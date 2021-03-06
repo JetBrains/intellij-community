@@ -18,7 +18,6 @@ object Test {
 // EXIST:  interface
 // EXIST:  val
 // EXIST:  var
-// EXIST:  constructor
 // EXIST:  init
 // EXIST:  operator
 // EXIST:  infix

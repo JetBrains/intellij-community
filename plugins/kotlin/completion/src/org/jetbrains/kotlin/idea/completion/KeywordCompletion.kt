@@ -29,6 +29,7 @@ import com.intellij.psi.filters.position.LeftNeighbour
 import com.intellij.psi.filters.position.PositionElementFilter
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -420,6 +421,12 @@ object KeywordCompletion {
 
     private fun buildFilterByText(prefixText: String, position: PsiElement): (KtKeywordToken) -> Boolean {
         val psiFactory = KtPsiFactory(position.project)
+
+        fun PsiElement.isSecondaryConstructorInObjectDeclaration(): Boolean {
+            val secondaryConstructor = parentOfType<KtSecondaryConstructor>() ?: return false
+            return secondaryConstructor.getContainingClassOrObject() is KtObjectDeclaration
+        }
+
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
 
@@ -438,6 +445,8 @@ object KeywordCompletion {
                 (keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD) &&
                         elementAt.parent is KtParameter &&
                         elementAt.parentOfTypes(KtNamedFunction::class, KtSecondaryConstructor::class) != null -> return false
+
+                keywordTokenType == CONSTRUCTOR_KEYWORD && elementAt.isSecondaryConstructorInObjectDeclaration() -> return false
 
                 keywordTokenType !is KtModifierKeywordToken -> return true
 

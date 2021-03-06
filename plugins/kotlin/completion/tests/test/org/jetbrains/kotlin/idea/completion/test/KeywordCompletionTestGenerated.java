@@ -356,6 +356,21 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/NoCompletionForCapitalPrefix.kt");
     }
 
+    @TestMetadata("NoConstructorInCompanion.kt")
+    public void testNoConstructorInCompanion() throws Exception {
+        runTest("testData/keywords/NoConstructorInCompanion.kt");
+    }
+
+    @TestMetadata("NoConstructorInObject.kt")
+    public void testNoConstructorInObject() throws Exception {
+        runTest("testData/keywords/NoConstructorInObject.kt");
+    }
+
+    @TestMetadata("NoConstructorInObjectLiteral.kt")
+    public void testNoConstructorInObjectLiteral() throws Exception {
+        runTest("testData/keywords/NoConstructorInObjectLiteral.kt");
+    }
+
     @TestMetadata("NoContinue.kt")
     public void testNoContinue() throws Exception {
         runTest("testData/keywords/NoContinue.kt");
