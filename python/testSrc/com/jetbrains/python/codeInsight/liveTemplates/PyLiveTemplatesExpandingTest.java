@@ -15,14 +15,8 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 public class PyLiveTemplatesExpandingTest extends PyTestCase {
@@ -56,18 +50,22 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     myFixture.checkResult("# comment ");
   }
 
+  // PY-43889
   public void testMainInDef() {
     doMultiFileTest();
   }
 
+  // PY-43889
   public void testMainInImport() {
     doMultiFileTest();
   }
 
+  // PY-43889
   public void testMainInMain() {
     doMultiFileTest();
   }
 
+  // PY-43889
   public void testMainTopLevel() {
     doMultiFileTest();
   }
