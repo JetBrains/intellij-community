@@ -1084,9 +1084,9 @@ public class Py3TypeTest extends PyTestCase {
                   "        expr = self.foo\n";
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("Dict[str, Any]", dict);
+    assertExpressionType("dict[str, Any]", dict);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("Dict[str, Any]", expr);
+    assertExpressionType("dict[str, Any]", expr);
   }
 
   public void testRecursiveDictTopDown() {
@@ -1097,9 +1097,9 @@ public class Py3TypeTest extends PyTestCase {
                   "        expr = self.foo\n";
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    assertExpressionType("Dict[str, Any]", expr);
+    assertExpressionType("dict[str, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
-    assertExpressionType("Dict[str, Any]", dict);
+    assertExpressionType("dict[str, Any]", dict);
   }
 
   private void doTest(final String expectedType, final String text) {
