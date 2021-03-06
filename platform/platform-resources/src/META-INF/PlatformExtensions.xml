@@ -717,6 +717,7 @@
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsLocalSummary" />
 
