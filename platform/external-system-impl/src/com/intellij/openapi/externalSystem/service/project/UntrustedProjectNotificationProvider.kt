@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
+import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
 import com.intellij.ide.impl.TrustChangeNotifier
 import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.impl.isTrusted
@@ -46,7 +47,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
       }, false)
       createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.read.more.link"), {
         TrustedProjectsStatistics.READ_MORE_FROM_BANNER.log()
-        HelpManager.getInstance().invokeHelp("Project_security")
+        HelpManager.getInstance().invokeHelp(TRUSTED_PROJECTS_HELP_TOPIC)
       }, false)
     }
   }
