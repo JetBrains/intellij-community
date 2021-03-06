@@ -17,9 +17,10 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import java.util.Objects;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public interface VcsLogUiProperties {
   @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property);

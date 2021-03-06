@@ -51,7 +51,8 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
       else {
         popup.showInCenterOf(component);
       }
-    } else {
+    }
+    else {
       popup.showInFocusCenter();
     }
   }

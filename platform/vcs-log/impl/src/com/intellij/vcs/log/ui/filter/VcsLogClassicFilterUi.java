@@ -206,7 +206,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @NotNull private final Computable<? extends JComponent> myComponentCreator;
 
-    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText, @NotNull Computable<? extends JComponent> componentCreator) {
+    public FilterActionComponent(@NotNull Supplier<@Nls @NlsActions.ActionText String> dynamicText,
+                                 @NotNull Computable<? extends JComponent> componentCreator) {
       super(dynamicText);
       myComponentCreator = componentCreator;
     }

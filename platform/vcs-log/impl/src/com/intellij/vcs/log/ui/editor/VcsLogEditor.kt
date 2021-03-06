@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.disposeLogUis
 import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcs.log.impl.disposeLogUis
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent

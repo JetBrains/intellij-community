@@ -84,7 +84,9 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
 
   protected abstract @NotNull GraphAction getGraphAction();
 
-  protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull @NlsContexts.ProgressTitle String title) {
+  protected void performLongAction(@NotNull MainVcsLogUi logUi,
+                                   @NotNull GraphAction graphAction,
+                                   @NotNull @NlsContexts.ProgressTitle String title) {
     VisiblePack dataPack = logUi.getDataPack();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ActionController<Integer> actionController = dataPack.getVisibleGraph().getActionController();

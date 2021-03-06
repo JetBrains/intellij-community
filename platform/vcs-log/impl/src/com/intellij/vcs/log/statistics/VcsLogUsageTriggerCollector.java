@@ -29,16 +29,18 @@ public final class VcsLogUsageTriggerCollector {
   }
 
   public static void triggerUsage(@NotNull VcsLogEvent event, boolean isFromHistory, @Nullable Consumer<FeatureUsageData> configurator) {
-    triggerUsage( event, data -> {
+    triggerUsage(event, data -> {
       addContext(data, isFromHistory);
       if (configurator != null) configurator.accept(data);
     }, null);
   }
 
-  public static void triggerUsage(@NotNull VcsLogEvent event, @Nullable Consumer<FeatureUsageData> configurator, @Nullable Project project) {
+  public static void triggerUsage(@NotNull VcsLogEvent event,
+                                  @Nullable Consumer<FeatureUsageData> configurator,
+                                  @Nullable Project project) {
     FeatureUsageData data = new FeatureUsageData();
     if (configurator != null) configurator.accept(data);
-    FUCounterUsageLogger.getInstance().logEvent(project,"vcs.log.trigger", event.getId(), data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "vcs.log.trigger", event.getId(), data);
   }
 
   private static void addContext(@NotNull FeatureUsageData data, boolean isFromHistory) {

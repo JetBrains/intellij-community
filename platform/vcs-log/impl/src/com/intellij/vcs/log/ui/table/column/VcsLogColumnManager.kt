@@ -8,7 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.EventDispatcher
 import java.util.*
-import kotlin.collections.HashMap
 
 /**
  * Service stores information about the currently available [VcsLogColumn]s.

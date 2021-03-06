@@ -40,8 +40,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 

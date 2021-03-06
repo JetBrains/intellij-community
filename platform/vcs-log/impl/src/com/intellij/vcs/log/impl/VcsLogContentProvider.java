@@ -18,13 +18,13 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
-
-import java.awt.*;
-import java.util.function.Supplier;
-import javax.swing.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.

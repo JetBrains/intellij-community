@@ -250,7 +250,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         VcsLogHighlighter highlighter = myHighlighters.get(((VcsLogHighlighterProperty)property).getId());
         if ((boolean)myUiProperties.get(property)) {
           getTable().addHighlighter(highlighter);
-        } else {
+        }
+        else {
           getTable().removeHighlighter(highlighter);
         }
         getTable().repaint();
