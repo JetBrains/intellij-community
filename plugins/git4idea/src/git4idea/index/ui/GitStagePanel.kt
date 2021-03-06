@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.OnePixelSplitter
@@ -36,6 +37,7 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
+import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.EditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
@@ -139,6 +141,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
     busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
+    commitWorkflowHandler.workflow.addListener(MyCommitWorkflowListener(), this)
 
     if (GitVcs.getInstance(project).changeProvider?.isRefreshInProgress == true) {
       tree.setEmptyText(message("stage.loading.status"))
@@ -299,6 +302,20 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         updateChangesStatusPanel()
       }
     }
+  }
+
+  private inner class MyCommitWorkflowListener : CommitWorkflowListener {
+    override fun executionEnded() {
+      if (hasPendingUpdates) {
+        hasPendingUpdates = false
+        update()
+      }
+    }
+
+    override fun vcsesChanged() = Unit
+    override fun executionStarted() = Unit
+    override fun beforeCommitChecksStarted() = Unit
+    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = Unit
   }
 }
 
