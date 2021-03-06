@@ -160,6 +160,10 @@
       <reference id="EditSource"/>
     </group>
 
+    <group id="space.review.commits.popup">
+      <reference id="Git.SelectInGitLog"/>
+    </group>
+
     <group id="SpaceGroup" popup="true" icon="SpaceIcons.Main">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
       <reference id="com.intellij.space.vcs.clone.SpaceCloneAction"/>
