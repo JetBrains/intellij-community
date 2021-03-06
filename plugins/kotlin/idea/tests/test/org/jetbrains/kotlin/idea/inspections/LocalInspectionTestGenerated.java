@@ -140,6 +140,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/booleanLiteralArgument/javaMethod.kt");
         }
 
+        @TestMetadata("pair.kt")
+        public void testPair() throws Exception {
+            runTest("testData/inspectionsLocal/booleanLiteralArgument/pair.kt");
+        }
+
+        @TestMetadata("triple.kt")
+        public void testTriple() throws Exception {
+            runTest("testData/inspectionsLocal/booleanLiteralArgument/triple.kt");
+        }
+
         @TestMetadata("vararg.kt")
         public void testVararg() throws Exception {
             runTest("testData/inspectionsLocal/booleanLiteralArgument/vararg.kt");

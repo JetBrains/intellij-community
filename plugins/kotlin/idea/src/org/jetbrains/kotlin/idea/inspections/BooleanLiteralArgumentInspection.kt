@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -19,13 +20,20 @@ import org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesToCallArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.AddNamesToFollowingArgumentsIntention
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
 
 class BooleanLiteralArgumentInspection(
     @JvmField var reportSingle: Boolean = false
 ) : AbstractKotlinInspection() {
+    companion object {
+        private val ignoreConstructors = listOf("kotlin.Pair", "kotlin.Triple").map { FqName(it) }
+    }
+
     private fun KtExpression.isBooleanLiteral(): Boolean =
         this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT
 
@@ -44,6 +52,9 @@ class BooleanLiteralArgumentInspection(
             if (AddNameToArgumentIntention.detectNameToAdd(argument, shouldBeLastUnnamed = false) == null) return
 
             val resolvedCall = call.resolveToCall() ?: return
+            if ((resolvedCall.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass?.fqNameOrNull() in ignoreConstructors) {
+                return
+            }
             if (!resolvedCall.candidateDescriptor.hasStableParameterNames()) return
             val languageVersionSettings = call.languageVersionSettings
             if (valueArguments.any {
