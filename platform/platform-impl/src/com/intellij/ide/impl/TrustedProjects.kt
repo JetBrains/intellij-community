@@ -209,13 +209,15 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
 
 interface TrustChangeNotifier {
   fun projectTrusted(project: Project)
+
   companion object {
     @JvmField
     @Topic.AppLevel
     val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java)
   }
-
 }
+
+const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
 
 private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")
 

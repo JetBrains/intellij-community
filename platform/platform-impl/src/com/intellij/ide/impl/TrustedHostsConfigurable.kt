@@ -21,7 +21,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name")),
+class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
   private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
