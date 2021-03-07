@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.ui.discussion
 
 import circlet.code.api.CodeDiscussionAnchor
@@ -99,6 +99,9 @@ private fun EditorEx.addFullLineHighlighting(line: InlineDiffLine, lineIndex: In
       DiffLineType.MODIFIED -> TextDiffType.MODIFIED
       DiffLineType.CONFLICT_OLD -> TextDiffType.CONFLICT
       DiffLineType.CONFLICT_NEW -> TextDiffType.CONFLICT
+      DiffLineType.FILTERED_ADDED -> TextDiffType.INSERTED
+      DiffLineType.FILTERED_DELETED -> TextDiffType.DELETED
+      DiffLineType.FILTERED_MODIFIED -> TextDiffType.MODIFIED
       null -> null
     }
     val ignored = (line.deletes?.any { range -> !isFullLineRange(line, range) } ?: false) ||

@@ -39,10 +39,10 @@ import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.ui.AppIcon
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.usingSource
-import libraries.coroutines.extra.withContext
 import libraries.klogging.KLogger
 import libraries.klogging.assert
 import libraries.klogging.logger
@@ -150,7 +150,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.cant.open.browser.label", server))
     }
 
-    val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+    val response = withContext(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
       codeFlow.handleCodeFlowRedirect(redirectUrl.await())
     }
     if (response is OAuthTokenResponse.Success) {
