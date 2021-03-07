@@ -519,7 +519,7 @@ public final class EditorWindow {
 
   public void setEditor(@Nullable EditorWithProviderComposite editor, boolean selectEditor, boolean focusEditor) {
     if (editor != null) {
-      var isPreviewMode = shouldReservePreview(selectEditor, focusEditor);
+      var isPreviewMode = shouldReservePreview(editor.getFile(), selectEditor, focusEditor);
       int index = findEditorIndex(editor);
       if (index != -1) {
         if (selectEditor) {
@@ -1401,10 +1401,17 @@ public final class EditorWindow {
     return true;
   }
 
-  private boolean shouldReservePreview(boolean selectEditor, boolean focusEditor) {
+  private boolean shouldReservePreview(@NotNull VirtualFile file,
+                                       boolean selectEditor,
+                                       boolean focusEditor) {
     if (!selectEditor || !UISettings.getInstance().getOpenInPreviewTabIfPossible()) {
       return false;
     }
+
+    if (file instanceof NotSuitableForPreviewTab) {
+      return false;
+    }
+
     if (!focusEditor) {
       Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
       Component parent = JBIterable.generate(owner, child -> child.getParent()).find(component -> {
