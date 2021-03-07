@@ -65,6 +65,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
   private volatile List<PyTargetExpression> myInstanceAttributes;
+  private volatile List<PyTargetExpression> myFallbackInstanceAttributes;
 
   private volatile Map<String, Property> myLocalPropertyCache;
 
@@ -1068,7 +1069,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public List<PyTargetExpression> getInstanceAttributes() {
     if (myInstanceAttributes == null) {
-      myInstanceAttributes = collectInstanceAttributes();
+      myInstanceAttributes = collectInstanceAttributes(Collections.emptyMap());
     }
     return myInstanceAttributes;
   }
@@ -1093,21 +1094,27 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  private List<PyTargetExpression> collectInstanceAttributes() {
-    Map<String, PyTargetExpression> result = new HashMap<>();
+  private List<PyTargetExpression> getFallbackInstanceAttributes() {
+    if (myFallbackInstanceAttributes == null) {
+      Map<String, ScopeOwner> scopesToSkip = StreamEx.of(getInstanceAttributes())
+        .filter(e -> e.getName() != null)
+        .mapToEntry(e -> e.getName(), e -> ScopeUtil.getScopeOwner(e))
+        .toMap();
+      myFallbackInstanceAttributes = collectInstanceAttributes(scopesToSkip);
+    }
+    return myFallbackInstanceAttributes;
+  }
 
+  private List<PyTargetExpression> collectInstanceAttributes(Map<String, ScopeOwner> scopesToSkip) {
+    Map<String, PyTargetExpression> result = new HashMap<>();
     collectAttributesInConstructors(result);
     Set<String> existing = new HashSet<>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
-      if (!PyUtil.isInitMethod(method)) {
-        collectInstanceAttributes(method, result, existing);
-        existing.addAll(result.keySet());
-      }
+      collectInstanceAttributes(method, result, existing, scopesToSkip);
+      existing.addAll(result.keySet());
     }
-
-    final Collection<PyTargetExpression> expressions = result.values();
-    return new ArrayList<>(expressions);
+    return new ArrayList<>(result.values());
   }
 
   private void collectAttributesInConstructors(Map<String, PyTargetExpression> result) {
@@ -1124,19 +1131,23 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public static void collectInstanceAttributes(@NotNull PyFunction method, @NotNull final Map<String, PyTargetExpression> result) {
-    collectInstanceAttributes(method, result, null);
+    collectInstanceAttributes(method, result, Collections.emptySet(), Collections.emptyMap());
   }
 
   private static void collectInstanceAttributes(@NotNull PyFunction method,
                                                 @NotNull final Map<String, PyTargetExpression> result,
-                                                Set<String> existing) {
+                                                @NotNull Set<String> namesToSkip,
+                                                @NotNull Map<String, ScopeOwner> scopesToSkip) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
     }
     for (PyTargetExpression target : getTargetExpressions(method)) {
-      if ((existing == null || !existing.contains(target.getName())) && PyUtil.isInstanceAttribute(target)) {
-        result.put(target.getName(), target);
+      String name = target.getName();
+      if (!namesToSkip.contains(name) &&
+          scopesToSkip.get(name) != method &&
+          PyUtil.isInstanceAttribute(target)) {
+        result.put(name, target);
       }
     }
   }
@@ -1255,13 +1266,21 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
       }
     }
-    for (PyTargetExpression expr : getInstanceAttributes()) {
+    if (processInstanceAttributesNotInMethod(processor, instanceMethod, getInstanceAttributes())) return false;
+    if (processInstanceAttributesNotInMethod(processor, instanceMethod, getFallbackInstanceAttributes())) return false;
+    return true;
+  }
+
+  private static boolean processInstanceAttributesNotInMethod(@NotNull PsiScopeProcessor processor,
+                                                              @Nullable PyFunction instanceMethod,
+                                                              @NotNull List<PyTargetExpression> instanceAttributes) {
+    for (PyTargetExpression expr : instanceAttributes) {
       if (instanceMethod != null && ScopeUtil.getScopeOwner(expr) == instanceMethod) {
         continue;
       }
-      if (!processor.execute(expr, ResolveState.initial())) return false;
+      if (!processor.execute(expr, ResolveState.initial())) return true;
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -1302,6 +1321,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     ControlFlowCache.clear(this);
     if (myInstanceAttributes != null) {
       myInstanceAttributes = null;
+    }
+    if (myFallbackInstanceAttributes != null) {
+      myFallbackInstanceAttributes = null;
     }
     myLocalPropertyCache = null;
   }
