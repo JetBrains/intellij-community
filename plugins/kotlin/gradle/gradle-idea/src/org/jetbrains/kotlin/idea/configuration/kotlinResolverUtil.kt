@@ -12,7 +12,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
@@ -21,21 +22,22 @@ import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
 const val NATIVE_DEBUG_ID = "com.intellij.nativeDebug"
 
 fun suggestNativeDebug(projectPath: String) {
+    val pluginId = PluginId.getId(NATIVE_DEBUG_ID)
     if (!PlatformUtils.isIdeaUltimate() ||
-        PluginManagerCore.isPluginInstalled(PluginId.getId(NATIVE_DEBUG_ID))
+        PluginManagerCore.isPluginInstalled(pluginId)
     ) {
         return
     }
 
     val project = ProjectManager.getInstance().openProjects.firstOrNull { it.basePath == projectPath } ?: return
 
-    PluginsAdvertiser.NOTIFICATION_GROUP.createNotification(
+    notificationGroup.createNotification(
         KotlinIdeaGradleBundle.message("title.plugin.suggestion"),
         KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"),
         NotificationType.INFORMATION, null
     ).addAction(object : NotificationAction(KotlinIdeaGradleBundle.message("action.text.install")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-            PluginsAdvertiser.installAndEnablePlugins(setOf(NATIVE_DEBUG_ID)) { notification.expire() }
+            installAndEnable(setOf(pluginId)) { notification.expire() }
         }
     }).notify(project)
 }
