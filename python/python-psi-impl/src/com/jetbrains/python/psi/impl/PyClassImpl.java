@@ -1127,9 +1127,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     collectInstanceAttributes(method, result, null);
   }
 
-  public static void collectInstanceAttributes(@NotNull PyFunction method,
-                                               @NotNull final Map<String, PyTargetExpression> result,
-                                               Set<String> existing) {
+  private static void collectInstanceAttributes(@NotNull PyFunction method,
+                                                @NotNull final Map<String, PyTargetExpression> result,
+                                                Set<String> existing) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
