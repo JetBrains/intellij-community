@@ -42,7 +42,7 @@ fun confirmOpeningUntrustedProject(
   createDialog: () -> MessageDialogBuilder.YesNoCancel
 ): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  val trustedCheckResult = isProjectImplicitlyTrusted(projectDir.toNioPath())
+  val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
     return OpenUntrustedProjectChoice.IMPORT
   }
@@ -76,7 +76,7 @@ fun confirmLoadingUntrustedProject(
 }
 
 fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
-  val trustedCheckResult = isProjectImplicitlyTrusted(project)
+  val trustedCheckResult = getImplicitTrustedCheckResult(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
@@ -103,7 +103,7 @@ fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
   val explicit = getTrustedState()
   if (explicit != ThreeState.UNSURE) return explicit
 
-  return if (isProjectImplicitlyTrusted(this) is Trusted) {
+  return if (getImplicitTrustedCheckResult(this) is Trusted) {
     ThreeState.YES
   }
   else {
@@ -119,7 +119,11 @@ fun Project.setTrusted(value: Boolean) {
 }
 
 fun createDoNotAskOptionForHost(project: Project): DialogWrapper.DoNotAskOption? {
-  return createDoNotAskOptionForHost(isProjectImplicitlyTrusted(project))
+  return createDoNotAskOptionForHost(getImplicitTrustedCheckResult(project))
+}
+
+fun createDoNotAskOptionForHost(projectBasePath: Path): DialogWrapper.DoNotAskOption? {
+  return createDoNotAskOptionForHost(getImplicitTrustedCheckResult(projectBasePath))
 }
 
 private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult): DialogWrapper.DoNotAskOption? {
@@ -143,6 +147,10 @@ private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult):
   else null
 }
 
+fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
+  return getImplicitTrustedCheckResult(projectDir) is Trusted
+}
+
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
                                        ApplicationManager.getApplication().isHeadlessEnvironment ||
                                        SystemProperties.`is`("idea.is.integration.test")
@@ -152,9 +160,9 @@ private sealed class TrustedCheckResult {
   class NotTrusted(val url: String?): TrustedCheckResult()
 }
 
-private fun isProjectImplicitlyTrusted(project: Project): TrustedCheckResult = isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) })
+private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult = getImplicitTrustedCheckResult(project.basePath?.let { Paths.get(it) })
 
-private fun isProjectImplicitlyTrusted(projectDir: Path?): TrustedCheckResult {
+private fun getImplicitTrustedCheckResult(projectDir: Path?): TrustedCheckResult {
   if (isTrustedCheckDisabled()) {
     return Trusted
   }
