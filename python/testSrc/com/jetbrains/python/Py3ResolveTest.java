@@ -828,6 +828,10 @@ public class Py3ResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
 
+  public void testInstanceAttrBelowDifferentBranchesOfSameIfStatement() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
   public void testInstanceAttrBothEarlierAndLater() {
     PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
     assertEquals("self.foo = 1", target.getParent().getText());
