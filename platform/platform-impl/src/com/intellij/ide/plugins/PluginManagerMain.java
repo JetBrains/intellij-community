@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.notification.Notification;
@@ -280,9 +279,8 @@ public final class PluginManagerMain {
 
         PluginId dependantId = dependency.getPluginId();
         if (PluginManagerCore.isModuleDependency(dependantId)) {
-          PluginId pluginIdByModule = PluginModulesHelper.getInstance().getInstalledPluginIdByModule(dependantId);
           // If there is no installed plugin implementing module then it can only be platform module which can not be disabled
-          if (pluginIdByModule == null) continue;
+          if (PluginManagerCore.findPluginByModuleDependency(dependantId) == null) continue;
         }
         IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(dependantId);
         if (pluginDescriptor != null && pluginEnabler.isDisabled(dependantId)) {

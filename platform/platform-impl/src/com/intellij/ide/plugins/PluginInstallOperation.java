@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.marketplace.PluginModulesHelper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -29,9 +30,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
+
+  private static final Cache<String, Optional<PluginId>> ourCache = Caffeine
+    .newBuilder()
+    .expireAfterWrite(1, TimeUnit.HOURS)
+    .build();
 
   private final List<PluginNode> myPluginsToInstall;
   private final Collection<? extends IdeaPluginDescriptor> myCustomReposPlugins;
@@ -291,7 +298,8 @@ public class PluginInstallOperation {
     return toDisable;
   }
 
-  private boolean checkMissingDependencies(IdeaPluginDescriptor pluginNode, @Nullable List<PluginId> pluginIds) {
+  private boolean checkMissingDependencies(@NotNull IdeaPluginDescriptor pluginNode,
+                                           @Nullable List<PluginId> pluginIds) {
     // check for dependent plugins at first.
     List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
     if (!dependencies.isEmpty()) {
@@ -302,7 +310,11 @@ public class PluginInstallOperation {
         PluginId depPluginId = dependency.getPluginId();
 
         if (PluginManagerCore.isModuleDependency(depPluginId)) {
-          PluginId pluginIdByModule = PluginModulesHelper.getInstance().getMarketplacePluginIdByModule(depPluginId);
+          IdeaPluginDescriptor descriptorByModule = PluginManagerCore.findPluginByModuleDependency(depPluginId);
+          PluginId pluginIdByModule = descriptorByModule != null ?
+                                      descriptorByModule.getPluginId() :
+                                      getCachedPluginId(depPluginId.getIdString());
+
           if (pluginIdByModule == null) continue;
           depPluginId = pluginIdByModule;
         }
@@ -437,5 +449,16 @@ public class PluginInstallOperation {
     else {
       return pluginFromMarketplace;
     }
+  }
+
+  private static @Nullable PluginId getCachedPluginId(@NotNull String pluginId) {
+    Optional<PluginId> cachedModule = ourCache.getIfPresent(pluginId);
+    if (cachedModule != null && cachedModule.isPresent()) {
+      return cachedModule.get();
+    }
+
+    PluginId result = MarketplaceRequests.getInstance().getCompatibleUpdateByModule(pluginId);
+    ourCache.put(pluginId, Optional.ofNullable(result));
+    return result;
   }
 }

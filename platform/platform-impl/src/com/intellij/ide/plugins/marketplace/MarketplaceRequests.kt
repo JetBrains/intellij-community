@@ -371,23 +371,25 @@ class MarketplaceRequests : PluginInfoProvider {
       ?.let { loadPluginDescriptor(pluginId.idString, it, indicator) }
   }
 
-  @JvmOverloads
-  fun getCompatibleUpdatesByModule(module: String, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
+  fun getCompatibleUpdateByModule(module: String): PluginId? {
     try {
-      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module, buildNumber))
-      val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
-      return HttpRequests
-        .post(url, HttpRequests.JSON_CONTENT_TYPE)
-        .productNameAsUserAgent()
+      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
+
+      return HttpRequests.post(
+        Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm(),
+        HttpRequests.JSON_CONTENT_TYPE,
+      ).productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
           it.write(data)
           objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
-        }
+        }.firstOrNull()
+        ?.pluginId
+        ?.let { PluginId.getId(it) }
     }
     catch (e: Exception) {
       logWarnOrPrintIfDebug("Can not get compatible update by module from Marketplace", e)
-      return emptyList()
+      return null
     }
   }
 
