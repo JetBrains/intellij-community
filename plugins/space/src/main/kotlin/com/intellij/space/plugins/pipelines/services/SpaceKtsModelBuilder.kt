@@ -26,10 +26,10 @@ import com.intellij.space.plugins.pipelines.viewmodel.ScriptModel
 import com.intellij.space.plugins.pipelines.viewmodel.ScriptState
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
+import kotlinx.coroutines.withContext
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.using
-import libraries.coroutines.extra.withContext
 import libraries.klogging.*
 import org.slf4j.event.Level
 import org.slf4j.event.SubstituteLoggingEvent
@@ -60,7 +60,7 @@ class SpaceKtsModelBuilder(val project: Project) : LifetimedDisposable by Lifeti
   init {
     launch(lifetime, backgroundDispatcher) {
       val saved = log.catch { persistentState.load() }
-      withContext(lifetime, Ui) {
+      withContext(Ui) {
         project.service<SpaceKtsFileDetector>().dslFile.view(lifetime) { lt, file ->
           _model.value = file?.let { ScriptModelHolder(lt, file, _modelBuildIsRequested, saved) }
         }
