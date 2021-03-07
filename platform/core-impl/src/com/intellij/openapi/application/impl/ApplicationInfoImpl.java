@@ -11,13 +11,11 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serviceContainer.NonInjectable;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -451,12 +449,17 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       int progressPercentInt = Integer.parseInt(progressPercentString);
       assert (progressPercentInt <= 100 && progressPercentInt >= 0);
 
-      float progressPercentFloat = (float) progressPercentInt / 100;
+      float progressPercentFloat = (float)progressPercentInt / 100;
       myProgressSlides.add(new ProgressSlide(slideUrl, progressPercentFloat));
     }
   }
 
   public static @NotNull ApplicationInfoEx getShadowInstance() {
+    return getShadowInstanceImpl();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ApplicationInfoImpl getShadowInstanceImpl() {
     ApplicationInfoImpl result = instance;
     if (result != null) {
       return result;
@@ -477,6 +480,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
     return result;
+  }
+
+  public static @NotNull String orFromPluginsCompatibleBuild(@Nullable BuildNumber buildNumber) {
+    BuildNumber number = buildNumber != null ?
+                         buildNumber :
+                         getShadowInstanceImpl().getPluginsCompatibleBuildAsNumber();
+    return number.asString();
   }
 
   @Override
@@ -503,7 +513,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
+      BuildNumber api = fromStringWithProductCode(myApiVersion, build);
       if (api != null) {
         return api;
       }
@@ -839,6 +849,25 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull List<ProgressSlide> getProgressSlides() {
     return myProgressSlides;
+  }
+
+  public @NotNull @NlsSafe String getPluginsCompatibleBuild() {
+    return getPluginsCompatibleBuildAsNumber().asString();
+  }
+
+  public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
+    @Nullable BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+    BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
+
+    BuildNumber buildNumber = fromStringWithProductCode(version.asString(),
+                                                        getBuild());
+    return Objects.requireNonNull(buildNumber);
+  }
+
+  private static @Nullable BuildNumber fromStringWithProductCode(@NotNull @NlsSafe String version,
+                                                                 @NotNull BuildNumber buildNumber) {
+    return BuildNumber.fromStringWithProductCode(version,
+                                                 buildNumber.getProductCode());
   }
 
   private static @Nullable String getAttributeValue(@NotNull Element element, @NotNull String name) {

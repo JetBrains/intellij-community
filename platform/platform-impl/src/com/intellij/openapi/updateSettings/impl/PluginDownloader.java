@@ -340,7 +340,7 @@ public final class PluginDownloader {
       else {
         final Map<String, String> parameters = new HashMap<>();
         parameters.put("id", descriptor.getPluginId().getIdString());
-        parameters.put("build", getBuildNumberForDownload(buildNumber));
+        parameters.put("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber));
         parameters.put("uuid", PermanentInstallationID.get());
         url = Urls
           .newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
@@ -352,10 +352,6 @@ public final class PluginDownloader {
       throw new IOException(e);
     }
     return new PluginDownloader(descriptor, url, buildNumber);
-  }
-
-  public static @NotNull String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
-    return buildNumber != null ? buildNumber.asString() : MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests();
   }
 
   public static @NotNull PluginNode createPluginNode(@Nullable String host, @NotNull PluginDownloader downloader) {

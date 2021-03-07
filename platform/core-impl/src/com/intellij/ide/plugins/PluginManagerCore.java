@@ -124,11 +124,6 @@ public final class PluginManagerCore {
 
   private static BuildNumber ourBuildNumber;
 
-  @ApiStatus.Internal
-  public static @Nullable String getPluginsCompatibleBuild() {
-    return System.getProperty("idea.plugins.compatible.build");
-  }
-
   /**
    * Returns list of all available plugin descriptors (bundled and custom, include disabled ones). Use {@link #getLoadedPlugins()}
    * if you need to get loaded plugins only.
@@ -880,7 +875,7 @@ public final class PluginManagerCore {
   public static @NotNull BuildNumber getBuildNumber() {
     BuildNumber result = ourBuildNumber;
     if (result == null) {
-      result = BuildNumber.fromString(getPluginsCompatibleBuild());
+      result = BuildNumber.fromPluginsCompatibleBuild();
       if (result == null) {
         if (isUnitTestMode) {
           result = BuildNumber.currentVersion();

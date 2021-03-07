@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -13,7 +12,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -68,9 +66,12 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
+  private val applicationInfo
+    get() = ApplicationInfoImpl.getShadowInstanceImpl()
 
-  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests())
+  private val PLUGIN_MANAGER_URL = applicationInfo.pluginManagerUrl.trimEnd('/')
+
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(applicationInfo.pluginsCompatibleBuild)
 
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${PLUGIN_MANAGER_URL}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
@@ -133,7 +134,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val param = mapOf(
       "featureType" to featureType,
       "implementationName" to implementationName,
-      "build" to getBuildForPluginRepositoryRequests(),
+      "build" to applicationInfo.pluginsCompatibleBuild,
     )
     return getFeatures(param)
   }
@@ -173,12 +174,6 @@ class MarketplaceRequests : PluginInfoProvider {
     catch (ignore: IOException) {
     }
     return null
-  }
-
-  fun getBuildForPluginRepositoryRequests(): String {
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild() ?: appInfo.apiVersion
-    return BuildNumber.fromStringWithProductCode(compatibleBuild, appInfo.build.productCode)!!.asString()
   }
 
   @Throws(IOException::class)
@@ -340,10 +335,7 @@ class MarketplaceRequests : PluginInfoProvider {
         return emptyList()
       }
 
-      val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(
-        PluginDownloader.getBuildNumberForDownload(buildNumber),
-        ids.map { it.idString },
-      ))
+      val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
       return HttpRequests
         .post(Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm(), HttpRequests.JSON_CONTENT_TYPE)
         .productNameAsUserAgent()
@@ -382,8 +374,7 @@ class MarketplaceRequests : PluginInfoProvider {
   @JvmOverloads
   fun getCompatibleUpdatesByModule(module: String, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
     try {
-      val data = objectMapper.writeValueAsString(
-        CompatibleUpdateForModuleRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), module))
+      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module, buildNumber))
       val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
       return HttpRequests
         .post(url, HttpRequests.JSON_CONTENT_TYPE)
@@ -468,8 +459,35 @@ private fun isNotModified(urlConnection: URLConnection, file: Path?): Boolean {
          urlConnection is HttpURLConnection && urlConnection.responseCode == HttpURLConnection.HTTP_NOT_MODIFIED
 }
 
-private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
-private data class CompatibleUpdateForModuleRequest(val build: String, val module: String)
+private data class CompatibleUpdateRequest(
+  val build: String,
+  val pluginXMLIds: List<String>,
+) {
+
+  @JvmOverloads
+  constructor(
+    pluginIds: Set<PluginId>,
+    buildNumber: BuildNumber? = null,
+  ) : this(
+    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+    pluginIds.map { it.idString },
+  )
+}
+
+private data class CompatibleUpdateForModuleRequest(
+  val module: String,
+  val build: String,
+) {
+
+  @JvmOverloads
+  constructor(
+    module: String,
+    buildNumber: BuildNumber? = null,
+  ) : this(
+    module,
+    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+  )
+}
 
 private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
   if (LOG.isDebugEnabled) {

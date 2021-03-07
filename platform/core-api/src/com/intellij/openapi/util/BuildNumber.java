@@ -2,7 +2,10 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -93,6 +96,10 @@ public final class BuildNumber implements Comparable<BuildNumber> {
       builder.setLength(builder.length() - 1);
     }
     return builder.toString();
+  }
+
+  public static @Nullable BuildNumber fromPluginsCompatibleBuild() {
+    return fromString(getPluginsCompatibleBuild());
   }
 
   /**
@@ -284,5 +291,9 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   @ApiStatus.Internal
   public static @NotNull BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
+  }
+
+  private static @Nullable String getPluginsCompatibleBuild() {
+    return System.getProperty("idea.plugins.compatible.build");
   }
 }

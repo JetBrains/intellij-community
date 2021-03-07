@@ -95,7 +95,7 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", build != null ? build.asString() : MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests()));
+      url = url.addParameters(singletonMap("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(build)));
     }
 
     if (indicator != null) {
