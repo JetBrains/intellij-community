@@ -205,6 +205,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
       }
 
+      val shouldPrintScannedFiles = projectIndexingHistory.scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
       h1("Scanning")
       table {
         thead {
@@ -218,7 +219,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Time processing up-to-date files")
             th("Time updating content-less indexes")
             th("Time indexing without content")
-            th("Scanned files")
+            if (shouldPrintScannedFiles) {
+              th("Scanned files")
+            }
           }
         }
         tbody {
@@ -233,17 +236,19 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
               td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
               td(scanningStats.timeIndexingWithoutContent.presentableDuration())
-              td {
-                textarea {
-                  rawText(
-                    scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
-                      file.path.presentablePath + when {
-                        file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
-                        file.isUpToDate -> " [up-to-date]"
-                        else -> ""
+              if (shouldPrintScannedFiles) {
+                td {
+                  textarea {
+                    rawText(
+                      scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                        file.path.presentablePath + when {
+                          file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                          file.isUpToDate -> " [up-to-date]"
+                          else -> ""
+                        }
                       }
-                    }
-                  )
+                    )
+                  }
                 }
               }
             }
@@ -251,6 +256,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
       }
 
+      val shouldPrintIndexedFiles = projectIndexingHistory.fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
       h1("Indexing with content")
       table {
         thead {
@@ -260,7 +266,9 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             th("Number of indexed files")
             th("Number of files indexed by infrastructure extensions")
             th("Number of too large for indexing files")
-            th("Indexed files")
+            if (shouldPrintIndexedFiles) {
+              th("Indexed files")
+            }
           }
         }
         tbody {
@@ -271,11 +279,13 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               td(providerStats.totalNumberOfIndexedFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              td {
-                textarea {
-                  rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
-                    file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
-                  })
+              if (shouldPrintIndexedFiles) {
+                td {
+                  textarea {
+                    rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                      file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                    })
+                  }
                 }
               }
             }
