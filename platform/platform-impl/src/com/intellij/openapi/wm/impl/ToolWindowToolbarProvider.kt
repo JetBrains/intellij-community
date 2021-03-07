@@ -15,7 +15,7 @@ open class ToolWindowToolbarProvider {
   open fun defaultBottomToolwindows(project: Project, anchor: ToolWindowAnchor) =
     when (anchor) {
       LEFT -> listOf("Project", "Commit", "Structure")
-      BOTTOM -> listOf("Event Log", "Problems View", "Terminal")
+      BOTTOM -> listOf("Version Control", "Problems View", "Terminal", "Event Log")
       RIGHT -> listOf("Database", "Gradle", "Maven")
       else -> emptyList()
     }

@@ -94,6 +94,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    */
   override var order by property(-1)
 
+  @get:Attribute("orderOnLargeStripe")
+  override var orderOnLargeStripe by property(-1)
+
   @get:Transient
   override var isFromPersistentSettings = true
     internal set

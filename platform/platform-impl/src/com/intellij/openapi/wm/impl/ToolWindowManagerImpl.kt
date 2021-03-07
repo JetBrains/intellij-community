@@ -1079,10 +1079,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
-    val comparator = Comparator<ToolWindow> { o1, o2 ->
-      windowInfoComparator.compare((o1 as? ToolWindowImpl)?.windowInfo, (o2 as? ToolWindowImpl)?.windowInfo)
-    }
-    toolWindowPane.onStripeButtonAdded(project, button.toolWindow, button.toolWindow.largeStripeAnchor, comparator)
+    toolWindow.largeStripeAnchor = button.toolWindow.largeStripeAnchor
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
     // mode. But if tool window was active but its mode doesn't allow to activate it again
@@ -1492,7 +1489,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     val entry = idToEntry[id]!!
 
     val info = entry.readOnlyWindowInfo
-    if (anchor == info.largeStripeAnchor) return
 
     ApplicationManager.getApplication().assertIsDispatchThread()
     setToolWindowLargeAnchorImpl(entry, info, getRegisteredMutableInfoOrLogError(id), anchor)
@@ -1572,17 +1568,21 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun doSetLargeAnchor(entry: ToolWindowEntry, layoutInfo: WindowInfoImpl, anchor: ToolWindowAnchor) {
-    val toolWindowPane = toolWindowPane!!
-
+    toolWindowPane!!.onStripeButtonAdded(project, entry.toolWindow, anchor, layoutInfo)
     layout.setAnchor(layoutInfo, anchor, -1)
-    layoutInfo.largeStripeAnchor = anchor
+
     // update infos for all window. Actually we have to update only infos affected by setAnchor method
     for (otherEntry in idToEntry.values) {
       val otherInfo = layout.getInfo(otherEntry.id)?.copy() ?: continue
       otherEntry.applyWindowInfo(otherInfo)
     }
+  }
 
-    toolWindowPane.onStripeButtonAdded(project, entry.toolWindow, anchor, Comparator { _, _ -> 0 })
+  fun setOrderOnLargeStripe(id: String, order: Int) {
+    val info = getRegisteredMutableInfoOrLogError(id)
+    info.orderOnLargeStripe = order
+    idToEntry[info.id]!!.applyWindowInfo(info.copy())
+    fireStateChanged()
   }
 
   internal fun setSideTool(id: String, isSplit: Boolean) {

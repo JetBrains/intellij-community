@@ -237,6 +237,15 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setOrderOnLargeStripe(int order) {
+    }
+
+    @Override
+    public int getOrderOnLargeStripe() {
+      return -1;
+    }
+
+    @Override
     public boolean isShowStripeButton() {
       return false;
     }

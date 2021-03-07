@@ -25,14 +25,20 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor)
 
-  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, comparator: Comparator<ToolWindow>, toolWindow: ToolWindow)
+  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow)
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, comparator: Comparator<ToolWindow>) {
+  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow) {
     if (toolWindow !is ToolWindowImpl) return
+
+    if (toolWindow.orderOnLargeStripe == -1) {
+      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+    }
+
     //temporary add new button
     panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
     val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
-      .map { it.button.toolWindow }.sortedWith(comparator)
+      .map { it.button.toolWindow }
+      .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
     panel.removeAll()
     sortedSquareButtons.forEach {
       panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() }))
@@ -44,6 +50,17 @@ abstract class ToolwindowToolbar : JPanel() {
       panel.components.filterIsInstance(SquareStripeButton::class.java).forEach { it.update() }
       panel.revalidate()
       panel.repaint()
+    }
+
+    fun remove(panel: JPanel, toolWindow: ToolWindow) {
+      val components = panel.components
+      val index = components.filterIsInstance(SquareStripeButton::class.java).indexOfFirst { it.button.id == toolWindow.id }
+      // shift all button indexes beneath
+      components.drop(index + 1)
+        .filterIsInstance(SquareStripeButton::class.java)
+        .map { it.button.toolWindow }
+        .forEach { it.orderOnLargeStripe-- }
+      components[index]?.let { panel.remove(it); panel.revalidate(); panel.repaint() }
     }
   }
 

@@ -37,7 +37,6 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -594,7 +593,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
     if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
-    toolWindow.setVisibleOnLargeStripe(false);
+    toolWindow.setOrderOnLargeStripe(-1);
 
     ToolWindowAnchor anchor = toolWindow.getLargeStripeAnchor();
     if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
@@ -607,31 +606,38 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   void onStripeButtonAdded(@NotNull Project project,
                            @NotNull ToolWindow toolWindow,
-                           @NotNull ToolWindowAnchor actualAnchor,
-                           @NotNull Comparator<ToolWindow> comparator) {
+                           @NotNull ToolWindowAnchor anchor,
+                           @NotNull WindowInfo windowInfo) {
     if (!isSquareStripeUI()) return;
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
     ensureDefaultInitialized(project);
 
+    var largeStripeAnchor = setupDefaultLargeStripeAnchor(toolWindow);
+    if (largeStripeAnchor != null) anchor = largeStripeAnchor;
+
+    windowInfo.setLargeStripeAnchor(anchor);
+
+    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null || !toolWindow.isVisibleOnLargeStripe()) return;
+
+    if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
+      myLeftToolbar.addStripeButton(project, anchor, toolWindow);
+    }
+    else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
+      myRightToolbar.addStripeButton(project, anchor, toolWindow);
+    }
+  }
+
+  @Nullable
+  private ToolWindowAnchor setupDefaultLargeStripeAnchor(@NotNull ToolWindow toolWindow) {
     ToolWindowAnchor toolWindowAnchor = toolWindow.getAnchor();
     if (toolWindowAnchor == ToolWindowAnchor.LEFT && myDefaultLeftButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.RIGHT && myDefaultRightButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.BOTTOM && myDefaultBottomButtons.contains(toolWindow.getId())) {
       toolWindow.setVisibleOnLargeStripe(true);
-      actualAnchor = toolWindowAnchor;
+      return toolWindowAnchor;
     }
-
-    toolWindow.setLargeStripeAnchor(actualAnchor);
-
-    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null || !toolWindow.isVisibleOnLargeStripe()) return;
-
-    if (ToolWindowAnchor.LEFT.equals(actualAnchor) || ToolWindowAnchor.BOTTOM.equals(actualAnchor)) {
-      myLeftToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
-    }
-    else if (ToolWindowAnchor.RIGHT.equals(actualAnchor)) {
-      myRightToolbar.addStripeButton(project, actualAnchor, comparator, toolWindow);
-    }
+    return null;
   }
 
   private void ensureDefaultInitialized(@NotNull Project project) {

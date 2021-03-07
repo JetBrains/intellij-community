@@ -265,6 +265,12 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.setVisibleOnLargeStripe(id, visible)
   }
 
+  override fun getOrderOnLargeStripe() = windowInfo.orderOnLargeStripe
+
+  override fun setOrderOnLargeStripe(order: Int) {
+    toolWindowManager.setOrderOnLargeStripe(id, order)
+  }
+
   override fun setAnchor(anchor: ToolWindowAnchor, runnable: Runnable?) {
     EDT.assertIsEdt()
     toolWindowManager.setToolWindowAnchor(id, anchor)

@@ -39,17 +39,15 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
 
   override fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
     when (anchor) {
-      ToolWindowAnchor.LEFT ->
-        topPane.components.find { (it as SquareStripeButton).button.id == toolWindow.id }?.let { topPane.remove(it) }
-      ToolWindowAnchor.BOTTOM ->
-        bottomPane.components.find { (it as SquareStripeButton).button.id == toolWindow.id }?.let { bottomPane.remove(it) }
+      ToolWindowAnchor.LEFT -> remove(topPane, toolWindow)
+      ToolWindowAnchor.BOTTOM -> remove(bottomPane, toolWindow)
     }
   }
 
-  override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, comparator: Comparator<ToolWindow>, toolWindow: ToolWindow) {
+  override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
     when (anchor) {
-      ToolWindowAnchor.LEFT -> rebuildStripe(project, topPane, toolWindow, comparator)
-      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow, comparator)
+      ToolWindowAnchor.LEFT -> rebuildStripe(project, topPane, toolWindow)
+      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow)
     }
   }
 

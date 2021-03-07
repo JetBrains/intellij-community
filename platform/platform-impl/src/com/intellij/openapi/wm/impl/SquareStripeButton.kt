@@ -107,6 +107,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
       toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      toolWindow.isVisibleOnLargeStripe = false
       (toolWindow as? ToolWindowImpl)?.toolWindowManager?.hideToolWindow(toolWindow.id, false, true, ToolWindowEventSource.SquareStripeButton)
     }
   }
