@@ -11,7 +11,7 @@ import kotlin.concurrent.write
 
 @Service(Service.Level.APP)
 @State(
-  name = "PluginFeatureService",
+  name = "KnownExtensionsService",
   storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)],
   allowLoadInTests = true,
 )
