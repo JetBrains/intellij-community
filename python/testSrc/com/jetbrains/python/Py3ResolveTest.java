@@ -796,36 +796,31 @@ public class Py3ResolveTest extends PyResolveTestCase {
 
   public void testInstanceAttrOtherMethodAndAbove() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertNotNull(function);
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("f", function.getName());
   }
 
   public void testInstanceAttrBelowAndOtherMethodAbove() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertNotNull(function);
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("g", function.getName());
   }
 
   public void testInstanceAttrBelowAndOtherMethodBelow() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertNotNull(function);
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("g", function.getName());
   }
 
   public void testInstanceAttrInheritedAndAbove() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertNotNull(function);
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("f", function.getName());
   }
 
   public void testInstanceAttrInheritedAndBelow() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyFunction function = ObjectUtils.tryCast(ScopeUtil.getScopeOwner(target), PyFunction.class);
-    assertNotNull(function);
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
     assertEquals("g", function.getName());
   }
 

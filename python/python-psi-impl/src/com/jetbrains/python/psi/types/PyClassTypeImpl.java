@@ -809,11 +809,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return p1 != p2;
     }
 
+    @Nullable
     private static PyStatementPart findIfStatementPartByElement(@NotNull PsiElement element, @NotNull List<PyStatementPart> parts) {
-      return StreamEx.of(parts)
-        .filter(part -> PsiTreeUtil.isAncestor(part, element, true))
-        .findFirst()
-        .orElse(null);
+      return ContainerUtil.find(parts, part -> PsiTreeUtil.isAncestor(part, element, true));
     }
 
     @NotNull

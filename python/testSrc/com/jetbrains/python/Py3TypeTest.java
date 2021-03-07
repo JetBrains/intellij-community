@@ -1108,7 +1108,7 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType(expectedType, expr);
   }
 
-  private void assertExpressionType(String expectedType, PyExpression expr) {
+  private void assertExpressionType(@NotNull String expectedType, @NotNull PyExpression expr) {
     final Project project = expr.getProject();
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));

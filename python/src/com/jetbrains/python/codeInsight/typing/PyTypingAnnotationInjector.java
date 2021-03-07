@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
@@ -111,7 +112,7 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
     PyReferenceExpression operand = ObjectUtils.tryCast(subscription.getOperand(), PyReferenceExpression.class);
     if (operand == null) return false;
     Collection<String> resolvedNames = resolveToQualifiedNames(operand, context);
-    return resolvedNames.stream().anyMatch(name -> LITERAL.equals(name) || LITERAL_EXT.equals(name));
+    return ContainerUtil.exists(resolvedNames, name -> LITERAL.equals(name) || LITERAL_EXT.equals(name));
   }
 
   private static boolean isTypingAnnotatedMetadataArgument(@NotNull PsiElement element,
