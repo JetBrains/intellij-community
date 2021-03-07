@@ -10,9 +10,16 @@ import org.jetbrains.kotlin.idea.KotlinIconProviderBase
 import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinNavBarModelExtension : AbstractNavBarModelExtensionCompatBase() {
-    override fun getPresentableText(item: Any?): String? = (item as? KtDeclaration)?.let { tryGetRepresentableText(it) }
+    override fun getPresentableText(item: Any?): String? {
+        val fullText = (item as? KtDeclaration)?.let { tryGetRepresentableText(it) }
+        return when (item) {
+            is KtNamedFunction -> fullText?.substringBefore('(')
+            else -> fullText
+        }
+    }
 
     override fun adjustElementImpl(psiElement: PsiElement?): PsiElement? {
         if (psiElement is KtDeclaration) {
