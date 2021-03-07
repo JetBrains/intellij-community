@@ -248,7 +248,6 @@ object FullStackWebApplicationProjectTemplate : ProjectTemplate() {
                     ModuleType.common.createDefaultTarget(),
                     ModuleType.jvm.createDefaultTarget().apply {
                         withTemplate(KtorServerTemplate()) {
-                            template.serverEngine withValue KtorServerEngine.Netty
                         }
                     },
                     ModuleType.js.createDefaultTarget().apply {
