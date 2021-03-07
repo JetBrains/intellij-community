@@ -54,7 +54,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
 
       for (additionalPanel in EP_NAME.extensionList) {
         row {
-          component(additionalPanel.getPanel(this))
+          additionalPanel.getCellBuilder(this)
         }
       }
     }
@@ -112,5 +112,5 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
  */
 @ApiStatus.Internal
 interface TrustedHostsConfigurablePanelProvider {
-  fun getPanel(row: Row) : JComponent
+  fun getCellBuilder(row: Row) : CellBuilder<JComponent>
 }
