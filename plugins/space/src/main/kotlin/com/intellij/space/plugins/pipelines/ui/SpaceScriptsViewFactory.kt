@@ -341,9 +341,8 @@ private fun ScriptStep.toTreeNode(): SpaceModelTreeNode = when (val step = this)
   is SimpleStep.Process.Container -> SpaceModelTreeNode("container: ${step.image}").apply {
     add(step.data.exec.toTreeNode())
   }
-  is SimpleStep.Process.VM -> SpaceModelTreeNode("vm: ${step.image}")
   is SimpleStep.DockerComposeStep -> SpaceModelTreeNode("compose: ${step.mainService}")
-  else -> SpaceModelTreeNode(step::class.simpleName)
+  else -> SpaceModelTreeNode(step.usefulSubTypeName())
 }
 
 private val CompositeStep.treeNodeText: String get() = when(this) {
@@ -358,11 +357,9 @@ private val ProcessExecutable.treeNodeText: String
   get() = when (this) {
     is ContainerExecutable.DefaultCommand -> "exec: defaultCommand${args.presentArgs()}"
     is ContainerExecutable.OverrideEntryPoint -> "exec: overrideEntryPoint: $entryPoint${args.presentArgs()}"
-    is Command -> "exec: command: ${cmd.joinToString(" ")}"
     is KotlinScript -> "exec: kts script"
     is ShellScript -> "exec: shell script"
-    is VMExecutable -> "exec: VM executable"
-    else -> "exec: ${this::class.simpleName}"
+    else -> "exec: ${usefulSubTypeName()}"
   }
 
 private fun List<String>.presentArgs(): String {
