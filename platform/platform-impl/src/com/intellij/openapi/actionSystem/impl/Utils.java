@@ -144,7 +144,7 @@ public final class Utils {
   }
 
   private static void fillMenuInner(JComponent component,
-                                    List<AnAction> list,
+                                    @NotNull List<? extends AnAction> list,
                                     boolean checked,
                                     boolean enableMnemonics,
                                     PresentationFactory presentationFactory,
@@ -314,8 +314,8 @@ public final class Utils {
                                                     @NotNull String place,
                                                     @NotNull ActionProcessor actionProcessor,
                                                     @NotNull PresentationFactory factory,
-                                                    @Nullable Consumer<AnActionEvent> eventTracker,
-                                                    @NotNull Function<? super UpdateSession, T> function) {
+                                                    @Nullable Consumer<? super AnActionEvent> eventTracker,
+                                                    @NotNull Function<? super UpdateSession, ? extends T> function) {
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
@@ -340,9 +340,7 @@ public final class Utils {
         try {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-              ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession()));
-            }, new EmptyProgressIndicator());
+            ProgressManager.getInstance().executeProcessUnderProgress(() -> ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession())), new EmptyProgressIndicator());
             return null;
           });
           queue.offer(() -> {
@@ -369,7 +367,7 @@ public final class Utils {
     return result;
   }
 
-  private static <T> T runLoopAndWaitForFuture(@NotNull Future<T> promise,
+  private static <T> T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
                                                @Nullable T defValue,
                                                @NotNull ThrowableRunnable<?> pumpRunnable) {
     while (!promise.isDone()) {
