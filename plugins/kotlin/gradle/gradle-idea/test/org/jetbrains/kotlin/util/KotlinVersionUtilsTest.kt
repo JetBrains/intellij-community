@@ -62,6 +62,19 @@ class KotlinVersionUtilsTest {
         assertFalse(
             parseKotlinVersionRequirement("1.5.10+").matches("1.5.0")
         )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5+").matches("1.5.0")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5+").matches("1.5.10")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.5+").matches("1.5.0-rc")
+        )
+
     }
 
     @Test
