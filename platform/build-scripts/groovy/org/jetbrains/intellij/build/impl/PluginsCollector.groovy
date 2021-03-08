@@ -78,16 +78,26 @@ final class PluginsCollector {
       }
 
       Element xml = JDOMUtil.load(pluginXml)
-      if (JDOMUtil.isEmpty(xml) || xml.getAttributeValue('implementation-detail') == 'true') {
+      if (JDOMUtil.isEmpty(xml)) {
+        // Throws an exception
+        myBuildContext.messages.error("Module '$jpsModule.name': '$pluginXml' is empty")
         continue
       }
 
-      String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-      if (id == null || id.isEmpty()) {
+      if (xml.getAttributeValue('implementation-detail') == 'true') {
+        myBuildContext.messages.debug("PluginsCollector: skipping module '$jpsModule.name' since 'implementation-detail' == 'true' in '$pluginXml'")
         continue
       }
 
       JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toUri().toURL(), true, new SourcesBasedXIncludeResolver(jpsModule))
+
+      String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
+      if (id == null || id.isEmpty()) {
+        // Throws an exception
+        myBuildContext.messages.error("Module '$jpsModule.name': '$pluginXml' does not contain <id/> element")
+        continue
+      }
+
       def declaredModules = new HashSet<String>()
       for (moduleElement in xml.getChildren('module')) {
         def value = moduleElement.getAttributeValue('value')
