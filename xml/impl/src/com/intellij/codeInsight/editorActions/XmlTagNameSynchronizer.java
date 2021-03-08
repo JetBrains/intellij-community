@@ -209,6 +209,21 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
         }
       }
 
+      int caretOffset = caret.getOffset();
+      // Skip markers creation if cursors cover same tag area as other cursors
+      for (Caret c: myEditor.getCaretModel().getAllCarets()) {
+        if (c == caret) continue;
+        Couple<RangeMarker> m = c.getUserData(MARKERS_KEY);
+        if (m == null) continue;
+        RangeMarker leading = m.first;
+        RangeMarker trailing = m.second;
+        if ((trailing.getStartOffset() <= caretOffset && caretOffset <= trailing.getEndOffset())
+            || (leading.getStartOffset() <= caretOffset && caretOffset <= leading.getEndOffset())) {
+          clearMarkers(caret);
+          return;
+        }
+      }
+
       Couple<RangeMarker> markers = caret.getUserData(MARKERS_KEY);
       if (markers != null && !fitsInMarker(markers, offset, oldLength)) {
         clearMarkers(caret);
