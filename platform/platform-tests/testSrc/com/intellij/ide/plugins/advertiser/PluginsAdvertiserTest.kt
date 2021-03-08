@@ -25,6 +25,6 @@ class PluginsAdvertiserTest {
 
     val actual = KnownExtensionsService.instance.extensions
     assertNotNull(actual, "Extensions information for PluginsAdvertiser has not been loaded")
-    assertEquals("foo", actual.find("foo").single().pluginIdString)
+    assertEquals("foo", actual["foo"].single().pluginIdString)
   }
 }

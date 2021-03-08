@@ -4,13 +4,10 @@ package com.intellij.ide.plugins.advertiser
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Comparing
-import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Tag
-import com.intellij.util.xmlb.annotations.XMap
+import com.intellij.util.xmlb.annotations.*
 
 @Tag("plugin")
-class PluginData(
+class PluginData @JvmOverloads constructor(
   @Attribute("pluginId") val pluginIdString: String = "",
   @Attribute("pluginName") private val nullablePluginName: String? = null,
   @Attribute("bundled") val isBundled: Boolean = false,
@@ -52,16 +49,16 @@ class PluginData(
 }
 
 @Tag("featurePlugin")
-class FeaturePluginData(
+class FeaturePluginData @JvmOverloads constructor(
   @Attribute("displayName") val displayName: String = "",
-  @Attribute("pluginData") val pluginData: PluginData = PluginData(),
+  @Property(surroundWithTag = false) val pluginData: PluginData = PluginData(),
 )
 
 @Tag("plugins")
-class PluginDataSet(dataSet: Set<PluginData> = setOf()) {
+class PluginDataSet @JvmOverloads constructor(dataSet: Set<PluginData> = setOf()) {
 
   @JvmField
-  @OptionTag
+  @XCollection(style = XCollection.Style.v2)
   val dataSet = mutableSetOf<PluginData>()
 
   init {
@@ -70,10 +67,9 @@ class PluginDataSet(dataSet: Set<PluginData> = setOf()) {
 }
 
 @Tag("extensions")
-class KnownExtensions(extensionsMap: Map<String, Set<PluginData>> = mapOf()) {
+class KnownExtensions @JvmOverloads constructor(extensionsMap: Map<String, Set<PluginData>> = mapOf()) {
 
   @JvmField
-  @OptionTag
   @XMap
   val extensionsMap = mutableMapOf<String, PluginDataSet>()
 
@@ -83,5 +79,5 @@ class KnownExtensions(extensionsMap: Map<String, Set<PluginData>> = mapOf()) {
     }
   }
 
-  fun find(extension: String): Set<PluginData> = extensionsMap[extension]?.dataSet ?: setOf()
+  operator fun get(extension: String): Set<PluginData> = extensionsMap[extension]?.dataSet ?: setOf()
 }
