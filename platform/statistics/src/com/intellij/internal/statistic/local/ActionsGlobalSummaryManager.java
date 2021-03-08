@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class ActionsGlobalSummaryManager {
+public final class ActionsGlobalSummaryManager {
 
   private static final Logger LOG = Logger.getInstance(ActionsGlobalSummaryManager.class);
   private static final @NotNull CharFilter QUOTE_FILTER = ch -> ch != '"';
