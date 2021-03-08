@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -365,9 +364,12 @@ public class KotlinTestUtils {
 
             String expectedText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(StringUtil.convertLineSeparators(expected.trim()));
 
-            if (!Comparing.equal(sanitizer.invoke(expectedText), sanitizer.invoke(actualText))) {
+            String sanitizedExpectedText = sanitizer.invoke(expectedText);
+            String sanitizedActualText = sanitizer.invoke(actualText);
+
+            if (!Objects.equals(sanitizedExpectedText, sanitizedActualText)) {
                 throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
-                                                expected, actual, expectedFile.getAbsolutePath());
+                                                sanitizedExpectedText, sanitizedActualText, expectedFile.getAbsolutePath());
             }
         } catch (IOException e) {
             throw ExceptionUtilsKt.rethrow(e);

@@ -27,6 +27,8 @@ val KotlinVersion.isRC: Boolean
 
 val KotlinVersion.isStable: Boolean get() = this.classifier == null
 
+val KotlinVersion.isPreRelease: Boolean get() = !isStable
+
 
 enum class KotlinVersionMaturity {
     UNKNOWN,

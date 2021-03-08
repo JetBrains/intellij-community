@@ -44,6 +44,7 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 this.freeCompilerArgs += "-Xskip-prerelease-check"
+                this.freeCompilerArgs += "-Xskip-metadata-version-check"
                 this.freeCompilerArgs += "-Xskip-runtime-version-check"
                 this.freeCompilerArgs += "-Xsuppress-version-warnings"
             }
