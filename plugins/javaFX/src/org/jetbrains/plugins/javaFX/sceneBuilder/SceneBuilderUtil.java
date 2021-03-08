@@ -25,8 +25,8 @@ import java.util.stream.Stream;
 final class SceneBuilderUtil {
   private static final Logger LOG = Logger.getInstance(SceneBuilderUtil.class);
 
-  static final String SCENE_BUILDER_VERSION = "11.0.5";
-  static final String JAVAFX_VERSION = "11.0.1";
+  static final String SCENE_BUILDER_VERSION = "11.0.6";
+  static final String JAVAFX_VERSION = "11.0.2";
   static final String SCENE_BUILDER_KIT_FULL_NAME = "scenebuilderkit-" + SCENE_BUILDER_VERSION + ".jar";
 
   public static final String[] JAVAFX_ARTIFACTS = {
