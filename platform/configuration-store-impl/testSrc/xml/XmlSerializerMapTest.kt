@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
+import com.intellij.ide.plugins.PluginFeatureService
+import com.intellij.ide.plugins.advertiser.FeaturePluginData
 import com.intellij.ide.plugins.advertiser.KnownExtensions
+import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -294,20 +297,71 @@ internal class XmlSerializerMapTest {
     testSerializer(
       """
         <extensions>
-          <option name="extensionsMap">
+          <extensionsMap>
             <entry key="foo">
               <plugins>
-                <option name="dataSet">
-                  <set>
-                    <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
-                  </set>
-                </option>
+                <dataSet>
+                  <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
+                </dataSet>
               </plugins>
             </entry>
-          </option>
+          </extensionsMap>
         </extensions>
       """.trimIndent(),
       extensions,
+    )
+  }
+
+  @Test
+  fun `knownExtensionsService serialization`() {
+    val state = KnownExtensionsService.State()
+    state.extensions = KnownExtensions(mapOf())
+
+    testSerializer(
+      """
+        <knownExtensions>
+          <extensions>
+            <extensionsMap />
+          </extensions>
+        </knownExtensions>
+      """.trimIndent(),
+      state,
+    )
+  }
+
+  @Test
+  fun `featurePluginData serialization`() {
+    val pluginData = FeaturePluginData(
+      "foo",
+      PluginData("foo", "Foo"),
+    )
+
+    testSerializer(
+      """
+        <featurePlugin displayName="foo">
+          <plugin pluginId="foo" pluginName="Foo" bundled="false" fromCustomRepository="false" />
+        </featurePlugin>
+      """.trimIndent(),
+      pluginData,
+    )
+  }
+
+  @Test
+  fun `pluginFeatureService serialization`() {
+    val state = PluginFeatureService.State()
+    state["foo"] = PluginFeatureService.FeaturePluginsList()
+
+    testSerializer(
+      """
+        <pluginFeatures>
+          <features>
+            <entry key="foo">
+              <features />
+            </entry>
+          </features>
+        </pluginFeatures>
+      """.trimIndent(),
+      state,
     )
   }
 

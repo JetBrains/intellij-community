@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -20,7 +20,8 @@ import com.intellij.openapi.fileTypes.ex.FakeFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.orNull
-import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -31,11 +32,35 @@ internal data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginData>,
 )
 
-@State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+@State(
+  name = "PluginAdvertiserExtensions",
+  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)]
+)
 @Service(Service.Level.APP)
-internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<PluginAdvertiserExtensionsState>(
-  PluginAdvertiserExtensionsState()
+internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(
+  State()
 ) {
+
+  @Tag("pluginAdvertiserExtensions")
+  class State : BaseState() {
+
+    @get:XMap
+    val plugins by linkedMap<String, PluginData>()
+
+    operator fun set(fileNameOrExtension: String, descriptor: PluginDescriptor) {
+      plugins[fileNameOrExtension] = PluginData(descriptor)
+
+      // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
+      // so, mod count will be not incremented too often
+      incrementModificationCount()
+    }
+
+    operator fun get(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
+      return plugins[fileNameOrExtension]?.let {
+        PluginAdvertiserExtensionsData(fileNameOrExtension, setOf(it))
+      }
+    }
+  }
 
   companion object {
 
@@ -125,7 +150,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
 
     val compatiblePlugins = requestCompatiblePlugins(
       extensionOrFileName,
-      knownExtensions.find(extensionOrFileName),
+      knownExtensions[extensionOrFileName],
     )
 
     val optionalData = if (compatiblePlugins.isEmpty())
@@ -188,7 +213,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
         ?: cache.getIfPresent(fileName)
       }
       else {
-        val plugin = findEnabledPlugin(knownExtensions.find(fileName).map { it.pluginIdString }.toSet())
+        val plugin = findEnabledPlugin(knownExtensions[fileName].map { it.pluginIdString }.toSet())
         LOG.debug {
           val suffix = plugin?.let { "by fileName via '${it.name}'(id: '${it.pluginId}') plugin" }
                        ?: "therefore looking only for plugins exactly matching fileName"
@@ -204,26 +229,6 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
     private fun isIgnored(extensionOrFileName: String): Boolean {
       return enabledExtensionOrFileNames.contains(extensionOrFileName)
              || unknownFeaturesCollector.isIgnored(createUnknownExtensionFeature(extensionOrFileName))
-    }
-  }
-}
-
-internal class PluginAdvertiserExtensionsState : BaseState() {
-
-  @get:XCollection(style = XCollection.Style.v2)
-  val plugins by linkedMap<String, PluginData>()
-
-  operator fun set(fileNameOrExtension: String, descriptor: PluginDescriptor) {
-    plugins[fileNameOrExtension] = PluginData(descriptor)
-
-    // no need to waste time to check that map is really changed - registerLocalPlugin is not called often after start-up,
-    // so, mod count will be not incremented too often
-    incrementModificationCount()
-  }
-
-  operator fun get(fileNameOrExtension: String): PluginAdvertiserExtensionsData? {
-    return plugins[fileNameOrExtension]?.let {
-      PluginAdvertiserExtensionsData(fileNameOrExtension, setOf(it))
     }
   }
 }

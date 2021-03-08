@@ -3,7 +3,8 @@ package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -18,9 +19,10 @@ import kotlin.concurrent.write
 @ApiStatus.Internal
 class KnownExtensionsService : SimplePersistentStateComponent<KnownExtensionsService.State>(State()) {
 
+  @Tag("knownExtensions")
   class State : BaseState() {
 
-    @get:Attribute
+    @get:Property(surroundWithTag = false)
     var extensions by property<KnownExtensions?>(null) { it == null }
   }
 
