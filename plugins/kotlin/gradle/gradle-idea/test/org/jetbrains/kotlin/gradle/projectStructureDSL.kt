@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
-import kotlin.test.assertEquals
 import kotlin.test.fail
 
 class MessageCollector {
@@ -109,7 +108,11 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
 
     private fun checkReport(subject: String, expected: Any?, actual: Any?) {
         if (expected != actual) {
-            report("$subject differs: expected $expected, got $actual")
+            report(
+                "$subject differs:\n" +
+                        "expected $expected\n" +
+                        "actual:  $actual"
+            )
         }
     }
 
@@ -223,7 +226,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         val moduleEntry = moduleEntries.firstOrNull()
 
         if (moduleEntry == null) {
-            if(!isOptional) {
+            if (!isOptional) {
                 val allModules = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>().joinToString { it.debugText }
                 report("Module dependency ${moduleName} (${scope.displayName}) not found. All module dependencies: $allModules")
             }
@@ -378,7 +381,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
 fun checkProjectStructure(
     project: Project,
     projectPath: String,
-    exhaustiveModuleList: Boolean = false ,
+    exhaustiveModuleList: Boolean = false,
     exhaustiveSourceSourceRootList: Boolean = false,
     exhaustiveDependencyList: Boolean = false,
     exhaustiveTestsList: Boolean = false,
