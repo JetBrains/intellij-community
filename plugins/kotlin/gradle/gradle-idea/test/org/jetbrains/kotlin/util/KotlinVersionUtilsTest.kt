@@ -1,0 +1,97 @@
+package org.jetbrains.kotlin.util
+
+import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+
+class KotlinVersionUtilsTest {
+
+    @Test
+    fun exactRequirement() {
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.0").matches("1.5.0"),
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.5.0").matches("1.5.0-RC"),
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.0-RC1").matches("1.5.0-rc1")
+        )
+    }
+
+    @Test
+    fun sameVersionOrHigher() {
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0+").matches("1.4.0")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0+").matches("1.4.10")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0-M1+").matches("1.4.0-M1")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0-M1+").matches("1.4.0-M2")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0-M1+").matches("1.4.0-RC")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.4.0-RC2+").matches("1.4.0-RC1")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0-RC2+").matches("1.4.0-RC3")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0-RC3+").matches("1.4.0-rc-4")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.5.10+").matches("1.5.0-rc")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.5.10+").matches("1.5.0")
+        )
+    }
+
+    @Test
+    fun ranges() {
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.4.0")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.4.10")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.4.20-M2")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.4.0-rc")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.5.10-rc1")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.5.0-alpha1")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.5.0-rc")
+        )
+    }
+}

@@ -12,19 +12,48 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
+import org.jetbrains.kotlin.util.matches
+import org.jetbrains.kotlin.util.parseKotlinVersion
+import org.jetbrains.kotlin.util.parseKotlinVersionRequirement
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
 import org.junit.runners.Parameterized
 
 
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
+
+    sealed class KotlinVersionRequirement {
+        data class Exact(val version: KotlinVersion) : KotlinVersionRequirement()
+        data class Range(val lowestIncludedVersion: KotlinVersion?, val highestIncludedVersion: KotlinVersion?) : KotlinVersionRequirement()
+        companion object {
+            fun fromString(versionRequirement: String): KotlinVersionRequirement = parseKotlinVersionRequirement(versionRequirement)
+        }
+    }
+
+    data class KotlinVersion(
+        val major: Int,
+        val minor: Int,
+        val patch: Int,
+        val classifier: String? = null
+    ) {
+        override fun toString(): String {
+            return "$major.$minor.$patch" + if (classifier != null) "-$classifier" else ""
+        }
+
+        companion object {
+            fun fromString(version: String): KotlinVersion = parseKotlinVersion(version)
+        }
+    }
+
     @Rule
     @JvmField
-    var pluginVersionMatchingRule = PluginTargetVersionsRule()
+    var gradleAndKotlinPluginVersionMatchingRule = PluginTargetVersionsRule()
 
     @JvmField
     @Parameterized.Parameter(1)
     var pluginVersion: String = ""
+
+    val kotlinPluginVersion: KotlinVersion get() = parseKotlinVersion(pluginVersion)
 
     private val orgGradleNativePropertyKey: String = "org.gradle.native"
     private var initialOrgGradleNativePropertyValue: String? = null
@@ -108,10 +137,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 }
 
-fun MultiplePluginVersionGradleImportingTestCase.pluginVersionMatches(version: String): Boolean {
-    return VersionMatcher(GradleVersion.version(pluginVersion)).isVersionMatch(version, true);
+fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(versionRequirement: String): Boolean {
+    return parseKotlinVersionRequirement(versionRequirement).matches(kotlinPluginVersion)
 }
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
-    return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true);
+    return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
 }
