@@ -49,7 +49,7 @@ abstract class TargetEnvironment(
     var volumeData: TargetEnvironmentType.TargetSpecificVolumeData? = null  // excluded from equals / hashcode
   }
 
-  data class DownloadRoot(
+  data class DownloadRoot @JvmOverloads constructor(
     /**
      * A certain path on the local machine or null for creating a temporary directory.
      * The temporary directory should be deleted with [shutdown].
@@ -57,7 +57,13 @@ abstract class TargetEnvironment(
     val localRootPath: Path?,
 
     /** TODO Should [Temprorary] paths with the same hint point on the same directory for uploads and downloads? */
-    val targetRootPath: TargetPath
+    val targetRootPath: TargetPath,
+
+    /**
+     * If not null, target should try to persist the contents of the folder between the sessions,
+     * and make it available for the next session requests with the same persistentId
+     */
+    val persistentId: String? = null
   )
 
   /** Target TCP port forwardings. */
