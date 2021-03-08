@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.JBColor
 import com.intellij.ui.picker.ColorListener
+import com.intellij.util.Function
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Component
@@ -45,7 +46,7 @@ private const val SEPARATOR_HEIGHT = 5
 class ColorPickerBuilder(private val showAlpha: Boolean = false, private val showAlphaAsPercent: Boolean = true) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
-  private val model = ColorPickerModel()
+  val model = ColorPickerModel()
   private var originalColor: Color? = null
   private var requestFocusWhenDisplay = false
   private var focusCycleRoot = false
