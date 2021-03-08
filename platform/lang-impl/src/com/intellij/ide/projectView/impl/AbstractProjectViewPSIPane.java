@@ -42,6 +42,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -134,7 +136,18 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   private void initTree() {
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-    myTree.getSelectionModel().addTreeSelectionListener(e -> onSelectionChanged(e));
+    myTree.getSelectionModel().addTreeSelectionListener(e -> onSelectionChanged());
+    myTree.addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        onSelectionChanged();
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        onSelectionChanged();
+      }
+    });
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
@@ -151,9 +164,9 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
-  protected void onSelectionChanged(@SuppressWarnings("unused") TreeSelectionEvent e) {
+  protected void onSelectionChanged() {
     int count = myTree.getSelectionModel().getSelectionCount();
-    String description = count > 1 ? LangBundle.message("project.view.elements.selected", count) : null;
+    String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
     ActionMenu.showDescriptionInStatusBar(true, myTree, description);
   }
 
