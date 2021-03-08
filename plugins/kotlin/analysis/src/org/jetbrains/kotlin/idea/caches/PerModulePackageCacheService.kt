@@ -133,8 +133,8 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
             else -> return
         }
 
-        val eFile = event.file ?: event.child as? PsiFile ?: run {
-            LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without file" }
+        val eFile = event.file ?: event.child ?: run {
+            LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without file/child" }
             return
         }
 
