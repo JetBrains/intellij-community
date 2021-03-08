@@ -21,10 +21,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,14 +127,24 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     String refText = reference.getText();
     String message = getResolveErrorMessage(result.getElement(), context, refText);
     if (message != null && !result.isPackagePrefixPackageReference()) {
-      PsiElement referenceNameElement = reference.getReferenceNameElement();
-      PsiElement element = referenceNameElement != null ? referenceNameElement : reference;
+      PsiElement element = Objects.requireNonNullElse(reference.getReferenceNameElement(), reference);
 
       LocalQuickFix fix = null;
       if (isOnTheFly) {
         List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
         if (!classesToImport.isEmpty()) {
           fix = new AddQualifierFix(classesToImport);
+        }
+        else if (URLUtil.HTTP_PROTOCOL.equals(refText) || URLUtil.HTTPS_PROTOCOL.equals(refText)) {
+          PsiElement refHolder = reference.getParent();
+          if (refHolder != null && refHolder.getNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
+            PsiElement adjacent = refHolder.getNextSibling();
+            if (adjacent instanceof PsiDocToken &&
+                ((PsiDocToken)adjacent).getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA &&
+                adjacent.getText().startsWith(URLUtil.SCHEME_SEPARATOR)) {
+              fix = new UrlToHtmlFix(refHolder, adjacent);
+            }
+          }
         }
       }
 
@@ -347,6 +359,50 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
       PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();
+      }
+    }
+  }
+
+  private static class UrlToHtmlFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    private UrlToHtmlFix(PsiElement startElement, PsiElement endElement) {
+      super(startElement, endElement);
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return JavaBundle.message("quickfix.text.replace.url.with.html");
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement refHolder,
+                       @NotNull PsiElement adjacent) {
+      String text = adjacent.getText(), url;
+      int urlEnd = text.indexOf(' ');
+      if (urlEnd > 0) {
+        url = refHolder.getText() + text.substring(0, urlEnd);
+        text = text.substring(urlEnd).trim();
+      }
+      else {
+        url = refHolder.getText() + text;
+        text = "...";
+      }
+      PsiDocTag tag = PsiElementFactory.getInstance(project).createDocTagFromText("@see <a href=\"" + url + "\">" + text + "</a>");
+      PsiElement replacement = tag.getLastChild();
+      assert replacement instanceof PsiDocToken : Arrays.toString(tag.getChildren());
+      refHolder.delete();
+      replacement = adjacent.replace(replacement);
+      if (editor != null) {
+        int start = replacement.getTextRange().getStartOffset() + url.length() + 11, end = start + text.length();
+        editor.getCaretModel().moveToOffset(start);
+        editor.getSelectionModel().setSelection(start, end);
       }
     }
   }
