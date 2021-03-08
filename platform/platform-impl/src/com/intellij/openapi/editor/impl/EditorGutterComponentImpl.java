@@ -2074,6 +2074,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
+  public boolean isPaintBackground() {
+    return myPaintBackground;
+  }
+
+  @Override
   public void setPaintBackground(boolean value) {
     myPaintBackground = value;
   }
