@@ -67,6 +67,11 @@ final class PluginsCollector {
         continue
       }
 
+      // Not a plugin
+      if (jpsModule.name == "intellij.idea.ultimate.resources") {
+        continue
+      }
+
       PluginLayout pluginLayout = nonTrivialPlugins[jpsModule.name]?.first()
       if (pluginLayout == null) {
         pluginLayout = PluginLayout.plugin(jpsModule.name)
