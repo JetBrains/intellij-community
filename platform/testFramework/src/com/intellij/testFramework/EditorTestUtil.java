@@ -13,7 +13,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -444,6 +443,23 @@ public final class EditorTestUtil {
     if (!hasChecks) {
       return; // nothing to check, so we skip caret/selection assertions
     }
+
+    try {
+      doVerifyCaretAndSelectionState(editor, caretState, message);
+    }
+    catch (AssertionError e) {
+      try {
+        assertEquals(e.getMessage(), getExpectedStateAsTestTemplate(editor, caretState.carets), getActualStateAsTestTemplate(editor));
+      }
+      catch (AssertionError exception) {
+        exception.addSuppressed(e);
+        throw exception;
+      }
+      throw e;
+    }
+  }
+
+  private static void doVerifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
     String messageSuffix = message == null ? "" : (message + ": ");
     CaretModel caretModel = editor.getCaretModel();
     List<Caret> allCarets = new ArrayList<>(caretModel.getAllCarets());
@@ -474,6 +490,31 @@ public final class EditorTestUtil {
                     currentCaret.hasSelection());
       }
     }
+  }
+
+  private static String getActualStateAsTestTemplate(@NotNull Editor editor) {
+    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
+    List<Caret> allCarets = new ArrayList<>(editor.getCaretModel().getAllCarets());
+    for (int i = allCarets.size() - 1; i >= 0; i--) {
+      Caret caret = allCarets.get(i);
+      boolean hasSelection = caret.hasSelection();
+      if (hasSelection) sb.insert(caret.getSelectionEnd(), SELECTION_END_TAG);
+      sb.insert(caret.getOffset(), CARET_TAG);
+      if (hasSelection) sb.insert(caret.getSelectionStart(), SELECTION_START_TAG);
+    }
+    return sb.toString();
+  }
+
+  private static String getExpectedStateAsTestTemplate(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
+    for (int i = carets.size() - 1; i >= 0; i--) {
+      CaretInfo expected = carets.get(i);
+      boolean hasSelection = expected.selection != null;
+      if (hasSelection) sb.insert(expected.selection.getEndOffset(), SELECTION_END_TAG);
+      if (expected.position != null) sb.insert(editor.logicalPositionToOffset(expected.position), CARET_TAG);
+      if (hasSelection) sb.insert(expected.selection.getStartOffset(), SELECTION_START_TAG);
+    }
+    return sb.toString();
   }
 
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {
