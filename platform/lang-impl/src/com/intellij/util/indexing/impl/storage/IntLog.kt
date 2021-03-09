@@ -62,10 +62,14 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       doForce()
       val uniqueInputs = IntOpenHashSet()
       val uselessRecords = AtomicInteger()
+      var processedRecords = 0
+
+      ProgressManager.checkCanceled()
       withLock(true) {
-        ProgressManager.checkCanceled()
         if (!myKeyHashToVirtualFileMapping.processAll { key ->
-            ProgressManager.checkCanceled()
+            if (++processedRecords % 10000 == 0) {
+              ProgressManager.checkCanceled()
+            }
             val inputId = key[1]
             val data = key[0]
 
