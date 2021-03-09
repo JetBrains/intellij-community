@@ -131,7 +131,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     left.add(middleItemComponent, BorderLayout.CENTER);
 
     JPanel right = new JPanel(new BorderLayout());
-    int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.NextStep.getIconWidth()) / 2;
+    int leftRightInset = (ListPopupImpl.NEXT_STEP_AREA_WIDTH - AllIcons.Icons.Ide.MenuArrow.getIconWidth()) / 2;
     right.add(myNextStepLabel, BorderLayout.CENTER);
 
     myNextStepButtonSeparator = createNextStepButtonSeparator();
@@ -213,11 +213,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         setSelected(myLeftPart, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myRightPart, isSelected && nextStepButtonSelected, isSelected);
-        myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+        myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
         myNextStepButtonSeparator.setVisible(!isSelected);
       }
       else {
-        myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.NextStepInverted : AllIcons.Icons.Ide.NextStep);
+        myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       }
     }
     else {
