@@ -79,7 +79,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
       if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, false);
       }
-      else if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      else if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.isConstructor()) {
         PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, true);
       }
     }

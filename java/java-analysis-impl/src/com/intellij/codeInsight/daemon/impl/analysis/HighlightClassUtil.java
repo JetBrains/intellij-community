@@ -752,7 +752,10 @@ public final class HighlightClassUtil {
   static HighlightInfo checkThingNotAllowedInInterface(@NotNull PsiElement element, @Nullable PsiClass aClass) {
     if (aClass == null || !aClass.isInterface()) return null;
     String description = JavaErrorBundle.message("not.allowed.in.interface");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(element));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertInterfaceContainingNotAllowedToClassFix(aClass));
+    return info;
   }
 
   static HighlightInfo checkQualifiedNew(@NotNull PsiNewExpression expression, @Nullable PsiType type, @Nullable PsiClass aClass) {

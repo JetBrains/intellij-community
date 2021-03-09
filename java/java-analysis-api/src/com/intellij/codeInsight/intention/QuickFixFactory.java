@@ -512,4 +512,6 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter receiverParameter,
                                                                           @NotNull PsiType enclosingClassType);
+
+  public abstract @NotNull IntentionAction createConvertInterfaceContainingNotAllowedToClassFix(@NotNull PsiClass aClass);
 }

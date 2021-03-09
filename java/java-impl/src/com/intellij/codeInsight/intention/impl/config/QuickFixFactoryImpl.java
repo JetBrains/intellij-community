@@ -46,6 +46,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ipp.interfacetoclass.ConvertInterfaceContainingNotAllowedToClassFix;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -998,5 +999,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         return QuickFixBundle.message("fix.receiver.parameter.type.family");
       }
     };
+  }
+
+  public @NotNull IntentionAction createConvertInterfaceContainingNotAllowedToClassFix(@NotNull PsiClass aClass) {
+    return new ConvertInterfaceContainingNotAllowedToClassFix(aClass);
   }
 }
