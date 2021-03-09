@@ -26,7 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
-  private Logger logger = Logger.getInstance(NavBarRootPaneExtension.class);
+  private static final Logger LOG = Logger.getInstance(NavBarRootPaneExtension.class);
 
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
@@ -54,7 +54,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @Override
   public void revalidate() {
     final UISettings settings = UISettings.getInstance();
-    logger.info("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
+    LOG.debug("Revalidate in the navbarRootPane, toolbar visible: " + isShowToolPanel(settings));
     if (isShowToolPanel(settings)) {
       toggleRunPanel(false);
       toggleRunPanel(true);
@@ -69,7 +69,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public boolean isMainToolbarVisible() {
     var b = !UISettings.getInstance().getPresentationMode() &&
            (UISettings.getInstance().getShowMainToolbar() || !myNavToolbarGroupExist);
-    logger.info("Toolbar visibility: " + b);
+    LOG.debug("Toolbar visibility: " + b);
     return  b;
   }
 
