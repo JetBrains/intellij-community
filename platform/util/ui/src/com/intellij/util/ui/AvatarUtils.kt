@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
+import com.intellij.openapi.util.Couple
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.Avatars.gradient
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
 import java.awt.Color
 import java.awt.Font
@@ -24,8 +24,8 @@ object AvatarUtils {
     return JBImageIcon(ImageUtil.scaleImage(hiDpi, targetSize, targetSize))
   }
 
-  fun generateColoredAvatar(gradientSeed: String, name: String): BufferedImage {
-    val (color1, color2) = gradient(gradientSeed, ColorPalette.gradients);
+  fun generateColoredAvatar(gradientSeed: String, name: String, palette: ColorPalette = AvatarPalette): BufferedImage {
+    val (color1, color2) = palette.gradient(gradientSeed)
 
     val shortName = Avatars.initials(name)
     val size = 64
@@ -67,20 +67,24 @@ internal object Avatars {
   fun initials(firstName: String, lastName: String): String {
     return listOf(firstName, lastName).joinToString("") { it.first().toString() }
   }
+}
 
-  fun gradient(seed: String? = null, palette: Array<Pair<Color, Color>>): Pair<Color, Color> {
+abstract class ColorPalette {
+
+  abstract val gradients: Array<Pair<Color, Color>>
+
+  public fun gradient(seed: String? = null): Pair<Color, Color> {
     val keyCode = if (seed != null) {
-      abs(seed.hashCode()) % palette.size
+      abs(seed.hashCode()) % gradients.size
     }
-    else {
-      0
-    }
-    return palette[keyCode]
+    else 0
+    return gradients[keyCode]
   }
 }
 
-private object ColorPalette {
-  val gradients
+object AvatarPalette : ColorPalette() {
+
+  override val gradients: Array<Pair<Color, Color>>
     get() = arrayOf(
       Color(0x60A800) to Color(0xD5CA00),
       Color(0x0A81F6) to Color(0x0A81F6),

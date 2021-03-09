@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.ui.IconDeferrer
+import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
@@ -12,6 +13,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
 import org.jetbrains.annotations.SystemIndependent
+import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -53,7 +55,7 @@ internal class RecentProjectIconHelper {
       val calculateIcon = calculateIcon(it.first, it.second)
       if (calculateIcon == null && generateFromName) {
         val name = RecentProjectsManagerBase.instanceEx.getProjectName(path)
-        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name), 20)
+        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), 20)
       }
       else calculateIcon
     }
@@ -124,4 +126,20 @@ private fun toRetinaAwareIcon(image: BufferedImage): Icon {
       return if (UIUtil.isJreHiDPI()) (image.height / JBUIScale.sysScale()).toInt() else image.height
     }
   }
+}
+
+object ProjectIconPalette : ColorPalette() {
+
+  override val gradients: Array<kotlin.Pair<Color, Color>>
+    get() = arrayOf(
+      JBColor(0xDB3D3C, 0xCE443C) to JBColor(0xFF8E42, 0xE77E41),
+      JBColor(0xF57236, 0xE27237) to JBColor(0xFCBA3F, 0xE8A83E),
+      JBColor(0x2BC8BB, 0x2DBCAD) to JBColor(0x36EBAE, 0x35D6A4),
+      JBColor(0x359AF2, 0x3895E1) to JBColor(0x57DBFF, 0x51C5EA),
+      JBColor(0x8379FB, 0x7B75E8) to JBColor(0x85A8FF, 0x7D99EB),
+      JBColor(0x7E54B5, 0x7854AD) to JBColor(0x9486FF, 0x897AE6),
+      JBColor(0xD63CC8, 0x8F4593) to JBColor(0xF582B9, 0xB572E3),
+      JBColor(0x954294, 0xC840B9) to JBColor(0xC87DFF, 0xE074AE),
+      JBColor(0xE75371, 0xD75370) to JBColor(0xFF78B5, 0xE96FA3)
+    )
 }
