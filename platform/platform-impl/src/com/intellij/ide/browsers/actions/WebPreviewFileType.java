@@ -28,7 +28,7 @@ public class WebPreviewFileType extends FakeFileType {
 
   @Override
   public @NotNull @Nls String getDisplayName() {
-    return IdeBundle.message("web.preview.filetype.display.name");
+    return IdeBundle.message("filetype.web.preview.display.name");
   }
 
   @Override
