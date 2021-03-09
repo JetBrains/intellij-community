@@ -3,14 +3,14 @@ package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationsManagerImpl;
+import com.intellij.notification.EventLog;
+import com.intellij.notification.LogModel;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -64,11 +64,6 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       Application app = ApplicationManager.getApplication();
       app.getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
-
-      app.invokeLater(
-        () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
-        ModalityState.NON_MODAL,
-        ignored -> Disposer.isDisposed(this));
     }
   }
 
