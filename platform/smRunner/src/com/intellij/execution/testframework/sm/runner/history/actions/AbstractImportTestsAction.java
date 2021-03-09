@@ -85,11 +85,19 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return;
     }
 
+    doImport(project, file, myProperties);
+  }
+
+  public static void doImport(Project project, VirtualFile file) {
+    doImport(project, file, null);
+  }
+
+  private static void doImport(Project project, VirtualFile file, SMTRunnerConsoleProperties currentConsoleProperties) {
     try {
       final ImportRunProfile profile = new ImportRunProfile(file, project);
       SMTRunnerConsoleProperties properties = profile.getProperties();
       if (properties == null) {
-        properties = myProperties;
+        properties = currentConsoleProperties;
         LOG.info("Failed to detect test framework in " + file.getPath() +
                  "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
       }

@@ -65,6 +65,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -112,6 +113,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
+  private final String myHistoryFileName;
+
   public SMTestRunnerResultsForm(@NotNull ConsoleView consoleView,
                                  @NotNull TestConsoleProperties consoleProperties,
                                  @Nullable String splitterPropertyName) {
@@ -134,6 +137,8 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myContentPane.setFocusTraversalPolicy(new MyFocusTraversalPolicy(components));
     myContentPane.setFocusCycleRoot(true);
     */
+    myHistoryFileName = PathUtil.suggestFileName(consoleProperties.getConfiguration().getName()) + " - " +
+                        new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
   }
 
   @Override
@@ -293,7 +298,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     if (configuration instanceof RunConfiguration &&
         !(consoleProperties instanceof ImportedTestConsoleProperties) &&
         !myDisposed) {
-      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration);
+      final MySaveHistoryTask backgroundable = new MySaveHistoryTask(consoleProperties, root, (RunConfiguration)configuration, myHistoryFileName);
       Disposer.register(parentDisposable, new Disposable() {
         @Override
         public void dispose() {
@@ -742,18 +747,25 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
+  public String getHistoryFileName() {
+    return myHistoryFileName;
+  }
+
   private static class MySaveHistoryTask extends Task.Backgroundable {
 
     private final TestConsoleProperties myConsoleProperties;
     private SMTestProxy.SMRootTestProxy myRoot;
     private RunConfiguration myConfiguration;
     private File myOutputFile;
-
-    MySaveHistoryTask(TestConsoleProperties consoleProperties, SMTestProxy.SMRootTestProxy root, RunConfiguration configuration) {
+    MySaveHistoryTask(TestConsoleProperties consoleProperties,
+                      SMTestProxy.SMRootTestProxy root,
+                      RunConfiguration configuration, 
+                      String outputFile) {
       super(consoleProperties.getProject(), SmRunnerBundle.message("sm.test.runner.results.form.save.test.results.title"), true);
       myConsoleProperties = consoleProperties;
       myRoot = root;
       myConfiguration = configuration;
+      myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), outputFile + ".xml");
     }
 
     @Override
@@ -765,17 +777,14 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-        final String configurationNameIncludedDate = PathUtil.suggestFileName(myConfiguration.getName()) + " - " +
-                                                     new SimpleDateFormat(HISTORY_DATE_FORMAT).format(new Date());
-
-        myOutputFile = new File(TestStateStorage.getTestHistoryRoot(myProject), configurationNameIncludedDate + ".xml");
         FileUtilRt.createParentDirs(myOutputFile);
-        handler.setResult(new StreamResult(new FileWriter(myOutputFile)));
-        final SMTestProxy.SMRootTestProxy root = myRoot;
-        final RunConfiguration configuration = myConfiguration;
-        if (root != null && configuration != null) {
-          TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
+        try (FileWriter writer = new FileWriter(myOutputFile, StandardCharsets.UTF_8)) {
+          handler.setResult(new StreamResult(writer));
+          final SMTestProxy.SMRootTestProxy root = myRoot;
+          final RunConfiguration configuration = myConfiguration;
+          if (root != null && configuration != null) {
+            TestResultsXmlFormatter.execute(root, configuration, myConsoleProperties, handler);
+          }
         }
       }
       catch (ProcessCanceledException e) {

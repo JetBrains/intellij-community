@@ -6,9 +6,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,15 +31,6 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
     public void setHistoryElements(final Map<String, ConfigurationBean> elements) {
       myHistoryElements = elements;
     }
-  }
-
-  @Tag("configuration")
-  public static class ConfigurationBean {
-
-    @Attribute("name")
-    public String name;
-    @Attribute("configurationId")
-    public String configurationId;
   }
 
   private State myState = new State();

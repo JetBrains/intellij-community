@@ -82,6 +82,7 @@ final class CommunityRepositoryModules {
     "intellij.platform.scriptDebugger.backend",
     "intellij.platform.scriptDebugger.ui",
     "intellij.platform.smRunner",
+    "intellij.platform.smRunner.vcs",
     "intellij.platform.structureView.impl",
     "intellij.platform.tasks.impl",
     "intellij.platform.testRunner",
