@@ -947,7 +947,7 @@ public class JBUI {
 
       @NotNull
       public static Border advertiserBorder()  {
-        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.foreground", insetsLeft(8)));
+        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.borderInsets", insets(5, 10, 5, 15)));
       }
 
       @NotNull
