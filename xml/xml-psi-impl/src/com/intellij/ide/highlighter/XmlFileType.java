@@ -28,7 +28,7 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
   @Override
   @NotNull
   public String getDescription() {
-    return XmlPsiBundle.message("filetype.description.xml");
+    return XmlPsiBundle.message("filetype.xml.description");
   }
 
   @Override

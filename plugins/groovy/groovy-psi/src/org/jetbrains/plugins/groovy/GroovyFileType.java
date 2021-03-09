@@ -43,7 +43,7 @@ public final class GroovyFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return GroovyBundle.message("language.groovy");
+    return GroovyBundle.message("filetype.groovy.description");
   }
 
   @Override

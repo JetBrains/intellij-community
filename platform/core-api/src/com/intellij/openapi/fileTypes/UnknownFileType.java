@@ -3,7 +3,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +22,13 @@ public final class UnknownFileType implements FileType {
   @Override
   @NotNull
   public String getDescription() {
-    return CoreBundle.message("filetype.description.unknown");
+    return CoreBundle.message("filetype.unknown.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return CoreBundle.message("filetype.unknown.display.name");
   }
 
   @Override

@@ -114,7 +114,7 @@ class FileTypeChooser extends ComboBoxAction implements DumbAware {
     final Presentation presentation = e.getPresentation();
     if (mySelectedItem == null) {
       presentation.setIcon(AllIcons.FileTypes.Unknown);
-      presentation.setText(CoreBundle.message("filetype.description.unknown"));
+      presentation.setText(CoreBundle.message("filetype.unknown.description"));
     }
     else {
       presentation.setIcon(mySelectedItem.getFileType().getIcon());

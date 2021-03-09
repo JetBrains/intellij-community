@@ -40,7 +40,7 @@ public class PyDocstringFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("python.docstring.file.type");
+    return PyPsiBundle.message("filetype.python.docstring.description");
   }
 
   @NotNull

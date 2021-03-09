@@ -30,7 +30,7 @@ public final class TextMateFileType extends LanguageFileType implements PlainTex
   @NotNull
   @Override
   public String getDescription() {
-    return TextMateBundle.message("textmate.filetype.description");
+    return TextMateBundle.message("filetype.textmate.description");
   }
 
   @NotNull

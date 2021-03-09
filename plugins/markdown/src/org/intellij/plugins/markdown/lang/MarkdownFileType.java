@@ -25,7 +25,7 @@ public final class MarkdownFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return MarkdownBundle.message("markdown.file.type.description");
+    return MarkdownBundle.message("filetype.markdown.description");
   }
 
   @NotNull

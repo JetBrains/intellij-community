@@ -28,7 +28,7 @@ public final class JqlFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return TaskBundle.message("label.jira.query");
+    return TaskBundle.message("filetype.jira.query.description");
   }
 
   @NotNull

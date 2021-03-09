@@ -15,7 +15,7 @@ object DGMFileType : LanguageFileType(PropertiesLanguage.INSTANCE, true), FileTy
 
   override fun getName(): String = "DGM"
   override fun getDefaultExtension(): String = ""
-  override fun getDescription(): String = GroovyBundle.message("file.type.dgm")
+  override fun getDescription(): String = GroovyBundle.message("filetype.dgm.description")
   override fun getIcon(): Icon? = PropertiesFileType.INSTANCE.icon
 
   override fun isMyFileType(file: VirtualFile): Boolean {

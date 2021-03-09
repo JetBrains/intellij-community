@@ -42,7 +42,7 @@ public final class SvgFileType extends XmlLikeFileType implements UIBasedFileTyp
   @NotNull
   @Override
   public String getDescription() {
-    return IdeBundle.message("filetype.description.scalable.vector.graphics");
+    return IdeBundle.message("filetype.scalable.vector.graphics.description");
   }
 
   @NotNull

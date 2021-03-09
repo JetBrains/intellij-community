@@ -6,10 +6,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,7 +24,13 @@ public final class DetectedByContentFileType implements FileType {
 
   @Override
   public @NlsContexts.Label @NotNull String getDescription() {
-    return FileTypesBundle.message("filetype.autodetect");
+    return FileTypesBundle.message("filetype.autodetected.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return FileTypesBundle.message("filetype.autodetected.display.name");
   }
 
   @Override

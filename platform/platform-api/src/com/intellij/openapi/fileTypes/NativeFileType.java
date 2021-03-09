@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,13 @@ public final class NativeFileType implements INativeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return IdeBundle.message("native.filetype.description");
+    return IdeBundle.message("filetype.native.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return IdeBundle.message("filetype.native.display.name");
   }
 
   @Override

@@ -6,9 +6,9 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.OSFileIdeAssociation;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +30,12 @@ public final class EnforcedPlainTextFileType implements FileType, OSFileIdeAssoc
   @Override
   public @NotNull String getDescription() {
     return LangBundle.message("file.type.enforced.plain.text");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return getDescription();
   }
 
   @Override

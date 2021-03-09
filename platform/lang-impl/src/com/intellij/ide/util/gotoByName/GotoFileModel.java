@@ -234,7 +234,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
     @Override
     public @NlsContexts.Label @NotNull String getDescription() {
-      return IdeBundle.message("search.everywhere.directory.file.type.desc");
+      return IdeBundle.message("filetype.search.everywhere.directory.description");
     }
 
     @Override

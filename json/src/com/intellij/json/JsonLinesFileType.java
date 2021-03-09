@@ -25,7 +25,7 @@ public class JsonLinesFileType extends LanguageFileType {
 
   @Override
   public @Label @NotNull String getDescription() {
-    return JsonBundle.message("file.type.description.json_lines");
+    return JsonBundle.message("filetype.json_lines.description");
   }
 
   @Override

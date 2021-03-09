@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectModel.ProjectModelBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +28,13 @@ public final class ProjectFileType implements InternalFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return ProjectModelBundle.message("filetype.description.idea.project");
+    return ProjectModelBundle.message("filetype.idea.project.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return ProjectModelBundle.message("filetype.idea.project.display.name");
   }
 
   @Override

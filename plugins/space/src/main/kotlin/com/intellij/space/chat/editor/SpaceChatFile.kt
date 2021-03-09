@@ -87,7 +87,7 @@ private class SpaceChatFileType private constructor(): FileType {
 
   override fun getName(): String = "SpaceChat"
 
-  override fun getDescription(): String = SpaceBundle.message("chat.filetype.description")
+  override fun getDescription(): String = SpaceBundle.message("filetype.chat.description")
 
   override fun getDefaultExtension(): String = ""
 

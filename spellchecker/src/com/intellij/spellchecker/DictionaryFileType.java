@@ -4,9 +4,9 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import icons.SpellcheckerIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,13 @@ public class DictionaryFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return SpellCheckerBundle.message("dictionary.filetype.description");
+    return SpellCheckerBundle.message("filetype.dictionary.description");
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return SpellCheckerBundle.message("filetype.dictionary.display.name");
   }
 
   @NotNull

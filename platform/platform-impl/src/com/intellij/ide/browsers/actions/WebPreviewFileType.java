@@ -33,7 +33,7 @@ public class WebPreviewFileType extends FakeFileType {
 
   @Override
   public @NlsContexts.Label @NotNull String getDescription() {
-    return IdeBundle.message("web.preview.filetype.description");
+    return IdeBundle.message("filetype.web.preview.description");
   }
 
   @Override

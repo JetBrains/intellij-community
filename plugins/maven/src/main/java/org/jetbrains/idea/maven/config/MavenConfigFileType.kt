@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.config
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import icons.OpenapiIcons.RepositoryLibraryLogo
-import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import javax.swing.Icon
 
@@ -15,7 +14,7 @@ class MavenConfigFileType private constructor(): LanguageFileType(PlainTextLangu
   }
 
   override fun getDescription(): String {
-    return MavenProjectBundle.message("maven.config.filetype.description")
+    return MavenProjectBundle.message("filetype.maven.config.description")
   }
 
   override fun getDefaultExtension(): String {

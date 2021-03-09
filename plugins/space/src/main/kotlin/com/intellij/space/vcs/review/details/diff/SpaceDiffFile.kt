@@ -67,7 +67,7 @@ internal class SpaceDiffFile(
 object SpaceDiffFileType : FileType {
   override fun getName(): String = "SpaceDiffFileType"
 
-  override fun getDescription(): String = SpaceBundle.message("review.diff.filetype.description")
+  override fun getDescription(): String = SpaceBundle.message("filetype.review.diff.description")
 
   override fun getDefaultExtension(): String = ""
 
