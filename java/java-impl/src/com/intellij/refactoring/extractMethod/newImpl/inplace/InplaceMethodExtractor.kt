@@ -41,6 +41,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
+import com.intellij.refactoring.extractMethod.newImpl.ExtractSelector
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider
@@ -53,9 +55,11 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.*
 
-class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters, val extractor: InplaceExtractMethodProvider, private val popupProvider: ExtractMethodPopupProvider)
+class InplaceMethodExtractor(private val editor: Editor,
+                             private val context: ExtractParameters,
+                             private val extractor: InplaceExtractMethodProvider,
+                             private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, context.targetClass.project) {
 
   companion object {
@@ -132,7 +136,9 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
     val file = parameters.targetClass.containingFile
     val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: throw IllegalStateException()
 
-    val (method, call) = extractor.extract(parameters)
+    val elements = ExtractSelector().suggestElementsToExtract(parameters.targetClass.containingFile, parameters.range)
+    MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
+    val (method, call) = extractor.extract(parameters.targetClass, elements, parameters.methodName, parameters.static)
     val methodPointer = SmartPointerManager.createPointer(method)
     val callPointer = SmartPointerManager.createPointer(call)
     val manager = PsiDocumentManager.getInstance(project)
@@ -287,6 +293,7 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
       PsiDocumentManager.getInstance(myProject).commitAllDocuments()
       val extractedMethod = findExtractedMethod()
       if (extractedMethod != null) {
+        MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
         extractor.postprocess(editor, extractedMethod)
       }
     }
@@ -392,7 +399,8 @@ class InplaceMethodExtractor(val editor: Editor, val context: ExtractParameters,
     InplaceExtractMethodCollector.openExtractDialog.log(myProject, isLinkUsed)
     val updatedContext = context.update(getMethodName(), popupProvider.annotate, popupProvider.makeStatic)
     performCleanup()
-    extractor.extractInDialog(updatedContext)
+    val elements = ExtractSelector().suggestElementsToExtract(updatedContext.targetClass.containingFile, updatedContext.range)
+    extractor.extractInDialog(updatedContext.targetClass, elements, updatedContext.methodName, updatedContext.static)
   }
 
   private fun ExtractParameters.update(methodName: String, annotate: Boolean?, static: Boolean?): ExtractParameters {
