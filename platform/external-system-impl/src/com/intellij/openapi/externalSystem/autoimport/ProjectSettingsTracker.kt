@@ -199,10 +199,7 @@ class ProjectSettingsTracker(
   }
 
   private inner class ProjectSettingsListener : FilesChangesListener {
-    private var hasRelevantChanges = false
-
     override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
-      hasRelevantChanges = true
       logModificationAsDebug(path, modificationStamp, modificationType)
       if (applyChangesOperation.isOperationCompleted()) {
         status.markModified(currentTime(), modificationType)
@@ -212,21 +209,15 @@ class ProjectSettingsTracker(
       }
     }
 
-    override fun init() {
-      hasRelevantChanges = false
-    }
-
     override fun apply() {
-      if (hasRelevantChanges) {
-        submitSettingsFilesCRCCalculation("apply") { newSettingsFilesCRC ->
-          val settingsFilesStatus = settingsFilesStatus.updateAndGet {
-            createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
-          }
-          if (!settingsFilesStatus.hasChanges()) {
-            status.markReverted(currentTime())
-          }
-          projectTracker.scheduleChangeProcessing()
+      submitSettingsFilesCRCCalculation("apply") { newSettingsFilesCRC ->
+        val settingsFilesStatus = settingsFilesStatus.updateAndGet {
+          createSettingsFilesStatus(it.oldCRC, newSettingsFilesCRC)
         }
+        if (!settingsFilesStatus.hasChanges()) {
+          status.markReverted(currentTime())
+        }
+        projectTracker.scheduleChangeProcessing()
       }
     }
 
