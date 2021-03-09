@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -62,12 +63,14 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       doForce()
       val uniqueInputs = IntOpenHashSet()
       val uselessRecords = AtomicInteger()
-      var processedRecords = 0
+      val isReadAction = ApplicationManager.getApplication().isReadAccessAllowed
 
-      ProgressManager.checkCanceled()
+      if (isReadAction) {
+        ProgressManager.checkCanceled()
+      }
       withLock(true) {
         if (!myKeyHashToVirtualFileMapping.processAll { key ->
-            if (++processedRecords % 10000 == 0) {
+            if (isReadAction) {
               ProgressManager.checkCanceled()
             }
             val inputId = key[1]
