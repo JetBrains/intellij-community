@@ -234,6 +234,11 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   }
 
   @Nullable
+  public static LanguageCodeStyleSettingsProvider findByExternalLanguageId(@NotNull String languageId) {
+    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.getExternalLanguageId().equals(languageId));
+  }
+
+  @Nullable
   public IndentOptionsEditor getIndentOptionsEditor() {
     return null;
   }

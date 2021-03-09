@@ -122,20 +122,14 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   }
 
   private static boolean applyCodeStyleSettings(@NotNull MyContext context) {
-    AbstractCodeStylePropertyMapper mapper = getPropertyMapper(context);
     Set<String> processed = new HashSet<>();
-    boolean isModified = processOptions(context, mapper, false, processed);
-    isModified = processOptions(context, mapper, true, processed) || isModified;
-    return isModified;
-  }
-
-  @NotNull
-  private static AbstractCodeStylePropertyMapper getPropertyMapper(@NotNull MyContext context) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
-    if (provider != null) {
-      return provider.getPropertyMapper(context.getSettings());
+    boolean isModified = false;
+    for (AbstractCodeStylePropertyMapper mapper : getMappers(context)) {
+      processed.clear();
+      isModified |= processOptions(context, mapper, false, processed);
+      isModified |= processOptions(context, mapper, true, processed);
     }
-    return new GeneralCodeStylePropertyMapper(context.getSettings());
+    return isModified;
   }
 
   @Override
@@ -294,5 +288,50 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   @TestOnly
   public static void setEnabledInTests(boolean isEnabledInTests) {
     ourEnabledInTests = isEnabledInTests;
+  }
+
+  private static Collection<AbstractCodeStylePropertyMapper> getMappers(@NotNull MyContext context) {
+    Set<AbstractCodeStylePropertyMapper> mappers = new HashSet<>();
+    for (LanguageCodeStyleSettingsProvider provider : getLanguageCodeStyleProviders(context)) {
+      mappers.add(provider.getPropertyMapper(context.getSettings()));
+    }
+    if (mappers.isEmpty()) {
+      mappers.add(new GeneralCodeStylePropertyMapper(context.getSettings()));
+    }
+    return mappers;
+  }
+
+  private static Collection<LanguageCodeStyleSettingsProvider> getLanguageCodeStyleProviders(@NotNull MyContext context) {
+    Set<LanguageCodeStyleSettingsProvider> providers = new HashSet<>();
+    LanguageCodeStyleSettingsProvider mainProvider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(context.getLanguage());
+    if (mainProvider != null) {
+      providers.add(mainProvider);
+    }
+    for (String langId : getLanguageIds(context)) {
+      if (!langId.equals("any")) {
+        LanguageCodeStyleSettingsProvider additionalProvider = LanguageCodeStyleSettingsProvider.findByExternalLanguageId(langId);
+        if (additionalProvider != null) {
+          providers.add(additionalProvider);
+        }
+      }
+      else {
+        providers.clear();
+        providers.addAll(LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList());
+        break;
+      }
+    }
+    return providers;
+  }
+
+  @NotNull
+  private static Collection<String> getLanguageIds(@NotNull MyContext context) {
+    Set<String> langIds = new HashSet<>();
+    for (OutPair option : context.getOptions()) {
+      String langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(option.getKey());
+      if (langId != null) {
+        langIds.add(langId);
+      }
+    }
+    return langIds;
   }
 }

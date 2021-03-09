@@ -5,6 +5,7 @@ import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePr
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,6 +53,19 @@ public final class EditorConfigIntellijNameUtil {
   @NotNull
   public static String toIntellijName(@NotNull String editorConfigName) {
     return StringUtil.trimStart(StringUtil.trimStart(editorConfigName, IDE_PREFIX), GENERIC_PROPERTY_PREFIX);
+  }
+
+  @Nullable
+  public static String extractLanguageDomainId(@NotNull String propertyName) {
+    if (propertyName.startsWith(IDE_PREFIX)) {
+      String id = StringUtil.trimStart(propertyName, IDE_PREFIX);
+      int separatorPos = id.indexOf("_");
+      if (separatorPos > 0) {
+        id = id.substring(0, separatorPos);
+        return id;
+      }
+    }
+    return null;
   }
 
 }
