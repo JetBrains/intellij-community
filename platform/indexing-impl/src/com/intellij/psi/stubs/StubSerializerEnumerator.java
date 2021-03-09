@@ -153,12 +153,16 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   private SerializerNotFoundException reportMissingSerializer(int id, @Nullable String name, @NotNull MissingSerializerReporter reporter) {
     String externalId = null;
+    Throwable storageException = null;
     try {
       externalId = myNameStorage.valueOf(id);
     } catch (Throwable e) {
       LOG.info(e);
+      storageException = e;
     }
-    return new SerializerNotFoundException(reporter.report(id, name, externalId));
+    SerializerNotFoundException exception = new SerializerNotFoundException(reporter.report(id, name, externalId));
+    StubIndex.getInstance().forceRebuild(storageException != null ? storageException : exception);
+    return exception;
   }
 
   @Override
