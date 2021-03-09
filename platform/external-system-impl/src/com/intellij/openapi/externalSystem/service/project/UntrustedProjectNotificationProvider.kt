@@ -1,8 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.TrustChangeNotifier
+import com.intellij.ide.impl.UntrustedProjectEditorNotificationPanel
+import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.ExternalSystemManager
@@ -12,7 +13,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSaf
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -42,7 +42,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
   }
 
   private fun collectUntrustedProjectModeProviders(): Collection<UntrustedProjectModeProvider> {
-    val providers = HashMap<ProjectSystemId, UntrustedProjectModeProvider>()
+    val providers = LinkedHashMap<ProjectSystemId, UntrustedProjectModeProvider>()
     ExternalSystemManager.EP_NAME.forEachExtensionSafe {
       providers[it.systemId] = ExternalSystemUntrustedProjectModeProvider(it)
     }
