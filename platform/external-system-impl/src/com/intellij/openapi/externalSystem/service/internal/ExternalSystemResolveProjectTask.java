@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -37,6 +38,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.ExternalSystemTaskId.ResolveProject;
+import static com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector.externalSystemTaskStarted;
+
 
 /**
  * Thread-safe.
@@ -75,6 +80,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     Project ideProject;
     RemoteExternalSystemProjectResolver resolver;
     ExternalSystemExecutionSettings settings;
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
     try {
       progressNotificationManager.onStart(id, myProjectPath);
 
@@ -82,7 +88,6 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
 
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
       boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
-      TargetEnvironmentConfigurationProvider environmentConfigurationProvider = null;
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(getExternalSystemId())) {
         executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
 
@@ -107,6 +112,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       throw e;
     }
 
+    IdeActivity activity = externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
     try {
       DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy);
       if (project != null) {
@@ -131,6 +137,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     }
     finally {
       progressNotificationManager.onEnd(id);
+      activity.finished();
     }
   }
 
