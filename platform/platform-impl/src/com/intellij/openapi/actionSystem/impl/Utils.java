@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -110,16 +111,27 @@ public final class Utils {
                                                  boolean isContextMenu,
                                                  @Nullable ActionGroupVisitor visitor) {
     boolean async = isAsyncDataContext(context);
-    BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
+    boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
+    BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, null, async ? queue::offer : null);
+      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, null, queue0 != null ? queue0::offer : null);
     List<AnAction> list;
     if (async) {
+      IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
-        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
-        if (runnable != null) runnable.run();
+        if (queue0 != null) {
+          Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
+          if (runnable != null) runnable.run();
+        }
+        else {
+          AWTEvent event = queue.getNextEvent();
+          queue.dispatchEvent(event);
+        }
       });
+      if (promise.isCancelled()) {
+        throw new ProcessCanceledException();
+      }
     }
     else {
       list = DO_FULL_EXPAND ?
@@ -136,9 +148,8 @@ public final class Utils {
                        @NotNull DataContext context,
                        @NotNull String place,
                        boolean isWindowMenu,
-                       boolean isInModalContext,
                        boolean useDarkIcons) {
-    List<AnAction> list = expandActionGroup(isInModalContext, group, presentationFactory, context, place, true, null);
+    List<AnAction> list = expandActionGroup(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, null);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
@@ -210,7 +221,8 @@ public final class Utils {
       if (ActionMenu.isAligned()) {
         Icon icon = hasIcons(children) ? ActionMenuItem.EMPTY_ICON : null;
         children.forEach(child -> replaceIconIn(child, icon));
-      } else if (ActionMenu.isAlignedInGroup()) {
+      }
+      else if (ActionMenu.isAlignedInGroup()) {
         ArrayList<Component> currentGroup = new ArrayList<>();
         for (int i = 0; i < children.size(); i++) {
           Component child = children.get(i);
@@ -223,7 +235,8 @@ public final class Utils {
             Icon icon = hasIcons(currentGroup) ? ActionMenuItem.EMPTY_ICON : null;
             currentGroup.forEach(menuItem -> replaceIconIn(menuItem, icon));
             currentGroup.clear();
-          } else {
+          }
+          else {
             currentGroup.add(child);
           }
         }
@@ -340,7 +353,8 @@ public final class Utils {
         try {
           Ref<T> ref = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(() -> ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession())), new EmptyProgressIndicator());
+            ProgressManager.getInstance().executeProcessUnderProgress(
+              () -> ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession())), new EmptyProgressIndicator());
             return null;
           });
           queue.offer(() -> {
