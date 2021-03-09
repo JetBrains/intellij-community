@@ -380,12 +380,22 @@ public abstract class LongRangeSet {
   }
 
   /**
+   * Checks whether addition of this and other range may overflow
+   * @param other range to add to this range
+   * @param isLong whether addition should be performed on long values (otherwise int is assumed)
+   * @return true if result may overflow, false if it never overflows
+   */
+  public boolean additionMayOverflow(@NotNull LongRangeSet other, boolean isLong) {
+    return subtractionMayOverflow(other.negate(isLong), isLong);
+  }
+
+  /**
    * Checks whether subtraction of this and other range may overflow
    * @param other range to subtract from this range
    * @param isLong whether subtraction should be performed on long values (otherwise int is assumed)
    * @return true if result may overflow, false if it never overflows
    */
-  public boolean subtractionMayOverflow(LongRangeSet other, boolean isLong) {
+  public boolean subtractionMayOverflow(@NotNull LongRangeSet other, boolean isLong) {
     long leftMin = min();
     long leftMax = max();
     long rightMin = other.min();
@@ -1863,7 +1873,7 @@ public abstract class LongRangeSet {
         long bits = rotateRemainders(myBits, myMod, myMod - bit);
         for (int i = 0; i < ranges.length; i += 2) {
           LongRangeSet plus;
-          if (Integer.bitCount(myMod) == 1 || !subtractionMayOverflow(other.negate(isLong), isLong)) {
+          if (Integer.bitCount(myMod) == 1 || !additionMayOverflow(other, isLong)) {
             plus = modRange(ranges[i], ranges[i + 1], myMod, bits);
           }
           else {

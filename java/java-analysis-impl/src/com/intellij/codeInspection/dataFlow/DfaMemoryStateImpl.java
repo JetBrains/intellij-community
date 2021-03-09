@@ -231,6 +231,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       checkEphemeral(var, value);
     }
     recordVariableType(var, dfType);
+    applyBinOpRelations(value, RelationType.EQ, var);
     applyRelation(var, value, false);
     Couple<DfaValue> specialFields = getSpecialEquivalencePair(var, value);
     if (specialFields != null && specialFields.getFirst() instanceof DfaVariableValue) {
@@ -772,70 +773,89 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private boolean applyBinOpRelations(DfaValue left, RelationType type, DfaValue right) {
     if (type != RelationType.LT && type != RelationType.GT && type != RelationType.NE && type != RelationType.EQ) return true;
-    if (left instanceof DfaBinOpValue) {
-      DfaBinOpValue sum = (DfaBinOpValue)left;
-      LongRangeBinOp op = sum.getOperation();
-      if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
-      LongRangeSet leftRange = DfLongType.extractRange(getDfType(sum.getLeft()));
-      LongRangeSet rightRange = DfLongType.extractRange(getDfType(sum.getRight()));
-      boolean isLong = PsiType.LONG.equals(sum.getType());
-      LongRangeSet rightNegated = rightRange.negate(isLong);
-      LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
+    if (!(left instanceof DfaBinOpValue)) {
+      if (right instanceof DfaBinOpValue) {
+        return applyBinOpRelations(right, type.getFlipped(), left);
+      }
+      return true;
+    }
+    DfaBinOpValue binOp = (DfaBinOpValue)left;
+    LongRangeBinOp op = binOp.getOperation();
+    if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS) return true;
+    DfaVariableValue leftLeft = binOp.getLeft();
+    DfaValue leftRight = binOp.getRight();
+    LongRangeSet leftRange = DfLongType.extractRange(getDfType(leftLeft));
+    LongRangeSet rightRange = DfLongType.extractRange(getDfType(leftRight));
+    boolean isLong = PsiType.LONG.equals(binOp.getType());
+    LongRangeSet rightNegated = rightRange.negate(isLong);
+    LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
-      LongRangeSet resultRange = DfLongType.extractRange(getDfType(right));
-      RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
-      if (op == LongRangeBinOp.MINUS) {
-        long min = resultRange.min();
-        long max = resultRange.max();
-        if (min == 0 && max == 0) {
-          // a-b (rel) 0 => a (rel) b
-          if (!applyCondition(sum.getLeft().cond(correctedRelation, sum.getRight()))) return false;
-        }
-        else if (min == 0 && type == RelationType.GT || min >= 1 && RelationType.GE.isSubRelation(type)) {
-          RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, isLong);
-          if (!applyCondition(sum.getLeft().cond(correctedGt, sum.getRight()))) return false;
-        }
-        else if (max == 0 && type == RelationType.LT || max <= -1 && RelationType.LE.isSubRelation(type)) {
-          RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, isLong);
-          if (!applyCondition(sum.getLeft().cond(correctedLt, sum.getRight()))) return false;
-        }
-        if (RelationType.EQ.equals(type) && !resultRange.contains(0)) {
-          // a-b == non-zero => a != b
-          if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
-        }
+    LongRangeSet resultRange = DfLongType.extractRange(getDfType(right));
+    RelationType correctedRelation = correctRelation(type, leftRange, rightCorrected, resultRange, isLong);
+    if (op == LongRangeBinOp.MINUS) {
+      long min = resultRange.min();
+      long max = resultRange.max();
+      if (min == 0 && max == 0) {
+        // a-b (rel) 0 => a (rel) b
+        if (!applyCondition(leftLeft.cond(correctedRelation, leftRight))) return false;
       }
-      if (op == LongRangeBinOp.PLUS && RelationType.EQ == type &&
-          !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
-        // a+b == odd => a != b
-        if (!applyRelation(sum.getLeft(), sum.getRight(), true)) return false;
+      else if (min == 0 && type == RelationType.GT || min >= 1 && RelationType.GE.isSubRelation(type)) {
+        RelationType correctedGt = correctRelation(RelationType.GT, leftRange, rightCorrected, resultRange, isLong);
+        if (!applyCondition(leftLeft.cond(correctedGt, leftRight))) return false;
       }
-      if (right instanceof DfaVariableValue) {
-        // a+b (rel) c && a == c => b (rel) 0
-        if (areEqual(sum.getLeft(), right)) {
-          RelationType finalRelation = op == LongRangeBinOp.MINUS ?
-                                       Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
-          if (!applyCondition(sum.getRight().cond(finalRelation, myFactory.getInt(0)))) return false;
-        }
-        // a+b (rel) c && b == c => a (rel) 0
-        if (op == LongRangeBinOp.PLUS && areEqual(sum.getRight(), right)) {
-          if (!applyCondition(sum.getLeft().cond(correctedRelation, myFactory.getInt(0)))) return false;
-        }
+      else if (max == 0 && type == RelationType.LT || max <= -1 && RelationType.LE.isSubRelation(type)) {
+        RelationType correctedLt = correctRelation(RelationType.LT, leftRange, rightCorrected, resultRange, isLong);
+        if (!applyCondition(leftLeft.cond(correctedLt, leftRight))) return false;
+      }
+      if (RelationType.EQ.equals(type) && !resultRange.contains(0)) {
+        // a-b == non-zero => a != b
+        if (!applyRelation(leftLeft, leftRight, true)) return false;
+      }
+    }
+    if (op == LongRangeBinOp.PLUS && RelationType.EQ == type &&
+        !resultRange.intersects(LongRangeSet.all().mul(LongRangeSet.point(2), true))) {
+      // a+b == odd => a != b
+      if (!applyRelation(leftLeft, leftRight, true)) return false;
+    }
+    if (right instanceof DfaVariableValue) {
+      // a+b (rel) c && a == c => b (rel) 0
+      if (areEqual(leftLeft, right)) {
+        RelationType finalRelation = op == LongRangeBinOp.MINUS ?
+                                     Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
+        if (!applyCondition(leftRight.cond(finalRelation, myFactory.getInt(0)))) return false;
+      }
+      // a+b (rel) c && b == c => a (rel) 0
+      if (op == LongRangeBinOp.PLUS && areEqual(leftRight, right)) {
+        if (!applyCondition(leftLeft.cond(correctedRelation, myFactory.getInt(0)))) return false;
+      }
 
-        if (!leftRange.subtractionMayOverflow(op == LongRangeBinOp.MINUS ? rightRange : rightNegated, isLong)) {
-          // a-positiveNumber >= b => a > b
-          if (rightCorrected.max() < 0 && RelationType.GE.isSubRelation(type)) {
-            if (!applyLessThanRelation(right, sum.getLeft())) return false;
-          }
-          // a+positiveNumber >= b => a > b
-          if (rightCorrected.min() > 0 && RelationType.LE.isSubRelation(type)) {
-            if (!applyLessThanRelation(sum.getLeft(), right)) return false;
-          }
-        }
-        if (RelationType.EQ == type && !rightRange.contains(0)) {
-          // a+nonZero == b => a != b
-          if (!applyRelation(sum.getLeft(), right, true)) return false;
-        }
+      if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, isLong)) return false;
+      if (op == LongRangeBinOp.PLUS && leftRight instanceof DfaVariableValue) {
+        if (!applyRelationOnAddition(type, (DfaVariableValue)leftRight, rightRange, leftRange, right, isLong)) return false;
       }
+    }
+    return true;
+  }
+
+  private boolean applyRelationOnAddition(@NotNull RelationType type,
+                                          @NotNull DfaVariableValue left,
+                                          @NotNull LongRangeSet leftRange,
+                                          @NotNull LongRangeSet rightRange,
+                                          @NotNull DfaValue sum,
+                                          boolean isLong) {
+    if (!leftRange.additionMayOverflow(rightRange, isLong)) {
+      // a-positiveNumber >= b => a > b
+      if (rightRange.max() < 0 && RelationType.GE.isSubRelation(type)) {
+        if (!applyLessThanRelation(sum, left)) return false;
+      }
+      // a+positiveNumber >= b => a > b
+      if (rightRange.min() > 0 && RelationType.LE.isSubRelation(type)) {
+        if (!applyLessThanRelation(left, sum)) return false;
+      }
+    }
+    if (RelationType.EQ == type && !rightRange.contains(0)) {
+      // a+nonZero == b => a != b
+      if (!applyRelation(left, sum, true)) return false;
     }
     return true;
   }
