@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
-import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -59,12 +58,15 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   @Throws(CantRunException::class)
-  fun setupCommandLine(settings: MavenRunConfiguration.MavenSettings): MavenCommandLineSetup {
+  @JvmOverloads
+  fun setupCommandLine(settings: MavenRunConfiguration.MavenSettings, setupEventListener: Boolean = true): MavenCommandLineSetup {
     val mavenOptsValues = mutableListOf<TargetValue<String>>()
-    setupExePath(settings.myGeneralSettings)
+    setupExePath()
     setupTargetJavaRuntime(settings.myRunnerSettings)
     setupTargetProjectDirectories(settings)
-    setupMavenExtClassPath(mavenOptsValues)
+    if (setupEventListener) {
+      setupMavenExtClassPath()
+    }
     addMavenParameters(settings, mavenOptsValues)
     setupTargetEnvironmentVariables(settings, mavenOptsValues)
     return this
@@ -78,7 +80,7 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   @Throws(CantRunException::class)
-  private fun setupExePath(generalSettings: MavenGeneralSettings) {
+  private fun setupExePath() {
     if (defaultMavenRuntimeConfiguration == null) {
       commandLine.setExePath("mvn")
       return
@@ -104,7 +106,7 @@ class MavenCommandLineSetup(private val project: Project,
     }?.let { commandLine.addEnvironmentVariable("JAVA_HOME", it) }
   }
 
-  private fun setupMavenExtClassPath(mavenOptsValues: MutableList<TargetValue<String>>) {
+  private fun setupMavenExtClassPath() {
     val mavenEventListener = MavenServerManager.getMavenEventListener()
     val uploadPath = Paths.get(toSystemDependentName(mavenEventListener.path))
     val uploadRoot = createUploadRoot(MavenRuntimeType.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
