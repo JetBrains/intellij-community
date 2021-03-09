@@ -49,22 +49,28 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 @SuppressWarnings("unused")
 public class JBCefBrowser extends JBCefBrowserBase {
   /**
-   * Defines whether the browser component should take focus on navigation (loading a new URL).
-   * <p></p>
-   * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
-   *
    * @see #setProperty(String, Object)
    */
-  @NotNull public static final String FOCUS_ON_NAVIGATION = "JBCefBrowser.focusOnNavigation";
+  public static class Properties extends JBCefBrowserBase.Properties {
+    /**
+     * Defines whether the browser component should take focus on navigation (loading a new URL).
+     * <p></p>
+     * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
+     */
+    public static final @NotNull String FOCUS_ON_NAVIGATION = "JBCefBrowser.focusOnNavigation";
 
-  /**
-   * Defines whether the browser component should take focus on show.
-   * <p></p>
-   * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
-   *
-   * @see #setProperty(String, Object)
-   */
-  @NotNull public static final String FOCUS_ON_SHOW = "JBCefBrowser.focusOnShow";
+    /**
+     * Defines whether the browser component should take focus on show.
+     * <p></p>
+     * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
+     */
+    public static final @NotNull String FOCUS_ON_SHOW ="JBCefBrowser.focusOnShow";
+
+    static {
+      PropertiesHelper.putType(FOCUS_ON_NAVIGATION, Boolean.class);
+      PropertiesHelper.putType(FOCUS_ON_SHOW, Boolean.class);
+    }
+  }
 
   private static final @NotNull List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
     Collections.synchronizedList(new ArrayList<>(1));
@@ -157,8 +163,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();
-        boolean focusOnNavigation = (myFirstShow && Boolean.TRUE.equals(getProperty(FOCUS_ON_SHOW))) ||
-                                    Boolean.TRUE.equals(getProperty(FOCUS_ON_NAVIGATION)) ||
+        boolean focusOnNavigation = (myFirstShow && myPropertiesHelper.isTrue(Properties.FOCUS_ON_SHOW) ||
+                                    myPropertiesHelper.isTrue(Properties.FOCUS_ON_NAVIGATION)) ||
                                     componentFocused;
         myFirstShow = false;
 
@@ -337,19 +343,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   /**
-   * Supports the following properties:
-   * <ul>
-   * <li> {@link #FOCUS_ON_SHOW}
-   * <li> {@link #FOCUS_ON_NAVIGATION}
-   * </ul>
+   * Supports {@link Properties}.
    *
    * @throws IllegalArgumentException if the value has wrong type or format
    */
   @Override
   public void setProperty(@NotNull String name, @Nullable Object value) {
-    if (FOCUS_ON_NAVIGATION.equals(name) && !(value instanceof Boolean)) {
-      throw new IllegalArgumentException("JBCefBrowserBase.FOCUS_ON_NAVIGATION should be java.lang.Boolean");
-    }
     super.setProperty(name, value);
   }
 
