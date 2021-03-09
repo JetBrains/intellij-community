@@ -7,18 +7,17 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDependency;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.border.CustomLineBorder;
@@ -26,9 +25,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.HtmlChunk.body;
@@ -64,10 +62,11 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
   }
 
   private void onPluginGroupsLoaded() {
-    Map<PluginId, IdeaPluginDescriptor> pluginsFromRepository = ContainerUtil.map2Map(
-      myPluginGroups.getPluginsFromRepository(),
-      descriptor -> Pair.create(descriptor.getPluginId(), descriptor)
-    );
+    Map<PluginId, PluginNode> pluginsFromRepository = myPluginGroups
+      .getPluginsFromRepository()
+      .stream()
+      .collect(Collectors.toMap(PluginNode::getPluginId, Function.identity()));
+
     if (pluginsFromRepository.isEmpty()) {
       myInProgressLabel.setText(IdeBundle.message("label.cannot.get.featured.plugins.description.online"));
       return;
@@ -76,8 +75,9 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
     JPanel gridPanel = new JPanel(new GridLayout(0, 3));
     JBScrollPane scrollPane = CustomizePluginsStepPanel.createScrollPane(gridPanel);
 
-    Map<String, String> config = myPluginGroups.getFeaturedPlugins();
-    for (Map.Entry<@NlsSafe String, @Nls String> entry : config.entrySet()) {
+    NotNullLazyValue<? extends PluginGroupDescription> vimDescription = NotNullLazyValue.lazy(() -> PluginGroupDescription.vim());
+    Map<PluginId, ? extends PluginGroupDescription> config = myPluginGroups.getFeaturedPluginDescriptions();
+    for (Map.Entry<PluginId, ? extends PluginGroupDescription> entry : config.entrySet()) {
       JPanel groupPanel = new JPanel(new GridBagLayout());
       GridBagConstraints gbc = new GridBagConstraints();
       gbc.fill = GridBagConstraints.BOTH;
@@ -85,8 +85,8 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
 
-      PluginGroups.PluginGroupDescription groupDescription = new PluginGroups.PluginGroupDescription(entry.getValue());
-      final IdeaPluginDescriptor descriptor = pluginsFromRepository.get(groupDescription.getPluginId());
+      PluginGroupDescription description = entry.getValue();
+      final PluginNode descriptor = pluginsFromRepository.get(description.getPluginId());
       if (descriptor == null || PluginManagerCore.isBrokenPlugin(descriptor)) {
         continue;
       }
@@ -110,33 +110,30 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
         continue;
       }
 
-      final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
-      boolean isCloud = "#Cloud".equals(groupDescription.getTopic());
-
-      final String title;
-      final String description;
-      final String topic;
-      if (isCloud) {
-        title = descriptor.getName();
-        description = StringUtil.defaultIfEmpty(descriptor.getDescription(), IdeBundle.message("label.no.description.available"));
-        topic = StringUtil.defaultIfEmpty(descriptor.getCategory(), IdeBundle.message("label.plugin.descriptor.category.unknown"));
+      final boolean isVIM = description.equals(vimDescription.getValue());
+      final boolean isCloud;
+      if (description instanceof PluginGroupDescription.CloudDelegate) {
+        ((PluginGroupDescription.CloudDelegate)description).setPluginNode(descriptor);
+        isCloud = true;
       }
       else {
-        title = entry.getKey();
-        description = groupDescription.getDescription();
-        topic = groupDescription.getTopic();
+        isCloud = false;
       }
 
-      HtmlBuilder titleHtml =
-        new HtmlBuilder().append(html().child(body().child(HtmlChunk.tag("h2").attr("style", "text-align:left;").addText(title))));
+      HtmlBuilder titleHtml = new HtmlBuilder()
+        .append(html().child(body().child(HtmlChunk.tag("h2")
+                                            .attr("style", "text-align:left;")
+                                            .addText(description.getName()))));
       JLabel titleLabel = new JLabel(titleHtml.toString());
-      HtmlBuilder topicHtml =
-        new HtmlBuilder().append(html().child(body().child(
-          HtmlChunk.tag("h4").attr("style", "text-align:left;color:#808080;font-weight:bold;").addText(topic)
+      HtmlBuilder topicHtml = new HtmlBuilder()
+        .append(html().child(body().child(
+          HtmlChunk.tag("h4")
+            .attr("style", "text-align:left;color:#808080;font-weight:bold;")
+            .addText(description.getCategory())
         )));
       JLabel topicLabel = new JLabel(topicHtml.toString());
 
-      JLabel descriptionLabel = createHTMLLabel(description);
+      JLabel descriptionLabel = createHTMLLabel(description.getDescription());
 
       String dependenciesLabelText = "";
       if (!dependentDescriptors.isEmpty()) {
@@ -148,14 +145,12 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
 
       JLabel warningLabel = null;
       if (isVIM || isCloud) {
-        if (isCloud) {
-          warningLabel = createHTMLLabel(IdeBundle.message("label.from.your.jetbrains.account"));
-          warningLabel.setIcon(AllIcons.General.BalloonInformation);
-        }
-        else {
-          warningLabel = createHTMLLabel(IdeBundle.message("label.recommended.only.if.you.are.br.familiar.with.vim"));
-          warningLabel.setIcon(AllIcons.General.BalloonWarning);
-        }
+        warningLabel = createHTMLLabel(isCloud ?
+                                       IdeBundle.message("label.from.your.jetbrains.account") :
+                                       IdeBundle.message("label.recommended.only.if.you.are.br.familiar.with.vim"));
+        warningLabel.setIcon(isCloud ?
+                             AllIcons.General.BalloonInformation :
+                             AllIcons.General.BalloonWarning);
 
         if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }

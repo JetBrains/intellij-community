@@ -148,7 +148,7 @@ public final class StartupUtil {
     default void importFinished(@NotNull Path newConfigDir) {}
 
     /* called from EDT */
-    default int customizeIdeWizardDialog(@NotNull List<AbstractCustomizeWizardStep> steps) {
+    default int customizeIdeWizardDialog(@NotNull List<? extends AbstractCustomizeWizardStep> steps) {
       return -1;
     }
   }

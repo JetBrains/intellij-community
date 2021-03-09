@@ -4,8 +4,8 @@ package com.intellij.ide.customize;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardStepsProvider {
   @Override
@@ -21,20 +21,44 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
     }
 
     PluginGroups groups = new PluginGroups() {
+
       @Override
-      protected void initFeaturedPlugins(@NotNull Map<String, String> featuredPlugins) {
-        featuredPlugins.put("Scala", "Custom Languages:Scala language support:org.intellij.scala");
-        featuredPlugins.put("IntelliJ Light Theme", "Themes:A new light theme for IntelliJ-based IDEs:com.jetbrains.lightThemePreview");
-        addAwsPlugin(featuredPlugins);
-        featuredPlugins.put("Kubernetes", "Cloud Support:Kubernetes resource files support:com.intellij.kubernetes");
-        addBigDataToolsPlugin(featuredPlugins);
-        featuredPlugins.put("EduTools", "Code tools:Learn and teach programming languages such as Kotlin, Java, and Python in the form of coding tasks and custom verification tests:com.jetbrains.edu");
-        featuredPlugins.put("Key Promoter X", "Code tools:Learn the IntelliJ IDEA shortcuts:Key Promoter X");
-        addTrainingPlugin(featuredPlugins);
+      protected @NotNull List<? extends PluginGroupDescription> getInitialFeaturedPlugins() {
+        List<PluginGroupDescription> result = new ArrayList<>(List.of(
+          PluginGroupDescription.scala(),
+          PluginGroupDescription.create("com.jetbrains.lightThemePreview",
+                                        "IntelliJ Light Theme",
+                                        "Themes",
+                                        "A new light theme for IntelliJ-based IDEs"),
+          PluginGroupDescription.aws(),
+          PluginGroupDescription.create("com.intellij.kubernetes",
+                                        "Kubernetes",
+                                        "Cloud Support",
+                                        "Kubernetes resource files support"),
+          PluginGroupDescription.bigDataTools(),
+          PluginGroupDescription.create("com.jetbrains.edu",
+                                        "EduTools",
+                                        "Code tools",
+                                        "Learn and teach programming languages such as Kotlin, Java, and Python in the form of coding tasks and custom verification tests"),
+          PluginGroupDescription.create("Key Promoter X",
+                                        "Key Promoter X",
+                                        "Code tools",
+                                        "Learn the IntelliJ IDEA shortcuts"),
+          PluginGroupDescription.featuresTrainer()));
+
         if (PlatformUtils.isIdeaCommunity()) {
-          featuredPlugins.put("Gradianto", "Theme:Colorful and bright theme for IntelliJ-based IDEs:com.thvardhan.gradianto");
-          featuredPlugins.put("File Watchers", "Build:Automatically run tasks when you change or save files in the IDE:com.intellij.plugins.watcher");
+          result.addAll(List.of(
+            PluginGroupDescription.create("com.thvardhan.gradianto",
+                                          "Gradianto",
+                                          "Theme",
+                                          "Colorful and bright theme for IntelliJ-based IDEs"),
+            PluginGroupDescription.create("com.intellij.plugins.watcher",
+                                          "File Watchers",
+                                          "Build",
+                                          "Automatically run tasks when you change or save files in the IDE")
+          ));
         }
+        return result;
       }
     };
     steps.add(new CustomizePluginsStepPanel(groups));

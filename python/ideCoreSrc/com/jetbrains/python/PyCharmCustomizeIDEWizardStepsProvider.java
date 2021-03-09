@@ -6,18 +6,20 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 
 public class PyCharmCustomizeIDEWizardStepsProvider implements CustomizeIDEWizardStepsProvider {
   @Override
   public void initSteps(CustomizeIDEWizardDialog wizardDialog, @NotNull List<? super AbstractCustomizeWizardStep> steps) {
     PluginGroups groups = new PluginGroups() {
+
       @Override
-      protected void initGroups(@NotNull List<? super Group> tree, @NotNull Map<String, String> featuredPlugins) {
-        addVimPlugin(featuredPlugins);
-        addRPlugin(featuredPlugins);
-        addAwsPlugin(featuredPlugins);
-        addBigDataToolsPlugin(featuredPlugins);
+      protected @NotNull List<? extends PluginGroupDescription> getInitialFeaturedPlugins() {
+        return List.of(
+          PluginGroupDescription.vim(),
+          PluginGroupDescription.r(),
+          PluginGroupDescription.aws(),
+          PluginGroupDescription.bigDataTools()
+        );
       }
     };
 

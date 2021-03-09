@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -16,8 +17,7 @@ import java.util.List;
 public abstract class CloudConfigProvider {
   private static CloudConfigProvider myProvider;
 
-  @Nullable
-  public static CloudConfigProvider getProvider() {
+  public static @Nullable CloudConfigProvider getProvider() {
     return myProvider;
   }
 
@@ -31,13 +31,11 @@ public abstract class CloudConfigProvider {
 
   public abstract void beforeStartupWizard();
 
-  @Nullable
-  public abstract String getLafClassName();
+  public abstract @Nullable String getLafClassName();
 
-  @NotNull
-  public abstract List<PluginId> getInstalledPlugins();
+  public abstract @NotNull Set<PluginId> getInstalledPlugins();
 
-  public abstract int initSteps(@NotNull List<AbstractCustomizeWizardStep> steps);
+  public abstract int initSteps(@NotNull List<? extends AbstractCustomizeWizardStep> steps);
 
   public abstract void startupWizardFinished();
 
