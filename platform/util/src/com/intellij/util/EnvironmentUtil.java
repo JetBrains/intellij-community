@@ -43,7 +43,7 @@ public final class EnvironmentUtil {
 
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
 
-  public static final @NonNls String BASH_EXECUTABLE_NAME = "bash";
+  public static final String BASH_EXECUTABLE_NAME = "bash";
   public static final String SHELL_VARIABLE_NAME = "SHELL";
   private static final String SHELL_INTERACTIVE_ARGUMENT = "-i";
   public static final String SHELL_LOGIN_ARGUMENT = "-l";
@@ -69,12 +69,12 @@ public final class EnvironmentUtil {
    * An app launched by a GUI launcher (Finder, Dock, Spotlight etc.) receives a pretty empty and useless environment,
    * since standard Unix ways of setting variables via e.g. ~/.profile do not work. What's more important, there are no
    * sane alternatives. This causes a lot of user complaints about tools working in a terminal not working when launched
-   * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv()} for gory details)
+   * from the IDE. To ease their pain, the IDE loads a shell environment (see {@link #getShellEnv} for gory details)
    * and returns it as the result.<br/>
    * And one more thing (c): locale variables on macOS are usually set by a terminal app - meaning they are missing
    * even from a shell environment above. This again causes user complaints about tools being unable to output anything
    * outside ASCII range when launched from the IDE. Resolved by adding LC_CTYPE variable to the map if it doesn't contain
-   * explicitly set locale variables (LANG/LC_ALL/LC_CTYPE). See {@link #setCharsetVar(Map)} for details.</p>
+   * explicitly set locale variables (LANG/LC_ALL/LC_CTYPE). See {@link #setCharsetVar} for details.</p>
    *
    * @return unmodifiable map of the process environment.
    */
@@ -130,10 +130,10 @@ public final class EnvironmentUtil {
       LOG.info("loading shell env is turned off");
       return false;
     }
-    String value = System.getenv(SHLVL);
     // On macOS, login shell session is not run when a user logs in, thus "SHLVL > 0" likely means that IDE is run from a terminal.
-    if (StringUtilRt.parseInt(value, 0) > 0) {
-      LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + "=" + value + ")");
+    String shLvl = System.getenv(SHLVL);
+    if (StringUtilRt.parseInt(shLvl, 0) > 0) {
+      LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + "=" + shLvl + ")");
       return false;
     }
     return true;
@@ -168,7 +168,7 @@ public final class EnvironmentUtil {
    *
    * @see #getEnvironmentMap()
    */
-  public static @Nullable @NonNls String getValue(@NotNull @NonNls String name) {
+  public static @Nullable String getValue(@NotNull String name) {
     return getEnvironmentMap().get(name);
   }
 
@@ -181,7 +181,7 @@ public final class EnvironmentUtil {
    * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
    */
   @Contract(value = "null -> false", pure = true)
-  public static boolean isValidName(@Nullable @NonNls String name) {
+  public static boolean isValidName(@Nullable String name) {
     return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfoRt.isWindows ? 1 : 0) == -1;
   }
 
@@ -191,7 +191,7 @@ public final class EnvironmentUtil {
    * @see #isValidName(String)
    */
   @Contract(value = "null -> false", pure = true)
-  public static boolean isValidValue(@Nullable @NonNls String value) {
+  public static boolean isValidValue(@Nullable String value) {
     return value != null && value.indexOf('\0') == -1;
   }
 
@@ -241,7 +241,7 @@ public final class EnvironmentUtil {
         int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
         if (idx >= 0) {
           // if there is already a command append command to the end
-          command.set(idx + 1, command.get(idx + 1) + ";" + readerCmd.toString());
+          command.set(idx + 1, command.get(idx + 1) + ';' + readerCmd);
         }
         else {
           command.add(SHELL_COMMAND_ARGUMENT);
@@ -315,7 +315,7 @@ public final class EnvironmentUtil {
    * @return list of commands for starting a process, e.g. {@code /bin/bash -l -i -c}
    */
   @ApiStatus.Experimental
-  public static @NotNull List<String> buildShellProcessCommand(@NotNull @NonNls String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
+  public static @NotNull List<String> buildShellProcessCommand(@NotNull String shellScript, boolean isLogin, boolean isInteractive, boolean isCommand) {
     List<String> commands = new ArrayList<>();
     commands.add(shellScript);
     if (isLogin && !(shellScript.endsWith("/tcsh") || shellScript.endsWith("/csh"))) {
@@ -432,7 +432,7 @@ public final class EnvironmentUtil {
     String language = locale.getLanguage();
     String country = locale.getCountry();
 
-    @NonNls String languageTerritory = "en_US";
+    String languageTerritory = "en_US";
     if (!language.isEmpty() && !country.isEmpty()) {
       String languageTerritoryFromLocale = language + '_' + country;
       if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {

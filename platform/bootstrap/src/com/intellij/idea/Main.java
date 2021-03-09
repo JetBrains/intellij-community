@@ -23,7 +23,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
@@ -162,7 +161,7 @@ public final class Main {
     for (String arg : args) {
       if (!arg.startsWith("-")) { // If not an option
         try {
-          Path path = Paths.get(arg);
+          Path path = Path.of(arg);
           return Files.isRegularFile(path) || !Files.exists(path);
         }
         catch (Throwable t) {
@@ -275,9 +274,8 @@ public final class Main {
       textPane.setText(message.replaceAll("\t", "    "));
       textPane.setBackground(UIManager.getColor("Panel.background"));
       textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(textPane,
-                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      JScrollPane scrollPane =
+        new JScrollPane(textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setBorder(null);
 
       int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -84,8 +84,7 @@ public abstract class BaseDataReader {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  protected abstract Future<?> executeOnPooledThread(@NotNull Runnable runnable);
+  protected abstract @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable);
 
   /**
    * <h2>Blocking</h2>
@@ -109,7 +108,7 @@ public abstract class BaseDataReader {
    * <li>Sleep for a while</li>
    * <li>Repeat</li>
    * </ol>
-   * This "busy-wait" antipattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
+   * This "busy-wait" anti-pattern is the only way to exit thread leaving process alive. It is required if you want to "disconnect" from
    * user process and used by {@link #NON_BLOCKING} (aka non-blocking) policy. Drawback is that process may finish (when {@link Process#waitFor()} returns)
    * leaving some data unread.
    * It is implemented in {@link #readAvailableNonBlocking()}}

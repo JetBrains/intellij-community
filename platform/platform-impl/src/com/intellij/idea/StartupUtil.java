@@ -76,8 +76,7 @@ import java.util.function.Function;
 @ApiStatus.Internal
 public final class StartupUtil {
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
-  // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
-  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
+  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";  // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
