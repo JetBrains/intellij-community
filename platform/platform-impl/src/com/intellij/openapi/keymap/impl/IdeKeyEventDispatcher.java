@@ -633,19 +633,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   boolean processAction(@NotNull InputEvent e,
-                               @NotNull String place,
-                               @NotNull DataContext context,
-                               @NotNull List<AnAction> actions,
-                               @NotNull ActionProcessor processor,
-                               @NotNull PresentationFactory presentationFactory,
-                               @NotNull ActionManagerEx actionManager) {
+                        @NotNull String place,
+                        @NotNull DataContext context,
+                        @NotNull List<AnAction> actions,
+                        @NotNull ActionProcessor processor,
+                        @NotNull PresentationFactory presentationFactory,
+                        @NotNull ActionManagerEx actionManager) {
     if (actions.isEmpty()) return false;
     DataContext wrappedContext = Utils.wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
     Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
-    List<AnActionEvent> wouldBeEnabledIfNotDumb = new ArrayList<>();
+    List<AnAction> wouldBeEnabledIfNotDumb = new ArrayList<>();
     Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
       e, wrappedContext, place, processor, presentationFactory,
       event -> events.put(event.getPresentation(), event),
@@ -666,7 +666,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull DataContext context,
                                                                              @NotNull List<AnAction> actions,
                                                                              boolean dumb,
-                                                                             @NotNull List<? super AnActionEvent> wouldBeEnabledIfNotDumb,
+                                                                             @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
                                                                              @NotNull UpdateSession session,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
     ReadAction.run(() -> rearrangeByPromoters(actions, context));
@@ -674,11 +674,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       long startedAt = System.currentTimeMillis();
 
       Presentation presentation = session.presentation(action);
-      AnActionEvent actionEvent = events.apply(presentation);
 
       if (dumb && !action.isDumbAware()) {
         if (!Boolean.FALSE.equals(presentation.getClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
-          wouldBeEnabledIfNotDumb.add(actionEvent);
+          wouldBeEnabledIfNotDumb.add(action);
         }
         logTimeMillis(startedAt, action);
         continue;
@@ -687,7 +686,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
         logTimeMillis(startedAt, action);
         continue;
       }
-      return Trinity.create(action, actionEvent, startedAt);
+      AnActionEvent event = Objects.requireNonNull(events.apply(presentation));
+      return Trinity.create(action, event, startedAt);
     }
     return null;
   }
@@ -698,7 +698,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                     @NotNull DataContext context,
                                     @NotNull ActionManagerEx actionManager,
                                     @Nullable Project project,
-                                    @NotNull List<? extends AnActionEvent> wouldBeEnabledIfNotDumb,
+                                    @NotNull List<? extends AnAction> wouldBeEnabledIfNotDumb,
                                     @NotNull Runnable retryRunnable) {
     if (chosen != null) {
       AnAction action = chosen.first;
@@ -756,10 +756,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }, Conditions.or(expired, project.getDisposed()));
   }
 
-  private static @NotNull @Nls String getActionUnavailableMessage(@NotNull List<? extends AnActionEvent> actionEvents) {
+  private static @NotNull @Nls String getActionUnavailableMessage(@NotNull List<? extends AnAction> actions) {
     List<String> actionNames = new ArrayList<>();
-    for (AnActionEvent event : actionEvents) {
-      String s = event.getPresentation().getText();
+    for (AnAction action : actions) {
+      String s = action.getTemplateText();
       if (Strings.isNotEmpty(s)) {
         actionNames.add(s);
       }
