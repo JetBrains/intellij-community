@@ -103,7 +103,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
   }
 
   private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
-    CachedValueLeakChecker.checkProvider(provider, key, dh);
+    CachedValueLeakChecker.checkProviderDoesNotLeakPSI(provider, key, dh);
     CachedValue<T> value = createCachedValue(provider, trackValue);
     assert ((CachedValueBase<?>)value).isFromMyProject(myProject);
     return value;
