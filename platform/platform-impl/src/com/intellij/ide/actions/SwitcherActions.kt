@@ -28,7 +28,7 @@ internal abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAct
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
     val switcher = Switcher.SWITCHER_KEY.get(project)
-    if (switcher != null && (!switcher.pinned || forward != null)) {
+    if (switcher != null && (!switcher.recent || forward != null)) {
       switcher.go(forward ?: forward(event))
     }
     else {
