@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
@@ -287,9 +288,9 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
     if (pane != null) {
       y -= pane.getBottomHeight();
-
-      //IDEA-263851 Notification balloon overlaps status bar
-      y -= pane.getY();
+      if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+        y -= pane.getY();
+      }
     }
     if (myParent instanceof IdeRootPane) {
       y -= ((IdeRootPane)myParent).getStatusBarHeight();
