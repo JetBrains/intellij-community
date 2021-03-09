@@ -59,7 +59,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NotNull
 import javax.swing.JComponent
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
@@ -83,7 +82,7 @@ class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
     RunTestsBeforeCheckinHandler(panel)
 }
 
-class FailedTestCommitProblem(val statusText: @NlsContexts.NotificationContent String, val historyFileName: String) : CommitProblem {
+class FailedTestCommitProblem(@NlsContexts.NotificationContent val statusText: String, val historyFileName: String) : CommitProblem {
   override val text: String
     get() {
       return statusText
@@ -230,7 +229,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   }
 
   private fun askToReview(failedTests: FailedTestCommitProblem,
-                          commitActionText: @NotNull @Nls String) =
+                          @Nls commitActionText: String) =
     MessageDialogBuilder.yesNoCancel(SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration"), failedTests.text)
       .icon(UIUtil.getWarningIcon())
       .yesText(VcsBundle.message("code.smells.review.button"))
@@ -238,11 +237,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       .cancelText(CommonBundle.getCancelButtonText())
       .show(project)
 
-  private fun getOptionTitle(name: String): @NlsContexts.Label String {
+  @NlsContexts.DialogTitle
+  private fun getOptionTitle(name: String): String {
     return SmRunnerBundle.message("checkbox.run.tests.before.commit", name)
   }
 
-  inner class RunTask(val runConfiguration : RunnerAndConfigurationSettings) 
+  inner class RunTask(private val runConfiguration : RunnerAndConfigurationSettings) 
     : Task.WithResult<FailedTestCommitProblem?, Exception>(project, getOptionTitle(runConfiguration.name), false) {
 
     fun getFailedTests(): FailedTestCommitProblem? {
