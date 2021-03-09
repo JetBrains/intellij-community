@@ -505,7 +505,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   private static void setForwardIndexData(@NotNull IntList forwardIndex, int data, int inputId) {
     if (inputId >= forwardIndex.size()) {
-      forwardIndex.size(inputId + 1);
+      forwardIndex.size((inputId + 1) * 3 / 2);
     }
     forwardIndex.set(inputId, data);
   }
