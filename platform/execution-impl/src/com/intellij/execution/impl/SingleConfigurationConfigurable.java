@@ -35,7 +35,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -76,7 +75,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private String myFolderName;
   private boolean myChangingNameFromCode;
   private CancellablePromise<ValidationResult> myCancellablePromise;
-  private final SingleAlarm myValidationAlarm;
+  private final Alarm myValidationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, getEditor());
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(ConfigurationSettingsEditorWrapper.createWrapper(settings), settings);
@@ -111,14 +110,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         requestToUpdateWarning();
       }
     });
-    
-    boolean inplaceValidationSupported = getEditor() instanceof RunnerAndConfigurationSettingsEditor &&
-                                         ((RunnerAndConfigurationSettingsEditor)getEditor()).isInplaceValidationSupported();
-    myValidationAlarm = new SingleAlarm(() -> {
-      if (myComponent != null && !inplaceValidationSupported) {
-        validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
-      }
-    }, 100, getEditor(), Alarm.ThreadToUse.SWING_THREAD, ModalityState.current());
   }
 
   @NotNull
@@ -166,7 +157,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   void requestToUpdateWarning() {
-    myValidationAlarm.request();
+    if (myComponent != null && myValidationAlarm.isEmpty()) {
+      myValidationAlarm.addRequest(() -> {
+        boolean inplaceValidationSupported = getEditor() instanceof RunnerAndConfigurationSettingsEditor && ((RunnerAndConfigurationSettingsEditor)getEditor()).isInplaceValidationSupported();
+        if (myComponent != null && !inplaceValidationSupported) {
+          validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
+        }
+      }, 100, ModalityState.stateForComponent(myComponent.myWholePanel));
+    }
   }
 
   @Override
