@@ -472,6 +472,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", license: "CPL 1.0", url: "http://junit.org/"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit4", license: "Eclipse Public License v1.0", url: "http://junit.org/"),
+    new LibraryLicense(name: "JUnit5", libraryName: "JUnit5", license: "Eclipse Public License v2.0", url: "https://junit.org/junit5/"),
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet",
                        url: "https://code.google.com/archive/p/juniversalchardet",
                        license: "MPL 1.1",  licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
