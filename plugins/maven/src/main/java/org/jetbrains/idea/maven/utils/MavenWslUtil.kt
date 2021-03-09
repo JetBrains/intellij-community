@@ -107,7 +107,11 @@ object MavenWslUtil : MavenUtil() {
       MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
       return home
     }
-    val processOutput = this.executeOnWsl(listOf("which", "mvn"), WSLCommandLineOptions().setExecuteCommandInLoginShell(true), 10000, null)
+    
+    val options = WSLCommandLineOptions()
+      .setExecuteCommandInLoginShell(true)
+      .setShellPath(this.shellPath)
+    val processOutput = this.executeOnWsl(listOf("which", "mvn"), options, 10000, null)
     if (processOutput.exitCode == 0) {
       val path = processOutput.stdout.lines().find { it.isNotEmpty() }?.let(this::resolveSymlink)?.let(this::getWindowsPath)?.let(::File)
       if (path != null) {
