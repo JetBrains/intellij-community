@@ -1,17 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
-import com.intellij.ide.impl.TrustChangeNotifier
-import com.intellij.ide.impl.TrustedProjectsStatistics
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.ExternalResolverIsSafe.executesTrustedCodeOnly
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileEditor
@@ -35,20 +32,12 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (providers.isEmpty()) {
       return null
     }
-    return EditorNotificationPanel(fileEditor).apply {
-      text = ExternalSystemBundle.message("untrusted.project.notification.description")
-      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.trust.link"), {
-        TrustedProjectsStatistics.TRUST_PROJECT_FROM_BANNER.log()
-        if (confirmLoadingUntrustedProject(project, providers.map { it.systemId })) {
-          for (provider in providers) {
-            provider.loadAllLinkedProjects(project)
-          }
+    return UntrustedProjectEditorNotificationPanel(fileEditor) {
+      if (confirmLoadingUntrustedProject(project, providers.map { it.systemId })) {
+        for (provider in providers) {
+          provider.loadAllLinkedProjects(project)
         }
-      }, false)
-      createActionLabel(ExternalSystemBundle.message("untrusted.project.notification.read.more.link"), {
-        TrustedProjectsStatistics.READ_MORE_FROM_BANNER.log()
-        HelpManager.getInstance().invokeHelp(TRUSTED_PROJECTS_HELP_TOPIC)
-      }, false)
+      }
     }
   }
 
