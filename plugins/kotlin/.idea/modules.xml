@@ -727,6 +727,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/script-debugger/debugger-ui/intellij.platform.scriptDebugger.ui.iml" filepath="$PROJECT_DIR$/intellij/platform/script-debugger/debugger-ui/intellij.platform.scriptDebugger.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/service-container/intellij.platform.serviceContainer.iml" filepath="$PROJECT_DIR$/intellij/platform/service-container/intellij.platform.serviceContainer.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/intellij/platform/smRunner/intellij.platform.smRunner.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/platform/smRunner/vcs/intellij.platform.smRunner.vcs.iml" filepath="$PROJECT_DIR$/intellij/platform/smRunner/vcs/intellij.platform.smRunner.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/statistics/intellij.platform.statistics.iml" filepath="$PROJECT_DIR$/intellij/platform/statistics/intellij.platform.statistics.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/statistics/config/intellij.platform.statistics.config.iml" filepath="$PROJECT_DIR$/intellij/platform/statistics/config/intellij.platform.statistics.config.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" filepath="$PROJECT_DIR$/intellij/platform/statistics/devkit/intellij.platform.statistics.devkit.iml" />
