@@ -12,7 +12,7 @@ open class ToolWindowToolbarProvider {
    *
    * Please ensure that registered toolwindow anchor matches [anchor].
    */
-  open fun defaultBottomToolwindows(project: Project, anchor: ToolWindowAnchor) =
+  open fun defaultToolWindows(project: Project, anchor: ToolWindowAnchor) =
     when (anchor) {
       LEFT -> listOf("Project", "Commit", "Structure")
       BOTTOM -> listOf("Version Control", "Problems View", "Terminal", "Event Log")

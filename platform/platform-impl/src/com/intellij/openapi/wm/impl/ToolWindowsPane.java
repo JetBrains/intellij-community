@@ -613,7 +613,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     ensureDefaultInitialized(project);
 
-    var largeStripeAnchor = setupDefaultLargeStripeAnchor(toolWindow);
+    var largeStripeAnchor = setupDefaultLargeStripeAnchor(toolWindow, anchor);
     if (largeStripeAnchor != null) anchor = largeStripeAnchor;
 
     windowInfo.setLargeStripeAnchor(anchor);
@@ -629,8 +629,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @Nullable
-  private ToolWindowAnchor setupDefaultLargeStripeAnchor(@NotNull ToolWindow toolWindow) {
-    ToolWindowAnchor toolWindowAnchor = toolWindow.getAnchor();
+  private ToolWindowAnchor setupDefaultLargeStripeAnchor(@NotNull ToolWindow toolWindow, @NotNull ToolWindowAnchor toolWindowAnchor) {
     if (toolWindowAnchor == ToolWindowAnchor.LEFT && myDefaultLeftButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.RIGHT && myDefaultRightButtons.contains(toolWindow.getId())
         || toolWindowAnchor == ToolWindowAnchor.BOTTOM && myDefaultBottomButtons.contains(toolWindow.getId())) {
@@ -646,9 +645,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       return;
     }
 
-    myDefaultLeftButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.LEFT);
-    myDefaultRightButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.RIGHT);
-    myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultBottomToolwindows(project, ToolWindowAnchor.BOTTOM);
+    myDefaultLeftButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.LEFT);
+    myDefaultRightButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.RIGHT);
+    myDefaultBottomButtons = ToolWindowToolbarProvider.getInstance().defaultToolWindows(project, ToolWindowAnchor.BOTTOM);
 
     PropertiesComponent.getInstance(project).setValue(key, true);
   }
