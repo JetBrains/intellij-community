@@ -1080,7 +1080,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
 
-    toolWindow.largeStripeAnchor = if (toolWindow.largeStripeAnchor == ToolWindowAnchor.NONE) task.anchor else toolWindow.largeStripeAnchor
+    if (Registry.`is`("ide.new.stripes.ui")) {
+      toolWindow.largeStripeAnchor = if (toolWindow.largeStripeAnchor == ToolWindowAnchor.NONE) task.anchor else toolWindow.largeStripeAnchor
+    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide
