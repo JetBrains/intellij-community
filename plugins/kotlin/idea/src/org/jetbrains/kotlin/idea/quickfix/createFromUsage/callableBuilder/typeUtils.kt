@@ -9,7 +9,7 @@ import com.intellij.refactoring.psi.SearchUtils
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.*
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -32,9 +32,7 @@ import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-import org.jetbrains.kotlin.types.typeUtil.substitute
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import java.util.*
 
@@ -312,13 +310,30 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
 }
 
 internal fun KotlinType.withoutRedundantAnnotations(): KotlinType {
-    val newArguments = arguments.map { it.substitute { type -> type.withoutRedundantAnnotations() } }
-    val newAnnotations = annotations.filter {
-        val fqName = it.fqName
-        fqName !in NULLABILITY_ANNOTATIONS && fqName !in MUTABLE_ANNOTATIONS && fqName !in READ_ONLY_ANNOTATIONS
-    }
+    var argumentsWasChanged = false
+    val newArguments = arguments.map(fun(typeProjection: TypeProjection): TypeProjection {
+        if (typeProjection.isStarProjection) return typeProjection
 
-    return replace(newArguments, Annotations.create(newAnnotations))
+        val newType = typeProjection.type.withoutRedundantAnnotations()
+        if (typeProjection.type === newType) return typeProjection
+
+        argumentsWasChanged = true
+        return typeProjection.replaceType(newType)
+    })
+
+    val newAnnotations = FilteredAnnotations(
+        annotations,
+        isDefinitelyNewInference = true,
+        fqNameFilter = { it !in NULLABILITY_ANNOTATIONS && it !in MUTABLE_ANNOTATIONS && it !in READ_ONLY_ANNOTATIONS },
+    )
+
+    val annotationsWasChanged = newAnnotations.count() != annotations.count()
+    if (!argumentsWasChanged && !annotationsWasChanged) return this
+
+    return replace(
+        newArguments = newArguments.takeIf { argumentsWasChanged } ?: arguments,
+        newAnnotations = newAnnotations.takeIf { annotationsWasChanged } ?: annotations,
+    )
 }
 
 fun KtExpression.getExpressionForTypeGuess() = getAssignmentByLHS()?.right ?: this
