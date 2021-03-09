@@ -165,12 +165,6 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
           }
         }
         isModified |= accessor.setFromString(val);
-        if (accessor instanceof CodeStyleFieldAccessor) {
-          Object dataObject = ((CodeStyleFieldAccessor<?,?>)accessor).getDataObject();
-          if (dataObject instanceof CommonCodeStyleSettings.IndentOptions) {
-            ((CommonCodeStyleSettings.IndentOptions)dataObject).setOverrideLanguageOptions(true);
-          }
-        }
         processed.add(intellijName);
       }
     }
@@ -295,9 +289,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     for (LanguageCodeStyleSettingsProvider provider : getLanguageCodeStyleProviders(context)) {
       mappers.add(provider.getPropertyMapper(context.getSettings()));
     }
-    if (mappers.isEmpty()) {
-      mappers.add(new GeneralCodeStylePropertyMapper(context.getSettings()));
-    }
+    mappers.add(new GeneralCodeStylePropertyMapper(context.getSettings()));
     return mappers;
   }
 
@@ -327,7 +319,11 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private static Collection<String> getLanguageIds(@NotNull MyContext context) {
     Set<String> langIds = new HashSet<>();
     for (OutPair option : context.getOptions()) {
-      String langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(option.getKey());
+      String key = option.getKey();
+      if ("indent_size".equals(key) || "tab_size".equals(key) || "ij_continuation_indent_size".equals(key)) {
+        langIds.add("any");
+      }
+      String langId = EditorConfigIntellijNameUtil.extractLanguageDomainId(key);
       if (langId != null) {
         langIds.add(langId);
       }
