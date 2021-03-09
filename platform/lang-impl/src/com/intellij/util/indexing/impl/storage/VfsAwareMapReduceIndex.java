@@ -70,8 +70,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                 @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
                                 @Nullable ReadWriteLock lock) throws IOException {
     this(extension,
-         () -> indexStorageLayout.createOrClearIndexStorage(),
-         () -> indexStorageLayout.createOrClearForwardIndex(),
+         () -> indexStorageLayout.openIndexStorage(),
+         () -> indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
          () -> indexStorageLayout.createOrClearSnapshotInputMappings(),
          lock);

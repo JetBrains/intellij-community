@@ -492,10 +492,28 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         break;
       }
       catch (Exception e) {
+        boolean lastAttempt = attempt == attemptCount - 1;
+
+        try {
+          VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension, contentHashesEnumeratorOk);
+          layout.clearIndexData();
+        }
+        catch (Exception layoutEx) {
+          LOG.error(layoutEx);
+        }
+
+        for (FileBasedIndexInfrastructureExtension ext : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          try {
+            ext.resetPersistentState(name);
+          }
+          catch (Exception extEx) {
+            LOG.error(extEx);
+          }
+        }
+
         registrationStatusSink.setIndexVersionDiff(name, new IndexVersion.IndexVersionDiff.CorruptedRebuild(version));
         IndexVersion.rewriteVersion(name, version);
 
-        boolean lastAttempt = attempt == attemptCount - 1;
         if (lastAttempt) {
           state.registerIndexInitializationProblem(name, e);
           if (extension instanceof CustomImplementationFileBasedIndexExtension) {

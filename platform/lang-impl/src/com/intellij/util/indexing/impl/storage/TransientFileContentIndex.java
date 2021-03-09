@@ -38,8 +38,8 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
     super(extension,
           new VfsAwareIndexStorageLayout<>() {
             @Override
-            public @NotNull IndexStorage<Key, Value> createOrClearIndexStorage() throws IOException {
-              return new TransientChangesIndexStorage<>(indexStorageLayout.createOrClearIndexStorage(), extension.getName());
+            public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
+              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension.getName());
             }
 
             @Override
@@ -48,8 +48,13 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
             }
 
             @Override
-            public @Nullable ForwardIndex createOrClearForwardIndex() throws IOException {
-              return indexStorageLayout.createOrClearForwardIndex();
+            public void clearIndexData() {
+              indexStorageLayout.clearIndexData();
+            }
+
+            @Override
+            public @Nullable ForwardIndex openForwardIndex() throws IOException {
+              return indexStorageLayout.openForwardIndex();
             }
 
             @Override
