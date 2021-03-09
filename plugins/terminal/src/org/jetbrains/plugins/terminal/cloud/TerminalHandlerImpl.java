@@ -66,7 +66,9 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
   private class MyCopyActionKeyListener extends KeyAdapter {
     @Override
     public void keyPressed(KeyEvent e) {
-      myTerminalPanel.getActions().stream().filter(a -> a.getName().equals("Copy")).findFirst().ifPresent(a -> {
+      var copyActionName = myTerminalWidget.getSettingsProvider().getCopyActionPresentation().getName();
+
+      myTerminalPanel.getActions().stream().filter(a -> a.getName().equals(copyActionName)).findFirst().ifPresent(a -> {
         if (a.matches(e) && a.isEnabled(e)) {
           a.actionPerformed(e);
         }
