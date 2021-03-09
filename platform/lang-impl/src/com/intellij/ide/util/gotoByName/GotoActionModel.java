@@ -15,7 +15,6 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -39,7 +38,6 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -54,6 +52,8 @@ import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,18 +61,17 @@ import java.util.regex.Pattern;
 public final class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Logger LOG = Logger.getInstance(GotoActionModel.class);
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
+  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  @Nullable private final Project myProject;
-  @Nullable private final WeakReference<Editor> myEditor;
+  private final @Nullable Project myProject;
+  private final @Nullable WeakReference<Editor> myEditor;
   private final DataContext myDataContext;
-  private final UpdateSession myUpdateSession;
+  private final AtomicReference<UpdateSession> myUpdateSession;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
 
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-
-  private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
+  private final Map<AnAction, GroupMapping> myActionGroups = new ConcurrentHashMap<>();
 
   private final NotNullLazyValue<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
     NotNullLazyValue.volatileLazy(() -> {
@@ -93,11 +92,18 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     myProject = project;
     myEditor = new WeakReference<>(editor);
     myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
-    myUpdateSession = Utils.getOrCreateUpdateSession(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext));
-    buildActions();
+    myUpdateSession = new AtomicReference<>(newUpdateSession());
   }
 
-  private void buildActions() {
+  @NotNull
+  private UpdateSession newUpdateSession() {
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext);
+    return Utils.getOrCreateUpdateSession(event);
+  }
+
+  void buildGroupMappings() {
+    if (!myActionGroups.isEmpty()) return;
+
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
     assert mainMenu != null && keymapOthers != null;
@@ -160,14 +166,9 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   @ApiStatus.Internal
-  public void rebuildActions() {
+  public void clearCaches() {
     myActionGroups.clear();
-    buildActions();
-  }
-
-  @ApiStatus.Internal
-  public void clearActions() {
-    myActionGroups.clear();
+    myUpdateSession.set(newUpdateSession());
   }
 
   public static class MatchedValue {
@@ -282,11 +283,11 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public ListCellRenderer<?> getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
   }
 
-  private int compareActions(@Nullable AnAction first, @Nullable AnAction second) {
+  private int compareActions(@NotNull AnAction first, @NotNull AnAction second) {
     return myOrderStrategy.compare(first, second);
   }
 
@@ -360,19 +361,21 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
-    DataContext context = myProject == null ? DataContext.EMPTY_CONTEXT : SimpleDataContext.getProjectContext(myProject);
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, context);
-    AnAction[] actions;
-    try {
-      actions = SlowOperations.allowSlowOperations(() -> group.getChildren(event));
-    }
-    catch (PluginException e) {
-      LOG.error(e);
-      return;
-    }
+    if (actionGroups.containsKey(group)) return;
 
-    boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
-    if (!hasMeaningfulChildren) {
+    List<? extends AnAction> actions = ReadAction.nonBlocking(() -> {
+      try {
+        return myUpdateSession.get().children(group);
+      }
+      catch (PluginException e) {
+        LOG.error(e);
+        return Collections.<AnAction>emptyList();
+      }
+    })
+      .executeSynchronously();
+
+    boolean hasRegisteredChild = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
+    if (!hasRegisteredChild) {
       GroupMapping mapping = actionGroups.computeIfAbsent(group, (key) -> new GroupMapping(showNonPopupGroups));
       mapping.addPath(path);
     }
@@ -473,7 +476,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   }
 
   UpdateSession getUpdateSession() {
-    return myUpdateSession;
+    return myUpdateSession.get();
   }
 
   @NotNull
@@ -877,7 +880,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @ActionText
     private static String cutName(@ActionText String name,
                                   @NlsSafe String shortcutText,
-                                  JList list,
+                                  JList<?> list,
                                   JPanel panel,
                                   SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
@@ -909,7 +912,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return name.trim() + "...";
     }
 
-    private static int calcFreeSpace(JList list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
+    private static int calcFreeSpace(JList<?> list, JPanel panel, SimpleColoredComponent nameComponent, String shortcutText) {
       BorderLayout layout = (BorderLayout)panel.getLayout();
       Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
       Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);

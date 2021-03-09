@@ -109,6 +109,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   public boolean filterElements(@NotNull String pattern, @NotNull Processor<? super MatchedValue> consumer) {
+    myModel.buildGroupMappings();
+
     if (!processAbbreviations(pattern, consumer)) return false;
     if (!processActions(pattern, consumer)) return false;
     if (!processTopHits(pattern, consumer)) return false;
