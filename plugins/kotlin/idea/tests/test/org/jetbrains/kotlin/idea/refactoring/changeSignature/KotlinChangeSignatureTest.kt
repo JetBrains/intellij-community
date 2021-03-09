@@ -688,6 +688,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(KotlinParameterInfo(originalBaseFunctionDescriptor, -1, "s", KotlinTypeInfo(false, BUILT_INS.stringType)))
     }
 
+    fun testRemoveParameterFromFunctionWithReceiver() = doJavaTest { newParameters.clear() }
+
+    fun testAddParameterFromFunctionWithReceiver() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
+
     fun testChangeJavaMethod() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiType.INT)) }
 
     fun testChangeJavaMethodWithPrimitiveType() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType)) }

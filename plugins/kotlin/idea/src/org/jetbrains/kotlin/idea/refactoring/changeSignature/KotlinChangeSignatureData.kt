@@ -60,7 +60,7 @@ class KotlinChangeSignatureData(
 
     private fun createReceiverInfoIfNeeded(): KotlinParameterInfo? {
         val receiverType = baseDescriptor.extensionReceiverParameter?.type ?: return null
-        val receiverName = suggestReceiverNames(baseDeclaration.project, baseDescriptor).first()
+        val receiverName = suggestReceiverNames(baseDeclaration.project, baseDescriptor).firstOrNull() ?: return null
         val receiverTypeText = (baseDeclaration as? KtCallableDeclaration)?.receiverTypeReference?.text
             ?: IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(receiverType)
         return KotlinParameterInfo(
