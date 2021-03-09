@@ -133,9 +133,10 @@ public class FragmentHintManager {
         JComponent component = fragment.getComponent();
         if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
           JComponent hintComponent = createHintComponent(fragment);
-          Point northEastOf = RelativePoint.getNorthEastOf(component).getScreenPoint();
-          northEastOf.translate(-hintComponent.getPreferredSize().width, -hintComponent.getPreferredSize().height + 5);
-          HintManager.getInstance().showHint(hintComponent, RelativePoint.fromScreen(northEastOf), HintManager.HIDE_BY_ANY_KEY, -1);
+          Rectangle rect = component.getVisibleRect();
+          RelativePoint point = new RelativePoint(component, new Point(rect.x + rect.width - hintComponent.getPreferredSize().width,
+                                                                       rect.y - hintComponent.getPreferredSize().height + 5));
+          HintManager.getInstance().showHint(hintComponent, point, HintManager.HIDE_BY_ANY_KEY, -1);
         }
       }
     }
