@@ -2,6 +2,7 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,14 @@ public final class EditorConfigIntellijNameUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isIndentProperty(@NotNull String propertyName) {
+    propertyName = StringUtil.trimStart(propertyName, IDE_PREFIX);
+    return "indent_size".equals(propertyName) ||
+           "indent_style".equals(propertyName) ||
+           "tab_width".equals(propertyName) ||
+           "continuation_indent_size".equals(propertyName);
   }
 
 }
