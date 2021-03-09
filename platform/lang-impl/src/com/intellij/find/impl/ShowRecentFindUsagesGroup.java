@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ShowRecentFindUsagesGroup extends ActionGroup {
+public class ShowRecentFindUsagesGroup extends ActionGroup implements UpdateInBackground {
   @Override
   public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
