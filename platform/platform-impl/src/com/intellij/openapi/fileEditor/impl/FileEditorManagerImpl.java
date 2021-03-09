@@ -726,20 +726,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     EditorWindow wndToOpenIn = null;
-    if (searchForSplitter && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
+    if (searchForSplitter) {
+      boolean selectionRequired = UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE;
       Set<EditorsSplitters> all = getAllSplitters();
       EditorsSplitters active = getActiveSplittersSync();
-      if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
-        wndToOpenIn = active.getCurrentWindow();
+      EditorWindow activeCurrentWindow = active.getCurrentWindow();
+      if (activeCurrentWindow != null
+          && activeCurrentWindow.isFileOpen(file)
+          && (!selectionRequired || file.equals(activeCurrentWindow.getSelectedFile()))) {
+        wndToOpenIn = activeCurrentWindow;
       }
       else {
         for (EditorsSplitters splitters : all) {
-          EditorWindow window = splitters.getCurrentWindow();
-          if (window == null) continue;
-
-          if (window.isFileOpen(file)) {
-            wndToOpenIn = window;
-            break;
+          EditorWindow[] windows = splitters.getWindows();
+          for (EditorWindow window : windows) {
+            if (window.isFileOpen(file)
+                && (!selectionRequired || file.equals(window.getSelectedFile()))) {
+              wndToOpenIn = window;
+              break;
+            }
           }
         }
       }
