@@ -601,7 +601,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     FileEditorManagerEx editorManager = getFileEditorManager();
     VirtualFile file = fileEditor.getFile();
-    LOG.assertTrue(file != null);
+    LOG.assertTrue(file != null, fileEditor.getClass().getName() + " getFile() returned null");
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow(), getCaretPosition(fileEditor),
