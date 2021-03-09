@@ -82,6 +82,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private WindowResizeListener myResizeListener;
   private WindowMoveListener myMoveListener;
   private JPanel myHeaderPanel;
+  private JPanel myBottomPanel;
   private CaptionPanel myCaption;
   private JComponent myComponent;
   private SpeedSearch mySpeedSearchFoundInRootComponent;
@@ -122,6 +123,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private boolean myHeaderAlwaysFocusable;
   private boolean myMovable;
   private JComponent myHeaderComponent;
+  private JComponent myBottomComponent;
 
   InputEvent myDisposeEvent;
 
@@ -164,7 +166,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
-  private JLabel myAdComponent;
+  private JComponent myAdComponent;
   private boolean myDisposed;
   private boolean myNormalWindowLevel;
 
@@ -271,6 +273,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
 
     myHeaderPanel = new JPanel(new BorderLayout());
+    myBottomPanel = new JPanel(new BorderLayout());
 
     if (caption != null) {
       if (!caption.isEmpty()) {
@@ -306,6 +309,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     myHeaderPanel.add(myCaption, BorderLayout.NORTH);
     myContent.add(myHeaderPanel, BorderLayout.NORTH);
+    myContent.add(myBottomPanel, BorderLayout.SOUTH);
 
     myForcedHeavyweight = true;
     myResizable = resizable;
@@ -382,16 +386,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   @Override
   public void setAdText(@NotNull String s, int alignment) {
-    if (myAdComponent == null) {
-      myAdComponent = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
-      myContent.add(myAdComponent, BorderLayout.SOUTH);
-      pack(false, true);
+    JLabel label;
+    if (myAdComponent == null || !(myAdComponent instanceof JLabel)) {
+      label = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
+      setFooterComponent(label);
+    } else {
+      label = (JLabel)myAdComponent;
     }
 
+    label.setVisible(StringUtil.isNotEmpty(s));
+    label.setText(wrapToSize(s));
+    label.setHorizontalAlignment(alignment);
+  }
+
+  protected void setFooterComponent(JComponent c) {
+    if (myAdComponent != null) {
+      myContent.remove(myAdComponent);
+    }
+
+    myContent.add(c, BorderLayout.SOUTH);
+    pack(false, true);
+    myAdComponent = c;
+
     Dimension prefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
-    myAdComponent.setVisible(StringUtil.isNotEmpty(s));
-    myAdComponent.setText(wrapToSize(s));
-    myAdComponent.setHorizontalAlignment(alignment);
 
     Dimension newPrefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
     int delta = newPrefSize.height - prefSize.height;
