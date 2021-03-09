@@ -61,7 +61,7 @@ internal object LessonExecutorUtil {
     balloonPanel.isOpaque = false
     balloonPanel.layout = BoxLayout(balloonPanel, BoxLayout.Y_AXIS)
     var height = preferredSize.height + 16
-    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 2)) + 16
+    val width = (if (balloonConfig.width != 0) balloonConfig.width else (preferredSize.width + 6)) + 16
     balloonPanel.add(messagesPane)
     val gotItCallBack = balloonConfig.gotItCallBack
     val gotItButton = if (gotItCallBack != null) JButton().also {
