@@ -62,6 +62,8 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
 
   override fun resetPersistentState() = Unit
 
+  override fun resetPersistentState(indexId: ID<*, *>) = Unit
+
   override fun shutdown() = Unit
 
   override fun getVersion(): Int = 0
