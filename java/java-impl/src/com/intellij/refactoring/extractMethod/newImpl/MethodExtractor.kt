@@ -37,6 +37,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.NonNls
 
 class MethodExtractor {
 
@@ -70,7 +71,8 @@ class MethodExtractor {
           doInplaceExtract(editor, extractor, parameters.copy(methodName = methodName), popupSettings, suggestedNames)
         }
         else {
-          extractor.extractInDialog(parameters)
+          val elements = ExtractSelector().suggestElementsToExtract(parameters.targetClass.containingFile, parameters.range)
+          extractor.extractInDialog(parameters.targetClass, elements, parameters.methodName, parameters.static)
         }
       }
     }
@@ -139,15 +141,9 @@ class MethodExtractor {
 
   private fun doRefactoring(options: ExtractOptions) {
     try {
-      val beforeData = RefactoringEventData()
-      beforeData.addElements(options.elements.toTypedArray())
-      options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-        .refactoringStarted("refactoring.extract.method", beforeData)
+      sendRefactoringStartedEvent(options.elements.toTypedArray())
       val extractedElements = extractMethod(options)
-      val data = RefactoringEventData()
-      data.addElement(extractedElements.method)
-      options.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-        .refactoringDone("refactoring.extract.method", data)
+      sendRefactoringDoneEvent(extractedElements.method)
     }
     catch (e: IncorrectOperationException) {
       LOG.error(e)
@@ -308,6 +304,23 @@ class MethodExtractor {
 
   companion object {
     private val LOG = Logger.getInstance(MethodExtractor::class.java)
+
+    @NonNls const val refactoringId: String = "refactoring.extract.method"
+
+    internal fun sendRefactoringDoneEvent(extractedMethod: PsiMethod) {
+      val data = RefactoringEventData()
+      data.addElement(extractedMethod)
+      extractedMethod.project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringDone(refactoringId, data)
+    }
+
+    internal fun sendRefactoringStartedEvent(elements: Array<PsiElement>) {
+      val project = elements.firstOrNull()?.project ?: return
+      val data = RefactoringEventData()
+      data.addElements(elements)
+      val publisher = project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+      publisher.refactoringStarted(refactoringId, data)
+    }
   }
 }
 

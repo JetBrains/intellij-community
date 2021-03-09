@@ -4,12 +4,13 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 
 interface InplaceExtractMethodProvider {
-  fun extract(parameters: ExtractParameters): Pair<PsiMethod, PsiMethodCallExpression>
-  fun extractInDialog(parameters: ExtractParameters)
+  fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression>
+  fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean)
   fun postprocess(editor: Editor, method: PsiMethod){}
 }
 
