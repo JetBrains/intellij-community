@@ -26,6 +26,8 @@ import javax.swing.JLabel
 import javax.swing.border.Border
 
 internal object LoginComponents {
+  @NlsSafe private const val organizationUrlPlaceholder: String = "company.jetbrains.space"
+
   fun LayoutBuilder.loginPanel(
     state: SpaceLoginState.Disconnected,
     statsLoginPlace: SpaceStatsCounterCollector.LoginPlace,
@@ -36,8 +38,8 @@ internal object LoginComponents {
     val serverField = organizationUrlTextField(
       state.server,
       30,
-      if (withOrganizationsUrlLabel) SpaceBundle.message("login.input.field.organizations.url.placeholder")
-      else SpaceBundle.message("login.input.field.organizations.url.large.placeholder")
+      if (withOrganizationsUrlLabel) organizationUrlPlaceholder
+      else SpaceBundle.message("login.input.field.organizations.url.large.placeholder", organizationUrlPlaceholder)
     )
 
     val loginButton = loginButton(statsLoginPlace, default = isLoginActionDefault, onClick = {
@@ -74,7 +76,7 @@ internal object LoginComponents {
   internal fun organizationUrlTextField(
     @NlsSafe initialText: String = "",
     columns: Int = 0,
-    @NlsContexts.StatusText placeholderText: String = SpaceBundle.message("login.input.field.organizations.url.placeholder")
+    @NlsContexts.StatusText placeholderText: String = organizationUrlPlaceholder
   ): JBTextField {
     return JBTextField(initialText, columns).apply {
       emptyText.text = placeholderText
