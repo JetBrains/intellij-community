@@ -1001,6 +1001,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
     };
   }
 
+  @Override
   public @NotNull IntentionAction createConvertInterfaceContainingNotAllowedToClassFix(@NotNull PsiClass aClass) {
     return new ConvertInterfaceContainingNotAllowedToClassFix(aClass);
   }
