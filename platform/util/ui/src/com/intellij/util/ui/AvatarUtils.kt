@@ -44,33 +44,6 @@ object AvatarUtils {
   }
 }
 
-private object ColorPalette {
-  val gradients
-    get() = arrayOf(
-      Color(0x60A800) to Color(0xD5CA00),
-      Color(0x0A81F6) to Color(0x0A81F6),
-      Color(0xAB3AF2) to Color(0xE40568),
-      Color(0x21D370) to Color(0x03E9E1),
-      Color(0x765AF8) to Color(0x5A91F8),
-      Color(0x9F2AFF) to Color(0xE9A80B),
-      Color(0x3BA1FF) to Color(0x36E97D),
-      Color(0x9E54FF) to Color(0x0ACFF6),
-      Color(0xD50F6B) to Color(0xE73AE8),
-      Color(0x00C243) to Color(0x00FFFF),
-      Color(0xB345F1) to Color(0x669DFF),
-      Color(0xED5502) to Color(0xE73AE8),
-      Color(0x4BE098) to Color(0x627FFF),
-      Color(0x765AF8) to Color(0xC059EE),
-      Color(0xED358C) to Color(0xDBED18),
-      Color(0x168BFA) to Color(0x26F7C7),
-      Color(0x9039D0) to Color(0xC239D0),
-      Color(0xED358C) to Color(0xF9902E),
-      Color(0x9D4CFF) to Color(0x39D3C3),
-      Color(0x9F2AFF) to Color(0xFD56FD),
-      Color(0xFF7500) to Color(0xFFCA00)
-    )
-}
-
 internal object Avatars {
   // "John Smith" -> "JS"
   fun initials(text: String): String {
@@ -104,4 +77,31 @@ internal object Avatars {
     }
     return palette[keyCode]
   }
+}
+
+private object ColorPalette {
+  val gradients
+    get() = arrayOf(
+      Color(0x60A800) to Color(0xD5CA00),
+      Color(0x0A81F6) to Color(0x0A81F6),
+      Color(0xAB3AF2) to Color(0xE40568),
+      Color(0x21D370) to Color(0x03E9E1),
+      Color(0x765AF8) to Color(0x5A91F8),
+      Color(0x9F2AFF) to Color(0xE9A80B),
+      Color(0x3BA1FF) to Color(0x36E97D),
+      Color(0x9E54FF) to Color(0x0ACFF6),
+      Color(0xD50F6B) to Color(0xE73AE8),
+      Color(0x00C243) to Color(0x00FFFF),
+      Color(0xB345F1) to Color(0x669DFF),
+      Color(0xED5502) to Color(0xE73AE8),
+      Color(0x4BE098) to Color(0x627FFF),
+      Color(0x765AF8) to Color(0xC059EE),
+      Color(0xED358C) to Color(0xDBED18),
+      Color(0x168BFA) to Color(0x26F7C7),
+      Color(0x9039D0) to Color(0xC239D0),
+      Color(0xED358C) to Color(0xF9902E),
+      Color(0x9D4CFF) to Color(0x39D3C3),
+      Color(0x9F2AFF) to Color(0xFD56FD),
+      Color(0xFF7500) to Color(0xFFCA00)
+    )
 }
