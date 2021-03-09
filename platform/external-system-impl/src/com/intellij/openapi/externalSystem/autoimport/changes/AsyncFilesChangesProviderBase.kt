@@ -4,9 +4,9 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
-import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
 import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
 import com.intellij.util.EventDispatcher
+import java.util.concurrent.ConcurrentHashMap
 
 class AsyncFilesChangesProviderBase(
   private val filesProvider: AsyncSupplier<Set<String>>,
@@ -18,30 +18,33 @@ class AsyncFilesChangesProviderBase(
     eventDispatcher.addListener(listener, parentDisposable)
   }
 
-  private val updatedFiles = HashMap<String, ModificationData>()
+  private val updatedFiles = ConcurrentHashMap<String, ModificationData>()
 
-  override fun init() {}
+  override fun init() {
+    updatedFiles.clear()
+  }
 
   override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
     updatedFiles[path] = ModificationData(modificationStamp, modificationType)
   }
 
   override fun apply() {
-    filesProvider.supply({ filesToWatch ->
-      invokeOnEdt(filesProvider::isBlocking, {
-        val index = PathPrefixTreeMap<Boolean>()
-        filesToWatch.forEach { index[it] = true }
-        eventDispatcher.multicaster.init()
-        for ((path, modificationData) in updatedFiles) {
-          val (modificationStamp, modificationType) = modificationData
-          for (relevantPath in index.getAllAncestorKeys(path)) {
-            eventDispatcher.multicaster.onFileChange(relevantPath, modificationStamp, modificationType)
+    val updatedFiles = HashMap(updatedFiles)
+    if (updatedFiles.isNotEmpty()) {
+      filesProvider.supply(
+        { filesToWatch ->
+          val index = PathPrefixTreeMap<Boolean>()
+          filesToWatch.forEach { index[it] = true }
+          eventDispatcher.multicaster.init()
+          for ((path, modificationData) in updatedFiles) {
+            val (modificationStamp, modificationType) = modificationData
+            for (relevantPath in index.getAllAncestorKeys(path)) {
+              eventDispatcher.multicaster.onFileChange(relevantPath, modificationStamp, modificationType)
+            }
           }
-        }
-        eventDispatcher.multicaster.apply()
-        updatedFiles.clear()
-      }, parentDisposable)
-    }, parentDisposable)
+          eventDispatcher.multicaster.apply()
+        }, parentDisposable)
+    }
   }
 
   private data class ModificationData(val modificationStamp: Long, val modificationType: ModificationType)

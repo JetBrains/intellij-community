@@ -4,10 +4,16 @@ package com.intellij.openapi.externalSystem.autoimport.changes
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import java.util.*
 
+/**
+ * Describes interface for listening modifications in files or documents.
+ * All listener functions can be called with write/read/none contexts.
+ * Call sequence of [init], [onFileChange] and [apply] must be called on the same thread,
+ * but threads may be different for different call sequences.
+ */
 interface FilesChangesListener : EventListener {
-  fun init()
+  fun init() {}
 
-  fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType)
+  fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {}
 
-  fun apply()
+  fun apply() {}
 }
