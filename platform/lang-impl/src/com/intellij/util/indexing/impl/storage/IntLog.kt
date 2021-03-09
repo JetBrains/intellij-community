@@ -212,7 +212,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       val oldDataFile = getDataFile()
       val oldMapping = AppendableStorageBackedByResizableMappedFile(oldDataFile,
                                                                     0,
-                                                                    null,
+                                                                    storageLockContext,
                                                                     PagedFileStorage.MB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)
@@ -241,7 +241,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       val newDataFile = oldDataFile.resolveSibling(newDataFileName)
       val newMapping = AppendableStorageBackedByResizableMappedFile(newDataFile,
                                                                     32 * 2 * data.size,
-                                                                    null,
+                                                                    storageLockContext,
                                                                     PagedFileStorage.MB,
                                                                     true,
                                                                     IntPairInArrayKeyDescriptor)

@@ -40,7 +40,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull SLRUMap<Integer, Integer> myLogCache;
-  private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler = new MemorySnapshotHandler();
+  private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler;
+
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -65,6 +66,8 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
+
+    myMemorySnapshotHandler = new MemorySnapshotHandler();
   }
 
   @Override
