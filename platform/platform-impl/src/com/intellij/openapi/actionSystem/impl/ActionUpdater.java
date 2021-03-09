@@ -498,8 +498,13 @@ final class ActionUpdater {
     return new UpdateSession() {
       @NotNull
       @Override
-      public Iterable<? extends AnAction> children(@NotNull ActionGroup actionGroup) {
+      public Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup) {
         return iterateGroupChildren(actionGroup, strategy);
+      }
+
+      @Override
+      public @NotNull List<? extends AnAction> children(@NotNull ActionGroup actionGroup) {
+        return getGroupChildren(actionGroup, strategy);
       }
 
       @NotNull
