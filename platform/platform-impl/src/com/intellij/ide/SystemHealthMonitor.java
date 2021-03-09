@@ -7,7 +7,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
+import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
@@ -176,6 +179,19 @@ final class SystemHealthMonitor extends PreloadingActivity {
     if (!usedVars.isEmpty()) {
       showNotification("vm.options.env.vars", null, String.join(", ", usedVars));
     }
+
+    StartupUtil.getShellEnvLoadingFuture().thenAcceptAsync(result -> {
+      if (result == Boolean.FALSE) {
+        NotificationAction action = null;
+        if (RevealFileAction.isSupported()) {
+          action = NotificationAction.createSimpleExpiring(
+            ActionsBundle.message("show.log.notification.text"), () -> RevealFileAction.openFile(Path.of(PathManager.getLogPath(), "idea.log")));
+        }
+        String appName = ApplicationNamesInfo.getInstance().getFullProductName();
+        String shell = System.getenv("SHELL");
+        showNotification("shell.env.loading.failed", action, appName, shell);
+      }
+    }, AppExecutorUtil.getAppExecutorService());
   }
 
   private static void checkSignalBlocking() {

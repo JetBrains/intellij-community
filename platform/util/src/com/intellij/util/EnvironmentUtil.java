@@ -95,25 +95,27 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static void loadEnvironment(@NotNull Path reader, @NotNull Runnable callback) {
+  public static void loadEnvironment(@NotNull Path reader, @NotNull CompletableFuture<Boolean> callback) {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
-      callback.run();
+      callback.complete(null);
       return;
     }
 
     ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
+      Boolean result = Boolean.TRUE;
       try {
         Map<String, String> env = getShellEnv(reader);
         setCharsetVar(env);
         return Collections.unmodifiableMap(env);
       }
       catch (Throwable t) {
+        result = Boolean.FALSE;
         LOG.warn("can't get shell environment", t);
         return getSystemEnv();
       }
       finally {
-        callback.run();
+        callback.complete(result);
       }
     }, AppExecutorUtil.getAppExecutorService()));
   }
