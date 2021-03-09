@@ -682,26 +682,6 @@ public final class ExternalSystemUtil {
     }
   }
 
-  @Deprecated
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public static boolean confirmLoadingUntrustedProject(
-    @NotNull Project project,
-    @NotNull Supplier<Boolean> confirmation,
-    ProjectSystemId... systemIds
-  ) {
-    return confirmLoadingUntrustedProject(project, confirmation.get(), Arrays.asList(systemIds));
-  }
-
-  @Deprecated
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public static boolean confirmLoadingUntrustedProject(
-    @NotNull Project project,
-    @NotNull Supplier<Boolean> confirmation,
-    @NotNull Collection<ProjectSystemId> systemIds
-  ) {
-    return confirmLoadingUntrustedProject(project, confirmation.get(), systemIds);
-  }
-
   public static boolean confirmLoadingUntrustedProject(
     @NotNull Project project,
     ProjectSystemId... systemIds
