@@ -256,6 +256,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
     for (Component component : myProfilePanelHolder.getComponents()) {
       component.setVisible(component == panel);
     }
+    myAbstractSchemesPanel.selectScheme(profile);
   }
 
   @NotNull
