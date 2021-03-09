@@ -26,13 +26,13 @@ class SearchTargetVariantsDataRule : GetDataRule {
       val editor = CommonDataKeys.EDITOR.getData(dataProvider)
       if (editor != null) {
         val offset = editor.caretModel.offset
-        val reference = TargetElementUtil.findReference(editor, offset)
-        if (reference != null) {
-          try {
+        try {
+          val reference = TargetElementUtil.findReference(editor, offset)
+          if (reference != null) {
             TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
           }
-          catch (ignore: IndexNotReadyException) { }
         }
+        catch (ignore: IndexNotReadyException) { }
       }
     }
     else {
