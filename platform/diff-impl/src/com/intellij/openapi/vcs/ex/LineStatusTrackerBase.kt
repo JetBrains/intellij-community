@@ -323,6 +323,20 @@ abstract class LineStatusTrackerBase<R : Range>(
 
 
   override fun toString(): String {
-    return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"
+    return javaClass.name + "(" +
+           "file=" +
+           virtualFile?.let { file ->
+             file.path +
+             (if (!file.isInLocalFileSystem) "@$file" else "") +
+             "@" + Integer.toHexString(file.hashCode())
+           } +
+           ", document=" +
+           document.let { doc ->
+             doc.toString() +
+             "@" + Integer.toHexString(doc.hashCode())
+           } +
+           ", isReleased=$isReleased" +
+           ")" +
+           "@" + Integer.toHexString(hashCode())
   }
 }
