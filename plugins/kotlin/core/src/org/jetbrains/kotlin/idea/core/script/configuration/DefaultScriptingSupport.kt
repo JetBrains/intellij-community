@@ -469,16 +469,23 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
     /**
      * Ensure that any configuration for [files] is loaded from cache
      */
+    fun allLoadedFromCache(files: List<KtFile>): Boolean {
+        if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
+
+        return files.none { file -> file.originalFile.virtualFile?.let { cache[it] == null } ?: false }
+    }
+
+    /**
+     * Ensure that any configuration for [files] is loaded from cache
+     */
     fun ensureLoadedFromCache(files: List<KtFile>): Boolean {
         if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
 
         var allLoaded = true
         manager.updater.update {
             files.forEach { file ->
-                val virtualFile = file.originalFile.virtualFile
-                if (virtualFile != null) {
-                    val state = cache[virtualFile]
-                    if (state == null) {
+                file.originalFile.virtualFile?.let { virtualFile ->
+                    cache[virtualFile] ?: run {
                         if (!reloadOutOfDateConfiguration(
                                 file,
                                 isFirstLoad = true,
