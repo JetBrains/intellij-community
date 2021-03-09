@@ -98,6 +98,9 @@ public abstract class DfaCondition {
       }
       DfType leftType = dfaLeft.getDfType();
       DfType rightType = dfaRight.getDfType();
+      if (dfaLeft == dfaRight && dfaLeft instanceof DfaBinOpValue) {
+        return fromBoolean(relationType.isSubRelation(RelationType.EQ));
+      }
 
       if (relationType == RelationType.EQ || relationType == RelationType.NE) {
         if (leftType instanceof DfConstantType) {

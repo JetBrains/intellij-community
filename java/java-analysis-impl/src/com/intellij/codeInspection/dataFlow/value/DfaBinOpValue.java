@@ -167,6 +167,11 @@ public final class DfaBinOpValue extends DfaValue {
         return myFactory.getInt(0);
       }
       if (op == LongRangeBinOp.MOD) {
+        if (leftDfType instanceof DfIntegralType && rightDfType instanceof DfIntegralType) {
+          if (withinDivisorRange(state, left, right, ((DfIntegralType)leftDfType).getRange(), ((DfIntegralType)rightDfType).getRange())) {
+            return left;
+          }
+        }
         if (left instanceof DfaVariableValue && rightConst != null) {
           long divisor = rightConst.longValue();
           if (divisor > 1 && divisor <= Long.SIZE) {
@@ -220,6 +225,62 @@ public final class DfaBinOpValue extends DfaValue {
         }
       }
       return null;
+    }
+
+    /**
+     * @param state memory state
+     * @param dividend dividend
+     * @param divisor divisor
+     * @param dividendRange
+     * @param divisorRange
+     * @return true if it's known that dividend is within divisor range
+     */
+    private static boolean withinDivisorRange(@NotNull DfaMemoryState state,
+                                              @NotNull DfaValue dividend,
+                                              @NotNull DfaValue divisor,
+                                              @NotNull LongRangeSet dividendRange,
+                                              @NotNull LongRangeSet divisorRange) {
+      if (divisorRange.min() > 0) {
+        // a % b where 0 <= a < b
+        if (dividendRange.min() > -divisorRange.max() && 
+            (dividendRange.max() < divisorRange.min() || state.getRelation(dividend, divisor) == RelationType.LT)) {
+          return true;
+        }
+        if (dividend instanceof DfaBinOpValue) {
+          LongRangeBinOp prevOp = ((DfaBinOpValue)dividend).getOperation();
+          if (prevOp == LongRangeBinOp.MINUS) {
+            boolean negative = dividendRange.max() <= 0;
+            boolean positive = dividendRange.min() >= 0;
+            if (positive || negative) {
+              DfaVariableValue left = ((DfaBinOpValue)dividend).getLeft();
+              DfaValue right = ((DfaBinOpValue)dividend).getRight();
+              DfIntegralType leftType = ObjectUtils.tryCast(state.getDfType(left), DfIntegralType.class);
+              DfIntegralType rightType = ObjectUtils.tryCast(state.getDfType(right), DfIntegralType.class);
+              if (leftType != null && rightType != null) {
+                LongRangeSet leftRange = leftType.getRange();
+                LongRangeSet rightRange = rightType.getRange();
+                if (leftRange.min() >= 0 && rightRange.min() >= 0) {
+                  // (a-b) % c where (a-b)<0 && a>=0 && b>=0 && b<c (or b==c && a>0)
+                  if (negative) {
+                    RelationType relation = state.getRelation(right, divisor);
+                    if (relation == RelationType.LT || relation == RelationType.EQ && leftRange.min() >= 1) {
+                      return true;
+                    }
+                  }
+                  // (a-b) % c where (a-b)>0 && a>=0 && b>=0 && a<c (or a==c && b>0)
+                  if (positive) {
+                    RelationType relation = state.getRelation(left, divisor);
+                    if (relation == RelationType.LT || relation == RelationType.EQ && rightRange.min() >= 1) {
+                      return true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return false;
     }
 
     @NotNull
