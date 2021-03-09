@@ -38,6 +38,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonProperties
@@ -47,6 +48,7 @@ import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
 import java.awt.Component
 import java.awt.event.KeyEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreePath
@@ -111,13 +113,11 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
                                        welcomeScreenRemark,
-                                       getCallBackActionId("NewDirectoryProject"),
-                                       getCallBackActionId("OpenFile"),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
     }
   }
 
-  private fun getCallBackActionId(actionId: String): Int {
+  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
     val action = ActionManager.getInstance().getAction(actionId) ?: error("No action with Id $actionId")
     return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
   }
@@ -132,7 +132,8 @@ class PythonOnboardingTour :
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
            LearningBalloonConfig(Balloon.Position.below, width = 0, duplicateMessage = false))
-      PythonLessonsBundle.message("python.onboarding.toggle.breakpoint", code("find_average"))
+      text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1", code("find_average")))
+      text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
     }
 
     highlightButtonByIdTask("Debug")
@@ -153,21 +154,21 @@ class PythonOnboardingTour :
 
     task {
       val needFirstAction = ActionManager.getInstance().getAction("ShowExecutionPoint")
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionToolbarImpl ->
+      triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" && checkFirstButton(ui, needFirstAction)
       }
     }
 
-    highlightAllFoundUi(clearPreviousHighlights = false, highlightInside = false) { ui: ActionToolbarImpl ->
+    highlightAllFoundUi(clearPreviousHighlights = false, highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
       ui.size.let { it.width > 0 && it.height > 0 } && ui.place == "DebuggerToolbar" &&
       checkFirstButton(ui, ActionManager.getInstance().getAction("Rerun"))
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.press.got.it.to.proceed", strong(UIBundle.message("got.it"))))
-      gotItStep(Balloon.Position.above, 500,
-                PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
-                                            strong(LessonsBundle.message("debug.workflow.lesson.name"))))
+      text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
+                                       strong(UIBundle.message("tool.window.name.debug")),
+                                       strong(LessonsBundle.message("debug.workflow.lesson.name"))))
+      proceedLink()
       restoreIfModified(sample)
     }
 
@@ -230,18 +231,26 @@ class PythonOnboardingTour :
     }
 
     task {
-      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ActionToolbarImpl ->
+      triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
         ui.place == "NavBarToolbar" || ui.place == "MainToolbar"
       }
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.temporary.configuration.description"))
-
-      text(PythonLessonsBundle.message("python.onboarding.press.got.it.to.proceed", strong(UIBundle.message("got.it"))))
-      gotItStep(Balloon.Position.below, 400, PythonLessonsBundle.message("python.onboarding.run.panel.description"))
+      text(PythonLessonsBundle.message("python.onboarding.temporary.configuration.description",
+                                       icon(AllIcons.Actions.Execute),
+                                       icon(AllIcons.Actions.StartDebugger),
+                                       icon(AllIcons.Actions.Profile),
+                                       icon(AllIcons.General.RunWithCoverage)))
+      proceedLink()
       restoreIfModified(sample)
     }
+  }
+
+  private fun TaskContext.proceedLink() {
+    val gotIt = CompletableFuture<Boolean>()
+    text(PythonLessonsBundle.message("python.onboarding.proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) }))
+    addStep(gotIt)
   }
 
   private fun LessonContext.openLearnToolwindow() {
@@ -252,7 +261,8 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar"),
+      text(
+        PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
            LearningBalloonConfig(Balloon.Position.atRight, width = 300))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
@@ -278,8 +288,10 @@ class PythonOnboardingTour :
     task {
       var collapsed = false
 
-      text(PythonLessonsBundle.message("python.onboarding.balloon.project.view", action("ActivateProjectToolWindow")),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 300))
+      text(PythonLessonsBundle.message("python.onboarding.project.view.description",
+                                       action("ActivateProjectToolWindow")))
+      text(PythonLessonsBundle.message("python.onboarding.balloon.project.view"),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       triggerByFoundPathAndHighlight { tree: JTree, path: TreePath ->
         val result = path.pathCount >= 1 && path.getPathComponent(0).toString().contains("PyCharmLearningProject")
         if (result) {
@@ -336,7 +348,8 @@ class PythonOnboardingTour :
     }
 
     task("EditorChooseLookupItem") {
-      text(PythonLessonsBundle.message("python.onboarding.choose.len.item", code("len(__obj)"), LessonUtil.rawEnter()))
+      text(PythonLessonsBundle.message("python.onboarding.choose.len.item",
+                                       code("len(__obj)"), LessonUtil.rawEnter()))
       trigger(it) {
         checkEditorModification(completionPosition, "/len()")
       }
@@ -344,7 +357,10 @@ class PythonOnboardingTour :
     }
 
     task("CodeCompletion") {
-      text(PythonLessonsBundle.message("python.onboarding.invoke.completion", code("()"), action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
+                                       code("values"),
+                                       code("()"),
+                                       action(it)))
       trigger(it)
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains("values")
@@ -354,7 +370,7 @@ class PythonOnboardingTour :
 
     task("EditorChooseLookupItem") {
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
-                                       code("values"), strong("val")))
+                                       strong("val"), code("values"), LessonUtil.rawEnter()))
       trigger(it) {
         checkEditorModification(completionPosition, "/len(values)")
       }
@@ -384,7 +400,8 @@ class PythonOnboardingTour :
     val reformatMessage = PyBundle.message("QFIX.reformat.file")
     caret(",6")
     task("ShowIntentionActions") {
-      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning", action(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.1"))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.warning.2", action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(reformatMessage)
       }
@@ -403,7 +420,8 @@ class PythonOnboardingTour :
     val returnTypeMessage = PyPsiBundle.message("INTN.specify.return.type.in.annotation")
     caret("find_average")
     task("ShowIntentionActions") {
-      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code", action(it), code("find_average")))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
+                                       code("find_average"), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains(returnTypeMessage)
       }
@@ -411,7 +429,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage)))
+      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage), LessonUtil.rawEnter()))
       stateCheck {
         // TODO: make normal check
         previous.sample.text != editor.document.text
@@ -441,18 +459,19 @@ class PythonOnboardingTour :
   }
 
   private fun LessonContext.searchEverywhereTasks() {
+    val toggleCase = ActionsBundle.message("action.EditorToggleCase.text")
     caret("AVERAGE", select = true)
     task("SearchEverywhere") {
-      text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere",
-                                       code("AVERAGE"), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere.1",
+                                       strong(toggleCase), code("AVERAGE")))
+      text(PythonLessonsBundle.message("python.onboarding.invoke.search.everywhere.2",
+                                       LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT), LessonUtil.actionName(it)))
       trigger(it)
       restoreIfModifiedOrMoved()
     }
 
-    val toggleCase = ActionsBundle.message("action.EditorToggleCase.text")
     task {
-      text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description", code("find_average")))
-      text(PythonLessonsBundle.message("python.onboarding.set.input.in.search.everywhere", strong("AVERAGE"), strong("case")))
+      text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description", strong("AVERAGE")))
       triggerByListItemAndHighlight { item ->
         (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
       }
@@ -466,6 +485,8 @@ class PythonOnboardingTour :
       restoreByUi(delayMillis = defaultRestoreDelay)
       PythonLessonsBundle.message("python.onboarding.apply.action", strong(toggleCase), LessonUtil.rawEnter())
     }
+
+    text(PythonLessonsBundle.message("python.onboarding.case.changed"))
   }
 
   private fun TaskRuntimeContext.runManager() = RunManager.getInstance(project)

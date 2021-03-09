@@ -67,7 +67,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     prepareTask()
 
     toggleBreakpointTask(sample, { logicalPosition }) {
-      LessonsBundle.message("debug.workflow.toggle.breakpoint", action("ToggleLineBreakpoint"))
+      text(LessonsBundle.message("debug.workflow.toggle.breakpoint",
+                                 action("ToggleLineBreakpoint")))
     }
 
     startDebugTask()
@@ -463,7 +464,7 @@ private val incorrectBreakPointsMessage = LessonsBundle.message("debug.workflow.
 fun LessonContext.toggleBreakpointTask(sample: LessonSample,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
-                                       @Nls message: TaskContext.() -> String) {
+                                       textContent: TaskContext.() -> Unit) {
   highlightBreakpointGutter(logicalPosition)
 
   prepareRuntimeTask {
@@ -474,7 +475,7 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample,
   }
 
   task {
-    text(message())
+    textContent()
     stateCheck {
       lineWithBreakpoints() == setOf(logicalPosition().line)
     }
