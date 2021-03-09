@@ -371,6 +371,8 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testPositionOnValForProperty() = doTestTargetElement<KtProperty>("v<caret>al a: String = \"\"")
     fun testPositionOnNameForProperty() = doTestTargetElement<KtProperty>("val <caret>a: String = \"\"")
 
+    fun testCaretAtReferenceAsValueParameter() = doTestConflict {  }
+
     fun testSynthesized() = doTestConflict()
 
     fun testPreferContainedInClass() = TestCase.assertEquals("param", createChangeInfo().newParameters[0].name)

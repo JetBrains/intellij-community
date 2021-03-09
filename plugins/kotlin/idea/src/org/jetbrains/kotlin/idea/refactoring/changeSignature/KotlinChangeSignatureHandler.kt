@@ -188,6 +188,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
             }
 
             return when (descriptor) {
+                is PropertyDescriptor -> descriptor
                 is FunctionDescriptor -> {
                     if (descriptor.valueParameters.any { it.varargElementType != null }) {
                         val message = KotlinBundle.message("error.cant.refactor.vararg.functions")
@@ -215,8 +216,6 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
 
                     descriptor
                 }
-
-                is PropertyDescriptor, is ValueParameterDescriptor -> descriptor as CallableDescriptor
 
                 else -> {
                     val message = RefactoringBundle.getCannotRefactorMessage(
