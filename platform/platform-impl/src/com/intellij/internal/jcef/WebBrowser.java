@@ -56,7 +56,7 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
     myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
-    myJBCefBrowser.setProperty(JBCefBrowser.FOCUS_ON_SHOW, Boolean.TRUE);
+    myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
 
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
@@ -143,8 +143,8 @@ public class WebBrowser extends AnAction implements DumbAware {
     menuItemFocus.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowser.FOCUS_ON_NAVIGATION));
-        myJBCefBrowser.setProperty(JBCefBrowser.FOCUS_ON_NAVIGATION, !value);
+        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowser.Properties.FOCUS_ON_NAVIGATION));
+        myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_NAVIGATION, !value);
         menuItemFocus.setText(value ? "Set focus on navigation" : "Unset focus on navigation");
       }
     });

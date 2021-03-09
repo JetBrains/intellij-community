@@ -43,13 +43,21 @@ import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 @SuppressWarnings("unused")
 public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
-   * Prevents the browser from providing credentials via the {@link CefRequestHandler#getAuthCredentials(CefBrowser, String, boolean, String, int, String, String, CefAuthCallback)} callback.
-   * <p></p>
-   * Accepts {@link Boolean} values. Use the property to handle the callback on your own.
-   *
    * @see #setProperty(String, Object)
    */
-  @NotNull public static final String NO_DEFAULT_AUTH_CREDENTIALS = "JBCefBrowserBase.noDefaultAuthCredentials";
+  public static class Properties {
+    /**
+     * Prevents the browser from providing credentials via the
+     * {@link CefRequestHandler#getAuthCredentials(CefBrowser, String, boolean, String, int, String, String, CefAuthCallback)} callback.
+     * <p></p>
+     * Accepts {@link Boolean} values. Use the property to handle the callback on your own.
+     */
+    public static final @NotNull String NO_DEFAULT_AUTH_CREDENTIALS = "JBCefBrowserBase.noDefaultAuthCredentials";
+
+    static {
+      PropertiesHelper.putType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
+    }
+  }
 
   @NotNull protected static final String BLANK_URI = "about:blank";
   @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
@@ -61,7 +69,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull private String myLastRequestedUrl = "";
   @NotNull private final Object myLastRequestedUrlLock = new Object();
   @Nullable private volatile ErrorPage myErrorPage;
-  @NotNull private final PropertyChangeHelper myPropertyChangeHelper = new PropertyChangeHelper();
+  @NotNull protected final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -173,7 +181,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                           String realm,
                                           String scheme, CefAuthCallback callback)
         {
-          if (isProxy && !Boolean.TRUE.equals(getProperty(NO_DEFAULT_AUTH_CREDENTIALS))) {
+          if (isProxy && !myPropertiesHelper.isTrue(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
             Credentials credentials = JBCefProxyAuthenticator.getCredentials(JBCefBrowserBase.this, host, port);
             if (credentials != null) {
               callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
@@ -436,19 +444,12 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
-   * Supports the following properties:
-   * <ul>
-   * <li> {@link #NO_DEFAULT_AUTH_CREDENTIALS}
-   * </ul>
+   * Supports {@link Properties}.
    *
    * @throws IllegalArgumentException if the value has wrong type or format
-   * @see JBCefBrowser#setProperty(String, Object)
    */
   public void setProperty(@NotNull String name, @Nullable Object value) {
-    if (NO_DEFAULT_AUTH_CREDENTIALS.equals(name) && !(value instanceof Boolean)) {
-      throw new IllegalArgumentException("JBCefBrowserBase.NO_DEFAULT_AUTH_CREDENTIALS should be java.lang.Boolean");
-    }
-    myPropertyChangeHelper.setProperty(name, value);
+    myPropertiesHelper.setProperty(name, value);
   }
 
   /**
@@ -456,21 +457,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   @Nullable
   public Object getProperty(@NotNull String name) {
-    return myPropertyChangeHelper.getProperty(name);
+    return myPropertiesHelper.getProperty(name);
   }
 
   /**
    * @see #setProperty(String, Object)
    */
   void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
-    myPropertyChangeHelper.addPropertyChangeListener(name, listener);
+    myPropertiesHelper.addPropertyChangeListener(name, listener);
   }
 
   /**
    * @see #setProperty(String, Object)
    */
   void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
-    myPropertyChangeHelper.removePropertyChangeListener(name, listener);
+    myPropertiesHelper.removePropertyChangeListener(name, listener);
   }
 
   private final class LoadDeferrer {
