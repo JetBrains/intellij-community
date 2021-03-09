@@ -53,7 +53,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
   }
 
   private fun collectUntrustedProjectModeProviders(): Collection<UntrustedProjectModeProvider> {
-    val providers = HashMap<ProjectSystemId, UntrustedProjectModeProvider>()
+    val providers = LinkedHashMap<ProjectSystemId, UntrustedProjectModeProvider>()
     ExternalSystemManager.EP_NAME.forEachExtensionSafe {
       providers[it.systemId] = ExternalSystemUntrustedProjectModeProvider(it)
     }
