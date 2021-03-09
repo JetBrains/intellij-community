@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.export;
 
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -13,7 +14,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.*;
@@ -157,13 +157,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
             }
             catch (Throwable ignored) { }
 
-            try {
-              String content = FileUtil.loadFile(tempFile);
-              LOG.error("Failed to export test results", ex, new Attachment("dump.xml", content));
-            }
-            catch (IOException exception) {
-              LOG.error("Failed to export test results", ex);
-            }
+            LOG.error("Failed to export test results", ex, AttachmentFactory.createAttachment(tempFile, false));
             FileUtil.delete(tempFile);
             return;
           }

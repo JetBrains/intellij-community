@@ -130,10 +130,12 @@ public final class TestsUIUtil {
     return "Test Results: " + toolWindowId;
   }
 
+  @NlsContexts.NotificationContent
   public static String getTestSummary(AbstractTestProxy proxy) {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
   }
 
+  @NlsContexts.SystemNotificationText
   public static String getTestShortSummary(AbstractTestProxy proxy) {
     return new TestResultPresentation(proxy).getPresentation().getText();
   }

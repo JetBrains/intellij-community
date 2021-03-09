@@ -287,6 +287,9 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     ToolWindowsPane pane = UIUtil.findComponentOfType(myParent, ToolWindowsPane.class);
     if (pane != null) {
       y -= pane.getBottomHeight();
+
+      //IDEA-263851 Notification balloon overlaps status bar
+      y -= pane.getY();
     }
     if (myParent instanceof IdeRootPane) {
       y -= ((IdeRootPane)myParent).getStatusBarHeight();
