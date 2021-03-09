@@ -1,25 +1,31 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.remote
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages.showErrorDialog
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.components.fields.ExtendableTextComponent
+import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.layout.*
-import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator
-import org.jetbrains.annotations.Nls
+import kotlinx.coroutines.*
 import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
 
 private val LOG = logger<GitDefineRemoteDialog>()
 
@@ -30,8 +36,14 @@ class GitDefineRemoteDialog(
   @NlsSafe initialUrl: String
 ) : DialogWrapper(repository.project) {
 
+  private val uiDispatcher get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
+  private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
+
   private val nameField = JBTextField(initialName, 30)
-  private val urlField = JBTextField(initialUrl, 30)
+  private val urlField = ExtendableTextField(initialUrl, 30)
+  private val loadingExtension = ExtendableTextComponent.Extension { AnimatedIcon.Default.INSTANCE }
+
+  private var urlAccessError: ValidationInfo? = null
 
   init {
     title = message("remotes.define.remote") + mention(repository)
@@ -50,21 +62,31 @@ class GitDefineRemoteDialog(
         nameField(growX).withValidationOnApply { nameNotBlank() ?: nameWellFormed() ?: nameUnique() }
       }
       row(message("remotes.define.remote.url")) {
-        urlField(growX).withValidationOnApply { urlNotBlank() }
+        urlField(growX)
+          .withValidationOnApply { urlNotBlank() ?: urlAccessError }
+          .applyToComponent { clearUrlAccessErrorOnTextChanged() }
       }
     }
 
   override fun doOKAction() {
-    val url = remoteUrl
-    val error = validateRemoteUnderModal(url)
-    
-    if (error != null) {
-      LOG.warn("Invalid remote. Name: $remoteName, URL: $url, error: $error")
-      showErrorDialog(repository.project, wrapInHtml(error), message("remotes.define.invalid.remote"))
+    scope.launch(uiDispatcher + CoroutineName("Define Remote - checking url")) {
+      setLoading(true)
+      try {
+        checkUrlAccess()
+      }
+      finally {
+        setLoading(false)
+      }
     }
-    else {
-      super.doOKAction()
-    }
+  }
+
+  private fun setLoading(isLoading: Boolean) {
+    nameField.isEnabled = !isLoading
+
+    urlField.apply { if (isLoading) addExtension(loadingExtension) else removeExtension(loadingExtension) }
+    urlField.isEnabled = !isLoading
+
+    isOKActionEnabled = !isLoading
   }
 
   private fun nameNotBlank(): ValidationInfo? =
@@ -86,16 +108,32 @@ class GitDefineRemoteDialog(
     if (remoteUrl.isNotEmpty()) null
     else ValidationInfo(message("remotes.define.empty.remote.url.validation.message"), urlField)
 
-  @Nls
-  private fun validateRemoteUnderModal(url: String): String? {
-    val result = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      ThrowableComputable<GitCommandResult, RuntimeException> { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) },
-      message("remotes.define.checking.url.progress.message"),
-      true,
-      repository.project
-    )
+  private fun JBTextField.clearUrlAccessErrorOnTextChanged() =
+    document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        urlAccessError = null
+      }
+    })
 
-    return if (result.success()) null
-    else message("remotes.define.remote.url.validation.fail.message") + " " + result.errorOutputAsHtmlString
+  private suspend fun checkUrlAccess() {
+    val url = remoteUrl
+    val result = lsRemote(url)
+
+    if (result.success()) {
+      urlAccessError = null
+      super.doOKAction()
+    }
+    else {
+      LOG.warn("Invalid remote. Name: $remoteName, URL: $url, error: ${result.errorOutputAsJoinedString}")
+
+      urlAccessError = ValidationInfo(result.errorOutputAsHtmlString, urlField).withOKEnabled()
+      IdeFocusManager.getGlobalInstance().requestFocus(urlField, true)
+      startTrackingValidation()
+    }
   }
+
+  private suspend fun lsRemote(url: String): GitCommandResult =
+    withContext(Dispatchers.IO) {
+      runUnderIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
+    }
 }
