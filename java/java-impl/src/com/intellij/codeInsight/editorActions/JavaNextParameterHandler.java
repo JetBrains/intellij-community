@@ -62,7 +62,7 @@ public class JavaNextParameterHandler extends EditorActionHandler {
 
                   boolean checkTabOut = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
                   int tabOutOffset = checkTabOut ? TabOutScopesTracker.getInstance().getScopeEndingAt(editor, offset) : -1;
-                  if (currentIndex >= 0 && tabOutOffset > -1 && rParOffset < tabOutOffset) {
+                  if (currentIndex >= 0 && (tabOutOffset <= offset || rParOffset < tabOutOffset)) {
                     PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
                     if (currentMethod.isVarArgs() || actualParameterCount < currentMethod.getParameterList().getParametersCount() &&
                                                      currentMethod.getParameterList().getParametersCount() > 1) {
