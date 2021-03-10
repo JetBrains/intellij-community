@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.combineWhenConditions
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
@@ -36,6 +38,7 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
         val commentSaver = CommentSaver(element)
 
         val factory = KtPsiFactory(element)
+        val isTrueOrFalseCondition = element.isTrueOrFalseCondition()
         val ifExpression = factory.buildExpression {
             val entries = element.entries
             for ((i, entry) in entries.withIndex()) {
@@ -43,7 +46,7 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
                     appendFixedText("else ")
                 }
                 val branch = entry.expression
-                if (entry.isElse) {
+                if (entry.isElse || (isTrueOrFalseCondition && i == 1)) {
                     appendExpression(branch)
                 } else {
                     val condition = factory.combineWhenConditions(entry.conditions, element.subjectExpression)
@@ -68,5 +71,17 @@ class WhenToIfIntention : SelfTargetingRangeIntention<KtWhenExpression>(
 
         val result = element.replace(ifExpression)
         commentSaver.restore(result)
+    }
+
+    private fun KtWhenExpression.isTrueOrFalseCondition(): Boolean {
+        val entries = this.entries
+        if (entries.size != 2) return false
+        val first = entries[0]?.conditionExpression() ?: return false
+        val second = entries[1]?.conditionExpression() ?: return false
+        return first.isTrueConstant() && second.isFalseConstant() || first.isFalseConstant() && second.isTrueConstant()
+    }
+
+    private fun KtWhenEntry.conditionExpression(): KtExpression? {
+        return (conditions.singleOrNull() as? KtWhenConditionWithExpression)?.expression
     }
 }

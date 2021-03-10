@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
+import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
@@ -27,7 +30,11 @@ fun KtWhenCondition.toExpression(subject: KtExpression?): KtExpression {
 
         is KtWhenConditionWithExpression -> {
             if (subject != null) {
-                factory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
+                when {
+                    expression?.isTrueConstant() == true -> subject
+                    expression?.isFalseConstant() == true -> subject.negate()
+                    else -> factory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
+                }
             } else {
                 expression!!
             }
