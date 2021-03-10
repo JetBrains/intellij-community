@@ -63,6 +63,7 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
@@ -778,7 +779,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         FileUtilRt.createParentDirs(myOutputFile);
-        try (FileWriter writer = new FileWriter(myOutputFile, StandardCharsets.UTF_8)) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(myOutputFile, StandardCharsets.UTF_8))) {
           handler.setResult(new StreamResult(writer));
           final SMTestProxy.SMRootTestProxy root = myRoot;
           final RunConfiguration configuration = myConfiguration;
