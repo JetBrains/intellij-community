@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.ide.plugins.newui.PluginLogo
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -17,6 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.NlsContexts.Label
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.BrowserLink
@@ -28,8 +28,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.FlowLayout
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -119,11 +117,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }.largeGapAfter()
       }
 
-      if (!(manager == ExternalUpdateManager.TOOLBOX || PropertiesComponent.getInstance().getBoolean("ide.hide.tb.spam"))) {
-        val rows = mutableListOf<Row>()
-
-        row(" ") { }.let { rows += it }
-        row { component(SeparatorComponent()) }.let { rows += it }
+      if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
+        row(" ") { }
+        row { component(SeparatorComponent()) }
         row {
           val logo = JBLabel(PluginLogo.reloadIcon(AllIcons.Nodes.Toolbox, 40, 40, null))
           logo.verticalAlignment = SwingConstants.TOP
@@ -137,21 +133,11 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           textBlock.add(linkLine, BorderLayout.NORTH)
           textBlock.add(MultiLineLabel(IdeBundle.message("updates.settings.recommend.toolbox.multiline.description")), BorderLayout.CENTER)
 
-          val close = JBLabel(AllIcons.Actions.Close, SwingConstants.RIGHT)
-          close.verticalAlignment = SwingConstants.TOP
-          close.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent) {
-              rows.forEach { it.visible = false }
-              PropertiesComponent.getInstance().setValue("ide.hide.tb.spam", true)
-            }
-          })
-
           val panel = JPanel(BorderLayout(JBUI.scale(10), 0))
           panel.add(logo, BorderLayout.WEST)
           panel.add(textBlock, BorderLayout.CENTER)
-          panel.add(close, BorderLayout.EAST)
           component(panel)
-        }.let { rows += it }
+        }
       }
 
       var wasEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
