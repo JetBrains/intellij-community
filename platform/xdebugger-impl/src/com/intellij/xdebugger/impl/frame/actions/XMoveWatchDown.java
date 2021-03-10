@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -6,7 +6,6 @@ import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
-import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
