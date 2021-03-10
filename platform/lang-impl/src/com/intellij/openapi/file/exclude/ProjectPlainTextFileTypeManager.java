@@ -34,7 +34,7 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   @Override
   public void loadState(@NotNull Element state) {
     super.loadState(state);
-    for (VirtualFile file : getFiles()) {
+    for (VirtualFile file : super.getFiles()) {
       OverrideFileTypeManager.getInstance().addFile(file, PlainTextFileType.INSTANCE);
     }
   }
