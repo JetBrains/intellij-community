@@ -101,7 +101,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private int myOrientation;
   private final ActionGroup myActionGroup;
   private final @NotNull String myPlace;
-  List<? extends AnAction> myVisibleActions;
+  private List<? extends AnAction> myVisibleActions;
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final boolean myDecorateButtons;
 
@@ -1105,17 +1105,21 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImpl(boolean forced) {
+    if (forced) myForcedUpdateRequested = true;
+    boolean forcedActual = forced || myForcedUpdateRequested;
+
     DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
                                               dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
-      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
-      myLastUpdate.onSuccess(actions -> actionsUpdated(forced, actions)).onProcessed(__ -> myLastUpdate = null);
+      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled)
+        .onSuccess(actions -> actionsUpdated(forcedActual, actions))
+        .onProcessed(__ -> myLastUpdate = null);
     }
     else {
-      actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
+      actionsUpdated(forcedActual, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();
@@ -1124,6 +1128,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private CancellablePromise<List<AnAction>> myLastUpdate;
+  private boolean myForcedUpdateRequested;
 
   protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
     return !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild();
@@ -1131,6 +1136,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
     if (forced || canUpdateActions(newVisibleActions)) {
+      myForcedUpdateRequested = false;
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
@@ -1187,6 +1193,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public boolean hasVisibleActions() {
     return !myVisibleActions.isEmpty();
+  }
+
+  public boolean hasVisibleAction(@NotNull AnAction action) {
+    return myVisibleActions.contains(action);
   }
 
   @Override
@@ -1412,8 +1422,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     @Override
-    public void afterActionPerformed(final @NotNull AnAction action, final @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (!myVisibleActions.contains(action)) {
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      if (!hasVisibleAction(action)) {
         onOtherActionPerformed();
       }
     }
