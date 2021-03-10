@@ -267,7 +267,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     // But it theoretically can be needed in case of several restores of dependent steps
     if (checkFunction()) return {}
 
-    val restoreRecorder = ActionsRecorder(project, editor.document, this)
+    val restoreRecorder = ActionsRecorder(project, selectedEditor?.document, this)
     currentRestoreRecorder = restoreRecorder
     val restoreFuture = restoreRecorder.futureCheck { checkFunction() }
     clearRestore = {

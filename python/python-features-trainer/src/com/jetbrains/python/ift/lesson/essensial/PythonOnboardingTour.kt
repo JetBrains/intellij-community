@@ -29,8 +29,9 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.StripeButton
 import com.intellij.ui.UIBundle
-import com.intellij.util.Alarm
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
@@ -357,7 +358,7 @@ class PythonOnboardingTour :
         if (result) {
           if (!collapsed) {
             invokeLater {
-              Alarm().addRequest({ tree.collapsePath(path) }, 300)
+              tree.collapsePath(path)
             }
           }
           collapsed = true
@@ -366,15 +367,16 @@ class PythonOnboardingTour :
       }
     }
 
-    // Why it breaks `previous` work
-    waitBeforeContinue(500)
+    fun isDemoFilePath(path: TreePath) =
+      path.pathCount >= 3 && path.getPathComponent(2).toString().contains(demoFileName)
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
            LearningBalloonConfig(Balloon.Position.atRight, width = 400))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
-        path.pathCount >= 3 && path.getPathComponent(2).toString().contains(demoFileName)
+        isDemoFilePath(path)
       }
+      restoreByUi()
     }
 
     task {
@@ -383,6 +385,13 @@ class PythonOnboardingTour :
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false
         virtualFile.name == demoFileName
+      }
+      restoreState {
+        (previous.ui as? JTree)?.takeIf { tree ->
+          TreeUtil.visitVisibleRows(tree, TreeVisitor { path ->
+            if (isDemoFilePath(path)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
+          }) != null
+        }?.isShowing?.not() ?: true
       }
     }
   }
