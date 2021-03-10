@@ -1273,7 +1273,12 @@ public final class UIUtil {
   }
 
   public static @NotNull Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? JBInsets.create(1, 0) : JBUI.emptyInsets();
+    return getListViewportPadding(false);
+  }
+
+  public static @NotNull Insets getListViewportPadding(boolean listWithAdvertiser) {
+    return listWithAdvertiser ? new JBInsets(4, 0, 8 , 0)
+                              : JBInsets.create(4, 0);
   }
 
   public static boolean isToUseDottedCellBorder() {
