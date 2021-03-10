@@ -691,10 +691,12 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         private fun gradlePathToQualifiedName(
             rootName: String,
             gradlePath: String
-        ): String = ((if (gradlePath.startsWith(":")) "$rootName." else "")
+        ): String? {
+            return ((if (gradlePath.startsWith(":")) "$rootName." else "")
                 + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
             .filter { s: String -> s.isNotEmpty() }
             .collect(Collectors.joining(".")))
+        }
 
         private fun getInternalModuleName(
             gradleModule: IdeaModule,
