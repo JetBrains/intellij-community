@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
@@ -40,10 +40,10 @@ class MavenGeneralSettingsWatcher private constructor(
 
   init {
     generalSettings.addListener(::fireSettingsChange, parentDisposable)
-    AsyncFilesChangesProviderImpl(ReadAsyncSupplier.readAction(::settingsFiles, backgroundExecutor, this))
-      .subscribeAsAsyncVirtualFilesChangesProvider(false, object : FilesChangesListener {
-        override fun apply() = fireSettingsXmlChange()
-      }, parentDisposable)
+    val filesProvider = ReadAsyncSupplier.readAction(::settingsFiles, backgroundExecutor, this)
+    subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
+      override fun apply() = fireSettingsXmlChange()
+    }, parentDisposable)
   }
 
   companion object {
