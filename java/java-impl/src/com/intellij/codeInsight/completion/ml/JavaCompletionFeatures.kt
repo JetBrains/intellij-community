@@ -119,14 +119,14 @@ internal object JavaCompletionFeatures {
     return null
   }
 
-  fun calculateVariables(environment: CompletionEnvironment) {
+  fun calculateVariables(environment: CompletionEnvironment) = try {
     val position = environment.parameters.position
     val variables = MacroUtil.getVariablesVisibleAt(position, "").toList()
     val names = variables.mapNotNull { it.name }.toSet()
     val types = variables.map { it.type }.toSet()
     val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
     environment.putUserData(VARIABLES_KEY, VariablesInfo(names, types, names2types))
-  }
+  } catch (ignored: PsiInvalidElementAccessException) {}
 
   fun getArgumentsVariablesMatchingFeatures(contextFeatures: ContextFeatures, method: PsiMethod): Map<String, MLFeatureValue> {
     val result = mutableMapOf<String, MLFeatureValue>()
