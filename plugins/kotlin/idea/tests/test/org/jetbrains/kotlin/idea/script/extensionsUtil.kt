@@ -6,11 +6,11 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 
 fun <T> addExtensionPointInTest(
-    pointName: ExtensionPointName<T>,
+    pointName: ProjectExtensionPointName<T>,
     project: Project,
     provider: T,
     testRootDisposable: Disposable

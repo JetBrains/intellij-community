@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -466,13 +466,10 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
         }
     }
 
-    /**
-     * Ensure that any configuration for [files] is loaded from cache
-     */
-    fun allLoadedFromCache(files: List<KtFile>): Boolean {
+    fun isLoadedFromCache(file: KtFile): Boolean {
         if (!ScriptDefinitionsManager.getInstance(project).isReady()) return false
 
-        return files.none { file -> file.originalFile.virtualFile?.let { cache[it] == null } ?: false }
+        return file.originalFile.virtualFile?.let { cache[it] != null } ?: true
     }
 
     /**
@@ -556,8 +553,8 @@ abstract class DefaultScriptingSupportBase(val manager: CompositeScriptConfigura
 }
 
 object DefaultScriptConfigurationManagerExtensions {
-    val LOADER: ExtensionPointName<ScriptConfigurationLoader> =
-        ExtensionPointName.create("org.jetbrains.kotlin.scripting.idea.loader")
+    val LOADER: ProjectExtensionPointName<ScriptConfigurationLoader> =
+        ProjectExtensionPointName("org.jetbrains.kotlin.scripting.idea.loader")
 }
 
 val ScriptConfigurationManager.testingBackgroundExecutor

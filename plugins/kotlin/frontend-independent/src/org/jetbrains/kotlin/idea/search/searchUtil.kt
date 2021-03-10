@@ -29,12 +29,11 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.util.CommonProcessors
+import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -43,7 +42,6 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import java.util.*
 
 infix fun SearchScope.and(otherScope: SearchScope): SearchScope = intersectWith(otherScope)
 infix fun SearchScope.or(otherScope: SearchScope): SearchScope = union(otherScope)
@@ -127,26 +125,25 @@ fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, progress)
 }
 
-fun findScriptsWithUsages(declaration: KtNamedDeclaration): List<KtFile> {
+fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor:(KtFile) -> Boolean): Boolean {
     val project = declaration.project
     val scope = PsiSearchHelper.getInstance(project).getUseScope(declaration) as? GlobalSearchScope
-        ?: return emptyList()
+        ?: return true
 
-    val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return emptyList()
-    val collector = CommonProcessors.CollectProcessor(ArrayList<VirtualFile>())
-    runReadAction {
-        FileBasedIndex.getInstance().getFilesWithKey(
-            IdIndex.NAME,
-            setOf(IdIndexEntry(name, true)),
-            collector,
-            scope
-        )
+    val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return true
+    val collector = Processor<VirtualFile> { file ->
+        val ktFile =
+            (PsiManager.getInstance(project).findFile(file) as? KtFile)?.takeIf { it.scriptDefinitionExists() } ?: return@Processor true
+        processor(ktFile)
     }
-    return collector.results
-        .mapNotNull { PsiManager.getInstance(project).findFile(it) as? KtFile }
-        .filter { it.scriptDefinitionExists() }
-        .toList()
+    return FileBasedIndex.getInstance().getFilesWithKey(
+        IdIndex.NAME,
+        setOf(IdIndexEntry(name, true)),
+        collector,
+        scope
+    )
 }
+
 
 data class ReceiverTypeSearcherInfo(
     val psiClass: PsiClass?,

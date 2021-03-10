@@ -14,8 +14,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -157,7 +157,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         @Suppress("DEPRECATION")
         val fromDeprecatedEP = Extensions.getArea(project).getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensions.toList()
             .map { ScriptTemplatesProviderAdapter(it).asSource() }
-        val fromNewEp = project.extensionArea.getExtensionPoint(ScriptDefinitionContributor.EP_NAME).extensions.toList()
+        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensions.toList()
             .map { it.asSource() }
         return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
     }
@@ -355,11 +355,11 @@ interface ScriptDefinitionContributor {
     fun isReady() = true
 
     companion object {
-        val EP_NAME: ExtensionPointName<ScriptDefinitionContributor> =
-            ExtensionPointName.create<ScriptDefinitionContributor>("org.jetbrains.kotlin.scriptDefinitionContributor")
+        val EP_NAME: ProjectExtensionPointName<ScriptDefinitionContributor> =
+            ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionContributor")
 
         inline fun <reified T> find(project: Project) =
-            project.extensionArea.getExtensionPoint(EP_NAME).extensionList.filterIsInstance<T>().firstOrNull()
+            EP_NAME.getPoint(project).extensionList.filterIsInstance<T>().firstOrNull()
     }
 }
 
