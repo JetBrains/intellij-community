@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
@@ -36,7 +36,7 @@ class RepositoryChangesBrowserNode(repository: Repository,
                                    private val colorManager: VcsLogColorManager = getColorManager(repository.project)) : ChangesBrowserNode<Repository>(repository) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    renderer.icon = ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
+    renderer.icon = getRepositoryIcon(getUserObject(), colorManager)
     renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
     appendCount(renderer)
 
@@ -67,5 +67,8 @@ class RepositoryChangesBrowserNode(repository: Repository,
   companion object {
     fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
       findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.asList(), project).keys)
+
+    fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
+      ColorIcon(ICON_SIZE, VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(repository.root)))
   }
 }
