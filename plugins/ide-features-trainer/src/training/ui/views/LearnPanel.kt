@@ -313,6 +313,10 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     scrollToMessage(needToShow())
   }
 
+  fun removeMessage(index: Int) {
+    lessonMessagePane.removeMessage(index)
+  }
+
   class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
 
     init {

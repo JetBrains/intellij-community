@@ -249,7 +249,10 @@ class PythonOnboardingTour :
 
   private fun TaskContext.proceedLink() {
     val gotIt = CompletableFuture<Boolean>()
-    text(PythonLessonsBundle.message("python.onboarding.proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) }))
+    runtimeText {
+      removeAfterDone = true
+      PythonLessonsBundle.message("python.onboarding.proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
+    }
     addStep(gotIt)
   }
 
