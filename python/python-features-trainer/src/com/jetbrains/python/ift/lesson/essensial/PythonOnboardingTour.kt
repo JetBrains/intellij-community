@@ -12,6 +12,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -47,9 +48,11 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
 import java.awt.Component
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -231,8 +234,19 @@ class PythonOnboardingTour :
     }
 
     task {
-      triggerByUiComponentAndHighlight(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.place == "NavBarToolbar" || ui.place == "MainToolbar"
+
+      triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
+        ui.takeIf { (ui.place == "NavBarToolbar" || ui.place == "MainToolbar") }?.let { toolbar ->
+          val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
+          val stop = ui.components.find { it is ActionButton && it.action == ActionManager.getInstance().getAction("Stop") }
+          if (configurations != null && stop != null) {
+            val x = configurations.x
+            val y = configurations.y
+            val width = stop.x + stop.width - x
+            val height = stop.y + stop.height - y
+            Rectangle(x, y, width, height)
+          } else null
+        }
       }
     }
 
