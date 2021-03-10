@@ -130,25 +130,7 @@ fun createDoNotAskOptionForHost(projectBasePath: Path): DialogWrapper.DoNotAskOp
 }
 
 private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult): DialogWrapper.DoNotAskOption? {
-  if (trustedCheckResult !is NotTrusted) return null
-
-  val url = trustedCheckResult.url
-  val origin = if (url == null) null else getOriginFromUrl(url)?.host
-  return if (origin != null) {
-    object : DialogWrapper.DoNotAskOption.Adapter() {
-      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        if (isSelected && exitCode == Messages.YES) {
-          service<TrustedHostsSettings>().setHostTrusted(origin, true)
-          TrustedProjectsStatistics.TRUST_HOST_CHECKBOX_SELECTED.log()
-        }
-      }
-
-      override fun getDoNotShowMessage(): String {
-        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
-      }
-    }
-  }
-  else null
+  return null
 }
 
 fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
@@ -174,12 +156,7 @@ private fun getImplicitTrustedCheckResult(projectDir: Path?): TrustedCheckResult
     TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log()
     return Trusted
   }
-  val url = getProjectOriginUrl(projectDir)
-  if (url != null && service<TrustedHostsSettings>().isUrlTrusted(url)) {
-    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_URL.log()
-    return Trusted
-  }
-  return NotTrusted(url)
+  return NotTrusted(null)
 }
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
