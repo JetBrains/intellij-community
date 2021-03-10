@@ -20,7 +20,6 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public final class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
@@ -38,9 +37,9 @@ public final class LoggerFactory implements Logger.Factory {
 
     String configPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
     if (configPath != null) {
-      Path configFile = Paths.get(configPath);
+      Path configFile = Path.of(configPath);
       if (!configFile.isAbsolute()) {
-        configFile = Paths.get(PathManager.getBinPath()).resolve(configPath);  // look from the 'bin/' directory where log.xml was used to be
+        configFile = Path.of(PathManager.getBinPath()).resolve(configPath);  // look from the 'bin/' directory where log.xml was used to be
       }
       if (Files.exists(configFile)) {
         configureFromXmlFile(configFile);
@@ -57,7 +56,7 @@ public final class LoggerFactory implements Logger.Factory {
     return MutedErrorLogger.isEnabled() ? MutedErrorLogger.of(logger) : logger;
   }
 
-  private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {
+  private static void configureFromXmlFile(Path xmlFile) throws Exception {
     String text = Files.readString(xmlFile);
     text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
     text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));

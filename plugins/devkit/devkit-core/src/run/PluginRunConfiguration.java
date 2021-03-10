@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -45,49 +44,47 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-  @NonNls private static final String IDEA_LOG = "idea.log";
-  @NonNls private static final String LOG_DIR = "/system/log/";
+  private static final String NAME = "name";
+  private static final String MODULE = "module";
+  private static final String ALTERNATIVE_PATH_ELEMENT = "alternative-path";
+  private static final String PATH = "path";
+  private static final String ALTERNATIVE_PATH_ENABLED_ATTR = "alternative-path-enabled";
 
   private Module myModule;
   private String myModuleName;
 
   public String VM_PARAMETERS;
   public String PROGRAM_PARAMETERS;
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String MODULE = "module";
-  @NonNls private static final String ALTERNATIVE_PATH_ELEMENT = "alternative-path";
-  @NonNls private static final String PATH = "path";
-  @NonNls private static final String ALTERNATIVE_PATH_ENABLED_ATTR = "alternative-path-enabled";
+
   private String ALTERNATIVE_JRE_PATH = null;
   private boolean ALTERNATIVE_JRE_PATH_ENABLED = false;
 
-  public PluginRunConfiguration(final Project project, final ConfigurationFactory factory, final String name) {
+  public PluginRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
-    addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+    addPredefinedLogFile(new PredefinedLogFile(LOG_FILE_NAME, true));
   }
 
-  @Nullable
   @Override
-  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
-    if (IDEA_LOG.equals(predefinedLogFile.getId())) {
+  public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+    if (LOG_FILE_NAME.equals(predefinedLogFile.getId())) {
       final Module module = getModule();
       final Sdk ideaJdk = module != null ? IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getSdk()) : null;
       if (ideaJdk != null) {
         final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
         if (sandboxHome != null) {
-          return new LogFileOptions(IDEA_LOG, sandboxHome + LOG_DIR + IDEA_LOG, predefinedLogFile.isEnabled());
+          return new LogFileOptions(LOG_FILE_NAME, sandboxHome + "/system/log/" + LOG_FILE_NAME, predefinedLogFile.isEnabled());
         }
       }
     }
     return super.getOptionsForPredefinedLogFile(predefinedLogFile);
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<PluginRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new PluginRunConfigurationEditor(this));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
@@ -95,7 +92,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getModule();
     if (module == null) {
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
@@ -160,8 +157,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         if (!fromIdeaProject) {
-          @NonNls String bootPath = "/lib/boot.jar";
-          @NonNls String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          String bootPath = "/lib/boot.jar";
+          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);
@@ -298,7 +295,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     }
     super.readExternal(element);
     if (getPredefinedLogFiles().isEmpty() && getLogFiles().isEmpty()) {
-      addPredefinedLogFile(new PredefinedLogFile(IDEA_LOG, true));
+      addPredefinedLogFile(new PredefinedLogFile(LOG_FILE_NAME, true));
     }
   }
 
@@ -324,15 +321,13 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     super.writeExternal(element);
   }
 
-  @Nullable
-  public Module getModule() {
+  public @Nullable Module getModule() {
     if (myModule == null && myModuleName != null && !getProject().isDisposed()) {
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
     }
     if (myModule != null && myModule.isDisposed()) {
       myModule = null;
     }
-
     return myModule;
   }
 
@@ -340,8 +335,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     myModule = module;
   }
 
-  @Nullable
-  private static String getPluginId(Module plugin) {
+  private static @Nullable String getPluginId(Module plugin) {
     final XmlFile pluginXml = PluginModuleType.getPluginXml(plugin);
     if (pluginXml == null) return null;
 

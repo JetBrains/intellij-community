@@ -157,7 +157,7 @@ class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties)
     isModal = true
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     val pane = JPanel(BorderLayout(0, 5))
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     val vendorName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
