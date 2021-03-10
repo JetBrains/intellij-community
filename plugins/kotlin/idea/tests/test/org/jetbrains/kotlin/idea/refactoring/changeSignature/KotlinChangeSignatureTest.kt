@@ -1555,13 +1555,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testAddDataClassParameter() = doTest {
         addParameter(
             KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "c",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                KtPsiFactory(project).createExpression("3"),
-                KotlinValVar.Val
+                callableDescriptor = originalBaseFunctionDescriptor,
+                name = "c",
+                originalTypeInfo = KotlinTypeInfo(false, BUILT_INS.intType),
+                defaultValueForCall = KtPsiFactory(project).createExpression("3"),
+                valOrVar = KotlinValVar.Val,
             ),
             1
         )
@@ -1576,26 +1574,22 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         setNewParameter(
             0,
             KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "d",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                psiFactory.createExpression("4"),
-                KotlinValVar.Val
+                callableDescriptor = originalBaseFunctionDescriptor,
+                name = "d",
+                originalTypeInfo = KotlinTypeInfo(false, BUILT_INS.intType),
+                defaultValueForCall = psiFactory.createExpression("4"),
+                valOrVar = KotlinValVar.Val,
             )
         )
 
         setNewParameter(
             2,
             KotlinParameterInfo(
-                originalBaseFunctionDescriptor,
-                -1,
-                "e",
-                KotlinTypeInfo(false, BUILT_INS.intType),
-                null,
-                psiFactory.createExpression("5"),
-                KotlinValVar.Val
+                callableDescriptor = originalBaseFunctionDescriptor,
+                name = "e",
+                originalTypeInfo = KotlinTypeInfo(false, BUILT_INS.intType),
+                defaultValueForCall = psiFactory.createExpression("5"),
+                valOrVar = KotlinValVar.Val,
             )
         )
     }

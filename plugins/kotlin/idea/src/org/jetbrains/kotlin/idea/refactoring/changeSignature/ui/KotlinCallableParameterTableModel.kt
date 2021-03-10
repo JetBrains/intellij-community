@@ -45,14 +45,8 @@ abstract class KotlinCallableParameterTableModel protected constructor(
 
     override fun createRowItem(parameterInfo: KotlinParameterInfo?): ParameterTableModelItemBase<KotlinParameterInfo> {
         val resultParameterInfo = parameterInfo ?: KotlinParameterInfo(
-            methodDescriptor.baseDescriptor,
-            -1,
-            "",
-            KotlinTypeInfo(false, null, null),
-            null,
-            null,
-            KotlinValVar.None,
-            null
+            callableDescriptor = methodDescriptor.baseDescriptor,
+            name = "",
         )
 
         val psiFactory = KtPsiFactory(project)
