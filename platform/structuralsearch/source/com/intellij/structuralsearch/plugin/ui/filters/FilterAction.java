@@ -19,6 +19,11 @@ import java.util.function.Supplier;
  */
 public abstract class FilterAction extends DumbAwareAction implements Filter {
 
+  /**
+   * This extension points causes memory leaks and other problems, because FilterActions have state.
+   * @deprecated Please use {@link com.intellij.structuralsearch.plugin.ui.filters.FilterProvider} instead.
+   */
+  @Deprecated
   public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
 
   private static final AtomicInteger myFilterCount = new AtomicInteger();
@@ -28,6 +33,7 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
   private final int myPosition;
 
   private boolean myApplicable = true;
+  private boolean myActive = false;
 
   protected FilterAction(@NotNull Supplier<String> text) {
     super(text);
@@ -47,6 +53,7 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
   public final void actionPerformed(@NotNull AnActionEvent e) {
     initFilter();
     myApplicable = false;
+    myActive = true;
     myTable.addFilter(this);
   }
 
@@ -61,34 +68,42 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
 
   public abstract boolean hasFilter();
 
+  final boolean isActive() {
+    if (hasFilter()) {
+      myActive = true;
+    }
+    return myActive;
+  }
+
   protected void initFilter() {}
 
   public abstract void clearFilter();
 
-  public void reset() {
+  final void reset() {
     myApplicable = true;
+    myActive = false;
   }
 
   protected abstract boolean isApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target);
 
-  protected boolean isApplicableConstraint(@NonNls String constraintName,
-                                           List<? extends PsiElement> nodes,
-                                           boolean completePattern,
-                                           boolean target) {
+  protected final boolean isApplicableConstraint(@NonNls String constraintName,
+                                                 List<? extends PsiElement> nodes,
+                                                 boolean completePattern,
+                                                 boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     return profile != null && profile.isApplicableConstraint(constraintName, nodes, completePattern, target);
   }
 
-  public boolean isAvailable() {
-    return myApplicable && !hasFilter();
+  final boolean isAvailable() {
+    return myApplicable && !isActive();
   }
 
-  public boolean checkApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+  final boolean checkApplicable(List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     return myApplicable = isApplicable(nodes, completePattern, target);
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!hasFilter() && myApplicable);
+  public final void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(myApplicable && !isActive());
   }
 }

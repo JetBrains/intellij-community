@@ -64,8 +64,6 @@ public class FilterPanel implements FilterTable {
       myFilters.add(filterAction);
       filterAction.setTable(this);
     }
-    myFilters.add(myScriptFilter);
-    myScriptFilter.setTable(this);
 
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable
@@ -144,14 +142,14 @@ public class FilterPanel implements FilterTable {
 
   final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.checkApplicable(nodes, completePattern, target)) {
-      if (filter.hasFilter() && !myTableModel.getItems().contains(filter)) {
+      if (filter.isActive() && !myTableModel.getItems().contains(filter)) {
         if (myTableModel.getRowCount() == 0) {
           myTableModel.addRow(myHeader);
         }
         myTableModel.addRow(filter);
       }
     }
-    else {
+    else if (filter.hasFilter()) {
       filter.clearFilter();
     }
   }
@@ -189,8 +187,8 @@ public class FilterPanel implements FilterTable {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
-                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
-                                                                                  null);
+                                                                                  JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, false,
+                                                                                  "StructuralSearchFilterPanel");
       popup.show(point);
     }
     else {
@@ -221,11 +219,18 @@ public class FilterPanel implements FilterTable {
       return;
     }
     myConstraint = constraint;
+    resetFilters();
     showFilters();
   }
 
   public boolean hasVisibleFilter() {
     return myTableModel.getRowCount() > 0;
+  }
+
+  private void resetFilters() {
+    for (FilterAction filter : myFilters) {
+      filter.reset();
+    }
   }
 
   private void showFilters() {
