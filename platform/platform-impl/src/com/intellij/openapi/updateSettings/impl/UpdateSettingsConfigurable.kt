@@ -77,7 +77,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }
       }
 
-      row { checkBox(IdeBundle.message("updates.plugins.settings.checkbox"), settings.state::isPluginsCheckNeeded) }
+      row {
+        checkBox(IdeBundle.message("updates.plugins.settings.checkbox"), settings.state::isPluginsCheckNeeded)
+      }.largeGapAfter()
 
       row {
         cell {
