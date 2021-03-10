@@ -44,9 +44,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	source.attrs.src
 		&	source.attrs.type?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		source.attrs.src =
 			attribute src {
@@ -153,9 +150,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	track.attrs.srclang?
 		&	track.attrs.label?
 		&	track.attrs.default?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		track.attrs.kind =
 			attribute kind {

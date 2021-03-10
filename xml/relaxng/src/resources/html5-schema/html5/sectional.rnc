@@ -119,11 +119,7 @@
 		element hgroup { hgroup.inner & hgroup.attrs }
 	hgroup.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.implicit.heading
-			|	common.attrs.aria.role.heading
-			|	common.attrs.aria.role.tab
-			|	common.attrs.aria.role.presentation
-			)?
+		&	common.attrs.aria?
 		)
 	hgroup.inner =
 		(	(	h1.elem
