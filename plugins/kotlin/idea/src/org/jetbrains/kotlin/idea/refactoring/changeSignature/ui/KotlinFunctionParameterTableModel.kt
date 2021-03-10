@@ -15,13 +15,12 @@
  */
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
-import com.intellij.refactoring.ui.StringTableCellEditor
+import com.intellij.ui.BooleanTableCellEditor
 import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
-import org.jetbrains.kotlin.idea.KotlinBundle.message
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
@@ -40,7 +39,7 @@ class KotlinFunctionParameterTableModel(
         defaultValueContext.project,
         KotlinFileType.INSTANCE
     ),
-    ReceiverColumn<ParameterTableModelItemBase<KotlinParameterInfo?>>(defaultValueContext.project, methodDescriptor)
+    ReceiverColumn(methodDescriptor),
 ) {
     override fun removeRow(idx: Int) {
         if (getRowValue(idx).parameter == receiver) {
@@ -51,32 +50,31 @@ class KotlinFunctionParameterTableModel(
     }
 
     override var receiver: KotlinParameterInfo?
-        get() = (columnInfos[columnCount - 1] as ReceiverColumn<*>).receiver
+        get() = (columnInfos[columnCount - 1] as ReceiverColumn).receiver
         set(receiver) {
-            (columnInfos[columnCount - 1] as ReceiverColumn<*>).receiver = receiver
+            (columnInfos[columnCount - 1] as ReceiverColumn).receiver = receiver
         }
 
-    private class ReceiverColumn<TableItem : ParameterTableModelItemBase<KotlinParameterInfo?>>(
-        private val project: Project, methodDescriptor: KotlinMethodDescriptor
-    ) : ColumnInfoBase<KotlinParameterInfo?, TableItem, Boolean>(
-        message("column.name.receiver")
-    ) {
+    private class ReceiverColumn(methodDescriptor: KotlinMethodDescriptor) :
+        ColumnInfoBase<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>, Boolean>(KotlinBundle.message("column.name.receiver")) {
         var receiver: KotlinParameterInfo? = methodDescriptor.receiver
-        override fun valueOf(item: TableItem): Boolean = item.parameter == receiver
+        override fun valueOf(item: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean = item.parameter == receiver
 
-        override fun setValue(item: TableItem, value: Boolean?) {
+        override fun setValue(item: ParameterTableModelItemBase<KotlinParameterInfo>, value: Boolean?) {
             if (value == null) return
             receiver = if (value) item.parameter else null
         }
 
-        override fun isCellEditable(pParameterTableModelItemBase: TableItem): Boolean = true
+        override fun isCellEditable(pParameterTableModelItemBase: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean = true
 
-        public override fun doCreateRenderer(item: TableItem): TableCellRenderer = BooleanTableCellRenderer()
+        public override fun doCreateRenderer(item: ParameterTableModelItemBase<KotlinParameterInfo>): TableCellRenderer =
+            BooleanTableCellRenderer()
 
-        public override fun doCreateEditor(o: TableItem): TableCellEditor = StringTableCellEditor(project)
+        public override fun doCreateEditor(o: ParameterTableModelItemBase<KotlinParameterInfo>): TableCellEditor =
+            BooleanTableCellEditor()
     }
 
     companion object {
-        fun isReceiverColumn(column: ColumnInfo<*, *>?): Boolean = column is ReceiverColumn<*>
+        fun isReceiverColumn(column: ColumnInfo<*, *>?): Boolean = column is ReceiverColumn
     }
 }
