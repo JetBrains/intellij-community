@@ -201,7 +201,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
     group.add(Separator())
     group.add(settings)
-    group.add(actionManager.getAction("Git.Log.Branches.GroupBy.Directory"))
+    group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))
     group.add(expandAllAction)
     group.add(collapseAllAction)
 

@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.diverged
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
@@ -37,6 +38,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.util.function.Supplier
 import javax.swing.Icon
 
 internal object BranchesDashboardActions {
@@ -452,7 +454,38 @@ internal object BranchesDashboardActions {
     override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY
   }
 
-  class GroupBranchByDirectoryAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+  class GroupingSettingsGroup: DefaultActionGroup(), DumbAware {
+    override fun update(e: AnActionEvent) {
+      isPopup = GroupBranchByRepositoryAction.isEnabledAndVisible(e)
+    }
+  }
+
+  class GroupBranchByDirectoryAction : GroupBranchAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+
+      val groupByDirectory: Supplier<String> = DvcsBundle.messagePointer("action.text.branch.group.by.directory")
+      val groupingSeparator: () -> String = messagePointer("group.Git.Log.Branches.Grouping.Separator.text")
+
+      e.presentation.text =
+        if (GroupBranchByRepositoryAction.isEnabledAndVisible(e)) groupByDirectory.get() //NON-NLS
+        else groupingSeparator() + " " + groupByDirectory.get() //NON-NLS
+    }
+  }
+
+  class GroupBranchByRepositoryAction : GroupBranchAction(GroupingKey.GROUPING_BY_REPOSITORY) {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)
+    }
+
+    companion object {
+      fun isEnabledAndVisible(e: AnActionEvent): Boolean =
+        e.project?.let(RepositoryChangesBrowserNode.Companion::getColorManager)?.hasMultiplePaths() ?: false
+    }
+  }
+
+  abstract class GroupBranchAction(key: GroupingKey) : BranchGroupingAction(key) {
     override fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean) {
       e.getData(BRANCHES_UI_CONTROLLER)?.toggleGrouping(key, state)
     }

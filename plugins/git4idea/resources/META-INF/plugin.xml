@@ -65,8 +65,15 @@
       <action id="Git.Log.Branches.Navigate.Log.To.Branch.On.Selection"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToBranchAction"/>
     </group>
-    <action id="Git.Log.Branches.GroupBy.Directory" icon="AllIcons.Actions.GroupByPackage"
-            class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByDirectoryAction"/>
+    <group id="Git.Log.Branches.Grouping.Settings" icon="AllIcons.Actions.GroupBy"
+           class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupingSettingsGroup">
+      <separator key="group.Git.Log.Branches.Grouping.Separator.text"/>
+      <action id="Git.Log.Branches.GroupBy.Directory"
+              icon="AllIcons.Actions.GroupByPackage"
+              class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByDirectoryAction"/>
+      <action id="Git.Log.Branches.GroupBy.Repository"
+              class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByRepositoryAction"/>
+    </group>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction"/>
