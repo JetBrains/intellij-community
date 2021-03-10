@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.issue.quickfix
 
 import com.intellij.build.SyncViewManager
@@ -62,7 +62,7 @@ class GradleVersionQuickFix(private val projectPath: String,
           .apply {
             isBalloonNotification = true
             balloonGroup = "Gradle Import"
-            setListener("#open_log") { _, _ -> RevealFileAction.openFile(File(PathManager.getLogPath(), "idea.log")) }
+            setListener("#open_log") { _, _ -> ShowLogAction.showLog() }
           }
         ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notification)
         throw it

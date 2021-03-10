@@ -27,6 +27,12 @@ public final class LoggerFactory implements Logger.Factory {
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
 
+  public static final String LOG_FILE_NAME = "idea.log";
+
+  public static @NotNull Path getLogFilePath() {
+    return Path.of(PathManager.getLogPath(), LOG_FILE_NAME);
+  }
+
   LoggerFactory() throws Exception {
     System.setProperty("log4j.defaultInitOverride", "true");
 
@@ -87,7 +93,7 @@ public final class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, PathManager.getLogPath() + "/idea.log", true) {
+    RollingFileAppender ideaLog = new RollingFileAppender(layout, getLogFilePath().toString(), true) {
       @Override
       public void rollOver() {
         super.rollOver();
