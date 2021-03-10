@@ -13,9 +13,9 @@ import com.intellij.idea.StartupUtil;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationFullContent;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
@@ -29,6 +29,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,19 +112,17 @@ final class SystemHealthMonitor extends PreloadingActivity {
         String configName = scriptName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
         Path configFile = Path.of(directory, configName);
         if (Files.isRegularFile(configFile)) {
-          switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-              notification.expire();
-              try {
-                Files.delete(configFile);
-              }
-              catch (IOException x) {
-                LOG.warn("Can't delete JDK configuration file: " + configFile, x);
-              }
-              ApplicationManager.getApplication().restart();
+          switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text"), () -> {
+            try {
+              Files.delete(configFile);
+              ApplicationManagerEx.getApplicationEx().restart(true);
             }
-          };
+            catch (IOException x) {
+              LOG.warn("cannot delete " + configFile, x);
+              String content = IdeBundle.message("cannot.delete.jre.config", configFile, IoErrorText.message(x));
+              Notifications.Bus.notify(new Notification(DISPLAY_ID, "", content, NotificationType.ERROR));
+            }
+          });
         }
       }
 
@@ -160,14 +159,9 @@ final class SystemHealthMonitor extends PreloadingActivity {
     int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
-      NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action.cap")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          ActionUtil.performActionDumbAware(vmEditAction, e);
-        }
-      };
-      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
+      NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
+        IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> ActionUtil.performActionDumbAware(vmEditAction, e)) : null;
+      showNotification("code.cache.warn.message", action, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
@@ -226,13 +220,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
       notification.addAction(action);
     }
     if (suppressable) {
-      notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          PropertiesComponent.getInstance().setValue("ignore." + key, "true");
-        }
-      });
+      notification.addAction(NotificationAction.createSimpleExpiring(
+        IdeBundle.message("sys.health.acknowledge.action"), () -> PropertiesComponent.getInstance().setValue("ignore." + key, "true")));
     }
     notification.setImportant(true);
 
