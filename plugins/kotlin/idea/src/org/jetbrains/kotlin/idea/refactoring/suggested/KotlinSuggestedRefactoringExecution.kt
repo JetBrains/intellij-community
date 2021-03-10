@@ -99,13 +99,12 @@ class KotlinSuggestedRefactoringExecution(
 
             val parameterInfo = if (initialIndex == null) {
                 KotlinParameterInfo(
-                    descriptor,
-                    -1,
-                    parameter.name,
-                    parameterTypeInfos[index],
-                    defaultValueForParameter = defaultValue,
-                    modifierList = modifierList
+                    callableDescriptor = descriptor,
+                    name = parameter.name,
+                    originalTypeInfo = parameterTypeInfos[index],
+                    modifierList = modifierList,
                 ).apply {
+                    setDefaultValueForParameter(defaultValue)
                     // a few last added parameters may be missing in newParameterValues
                     // because they have default values and we did not offer to enter value for them
                     if (newParameterValueIndex < newParameterValues.size) {
@@ -114,13 +113,13 @@ class KotlinSuggestedRefactoringExecution(
                 }
             } else {
                 KotlinParameterInfo(
-                    descriptor,
-                    initialIndex,
-                    parameter.name,
-                    methodDescriptor.parameters[initialIndex].originalTypeInfo,
-                    defaultValueForParameter = defaultValue,
-                    modifierList = modifierList
+                    callableDescriptor = descriptor,
+                    originalIndex = initialIndex,
+                    name = parameter.name,
+                    originalTypeInfo = methodDescriptor.parameters[initialIndex].originalTypeInfo,
+                    modifierList = modifierList,
                 ).apply {
+                    setDefaultValueForParameter(defaultValue)
                     currentTypeInfo = parameterTypeInfos[index]
                 }
             }
@@ -136,7 +135,7 @@ class KotlinSuggestedRefactoringExecution(
             receiver = receiver,
             checkUsedParameters = true,
         )
-        
+
         val processor = KotlinChangeSignatureProcessor(project, changeInfo, "")
         processor.run()
     }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.openapi.project.Project
@@ -24,7 +25,9 @@ import com.intellij.ui.BooleanTableCellEditor
 import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.render
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import javax.swing.table.TableCellEditor
@@ -81,15 +84,10 @@ abstract class KotlinCallableParameterTableModel protected constructor(
             BooleanTableCellEditor()
 
         override fun valueOf(item: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean =
-            item.parameter.defaultValueForParameter != null
+            item.parameter.defaultValueAsDefaultParameter
 
         override fun setValue(item: ParameterTableModelItemBase<KotlinParameterInfo>, value: Boolean?) {
-            val parameter = item.parameter
-            parameter.defaultValueForParameter = if (value == true) {
-                parameter.defaultValueForCall
-            } else {
-                null
-            }
+            item.parameter.defaultValueAsDefaultParameter = value == true
         }
     }
 

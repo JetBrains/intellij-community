@@ -159,7 +159,7 @@ class KotlinChangeSignatureDialog(
                         component = editor
                     } else if (KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) && isDefaultColumnEnabled()) {
                         val checkBox = JCheckBox()
-                        checkBox.isSelected = item.parameter.defaultValueForParameter != null
+                        checkBox.isSelected = item.parameter.defaultValue != null
                         checkBox.addItemListener {
                             parametersTableModel.setValueAtWithoutUpdate(it.stateChange == ItemEvent.SELECTED, row, columnFinal)
                             updateSignature()

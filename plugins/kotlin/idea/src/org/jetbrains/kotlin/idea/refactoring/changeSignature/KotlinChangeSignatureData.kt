@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -43,17 +43,20 @@ class KotlinChangeSignatureData(
         }
         parameters = baseDescriptor.valueParameters
             .mapTo(receiver?.let { arrayListOf(it) } ?: arrayListOf()) { parameterDescriptor ->
-                val jetParameter = valueParameters?.get(parameterDescriptor.index)
+                val ktParameter = valueParameters?.get(parameterDescriptor.index)
                 val parameterType = parameterDescriptor.type
-                val parameterTypeText = jetParameter?.typeReference?.text
+                val parameterTypeText = ktParameter?.typeReference?.text
                     ?: IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(parameterType)
+
+                val defaultValue = ktParameter?.defaultValue
                 KotlinParameterInfo(
                     callableDescriptor = baseDescriptor,
                     originalIndex = parameterDescriptor.index,
                     name = parameterDescriptor.name.asString().quoteIfNeeded(),
                     originalTypeInfo = KotlinTypeInfo(false, parameterType, parameterTypeText),
-                    defaultValueForParameter = jetParameter?.defaultValue,
-                    valOrVar = jetParameter?.valOrVarKeyword.toValVar()
+                    defaultValueForCall = defaultValue,
+                    defaultValueAsDefaultParameter = defaultValue != null,
+                    valOrVar = ktParameter?.valOrVarKeyword.toValVar(),
                 )
             }
     }

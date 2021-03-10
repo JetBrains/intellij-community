@@ -39,12 +39,18 @@ class KotlinParameterInfo(
     val originalIndex: Int = -1,
     private var name: String,
     val originalTypeInfo: KotlinTypeInfo = KotlinTypeInfo(false),
-    var defaultValueForParameter: KtExpression? = null,
     var defaultValueForCall: KtExpression? = null,
     var defaultValueAsDefaultParameter: Boolean = false,
     var valOrVar: KotlinValVar = defaultValOrVar(callableDescriptor),
     val modifierList: KtModifierList? = null,
 ) : ParameterInfo {
+    private var _defaultValueForParameter: KtExpression? = null
+    fun setDefaultValueForParameter(expression: KtExpression?) {
+        _defaultValueForParameter = expression
+    }
+
+    val defaultValue: KtExpression? get() = defaultValueForCall?.takeIf { defaultValueAsDefaultParameter } ?: _defaultValueForParameter
+
     var currentTypeInfo: KotlinTypeInfo = originalTypeInfo
 
     val defaultValueParameterReferences: Map<PsiReference, DeclarationDescriptor> by lazy {
@@ -155,7 +161,7 @@ class KotlinParameterInfo(
         }
 
         if (!inheritedCallable.isInherited) {
-            defaultValueForParameter?.let { buffer.append(" = ").append(it.text) }
+            defaultValue?.let { buffer.append(" = ").append(it.text) }
         }
 
         return psiFactory.createParameter(buffer.toString())
@@ -184,7 +190,7 @@ class KotlinParameterInfo(
         }
 
         if (!inheritedCallable.isInherited) {
-            defaultValueForParameter?.let { newParameter.setDefaultValue(it) }
+            defaultValue?.let { newParameter.setDefaultValue(it) }
         }
 
         return newParameter

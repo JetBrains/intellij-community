@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -136,10 +136,11 @@ fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onEx
                 val parameterInfo = KotlinParameterInfo(
                     callableDescriptor = callableDescriptor,
                     name = newParameterName,
-                    defaultValueForCall = if (withDefaultValue) null else defaultValue,
-                    defaultValueForParameter = if (withDefaultValue) defaultValue else null,
+                    defaultValueForCall = defaultValue,
+                    defaultValueAsDefaultParameter = withDefaultValue,
                     valOrVar = valVar
                 )
+
                 parameterInfo.currentTypeInfo = KotlinTypeInfo(false, null, newParameterTypeText)
                 methodDescriptor.addParameter(parameterInfo)
             }
@@ -223,9 +224,11 @@ open class KotlinIntroduceParameterHandler(
         }
 
         if (expressionType.isUnit() || expressionType.isNothing()) {
-            val message = KotlinBundle.message("cannot.introduce.parameter.of.0.type",
-                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(expressionType)
+            val message = KotlinBundle.message(
+                "cannot.introduce.parameter.of.0.type",
+                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(expressionType),
             )
+
             showErrorHint(project, editor, message, INTRODUCE_PARAMETER)
             return
         }

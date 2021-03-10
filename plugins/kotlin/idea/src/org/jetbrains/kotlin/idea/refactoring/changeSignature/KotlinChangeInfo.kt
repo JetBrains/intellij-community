@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -377,10 +377,12 @@ open class KotlinChangeInfo(
         fun initCurrentSignatures(currentPsiMethods: List<PsiMethod>): List<JvmOverloadSignature> {
             val parameterInfoToPsi = methodDescriptor.original.parameters.zip(originalParameters).toMap()
             val dummyParameter = KtPsiFactory(method).createParameter("dummy")
-            return makeSignatures(newParameters,
-                                  currentPsiMethods,
-                                  { parameterInfoToPsi[it] ?: dummyParameter },
-                                  { it.defaultValueForParameter })
+            return makeSignatures(
+                parameters = newParameters,
+                psiMethods = currentPsiMethods,
+                getPsi = { parameterInfoToPsi[it] ?: dummyParameter },
+                getDefaultValue = { it.defaultValue },
+            )
         }
 
         fun matchOriginalAndCurrentMethods(currentPsiMethods: List<PsiMethod>): Map<PsiMethod, PsiMethod> {
@@ -451,13 +453,13 @@ open class KotlinChangeInfo(
             newParameterList: List<KotlinParameterInfo>
         ): MutableList<ParameterInfoImpl> {
             val defaultValuesToSkip = newParameterList.size - currentPsiMethod.parameterList.parametersCount
-            val defaultValuesToRetain = newParameterList.count { it.defaultValueForParameter != null } - defaultValuesToSkip
+            val defaultValuesToRetain = newParameterList.count { it.defaultValue != null } - defaultValuesToSkip
             val oldIndices = newParameterList.map { it.oldIndex }.toIntArray()
 
             // TODO: Ugly code, need to refactor Change Signature data model
             var defaultValuesRemained = defaultValuesToRetain
             for (param in newParameterList) {
-                if (param.isNewParameter || param.defaultValueForParameter == null || defaultValuesRemained-- > 0) continue
+                if (param.isNewParameter || param.defaultValue == null || defaultValuesRemained-- > 0) continue
                 newParameterList.asSequence()
                     .withIndex()
                     .filter { it.value.oldIndex >= param.oldIndex }
@@ -471,7 +473,7 @@ open class KotlinChangeInfo(
             return newParameterList.asSequence().withIndex().mapNotNullTo(ArrayList()) map@{ pair ->
                 val (i, info) = pair
 
-                if (info.defaultValueForParameter != null && defaultValuesRemained-- <= 0) return@map null
+                if (info.defaultValue != null && defaultValuesRemained-- <= 0) return@map null
 
                 val oldIndex = oldIndices[i]
                 val javaOldIndex = when {
@@ -487,7 +489,7 @@ open class KotlinChangeInfo(
                 else
                     PsiType.VOID
 
-                val defaultValue = info.defaultValueForCall ?: info.defaultValueForParameter
+                val defaultValue = info.defaultValueForCall ?: info.defaultValue
                 ParameterInfoImpl(javaOldIndex, info.name, type, defaultValue?.text ?: "")
             }
         }

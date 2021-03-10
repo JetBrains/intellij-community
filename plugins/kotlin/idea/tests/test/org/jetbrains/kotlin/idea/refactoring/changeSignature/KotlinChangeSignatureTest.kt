@@ -366,26 +366,26 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun KotlinChangeInfo.createKotlinIntParameter(
         name: String = "i",
-        defaultValueForParameter: KtExpression? = null,
         defaultValueForCall: KtExpression? = null,
+        defaultValueAsDefaultParameter: Boolean = false,
     ) = createKotlinParameter(
         name = name,
         type = kotlinIntType,
-        defaultValueForParameter = defaultValueForParameter,
         defaultValueForCall = defaultValueForCall,
+        defaultValueAsDefaultParameter = defaultValueAsDefaultParameter,
     )
 
     private fun KotlinChangeInfo.createKotlinParameter(
         name: String,
         type: KotlinTypeInfo,
-        defaultValueForParameter: KtExpression? = null,
         defaultValueForCall: KtExpression? = null,
+        defaultValueAsDefaultParameter: Boolean = false,
     ): KotlinParameterInfo = KotlinParameterInfo(
         callableDescriptor = originalBaseFunctionDescriptor,
         name = name,
         originalTypeInfo = type,
         defaultValueForCall = defaultValueForCall,
-        defaultValueForParameter = defaultValueForParameter,
+        defaultValueAsDefaultParameter = defaultValueAsDefaultParameter,
     )
     // --------------------------------- Tests ---------------------------------
 
@@ -1295,7 +1295,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun doTestJvmOverloadedAddDefault(index: Int) = doTestAndIgnoreConflicts {
         val defaultValue = KtPsiFactory(project).createExpression("2")
         addParameter(
-            createKotlinIntParameter(name = "n", defaultValueForCall = defaultValue, defaultValueForParameter = defaultValue),
+            createKotlinIntParameter(name = "n", defaultValueForCall = defaultValue, defaultValueAsDefaultParameter = true),
             index,
         )
     }
