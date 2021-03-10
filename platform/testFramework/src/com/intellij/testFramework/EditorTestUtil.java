@@ -449,7 +449,8 @@ public final class EditorTestUtil {
     }
     catch (AssertionError e) {
       try {
-        assertEquals(e.getMessage(), getExpectedStateAsTestTemplate(editor, caretState.carets), getActualStateAsTestTemplate(editor));
+        assertEquals(e.getMessage(), getExpectedStateAsTestTemplate(editor, caretState.carets),
+                     getActualStateAsTestTemplate(editor, caretState.carets));
       }
       catch (AssertionError exception) {
         exception.addSuppressed(e);
@@ -492,14 +493,16 @@ public final class EditorTestUtil {
     }
   }
 
-  private static String getActualStateAsTestTemplate(@NotNull Editor editor) {
+  private static String getActualStateAsTestTemplate(@NotNull Editor editor,
+                                                     @NotNull List<CaretInfo> expectedCarets) {
     StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
     List<Caret> allCarets = new ArrayList<>(editor.getCaretModel().getAllCarets());
     for (int i = allCarets.size() - 1; i >= 0; i--) {
       Caret caret = allCarets.get(i);
+      CaretInfo expected = i < expectedCarets.size() ? expectedCarets.get(i) : null;
       boolean hasSelection = caret.hasSelection();
       if (hasSelection) sb.insert(caret.getSelectionEnd(), SELECTION_END_TAG);
-      sb.insert(caret.getOffset(), CARET_TAG);
+      if (expected != null && expected.position != null) sb.insert(caret.getOffset(), CARET_TAG);
       if (hasSelection) sb.insert(caret.getSelectionStart(), SELECTION_START_TAG);
     }
     return sb.toString();
@@ -509,10 +512,18 @@ public final class EditorTestUtil {
     StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
     for (int i = carets.size() - 1; i >= 0; i--) {
       CaretInfo expected = carets.get(i);
-      boolean hasSelection = expected.selection != null;
-      if (hasSelection) sb.insert(expected.selection.getEndOffset(), SELECTION_END_TAG);
-      if (expected.position != null) sb.insert(editor.logicalPositionToOffset(expected.position), CARET_TAG);
-      if (hasSelection) sb.insert(expected.selection.getStartOffset(), SELECTION_START_TAG);
+      LogicalPosition position = expected.position;
+      TextRange selection = expected.selection;
+
+      ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+      if (selection != null) marks.add(Pair.create(selection.getEndOffset(), SELECTION_END_TAG));
+      if (position != null) marks.add(Pair.create(editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG));
+      if (selection != null) marks.add(Pair.create(selection.getStartOffset(), SELECTION_START_TAG));
+      marks.sort(Comparator.comparingInt((Pair<Integer, String> mark) -> mark.first).reversed());
+
+      for (Pair<Integer, String> mark : marks) {
+        sb.insert(mark.first, mark.second);
+      }
     }
     return sb.toString();
   }
