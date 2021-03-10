@@ -50,7 +50,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
       @Override
       protected boolean onDoubleClick(@NotNull MouseEvent e) {
         handleDoubleClickOrEnter(getClosestPathForLocation(e.getX(), e.getY()), e);
-        return true;
+        return false;
       }
     }.installOn(this);
     addMouseListener(new MyMouseListener());
