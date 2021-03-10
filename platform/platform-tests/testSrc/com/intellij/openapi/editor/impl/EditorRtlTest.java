@@ -410,7 +410,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     moveCaretToPreviousWordWithSelection();
     checkResult("<selection>LL </selection>RR RR LL");
     moveCaretToPreviousWordWithSelection();
-    checkResult("<selection></selection>LL RR RR LL");
+    checkResult("<caret>LL RR RR LL");
   }
   
   public void testHomeEnd() {
@@ -521,7 +521,7 @@ public class EditorRtlTest extends AbstractRtlTest {
     right();
     checkResult("RLR<caret>");
   }
-  
+
   public void testTabInsideRtlText() {
     prepareText("<caret>R\tRR");
     right();
