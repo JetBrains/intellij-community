@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -1070,7 +1070,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
     ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
     tb.setReservePlaceAutoPopupIcon(false);
-    tb.setTargetComponent(myComponent);
+    // see IDEA-262878, evaluate action on the toolbar should get the editor data context
+    tb.setTargetComponent(Registry.is("debugger.new.tool.window.layout") ? myComponent : null);
     tb.getComponent().setBorder(null);
     tb.getComponent().setOpaque(false);
 
