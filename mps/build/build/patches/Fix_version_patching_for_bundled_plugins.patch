@@ -3,14 +3,14 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(revision 8381fc0972e456b2def53e689abe7c3ea6cb3296)
-+++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(date 1611317658639)
-@@ -801,7 +801,7 @@
+--- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(revision 1449f6fdc67c7fe72156687711d141908af59647)
++++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy	(date 1615373087751)
+@@ -853,7 +853,7 @@
      def productLayout = buildContext.productProperties.productLayout
      def includeInBuiltinCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
              buildContext.proprietaryBuildTools.artifactsServer != null
--    CompatibleBuildRange compatibleBuildRange = bundled ||
-+    CompatibleBuildRange compatibleBuildRange =
+-    CompatibleBuildRange compatibleBuildRange = bundled || plugin.pluginCompatibilityExactVersion ||
++    CompatibleBuildRange compatibleBuildRange = plugin.pluginCompatibilityExactVersion ||
              //plugins included into the built-in custom plugin repository should use EXACT range because such custom repositories are used for nightly builds and there may be API differences between different builds
              includeInBuiltinCustomRepository ? CompatibleBuildRange.EXACT :
                      //when publishing plugins with EAP build let's use restricted range to ensure that users will update to a newer version of the plugin when they update to the next EAP or release build
