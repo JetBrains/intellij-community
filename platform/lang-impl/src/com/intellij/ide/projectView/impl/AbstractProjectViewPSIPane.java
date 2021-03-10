@@ -35,8 +35,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -165,9 +163,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   protected void onSelectionChanged() {
-    int count = myTree.getSelectionModel().getSelectionCount();
-    String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
-    ActionMenu.showDescriptionInStatusBar(true, myTree, description);
+    if (myTree != null && myTree.getSelectionModel() != null) {
+      int count = myTree.getSelectionModel().getSelectionCount();
+      String description = count > 1 && myTree.hasFocus() ? LangBundle.message("project.view.elements.selected", count) : null;
+      ActionMenu.showDescriptionInStatusBar(true, myTree, description);
+    }
   }
 
   @NotNull
