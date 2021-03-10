@@ -8,6 +8,7 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -139,10 +140,19 @@ final class ActionUpdater {
 
   void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
-      Presentation original = myFactory.getPresentation(entry.getKey());
-      Presentation cloned = entry.getValue();
-      original.copyFrom(cloned);
-      reflectSubsequentChangesInOriginalPresentation(original, cloned);
+      AnAction action = entry.getKey();
+      Presentation orig = myFactory.getPresentation(action);
+      Presentation copy = entry.getValue();
+      if (action instanceof CustomComponentAction) {
+        // toolbar may have already created a custom component, do not erase it
+        JComponent copyC = copy.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+        JComponent origC = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
+        if (copyC == null && origC != null) {
+          copy.putClientProperty(CustomComponentAction.COMPONENT_KEY, origC);
+        }
+      }
+      orig.copyFrom(copy);
+      reflectSubsequentChangesInOriginalPresentation(orig, copy);
     }
   }
 
