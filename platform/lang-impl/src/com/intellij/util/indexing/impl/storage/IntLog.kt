@@ -16,7 +16,7 @@ import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.*
 import kotlin.math.abs
 
 interface AbstractIntLog : Closeable, Flushable {
@@ -61,8 +61,9 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     try {
       val l = System.currentTimeMillis()
       doForce()
-      val uniqueInputs = IntOpenHashSet()
-      val uselessRecords = AtomicInteger()
+      val uniqueInputs = BitSet()
+      var uselessRecords = 0
+      var usefulRecords = 0
       val isReadAction = ApplicationManager.getApplication().isReadAccessAllowed
 
       if (isReadAction) {
@@ -80,8 +81,13 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
               return@processAll false
             }
 
-            if (!uniqueInputs.add(inputId)) {
-              uselessRecords.incrementAndGet()
+            val isPresent = uniqueInputs.get(inputId)
+            if (isPresent) {
+              uselessRecords++
+            }
+            else {
+              uniqueInputs.set(inputId)
+              usefulRecords++
             }
 
             true
@@ -90,7 +96,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
         }
         true
       }
-      if (uselessRecords.get() >= uniqueInputs.size) {
+      if (uselessRecords >= usefulRecords) {
         setRequiresCompaction()
       }
 
