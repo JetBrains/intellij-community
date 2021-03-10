@@ -88,6 +88,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         return JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false");
       });
     }
+    if (Registry.is("idea.coverage.new.sampling.enabled")) {
+      targetParameters.add(request -> {
+        return JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true");
+      });
+    }
   }
 
   @Nullable
