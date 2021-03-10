@@ -17,9 +17,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +109,9 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMnemonicLabel = new JLabel();
     Dimension preferredSize = new JLabel("A").getPreferredSize();
     Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    preferredSize.width += insets.left + insets.right;
+    JBInsets.addTo(preferredSize, insets);
     myMnemonicLabel.setPreferredSize(preferredSize);
-    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets.top, insets.left, insets.bottom, insets.right));
+    myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
 
     return layoutComponent(panel);
@@ -236,10 +234,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     }
 
     if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
-      myLeftPart.add(myMnemonicLabel, BorderLayout.WEST);
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
+      myLeftPart.add(myMnemonicLabel, BorderLayout.WEST);
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
