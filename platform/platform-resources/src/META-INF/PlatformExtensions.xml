@@ -198,8 +198,8 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.RefreshQueue"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.RefreshQueueImpl"/>
 
-    <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator"/>
-    <cachesInvalidator implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
+    <cachesInvalidator implementation="com.intellij.openapi.vfs.newvfs.FSRecordsCacheInvalidator" order="after rootCachesInvalidator"/>
+    <cachesInvalidator id="rootCachesInvalidator" implementation="com.intellij.ide.actions.RootCachesInvalidator" order="first"/>
 
     <applicationService serviceInterface="com.intellij.openapi.ui.DialogWrapperPeerFactory"
                         serviceImplementation="com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl"/>
