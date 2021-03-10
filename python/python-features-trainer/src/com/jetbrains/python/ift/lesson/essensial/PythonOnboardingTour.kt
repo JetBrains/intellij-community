@@ -22,6 +22,8 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
@@ -33,6 +35,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
+import icons.FeaturesTrainerIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
@@ -42,7 +45,10 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.learn.course.Lesson
 import training.learn.course.LessonProperties
+import training.learn.lesson.LessonListener
+import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
@@ -82,6 +88,7 @@ class PythonOnboardingTour :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
+      addEndLessonListener()
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectRootManager.getInstance(project).contentRoots[0]
@@ -111,13 +118,49 @@ class PythonOnboardingTour :
     searchEverywhereTasks()
 
     task {
-      val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
-      val welcomeScreenRemark = if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
       text(PythonLessonsBundle.message("python.onboarding.epilog",
                                        getCallBackActionId("CloseProject"),
-                                       welcomeScreenRemark,
+                                       returnToWelcomeScreenRemark(),
                                        LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
     }
+  }
+
+  private fun returnToWelcomeScreenRemark(): String {
+    val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
+    return if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
+  }
+
+  private fun TaskRuntimeContext.addEndLessonListener() {
+    val listener = object  : LessonListener {
+      override fun lessonPassed(lesson: Lesson) {
+        invokeLater {
+          val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
+                                                        PythonLessonsBundle.message("python.onboarding.finish.text", returnToWelcomeScreenRemark()))
+            .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
+            .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
+            .icon(FeaturesTrainerIcons.Img.PluginIcon)
+            .show(project)
+
+          when (result) {
+            Messages.YES -> invokeLater {
+              LessonManager.instance.stopLesson()
+              val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
+              invokeActionForFocusContext(closeAction)
+            }
+            Messages.NO -> invokeLater {
+              LearningUiManager.resetModulesView()
+            }
+          }
+        }
+      }
+
+      override fun lessonStopped(lesson: Lesson) {
+        invokeLater {
+          removeLessonListener(this)
+        }
+      }
+    }
+    addLessonListener(listener)
   }
 
   private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {

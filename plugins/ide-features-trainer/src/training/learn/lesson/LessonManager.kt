@@ -75,7 +75,7 @@ class LessonManager {
 
   internal fun lessonIsRunning() : Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
-  internal fun stopLesson() {
+  fun stopLesson() {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
       it.lesson.onStop()
