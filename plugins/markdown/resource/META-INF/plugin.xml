@@ -109,6 +109,7 @@ Includes the following features:</p>
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />
     <enterHandlerDelegate implementation="org.intellij.plugins.markdown.editor.MarkdownEnterHandler"/>
     <highlightErrorFilter implementation="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$CodeFenceHighlightErrorFilter"/>
+    <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
 
     <!--Formatting-->
     <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
