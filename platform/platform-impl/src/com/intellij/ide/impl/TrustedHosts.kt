@@ -82,16 +82,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
   }
 
   fun isUrlTrusted(url: String): Boolean {
-    val origin = getOriginFromUrl(url) ?: return false
-    return state.trustedHosts.map { it.toLowerCase() }.any { host ->
-      if (host.contains(SCHEME_SEPARATOR)) { // host is defined manually, with a protocol => we compare protocol as well
-        val hostWithTrailingSlash = if (host.endsWith("/")) host else "$host/"
-        url.startsWith(hostWithTrailingSlash, ignoreCase = true) || url.equals(host, ignoreCase = true)
-      }
-      else {
-        host.equals(origin.host, ignoreCase = true)
-      }
-    }
+    return false
   }
 
   fun setHostTrusted(host: String, value: Boolean) {

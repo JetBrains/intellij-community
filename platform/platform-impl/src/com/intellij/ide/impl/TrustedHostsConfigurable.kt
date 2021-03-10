@@ -23,19 +23,6 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   override fun createPanel(): DialogPanel {
     return panel {
       row {
-        label(IdeBundle.message("trusted.hosts.settings.label"))
-      }
-      row {
-        val trustedHostsSettings = service<TrustedHostsSettings>()
-        trustedLocationConfigurable(this,
-                                    getValuesFromSettings = { trustedHostsSettings.getTrustedHosts() },
-                                    setValuesToSettings = { trustedHostsSettings.setTrustedHosts(it) },
-                                    getNewValueFromUser = {
-                                      showInputDialog(it, null, IdeBundle.message("trusted.hosts.settings.add.new.host.dialog.title"), null)
-                                    })
-      }
-
-      row {
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
       row {
