@@ -36,16 +36,20 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open val testScriptProperties : TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
+  fun addLessonListener(lessonListener: LessonListener) {
+    lessonListeners.add(lessonListener)
+  }
+
+  fun removeLessonListener(lessonListener: LessonListener) {
+    lessonListeners.remove(lessonListener)
+  }
+
   //-------------------------------------------------------------
 
   internal val passed: Boolean
     get() = LessonStateManager.getStateFromBase(id) == LessonState.PASSED
 
   internal val lessonListeners: MutableList<LessonListener> = mutableListOf()
-
-  internal fun addLessonListener(lessonListener: LessonListener) {
-    lessonListeners.add(lessonListener)
-  }
 
   internal fun onStart() {
     lessonListeners.forEach { it.lessonStarted(this) }
