@@ -45,7 +45,8 @@ SHELL_SCRIPT
       PsiElement(=)('=')
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         BITWISE_OR_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('retval')
@@ -53,7 +54,8 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             VARIABLE
               PsiElement(var)('$?')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     LET_COMMAND
@@ -66,7 +68,8 @@ SHELL_SCRIPT
         LITERAL_EXPRESSION
           PsiElement($)('$')
           ARITHMETIC_EXPANSION
-            PsiElement((()('((')
+            PsiElement(()('(')
+            PsiElement(()('(')
             BITWISE_OR_EXPRESSION
               LITERAL_EXPRESSION
                 PsiElement(word)('retval')
@@ -74,4 +77,5 @@ SHELL_SCRIPT
               LITERAL_EXPRESSION
                 VARIABLE
                   PsiElement(var)('$?')
-            PsiElement()))('))')
+            PsiElement())(')')
+            PsiElement())(')')

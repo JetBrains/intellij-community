@@ -145,9 +145,8 @@ SHELL_SCRIPT
                   PsiElement(word)('branch')
                   PsiElement(})('}')
                 PsiElement(word)('\\<<<]]+={}')
-            PsiWhiteSpace('   ')
-            LITERAL
-              PsiElement(word)('sdfsdfsd')
+                PsiWhiteSpace('   ')
+                PsiElement(word)('sdfsdfsd')
         PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST

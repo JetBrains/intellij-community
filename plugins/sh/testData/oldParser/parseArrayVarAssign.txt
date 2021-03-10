@@ -21,7 +21,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')

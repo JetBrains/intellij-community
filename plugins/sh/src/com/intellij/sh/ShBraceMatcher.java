@@ -15,7 +15,6 @@ final class ShBraceMatcher implements PairedBraceMatcher, ShTokenTypes {
       new BracePair(OUTPUT_PROCESS_SUBSTITUTION, RIGHT_PAREN, true),
       new BracePair(LEFT_PAREN, RIGHT_PAREN, true),
       new BracePair(LEFT_SQUARE, RIGHT_SQUARE, false),
-      new BracePair(LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, true),
       new BracePair(LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET, false),
       new BracePair(EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT, false),
       new BracePair(HEREDOC_MARKER_START, HEREDOC_MARKER_END, false),

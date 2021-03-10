@@ -1,8 +1,9 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('number')
@@ -10,12 +11,14 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('5')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('number')
@@ -23,4 +26,5 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('5')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

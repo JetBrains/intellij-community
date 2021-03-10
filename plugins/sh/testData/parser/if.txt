@@ -1005,7 +1005,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             PsiElement(word)('*.sh')
         PsiElement())(')')
   PsiElement(\n)('\n')

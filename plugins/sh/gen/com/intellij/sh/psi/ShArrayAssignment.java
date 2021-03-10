@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 public interface ShArrayAssignment extends ShCompositeElement {
 
   @NotNull
-  ShExpression getExpression();
+  ShOperation getOperation();
 
   @Nullable
   PsiElement getAssign();

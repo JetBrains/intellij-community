@@ -10,8 +10,10 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         ARITHMETIC_EXPANSION
-          PsiElement((()('((')
+          PsiElement(()('(')
+          PsiElement(()('(')
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
-          PsiElement()))('))')
+          PsiElement())(')')
+          PsiElement())(')')

@@ -3,7 +3,8 @@ SHELL_SCRIPT
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         LITERAL_EXPRESSION
           PsiElement($)('$')
           SUBSHELL_COMMAND
@@ -20,4 +21,5 @@ SHELL_SCRIPT
                     PsiElement(var)('$1')
                   PsiElement(CLOSE_QUOTE)('"')
             PsiElement())(')')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

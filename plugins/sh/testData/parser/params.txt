@@ -533,7 +533,8 @@ SHELL_SCRIPT
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ADD_EXPRESSION
           LITERAL_EXPRESSION
@@ -548,7 +549,8 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -722,7 +724,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             VARIABLE
               PsiElement(var)('$HOMEBREW_PACKAGES')
         PsiElement())(')')
@@ -930,9 +932,7 @@ SHELL_SCRIPT
         PsiElement(param_separator)(':-')
         NUMBER
           PsiElement(int)('8')
-        PsiElement(word)('.')
-        NUMBER
-          PsiElement(int)('181')
+        PsiElement(word)('.181')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   PsiElement(\n)('\n')
@@ -958,7 +958,7 @@ SHELL_SCRIPT
       ASSIGNMENT_LIST
         PsiElement(()('(')
         ARRAY_ASSIGNMENT
-          LITERAL_EXPRESSION
+          LITERAL_OPERATION
             NUMBER
               PsiElement(int)('1')
             PsiWhiteSpace(' ')
@@ -1009,49 +1009,49 @@ SHELL_SCRIPT
             PsiElement(()('(')
             PsiWhiteSpace(' \\n        ')
             ARRAY_ASSIGNMENT
-              ASSIGNMENT_EXPRESSION
-                ASSIGNMENT_EXPRESSION
-                  ASSIGNMENT_EXPRESSION
-                    ARRAY_EXPRESSION
+              ASSIGNMENT_OPERATION
+                ASSIGNMENT_OPERATION
+                  ASSIGNMENT_OPERATION
+                    ARRAY_OPERATION
                       PsiElement([)('[')
-                      LITERAL_EXPRESSION
+                      LITERAL_OPERATION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
                           PsiElement(STRING_CONTENT)('11')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                     PsiElement(=)('=')
-                    INDEX_EXPRESSION
-                      LITERAL_EXPRESSION
+                    INDEX_OPERATION
+                      LITERAL_OPERATION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
                           PsiElement(STRING_CONTENT)('3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiWhiteSpace(' \\n        ')
                       PsiElement([)('[')
-                      LITERAL_EXPRESSION
+                      LITERAL_OPERATION
                         STRING
                           PsiElement(OPEN_QUOTE)('"')
                           PsiElement(STRING_CONTENT)('9.0.4')
                           PsiElement(CLOSE_QUOTE)('"')
                       PsiElement(])(']')
                   PsiElement(=)('=')
-                  INDEX_EXPRESSION
-                    LITERAL_EXPRESSION
+                  INDEX_OPERATION
+                    LITERAL_OPERATION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('39362fb9bfb341fcc802e55e8ea59f4664ca58fd821ce956d48e1aa4fb3d2dec')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' \\n        ')
                     PsiElement([)('[')
-                    LITERAL_EXPRESSION
+                    LITERAL_OPERATION
                       STRING
                         PsiElement(OPEN_QUOTE)('"')
                         PsiElement(STRING_CONTENT)('10')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiElement(])(']')
                 PsiElement(=)('=')
-                LITERAL_EXPRESSION
+                LITERAL_OPERATION
                   STRING
                     PsiElement(OPEN_QUOTE)('"')
                     PsiElement(STRING_CONTENT)('c851df838a51af52517b74e3a4b251d90c54cf478a4ebed99e7285ef134c3435')

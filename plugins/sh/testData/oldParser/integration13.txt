@@ -6,9 +6,10 @@ SHELL_SCRIPT
   PsiElement(\n)('\n')
   PsiWhiteSpace(' ')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
+    SHELL_COMMAND
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('a')
@@ -16,4 +17,5 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

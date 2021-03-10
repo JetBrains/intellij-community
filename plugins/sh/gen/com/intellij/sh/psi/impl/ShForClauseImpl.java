@@ -82,18 +82,6 @@ public class ShForClauseImpl extends ShCompositeElementImpl implements ShForClau
 
   @Override
   @Nullable
-  public PsiElement getLeftDoubleParen() {
-    return findChildByType(LEFT_DOUBLE_PAREN);
-  }
-
-  @Override
-  @Nullable
-  public PsiElement getRightDoubleParen() {
-    return findChildByType(RIGHT_DOUBLE_PAREN);
-  }
-
-  @Override
-  @Nullable
   public PsiElement getIn() {
     return findChildByType(IN);
   }

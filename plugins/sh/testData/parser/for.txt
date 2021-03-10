@@ -53,7 +53,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -78,7 +79,8 @@ SHELL_SCRIPT
             PsiElement(word)('c')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       DO_BLOCK
@@ -142,7 +144,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -166,7 +169,8 @@ SHELL_SCRIPT
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       DO_BLOCK
@@ -190,13 +194,15 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace('  ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       DO_BLOCK
@@ -217,13 +223,15 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace('  ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       DO_BLOCK
@@ -240,13 +248,15 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         PsiElement(;)(';')
         PsiWhiteSpace('  ')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
       BLOCK
@@ -263,7 +273,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace('  ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -293,7 +304,8 @@ SHELL_SCRIPT
             PsiElement(word)('i')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         PsiWhiteSpace(' ')
         LIST_TERMINATOR
           PsiElement(;)(';')
@@ -548,7 +560,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -573,7 +586,8 @@ SHELL_SCRIPT
             PsiElement(word)('i')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
       PsiWhiteSpace('    ')
       DO_BLOCK
         PsiElement(do)('do')
@@ -597,7 +611,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         PsiWhiteSpace(' ')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
@@ -622,7 +637,8 @@ SHELL_SCRIPT
             PsiElement(word)('i')
           PsiElement(++)('++')
         PsiWhiteSpace(' ')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
         LIST_TERMINATOR
           PsiElement(\n)('\n')
         PsiElement(\n)('\n')
@@ -648,7 +664,8 @@ SHELL_SCRIPT
       PsiElement(for)('for')
       PsiWhiteSpace(' ')
       FOR_CLAUSE
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         ASSIGNMENT_EXPRESSION
           LITERAL_EXPRESSION
             PsiElement(word)('i')
@@ -671,7 +688,8 @@ SHELL_SCRIPT
           LITERAL_EXPRESSION
             PsiElement(word)('i')
           PsiElement(++)('++')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')
       PsiWhiteSpace('     ')
       DO_BLOCK
         PsiElement(do)('do')

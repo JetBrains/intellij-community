@@ -28,7 +28,7 @@ SHELL_SCRIPT
           ASSIGNMENT_LIST
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
+              LITERAL_OPERATION
                 PsiElement(word)('a')
             PsiElement())(')')
   PsiElement(\n)('\n')
@@ -46,6 +46,10 @@ SHELL_SCRIPT
           ASSIGNMENT_LIST
             PsiElement(()('(')
             ARRAY_ASSIGNMENT
-              LITERAL_EXPRESSION
-                PsiElement(word)('a,b')
+              COMMA_OPERATION
+                LITERAL_OPERATION
+                  PsiElement(word)('a')
+                PsiElement(,)(',')
+                LITERAL_OPERATION
+                  PsiElement(word)('b')
             PsiElement())(')')

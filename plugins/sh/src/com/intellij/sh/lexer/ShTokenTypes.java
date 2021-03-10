@@ -38,7 +38,7 @@ public interface ShTokenTypes extends ShTypes {
       LEFT_DOUBLE_BRACKET, RIGHT_DOUBLE_BRACKET,
       CASE_END,
       DOLLAR,
-      LEFT_DOUBLE_PAREN, RIGHT_DOUBLE_PAREN, EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT
+      EXPR_CONDITIONAL_LEFT, EXPR_CONDITIONAL_RIGHT
   ));
 
   //these are keyword tokens which may be used as identifiers, e.g. in a for loop
@@ -49,4 +49,7 @@ public interface ShTokenTypes extends ShTypes {
   );
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING);
+
+  TokenSet arithmeticOperationsForRemapping = TokenSet.create(PLUS, MINUS, DIV, MULT, MINUS_MINUS, PLUS_PLUS);
+  TokenSet numbers = TokenSet.create(INT, OCTAL, HEX);
 }

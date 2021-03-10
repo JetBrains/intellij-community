@@ -12,9 +12,8 @@ SHELL_SCRIPT
         REDIRECTION
           PsiElement(>)('>')
           PsiElement(word)('/dev/null')
-      PsiWhiteSpace(' ')
-      LITERAL
-        PsiElement(word)('file2.txt')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('file2.txt')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -29,9 +28,8 @@ SHELL_SCRIPT
         REDIRECTION
           PsiElement(<<<)('<<<')
           PsiElement(word)('stdin')
-      PsiWhiteSpace(' ')
-      LITERAL
-        PsiElement(word)('file.txt')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('file.txt')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -47,37 +45,30 @@ SHELL_SCRIPT
           PsiElement(<<<)('<<<')
           PsiWhiteSpace(' ')
           PsiElement(word)('stdin')
-      PsiWhiteSpace(' ')
-      LITERAL
-        PsiElement(word)('file.txt')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('file.txt')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# equivalent redirects')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
-        REDIRECTION
-          PsiElement(>&)('>&')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('x')
-      PsiWhiteSpace(' ')
-      LITERAL
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(>&)('>&')
+        PsiWhiteSpace(' ')
+        PsiElement(word)('x')
+        PsiWhiteSpace(' ')
         PsiElement(word)('echo')
-      PsiWhiteSpace(' ')
-      LITERAL
+        PsiWhiteSpace(' ')
         PsiElement(word)('out')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
-        REDIRECTION
-          PsiElement(>&)('>&')
-          PsiElement(word)('x')
-      PsiWhiteSpace(' ')
-      LITERAL
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
+        PsiElement(>&)('>&')
+        PsiElement(word)('x')
+        PsiWhiteSpace(' ')
         PsiElement(word)('echo')
-      PsiWhiteSpace(' ')
-      LITERAL
+        PsiWhiteSpace(' ')
         PsiElement(word)('out')
   PsiElement(\n)('\n')
   COMMANDS_LIST

@@ -1494,7 +1494,9 @@ SHELL_SCRIPT
                                         PsiElement(var)('$SELF')
                                     PsiWhiteSpace(' ')
                                     LITERAL
-                                      PsiElement(word)('artifact-file')
+                                      PsiElement(word)('artifact')
+                                    LITERAL
+                                      PsiElement(word)('-file')
                                     PsiWhiteSpace(' ')
                                     VARIABLE
                                       PsiElement(var)('$ARTIFACT')
@@ -1835,7 +1837,9 @@ SHELL_SCRIPT
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace(' ')
                     LITERAL
-                      PsiElement(word)('compile-classpath')
+                      PsiElement(word)('compile')
+                    LITERAL
+                      PsiElement(word)('-classpath')
                 PsiElement())(')')
               PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
@@ -2261,7 +2265,7 @@ SHELL_SCRIPT
                                     ASSIGNMENT_LIST
                                       PsiElement(()('(')
                                       ARRAY_ASSIGNMENT
-                                        LITERAL_EXPRESSION
+                                        LITERAL_OPERATION
                                           PsiElement(word)('rm')
                                           PsiWhiteSpace(' ')
                                           STRING
@@ -3397,7 +3401,9 @@ SHELL_SCRIPT
                                   PsiElement(CLOSE_QUOTE)('"')
                               PsiWhiteSpace(' ')
                               LITERAL
-                                PsiElement(word)('run-classpath')
+                                PsiElement(word)('run')
+                              LITERAL
+                                PsiElement(word)('-classpath')
                           PsiElement())(')')
                         PsiElement(CLOSE_QUOTE)('"')
                     PsiWhiteSpace('               ')

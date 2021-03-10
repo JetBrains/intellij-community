@@ -3,8 +3,10 @@ SHELL_SCRIPT
     GENERIC_COMMAND_DIRECTIVE
       PsiElement($)('$')
       ARITHMETIC_EXPANSION
-        PsiElement((()('((')
+        PsiElement(()('(')
+        PsiElement(()('(')
         LITERAL_EXPRESSION
           NUMBER
             PsiElement(int)('1')
-        PsiElement()))('))')
+        PsiElement())(')')
+        PsiElement())(')')

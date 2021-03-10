@@ -330,11 +330,13 @@ SHELL_SCRIPT
         PsiElement(OPEN_QUOTE)('"')
         PsiElement($)('$')
         ARITHMETIC_EXPANSION
-          PsiElement((()('((')
+          PsiElement(()('(')
+          PsiElement(()('(')
           LITERAL_EXPRESSION
             NUMBER
               PsiElement(int)('1')
-          PsiElement()))('))')
+          PsiElement())(')')
+          PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
