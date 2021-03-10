@@ -14,6 +14,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction.Priority;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -621,10 +622,14 @@ public final class HighlightClassUtil {
                                                    PsiFormatUtilBase.SHOW_NAME |
                                                    PsiFormatUtilBase.SHOW_PARAMETERS,
                                                    PsiFormatUtilBase.SHOW_TYPE);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .range(range)
         .descriptionAndTooltip(JavaErrorBundle.message("ambiguous.method.call", m1, m2))
         .create();
+
+      QuickFixAction.registerQuickFixAction(info,QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass, Priority.TOP));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(baseClass));
+      return info;
     }
 
     if (!constructorCandidates.isEmpty()) {
