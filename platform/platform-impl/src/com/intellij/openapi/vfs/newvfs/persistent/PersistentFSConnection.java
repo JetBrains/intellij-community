@@ -6,8 +6,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.*;
-import com.intellij.util.io.storage.*;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.storage.CapacityAllocationPolicy;
+import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.Storage;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +36,7 @@ final class PersistentFSConnection {
   @NotNull
   private final Storage myAttributes;
   @NotNull
-  private final RefCountingStorage myContents;
+  private final RefCountingContentStorage myContents;
   @NotNull
   private final PersistentFSRecordsStorage myRecords;
   @Nullable
@@ -54,7 +58,7 @@ final class PersistentFSConnection {
                          @NotNull PersistentFSRecordsStorage records,
                          @NotNull PersistentStringEnumerator names,
                          @NotNull Storage attributes,
-                         @NotNull RefCountingStorage contents,
+                         @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull IntList freeRecords,
                          boolean markDirty) {
@@ -94,7 +98,7 @@ final class PersistentFSConnection {
   }
 
   @NotNull("Vfs must be initialized")
-  RefCountingStorage getContents() {
+  RefCountingContentStorage getContents() {
     return myContents;
   }
 
@@ -227,7 +231,7 @@ final class PersistentFSConnection {
                             @Nullable PersistentStringEnumerator names,
                             @Nullable Storage attributes,
                             @Nullable ContentHashEnumerator contentHashesEnumerator,
-                            @Nullable RefCountingStorage contents) throws IOException {
+                            @Nullable RefCountingContentStorage contents) throws IOException {
     if (names != null) {
       names.close();
     }
