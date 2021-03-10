@@ -63,6 +63,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val colorManager = getColorManager(project)
+    private val branchSettings = GitVcsSettings.getInstance(project).branchSettings
 
     override fun customizeCellRenderer(tree: JTree,
                                        value: Any?,
@@ -91,7 +92,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
-      if (branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
+      val repositoryGrouping = branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      if (!repositoryGrouping && branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
         append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
