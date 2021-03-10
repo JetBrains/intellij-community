@@ -111,12 +111,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     if (mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER) {
       myLabel.setForeground(new JBColor(() -> mySchemeSupplier.get().getDefaultForeground()));
     }
-  }
 
-  @Override
-  public Color getBackground() {
-    return ObjectUtils.notNull(myBackgroundColor,
-                        ObjectUtils.notNull(GLOBAL_SCHEME_SUPPLIER.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
+    setBackground(ObjectUtils.notNull(myBackgroundColor,
+                  new JBColor(() -> ObjectUtils.notNull(GLOBAL_SCHEME_SUPPLIER.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
   }
 
   public void setProject(Project project) {
