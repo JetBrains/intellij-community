@@ -12,10 +12,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.psi.YAMLFile;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLScalar;
-import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.Collection;
@@ -112,7 +109,20 @@ public class YAMLElementGenerator {
   }
 
   @NotNull
-  public PsiElement createSequenceItemMark() {
-    return PsiTreeUtil.getDeepestFirst(createDummyYamlWithText("- "));
+  public YAMLSequence createEmptySequence() {
+    YAMLSequence sequence = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- dummy"), YAMLSequence.class);
+    assert sequence != null;
+    sequence.deleteChildRange(sequence.getFirstChild(), sequence.getLastChild());
+    return sequence;
+  }
+
+  @NotNull
+  public YAMLSequenceItem createEmptySequenceItem() {
+    YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- dummy"), YAMLSequenceItem.class);
+    assert sequenceItem != null;
+    YAMLValue value = sequenceItem.getValue();
+    assert value != null;
+    value.deleteChildRange(value.getFirstChild(), value.getLastChild());
+    return sequenceItem;
   }
 }
