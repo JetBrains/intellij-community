@@ -20,7 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.containers.HashSetInterner
+import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
@@ -46,20 +46,22 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
   companion object {
     @JvmStatic
     fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
-      val interner = HashSetInterner<String>()
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY)
-      val pathsByName = paths.associateBy { interner.intern(it.moduleName) }
+      val pathsByName = paths.associateBy { it.moduleName }
+      val interner = Interner.createStringInterner<String>()
       return modules.map { create(pathsByName[it.name]!!, it, parentDisposable, interner) }
     }
 
-    private fun create(path: ModulePath, module: JpsModule, parentDisposable: Disposable, interner: HashSetInterner<String>): UnloadedModuleDescriptionImpl {
+    private fun create(path: ModulePath, module: JpsModule, parentDisposable: Disposable,
+                       interner: Interner<String>): UnloadedModuleDescriptionImpl {
       val dependencyModuleNames = module.dependenciesList.dependencies
         .filterIsInstance(JpsModuleDependency::class.java)
         .map { interner.intern(it.moduleReference.moduleName) }
 
       val pointerManager = VirtualFilePointerManager.getInstance()
-      return UnloadedModuleDescriptionImpl(path, dependencyModuleNames, module.contentRootsList.urls.map {pointerManager.create(it, parentDisposable, null)})
+      return UnloadedModuleDescriptionImpl(path, dependencyModuleNames,
+                                           module.contentRootsList.urls.map { pointerManager.create(it, parentDisposable, null) })
     }
   }
 }
