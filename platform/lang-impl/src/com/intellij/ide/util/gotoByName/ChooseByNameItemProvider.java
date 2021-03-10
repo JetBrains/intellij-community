@@ -61,10 +61,10 @@ public interface ChooseByNameItemProvider {
                          @NotNull Processor<Object> consumer);
 
   default boolean filterElements(@NotNull ChooseByNameViewModel base,
-                         @NotNull String pattern,
-                         boolean everywhere,
-                         @NotNull ProgressIndicator cancelled,
-                         @NotNull Processor<Object> consumer) {
+                                 @NotNull String pattern,
+                                 boolean everywhere,
+                                 @NotNull ProgressIndicator cancelled,
+                                 @NotNull Processor<Object> consumer) {
     assert base instanceof ChooseByNameBase : "This method supposed to be overridden if you want to use ChooseByNameViewModel as param";
     return filterElements((ChooseByNameBase)base, pattern, everywhere, cancelled, consumer);
   }

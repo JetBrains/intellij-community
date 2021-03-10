@@ -23,8 +23,8 @@ public interface WeightedSearchEverywhereContributor<I> extends SearchEverywhere
 
   @NotNull
   default ContributorSearchResult<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
-                                               @NotNull ProgressIndicator progressIndicator,
-                                               int elementsLimit) {
+                                                                                         @NotNull ProgressIndicator progressIndicator,
+                                                                                         int elementsLimit) {
     ContributorSearchResult.Builder<? super FoundItemDescriptor<I>> builder = ContributorSearchResult.builder();
     fetchWeightedElements(pattern, progressIndicator, descriptor -> {
       if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
@@ -38,12 +38,11 @@ public interface WeightedSearchEverywhereContributor<I> extends SearchEverywhere
     });
 
     return builder.build();
-
   }
 
   @NotNull
   default List<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
-                            @NotNull ProgressIndicator progressIndicator) {
+                                                                      @NotNull ProgressIndicator progressIndicator) {
     List<? super FoundItemDescriptor<I>> res = new ArrayList<>();
     fetchWeightedElements(pattern, progressIndicator, res::add);
     return res;
