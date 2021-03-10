@@ -72,6 +72,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
+import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
+
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance(BaseRefactoringProcessor.class);
   private static boolean PREVIEW_IN_TESTS = true;
@@ -248,7 +250,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
-    if (isPreview) {
+    if (isPreview && !isForeignClientOnServer()) {
       for (UsageInfo usage : usages) {
         LOG.assertTrue(usage != null, getClass());
       }
