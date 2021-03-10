@@ -37,10 +37,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class KotlinChangeSignatureHandler : ChangeSignatureHandler {
-
-    override fun findTargetMember(file: PsiFile, editor: Editor) =
-        file.findElementAt(editor.caretModel.offset)?.let { findTargetMember(it) }
-
     override fun findTargetMember(element: PsiElement) = findTargetForRefactoring(element)
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
@@ -71,21 +67,17 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
     companion object {
         fun findTargetForRefactoring(element: PsiElement): PsiElement? {
             val elementParent = element.parent
-
-            if ((elementParent is KtNamedFunction || elementParent is KtClass || elementParent is KtProperty)
-                && (elementParent as KtNamedDeclaration).nameIdentifier === element
+            if ((elementParent is KtNamedFunction || elementParent is KtClass || elementParent is KtProperty) &&
+                (elementParent as KtNamedDeclaration).nameIdentifier === element
             ) return elementParent
 
             if (elementParent is KtParameter &&
                 elementParent.hasValOrVar() &&
                 elementParent.parentOfType<KtPrimaryConstructor>()?.valueParameterList === elementParent.parent
-            ) {
-                return elementParent
-            }
+            ) return elementParent
 
             if (elementParent is KtProperty && elementParent.valOrVarKeyword === element) return elementParent
-            if (elementParent is KtPrimaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
-            if (elementParent is KtSecondaryConstructor && elementParent.getConstructorKeyword() === element) return elementParent
+            if (elementParent is KtConstructor<*> && elementParent.getConstructorKeyword() === element) return elementParent
 
             element.parentOfType<KtParameterList>()?.let { parameterList ->
                 return PsiTreeUtil.getParentOfType(parameterList, KtFunction::class.java, KtProperty::class.java, KtClass::class.java)
