@@ -95,13 +95,13 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static void loadEnvironment(@NotNull Path reader, @NotNull CompletableFuture<Boolean> callback) {
+  public static @NotNull Future<@Nullable Boolean> loadEnvironment(@NotNull Path reader, @NotNull Runnable callback) {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
-      callback.complete(null);
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
+    CompletableFuture<Boolean> state = new CompletableFuture<>();
     ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
       Boolean result = Boolean.TRUE;
       try {
@@ -115,9 +115,11 @@ public final class EnvironmentUtil {
         return getSystemEnv();
       }
       finally {
-        callback.complete(result);
+        callback.run();
+        state.complete(result);
       }
     }, AppExecutorUtil.getAppExecutorService()));
+    return state;
   }
 
   private static boolean shouldLoadShellEnv() {

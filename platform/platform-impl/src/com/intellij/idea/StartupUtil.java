@@ -83,8 +83,7 @@ public final class StartupUtil {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
-
-  private static final CompletableFuture<@Nullable Boolean> ourShellEnvLoaded = new CompletableFuture<>();
+  private static Future<@Nullable Boolean> ourShellEnvLoaded;
 
   private StartupUtil() { }
 
@@ -111,7 +110,7 @@ public final class StartupUtil {
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
   }
 
-  public static @NotNull CompletableFuture<@Nullable Boolean> getShellEnvLoadingFuture() {
+  public static @NotNull Future<@Nullable Boolean> getShellEnvLoadingFuture() {
     return ourShellEnvLoaded;
   }
 
@@ -240,13 +239,13 @@ public final class StartupUtil {
     });
 
     Activity subActivity = StartUpMeasurer.startActivity("environment loading");
-    ourShellEnvLoaded.thenAccept(result -> subActivity.end());
     Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
     if (envReaderFile == null) {
-      ourShellEnvLoaded.complete(null);
+      subActivity.end();
+      ourShellEnvLoaded = CompletableFuture.completedFuture(null);
     }
     else {
-      EnvironmentUtil.loadEnvironment(envReaderFile, ourShellEnvLoaded);
+      ourShellEnvLoaded = EnvironmentUtil.loadEnvironment(envReaderFile, subActivity::end);
     }
 
     if (!configImportNeeded) {

@@ -173,14 +173,18 @@ final class SystemHealthMonitor extends PreloadingActivity {
       showNotification("vm.options.env.vars", null, String.join(", ", usedVars));
     }
 
-    StartupUtil.getShellEnvLoadingFuture().thenAcceptAsync(result -> {
-      if (result == Boolean.FALSE) {
-        NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
-        String appName = ApplicationNamesInfo.getInstance().getFullProductName();
-        String shell = System.getenv("SHELL");
-        showNotification("shell.env.loading.failed", action, appName, shell);
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
+      try {
+        if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
+          NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
+          String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
+          showNotification("shell.env.loading.failed", action, appName, shell);
+        }
       }
-    }, AppExecutorUtil.getAppExecutorService());
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private static void checkSignalBlocking() {
