@@ -33,7 +33,8 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
                               val taskContent: (TaskContext.() -> Unit)?,
                               var messagesNumberBeforeStart: Int = 0,
                               var rehighlightComponent: (() -> Component)? = null,
-                              var userVisibleInfo: PreviousTaskInfo? = null)
+                              var userVisibleInfo: PreviousTaskInfo? = null,
+                              val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
   private set
@@ -291,8 +292,13 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         if (taskHasBeenDone) {
           clearRestore()
           LessonManager.instance.passExercise()
-          if (foundComponent == null) foundComponent = taskActions[currentTaskIndex].userVisibleInfo?.ui
-          if (rehighlightComponent == null) rehighlightComponent = taskActions[currentTaskIndex].rehighlightComponent
+          val taskInfo = taskActions[currentTaskIndex]
+          if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
+          if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
+          for (index in taskInfo.removeAfterDoneMessages) {
+            LessonManager.instance.removeMessage(index)
+          }
+          taskInfo.taskProperties?.let { it.messagesNumber -= taskInfo.removeAfterDoneMessages.size }
           processNextTask(currentTaskIndex + 1)
         }
       }
@@ -316,9 +322,16 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     }
   }
 
-  fun text(@Language("HTML") text: String) {
+  fun text(@Language("HTML") text: String, removeAfterDone: Boolean = false) {
     val taskInfo = taskActions[currentTaskIndex]
-    taskInfo.taskProperties?.let { it.messagesNumber++ } // Here could be runtime messages
+
+    if (removeAfterDone) taskInfo.removeAfterDoneMessages.add(LessonManager.instance.messagesNumber())
+
+    // Here could be runtime messages
+    taskInfo.taskProperties?.let {
+      it.messagesNumber++
+    }
+
     var hasDetection = false
     for (i in currentTaskIndex until taskActions.size) {
       if (taskInfo.taskProperties?.hasDetection == true) {

@@ -119,6 +119,10 @@ class LessonManager {
     learnPanel?.resetMessagesNumber(number)
   }
 
+  fun removeMessage(index: Int) {
+    learnPanel?.removeMessage(index)
+  }
+
   fun messagesNumber(): Int = learnPanel?.messagesNumber() ?: 0
 
   fun passExercise() {

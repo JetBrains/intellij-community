@@ -191,6 +191,10 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     return { getRectangleToScroll(lessonMessage) }
   }
 
+  fun removeMessage(index: Int) {
+    activeMessages.removeAt(index)
+  }
+
   private fun getRectangleToScroll(lessonMessage: LessonMessage): Rectangle? {
     val startRect = modelToView(lessonMessage.start + 1) ?: return null
     val endRect = modelToView(lessonMessage.end - 1) ?: return null
