@@ -403,9 +403,8 @@
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
 
-    <fileType name="Enforced Plain Text" implementationClass="com.intellij.openapi.file.exclude.EnforcedPlainTextFileType" fieldName="INSTANCE"/>
     <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
-    <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeOverrider"/>
+    <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
 
     <fileTypeDetector implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Detector"/>
     <navbar implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$NavBarExtension"/>
