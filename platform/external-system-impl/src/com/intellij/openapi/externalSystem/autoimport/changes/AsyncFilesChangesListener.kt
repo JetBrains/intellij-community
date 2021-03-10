@@ -30,12 +30,12 @@ class AsyncFilesChangesListener(
   }
 
   override fun apply() {
-    val updatedFiles = HashMap(updatedFiles)
+    val updatedFilesSnapshot = HashMap(updatedFiles)
     filesProvider.supply(
       { filesToWatch ->
         val index = PathPrefixTreeMap<Boolean>()
         filesToWatch.forEach { index[it] = true }
-        val updatedWatchedFiles = updatedFiles.flatMap { (path, modificationData) ->
+        val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
           index.getAllAncestorKeys(path).map { it to modificationData }
         }
         if (updatedWatchedFiles.isNotEmpty()) {
