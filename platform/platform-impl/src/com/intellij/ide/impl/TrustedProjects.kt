@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
@@ -48,7 +49,7 @@ fun confirmOpeningUntrustedProject(
   }
 
   val choice = createDialog()
-    .doNotAsk(createDoNotAskOptionForHost(trustedCheckResult))
+    .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
     .asWarning()
     .show(project = null)
 
@@ -121,16 +122,20 @@ fun Project.setTrusted(value: Boolean) {
   }
 }
 
-fun createDoNotAskOptionForHost(project: Project): DialogWrapper.DoNotAskOption? {
-  return createDoNotAskOptionForHost(getImplicitTrustedCheckResult(project))
-}
+fun createDoNotAskOptionForLocation(projectLocationPath: String): DialogWrapper.DoNotAskOption {
+  return object : DialogWrapper.DoNotAskOption.Adapter() {
+    override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+      if (isSelected && exitCode == Messages.YES) {
+        TrustedProjectsStatistics.TRUST_LOCATION_CHECKBOX_SELECTED.log()
+        service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
+      }
+    }
 
-fun createDoNotAskOptionForHost(projectBasePath: Path): DialogWrapper.DoNotAskOption? {
-  return createDoNotAskOptionForHost(getImplicitTrustedCheckResult(projectBasePath))
-}
-
-private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult): DialogWrapper.DoNotAskOption? {
-  return null
+    override fun getDoNotShowMessage(): String {
+      val path = getLocationRelativeToUserHome(projectLocationPath, false)
+      return IdeBundle.message("untrusted.project.warning.trust.location.checkbox", path)
+    }
+  }
 }
 
 fun isProjectImplicitlyTrusted(projectDir: Path?): Boolean {
