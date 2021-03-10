@@ -77,7 +77,7 @@ BOOL appendBundle(NSString *path, NSMutableArray *sink) {
         NSLog(@"Can't find bundled java.The folder doesn't exist: %@", path);
     }
     else {
-        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"] || [path hasSuffix:@"jbr"]) {
+        if ([path hasSuffix:@"jdk"] || [path hasSuffix:@"jre"] || [path hasSuffix:@"jbr"]) { // Android Studio: bundle under "jre"
             NSBundle *bundle = [NSBundle bundleWithPath:path];
             if (bundle != nil) {
                 [sink addObject:bundle];
@@ -119,7 +119,7 @@ NSArray *allVms() {
     NSMutableArray *jvmBundlePaths = [NSMutableArray array];
 
     NSBundle *bundle = [NSBundle mainBundle];
-    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jbr"], jvmBundlePaths);
+    appendBundle([bundle.bundlePath stringByAppendingPathComponent:@"Contents/jre"], jvmBundlePaths); // Android Studio: bundle under "jre"
 
     if (jvmBundlePaths.count == 0 || !satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required)) {
         NSLog(@"Can't get bundled java version. It is probably corrupted.");
