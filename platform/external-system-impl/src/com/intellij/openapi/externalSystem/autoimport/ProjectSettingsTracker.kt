@@ -5,11 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
-import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
 import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.EdtAsyncSupplier.Companion.invokeOnEdt
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier.Companion.readAction
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -176,8 +177,7 @@ class ProjectSettingsTracker(
 
   init {
     whenNewFilesCreated(settingsProvider::invalidate, parentDisposable)
-    AsyncFilesChangesProviderImpl(settingsProvider)
-      .subscribe(ProjectSettingsListener(), parentDisposable)
+    subscribeOnDocumentsAndVirtualFilesChanges(settingsProvider, ProjectSettingsListener(), parentDisposable)
   }
 
   companion object {
