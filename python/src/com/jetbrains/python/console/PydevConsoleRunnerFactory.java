@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
@@ -152,8 +153,12 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       }
       else {
         VirtualFile[] projectRoots = ProjectRootManager.getInstance(project).getContentRoots();
-        if (projectRoots.length > 0) {
-          workingDir = projectRoots[0].getPath();
+        for (VirtualFile root: projectRoots) {
+          if (root.getFileSystem() instanceof LocalFileSystem) {
+            // we can't start Python Console in remote folder without additional connection configurations
+            workingDir = root.getPath();
+            break;
+          }
         }
       }
     }
