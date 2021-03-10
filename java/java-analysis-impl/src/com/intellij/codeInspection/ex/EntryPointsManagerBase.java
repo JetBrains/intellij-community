@@ -506,9 +506,14 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         }
       }
     }
-
-    return AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
-           AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
+    boolean annotationsMatch = AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
+                               AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
+    if (annotationsMatch) return true;
+    for (PsiAnnotation annotation : owner.getAnnotations()) {
+      PsiClass annClass = annotation.resolveAnnotationType();
+      if (AnnotationUtil.checkAnnotatedUsingPatterns(annClass, ADDITIONAL_ANNOTATIONS)) return true;
+    }
+    return false;
   }
 
   private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<? super PsiClass> visited) {
