@@ -43,10 +43,10 @@ public final class SvgCacheManager {
     public void accept(Throwable e, MVStore store) {
       Logger logger = getLogger();
       if (isStoreOpened) {
-        logger.error("Icon Cache Error, (db=" + store.getFileStore() + ')');
+        logger.error("Icon cache error (db=" + store.getFileStore() + ')');
       }
       else {
-        logger.warn("Icon Cache will be recreated or previous version of data reused, (db=" + store.getFileStore() + ')');
+        logger.warn("Icon cache will be recreated or previous version of data reused, (db=" + store.getFileStore() + ')');
       }
       logger.debug(e);
     }
