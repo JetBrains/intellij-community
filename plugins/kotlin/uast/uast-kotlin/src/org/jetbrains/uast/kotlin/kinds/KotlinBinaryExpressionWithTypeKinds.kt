@@ -19,6 +19,12 @@ package org.jetbrains.uast.kotlin
 import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 
 object KotlinBinaryExpressionWithTypeKinds {
+    init {
+        // We trigger class initialization for UastBinaryExpressionWithTypeKind early in order to
+        // avoid a class initializer deadlock (https://youtrack.jetbrains.com/issue/KT-32444).
+        UastBinaryExpressionWithTypeKind.INSTANCE_CHECK
+    }
+
     @JvmField
     val NEGATED_INSTANCE_CHECK = UastBinaryExpressionWithTypeKind.InstanceCheck("!is")
 
