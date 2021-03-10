@@ -28,10 +28,12 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.intentions.isInvokeOperator
 import org.jetbrains.kotlin.idea.util.expectedDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -100,11 +102,11 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
             } ?: element.parentOfType<KtSimpleNameExpression>()
 
             if (calleeExpr is KtSimpleNameExpression || calleeExpr is KtConstructorDelegationReferenceExpression) {
-                val jetElement = element.parentOfType<KtElement>() ?: return null
+                val bindingContext = element.parentOfType<KtElement>()?.analyze(BodyResolveMode.FULL) ?: return null
 
-                val bindingContext = jetElement.analyze(BodyResolveMode.FULL)
+                if (call?.getResolvedCall(bindingContext)?.resultingDescriptor?.isInvokeOperator == true) return call
+
                 val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, calleeExpr as KtReferenceExpression]
-
                 if (descriptor is ClassDescriptor || descriptor is CallableDescriptor) return calleeExpr
             }
 
@@ -165,6 +167,7 @@ class KotlinChangeSignatureHandler : ChangeSignatureHandler {
             val descriptor = when {
                 element is KtParameter && element.hasValOrVar() -> bindingContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, element]
                 element is KtReferenceExpression -> bindingContext[BindingContext.REFERENCE_TARGET, element]
+                element is KtCallExpression -> element.getResolvedCall(bindingContext)?.resultingDescriptor
                 else -> bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element]
             }
 

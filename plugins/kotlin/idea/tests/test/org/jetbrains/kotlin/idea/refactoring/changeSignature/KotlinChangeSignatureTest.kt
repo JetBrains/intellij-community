@@ -119,8 +119,6 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     private fun createChangeSignatureContext(): ChangeSignatureContext {
-        configureFiles()
-
         val element = findTargetElement()?.safeAs<KtElement>().sure { "Target element is null" }
         val context = file
             .findElementAt(editor.caretModel.offset)
@@ -147,9 +145,13 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun doTest(configure: KotlinChangeInfo.() -> Unit = {}) {
-        KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()
-
+        configureFiles()
+        doRefactoring(configure)
         compareEditorsWithExpectedData()
+    }
+
+    private fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
+        KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()
     }
 
     private fun doTestAndIgnoreConflicts(configure: KotlinChangeInfo.() -> Unit = {}) = withIgnoredConflicts<Throwable> {
@@ -275,10 +277,26 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             KotlinCallableParameterTableModel.getTypeCodeFragmentContext(context),
         ).getTypeInfo(isCovariant, forPreview)
 
-    private inline fun <reified T> doTestTargetElement(code: String) {
+    private inline fun <reified T> doTestTargetElement(code: String, withError: Boolean = false) {
         myFixture.configureByText("dummy.kt", code)
         val element = findTargetElement()!!
         TestCase.assertEquals(T::class, element::class)
+
+        val exception = try {
+            doRefactoring {  }
+            null
+        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+            e
+        }
+
+        if (withError) {
+            TestCase.assertNotNull(exception)
+        } else {
+            exception?.let { throw it }
+        }
+
+        val expected = code.replace("<caret>", "")
+        TestCase.assertEquals(expected, file.text)
     }
 
     private fun KotlinMutableMethodDescriptor.createNewParameter(
@@ -294,6 +312,8 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     private fun doTestWithDescriptorModification(modificator: KotlinMutableMethodDescriptor.() -> Unit) {
+        configureFiles()
+
         val context = createChangeSignatureContext()
         val callableDescriptor = context.callableDescriptor
         val kotlinChangeSignature = KotlinChangeSignature(
@@ -371,11 +391,40 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testPositionOnValForProperty() = doTestTargetElement<KtProperty>("v<caret>al a: String = \"\"")
     fun testPositionOnNameForProperty() = doTestTargetElement<KtProperty>("val <caret>a: String = \"\"")
 
-    fun testCaretAtReferenceAsValueParameter() = doTestConflict {  }
+    fun testPositionOnInvokeArgument() = doTestTargetElement<KtCallExpression>(
+        """
+            class WithInvoke
+            operator fun WithInvoke.invoke() {}
+            fun checkInvoke(w: WithInvoke) = w(<caret>)
+    """.trimIndent()
+    )
+
+    fun testPositionOnInvokeObject() = doTestTargetElement<KtCallExpression>(
+        """
+            object InvokeObject {
+                operator fun invoke() {}
+            } 
+        
+            val invokeObjectCall = InvokeObject(<caret>)
+    """.trimIndent()
+    )
+
+    fun testAddParameterToInvokeFunction() = doTestWithDescriptorModification {
+        addParameter(createNewParameter(defaultValueForCall = KtPsiFactory(project).createExpression("42")))
+    }
+
+    fun testAddParameterToInvokeFunctionFromObject() = doTestWithDescriptorModification {
+        addParameter(createNewParameter(defaultValueForCall = KtPsiFactory(project).createExpression("42")))
+    }
+
+    fun testCaretAtReferenceAsValueParameter() = doTestConflict { }
 
     fun testSynthesized() = doTestConflict()
 
-    fun testPreferContainedInClass() = TestCase.assertEquals("param", createChangeInfo().newParameters[0].name)
+    fun testPreferContainedInClass() {
+        configureFiles()
+        TestCase.assertEquals("param", createChangeInfo().newParameters[0].name)
+    }
 
     fun testRenameFunction() = doTest { newName = "after" }
 
