@@ -151,7 +151,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
       myExcludedDescriptions.clear();
     }
     myCompilationAffectedModules.clear();
-    myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
+    myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject());
   }
 
   @NotNull
