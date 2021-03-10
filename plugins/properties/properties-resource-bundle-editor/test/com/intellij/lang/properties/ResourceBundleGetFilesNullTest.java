@@ -9,20 +9,14 @@ import org.junit.Assert;
 
 public class ResourceBundleGetFilesNullTest extends BasePlatformTestCase {
 
-  private ResourceBundleFileStructureViewElement myElement;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  public void testGetFilesNull() {
     final PsiFile file = myFixture.addFileToProject("empty.properties", "");
+
     final ResourceBundleImpl bundle = new ResourceBundleImpl((PropertiesFile)file);
     bundle.invalidate();
 
-    myElement = new ResourceBundleFileStructureViewElement(bundle, () -> true);
-  }
+    ResourceBundleFileStructureViewElement myElement = new ResourceBundleFileStructureViewElement(bundle, () -> true);
 
-  public void testGetFilesNull() {
     Assert.assertNull("Should return null on an invalidated resource bundle", myElement.getFiles());
   }
 }
