@@ -11,7 +11,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.util.io.storage.RefCountingStorage;
+import com.intellij.util.io.storage.RefCountingContentStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +57,14 @@ public final class PersistentFSContentAccessor {
   }
 
   void releaseContentRecord(int contentId, @NotNull PersistentFSConnection connection) throws IOException {
-    connection.getContents().releaseRecord(contentId, !myUseContentHashes);
+    connection.getContents().releaseRecord(contentId);
   }
 
   boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize, @NotNull PersistentFSConnection connection) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
 
     boolean modified = false;
-    RefCountingStorage contentStorage = connection.getContents();
+    RefCountingContentStorage contentStorage = connection.getContents();
 
     int page;
     if (myUseContentHashes) {

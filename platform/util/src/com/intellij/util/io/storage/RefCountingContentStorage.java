@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,22 +25,33 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 @ApiStatus.Internal
-public final class RefCountingStorage extends AbstractStorage {
+public final class RefCountingContentStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<>();
   private int myPendingWriteRequestsSize;
   private final ExecutorService myWriteRequestExecutor;
+  private final boolean myUseContentHashes;
 
   private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
-  public RefCountingStorage(@NotNull Path path,
-                            @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
-                            @NotNull ExecutorService writeRequestExecutor,
-                            boolean doNotZipCaches) throws IOException {
+  public RefCountingContentStorage(@NotNull Path path,
+                                   @Nullable CapacityAllocationPolicy capacityAllocationPolicy,
+                                   @NotNull ExecutorService writeRequestExecutor,
+                                   boolean doNotZipCaches,
+                                   boolean useContentHashes) throws IOException {
     super(path, capacityAllocationPolicy, true);
 
     myDoNotZipCaches = doNotZipCaches;
     myWriteRequestExecutor = writeRequestExecutor;
+    myUseContentHashes = useContentHashes;
+  }
+
+  @Override
+  protected void doDeleteRecord(int record) throws IOException {
+    if (myUseContentHashes) {
+      throw new UnsupportedEncodingException("Records can't be released completely with enabled content hashes support");
+    }
+    super.doDeleteRecord(record);
   }
 
   @Override
@@ -158,6 +170,10 @@ public final class RefCountingStorage extends AbstractStorage {
     });
   }
 
+  public int getRecordsCount() throws IOException {
+    return myRecordsTable.getRecordsCount();
+  }
+
   public void acquireRecord(int record) {
     waitForPendingWriteForRecord(record);
     withWriteLock(() -> {
@@ -166,13 +182,9 @@ public final class RefCountingStorage extends AbstractStorage {
   }
 
   public void releaseRecord(int record) throws IOException {
-    releaseRecord(record, true);
-  }
-
-  public void releaseRecord(int record, boolean completely) throws IOException {
     waitForPendingWriteForRecord(record);
     withWriteLock(() -> {
-      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record) && completely) {
+      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record) && !myUseContentHashes) {
         doDeleteRecord(record);
       }
     });
