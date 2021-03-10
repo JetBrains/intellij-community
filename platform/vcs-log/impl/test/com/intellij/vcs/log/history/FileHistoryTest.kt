@@ -428,7 +428,6 @@ class FileHistoryTest {
     }
   }
 
-  @Ignore
   @Test
   fun historyWithDeletedAndAddedUnderDifferentName() {
     val after = LocalFilePath("after.txt", false)
