@@ -1086,6 +1086,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     names.add(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItems(names);
     myTargetComboBox.setEnabled(names.size() > 1);
+
+    for (@NlsSafe String name : names) {
+      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+      if (constraint != null && constraint.isPartOfSearchResults()) {
+        myTargetComboBox.setSelectedItem(name);
+        return;
+      }
+    }
+    myTargetComboBox.setSelectedItem(SSRBundle.message("complete.match.variable.name"));
   }
 
   /**
