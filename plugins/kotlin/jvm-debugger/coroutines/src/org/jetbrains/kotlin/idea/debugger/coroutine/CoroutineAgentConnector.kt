@@ -1,8 +1,11 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
+import com.intellij.psi.JavaPsiFacade
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 enum class CoroutineDebuggerMode {
@@ -12,15 +15,17 @@ enum class CoroutineDebuggerMode {
     VERSION_1_3_8_AND_UP,
 }
 
-object CoroutineAgentConnector {
+internal object CoroutineAgentConnector {
     private data class KotlinxCoroutinesSearchResult(val jarPath: String?, val debuggerMode: CoroutineDebuggerMode)
 
     private const val kotlinxCoroutinesCoreName = "kotlinx-coroutines-core"
+    private const val kotlinxCoroutinesPackageName = "kotlinx.coroutines"
+    private const val jarSeparator = "!/"
     private val versionToCompareTo = DefaultArtifactVersion("1.3.7-255")
     private val kotlinxCoroutinesCoreJarRegex = Regex(""".+\W$kotlinxCoroutinesCoreName(-jvm)?-(\d[\w.\-]+)?\.jar""")
 
-    fun attachCoroutineAgent(params: JavaParameters): Boolean {
-        val searchResult = findKotlinxCoroutinesCoreJar(params.classPath?.pathList)
+    fun attachCoroutineAgent(project: Project, params: JavaParameters): Boolean {
+        val searchResult = findKotlinxCoroutinesCoreJar(project)
         if (searchResult.debuggerMode == CoroutineDebuggerMode.VERSION_1_3_8_AND_UP &&
             searchResult.jarPath != null) {
             return initializeCoroutineAgent(params, searchResult.jarPath)
@@ -28,25 +33,37 @@ object CoroutineAgentConnector {
         return false
     }
 
-    private fun findKotlinxCoroutinesCoreJar(pathList: List<String>?): KotlinxCoroutinesSearchResult {
-        fun emptyResult() = KotlinxCoroutinesSearchResult(null, CoroutineDebuggerMode.DISABLED)
-
-        val kotlinxCoroutinesCoreCandidates = pathList?.filter {
-            it.contains(kotlinxCoroutinesCoreName)
-        } ?: return emptyResult()
-
-        val matchResult = kotlinxCoroutinesCoreCandidates.asSequence()
-            .map { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
-            .firstOrNull { it != null }
+    private fun findKotlinxCoroutinesCoreJar(project: Project): KotlinxCoroutinesSearchResult {
+        val matchResult = project.getJarPaths(kotlinxCoroutinesPackageName)
+                .asSequence()
+                .map { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
+                .firstOrNull { it != null }
 
         if (matchResult == null || matchResult.groupValues.size < 3) {
-            return emptyResult()
+            return KotlinxCoroutinesSearchResult(null, CoroutineDebuggerMode.DISABLED)
         }
-
         return KotlinxCoroutinesSearchResult(
             matchResult.value,
             determineCoreVersionMode(matchResult.groupValues[2])
         )
+    }
+
+    private fun Project.getJarPaths(packageName: String): List<String> {
+        val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
+            .findPackage(packageName)
+            ?: return emptyList()
+
+        return kotlinxCoroutinesPackage.directories.map {
+            it.virtualFile.path.getParentJarPath()
+        }
+    }
+
+    private fun String.getParentJarPath(): String {
+        val i = indexOf(jarSeparator)
+        if (i != -1) {
+            return substring(0, i)
+        }
+        return this
     }
 
     private fun determineCoreVersionMode(version: String) =
@@ -72,4 +89,6 @@ object CoroutineAgentConnector {
 
         return true
     }
+
+    private fun VirtualFile.isKotlinStdlib() = path.contains("kotlin-stdlib")
 }
