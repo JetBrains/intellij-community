@@ -233,6 +233,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceVariable/kt38449_unit.kt");
         }
 
+        @TestMetadata("ktij817.kt")
+        public void testKtij817() throws Exception {
+            runTest("testData/refactoring/introduceVariable/ktij817.kt");
+        }
+
         @TestMetadata("LoopRange.kt")
         public void testLoopRange() throws Exception {
             runTest("testData/refactoring/introduceVariable/LoopRange.kt");
