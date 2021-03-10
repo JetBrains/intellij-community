@@ -77,27 +77,23 @@ data class IntroduceParameterDescriptor(
 
     val originalOccurrence: KotlinPsiRange
         get() = occurrencesToReplace.first { it.getTextRange().intersects(originalRange.getTextRange()) }
-    val valVar: KotlinValVar
 
-    init {
-        valVar = if (callable is KtClass) {
-            val modifierIsUnnecessary: (PsiElement) -> Boolean = {
-                when {
-                    it.parent != callable.body ->
-                        false
-                    it is KtAnonymousInitializer ->
-                        true
-                    it is KtProperty && it.initializer?.textRange?.intersects(originalRange.getTextRange()) ?: false ->
-                        true
-                    else ->
-                        false
-                }
+    val valVar: KotlinValVar = if (callable is KtClass) {
+        val modifierIsUnnecessary: (PsiElement) -> Boolean = {
+            when {
+                it.parent != callable.body -> false
+                it is KtAnonymousInitializer -> true
+                it is KtProperty && it.initializer?.textRange?.intersects(originalRange.getTextRange()) ?: false -> true
+                else -> false
             }
-            if (occurrencesToReplace.all {
-                    PsiTreeUtil.findCommonParent(it.elements)?.parentsWithSelf?.any(modifierIsUnnecessary) == true
-                }) KotlinValVar.None else KotlinValVar.Val
-        } else KotlinValVar.None
-    }
+        }
+
+        if (occurrencesToReplace.all { PsiTreeUtil.findCommonParent(it.elements)?.parentsWithSelf?.any(modifierIsUnnecessary) == true })
+            KotlinValVar.None
+        else
+            KotlinValVar.Val
+    } else
+        KotlinValVar.None
 }
 
 fun getParametersToRemove(
