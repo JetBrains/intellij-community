@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -80,8 +81,7 @@ final class PsiReflectionAccessUtil {
   public static boolean isQualifierAccessible(@Nullable PsiExpression qualifierExpression) {
     if (qualifierExpression == null) return true;
     PsiType type = qualifierExpression.getType();
-    PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    return psiClass == null || isAccessible(psiClass);
+    return type == null || isAccessibleType(type);
   }
 
   @Nullable
@@ -158,12 +158,21 @@ final class PsiReflectionAccessUtil {
       return isAccessibleType(type.getDeepComponentType());
     }
 
-    return TypeConversionUtil.isPrimitiveAndNotNull(type) || isAccessible(PsiTypesUtil.getPsiClass(type));
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) return true;
+
+    PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
+    return isAccessible(psiClass) && !hasInaccessibleGenerics(type);
   }
 
   @NotNull
   public static PsiType nearestAccessibleType(@NotNull PsiType type) {
     while (!isAccessibleType(type)) {
+      PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
+      boolean isAccessible = isAccessible(psiClass);
+      if (isAccessible && hasInaccessibleGenerics(type)) {
+        return TypeConversionUtil.erasure(type);
+      }
+
       type = type.getSuperTypes()[0];
     }
 
@@ -178,5 +187,12 @@ final class PsiReflectionAccessUtil {
     }
 
     return psiClass == null ? null : psiClass.getQualifiedName();
+  }
+
+  private static boolean hasInaccessibleGenerics(@NotNull PsiType type) {
+    if (type instanceof PsiClassType) {
+      return !ContainerUtil.and(((PsiClassType)type).getParameters(), x -> isAccessibleType(x));
+    }
+    return false;
   }
 }
