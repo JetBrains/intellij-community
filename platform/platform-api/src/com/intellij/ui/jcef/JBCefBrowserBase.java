@@ -17,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefAuthCallback;
+import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -144,6 +145,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         }
       }, getCefBrowser());
 
+      // check if the native browser has already been created (no onAfterCreated will be called then)
+      if (cefBrowser instanceof CefNativeAdapter && ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0) {
+        myIsCefBrowserCreated = true;
+      }
+
       cefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
         public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
@@ -197,6 +203,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myLifeSpanHandler = null;
       myLoadHandler = null;
       myRequestHandler = null;
+      myIsCefBrowserCreated = true; // if the browser comes from the outer - consider its native browser created
     }
   }
 

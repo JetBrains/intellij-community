@@ -21,9 +21,17 @@ import java.awt.event.KeyEvent;
 public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
   @NotNull
   public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler) {
-    var client = JBCefApp.getInstance().createClient();
+    return create(url, renderHandler, JBCefApp.getInstance().createClient(), true);
+  }
+
+  @NotNull
+  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client) {
+    return create(url, renderHandler, client, false);
+  }
+
+  private static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client, boolean isDefaultClient) {
     var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
-    return new JBCefOsrHandlerBrowser(client, cefBrowser, true, true);
+    return new JBCefOsrHandlerBrowser(client, cefBrowser, true, isDefaultClient);
   }
 
   private JBCefOsrHandlerBrowser(@NotNull JBCefClient cefClient,
