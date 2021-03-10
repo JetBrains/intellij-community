@@ -2,6 +2,7 @@ package org.jetbrains.plugins.feature.suggester
 
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -78,14 +79,16 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private fun initFocusListener() {
         val eventMulticaster = EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx
         eventMulticaster?.addFocusChangeListener(
-            FocusChangeListener { editor ->
-                if (editor.project != project) return@FocusChangeListener
-                actionPerformed(
-                    EditorFocusGainedAction(
-                        editorRef = WeakReference(editor),
-                        timeMillis = System.currentTimeMillis()
+            object : FocusChangeListener {
+                override fun focusGained(editor: Editor) {
+                    if (editor.project != project) return
+                    actionPerformed(
+                        EditorFocusGainedAction(
+                            editorRef = WeakReference(editor),
+                            timeMillis = System.currentTimeMillis()
+                        )
                     )
-                )
+                }
             },
             this
         )
