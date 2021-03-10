@@ -123,6 +123,10 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
   fun setTrustedPaths(paths: List<String>) {
     state.trustedPaths = ArrayList<String>(paths)
   }
+
+  fun addTrustedPath(path: String) {
+    state.trustedPaths.add(path)
+  }
 }
 
 private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedHosts")
