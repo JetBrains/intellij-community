@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -1054,11 +1054,16 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     if (isRequired) {
-      @NonNls String message = "could not find extension implementation " + aClass;
-      if (isInReadOnlyMode()) {
-        message += " (point in read-only mode)";
+      @NonNls String message = "cannot find extension implementation " + aClass + "(epName=" + getName() + ", extensionCount=" + size();
+      List<? extends T> cache = myExtensionsCache;
+      if (cache != null) {
+        message += ", cachedExtensions";
       }
-      throw new IllegalArgumentException(message);
+      if (isInReadOnlyMode()) {
+        message += ", point in read-only mode";
+      }
+      message += ")";
+      throw componentManager.createError(message, getPluginDescriptor().getPluginId());
     }
     return null;
   }
