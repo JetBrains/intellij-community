@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.sam
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -18,7 +19,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isTrait
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExplicitRuntimeTypeArgument
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypePositionConstraint
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType
 
 fun findSingleAbstractMethod(clazz: PsiClass): PsiMethod? = findSingleAbstractSignatureCached(clazz)?.method
@@ -90,7 +94,7 @@ internal fun processSAMConversion(targetType: PsiType,
   val (sam, classResolveResult) = pair
 
   val groundClass = classResolveResult.element ?: return constraints
-  val groundType = groundTypeForClosure(sam, groundClass, closureType, context)
+  val groundType = groundTypeForClosure(sam, groundClass, closureType, targetType, context)
 
   if (groundType != null) {
     constraints.add(TypeConstraint(targetType, groundType, context))
@@ -115,6 +119,7 @@ private fun returnTypeConstraint(samReturnType: PsiType?,
 private fun groundTypeForClosure(sam: PsiMethod,
                                  groundClass: PsiClass,
                                  closureType: GroovyClosureType,
+                                 targetType: PsiType,
                                  context: PsiElement): PsiClassType? {
   if (!Registry.`is`("groovy.use.explicitly.typed.closure.in.inference", true)) return null
 
@@ -147,8 +152,28 @@ private fun groundTypeForClosure(sam: PsiMethod,
   if (!samSession.repeatInferencePhases()) {
     return null
   }
-  val resultSubstitutor = samSession.result()
+  val resultSubstitutor = relaxUnboundTypeParameters(samSession.result(), samSession, targetType)
 
   val elementFactory = JavaPsiFacade.getElementFactory(context.project)
   return elementFactory.createType(groundClass, resultSubstitutor)
+}
+
+fun relaxUnboundTypeParameters(substitutor: PsiSubstitutor,
+                               samSession: GroovyInferenceSession,
+                               targetType : PsiType) : PsiSubstitutor {
+  // Untyped parameters of functional expressions may turn into any type, not just Object.
+  // In that case, we just replace unknown type parameter with the type we are expected to compare with
+  val targetTypeSubstitutor = (targetType as? PsiClassType)?.resolveGenerics() ?: return substitutor
+  val map = mutableMapOf<PsiTypeParameter, PsiType?>()
+  for (inferenceVariable in samSession.inferenceVariables) {
+    val typeParameter = inferenceVariable.delegate
+    if (inferenceVariable.getBounds(InferenceBound.LOWER).isNullOrEmpty() &&
+        inferenceVariable.getBounds(InferenceBound.EQ).isNullOrEmpty() &&
+        inferenceVariable.getBounds(InferenceBound.UPPER).size == 1) {
+      map[typeParameter] = targetTypeSubstitutor.substitutor.substitute(typeParameter) ?: substitutor.substitute(typeParameter)
+    } else {
+      map[typeParameter] = substitutor.substitute(typeParameter)
+    }
+  }
+  return PsiSubstitutor.createSubstitutor(map)
 }
