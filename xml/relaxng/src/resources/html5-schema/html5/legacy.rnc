@@ -302,9 +302,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 			attribute content {
 				string
 			}
-		
+
 	common.elem.metadata |= meta.http-equiv.content-language.elem # not quite right per spec
-                                                               # if the definition is 
+                                                               # if the definition is
                                                                # reused in another language
 
 ## Key-pair generator/input control: <keygen>
@@ -1015,6 +1015,45 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 ## hspace attribute
 
+	embed.attrs.hspace =
+		attribute hspace {
+			string
+		}
+	embed.attrs &= embed.attrs.hspace?
+
+	iframe.attrs.hspace =
+		attribute hspace {
+			string
+		}
+	iframe.attrs &= iframe.attrs.hspace?
+
+	input.attrs.hspace =
+		attribute hspace {
+			string
+		}
+	input.text.attrs &= input.attrs.hspace?
+	input.password.attrs &= input.attrs.hspace?
+	input.checkbox.attrs &= input.attrs.hspace?
+	input.radio.attrs &= input.attrs.hspace?
+	input.button.attrs &= input.attrs.hspace?
+	input.submit.attrs &= input.attrs.hspace?
+	input.reset.attrs &= input.attrs.hspace?
+	input.file.attrs &= input.attrs.hspace?
+	input.image.attrs &= input.attrs.hspace?
+	input.datetime.attrs &= input.attrs.hspace?
+	input.datetime-local.attrs &= input.attrs.hspace?
+	input.date.attrs &= input.attrs.hspace?
+	input.month.attrs &= input.attrs.hspace?
+	input.time.attrs &= input.attrs.hspace?
+	input.week.attrs &= input.attrs.hspace?
+	input.number.attrs &= input.attrs.hspace?
+	input.range.attrs &= input.attrs.hspace?
+	input.email.attrs &= input.attrs.hspace?
+	input.url.attrs &= input.attrs.hspace?
+	input.search.attrs &= input.attrs.hspace?
+	input.tel.attrs &= input.attrs.hspace?
+	input.color.attrs &= input.attrs.hspace?
+
 	img.attrs.hspace =
 		attribute hspace {
 			string
@@ -1245,6 +1284,45 @@ datatypes w = "http://whattf.org/datatype-draft"
 	body.attrs &= body.attrs.vlink?
 
 ## vspace attribute
+
+	embed.attrs.vspace =
+		attribute vspace {
+			string
+		}
+	embed.attrs &= embed.attrs.vspace?
+
+	iframe.attrs.vspace =
+		attribute vspace {
+			string
+		}
+	iframe.attrs &= iframe.attrs.vspace?
+
+	input.attrs.vspace =
+		attribute vspace {
+			string
+		}
+	input.text.attrs &= input.attrs.vspace?
+	input.password.attrs &= input.attrs.vspace?
+	input.checkbox.attrs &= input.attrs.vspace?
+	input.radio.attrs &= input.attrs.vspace?
+	input.button.attrs &= input.attrs.vspace?
+	input.submit.attrs &= input.attrs.vspace?
+	input.reset.attrs &= input.attrs.vspace?
+	input.file.attrs &= input.attrs.vspace?
+	input.image.attrs &= input.attrs.vspace?
+	input.datetime.attrs &= input.attrs.vspace?
+	input.datetime-local.attrs &= input.attrs.vspace?
+	input.date.attrs &= input.attrs.vspace?
+	input.month.attrs &= input.attrs.vspace?
+	input.time.attrs &= input.attrs.vspace?
+	input.week.attrs &= input.attrs.vspace?
+	input.number.attrs &= input.attrs.vspace?
+	input.range.attrs &= input.attrs.vspace?
+	input.email.attrs &= input.attrs.vspace?
+	input.url.attrs &= input.attrs.vspace?
+	input.search.attrs &= input.attrs.vspace?
+	input.tel.attrs &= input.attrs.vspace?
+	input.color.attrs &= input.attrs.vspace?
 
 	img.attrs.vspace =
 		attribute vspace {

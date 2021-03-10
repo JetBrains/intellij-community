@@ -91,6 +91,17 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.required?
 		)
 
+	shared-input-no-list.attrs =
+		(	input.attrs.autocomplete?
+		&	shared-form.attrs.maxlength?
+		&	shared-form.attrs.minlength?
+		&	shared-form.attrs.pattern?
+		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.readonly?
+		&	shared-form.attrs.required?
+		&	shared-form.attrs.size?
+		)
+
 	shared-input.attrs =
 		(	shared-input-no-size.attrs
 		&	shared-form.attrs.size?
@@ -199,7 +210,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.file.attrs &=
 		(	shared-input.attrs
 		&	input.attrs.multiple?
+		&	aria.prop.required?
+		&	input.input.attrs.capture?
 		)
+		input.input.attrs.capture =
+			attribute capture {
+				w:string "user" | w:string "environment"
+			}
 
 ## Image Submit Button: <input type='image'>, Extensions
 
@@ -235,9 +252,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.datetime-local.attrs.max?
 		&	input.attrs.step.float?
 		&	input.datetime-local.attrs.value?
-		&	(	common.attrs.aria?
-			|	aria.prop.required?
-			)
 		)	
 		input.datetime-local.attrs.type = 
 			attribute type {
@@ -271,9 +285,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.date.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.date.attrs.value?
-		&	(	common.attrs.aria?
-			|	aria.prop.required?
-			)
 		)	
 		input.date.attrs.type = 
 			attribute type {
@@ -307,9 +318,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.month.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.month.attrs.value?
-		&	(	common.attrs.aria?
-			|	aria.prop.required?
-			)
 		)	
 		input.month.attrs.type = 
 			attribute type {
@@ -343,9 +351,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.time.attrs.max?
 		&	input.attrs.step.float?
 		&	input.time.attrs.value?
-		&	(	common.attrs.aria?
-			|	aria.prop.required?
-			)
 		)	
 		input.time.attrs.type = 
 			attribute type {
@@ -379,9 +384,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.week.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.week.attrs.value?
-		&	(	common.attrs.aria?
-			|	aria.prop.required?
-			)
 		)	
 		input.week.attrs.type = 
 			attribute type {
@@ -481,18 +483,23 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.email.attrs = 
 		(	common.attrs
 		&	common-form.attrs
-		&	shared-input.attrs
+		&	shared-input-no-list.attrs
 		&	input.email.attrs.type
 		&	(	(	input.attrs.multiple
 				&	input.email.attrs.value.multiple?
 				)
 			|	input.email.attrs.value.single?
 			)?
-		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.implicit.combobox
-			|	common.attrs.aria.role.textbox
-			|	common.attrs.aria.role.combobox
-			)?
+		&	(
+				(	common.attrs.aria.implicit.textbox
+				|	common.attrs.aria.role.textbox
+				)?
+			|	(	input.attrs.list
+				&	(	common.attrs.aria.implicit.combobox
+					|	common.attrs.aria.role.combobox
+					)?
+				)?
+			)
 		)	
 		input.email.attrs.type = 
 			attribute type {
@@ -516,15 +523,20 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.url.attrs = 
 		(	common.attrs
 		&	common-form.attrs
-		&	shared-input.attrs
+		&	shared-input-no-list.attrs
 		&	input.url.attrs.type
 		&	input.url.attrs.value?
-		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.implicit.combobox
-			|	common.attrs.aria.role.textbox
-			|	common.attrs.aria.role.combobox
-			)?
-		)	
+		&	(
+				(	common.attrs.aria.implicit.textbox
+				|	common.attrs.aria.role.textbox
+				)?
+			|	(	input.attrs.list
+				&	(	common.attrs.aria.implicit.combobox
+					|	common.attrs.aria.role.combobox
+					)?
+				)?
+			)
+		)
 		input.url.attrs.type = 
 			attribute type {
 				w:string "url"
@@ -569,15 +581,20 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.tel.attrs = 
 		(	common.attrs
 		&	common-form.attrs
-		&	shared-input.attrs
+		&	shared-input-no-list.attrs
 		&	input.tel.attrs.type
 		&	input.tel.attrs.value?
-		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.implicit.combobox
-			|	common.attrs.aria.role.textbox
-			|	common.attrs.aria.role.combobox
-			)?
-		)	
+		&	(
+				(	common.attrs.aria.implicit.textbox
+				|	common.attrs.aria.role.textbox
+				)?
+			|	(	input.attrs.list
+				&	(	common.attrs.aria.implicit.combobox
+					|	common.attrs.aria.role.combobox
+					)?
+				)?
+			)
+		)
 		input.tel.attrs.type = 
 			attribute type {
 				w:string "tel"
@@ -599,7 +616,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.color.attrs.type
 		&	input.color.attrs.value?
 		&	shared-input.attrs
-		&	common.attrs.aria?
 		)	
 		input.color.attrs.type = 
 			attribute type {

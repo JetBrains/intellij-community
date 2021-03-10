@@ -65,9 +65,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	meter.attrs.high?
 		&	meter.attrs.max?
 		&	meter.attrs.optimum?
-		&	(	common.attrs.aria.implicit.progressbar
-			|	common.attrs.aria.role.progressbar
-			)?
 		)
 		meter.attrs.value =
 			attribute value {

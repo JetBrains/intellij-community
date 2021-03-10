@@ -265,9 +265,6 @@ link.rdfa.attrs.phrasing =
 		&	meta.name.attrs.name?
 		&	common.attrs.rdfa.property
 		&	meta.name.attrs.content
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 	common.elem.metadata |= meta.property.elem
 

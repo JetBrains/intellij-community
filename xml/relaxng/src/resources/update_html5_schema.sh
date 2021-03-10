@@ -31,7 +31,6 @@ cp temp/validator/schema/*.rnc result
 rsync -r --include=*.rnc temp/validator/schema/* result
 rm -rf result/xhtml10
 ruby html5charref.rb > result/html5chars.ent
-git clone https://github.com/mdn/browser-compat-data
 
 echo
 echo ">>>>> Patching html5 schema"
@@ -52,10 +51,15 @@ echo ">>>>> Moving items in place"
 cp result/html5-all.rnc result/html5.rnc
 cp result/xhtml5-all.rnc result/xhtml5.rnc
 mv result/html5/LICENSE result
+
+# Retain our SVG 2.0 support
+cp -R html5-schema/svg20 result
+
+# Remove unnecessary files
+rm result/html5/.htaccess
+rm result/html5/assertions.sch
+
+# Update html5-schema dir
 rm -rf html5-schema
 mv result html5-schema
-rsync -r --include=*.json browser-compat-data/html/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData
-rsync -r --include=*.json browser-compat-data/mathml/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData/mathml
-rsync -r --include=*.json browser-compat-data/svg/* ../../../xml-psi-impl/src/com/intellij/xml/util/documentation/compatData/svg
 rm -rf temp
-rm -rf browser-compat-data
