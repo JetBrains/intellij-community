@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.openapi.ui.ComboBoxTableRenderer
@@ -42,7 +43,8 @@ class KotlinPrimaryConstructorParameterTableModel(
     DefaultValueColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(
         defaultValueContext.project,
         KotlinFileType.INSTANCE,
-    )
+    ),
+    DefaultParameterColumn(),
 ) {
     private class ValVarColumn : ColumnInfoBase<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>, KotlinValVar>(
         KotlinBundle.message("column.name.val.var")

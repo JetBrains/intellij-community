@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.psi.PsiElement
@@ -39,6 +40,7 @@ class KotlinFunctionParameterTableModel(
         defaultValueContext.project,
         KotlinFileType.INSTANCE
     ),
+    DefaultParameterColumn(),
     ReceiverColumn(methodDescriptor),
 ) {
     override fun removeRow(idx: Int) {

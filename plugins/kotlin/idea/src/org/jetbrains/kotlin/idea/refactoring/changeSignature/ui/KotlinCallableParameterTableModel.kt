@@ -20,10 +20,15 @@ import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.ParameterTableModelBase
 import com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
+import com.intellij.ui.BooleanTableCellEditor
+import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import javax.swing.table.TableCellEditor
+import javax.swing.table.TableCellRenderer
 
 abstract class KotlinCallableParameterTableModel protected constructor(
     private val methodDescriptor: KotlinMethodDescriptor,
@@ -62,8 +67,35 @@ abstract class KotlinCallableParameterTableModel protected constructor(
             myDefaultValueContext,
         )
 
-        return object : ParameterTableModelItemBase<KotlinParameterInfo>(resultParameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
+        return object : ParameterTableModelItemBase<KotlinParameterInfo>(
+            resultParameterInfo,
+            paramTypeCodeFragment,
+            defaultValueCodeFragment,
+        ) {
             override fun isEllipsisType(): Boolean = false
+        }
+    }
+
+    protected class DefaultParameterColumn :
+        ColumnInfoBase<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>, Boolean>(KotlinBundle.message("column.name.default.parameter")) {
+        override fun isCellEditable(pParameterTableModelItemBase: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean = true
+
+        public override fun doCreateRenderer(item: ParameterTableModelItemBase<KotlinParameterInfo>): TableCellRenderer =
+            BooleanTableCellRenderer()
+
+        public override fun doCreateEditor(o: ParameterTableModelItemBase<KotlinParameterInfo>): TableCellEditor =
+            BooleanTableCellEditor()
+
+        override fun valueOf(item: ParameterTableModelItemBase<KotlinParameterInfo>): Boolean =
+            item.parameter.defaultValueForParameter != null
+
+        override fun setValue(item: ParameterTableModelItemBase<KotlinParameterInfo>, value: Boolean?) {
+            val parameter = item.parameter
+            parameter.defaultValueForParameter = if (value == true) {
+                parameter.defaultValueForCall
+            } else {
+                null
+            }
         }
     }
 
@@ -73,6 +105,8 @@ abstract class KotlinCallableParameterTableModel protected constructor(
         fun isNameColumn(column: ColumnInfo<*, *>?): Boolean = column is NameColumn<*, *>
 
         fun isDefaultValueColumn(column: ColumnInfo<*, *>?): Boolean = column is DefaultValueColumn<*, *>
+
+        fun isDefaultParameterColumn(column: ColumnInfo<*, *>?): Boolean = column is DefaultParameterColumn
 
         fun getTypeCodeFragmentContext(startFrom: PsiElement): KtElement = startFrom.parentsWithSelf.mapNotNull {
             when {

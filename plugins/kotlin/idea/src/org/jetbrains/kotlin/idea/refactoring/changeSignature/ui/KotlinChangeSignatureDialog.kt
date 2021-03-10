@@ -157,6 +157,15 @@ class KotlinChangeSignatureDialog(
                         val document = PsiDocumentManager.getInstance(project).getDocument(item.defaultValueCodeFragment)
                         editor = EditorTextField(document, project, fileType)
                         component = editor
+                    } else if (KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) && isDefaultColumnEnabled()) {
+                        val checkBox = JCheckBox()
+                        checkBox.isSelected = item.parameter.defaultValueForParameter != null
+                        checkBox.addItemListener {
+                            parametersTableModel.setValueAtWithoutUpdate(it.stateChange == ItemEvent.SELECTED, row, columnFinal)
+                            updateSignature()
+                        }
+                        component = checkBox
+                        editor = null
                     } else if (KotlinPrimaryConstructorParameterTableModel.isValVarColumn(columnInfo)) {
                         val comboBox = ComboBox(KotlinValVar.values())
                         comboBox.selectedItem = item.parameter.valOrVar
@@ -208,6 +217,7 @@ class KotlinChangeSignatureDialog(
                     KotlinCallableParameterTableModel.isTypeColumn(columnInfo) -> item.typeCodeFragment
                     KotlinCallableParameterTableModel.isNameColumn(columnInfo) -> (components[column] as EditorTextField).text
                     KotlinCallableParameterTableModel.isDefaultValueColumn(columnInfo) -> item.defaultValueCodeFragment
+                    KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) -> item.parameter.defaultValue != null
                     else -> null
                 }
             }

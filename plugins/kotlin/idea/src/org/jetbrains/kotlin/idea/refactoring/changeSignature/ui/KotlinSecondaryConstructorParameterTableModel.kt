@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
 import com.intellij.psi.PsiElement
@@ -32,5 +33,6 @@ class KotlinSecondaryConstructorParameterTableModel(
     DefaultValueColumn<KotlinParameterInfo, ParameterTableModelItemBase<KotlinParameterInfo>>(
         defaultValueContext.project,
         KotlinFileType.INSTANCE
-    )
+    ),
+    DefaultParameterColumn(),
 )
