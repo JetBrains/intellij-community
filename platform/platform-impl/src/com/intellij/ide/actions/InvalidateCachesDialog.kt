@@ -29,6 +29,8 @@ class InvalidateCachesDialog(
     this += invalidators.filter { it.description == null }
   }
 
+  override fun getHelpId() = "invalidate-cache-restart"
+
   init {
     title = IdeBundle.message("dialog.title.invalidate.caches")
     setResizable(false)
