@@ -3,11 +3,14 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -1149,6 +1152,20 @@ public final class EditorUtil {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  public static DataContext getEditorDataContext(@NotNull Editor editor) {
+    DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
+    if (CommonDataKeys.PROJECT.getData(context) == editor.getProject()) {
+      return context;
+    }
+    return dataId -> {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return editor.getProject();
+      }
+      return context.getData(dataId);
+    };
   }
 
   private static class EditorNotification {

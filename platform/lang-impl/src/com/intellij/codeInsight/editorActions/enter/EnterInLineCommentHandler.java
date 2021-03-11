@@ -98,7 +98,7 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
-    if (offset < 1) return -1;
+    if (offset < 1 || !(editor instanceof EditorEx)) return -1;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     String prefix = commenter.getLineCommentPrefix();

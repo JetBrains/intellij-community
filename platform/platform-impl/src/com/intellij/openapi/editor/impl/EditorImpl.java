@@ -2363,19 +2363,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   @Override
   public DataContext getDataContext() {
-    return getProjectAwareDataContext(DataManager.getInstance().getDataContext(getContentComponent()));
-  }
-
-  @NotNull
-  private DataContext getProjectAwareDataContext(@NotNull final DataContext original) {
-    if (CommonDataKeys.PROJECT.getData(original) == myProject) return original;
-
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      return original.getData(dataId);
-    };
+    return EditorUtil.getEditorDataContext(this);
   }
 
   private boolean isInsideGutterWhitespaceArea(@NotNull MouseEvent e) {

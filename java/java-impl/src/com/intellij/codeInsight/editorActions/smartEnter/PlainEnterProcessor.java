@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -38,7 +38,7 @@ public class PlainEnterProcessor implements EnterProcessor {
     if (expandCodeBlock(editor, psiElement)) return true;
 
     getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, editor.getCaretModel().getCurrentCaret(),
-                                                                     ((EditorEx)editor).getDataContext());
+                                                                     EditorUtil.getEditorDataContext(editor));
     return true;
   }
 
@@ -67,7 +67,7 @@ public class PlainEnterProcessor implements EnterProcessor {
     editor.getCaretModel().moveToOffset(firstElement != null ?
                                         firstElement.getTextRange().getStartOffset() :
                                         block.getTextRange().getEndOffset());
-    enterHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx)editor).getDataContext());
+    enterHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), EditorUtil.getEditorDataContext(editor));
     return true;
   }
 

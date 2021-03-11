@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -54,7 +55,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   private final List<FixEnterProcessor> myAfterEnterProcessors = new ArrayList<>();
 
   protected static void plainEnter(@NotNull final Editor editor) {
-    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), ((EditorEx)editor).getDataContext());
+    getEnterHandler().execute(editor, editor.getCaretModel().getCurrentCaret(), EditorUtil.getEditorDataContext(editor));
   }
 
   protected static EditorActionHandler getEnterHandler() {

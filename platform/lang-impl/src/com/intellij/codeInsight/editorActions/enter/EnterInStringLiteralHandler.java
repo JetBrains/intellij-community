@@ -97,7 +97,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
 
   @Contract("_,null,_->false")
   private static boolean isInStringLiteral(@NotNull Editor editor, @Nullable JavaLikeQuoteHandler quoteHandler, int offset) {
-    if (offset > 0 && quoteHandler != null) {
+    if (offset > 0 && quoteHandler != null && editor instanceof EditorEx) {
       EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(offset - 1);
       final IElementType type = iterator.getTokenType();
