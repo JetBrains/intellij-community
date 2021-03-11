@@ -17,6 +17,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Locale;
@@ -25,8 +27,6 @@ import java.util.ResourceBundle;
 
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
-  private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
-
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
   private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
 
@@ -47,12 +47,12 @@ public class DynamicBundle extends AbstractBundle {
         ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader(), control);
         if (pluginBundle != null) {
           try {
-            if (SET_PARENT != null) {
-              SET_PARENT.invoke(pluginBundle, base);
+            if (DynamicBundleInternal.SET_PARENT != null) {
+              DynamicBundleInternal.SET_PARENT.invoke(pluginBundle, base);
             }
             return pluginBundle;
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.warn(e);
           }
         }
@@ -60,6 +60,25 @@ public class DynamicBundle extends AbstractBundle {
     }
     return base;
   }
+
+  /**
+   * "SET_PARENT" has been temporary moved into the internal class to fix Kotlin compiler.
+   * It's to be refactored with "ResourceBundleProvider" since 'core-api' module will use java 1.9+
+   */
+ private static class DynamicBundleInternal {
+   private static final MethodHandle SET_PARENT;
+
+   static {
+     try {
+       Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
+       method.setAccessible(true);
+       SET_PARENT = MethodHandles.lookup().unreflect(method);
+     }
+     catch (NoSuchMethodException | IllegalAccessException e) {
+       throw new RuntimeException(e);
+     }
+   }
+ }
 
   // todo: one language per application
   public static @Nullable LanguageBundleEP findLanguageBundle() {
