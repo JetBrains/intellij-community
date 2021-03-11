@@ -48,20 +48,11 @@ import static org.editorconfig.core.EditorConfig.OutPair;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsModifier {
-  private final static Map<String,List<String>> DEPENDENCIES = new HashMap<>();
 
   private final static Logger LOG = Logger.getInstance(EditorConfigCodeStyleSettingsModifier.class);
   public static final ProgressIndicator EMPTY_PROGRESS_INDICATOR = new EmptyProgressIndicator();
 
   private static boolean ourEnabledInTests;
-
-  static {
-    addDependency("indent_size", "continuation_indent_size");
-  }
-
-  private static void addDependency(@NotNull String name, String... dependentNames) {
-    DEPENDENCIES.put(name, Arrays.asList(dependentNames));
-  }
 
   @Override
   public boolean modifySettings(@NotNull TransientCodeStyleSettings settings, @NotNull PsiFile psiFile) {
@@ -157,13 +148,11 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       CodeStylePropertyAccessor<?> accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
         final String val = preprocessValue(accessor, context, optionKey, option.getVal());
-        if (DEPENDENCIES.containsKey(optionKey)) {
-          for (String dependency : DEPENDENCIES.get(optionKey)) {
-            if (!processed.contains(dependency)) {
-              CodeStylePropertyAccessor<?> dependencyAccessor = findAccessor(mapper, dependency, null);
-              if (dependencyAccessor != null) {
-                isModified |= dependencyAccessor.setFromString(val);
-              }
+        for (String dependency : getDependentProperties(optionKey, langPrefix)) {
+          if (!processed.contains(dependency)) {
+            CodeStylePropertyAccessor<?> dependencyAccessor = findAccessor(mapper, dependency, null);
+            if (dependencyAccessor != null) {
+              isModified |= dependencyAccessor.setFromString(val);
             }
           }
         }
@@ -172,6 +161,18 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       }
     }
     return isModified;
+  }
+
+  @NotNull
+  private static List<String> getDependentProperties(@NotNull String property, @Nullable String langPrefix) {
+    property = StringUtil.trimStart(property, EditorConfigIntellijNameUtil.IDE_PREFIX);
+    if (langPrefix != null && property.startsWith(langPrefix)) {
+      property = StringUtil.trimStart(property, langPrefix);
+    }
+    if ("indent_size".equals(property)) {
+      return Collections.singletonList("continuation_indent_size");
+    }
+    return Collections.emptyList();
   }
 
   private static String preprocessValue(@NotNull CodeStylePropertyAccessor accessor,
