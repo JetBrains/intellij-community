@@ -42,7 +42,7 @@ class KotlinCleanupInspection : LocalInspectionTool(), CleanupLocalInspectionToo
 
         val analysisResult = file.analyzeWithAllCompilerChecks()
         if (analysisResult.isError()) {
-            throw ProcessCanceledException(analysisResult.error)
+            return null
         }
 
         val diagnostics = analysisResult.bindingContext.diagnostics
