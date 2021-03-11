@@ -1,5 +1,4 @@
 // "Change the signature of function 'withReceiver'" "true"
-// DISABLE-ERRORS
 
 fun String.withReceiver(i: Int) {}
 
