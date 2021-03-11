@@ -126,10 +126,10 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     }
   }
 
-  fun getSelectedBranches(): Set<BranchInfo> {
+  fun getSelectedBranches(): List<BranchInfo> {
     return getSelectedNodes()
       .mapNotNull { it.getNodeDescriptor().branchInfo }
-      .toSet()
+      .toList()
   }
 
   fun getSelectedNodes(): Sequence<BranchTreeNode> {
