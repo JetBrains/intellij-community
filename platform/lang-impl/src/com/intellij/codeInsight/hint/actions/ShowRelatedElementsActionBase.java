@@ -172,7 +172,6 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
       ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance()
         .createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
         .setProject(project)
-        .setCancelOnClickOutside(false)
         .addListener(updateProcessor)
         .addUserData(updateProcessor)
         .setDimensionServiceKey(project, DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
