@@ -710,7 +710,7 @@ public final class ExternalSystemUtil {
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
     String systemsPresentation = naturalJoinSystemIds(systemIds);
-    return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemIds) ||
+    return isTrusted(project, systemIds) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
              ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
@@ -744,6 +744,15 @@ public final class ExternalSystemUtil {
       ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button")
     );
   }
+
+  public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
+    return TrustedProjects.isTrusted(project) || project.isDefault() || executesTrustedCodeOnly(systemId);
+  }
+
+  public static boolean isTrusted(@NotNull Project project, @NotNull Collection<ProjectSystemId> systemIds) {
+    return systemIds.stream().allMatch(id -> isTrusted(project, id));
+  }
+
 
   public static @NotNull String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
     return naturalJoin(
