@@ -59,7 +59,7 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   }
 
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id === toolWindowId}?.let { return it }
-    return bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id === toolWindowId}
+    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}?.let { return it }
+    return bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
   }
 }

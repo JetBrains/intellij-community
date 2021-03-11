@@ -36,6 +36,6 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
   }
 
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    return topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id === toolWindowId}
+    return topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
   }
 }
