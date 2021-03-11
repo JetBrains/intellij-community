@@ -37,11 +37,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -77,6 +79,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -1143,16 +1146,35 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (pattern.isEmpty()) return;
       emptyStatus.appendLine(getNotFoundText());
 
-      if (myHeader.getSelectedTab().canClearFilter()) {
+      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
+      boolean showResetScope = myHeader.canResetScope();
+      boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
+
+      if (showFindInFilesAction || showResetScope || showResetFilter) {
+        emptyStatus.appendLine("").appendLine("");
+      }
+
+      final AtomicBoolean firstPartAdded = new AtomicBoolean();
+      if (showResetScope) {
+        ActionListener resetScopeListener = e -> myHeader.resetScope();
+        emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.reset.scope"));
+        emptyStatus.appendText(" "+StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
+                               SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, resetScopeListener);
+        firstPartAdded.set(true);
+      }
+
+      if (showResetFilter) {
         ActionListener clearFiltersAction = e -> {
           myHeader.getSelectedTab().clearFilter();
           scheduleRebuildList();
         };
-        emptyStatus.appendLine(IdeBundle.message("searcheverywhere.reset.filters"),
+        if (firstPartAdded.get()) emptyStatus.appendText(", ");
+        String resetFilterMessage = IdeBundle.message("searcheverywhere.reset.filters");
+        emptyStatus.appendText(firstPartAdded.get() ? Strings.toLowerCase(resetFilterMessage) : resetFilterMessage,
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, clearFiltersAction);
+        firstPartAdded.set(true);
       }
 
-      boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
       if (showFindInFilesAction) {
         Optional.ofNullable(myProject)
           .map(project -> FindInProjectManager.getInstance(project))
@@ -1160,10 +1182,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           .ifPresent(manager -> {
             DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
             ActionListener findInFilesAction = e -> manager.findInProject(context, null);
-
-            String findInFilesText = IdeBundle.message("searcheverywhere.try.to.find.in.files");
+            emptyStatus.appendText((firstPartAdded.get() ?
+                                   " " + IdeBundle.message("searcheverywhere.use.optional")
+                                   : IdeBundle.message("searcheverywhere.use.main")) + " ");
+            emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.find.in.files"),
+                                   SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
             String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
-            emptyStatus.appendLine(findInFilesText, SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
             if (!StringUtil.isEmpty(findInFilesShortcut)) {
               emptyStatus.appendText(" (" + findInFilesShortcut + ")");
             }
