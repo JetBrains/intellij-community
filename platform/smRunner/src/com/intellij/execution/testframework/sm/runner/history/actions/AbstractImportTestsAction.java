@@ -85,14 +85,17 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return;
     }
 
-    doImport(project, file, myProperties);
+    doImport(project, file, myProperties, null);
   }
 
-  public static void doImport(Project project, VirtualFile file) {
-    doImport(project, file, null);
+  public static void doImport(Project project, VirtualFile file, Long executionId) {
+    doImport(project, file, null, executionId);
   }
 
-  private static void doImport(Project project, VirtualFile file, SMTRunnerConsoleProperties currentConsoleProperties) {
+  private static void doImport(Project project,
+                               VirtualFile file,
+                               SMTRunnerConsoleProperties currentConsoleProperties,
+                               Long executionId) {
     try {
       final ImportRunProfile profile = new ImportRunProfile(file, project);
       SMTRunnerConsoleProperties properties = profile.getProperties();
@@ -107,6 +110,9 @@ public abstract class AbstractImportTestsAction extends AnAction {
       ExecutionTarget target = profile.getTarget();
       if (target != null) {
         builder = builder.target(target);
+      }
+      if (executionId != null) {
+        builder = builder.executionId(executionId);
       }
       final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
       final ProgramRunner runner = initialConfiguration != null ? ProgramRunner.getRunner(executor.getId(), initialConfiguration) : null;
