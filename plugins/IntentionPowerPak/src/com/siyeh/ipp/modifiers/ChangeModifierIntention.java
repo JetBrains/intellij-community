@@ -90,7 +90,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     if (identifier == null || identifier.getTextRange().getEndOffset() <= element.getTextRange().getStartOffset()) return false;
     List<AccessModifier> modifiers = new ArrayList<>(AccessModifier.getAvailableModifiers(member));
     if (modifiers.isEmpty()) return false;
-    if (!myErrorFix && modifiers.stream().noneMatch(mod -> mod.hasModifier(member))) return false;
+    if (!myErrorFix && !ContainerUtil.exists(modifiers, mod -> mod.hasModifier(member))) return false;
     modifiers.removeIf(mod -> mod.hasModifier(member));
     AccessModifier target = null;
     if (modifiers.isEmpty()) return false;

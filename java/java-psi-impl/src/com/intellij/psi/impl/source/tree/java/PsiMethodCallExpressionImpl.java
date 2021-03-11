@@ -24,10 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements PsiMethodCallExpression {
   private static final Logger LOG = Logger.getInstance(PsiMethodCallExpressionImpl.class);
@@ -225,9 +224,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     }
     return parentArgList != null &&
            MethodCandidateInfo.isOverloadCheck(parentArgList) &&
-           Arrays.stream(parentArgList.getExpressions())
-             .map(expression -> PsiUtil.skipParenthesizedExprDown(expression))
-             .noneMatch(expression -> expression != null && ThreadLocalTypes.hasBindingFor(expression));
+           !ContainerUtil.exists(parentArgList.getExpressions(), expression -> {
+               expression = PsiUtil.skipParenthesizedExprDown(expression);
+               return expression != null && ThreadLocalTypes.hasBindingFor(expression);
+             });
   }
 
   private static PsiType captureReturnType(PsiMethodCallExpression call,

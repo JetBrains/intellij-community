@@ -22,8 +22,7 @@ public final class ExternalLanguageAnnotators extends LanguageExtension<External
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
     List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
     List<ExternalAnnotatorsFilter> filters = ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.getExtensionList();
-    return ContainerUtil.findAll(annotators, annotator -> {
-      return filters.stream().noneMatch(filter -> filter.isProhibited(annotator, file));
-    });
+    return ContainerUtil.findAll(annotators, annotator ->
+       !ContainerUtil.exists(filters, filter -> filter.isProhibited(annotator, file)));
   }
 }

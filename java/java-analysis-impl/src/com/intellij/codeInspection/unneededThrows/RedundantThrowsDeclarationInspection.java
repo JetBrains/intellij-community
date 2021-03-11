@@ -497,11 +497,11 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
        * @param redundantTypes a list of redundant exception types
        * @param method a method for which the references should break connections to exceptions
        */
-      private void breakConnectionsFromRedundantExceptions(final @NotNull Set<PsiClassType> redundantTypes,
+      private void breakConnectionsFromRedundantExceptions(final @NotNull Set<? extends PsiClassType> redundantTypes,
                                                            final @NotNull PsiMethod method) {
         for (final @NotNull PsiCatchSection catchSection : catchToExceptionTypes.keySet()) {
           for (final @NotNull PsiType exception : catchToExceptionTypes.get(catchSection)) {
-            if (redundantTypes.stream().noneMatch(exception::isAssignableFrom)) continue;
+            if (!ContainerUtil.exists(redundantTypes, exception::isAssignableFrom)) continue;
 
             final Iterator<@NotNull PsiElement> catchTypeInducers = getExceptionInducers(exception).iterator();
             while (catchTypeInducers.hasNext()) {
@@ -588,7 +588,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
      * false otherwise
      */
     private static boolean isTagRelatedToRedundantThrow(@NotNull final PsiDocTag tag,
-                                                        @NotNull final List<PsiClassType> redundantThrows) {
+                                                        final @NotNull List<? extends PsiClassType> redundantThrows) {
       assert "throws".equals(tag.getName()) : "the tag has to be of the @throws kind";
 
       final PsiClass throwsClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());

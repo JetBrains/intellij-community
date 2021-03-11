@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
@@ -186,7 +187,8 @@ class CollectMigration extends BaseStreamApiMigration {
       List<PsiElement> usedElements = usedElements().toList();
       PsiElement block = PsiUtil.getVariableCodeBlock(myTargetVariable, null);
       return StreamEx.of(VariableAccessUtils.getVariableReferences(myTargetVariable, block))
-        .filter(ref -> usedElements.stream().noneMatch(allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
+        .filter(ref -> !ContainerUtil
+          .exists(usedElements, allowedUsage -> PsiTreeUtil.isAncestor(allowedUsage, ref, false)));
     }
 
     boolean isTargetReference(PsiExpression expression) {

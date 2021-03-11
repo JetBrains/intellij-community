@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -260,7 +260,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       // Delete empty initializer left after fix
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
-        if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
+        if(body.isEmpty() && !ContainerUtil.exists(body.getChildren(), PsiComment.class::isInstance)) {
           new CommentTracker().deleteAndRestoreComments(owner);
         }
       }

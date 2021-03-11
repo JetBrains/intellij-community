@@ -234,7 +234,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   private String getUniqueName() {
     for (int i = 1; ; i++) {
       String candidate = DEFAULT_FILE_NAME + i;
-      if (myEditors.stream().noneMatch(editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
+      if (!ContainerUtil.exists(myEditors, editorInfo -> editorInfo.getFile().getName().equals(candidate))) {
         return candidate;
       }
     }

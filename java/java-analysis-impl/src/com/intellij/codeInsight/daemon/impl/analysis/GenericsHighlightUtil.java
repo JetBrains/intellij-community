@@ -443,7 +443,7 @@ public final class GenericsHighlightUtil {
    */
   @Nullable
   public static @NlsContexts.DetailedDescription String getUnrelatedDefaultsMessage(@NotNull PsiClass aClass,
-                                                                                    @NotNull Collection<PsiMethod> overrideEquivalentSuperMethods,
+                                                                                    @NotNull Collection<? extends PsiMethod> overrideEquivalentSuperMethods,
                                                                                     boolean skipMethodInSelf) {
     if (overrideEquivalentSuperMethods.size() <= 1) return null;
     final boolean isInterface = aClass.isInterface();
@@ -543,7 +543,7 @@ public final class GenericsHighlightUtil {
   }
 
   private static boolean hasNotOverriddenAbstract(@NotNull List<? extends PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
-    return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
+    return !ContainerUtil.exists(defaultContainingClasses, containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
   }
 
   private static @Nls String hasUnrelatedDefaults(@NotNull List<? extends PsiClass> defaults) {

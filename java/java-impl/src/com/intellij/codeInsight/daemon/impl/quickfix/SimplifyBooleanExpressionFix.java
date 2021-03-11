@@ -69,10 +69,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   private boolean shouldIgnore(PsiElement e, PsiExpression subExpression) {
     return e instanceof PsiInstanceOfExpression &&
-           JavaPsiPatternUtil.getExposedPatternVariables(((PsiInstanceOfExpression)e))
-             .stream()
-             .map(var -> PatternResolveState.stateAtParent(var, subExpression))
-             .noneMatch(PatternResolveState.fromBoolean(mySubExpressionValue)::equals);
+           !ContainerUtil.exists(JavaPsiPatternUtil.getExposedPatternVariables(((PsiInstanceOfExpression)e)),
+                                 var -> PatternResolveState.fromBoolean(mySubExpressionValue)
+                                   .equals(PatternResolveState.stateAtParent(var, subExpression)));
   }
 
   private boolean canExtractSideEffect(PsiExpression subExpression) {

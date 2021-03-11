@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -198,7 +199,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       }
 
       final String text = myEditor.getDocument().getText(e.getNewRange()).trim();
-      if (!IGNORED_TEXTS.contains(text) && SIDE_EFFECT_PRODUCERS.stream().noneMatch(text::contains)) {
+      if (!IGNORED_TEXTS.contains(text) && !ContainerUtil.exists(SIDE_EFFECT_PRODUCERS, text::contains)) {
         final XDebugSession session = getSession(myTreePanel.getTree());
         if (session == null) return;
         XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();

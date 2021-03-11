@@ -456,7 +456,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
     List<BreakpointState<?, ?, ?>> defaultBreakpoints = new SmartList<>();
     for (Set<XBreakpointBase<?, ?, ?>> typeDefaultBreakpoints : myDefaultBreakpoints.values()) {
-      if (typeDefaultBreakpoints.stream().noneMatch(breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
+      if (!ContainerUtil.exists(typeDefaultBreakpoints, breakpoint -> differsFromDefault(breakpoint.getType(), breakpoint.getState()))) {
         continue;
       }
       for (XBreakpointBase<?, ?, ?> breakpoint : typeDefaultBreakpoints) {

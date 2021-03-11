@@ -661,12 +661,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
-    return nodes
-      .stream()
-      .noneMatch(node -> {
-        final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
-        return tool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper() == null;
-      });
+    return !ContainerUtil.exists(nodes, node -> {
+      final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
+      return tool instanceof GlobalInspectionToolWrapper &&
+             ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper() == null;
+    });
   }
 
   private void fillTreeData(@Nullable String filter, boolean forceInclude) {

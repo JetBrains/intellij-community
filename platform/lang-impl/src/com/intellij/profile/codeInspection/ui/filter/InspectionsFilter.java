@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +140,7 @@ public abstract class InspectionsFilter {
       if (languageId != null) {
         Language language = Language.findLanguageByID(languageId);
         if (language instanceof MetaLanguage) {
-          if (((MetaLanguage)language).getMatchingLanguages().stream().noneMatch(mySuitableLanguages::contains)) return false;
+          if (!ContainerUtil.exists(((MetaLanguage)language).getMatchingLanguages(), mySuitableLanguages::contains)) return false;
         }
         else {
           if (!mySuitableLanguages.contains(language)) return false;

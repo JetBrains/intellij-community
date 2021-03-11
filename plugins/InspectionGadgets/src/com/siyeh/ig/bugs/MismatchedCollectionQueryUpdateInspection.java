@@ -540,7 +540,7 @@ public class MismatchedCollectionQueryUpdateInspection
       if (!CollectionUtils.isCollectionClassOrInterface(type)) {
         return false;
       }
-      return ignoredClasses.stream().noneMatch(className -> InheritanceUtil.isInheritor(type, className));
+      return !ContainerUtil.exists(ignoredClasses, className -> InheritanceUtil.isInheritor(type, className));
     }
 
     private boolean updatedViaInitializer(PsiVariable variable) {

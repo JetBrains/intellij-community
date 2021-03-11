@@ -44,6 +44,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
@@ -156,7 +157,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
     if (Registry.is("execution.java.always.debug") && DebuggerSettings.getInstance().ALWAYS_DEBUG) {
       ParametersList parametersList = parameters.getVMParametersList();
-      if (parametersList.getList().stream().noneMatch(s -> s.startsWith("-agentlib:jdwp"))) {
+      if (!ContainerUtil.exists(parametersList.getList(), s -> s.startsWith("-agentlib:jdwp"))) {
         parametersList.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,quiet=y");
       } 
     }

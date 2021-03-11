@@ -55,7 +55,6 @@ import java.awt.*;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -1268,8 +1267,11 @@ public final class HighlightMethodUtil {
       if (!isExtension && !isStatic && !isPrivate) {
         description = JavaErrorBundle.message("interface.methods.cannot.have.body");
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-          if (Stream.of(method.findDeepestSuperMethods()).map(PsiMethod::getContainingClass)
-                    .filter(Objects::nonNull).map(PsiClass::getQualifiedName).noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
+          if (Stream.of(method.findDeepestSuperMethods())
+            .map(PsiMethod::getContainingClass)
+            .filter(Objects::nonNull)
+            .map(PsiClass::getQualifiedName)
+            .noneMatch(CommonClassNames.JAVA_LANG_OBJECT::equals)) {
             IntentionAction makeDefaultFix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false);
             additionalFixes.add(PriorityIntentionActionWrapper.highPriority(makeDefaultFix));
             additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
@@ -2019,7 +2021,7 @@ public final class HighlightMethodUtil {
           String message = JavaErrorBundle.message("record.canonical.constructor.wrong.parameter.name", componentName, parameterName);
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(
             Objects.requireNonNull(parameters[i].getNameIdentifier())).descriptionAndTooltip(message).create();
-          if (Arrays.stream(parameters).map(PsiParameter::getName).noneMatch(Predicate.isEqual(componentName))) {
+          if (!ContainerUtil.exists(parameters, parameter -> parameter.getName().equals(componentName))) {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRenameElementFix(parameters[i], componentName));
           }
           problems.add(info);

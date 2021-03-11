@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -147,7 +148,7 @@ public final class GroupBasedTestClassFilter extends TestClassesFilter {
   @Override
   public boolean matches(String className, String moduleName) {
     return myGroups.stream().filter(g -> myGroupNames.contains(g.name)).anyMatch(g -> g.matches(className)) ||
-           myMatchUnlisted && myGroups.stream().noneMatch(g -> g.matches(className));
+           myMatchUnlisted && !ContainerUtil.exists(myGroups, g -> g.matches(className));
   }
 
   private static final class Group {

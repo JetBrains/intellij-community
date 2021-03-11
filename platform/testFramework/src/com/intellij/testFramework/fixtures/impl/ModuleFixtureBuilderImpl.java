@@ -23,11 +23,11 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements ModuleFixtureBuilder<T> {
@@ -140,7 +140,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
           if (vf != null) {
             VirtualFile finalVf = vf;
 
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> finalVf.equals(folder.getFile()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> finalVf.equals(folder.getFile()))) {
               contentEntry.addSourceFolder(finalVf, false);
             }
           }
@@ -148,7 +148,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
             // files are not created yet
 
             String url = VfsUtilCore.pathToUrl(s);
-            if (Arrays.stream(contentEntry.getSourceFolders()).noneMatch(folder -> url.equals(folder.getUrl()))) {
+            if (!ContainerUtil.exists(contentEntry.getSourceFolders(), folder -> url.equals(folder.getUrl()))) {
               contentEntry.addSourceFolder(url, false);
             }
           }

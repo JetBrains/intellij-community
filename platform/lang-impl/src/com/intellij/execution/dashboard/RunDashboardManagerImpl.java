@@ -370,7 +370,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
     Set<RunConfiguration> storedConfigurations = new HashSet<>(RunManager.getInstance(myProject).getAllConfigurationsList());
 
-    return descriptorConfigurations.stream().noneMatch(descriptorConfiguration -> {
+    return !ContainerUtil.exists(descriptorConfigurations, descriptorConfiguration -> {
       RunConfiguration configuration = descriptorConfiguration.getConfiguration();
       return isShowInDashboard(configuration) && storedConfigurations.contains(configuration);
     });
