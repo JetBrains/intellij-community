@@ -161,7 +161,7 @@ public final class CachedIntentions {
     Predicate<IntentionAction> filter = action -> ContainerUtil.and(
       IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
 
-    DataContext dataContext = ((EditorEx)myEditor).getDataContext();
+    DataContext dataContext = Utils.wrapDataContext(((EditorEx)myEditor).getDataContext());
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
