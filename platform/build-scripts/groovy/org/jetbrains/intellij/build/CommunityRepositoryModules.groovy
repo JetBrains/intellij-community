@@ -189,21 +189,27 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Gradle")
     },
+/* Android Studio: exclude dependencyUpdater
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
+Android Studio: exclude dependencyUpdater */
+/* Android Studio: exclude intellij.gradle.dsl
     plugin("intellij.gradle.dsl") {
       withModule("intellij.gradle.dsl.impl")
       withModule("intellij.gradle.dsl.kotlin.impl")
     },
+Android Studio: exclude intellij.gradle.dsl */
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
     plugin("intellij.gradle.java.maven"),
+/* Android Studio: exclude intellij.platform.testGuiFramework
     plugin("intellij.platform.testGuiFramework") {
       mainJarName = "testGuiFramework.jar"
       withProjectLibrary("fest")
       withProjectLibrary("fest-swing")
     },
+Android Studio: exclude intellij.platform.testGuiFramework */
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"
       withModule("intellij.junit.rt", "junit-rt.jar")
@@ -268,11 +274,13 @@ Android Studio: exclude smali */
     },
 Android Studio: exclude intellij.statsCollector */
     plugin("intellij.jps.cache"),
+/* Android Studio: exclude intellij.space
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
       withProjectLibrary("jackson-datatype-joda")
       withProjectLibrary("ktor-server-jetty")
     },
+Android Studio: exclude intellij.space */
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     }
