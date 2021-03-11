@@ -683,15 +683,6 @@ public final class Switcher extends BaseSwitcherAction {
             editorManager.closeFile(virtualFile, wnd, false);
           }
           ListUtil.removeItem(jList.getModel(), selectedIndex);
-          int size = jList.getModel().getSize();
-          if (size != 0) {
-            int index = Math.max(selectedIndex, size - 1);
-            jList.setSelectedIndex(index);
-            jList.ensureIndexIsVisible(index);
-          }
-          else {
-            toolWindows.requestFocusInWindow();
-          }
           if (recent) {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
@@ -700,6 +691,15 @@ public final class Switcher extends BaseSwitcherAction {
           SwitcherListItem item = (SwitcherListItem)value;
           item.close(this);
         }
+      }
+      int size = files.getModel().getSize();
+      if (size > 0) {
+        int index = Math.min(Math.max(selectedIndex, 0), size - 1);
+        files.setSelectedIndex(index);
+        files.ensureIndexIsVisible(index);
+      }
+      else {
+        toolWindows.requestFocusInWindow();
       }
     }
 
