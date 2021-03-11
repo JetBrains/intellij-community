@@ -88,7 +88,7 @@
     {
       "id": "rust",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 12, 13]
+      "includeGroups": [ 7, 12, 13, 8]
     },
     {
       "id": "dart",
