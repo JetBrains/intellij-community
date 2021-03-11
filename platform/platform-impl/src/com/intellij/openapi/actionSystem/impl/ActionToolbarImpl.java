@@ -31,6 +31,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -45,8 +46,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
@@ -360,7 +363,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         @Override
         public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace, e, getDataContext());}
       }
-      if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
+      if (!ContainerUtil.exists(clickable.getMouseListeners(), o -> o instanceof ToolbarClicksCollectorListener)) {
         clickable.addMouseListener(new ToolbarClicksCollectorListener());
       }
     }
@@ -588,7 +591,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
               else {
                 eachBound.x = insets.left + eachX;
               }
-            } else {
+            }
+            else {
               eachBound.x = insets.left + eachX;
               eachX += eachBound.width;
             }
@@ -1104,11 +1108,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
+  private boolean isAsyncUpdateSupportedForPlace() {
+    return !ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR.equals(myPlace);
+  }
+
   private void updateActionsImpl(boolean forced) {
     if (forced) myForcedUpdateRequested = true;
     boolean forcedActual = forced || myForcedUpdateRequested;
 
-    DataContext dataContext = Utils.wrapDataContext(getDataContext());
+    DataContext dataContext = isAsyncUpdateSupportedForPlace() ? Utils.wrapDataContext(getDataContext()) : getDataContext();
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
                                               dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
@@ -1475,7 +1483,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     for (AnAction each : kids) {
       if (myActionGroup.isPrimary(each)) {
         result.add(each);
-      } else {
+      }
+      else {
         secondary.add(each);
       }
     }
@@ -1495,7 +1504,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
-    } else {
+    }
+    else {
       setBorder(JBUI.Borders.empty(2));
       setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
