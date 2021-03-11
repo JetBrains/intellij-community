@@ -98,10 +98,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final boolean isEmbedded;
 
   ImageEditorUI(@Nullable ImageEditor editor) {
-    this(editor, false);
+    this(editor, false, true);
   }
 
-  ImageEditorUI(@Nullable ImageEditor editor, boolean isEmbedded) {
+  ImageEditorUI(@Nullable ImageEditor editor, boolean isEmbedded, boolean isOpaque) {
     this.editor = editor;
     this.isEmbedded = isEmbedded;
 
@@ -191,6 +191,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         updateZoomFactor();
       }
     });
+
+    if (!isOpaque) {
+      setOpaque(false);
+      contentPanel.setOpaque(false);
+      myScrollPane.setOpaque(false);
+      myScrollPane.getViewport().setOpaque(false);
+    }
 
     updateInfo();
   }
