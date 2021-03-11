@@ -67,7 +67,7 @@ public class PythonConsoleToolWindow {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+      public void toolWindowShown(@NotNull ToolWindow toolwindow) {
         ToolWindow window = getToolWindow(myProject);
         if (window.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           PydevConsoleRunner runner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(myProject, null);
