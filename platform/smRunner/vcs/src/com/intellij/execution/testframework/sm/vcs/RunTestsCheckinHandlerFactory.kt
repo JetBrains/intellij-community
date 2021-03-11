@@ -2,14 +2,12 @@
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.CommonBundle
-import com.intellij.execution.*
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.TestStateStorage
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.configurations.RunProfileState
-import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
@@ -21,7 +19,6 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -55,7 +52,6 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.PairConsumer
-import com.intellij.util.ThrowableConvertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
@@ -108,8 +104,9 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     
     return withContext(Dispatchers.IO) {
       val executor = DefaultRunExecutor.getRunExecutorInstance()
-      val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build()
-      val executionResult = environment?.state?.execute(executor, MyRunner()) ?: return@withContext null
+      val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build() ?: return@withContext null
+      val runner = ProgramRunner.getRunner(executor.id, configurationSettings.configuration) ?: return@withContext null
+      val executionResult = environment.state?.execute(executor, runner) ?: return@withContext null
       val handler = executionResult.processHandler ?: return@withContext null
       val resultsForm = executionResult.executionConsole?.component as? SMTestRunnerResultsForm ?: return@withContext null
 
@@ -281,7 +278,8 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     override fun compute(indicator: ProgressIndicator): FailedTestCommitProblem? {
       val executor = DefaultRunExecutor.getRunExecutorInstance()
       val environment = ExecutionUtil.createEnvironment(executor, runConfiguration)?.build()
-      val executionResult = environment?.state?.execute(executor, MyRunner()) ?: return null
+      val runner = ProgramRunner.getRunner(executor.id, runConfiguration.configuration) ?: return null
+      val executionResult = environment?.state?.execute(executor, runner) ?: return null
       val handler = executionResult.processHandler ?: return null
       val resultsForm = executionResult.executionConsole?.component as? SMTestRunnerResultsForm ?: return null
 
@@ -325,29 +323,6 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       }
 
       return result.get()
-    }
-  }
-  
-  inner class MyRunner : ProgramRunner<RunnerSettings?> {
-    override fun getRunnerId(): String {
-      return "MyRunner"
-    }
-
-    @Throws(ExecutionException::class)
-    override fun execute(environment: ExecutionEnvironment) {
-
-      val profileState = environment.state ?: return
-      ExecutionManager.getInstance(environment.project)
-        .startRunProfile(environment,
-                         profileState,
-                         ThrowableConvertor<RunProfileState, RunContentDescriptor?, ExecutionException> { state: RunProfileState? ->
-                           state?.execute(DefaultRunExecutor.getRunExecutorInstance(), this)
-                           return@ThrowableConvertor null
-                         })
-    }
-
-    override fun canRun(executorId: String, profile: RunProfile): Boolean {
-      return true
     }
   }
 }
