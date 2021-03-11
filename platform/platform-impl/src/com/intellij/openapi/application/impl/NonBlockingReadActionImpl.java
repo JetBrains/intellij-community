@@ -350,9 +350,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       synchronized (ourTasksByEquality) {
         if (isDone()) return;
 
-        Submission<?> current = ourTasksByEquality.get(coalesceEquality);
+        Submission<?> current = ourTasksByEquality.putIfAbsent(coalesceEquality, this);
         if (current == null) {
-          ourTasksByEquality.put(coalesceEquality, this);
           transferToBgThread();
         }
         else {
