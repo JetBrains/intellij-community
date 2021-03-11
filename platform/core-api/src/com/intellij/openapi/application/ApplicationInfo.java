@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.BuildNumber;
@@ -39,7 +39,7 @@ public abstract class ApplicationInfo {
    *
    * @see org.jetbrains.intellij.build.ApplicationInfoProperties#minorVersionMainPart
    */
-  public final String getMinorVersionMainPart() {
+  public final @NlsSafe String getMinorVersionMainPart() {
     String value = StringUtil.substringBefore(getMinorVersion(), ".");
     return value == null ? getMinorVersion() : value;
   }
@@ -73,6 +73,13 @@ public abstract class ApplicationInfo {
   public abstract boolean hasContextHelp();
 
   public abstract @NlsSafe @NotNull String getFullVersion();
+
+  /**
+   * "major.minor"; when minor version is composite, only the first part is used.
+   */
+  public final @NlsSafe String getShortVersion() {
+    return getMajorVersion() + '.' + getMinorVersionMainPart();
+  }
 
   public abstract @NlsSafe @NotNull String getStrictVersion();
 

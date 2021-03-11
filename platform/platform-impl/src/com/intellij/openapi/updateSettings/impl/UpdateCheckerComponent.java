@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -189,7 +189,7 @@ final class UpdateCheckerComponent {
 
     int lastRelease = 0;
     String announce = null;
-    String releaseVersion = ApplicationInfo.getInstance().getMajorVersion() + '.' + ApplicationInfo.getInstance().getMinorVersionMainPart();
+    String releaseVersion = ApplicationInfo.getInstance().getShortVersion();
     for (UpdateChannel updateChannel : product.getChannels()) {
       if (updateChannel.getLicensing() == UpdateChannel.Licensing.RELEASE && updateChannel.getStatus() == ChannelStatus.RELEASE) {
         for (BuildInfo buildInfo : updateChannel.getBuilds()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customization;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -18,14 +18,13 @@ public final class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingPar
   }
 
   @Override
-  public @NotNull String augmentUrl(@NotNull String originalUrl, String campaignId) {
+  public @NotNull String augmentUrl(@NotNull String originalUrl, @NotNull String campaignId) {
     try {
-      ApplicationInfo info = ApplicationInfo.getInstance();
-      String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
-      return new URIBuilder(originalUrl).addParameter("utm_source", "product")
+      return new URIBuilder(originalUrl)
+        .addParameter("utm_source", "product")
         .addParameter("utm_medium", "link")
         .addParameter("utm_campaign", campaignId)
-        .addParameter("utm_content", productVersion)
+        .addParameter("utm_content", ApplicationInfo.getInstance().getShortVersion())
         .build().toString();
     }
     catch (URISyntaxException e) {
