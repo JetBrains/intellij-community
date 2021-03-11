@@ -120,6 +120,8 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      if (e.project!!.isDisposed) return
+
       val manager = button.toolWindow.toolWindowManager
       if (!state) {
         manager.hideToolWindow(button.id, false, true, ToolWindowEventSource.SquareStripeButton)
