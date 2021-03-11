@@ -112,7 +112,7 @@
       "space_inside_empty_tag": false,
       "tab_width": 4,
       "text_wrap": "normal",
-      "uniform_ident": false,
+      "uniform_indent": false,
       "visual_guides": []
     }
   }
