@@ -112,7 +112,6 @@ public final class Switcher extends BaseSwitcherAction {
     final boolean recent; // false - Switcher, true - Recent files / Recently changed files
     final boolean pinned; // false - auto closeable on modifier key release, true - default popup
     final SwitcherKeyReleaseListener onKeyRelease;
-    final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
     private JBPopup myHint;
@@ -421,7 +420,6 @@ public final class Switcher extends BaseSwitcherAction {
       if (window == null) {
         window = WindowManager.getInstance().getFrame(project);
       }
-      myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
       SwitcherPanel old = project.getUserData(SWITCHER_KEY);
@@ -676,7 +674,7 @@ public final class Switcher extends BaseSwitcherAction {
           final FileInfo info = (FileInfo)value;
           final VirtualFile virtualFile = info.first;
           final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-          final JList jList = getSelectedList();
+          final JList<?> jList = getSelectedList();
           final EditorWindow wnd = findAppropriateWindow(info);
           if (wnd == null) {
             editorManager.closeFile(virtualFile, false, false);
@@ -684,25 +682,9 @@ public final class Switcher extends BaseSwitcherAction {
           else {
             editorManager.closeFile(virtualFile, wnd, false);
           }
-
-          final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> {
-            JComponent focusTarget = selectedList;
-            if (selectedList.getModel().getSize() == 0) {
-              focusTarget = selectedList == files ? toolWindows : files;
-            }
-            focusManager.requestFocus(focusTarget, true);
-          }, 300);
-          if (jList.getModel().getSize() == 1) {
-            removeElementAt(jList, selectedIndex);
-            this.remove(jList);
-            final Dimension size = toolWindows.getSize();
-            myPopup.setSize(new Dimension(size.width, myPopup.getSize().height));
-          }
-          else {
-            removeElementAt(jList, selectedIndex);
-            jList.setSize(jList.getPreferredSize());
+          ListUtil.removeItem(jList.getModel(), selectedIndex);
+          if (jList.getModel().getSize() == 0) {
+            toolWindows.requestFocusInWindow();
           }
           if (recent) {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
@@ -713,29 +695,6 @@ public final class Switcher extends BaseSwitcherAction {
           item.close(this);
         }
       }
-      pack();
-      myPopup.getContent().revalidate();
-      myPopup.getContent().repaint();
-      if (getSelectedList().getModel().getSize() > selectedIndex) {
-        getSelectedList().setSelectedIndex(selectedIndex);
-        getSelectedList().ensureIndexIsVisible(selectedIndex);
-      }
-    }
-
-    private static void removeElementAt(@NotNull JList<?> jList, int index) {
-      ListUtil.removeItem(jList.getModel(), index);
-    }
-
-    private void pack() {
-      this.setSize(this.getPreferredSize());
-      final JRootPane rootPane = SwingUtilities.getRootPane(this);
-      Container container = this;
-      do {
-        container = container.getParent();
-        container.setSize(container.getPreferredSize());
-      }
-      while (container != rootPane);
-      container.getParent().setSize(container.getPreferredSize());
     }
 
     private boolean isFilesSelected() {
