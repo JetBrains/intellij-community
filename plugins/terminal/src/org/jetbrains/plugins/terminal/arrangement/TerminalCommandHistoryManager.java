@@ -112,7 +112,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
     Path parentDir = dir.getParent();
     boolean empty = false;
     try (Stream<Path> s = Files.list(parentDir)) {
-      empty = s.count() == 0;
+      empty = s.findAny().isEmpty();
     }
     catch (IOException e) {
       LOG.warn("Cannot list files in " + parentDir, e);
