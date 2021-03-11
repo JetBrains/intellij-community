@@ -49,8 +49,8 @@ fun enlargedSearchScope(searchScope: GlobalSearchScope, psiFile: PsiFile?): Glob
     val vFile = psiFile?.originalFile?.virtualFile ?: return searchScope
 
     return ResolveScopeEnlarger.EP_NAME.extensions.fold(searchScope) { scope, enlarger ->
-        val extra = enlarger.getAdditionalResolveScope(vFile, scope.project)
-        if (extra != null) scope.union(extra) else scope
+        val project = scope.project ?: return@fold scope
+        enlarger.getAdditionalResolveScope(vFile, project)?.let { scope.union(it) } ?: scope
     }
 }
 
