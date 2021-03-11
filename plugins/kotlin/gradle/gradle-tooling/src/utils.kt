@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.api.Named
+
 fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
     try {
         getMethod(name, *parameterTypes)
