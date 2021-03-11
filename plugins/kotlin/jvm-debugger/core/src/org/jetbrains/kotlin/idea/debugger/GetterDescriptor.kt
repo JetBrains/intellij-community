@@ -32,9 +32,10 @@ class GetterDescriptor(
 
     init {
         OnDemandRenderer.ON_DEMAND_CALCULATED.set(this, false)
+        val returnTypeName = type?.name()
         setOnDemandPresentationProvider { node ->
             node.setFullValueEvaluator(OnDemandRenderer.createFullValueEvaluator(KotlinDebuggerCoreBundle.message("message.variables.property.get")))
-            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", type?.name(), " "), false)
+            node.setPresentation(AllIcons.Nodes.Property, XRegularValuePresentation("", returnTypeName, " "), false)
         }
     }
 
