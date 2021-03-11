@@ -64,20 +64,22 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
-    boolean isShown = consoleView != null && consoleView.getEditor().getGutter().isAnnotationsShown();
-    e.getPresentation().setEnabled(consoleView != null && !isShown && !myIsLoading);
+    Editor editor = consoleView != null ? consoleView.getEditor() : null;
+    boolean isShown = editor != null && editor.getGutter().isAnnotationsShown();
+    e.getPresentation().setEnabled(editor != null && !isShown && !myIsLoading);
   }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     myIsLoading = true;
+    Project project = e.getProject();
     ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
-    if (consoleView == null) return;
-    Editor editor = consoleView.getEditor();
+    Editor editor = consoleView != null ? consoleView.getEditor() : null;
+    if (project == null || editor == null) return;
     EditorHyperlinkSupport hyperlinks = consoleView.getHyperlinks();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(editor.getProject(),
-                                                              LangBundle.message("progress.title.getting.file.history"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(
+      project, LangBundle.message("progress.title.getting.file.history"), true) {
       private final Object LOCK = new Object();
       private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("AnnotateStackTraceAction", 200, true, null);
 
@@ -156,7 +158,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       @Nullable
       private LastRevision getLastRevision(@NotNull VirtualFile file) {
         try {
-          AbstractVcs vcs = VcsUtil.getVcsFor(editor.getProject(), file);
+          AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
           if (vcs == null) return null;
 
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
