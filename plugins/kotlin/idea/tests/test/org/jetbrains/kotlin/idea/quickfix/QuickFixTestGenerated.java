@@ -252,9 +252,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget1.kt");
         }
 
+        @TestMetadata("hasAnnotationTarget11.kt")
+        public void testHasAnnotationTarget11() throws Exception {
+            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget11.kt");
+        }
+
         @TestMetadata("hasAnnotationTarget2.kt")
         public void testHasAnnotationTarget2() throws Exception {
             runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget2.kt");
+        }
+
+        @TestMetadata("hasAnnotationTarget21.kt")
+        public void testHasAnnotationTarget21() throws Exception {
+            runTest("testData/quickfix/addAnnotationTarget/hasAnnotationTarget21.kt");
         }
 
         @TestMetadata("noBackingField.kt")

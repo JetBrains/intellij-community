@@ -3,5 +3,6 @@
 annotation class Foo
 
 class Test {
-    fun foo(): <caret>@Foo Int = 1
+    // TODO: [VD] temporary broken due to https://youtrack.jetbrains.com/issue/KT-45417
+    fun foo(): @Foo Int = 1
 }
