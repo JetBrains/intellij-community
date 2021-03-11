@@ -12,13 +12,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class JBCefTestHelper {
-  public static void invokeAndWaitForLoad(@NotNull JBCefBrowser browser, @NotNull Runnable runnable) {
+  public static void invokeAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull Runnable runnable) {
     CountDownLatch latch = new CountDownLatch(1);
 
     browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser cefBrowser, CefFrame frame, int httpStatusCode) {
-        System.out.println("onLoadEnd on " + browser);
+        System.out.println("onLoadEnd on " + browser + " for " + browser.getCefBrowser().getURL());
         browser.getJBCefClient().removeLoadHandler(this, cefBrowser);
         latch.countDown();
       }
