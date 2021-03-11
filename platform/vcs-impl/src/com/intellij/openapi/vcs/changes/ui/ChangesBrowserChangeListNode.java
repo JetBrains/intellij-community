@@ -43,8 +43,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     if (userObject instanceof LocalChangeList) {
       final LocalChangeList list = ((LocalChangeList)userObject);
-      renderer.appendTextWithIssueLinks(list.getName(),
-             list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      String listName = list.getName();
+      if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
+      renderer.appendTextWithIssueLinks(listName, list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+                                                                   : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (getChangeListData(list) != null) {
         renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES); //NON-NLS
         renderer.setToolTipText(getTooltipText());
@@ -60,7 +62,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       else if (myClManager.isInUpdate()) {
         appendUpdatingState(renderer);
       }
-      if (! myChangeListRemoteState.allUpToDate()) {
+      if (!myChangeListRemoteState.allUpToDate()) {
         renderer.append(spaceAndThinSpace());
         renderer.append(VcsBundle.message("changes.nodetitle.have.outdated.files"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }

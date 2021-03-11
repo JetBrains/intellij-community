@@ -1069,12 +1069,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+      String listName = myList.DESCRIPTION;
+      if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
       if (myList.isRecycled() || myList.isDeleted()) {
-        renderer.appendTextWithIssueLinks(myList.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
         renderer.setIcon(myList.isMarkedToDelete() || myList.isDeleted() ? DisabledToDeleteIcon : AppliedPatchIcon);
       }
       else {
-        renderer.appendTextWithIssueLinks(myList.DESCRIPTION, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.appendTextWithIssueLinks(listName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         renderer.setIcon(PatchIcon);
       }
       appendCount(renderer);
