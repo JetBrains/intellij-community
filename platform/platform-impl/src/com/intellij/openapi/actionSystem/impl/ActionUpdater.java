@@ -5,6 +5,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -79,7 +80,7 @@ final class ActionUpdater {
   private final Utils.ActionGroupVisitor myVisitor;
 
   private boolean myAllowPartialExpand = true;
-  private boolean myPreCacheAsyncDataKeys;
+  private boolean myPreCacheSlowDataKeys;
   private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
 
@@ -120,7 +121,7 @@ final class ActionUpdater {
     myToolbarAction = isToolbarAction;
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
-    myPreCacheAsyncDataKeys = Utils.isAsyncDataContext(dataContext);
+    myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, Op.update),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
@@ -130,7 +131,7 @@ final class ActionUpdater {
 
   @Nullable
   private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
-    if (myPreCacheAsyncDataKeys) ReadAction.run(this::ensureAsyncDataKeysPreCached);
+    if (myPreCacheSlowDataKeys) ReadAction.run(this::ensureSlowDataKeysPreCached);
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
@@ -298,7 +299,7 @@ final class ActionUpdater {
         try {
           indicator.checkCanceled();
           boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-            ensureAsyncDataKeysPreCached();
+            ensureSlowDataKeysPreCached();
             List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
             computeOnEdt(() -> {
               applyPresentationChanges();
@@ -327,14 +328,19 @@ final class ActionUpdater {
     }
   }
 
-  private void ensureAsyncDataKeysPreCached() {
-    if (!myPreCacheAsyncDataKeys) return;
+  private void ensureSlowDataKeysPreCached() {
+    if (!myPreCacheSlowDataKeys) return;
     long start = System.currentTimeMillis();
     for (DataKey<?> key : DataKey.allKeys()) {
       myDataContext.getData(key);
-      myDataContext.getData(AnActionEvent.injectedId(key.getName()));
     }
-    myPreCacheAsyncDataKeys = false;
+    // pre-cache injected data, if injected editor is present
+    if (myDataContext.getData(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow) {
+      for (DataKey<?> key : DataKey.allKeys()) {
+        myDataContext.getData(AnActionEvent.injectedId(key.getName()));
+      }
+    }
+    myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
       LOG.debug("ensureAsyncDataKeysPreCached() took: " + time + " ms");
@@ -514,7 +520,7 @@ final class ActionUpdater {
     else {
       updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                   myVisitor, myEventTransform, myLaterInvocator);
-      updater.myPreCacheAsyncDataKeys = false;
+      updater.myPreCacheSlowDataKeys = false;
     }
     return updater.asUpdateSession(new UpdateStrategy(
       action -> updater.updateActionReal(action, Op.beforeActionPerformedUpdate),
