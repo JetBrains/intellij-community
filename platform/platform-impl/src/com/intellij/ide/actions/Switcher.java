@@ -683,7 +683,13 @@ public final class Switcher extends BaseSwitcherAction {
             editorManager.closeFile(virtualFile, wnd, false);
           }
           ListUtil.removeItem(jList.getModel(), selectedIndex);
-          if (jList.getModel().getSize() == 0) {
+          int size = jList.getModel().getSize();
+          if (size != 0) {
+            int index = Math.max(selectedIndex, size - 1);
+            jList.setSelectedIndex(index);
+            jList.ensureIndexIsVisible(index);
+          }
+          else {
             toolWindows.requestFocusInWindow();
           }
           if (recent) {
