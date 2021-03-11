@@ -47,10 +47,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -384,14 +381,17 @@ public class ImplementationViewComponent extends JPanel {
     return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
   }
 
+  @ApiStatus.Internal
   public ComboBox<FileDescriptor> getFileChooserComboBox() {
     return myFileChooser;
   }
 
+  @ApiStatus.Internal
   public JPanel getSingleEntryPanel() {
     return mySingleEntryPanel;
   }
 
+  @ApiStatus.Internal
   public JPanel getViewingPanel() {
     return myViewingPanel;
   }
