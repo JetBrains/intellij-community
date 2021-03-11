@@ -23,16 +23,18 @@ private var Action.text
 class InvalidateCachesDialog(
   project: Project?,
   private val canRestart: Boolean,
-  invalidators: List<CachesInvalidator>,
+  private val invalidators: List<CachesInvalidator>,
 ) : DialogWrapper(project) {
   private val JUST_RESTART_CODE = NEXT_USER_EXIT_CODE + 3
 
-  private val invalidatorsWithDescriptor = invalidators
-    .mapNotNull { it.description?.to(it) }
-    .toSortedSet(compareBy(String.CASE_INSENSITIVE_ORDER, { it.first }))
+  private val enabledInvalidators: MutableSet<CachesInvalidator> = Sets.newIdentityHashSet()
 
-  val enabledInvalidators: MutableSet<CachesInvalidator> = Sets.newIdentityHashSet<CachesInvalidator>().apply {
-    this += invalidators.filter { it.description == null }
+  fun getSelectedInvalidators() : List<CachesInvalidator> {
+    if (!isOK) return emptyList()
+
+    return invalidators.filter {
+      it.description == null || it in enabledInvalidators
+    }
   }
 
   override fun getHelpId() = "invalidate-cache-restart"
@@ -74,6 +76,9 @@ class InvalidateCachesDialog(
           .toString()
       ).growPolicy(GrowPolicy.MEDIUM_TEXT).constraints(CCFlags.growY)
     }
+
+    //we keep the original order as it comes from the extensions order
+    val invalidatorsWithDescriptor = invalidators.mapNotNull { it.description?.to(it) }
 
     if (invalidatorsWithDescriptor.isNotEmpty()) {
       row {
