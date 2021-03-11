@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -302,6 +303,14 @@ public class SearchEverywhereHeader {
 
   public boolean canSetEverywhere() {
     return myEverywhereAutoSet && canToggleEverywhere();
+  }
+
+  public boolean canResetScope() {
+    return Boolean.TRUE.equals(ObjectUtils.doIfNotNull(mySelectedTab.everywhereAction, action -> !action.isEverywhere()));
+  }
+
+  public void resetScope() {
+    ObjectUtils.consumeIfNotNull(mySelectedTab.everywhereAction, action -> action.setEverywhere(true));
   }
 
   public boolean isEverywhere() {
