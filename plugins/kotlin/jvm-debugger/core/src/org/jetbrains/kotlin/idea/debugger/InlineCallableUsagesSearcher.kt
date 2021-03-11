@@ -96,7 +96,9 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
     }
 
     private fun checkIfInline(declaration: KtDeclaration): Boolean {
-        val bindingContext = declaration.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = runReadAction {
+            declaration.analyze(BodyResolveMode.PARTIAL)
+        }
         val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) ?: return false
         return when (descriptor) {
             is FunctionDescriptor -> InlineUtil.isInline(descriptor)
