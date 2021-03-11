@@ -71,7 +71,7 @@ private nestedExpression_ ::=
   wildcardSegment |
   filterExpression | // standalone filter operator may be substituted by programmatic filter
   indexExpression | // supported only in some implementations
-  spliceExpression |
+  sliceExpression |
   indexesList
 
 filterExpression ::= FILTER_OPERATOR (LPARENTH expression RPARENTH)? {
@@ -80,11 +80,12 @@ filterExpression ::= FILTER_OPERATOR (LPARENTH expression RPARENTH)? {
 indexExpression ::= LPARENTH expression RPARENTH {
   pin=1
 }
-spliceExpression ::=
+sliceExpression ::=
+  (INTEGER_NUMBER COLON INTEGER_NUMBER COLON INTEGER_NUMBER) |
   (INTEGER_NUMBER COLON INTEGER_NUMBER) |
   (INTEGER_NUMBER COLON) |
   (COLON INTEGER_NUMBER) {
-  name="splice expression"
+  name="slice expression"
 }
 indexesList ::= (INTEGER_NUMBER (COMMA INTEGER_NUMBER)*) {
   name="indexes list"

@@ -11,14 +11,14 @@ import static com.intellij.jsonpath.psi.JsonPathTypes.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.jsonpath.psi.*;
 
-public class JsonPathSpliceExpressionImpl extends ASTWrapperPsiElement implements JsonPathSpliceExpression {
+public class JsonPathSliceExpressionImpl extends ASTWrapperPsiElement implements JsonPathSliceExpression {
 
-  public JsonPathSpliceExpressionImpl(@NotNull ASTNode node) {
+  public JsonPathSliceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull JsonPathVisitor visitor) {
-    visitor.visitSpliceExpression(this);
+    visitor.visitSliceExpression(this);
   }
 
   @Override

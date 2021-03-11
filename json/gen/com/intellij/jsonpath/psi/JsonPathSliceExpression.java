@@ -5,6 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface JsonPathSpliceExpression extends PsiElement {
+public interface JsonPathSliceExpression extends PsiElement {
 
 }
