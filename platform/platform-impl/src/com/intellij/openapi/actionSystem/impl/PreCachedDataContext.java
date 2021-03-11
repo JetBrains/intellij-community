@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
@@ -36,11 +37,12 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
  */
 class PreCachedDataContext implements DataContext, UserDataHolder {
 
-  private Map<Key<?>, Object> myUserData;
-  private final Map<String, Object> myCachedData;
-
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
+
+  private Map<Key<?>, Object> myUserData;
+  private final Map<String, Object> myCachedData;
+  private final Consumer<? super String> myMissedKeysIfFrozen;
 
   PreCachedDataContext(@NotNull DataContext original) {
     if (!(original instanceof DataManagerImpl.MyDataContext)) {
@@ -48,6 +50,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     Component component = original.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    myMissedKeysIfFrozen = null;
 
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = IdeEventQueue.getInstance().getEventCount();
@@ -75,12 +78,29 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     }
   }
 
+  private PreCachedDataContext(@NotNull Map<String, Object> cachedData,
+                               @NotNull Map<Key<?>, Object> userData,
+                               @NotNull Consumer<? super String> missedKeys) {
+    myCachedData = cachedData;
+    myUserData = userData;
+    myMissedKeysIfFrozen = missedKeys;
+  }
+
+  @NotNull
+  PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
+    return new PreCachedDataContext(myCachedData, getOrCreateMap(), missedKeys == null ? s -> {} : missedKeys);
+  }
+
   @Override
   public Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
     if (answer != null && answer != NullResult.Initial) {
       return answer == NullResult.Final ? null : answer;
+    }
+    if (myMissedKeysIfFrozen != null) {
+      myMissedKeysIfFrozen.accept(dataId);
+      return null;
     }
 
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();

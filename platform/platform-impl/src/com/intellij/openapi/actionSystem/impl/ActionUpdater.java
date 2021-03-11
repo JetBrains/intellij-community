@@ -51,14 +51,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
-  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater", 2);
+
+  static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
+  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
@@ -78,7 +80,7 @@ final class ActionUpdater {
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheAsyncDataKeys;
-  private final BiFunction<? super AnAction, ? super Presentation, AnActionEvent> myEventFactory;
+  private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
 
   ActionUpdater(boolean isInModalContext,
@@ -105,9 +107,9 @@ final class ActionUpdater {
                 String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
-                Utils.ActionGroupVisitor visitor,
-                BiFunction<? super AnAction, ? super Presentation, AnActionEvent> eventFactory,
-                Consumer<Runnable> laterInvocator) {
+                @Nullable Utils.ActionGroupVisitor visitor,
+                @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
+                @Nullable Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
@@ -116,7 +118,7 @@ final class ActionUpdater {
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
-    myEventFactory = eventFactory;
+    myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
     myPreCacheAsyncDataKeys = Utils.isAsyncDataContext(dataContext);
     myRealUpdateStrategy = new UpdateStrategy(
@@ -138,7 +140,11 @@ final class ActionUpdater {
     return success ? presentation : null;
   }
 
-  void applyPresentationChanges() {
+  void applyPresentationChanges(@NotNull UpdateSession session) {
+    ((UpdateSessionImpl)session).updater.applyPresentationChanges();
+  }
+
+  private void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
       AnAction action = entry.getKey();
       Presentation orig = myFactory.getPresentation(action);
@@ -478,9 +484,12 @@ final class ActionUpdater {
   }
 
   private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
-    AnActionEvent event = myEventFactory != null ? myEventFactory.apply(action, presentation) : new AnActionEvent(
+    AnActionEvent event = new AnActionEvent(
       null, getDataContext(action), myPlace, presentation,
       ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
+    if (myEventTransform != null) {
+      event = myEventTransform.apply(event);
+    }
     event.setInjectedContext(action.isInInjectedContext());
     event.setUpdateSession(asUpdateSession());
     return event;
@@ -496,33 +505,26 @@ final class ActionUpdater {
   }
 
   @NotNull
-  UpdateSession asBeforeActionPerformedUpdateSession() {
-    return asUpdateSession(new UpdateStrategy(
-      action -> updateActionReal(action, Op.beforeActionPerformedUpdate),
-      myRealUpdateStrategy.getChildren,
-      myRealUpdateStrategy.canBePerformed));
+  UpdateSession asBeforeActionPerformedUpdateSession(@Nullable Consumer<? super String> missedKeysFast) {
+    DataContext frozenContext = missedKeysFast != null ? Utils.freezeDataContext(myDataContext, missedKeysFast) : null;
+    ActionUpdater updater;
+    if (frozenContext == null || frozenContext == myDataContext) {
+      updater = this;
+    }
+    else {
+      updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
+                                  myVisitor, myEventTransform, myLaterInvocator);
+      updater.myPreCacheAsyncDataKeys = false;
+    }
+    return updater.asUpdateSession(new UpdateStrategy(
+      action -> updater.updateActionReal(action, Op.beforeActionPerformedUpdate),
+      updater.myRealUpdateStrategy.getChildren,
+      updater.myRealUpdateStrategy.canBePerformed));
   }
 
   @NotNull
   private UpdateSession asUpdateSession(UpdateStrategy strategy) {
-    return new UpdateSession() {
-      @NotNull
-      @Override
-      public Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup) {
-        return iterateGroupChildren(actionGroup, strategy);
-      }
-
-      @Override
-      public @NotNull List<? extends AnAction> children(@NotNull ActionGroup actionGroup) {
-        return getGroupChildren(actionGroup, strategy);
-      }
-
-      @NotNull
-      @Override
-      public Presentation presentation(@NotNull AnAction action) {
-        return orDefault(action, update(action, strategy));
-      }
-    };
+    return new UpdateSessionImpl(this, strategy);
   }
 
   @NotNull
@@ -622,6 +624,33 @@ final class ActionUpdater {
       this.update = update;
       this.getChildren = getChildren;
       this.canBePerformed = canBePerformed;
+    }
+  }
+
+  private static class UpdateSessionImpl implements UpdateSession {
+    final ActionUpdater updater;
+    final UpdateStrategy strategy;
+
+    UpdateSessionImpl(ActionUpdater updater, UpdateStrategy strategy) {
+      this.updater = updater;
+      this.strategy = strategy;
+    }
+
+    @NotNull
+    @Override
+    public Iterable<? extends AnAction> expandedChildren(@NotNull ActionGroup actionGroup) {
+      return updater.iterateGroupChildren(actionGroup, strategy);
+    }
+
+    @Override
+    public @NotNull List<? extends AnAction> children(@NotNull ActionGroup actionGroup) {
+      return updater.getGroupChildren(actionGroup, strategy);
+    }
+
+    @NotNull
+    @Override
+    public Presentation presentation(@NotNull AnAction action) {
+      return updater.orDefault(action, updater.update(action, strategy));
     }
   }
 }

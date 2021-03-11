@@ -48,6 +48,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -645,11 +646,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
 
     Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
-    List<AnAction> wouldBeEnabledIfNotDumb = new ArrayList<>();
+    List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
       e, wrappedContext, place, processor, presentationFactory,
       event -> events.put(event.getPresentation(), event),
-      session -> doUpdateActionsInner(wrappedContext, actions, dumb, wouldBeEnabledIfNotDumb, session, events::get));
+      session -> {
+        ReadAction.run(() -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null)));
+        return doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get);
+      });
 
     doPerformActionInner(chosen, e, processor, wrappedContext, actionManager, project, wouldBeEnabledIfNotDumb, () -> {
       //invokeLater to make sure correct dataContext is taken from focus
@@ -663,13 +667,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   @Nullable
-  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull DataContext context,
-                                                                             @NotNull List<AnAction> actions,
+  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull List<AnAction> actions,
                                                                              boolean dumb,
                                                                              @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
                                                                              @NotNull UpdateSession session,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
-    ReadAction.run(() -> rearrangeByPromoters(actions, context));
     for (AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
 
@@ -702,7 +704,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
                                     @NotNull Runnable retryRunnable) {
     if (chosen != null) {
       AnAction action = chosen.first;
-      AnActionEvent actionEvent = chosen.second;
+      AnActionEvent actionEvent = chosen.second.withDataContext(context); // use not frozen data context
       long startedAt = chosen.third;
       processor.onUpdatePassed(e, action, actionEvent);
 
@@ -764,6 +766,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
         actionNames.add(s);
       }
     }
+    ContainerUtil.removeDuplicates(actionNames);
     if (actionNames.isEmpty()) {
       return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
     }

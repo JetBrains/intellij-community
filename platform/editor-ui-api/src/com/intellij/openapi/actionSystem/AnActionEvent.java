@@ -76,6 +76,7 @@ public class AnActionEvent implements PlaceProvider {
 
   @NotNull
   public AnActionEvent withDataContext(@NotNull DataContext dataContext) {
+    if (myDataContext == dataContext) return this;
     AnActionEvent event = new AnActionEvent(myInputEvent, dataContext, myPlace, myPresentation,
                                             myActionManager, myModifiers, myIsContextMenuAction, myIsActionToolbar);
     event.setInjectedContext(myWorksInInjected);

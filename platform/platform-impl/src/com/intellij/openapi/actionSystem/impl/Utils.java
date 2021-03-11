@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
@@ -18,7 +19,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +34,7 @@ import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -61,6 +63,12 @@ public final class Utils {
       return new PreCachedDataContext(dataContext);
     }
     return dataContext;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public static DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
+    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
@@ -335,30 +343,43 @@ public final class Utils {
     // direct approach would be to pump events in a custom modality state (enterModal/leaveModal)
     // EventQueue would add significant overhead (x10), but key events must be processed ASAP.
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
-    ActionManager actionManager = ActionManager.getInstance();
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
-      place, false, false, null, (action, presentation) -> {
-      AnActionEvent event = actionProcessor.createEvent(
-        inputEvent, dataContext, place, presentation, actionManager);
-      if (eventTracker != null) eventTracker.accept(event);
-      return event;
+      place, false, false, null, event -> {
+        AnActionEvent transformed = actionProcessor.createEvent(
+          inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
+        if (eventTracker != null) eventTracker.accept(transformed);
+        return transformed;
     }, async ? queue::offer : null);
 
     T result;
     if (async) {
       ActionUpdater.cancelAllUpdates();
       AsyncPromise<T> promise = new AsyncPromise<>();
-      AppExecutorUtil.getAppExecutorService().execute(() -> {
+      ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
+          Ref<UpdateSession> sessionRef = Ref.create();
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(
-              () -> ref.set(function.apply(actionUpdater.asBeforeActionPerformedUpdateSession())), new EmptyProgressIndicator());
-            return null;
+            ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+              Set<String> missedKeys = ContainerUtil.newConcurrentSet();
+              UpdateSession fastSession = actionUpdater.asBeforeActionPerformedUpdateSession(missedKeys::add);
+              T fastResult = function.apply(fastSession);
+              sessionRef.set(fastSession);
+              if (fastResult != null) {
+                ref.set(fastResult);
+              }
+              else if (ReadAction.compute(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+                UpdateSession slowSession = actionUpdater.asBeforeActionPerformedUpdateSession(null);
+                T slowResult = function.apply(slowSession);
+                ref.set(slowResult);
+                sessionRef.set(slowSession);
+              }
+            }, new EmptyProgressIndicator());
+            return ref.get();
           });
           queue.offer(() -> {
-            actionUpdater.applyPresentationChanges();
+            actionUpdater.applyPresentationChanges(sessionRef.get());
             promise.setResult(ref.get());
           });
         }
@@ -372,7 +393,9 @@ public final class Utils {
       });
     }
     else {
-      result = function.apply(actionUpdater.asBeforeActionPerformedUpdateSession());
+      UpdateSession session = actionUpdater.asBeforeActionPerformedUpdateSession(null);
+      result = function.apply(session);
+      actionUpdater.applyPresentationChanges(session);
     }
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
