@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.view.XCoroutineView
 
 class DebuggerConnection(
     val project: Project,
-    val configuration: RunConfigurationBase<*>,
+    val configuration: RunConfigurationBase<*>?,
     val params: JavaParameters?,
     modifyArgs: Boolean = true,
     val alwaysShowPanel: Boolean = false
