@@ -836,6 +836,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void ensureStaleIdsDeleted() {
+    loadIndexes();
     waitUntilIndicesAreInitialized();
     synchronized (myStaleIds) {
       if (myStaleIds.isEmpty()) return;
