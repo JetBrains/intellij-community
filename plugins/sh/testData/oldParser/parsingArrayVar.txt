@@ -55,14 +55,8 @@ SHELL_SCRIPT
           PARENTHESES_EXPRESSION
             PsiElement(()('(')
             PsiWhiteSpace(' ')
-            ADD_EXPRESSION
-              LITERAL_EXPRESSION
-                NUMBER
-                  PsiElement(int)('1')
-              PsiElement(+)('+')
-              LITERAL_EXPRESSION
-                NUMBER
-                  PsiElement(int)('1')
+            LITERAL_EXPRESSION
+              PsiElement(word)('1+1')
             PsiWhiteSpace(' ')
             PsiElement())(')')
           PsiWhiteSpace(' ')

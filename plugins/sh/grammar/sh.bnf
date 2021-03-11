@@ -439,6 +439,6 @@ regex_condition ::= condition '=~' regex_pattern
 comparison_condition ::= condition ('<' | '>') condition
 logical_bitwise_condition ::= '!' simple_command
 parentheses_condition ::= '(' condition ')'
-literal_condition ::= (word_in_condition newlines | newlines w)
+literal_condition ::= (word_in_condition newlines | newlines word_in_condition)
 regex_pattern ::= word_in_condition+
 private word_in_condition ::= word | string | number | not_lvalue

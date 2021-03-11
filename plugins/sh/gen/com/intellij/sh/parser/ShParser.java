@@ -2727,11 +2727,11 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // word_in_condition newlines | newlines w
+  // word_in_condition newlines | newlines word_in_condition
   public static boolean literal_condition(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _COLLAPSE_, LITERAL_CONDITION, "<literal condition>");
+    Marker m = enter_section_(b, l, _NONE_, LITERAL_CONDITION, "<literal condition>");
     r = literal_condition_0(b, l + 1);
     if (!r) r = literal_condition_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
@@ -2749,13 +2749,13 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // newlines w
+  // newlines word_in_condition
   private static boolean literal_condition_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal_condition_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = newlines(b, l + 1);
-    r = r && w(b, l + 1);
+    r = r && word_in_condition(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }

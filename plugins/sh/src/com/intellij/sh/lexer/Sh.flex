@@ -144,7 +144,7 @@ Regex                    = {RegexWord}+
 
 HereString               = [^\r\n$` \"';()|>&] | {EscapedChar}
 StringContent            = [^$\"`(\\] | {EscapedAnyChar}
-EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
+EvalContent              = [^|\r\n$\"`'() ;] | {EscapedAnyChar}
 
 %state ARITHMETIC_EXPRESSION
 %state OLD_ARITHMETIC_EXPRESSION
@@ -186,7 +186,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
    {WhiteSpace}+                 { return WHITESPACE; }
    {RawString}                   { return RAW_STRING; }
-   ")" | ";"                     |
+   "|" | ")" | ";"               |
    {LineTerminator}              { popState(); yypushback(yylength()); }
    "$" | "(" | {EvalContent}+    { return EVAL_CONTENT; }
 }
@@ -214,52 +214,6 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "`"                           { if (isBackquoteOpen) { popState(); yypushback(yylength()); }
                                     else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
     {LineTerminator}              { popState(); return LINEFEED; }
-}
-
-<ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION> {
-    "*="                          { return MULT_ASSIGN; }
-    "/="                          { return DIV_ASSIGN; }
-    "%="                          { return MOD_ASSIGN; }
-    "+="                          { return PLUS_ASSIGN; }
-    "-="                          { return MINUS_ASSIGN; }
-    ">>="                         { return SHIFT_RIGHT_ASSIGN; }
-    "<<="                         { return SHIFT_LEFT_ASSIGN; }
-    "&="                          { return BIT_AND_ASSIGN; }
-    "|="                          { return BIT_OR_ASSIGN; }
-    "^="                          { return BIT_XOR_ASSIGN; }
-    "!="                          { return NE; }
-    "=="                          { return EQ; }
-    ">="                          { return GE; }
-    "<="                          { return LE; }
-
-    "++"                          { return PLUS_PLUS; }
-    "--"                          { return MINUS_MINUS; }
-    "**"                          { return EXPONENT; }
-
-    "!"                           { return BANG; }
-    "~"                           { return BITWISE_NEGATION; }
-    "+"                           { return PLUS; }
-    "-"                           { return MINUS; }
-    "*"                           { return MULT; }
-    "/"                           { return DIV; }
-    "%"                           { return MOD; }
-
-    "<<"                          { return SHIFT_LEFT; }
-    ">>"                          { return SHIFT_RIGHT; }
-    "<"                           { return LT; }
-    ">"                           { return GT; }
-
-    "&&"                          { return AND_AND; }
-    "||"                          { return OR_OR; }
-    "&"                           { return AMP; }
-    "^"                           { return XOR; }
-    "|"                           { return PIPE; }
-
-    "?"                           { return QMARK; }
-    ":"                           { return COLON; }
-    ","                           { return COMMA; }
-
-    {ArithWord}                   { return WORD; }
 }
 
 <CONDITIONAL_EXPRESSION> {
@@ -390,130 +344,55 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "test"                        { pushState(TEST_EXPRESSION); return TEST; }
 }
 
-<PARENTHESES_COMMAND_SUBSTITUTION> {
-    //{AssignmentWord} / {AssigOp}  { return WORD; }
-    {Filedescriptor}              { return FILEDESCRIPTOR; }
+<PARENTHESES_COMMAND_SUBSTITUTION, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION> {
+    "*="                          { return MULT_ASSIGN; }
+    "/="                          { return DIV_ASSIGN; }
+    "%="                          { return MOD_ASSIGN; }
+    "+="                          { return PLUS_ASSIGN; }
+    "-="                          { return MINUS_ASSIGN; }
+    ">>="                         { return SHIFT_RIGHT_ASSIGN; }
+    "<<="                         { return SHIFT_LEFT_ASSIGN; }
+    "&="                          { return BIT_AND_ASSIGN; }
+    "|="                          { return BIT_OR_ASSIGN; }
+    "^="                          { return BIT_XOR_ASSIGN; }
+    "=~"                          { regexStart = getTokenEnd(); regexGroups = 0; pushState(REGULAR_EXPRESSION); return REGEXP; }
+    "!="                          { return NE; }
+    "=="                          { return EQ; }
+    ">="                          { return GE; }
+    "<="                          { return LE; }
 
-          "*="                          { return MULT_ASSIGN; }
-          "/="                          { return DIV_ASSIGN; }
-          "%="                          { return MOD_ASSIGN; }
-          "+="                          { return PLUS_ASSIGN; }
-          "-="                          { return MINUS_ASSIGN; }
-          ">>="                         { return SHIFT_RIGHT_ASSIGN; }
-          "<<="                         { return SHIFT_LEFT_ASSIGN; }
-          "&="                          { return BIT_AND_ASSIGN; }
-          "|="                          { return BIT_OR_ASSIGN; }
-          "^="                          { return BIT_XOR_ASSIGN; }
-          "!="                          { return NE; }
-          "=="                          { return EQ; }
-          "=~"                          { regexStart = getTokenEnd(); regexGroups = 0; pushState(REGULAR_EXPRESSION); return REGEXP; }
-          ">="                          { return GE; }
-          "<="                          { return LE; }
-
-          "++"                          { return PLUS_PLUS; }
-          "--"                          { return MINUS_MINUS; }
-          "**"                          { return EXPONENT; }
-
-          "!"                           { return BANG; }
-          "~"                           { return BITWISE_NEGATION; }
-          "+"                           { return PLUS; }
-          "-"                           { return MINUS; }
-          "*"                           { return MULT; }
-          "/"                           { return DIV; }
-          "%"                           { return MOD; }
-
-          "<<"                          { return SHIFT_LEFT; }
-          ">>"                          { return SHIFT_RIGHT; }
-          "<"                           { return LT; }
-          ">"                           { return GT; }
-
-          "&&"                          { return AND_AND; }
-          "||"                          { return OR_OR; }
-          "&"                           { return AMP; }
-          "^"                           { return XOR; }
-          "|"                           { return PIPE; }
-
-          "?"                           { return QMARK; }
-          ":"                           { return COLON; }
-          ","                           { return COMMA; }
-
-    /***** Conditional statements *****/
-    "$["                          { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
-    "$("                          { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
-    "${"                          { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-    "[["                          { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
-    "["                           { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
-    "]]"                          { popState(CONDITIONAL_EXPRESSION); return RIGHT_DOUBLE_BRACKET; }
-    "]"                           { switch (yystate()) {
-                                      case OLD_ARITHMETIC_EXPRESSION: popState(); return ARITH_SQUARE_RIGHT;
-                                      case CONDITIONAL_EXPRESSION: popState(); return RIGHT_SQUARE;
-                                      default: return RIGHT_SQUARE; }
-                                  }
-
-    /***** General operators *****/
-    "="                           { return ASSIGN; }
-    "$"                           { return DOLLAR; }
-    "("                           { if (!isPreviousChar('$')) pushState(PARENTHESES_COMMAND_SUBSTITUTION);
-                                    pushParentheses(PARENTHESES); return LEFT_PAREN; }
-    ")"                           { if (shouldCloseLgGtParen()) {
-                                      popParentheses();
-                                      return RIGHT_PAREN;
-                                    }
-                                    if (shouldCloseSingleParen())
-                                      popParentheses();
-                                    popState(PARENTHESES_COMMAND_SUBSTITUTION);
-                                    if (yystate() == CASE_PATTERN) popState();
-                                    return RIGHT_PAREN; }
-    "{"                           { return LEFT_CURLY; }
-    "}"                           { return RIGHT_CURLY; }
+    "++"                          { return PLUS_PLUS; }
+    "--"                          { return MINUS_MINUS; }
+    "**"                          { return EXPONENT; }
 
     "!"                           { return BANG; }
-    "`"                           { if (yystate() == BACKQUOTE_COMMAND_SUBSTITUTION) { popState(); isBackquoteOpen = false; return CLOSE_BACKQUOTE; }
-                                    else { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; } }
+    "~"                           { return BITWISE_NEGATION; }
+    "+"                           { return PLUS; }
+    "-"                           { return MINUS; }
+    "*"                           { return MULT; }
+    "/"                           { return DIV; }
+    "%"                           { return MOD; }
 
-    ";"                           { return SEMI; }
+    "<<"                          { return SHIFT_LEFT; }
+    ">>"                          { return SHIFT_RIGHT; }
+    "<"                           { return LT; }
+    ">"                           { return GT; }
 
-    /***** Pipelines *****/
+    "&&"                          { return AND_AND; }
+    "||"                          { return OR_OR; }
+    "&"                           { return AMP; }
+    "^"                           { return XOR; }
     "|"                           { return PIPE; }
-    "|&"                          { return PIPE_AMP; }
 
-    /***** Redirections *****/
-    "&>>"                         { return REDIRECT_AMP_GREATER_GREATER; }
-    "<&"                          { return REDIRECT_LESS_AMP; }
-    ">&"                          { return REDIRECT_GREATER_AMP; }
-    "<>"                          { return REDIRECT_LESS_GREATER; }
-    "&>"                          { return REDIRECT_AMP_GREATER; }
-    ">|"                          { return REDIRECT_GREATER_BAR; }
-    ">("                          { pushParentheses(LT_GT_PARENTHESES); return OUTPUT_PROCESS_SUBSTITUTION; }
-    "<("                          { pushParentheses(LT_GT_PARENTHESES); return INPUT_PROCESS_SUBSTITUTION; }
+    "?"                           { return QMARK; }
+    ":"                           { return COLON; }
+    ","                           { return COMMA; }
 
-    "<<<"                         { herestringStartPosition = getTokenEnd(); pushState(HERE_STRING); return REDIRECT_HERE_STRING; }
-    "<<-"                         { if (yystate() != HERE_DOC_PIPELINE)
-                                    { pushState(HERE_DOC_START_MARKER); heredocWithWhiteSpaceIgnore = true; return HEREDOC_MARKER_TAG; }
-                                    else return SHIFT_LEFT; }
-
-    {IntegerLiteral}              { return INT; }
-    {HexIntegerLiteral}           { return HEX; }
-    {OctalIntegerLiteral}         { return OCTAL; }
-
-    {Comment}                     { return COMMENT; }
-
-    {WhiteSpace}+                 |
-    {LineContinuation}+           { return WHITESPACE; }
-    {LineTerminator}              { return LINEFEED; }
-    {Variable}                    { return VAR; }
-
-    {Quote}                       { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
-
-    {RawString}                   |
-    {UnclosedRawString}           { return RAW_STRING; }
     {ArithWord}                   { return WORD; }
-//    {PatternExt}+                 |
-//    {Word}                        { return WORD; }
 }
 
 <YYINITIAL, ARITHMETIC_EXPRESSION, OLD_ARITHMETIC_EXPRESSION, LET_EXPRESSION, TEST_EXPRESSION, CONDITIONAL_EXPRESSION, HERE_DOC_PIPELINE,
-  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING> {
+  CASE_CONDITION, CASE_PATTERN, IF_CONDITION, OTHER_CONDITIONS, BACKQUOTE_COMMAND_SUBSTITUTION, HERE_STRING, PARENTHESES_COMMAND_SUBSTITUTION> {
     {AssignmentWord} / {AssigOp}  { return WORD; }
     {Filedescriptor}              { return FILEDESCRIPTOR; }
 
@@ -534,7 +413,8 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
     "+="                          { return PLUS_ASSIGN; }
     "="                           { return ASSIGN; }
     "$"                           { return DOLLAR; }
-    "("                           { if (!isPreviousChar('$')) pushState(PARENTHESES_COMMAND_SUBSTITUTION);
+    "("                           { if (!isPreviousChar('$') && yystate() != CONDITIONAL_EXPRESSION)
+                                      pushState(PARENTHESES_COMMAND_SUBSTITUTION);
                                     pushParentheses(PARENTHESES); return LEFT_PAREN; }
     ")"                           { if (shouldCloseLgGtParen()) {
                                       popParentheses();
@@ -542,7 +422,9 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedAnyChar}
                                     }
                                     if (shouldCloseSingleParen())
                                       popParentheses();
-                                    popState(PARENTHESES_COMMAND_SUBSTITUTION); return RIGHT_PAREN; }
+                                    popState(PARENTHESES_COMMAND_SUBSTITUTION);
+                                    if (yystate() == CASE_PATTERN) popState();
+                                    return RIGHT_PAREN; }
     "{"                           { return LEFT_CURLY; }
     "}"                           { return RIGHT_CURLY; }
 

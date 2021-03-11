@@ -46,5 +46,7 @@ public class ShParserTest extends ParsingTestCase {
   public void testRedirection2()  { doTest(true); }
   public void testSource()        { doTest(true); }
   public void testRedirectErrors(){ doTest(true); }
+  public void testIdea263122()    { doTest(true); } // IDEA-263122
+  public void testIdea244342()    { doTest(true); } // IDEA-244342
   public void testTest(){ doTest(true); }
 }
