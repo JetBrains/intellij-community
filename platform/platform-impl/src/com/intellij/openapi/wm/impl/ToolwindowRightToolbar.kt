@@ -30,6 +30,11 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
     }
   }
 
+  override fun reset() {
+    topPane.removeAll()
+    topPane.revalidate()
+  }
+
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
     return topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id === toolWindowId}
   }

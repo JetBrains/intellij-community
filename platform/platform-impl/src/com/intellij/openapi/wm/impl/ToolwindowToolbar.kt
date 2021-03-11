@@ -27,6 +27,8 @@ abstract class ToolwindowToolbar : JPanel() {
 
   abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow)
 
+  abstract fun reset()
+
   fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow) {
     if (toolWindow !is ToolWindowImpl) return
 

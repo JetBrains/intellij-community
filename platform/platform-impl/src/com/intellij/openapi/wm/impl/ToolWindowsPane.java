@@ -583,6 +583,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       stripe.reset();
     }
 
+    if (Registry.is("ide.new.stripes.ui")) {
+      if (myLeftToolbar != null) myLeftToolbar.reset();
+      if (myRightToolbar != null) myRightToolbar.reset();
+    }
+
     state = new ToolWindowPaneState();
 
     revalidate();
