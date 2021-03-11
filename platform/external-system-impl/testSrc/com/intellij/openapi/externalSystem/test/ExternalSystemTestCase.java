@@ -573,10 +573,10 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return (BiPredicate<T, U>)EQUALS_PREDICATE;
   }
 
-  public static void deleteBuildSystemDirectory() {
+  public static void deleteBuildSystemDirectory(Project project) {
     BuildManager buildManager = BuildManager.getInstance();
     if (buildManager == null) return;
-    Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory(project);
     try {
       PathKt.delete(buildSystemDirectory);
       return;

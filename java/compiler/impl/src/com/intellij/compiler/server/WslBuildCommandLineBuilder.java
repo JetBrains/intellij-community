@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.wsl.WSLCommandLineOptions;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -44,14 +45,12 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     myProgressIndicator = progressIndicator;
     myCommandLine.setExePath(sdkPath);
 
-    String home = distribution.getUserHome();
-    if (home != null) {
-      String pathsSelector = PathManager.getPathsSelector();
-      if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-      String workingDirectory = PathManager.getDefaultUnixSystemPath(home, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
-      myHostWorkingDirectory = myDistribution.getWindowsPath(workingDirectory);
-      myWorkingDirectory = myHostWorkingDirectory != null ? workingDirectory : null;
+    myHostWorkingDirectory = BuildManager.getInstance().getBuildSystemDirectory(project).toString();
+    String workingDir = myDistribution.getWslPath(myHostWorkingDirectory);
+    myWorkingDirectory = workingDir == null? myHostWorkingDirectory : workingDir;
+    WslPath path = WslPath.parseWindowsUncPath(myHostWorkingDirectory);
 
+    if (path != null) {
       myClasspathDirectory = myWorkingDirectory + "/jps-" + ApplicationInfo.getInstance().getBuild().asString();
       myHostClasspathDirectory = Paths.get(myDistribution.getWindowsPath(myClasspathDirectory));
       if (ApplicationInfo.getInstance().getBuild().isSnapshot() && !CURRENT_SNAPSHOT_COPIED) {
@@ -70,8 +69,6 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       }
     }
     else {
-      myHostWorkingDirectory = BuildManager.getInstance().getBuildSystemDirectory().toString();
-      myWorkingDirectory = myDistribution.getWslPath(myHostWorkingDirectory);
       myClasspathDirectory = null;
       myHostClasspathDirectory = null;
     }

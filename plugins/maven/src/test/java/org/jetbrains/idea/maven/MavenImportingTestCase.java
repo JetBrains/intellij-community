@@ -70,7 +70,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
       () -> TestDialogManager.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
-      () -> ExternalSystemTestCase.deleteBuildSystemDirectory(),
+      () -> ExternalSystemTestCase.deleteBuildSystemDirectory(myProject),
       () -> {
         myProjectsManager = null;
         myProjectsTree = null;
