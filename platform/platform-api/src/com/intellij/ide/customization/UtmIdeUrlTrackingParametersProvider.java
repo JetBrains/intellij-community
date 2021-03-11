@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.net.URISyntaxException;
 
 public final class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingParametersProvider {
-  private static final Logger LOG = Logger.getInstance(UtmIdeUrlTrackingParametersProvider.class);
-
   @Override
   public @NotNull String augmentUrl(@NotNull String originalUrl) {
     return augmentUrl(originalUrl, ApplicationInfo.getInstance().getBuild().getProductCode());
@@ -28,7 +26,7 @@ public final class UtmIdeUrlTrackingParametersProvider extends IdeUrlTrackingPar
         .build().toString();
     }
     catch (URISyntaxException e) {
-      LOG.warn(originalUrl, e);
+      Logger.getInstance(UtmIdeUrlTrackingParametersProvider.class).warn(originalUrl, e);
       return originalUrl;
     }
   }
