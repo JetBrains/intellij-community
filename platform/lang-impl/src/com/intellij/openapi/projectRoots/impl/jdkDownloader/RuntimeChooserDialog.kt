@@ -1,15 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
@@ -95,11 +97,6 @@ class RuntimeChooserDialog(
           return
         }
 
-        if (anObject is RuntimeChooserShowAdvancedItem) {
-          this@RuntimeChooserDialog.model.showAdvancedOptions()
-          return
-        }
-
         if (anObject is RuntimeChooserDownloadableItem || anObject is RuntimeChooserCustomItem || anObject is RuntimeChooserCurrentItem) {
           super.setSelectedItem(anObject)
         }
@@ -107,6 +104,33 @@ class RuntimeChooserDialog(
     }
 
     return panel {
+
+
+      noteRowInTheDialog()
+
+      row("") {
+        label(
+          HtmlChunk
+            .html()
+            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn"))
+            .toString()
+        ).growPolicy(GrowPolicy.MEDIUM_TEXT).constraints(growX, growY).component.icon = AllIcons.General.Warning
+      }
+
+      row(LangBundle.message("dialog.label.choose.ide.runtime.current")) {
+        val control = SimpleColoredComponent()
+        control().constraints(growX)
+
+        model.currentRuntime.getAndSubscribe(disposable) {
+          control.clear()
+          if (it != null) {
+            RuntimeChooserPresenter.run {
+              control.presetCurrentRuntime(it)
+            }
+          }
+        }
+      }
+
       row(LangBundle.message("dialog.label.choose.ide.runtime.combo")) {
         jdkCombobox.invoke(growX)
       }
@@ -146,12 +170,6 @@ class RuntimeChooserDialog(
       row {
         comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
       }.onlyVisibleWhenSelected { it is RuntimeChooserDownloadableItem }
-
-      row {
-        comment(LangBundle.message("dialog.label.choose.ide.runtime.warn"), 90).component.also {
-          it.icon = Messages.getWarningIcon()
-        }
-      }
     }
   }
 

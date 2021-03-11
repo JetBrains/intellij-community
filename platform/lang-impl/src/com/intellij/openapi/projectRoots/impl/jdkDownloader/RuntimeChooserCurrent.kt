@@ -8,6 +8,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -20,7 +21,7 @@ interface RuntimeChooserItemWithFixedLocation {
 data class RuntimeChooserCurrentItem(
   val isBundled: Boolean,
   override val homeDir: String,
-  val displayName: String?,
+  @NlsSafe val displayName: String?,
   val version: String?
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation {
   companion object
