@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
@@ -19,6 +18,7 @@ internal object CoroutineAgentConnector {
     private data class KotlinxCoroutinesSearchResult(val jarPath: String?, val debuggerMode: CoroutineDebuggerMode)
 
     private const val kotlinxCoroutinesCoreName = "kotlinx-coroutines-core"
+    private const val kotlinStdlibName = "kotlin-stdlib"
     private const val kotlinxCoroutinesPackageName = "kotlinx.coroutines"
     private const val jarSeparator = "!/"
     private val versionToCompareTo = DefaultArtifactVersion("1.3.7-255")
@@ -53,17 +53,17 @@ internal object CoroutineAgentConnector {
             .findPackage(packageName)
             ?: return emptyList()
 
-        return kotlinxCoroutinesPackage.directories.map {
+        return kotlinxCoroutinesPackage.directories.mapNotNull {
             it.virtualFile.path.getParentJarPath()
         }
     }
 
-    private fun String.getParentJarPath(): String {
+    private fun String.getParentJarPath(): String? {
         val i = indexOf(jarSeparator)
         if (i != -1) {
             return substring(0, i)
         }
-        return this
+        return null
     }
 
     private fun determineCoreVersionMode(version: String) =
@@ -78,7 +78,7 @@ internal object CoroutineAgentConnector {
         // Fix for NoClassDefFoundError: kotlin/collections/AbstractMutableMap via CommandLineWrapper.
         // If classpathFile used in run configuration - kotlin-stdlib should be included in the -classpath
         if (params.isClasspathFile) {
-            params.classPath.rootDirs.filter { it.isKotlinStdlib() }.forEach {
+            params.classPath.rootDirs.filter { it.path.contains(kotlinStdlibName) }.forEach {
                 val path = when (val fs = it.fileSystem) {
                     is ArchiveFileSystem -> fs.getLocalByEntry(it)?.path
                     else -> it.path
@@ -89,6 +89,4 @@ internal object CoroutineAgentConnector {
 
         return true
     }
-
-    private fun VirtualFile.isKotlinStdlib() = path.contains("kotlin-stdlib")
 }
