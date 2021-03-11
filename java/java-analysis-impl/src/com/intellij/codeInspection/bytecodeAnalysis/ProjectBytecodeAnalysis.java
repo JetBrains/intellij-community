@@ -308,7 +308,7 @@ public class ProjectBytecodeAnalysis {
     MethodAnnotations result = new MethodAnnotations();
 
     EKey pureKey = key.withDirection(Pure);
-    PuritySolver puritySolver = collectPurityEquations(pureKey);
+    PuritySolver puritySolver = collectPurityEquations(pureKey, myEquationProvider);
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParametersCount();
@@ -351,7 +351,7 @@ public class ProjectBytecodeAnalysis {
     return new EKey(key.member, key.dirKey, stability, false);
   }
 
-  private PuritySolver collectPurityEquations(EKey key) throws EquationsLimitException {
+  private static PuritySolver collectPurityEquations(EKey key, EquationProvider<?> provider) throws EquationsLimitException {
     PuritySolver puritySolver = new PuritySolver();
     Set<EKey> queued = new HashSet<>();
     Deque<EKey> queue = new ArrayDeque<>();
@@ -369,7 +369,7 @@ public class ProjectBytecodeAnalysis {
 
       boolean stable = true;
       Effects combined = null;
-      for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
+      for (Equations equations : provider.getEquations(curKey.member)) {
         stable &= equations.stable;
         Effects effects = (Effects)equations.find(curKey.getDirection())
           .orElseGet(() -> new Effects(DataValue.UnknownDataValue1,
@@ -473,21 +473,22 @@ public class ProjectBytecodeAnalysis {
       if (value == Value.Top || value == Value.Bot) continue;
       EKey key = entry.getKey().mkStable();
       Direction direction = key.getDirection();
-      if (value == Value.Fail && direction instanceof ParamValueBasedDirection && 
-          ((ParamValueBasedDirection)direction).inValue == Value.Null && !methodAnnotations.mutates.isPure()) {
-        // Impure methods with "null->fail" contract are just assumed to have `@NotNull` annotation on the corresponding parameter
-        continue;
-      }
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
+      }
+      if (value == Value.Fail && direction.isNullFail() && !methodAnnotations.mutates.isPure()) {
+        if (!isPureModuloFailCause(solution, key, direction)) {
+          // Impure methods with "null->fail" contract are just assumed to have `@NotNull` annotation on the corresponding parameter
+          continue;
+        }
       }
       if (value == Value.NotNull && direction == Out) {
         notNulls.add(methodKey);
       }
       else if (direction instanceof ParamValueBasedDirection) {
         ContractReturnValue contractReturnValue =
-          fullReturnValue.equals(ContractReturnValue.returnAny()) ? value.toReturnValue() : fullReturnValue;
+          fullReturnValue.equals(ContractReturnValue.returnAny()) || value == Value.Fail ? value.toReturnValue() : fullReturnValue;
         contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, contractReturnValue));
       }
     }
@@ -526,6 +527,43 @@ public class ProjectBytecodeAnalysis {
     if (!result.isEmpty()) {
       contracts.put(methodKey, '"' + result + '"');
     }
+  }
+
+  /**
+   * Returns true if the method is pure except calling the delegate that has failing contract in the form other than null->fail.
+   * Allows handling methods like
+   * <pre>{@code 
+   * void assertNotNull(Object obj) {
+   *   assertTrue(obj != null);
+   * }}</pre>
+   * if the purity of {@code assertTrue} wasn't inferred.
+   */
+  private boolean isPureModuloFailCause(@NotNull Map<EKey, Value> solution, @NotNull EKey key, @NotNull Direction direction) throws EquationsLimitException {
+    EKey pureKey = key.withDirection(Pure);
+    Set<MemberDescriptor> resetKeys = StreamEx.of(
+      myEquationProvider.getEquations(key.member)).mapPartial(eq -> eq.find(direction)).flatMap(Result::dependencies)
+      .filter(k -> !k.getDirection().isNullFail() && solution.get(k) == Value.Fail)
+      .map(k -> k.member)
+      .toSet();
+    if (resetKeys.isEmpty()) return false;
+    PuritySolver puritySolver = collectPurityEquations(pureKey, new EquationProvider<>(myEquationProvider.myProject) {
+      @Override
+      EKey adaptKey(@NotNull EKey key) {
+        return myEquationProvider.adaptKey(key);
+      }
+
+      @Override
+      List<Equations> getEquations(MemberDescriptor method) {
+        if (resetKeys.contains(method)) {
+          return Collections.singletonList(new Equations(Collections.singletonList(
+            new DirectionResultPair(Pure.asInt(), new Effects(DataValue.UnknownDataValue2, Collections.emptySet()))), true));
+        }
+        return myEquationProvider.getEquations(method);
+      }
+    });
+    Map<EKey, Effects> solve = puritySolver.solve();
+    Effects effects = solve.get(pureKey);
+    return effects != null && !effects.isTop() && effects.effects.isEmpty();
   }
 
   private void removeConstraintFromNonNullParameter(@NotNull EKey methodKey,

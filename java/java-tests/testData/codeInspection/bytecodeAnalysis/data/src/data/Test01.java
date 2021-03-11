@@ -13,6 +13,22 @@ import java.nio.file.Files;
  */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  @ExpectContract("null,_->fail;_,_->param1")
+  static <T> T checkNotNull(T object, String s) {
+    check(object != null, s, s);
+    return object;
+  }
+
+  @ExpectContract("null,_->fail")
+  static void checkNotNullVoid(Object object, String s) {
+    check(object != null, s, s);
+  }
+
+  @ExpectContract("!null,_->fail")
+  static void checkNull(Object object, String s) {
+    check(object == null, s, s);
+  }
+  
   @ExpectContract("true,_->fail")
   static void checkNegate(boolean val, String s1) {
     check(!val, s1, null);
@@ -139,7 +155,7 @@ public class Test01 {
   }
 
   @ExpectContract(value="null,_->fail", pure = true)
-  public static void assertNotNull(@ExpectNotNull Object obj, String message) {
+  public static void assertNotNull(Object obj, String message) {
     if (obj == null) {
       throw new IllegalArgumentException(message);
     }

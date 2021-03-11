@@ -53,6 +53,13 @@ public abstract class Direction {
    */
   abstract int asInt();
 
+  /**
+   * @return true if this is a null->fail direction (care should be taken to separate it from @NotNull annotation)
+   */
+  boolean isNullFail() {
+    return false;
+  }
+
   @Override
   public int hashCode() {
     return asInt();
@@ -169,6 +176,11 @@ public abstract class Direction {
     @NotNull
     InThrow withIndex(int paramIndex) {
       return new InThrow(paramIndex, inValue);
+    }
+
+    @Override
+    boolean isNullFail() {
+      return inValue == Value.Null;
     }
 
     @Override
