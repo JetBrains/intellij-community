@@ -417,7 +417,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     //      This may happen if we remove the matched entity, but don't have a replacement for it.
     for (unmatchedId in localUnmatchedReferencedNodes.values()) {
       val replaceWithUnmatchedEntity = replaceWith.entityDataById(unmatchedId)
-      if (replaceWithUnmatchedEntity == null) {
+      if (replaceWithUnmatchedEntity == null || replaceWithUnmatchedEntity != this.entityDataByIdOrDie(unmatchedId)) {
         // Okay, replaceWith storage doesn't have this "unmatched" entity at all.
         // TODO: 14.04.2020 Don't forget about entities with persistence id
         for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
