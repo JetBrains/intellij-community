@@ -592,7 +592,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       throw new ClsFormatException(file.getPath() + ": " + e.getMessage(), e);
     }
   }
