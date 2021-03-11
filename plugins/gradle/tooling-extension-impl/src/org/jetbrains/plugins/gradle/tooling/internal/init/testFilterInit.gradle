@@ -1,19 +1,5 @@
-import org.gradle.util.GradleVersion
 
 String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
-boolean ijTestFilteringSupported = GradleVersion.current().compareTo(GradleVersion.version("1.10")) >= 0
-boolean skipExecution
-
-for (incl in ijTestIncludes) {
-  if(incl != '*' && !ijTestFilteringSupported)  {
-    skipExecution = true
-    IJTestEventLogger.logConfigurationError(
-      "Unable to configure test filtering",
-      "Unable to configure test filtering for " + GradleVersion.current() +".<br>Please, use Gradle 1.10 or above or run all tests of a module.",
-      true)
-    break;
-  }
-}
 
 Class abstractTestTaskClass = null
 try {
@@ -24,13 +10,11 @@ try {
 
 gradle.taskGraph.whenReady { taskGraph ->
   taskGraph.allTasks.each { Task task ->
-    task.onlyIf { !skipExecution }
-
     if (task instanceof Test || (abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class))) {
       try {
         task.outputs.upToDateWhen { false }
         String[] strings = ['*']
-        if(ijTestIncludes != strings && ijTestFilteringSupported) {
+        if(ijTestIncludes != strings) {
           def filter = task.getFilter()
           filter.setIncludePatterns(new String[0])
           ijTestIncludes.each(){ filter.includeTestsMatching "${it}" }
