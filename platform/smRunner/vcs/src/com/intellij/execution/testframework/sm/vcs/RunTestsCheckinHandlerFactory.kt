@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
@@ -181,30 +182,46 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   
         return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
       }
-  
+
       private fun createConfigurationChooser(): ActionGroup {
         val result = DefaultActionGroup()
-        RunManager.getInstance(project).allConfigurationsList.groupBy { it.type }.forEach { (type, list) ->
-          val localConfigurations: List<RunConfiguration> = list
-            .filter {
-              it is SMRunnerConsolePropertiesProvider && !(it is TargetEnvironmentAwareRunProfile && it.needPrepareTarget())
-            }
-          if (localConfigurations.isNotEmpty()) {
-            result.addSeparator()
-          }
-          localConfigurations
-            .forEach { configuration: RunConfiguration ->
-              result.add(object : AnAction(configuration.name, null, configuration.icon) {
-                override fun actionPerformed(e: AnActionEvent) {
-                  val bean = ConfigurationBean()
-                  bean.configurationId = type.id
-                  bean.name = configuration.name
-                  settings.myState.configuration = bean
+        val runManager = RunManagerImpl.getInstanceImpl(project)
+        for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
+          var addedSeparator = false
+          for ((folder, list) in folderMap.entries) {
+            val localConfigurations: List<RunConfiguration> = list.map { it.configuration }
+              .filter {
+                it is SMRunnerConsolePropertiesProvider && !(it is TargetEnvironmentAwareRunProfile && it.needPrepareTarget())
+              }
 
-                  checkBox.text = getOptionTitle(configuration.name)
-                }
-              })
+            if (localConfigurations.isEmpty()) continue
+
+            if (!addedSeparator && result.childrenCount > 0) {
+              result.addSeparator()
+              addedSeparator = true
             }
+
+            var target = result
+            if (folder != null) {
+              target = DefaultActionGroup(folder, true)
+              result.add(target)
+            }
+            
+
+            localConfigurations
+              .forEach { configuration: RunConfiguration ->
+                target.add(object : AnAction(configuration.name, null, configuration.icon) {
+                  override fun actionPerformed(e: AnActionEvent) {
+                    val bean = ConfigurationBean()
+                    bean.configurationId = type.id
+                    bean.name = configuration.name
+                    settings.myState.configuration = bean
+
+                    checkBox.text = getOptionTitle(configuration.name)
+                  }
+                })
+              }
+          }
         }
         return result
       }
