@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.PriorityAction.Priority;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
@@ -415,13 +414,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateConstructorMatchingSuperFix(@NotNull PsiClass aClass) {
     return new CreateConstructorMatchingSuperFix(aClass);
-  }
-
-
-  @NotNull
-  @Override
-  public IntentionAction createCreateConstructorMatchingSuperFix(@NotNull PsiClass aClass, @NotNull Priority priority) {
-    return new CreateConstructorMatchingSuperFix(aClass, priority);
   }
 
   @NotNull

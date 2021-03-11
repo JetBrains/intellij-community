@@ -627,7 +627,7 @@ public final class HighlightClassUtil {
         .descriptionAndTooltip(JavaErrorBundle.message("ambiguous.method.call", m1, m2))
         .create();
 
-      QuickFixAction.registerQuickFixAction(info,QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass, Priority.TOP));
+      QuickFixAction.registerQuickFixAction(info,QUICK_FIX_FACTORY.createCreateConstructorMatchingSuperFix(aClass));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(baseClass));
       return info;
     }

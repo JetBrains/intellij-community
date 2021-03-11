@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.intention.PriorityAction.Priority;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -257,9 +256,6 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createCreateConstructorMatchingSuperFix(@NotNull PsiClass aClass);
-
-  @NotNull
-  public abstract IntentionAction createCreateConstructorMatchingSuperFix(@NotNull PsiClass aClass, @NotNull Priority priority);
 
   @NotNull
   public abstract IntentionAction createRemoveNewQualifierFix(@NotNull PsiNewExpression expression, @Nullable PsiClass aClass);

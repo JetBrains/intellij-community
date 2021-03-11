@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.*;
-import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,20 +43,13 @@ import java.util.List;
 /**
  * @author ven
  */
-public class CreateConstructorMatchingSuperFix extends BaseIntentionAction implements PriorityAction {
+public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateConstructorMatchingSuperFix.class);
 
   private final PsiClass myClass;
-  private final Priority myPriority;
 
   public CreateConstructorMatchingSuperFix(@NotNull PsiClass aClass) {
     myClass = aClass;
-    myPriority = Priority.NORMAL;
-  }
-
-  public CreateConstructorMatchingSuperFix(@NotNull PsiClass aClass, @NotNull Priority priority) {
-    myClass = aClass;
-    myPriority = priority;
   }
 
   @Override
@@ -101,11 +93,6 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction imple
     }
 
     chooseConstructor2Delegate(project, editor, substitutor, baseConstructors, baseConstrs, myClass);
-  }
-
-  @Override
-  public @NotNull Priority getPriority() {
-    return myPriority;
   }
 
   public static void chooseConstructor2Delegate(final Project project,
