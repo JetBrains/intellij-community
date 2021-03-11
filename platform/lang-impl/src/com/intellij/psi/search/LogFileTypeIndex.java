@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.IntStream;
+import java.util.function.IntConsumer;
 
 /**
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
@@ -42,7 +42,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull SLRUMap<Integer, Integer> myForwardIndexCache;
-  private final @NotNull SLRUMap<Integer, IntSet> myInvertedIndexCache;
+  private final @NotNull SLRUMap<Integer, IntSeq> myInvertedIndexCache;
 
   private final @NotNull MemorySnapshotHandler myMemorySnapshotHandler;
   private final @NotNull Disposable myDisposable;
@@ -180,18 +180,17 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
     myLock.readLock().lock();
     try {
-      IntSet cachedFileIds = getInputIdsFromCache(fileTypeId);
-      IntStream fileIds;
+      IntSeq cachedFileIds = getInputIdsFromCache(fileTypeId);
+      IntSeq fileIds;
       if (cachedFileIds == null) {
         MemorySnapshot snapshot = myMemorySnapshotHandler.getSnapshot();
         fileIds = snapshot != null ? snapshot.getFileIds(fileTypeId) : myPersistentLog.getFileIds(fileTypeId);
+        cacheInputIds(fileTypeId, fileIds);
       }
       else {
-        fileIds = cachedFileIds.intStream();
+        fileIds = cachedFileIds;
       }
-      fileIds.forEach(id -> {
-        result.addValue(id, null);
-      });
+      fileIds.forEach(id -> result.addValue(id, null));
     }
     finally {
       myLock.readLock().unlock();
@@ -270,9 +269,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
         if (memoryDataUpdated) {
           myPersistentLog.addData(fileTypeId, inputId);
-          synchronized (myInvertedIndexCache) {
-            myInvertedIndexCache.remove(fileTypeId);
-          }
+          clearInvertedIndexCache();
         }
       }
     }
@@ -286,7 +283,20 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     return Boolean.TRUE;
   }
 
-  private @Nullable IntSet getInputIdsFromCache(int fileTypeId) {
+  private void clearInvertedIndexCache() {
+    synchronized (myInvertedIndexCache) {
+      myInvertedIndexCache.clear();
+    }
+  }
+
+  private void cacheInputIds(int fileTypeId, IntSeq inputIds) {
+    IntSeq copy = inputIds.copy();
+    synchronized (myInvertedIndexCache) {
+      myInvertedIndexCache.put(fileTypeId, copy);
+    }
+  }
+
+  private @Nullable IntSeq getInputIdsFromCache(int fileTypeId) {
     synchronized (myInvertedIndexCache) {
       return myInvertedIndexCache.get(fileTypeId);
     }
@@ -361,7 +371,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   private interface IntIntIndex {
     boolean addData(int data, int inputId) throws StorageException;
 
-    @NotNull IntStream getFileIds(int data) throws StorageException;
+    @NotNull LogFileTypeIndex.IntSeq getFileIds(int data) throws StorageException;
 
     int getIndexedData(int inputId) throws StorageException;
   }
@@ -380,7 +390,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     }
 
     @Override
-    public @NotNull IntStream getFileIds(int dataKey) throws StorageException {
+    public @NotNull IntSeq getFileIds(int dataKey) throws StorageException {
       IntSet inputIds = new IntOpenHashSet();
 
       AbstractIntLog.IntLogEntryProcessor processor = (data, inputId) -> {
@@ -394,7 +404,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       };
 
       myLog.processEntries(processor);
-      return inputIds.intStream();
+      return new IntSeq.FromIntSet(inputIds);
     }
 
     @Override
@@ -456,9 +466,9 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     }
 
     @Override
-    public synchronized @NotNull IntStream getFileIds(int data) {
+    public synchronized @NotNull IntSeq getFileIds(int data) {
       BitSet fileIds = myInvertedIndex.get(data);
-      return fileIds == null ? IntStream.empty() : fileIds.stream();
+      return fileIds == null ? IntSeq.EMPTY : new IntSeq.FromBitSet(fileIds);
     }
 
     @Override
@@ -546,9 +556,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     synchronized (myForwardIndexCache) {
       myForwardIndexCache.clear();
     }
-    synchronized (myInvertedIndexCache) {
-      myInvertedIndexCache.clear();
-    }
+    clearInvertedIndexCache();
   }
 
   private static boolean setForwardIndexData(@NotNull IntList forwardIndex, int data, int inputId) {
@@ -556,5 +564,54 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       forwardIndex.size((inputId + 1) * 3 / 2);
     }
     return data != forwardIndex.set(inputId, data);
+  }
+
+  private interface IntSeq {
+    void forEach(@NotNull IntConsumer consumer);
+
+    @NotNull LogFileTypeIndex.IntSeq copy();
+
+    class FromBitSet implements IntSeq {
+      private final BitSet myBitSet;
+
+      private FromBitSet(@NotNull BitSet set) {myBitSet = set;}
+
+      @Override
+      public void forEach(@NotNull IntConsumer consumer) {
+        myBitSet.stream().forEach(consumer);
+      }
+
+      @Override
+      public @NotNull LogFileTypeIndex.IntSeq copy() {
+        return new FromBitSet((BitSet)myBitSet.clone());
+      }
+    }
+
+    class FromIntSet implements IntSeq {
+      private final IntSet myIntSet;
+
+      private FromIntSet(@NotNull IntSet set) {myIntSet = set;}
+
+
+      @Override
+      public void forEach(@NotNull IntConsumer consumer) {
+        myIntSet.forEach(consumer);
+      }
+
+      @Override
+      public @NotNull LogFileTypeIndex.IntSeq copy() {
+        return new FromIntSet(new IntOpenHashSet(myIntSet));
+      }
+    }
+
+    IntSeq EMPTY = new IntSeq() {
+      @Override
+      public void forEach(@NotNull IntConsumer consumer) { }
+
+      @Override
+      public @NotNull LogFileTypeIndex.IntSeq copy() {
+        return this;
+      }
+    };
   }
 }
