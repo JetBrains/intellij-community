@@ -19,18 +19,66 @@ import java.awt.event.KeyEvent;
  * @see JBCefBrowser
  */
 public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
+  /**
+   * Creates the browser and immediately creates its native peer.
+   * <p></p>
+   * In order to use {@link JBCefJSQuery} create the browser via {@link #create(String, CefRenderHandler, boolean)} or
+   * {@link #create(String, CefRenderHandler, JBCefClient, boolean, boolean)}.
+   */
   @NotNull
   public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler) {
-    return create(url, renderHandler, JBCefApp.getInstance().createClient(), true);
+    return create(url, renderHandler, true);
   }
 
+  /**
+   * Creates the browser and creates its native peer depending on {@code createImmediately}.
+   * <p></p>
+   * For the browser to start loading call {@link #getCefBrowser()} and {@link CefBrowser#createImmediately()}.
+   * <p></p>
+   * In order to use {@link JBCefJSQuery} pass {@code createImmediately} as {@code false}, then call {@link CefBrowser#createImmediately()}
+   * after all the JS queries are created.
+   *
+   * @see CefBrowser#createImmediately()
+   */
+  @NotNull
+  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, boolean createImmediately) {
+    return create(url, renderHandler, JBCefApp.getInstance().createClient(), true, createImmediately);
+  }
+
+  /**
+   * Creates the browser with the provided {@link JBCefClient} and immediately creates its native peer.
+   * <p></p>
+   * In order to use {@link JBCefJSQuery} set {@link JBCefClient.Properties#JS_QUERY_POOL_SIZE} before passing the client.
+   */
   @NotNull
   public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client) {
-    return create(url, renderHandler, client, false);
+    return create(url, renderHandler, client, false, true);
   }
 
-  private static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client, boolean isDefaultClient) {
+  /**
+   * Creates the browser and creates its native peer depending on {@code createImmediately}.
+   * <p></p>
+   * For the browser to start loading call {@link #getCefBrowser()} and {@link CefBrowser#createImmediately()}.
+   * <p></p>
+   * In order to use {@link JBCefJSQuery} pass {@code createImmediately} as {@code false}, then call {@link CefBrowser#createImmediately()}
+   * after all the JS queries are created. Alternatively, pass {@code createImmediately} as {@code true} and set
+   * {@link JBCefClient.Properties#JS_QUERY_POOL_SIZE} before passing the client.
+   *
+   * @see CefBrowser#createImmediately()
+   */
+  @NotNull
+  public static JBCefOsrHandlerBrowser create(@NotNull String url, @NotNull CefRenderHandler renderHandler, @NotNull JBCefClient client, boolean createImmediately) {
+    return create(url, renderHandler, client, false, createImmediately);
+  }
+
+  private static JBCefOsrHandlerBrowser create(@NotNull String url,
+                                               @NotNull CefRenderHandler renderHandler,
+                                               @NotNull JBCefClient client,
+                                               boolean isDefaultClient,
+                                               boolean createImmediately)
+  {
     var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
+    if (createImmediately) cefBrowser.createImmediately();
     return new JBCefOsrHandlerBrowser(client, cefBrowser, true, isDefaultClient);
   }
 
