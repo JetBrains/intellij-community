@@ -113,7 +113,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
 
     setBackground(ObjectUtils.notNull(myBackgroundColor,
-                  new JBColor(() -> ObjectUtils.notNull(GLOBAL_SCHEME_SUPPLIER.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
+                  new JBColor(() -> ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
   }
 
   public void setProject(Project project) {
