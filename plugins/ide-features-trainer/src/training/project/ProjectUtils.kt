@@ -8,7 +8,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -94,13 +97,7 @@ object ProjectUtils {
       }
       else {
         LangManager.getInstance().setLearningProjectPath(langSupport, dest.toAbsolutePath().toString())
-        val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(dest)
-                                          ?: error("Copied Learn project folder is null")
-        invokeLater {
-          val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), OpenProjectTask(projectToClose = projectToClose))
-                        ?: error("Could not create project for ${langSupport.primaryLanguage}")
-          postInitCallback(project)
-        }
+        openOrImportLearningProject(dest, OpenProjectTask(projectToClose = projectToClose), langSupport, postInitCallback)
       }
     }
   }
@@ -112,6 +109,13 @@ object ProjectUtils {
     val copied = copyLearningProjectFiles(projectPath, langSupport)
     if (!copied) return
     createVersionFile(projectPath)
+    openOrImportLearningProject(projectPath, openProjectTask, langSupport, postInitCallback)
+  }
+
+  private fun openOrImportLearningProject(projectPath: Path,
+                                          openProjectTask: OpenProjectTask,
+                                          langSupport: LangSupport,
+                                          postInitCallback: (learnProject: Project) -> Unit) {
     val projectDirectoryVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectPath)
                                       ?: error("Copied Learn project folder is null")
     val task = openProjectTask.copy(beforeInit = {
