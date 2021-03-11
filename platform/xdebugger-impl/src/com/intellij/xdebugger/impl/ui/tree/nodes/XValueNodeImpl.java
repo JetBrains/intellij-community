@@ -101,7 +101,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myTree.nodeLoaded(this, myName);
   }
 
-  public void updateInlineDebuggerData(boolean refresh) {
+  private void updateInlineDebuggerData(boolean refresh) {
+    if (refresh) {
+      if (!Registry.is("debugger.show.values.use.inlays")) {
+        myTree.updateEditor();
+      }
+      return;
+    }
     try {
       XDebugSession session = XDebugView.getSession(getTree());
       final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
@@ -109,38 +115,33 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         return;
       }
 
-      if (refresh) {
-        myTree.updateEditor();
-      }
-      else {
-        final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
-          @Override
-          public void computed(XSourcePosition position) {
-            if (isObsolete() || position == null) return;
-            VirtualFile file = position.getFile();
-            // filter out values from other files
-            if (!Comparing.equal(debuggerPosition.getFile(), file)) {
-              return;
-            }
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document == null) return;
-
-            XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
-            if (data == null) {
-              return;
-            }
-
-            if (!showAsInlay(session, position, document)) {
-              data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
-
-              myTree.updateEditor();
-            }
+      final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+        @Override
+        public void computed(XSourcePosition position) {
+          if (isObsolete() || position == null) return;
+          VirtualFile file = position.getFile();
+          // filter out values from other files
+          if (!Comparing.equal(debuggerPosition.getFile(), file)) {
+            return;
           }
-        };
+          final Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (document == null) return;
 
-        if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-          getValueContainer().computeSourcePosition(callback::computed);
+          XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
+          if (data == null) {
+            return;
+          }
+
+          if (!showAsInlay(session, position, document)) {
+            data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
+
+            myTree.updateEditor();
+          }
         }
+      };
+
+      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+        getValueContainer().computeSourcePosition(callback::computed);
       }
     }
     catch (Exception ignore) {

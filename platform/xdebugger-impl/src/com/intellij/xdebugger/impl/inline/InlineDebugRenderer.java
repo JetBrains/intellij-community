@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -33,8 +33,6 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +57,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
   private int myTextStartXCoordinate;
-  private XSourcePosition myPosition;
+  private final XSourcePosition myPosition;
   private SimpleColoredText myPresentation;
 
   InlineDebugRenderer(XValueNodeImpl valueNode,
@@ -71,30 +69,20 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     myEditor = editor;
-    myPresentation = getPresentation();
+    updatePresentation();
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
                                              session.getDebugProcess().getEditorsProvider(),
                                              session.getCurrentPosition(),
                                              ((XDebugSessionImpl)session).getValueMarkers());
-    myValueNode.getTree().addTreeListener(new XDebuggerTreeListener() {
-      @Override
-      public void nodeLoaded(@NotNull RestorableStateNode node,
-                             @NotNull String name) {
-        if (node == myValueNode) {
-          myPresentation = getPresentation();
-        }
-      }
-    });
   }
 
-  private SimpleColoredText getPresentation() {
+  public void updatePresentation() {
     TextAttributes attributes = XDebuggerEditorLinePainter.getAttributes(myPosition.getLine(), myPosition.getFile(), mySession);
     SimpleColoredText valuePresentation = XDebuggerEditorLinePainter.createPresentation(myValueNode);
-    return XDebuggerEditorLinePainter
+    myPresentation = XDebuggerEditorLinePainter
       .computeVariablePresentationWithChanges(myValueNode, myValueNode.getName(), valuePresentation, attributes, myPosition.getLine(),
                                               mySession.getProject());
   }
-
 
   private boolean isInExecutionPointHighlight() {
     XSourcePosition debuggerPosition = mySession.getCurrentPosition();
