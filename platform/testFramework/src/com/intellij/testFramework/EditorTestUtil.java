@@ -450,7 +450,7 @@ public final class EditorTestUtil {
     catch (AssertionError e) {
       try {
         assertEquals(e.getMessage(), getExpectedStateAsTestTemplate(editor, caretState.carets),
-                     getActualStateAsTestTemplate(editor, caretState.carets));
+                     getActualStateAsTestTemplate(editor));
       }
       catch (AssertionError exception) {
         exception.addSuppressed(e);
@@ -493,16 +493,14 @@ public final class EditorTestUtil {
     }
   }
 
-  private static String getActualStateAsTestTemplate(@NotNull Editor editor,
-                                                     @NotNull List<CaretInfo> expectedCarets) {
+  private static String getActualStateAsTestTemplate(@NotNull Editor editor) {
     StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
     List<Caret> allCarets = new ArrayList<>(editor.getCaretModel().getAllCarets());
     for (int i = allCarets.size() - 1; i >= 0; i--) {
       Caret caret = allCarets.get(i);
-      CaretInfo expected = i < expectedCarets.size() ? expectedCarets.get(i) : null;
       boolean hasSelection = caret.hasSelection();
       if (hasSelection) sb.insert(caret.getSelectionEnd(), SELECTION_END_TAG);
-      if (expected != null && expected.position != null) sb.insert(caret.getOffset(), CARET_TAG);
+      sb.insert(caret.getOffset(), CARET_TAG);
       if (hasSelection) sb.insert(caret.getSelectionStart(), SELECTION_START_TAG);
     }
     return sb.toString();
