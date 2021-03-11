@@ -19,6 +19,7 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Out;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.Throw;
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 abstract class ContractAnalysis extends Analysis<Result> {
@@ -63,7 +64,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     pendingPush(createStartState());
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
-      steps ++;
+      steps++;
       TooComplexException.check(method, steps);
       if (steps % 128 == 0) {
         ProgressManager.checkCanceled();
@@ -198,7 +199,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
 
   abstract boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) throws AnalyzerException;
 
-  private void pendingPush(State st) {
+  void pendingPush(State st) {
     TooComplexException.check(method, pendingTop);
     pending.set(pendingTop++, st);
   }
@@ -310,6 +311,9 @@ class InOutAnalysis extends ContractAnalysis {
 class InThrowAnalysis extends ContractAnalysis {
   private BasicValue myReturnValue;
   boolean myHasNonTrivialReturn;
+  private Map<State, Set<EKey>> myThrowKeys = new HashMap<>();
+  private final List<State> myNextStates = new ArrayList<>();
+  private Set<EKey> myFinalThrowKeys;
 
   protected InThrowAnalysis(RichControlFlow richControlFlow,
                             Direction direction,
@@ -317,6 +321,69 @@ class InThrowAnalysis extends ContractAnalysis {
                             boolean stable,
                             ExpandableArray<State> pending) {
     super(richControlFlow, direction, resultOrigins, stable, pending);
+  }
+
+  @Override
+  protected @NotNull Equation analyze() throws AnalyzerException {
+    Equation equation = super.analyze();
+    if (equation.result == Value.Top && myThrowKeys != null && myFinalThrowKeys != null && !myFinalThrowKeys.isEmpty()) {
+      for (Set<EKey> value : myThrowKeys.values()) {
+        updateFinalKeys(value);
+      }
+      return mkEquation(new Pending(new Component[]{new Component(Value.Top, myFinalThrowKeys)}));
+    }
+    return equation;
+  }
+
+  @Override
+  void pendingPush(State st) {
+    super.pendingPush(st);
+    myNextStates.add(st);
+  }
+
+  @Override
+  void processState(State state) throws AnalyzerException {
+    myNextStates.clear();
+    super.processState(state);
+    updateThrowPaths(state);
+  }
+
+  private void updateThrowPaths(State state) {
+    Set<EKey> throwKeys = interpreter.throwKeys;
+    interpreter.throwKeys = null;
+    if (myThrowKeys == null) return;
+    Set<EKey> prevKeys = myThrowKeys.remove(state);
+    if (myNextStates.isEmpty()) {
+      updateFinalKeys(prevKeys);
+      return;
+    }
+    if (prevKeys == null || prevKeys.isEmpty()) {
+      prevKeys = throwKeys != null ? throwKeys : Collections.emptySet();
+    } else {
+      if (throwKeys != null && !throwKeys.isEmpty()) {
+        prevKeys = new HashSet<>(prevKeys);
+        prevKeys.addAll(throwKeys);
+        if (prevKeys.size() > 32) {
+          myThrowKeys = null;
+          return;
+        }
+      }
+    }
+    for (State next : myNextStates) {
+      myThrowKeys.put(next, prevKeys);
+    }
+  }
+
+  private void updateFinalKeys(Set<EKey> prevKeys) {
+    if (myFinalThrowKeys == null) {
+      myFinalThrowKeys = new HashSet<>(prevKeys);
+    } else {
+      if (myFinalThrowKeys.isEmpty()) {
+        myThrowKeys = null;
+        return;
+      }
+      myFinalThrowKeys.retainAll(prevKeys);
+    }
   }
 
   @Override
@@ -364,6 +431,7 @@ class InOutInterpreter extends BasicInterpreter {
   final InsnList insns;
   final boolean[] resultOrigins;
   final boolean nullAnalysis;
+  Set<EKey> throwKeys = null;
 
   boolean deReferenced;
 
@@ -383,7 +451,7 @@ class InOutInterpreter extends BasicInterpreter {
   @Override
   public BasicValue newOperation(AbstractInsnNode insn) throws AnalyzerException {
     boolean propagate = resultOrigins[insns.indexOf(insn)];
-    if (propagate) {
+    if (propagate || isThrowAnalysis()) {
       switch (insn.getOpcode()) {
         case ICONST_0:
           return FalseValue;
@@ -491,7 +559,6 @@ class InOutInterpreter extends BasicInterpreter {
 
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
-    boolean propagate = resultOrigins[insns.indexOf(insn)];
     int opCode = insn.getOpcode();
     int shift = opCode == INVOKESTATIC ? 0 : 1;
 
@@ -505,7 +572,8 @@ class InOutInterpreter extends BasicInterpreter {
         }
     }
 
-    if (propagate) {
+    boolean propagate = resultOrigins[insns.indexOf(insn)];
+    if (propagate || isThrowAnalysis()) {
       switch (opCode) {
         case INVOKESTATIC:
         case INVOKESPECIAL:
@@ -516,18 +584,32 @@ class InOutInterpreter extends BasicInterpreter {
           Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           Type retType = Type.getReturnType(mNode.desc);
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
-          if (!Type.VOID_TYPE.equals(retType)) {
+          if (propagate && !Type.VOID_TYPE.equals(retType) || isThrowAnalysis()) {
             if (direction != null) {
               HashSet<EKey> keys = new HashSet<>();
               for (int i = shift; i < values.size(); i++) {
-                if (values.get(i) instanceof ParamValue) {
-                  keys.add(new EKey(method, direction.withIndex(i - shift), stable));
+                Direction direction = null;
+                BasicValue value = values.get(i);
+                if (value instanceof ParamValue) {
+                  direction = this.direction.withIndex(i - shift);
+                }
+                else {
+                  Value constant = Value.fromBasicValue(value);
+                  if (constant != null) {
+                    direction = this.direction.withValue(i - shift, constant);
+                  }
+                }
+                if (direction != null) {
+                  keys.add(new EKey(method, direction, stable));
                 }
               }
               if (isRefRetType) {
-                keys.add(new EKey(method, Out, stable));
+                keys.add(new EKey(method, isThrowAnalysis() ? Throw : Out, stable));
               }
               if (!keys.isEmpty()) {
+                if (isThrowAnalysis()) {
+                  throwKeys = keys;
+                }
                 return new CallResultValue(retType, keys);
               }
             }
@@ -549,5 +631,9 @@ class InOutInterpreter extends BasicInterpreter {
       }
     }
     return super.naryOperation(insn, values);
+  }
+
+  private boolean isThrowAnalysis() {
+    return direction instanceof Direction.InThrow || direction == Throw;
   }
 }

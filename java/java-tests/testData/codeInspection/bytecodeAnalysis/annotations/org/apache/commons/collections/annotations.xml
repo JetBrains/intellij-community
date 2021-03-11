@@ -1191,11 +1191,13 @@
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor int nextIndex()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.CursorableLinkedList.Cursor int previousIndex()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1599,20 +1601,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKey(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_,null-&gt;fail;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkKeyAndValue(java.lang.Object, java.lang.Object) 1'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkNonNullComparable(java.lang.Object, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1620,17 +1613,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkNonNullComparable(java.lang.Object, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void checkValue(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='org.apache.commons.collections.DoubleOrderedMap void checkValue(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.DoubleOrderedMap void copyColor(org.apache.commons.collections.DoubleOrderedMap.Node, org.apache.commons.collections.DoubleOrderedMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

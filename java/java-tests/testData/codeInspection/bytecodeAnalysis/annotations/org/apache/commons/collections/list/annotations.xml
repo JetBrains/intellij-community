@@ -390,6 +390,7 @@
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.lang.Object remove(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -432,6 +433,7 @@
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -454,6 +456,7 @@
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList.FixedSizeListIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,10 +65,14 @@ class ResultUtil {
     assert r1 instanceof Pending && r2 instanceof Pending;
     Pending pending1 = (Pending)r1;
     Pending pending2 = (Pending)r2;
+    List<Component> left = Arrays.asList(pending1.delta);
+    List<Component> right = Arrays.asList(pending2.delta);
+    if (left.containsAll(right)) return pending1;
+    if (right.containsAll(left)) return pending2;
     Set<Component> sum = new HashSet<>();
-    sum.addAll(Arrays.asList(pending1.delta));
-    sum.addAll(Arrays.asList(pending2.delta));
-    return new Pending(sum);
+    sum.addAll(left);
+    sum.addAll(right);
+    return new Pending(DfaUtil.upwardsAntichain(sum, (l, r) -> r.isSuperStateOf(l)));
   }
 
   @Nullable

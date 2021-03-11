@@ -535,6 +535,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope void stop()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -569,6 +570,11 @@
     <item name='org.apache.velocity.runtime.directive.Stop boolean isScopeProvided()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;fail&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Stop boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1'>

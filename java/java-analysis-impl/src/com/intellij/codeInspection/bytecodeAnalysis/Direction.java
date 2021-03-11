@@ -127,7 +127,9 @@ public abstract class Direction {
       this.inValue = inValue;
     }
 
-    abstract ParamValueBasedDirection withIndex(int paramIndex);
+    abstract @NotNull ParamValueBasedDirection withIndex(int paramIndex);
+    
+    abstract @NotNull ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue);
   }
 
   static final class InOut extends ParamValueBasedDirection {
@@ -136,7 +138,14 @@ public abstract class Direction {
     }
 
     @Override
+    @NotNull
     InOut withIndex(int paramIndex) {
+      return new InOut(paramIndex, inValue);
+    }
+
+    @Override
+    @NotNull
+    ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue) {
       return new InOut(paramIndex, inValue);
     }
 
@@ -157,7 +166,14 @@ public abstract class Direction {
     }
 
     @Override
+    @NotNull
     InThrow withIndex(int paramIndex) {
+      return new InThrow(paramIndex, inValue);
+    }
+
+    @Override
+    @NotNull
+    ParamValueBasedDirection withValue(int paramIndex, @NotNull Value inValue) {
       return new InThrow(paramIndex, inValue);
     }
 

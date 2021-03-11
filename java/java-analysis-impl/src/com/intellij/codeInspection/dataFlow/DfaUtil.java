@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
@@ -409,5 +411,25 @@ public final class DfaUtil {
   public static boolean isNaN(Object value) {
     return value instanceof Double && ((Double)value).isNaN() ||
            value instanceof Float && ((Float)value).isNaN();
+  }
+
+  /**
+   * @param poset input poset (mutable)
+   * @param predicate non-strict partial order over the input poset
+   * @param <T> type of poset elements
+   * @return the longest strong upwards antichain contained in the poset (input poset object with some elements removed)   
+   */
+  public static <T, C extends Collection<T>> C upwardsAntichain(@NotNull C poset, @NotNull BiPredicate<T, T> predicate) {
+    for (Iterator<T> iterator = poset.iterator(); iterator.hasNext(); ) {
+      T left = iterator.next();
+      for (T right : poset) {
+        ProgressManager.checkCanceled();
+        if (right != left && predicate.test(left, right)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+    return poset;
   }
 }

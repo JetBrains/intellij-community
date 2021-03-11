@@ -909,6 +909,7 @@
     </item>
     <item name='org.apache.commons.collections.map.FixedSizeMap void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -978,6 +979,7 @@
     </item>
     <item name='org.apache.commons.collections.map.FixedSizeSortedMap void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1418,11 +1420,13 @@
     </item>
     <item name='org.apache.commons.collections.map.LinkedMap.LinkedMapList java.lang.Object remove(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.LinkedMap.LinkedMapList void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1774,9 +1778,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.commons.collections.map.MultiKeyMap void checkKey(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.collections.map.MultiKeyMap void putAll(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2106,6 +2107,7 @@
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2135,6 +2137,7 @@
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap.SingletonMapIterator void remove()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2166,6 +2169,7 @@
     </item>
     <item name='org.apache.commons.collections.map.SingletonMap.SingletonValues void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

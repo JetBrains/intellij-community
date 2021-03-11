@@ -3,7 +3,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -102,7 +101,7 @@ class StateQueue {
     }
 
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
-      memoryStates = squash(memoryStates);
+      squash(memoryStates);
     }
 
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
@@ -121,7 +120,7 @@ class StateQueue {
         beforeSize = memoryStates.size();
         if (beforeSize == 1) break;
         // If some states were merged it's possible that they could be further squashed
-        memoryStates = squash(memoryStates);
+        squash(memoryStates);
         if (memoryStates.size() == beforeSize || memoryStates.size() == 1) break;
       }
     }
@@ -131,21 +130,11 @@ class StateQueue {
     return ContainerUtil.map(memoryStates, state1 -> new DfaInstructionState(instruction, state1));
   }
 
+  @NotNull
   private static List<DfaMemoryStateImpl> squash(List<DfaMemoryStateImpl> states) {
-    List<DfaMemoryStateImpl> result = new ArrayList<>(states);
-    for (Iterator<DfaMemoryStateImpl> iterator = result.iterator(); iterator.hasNext(); ) {
-      DfaMemoryStateImpl left = iterator.next();
-      for (DfaMemoryStateImpl right : result) {
-        ProgressManager.checkCanceled();
-        if (right != left && right.isSuperStateOf(left)) {
-          iterator.remove();
-          break;
-        }
-      }
-    }
-    return result;
+    return DfaUtil.upwardsAntichain(states, (l, r) -> r.isSuperStateOf(l));
   }
-
+  
   static List<DfaMemoryStateImpl> mergeGroup(List<DfaMemoryStateImpl> group) {
     if (group.size() < 2) {
       return group;

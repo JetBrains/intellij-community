@@ -13,6 +13,25 @@ import java.nio.file.Files;
  */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  @ExpectContract("true,_->fail")
+  static void checkNegate(boolean val, String s1) {
+    check(!val, s1, null);
+  }
+
+  @ExpectContract("false,_->fail")
+  static void check1(boolean val, String s1) {
+    check(val, s1, null);
+  }
+
+  @ExpectContract("false,_,_->fail")
+  static void check(boolean val, String s1, String s2) {
+    if (!val) {
+      throw new RuntimeException(createMessage(s1, s2));
+    }
+  }
+  
+  native static String createMessage(String s1, String s2);
+  
   @ExpectNotNull
   @ExpectContract(pure = true)
   public static MySupplier methodReference(@ExpectNotNull String s) {

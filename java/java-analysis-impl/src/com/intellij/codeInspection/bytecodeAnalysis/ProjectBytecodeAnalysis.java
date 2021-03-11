@@ -22,6 +22,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -116,6 +117,9 @@ public class ProjectBytecodeAnalysis {
       }
       else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
+        if (hasFailContract((PsiParameter)listOwner, parameterAnnotations)) {
+          return PsiAnnotation.EMPTY_ARRAY;
+        }
         return toPsi(parameterAnnotations);
       }
       else if (listOwner instanceof PsiField && listOwner.hasModifierProperty(PsiModifier.STATIC)) {
@@ -136,6 +140,24 @@ public class ProjectBytecodeAnalysis {
       }
       return PsiAnnotation.EMPTY_ARRAY;
     }
+  }
+
+  private boolean hasFailContract(PsiParameter listOwner, ParameterAnnotations parameterAnnotations) {
+    if (!parameterAnnotations.notNull) return false;
+    PsiMethod method = ObjectUtils.tryCast(listOwner.getDeclarationScope(), PsiMethod.class);
+    if (method == null) return false;
+    int index = method.getParameterList().getParameterIndex(listOwner);
+    PsiAnnotation anno = findInferredAnnotation(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (anno == null) return false;
+    for (StandardMethodContract contract : JavaMethodContractUtil.parseContracts(method, anno)) {
+      if (contract.getReturnValue().isFail()) {
+        ValueConstraint constraint = contract.getParameterConstraint(index);
+        if (constraint == ValueConstraint.NULL_VALUE) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -295,7 +317,8 @@ public class ProjectBytecodeAnalysis {
     EKey failureKey = key.withDirection(Throw);
     Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(failureKey), failureSolver);
-    if (failureSolver.solve().get(failureKey) == Value.Fail) {
+    Map<EKey, Value> failureData = failureSolver.solve();
+    if (failureData.get(failureKey.mkStable()) == Value.Fail || failureData.get(failureKey.mkUnstable()) == Value.Fail) {
       // Always failing method
       result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
     }
@@ -447,12 +470,14 @@ public class ProjectBytecodeAnalysis {
     for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || 
-          (value == Value.Fail && !methodAnnotations.mutates.isPure())) {
-        continue;
-      }
+      if (value == Value.Top || value == Value.Bot) continue;
       EKey key = entry.getKey().mkStable();
       Direction direction = key.getDirection();
+      if (value == Value.Fail && direction instanceof ParamValueBasedDirection && 
+          ((ParamValueBasedDirection)direction).inValue == Value.Null && !methodAnnotations.mutates.isPure()) {
+        // Impure methods with "null->fail" contract are just assumed to have `@NotNull` annotation on the corresponding parameter
+        continue;
+      }
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
