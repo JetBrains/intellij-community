@@ -57,7 +57,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -769,6 +768,10 @@ public final class Switcher extends BaseSwitcherAction {
       files.revalidate();
       files.repaint();
       // refresh the Recent Locations item
+      ListModel<SwitcherListItem> toolWindowsModel = toolWindows.getModel();
+      if (toolWindowsModel instanceof NameFilteringListModel) {
+        ((NameFilteringListModel<?>)toolWindowsModel).refilter();
+      }
       toolWindows.repaint();
     }
 
