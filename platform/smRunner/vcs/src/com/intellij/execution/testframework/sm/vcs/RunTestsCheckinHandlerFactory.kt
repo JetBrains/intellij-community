@@ -57,9 +57,14 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
 
@@ -100,47 +105,42 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   override suspend fun runCheck(): FailedTestCommitProblem? {
     val configurationSettings = getConfiguredRunConfiguration() ?: return null
     
-    return withContext(Dispatchers.Default) {
-      val info = CompletableDeferred<FailedTestCommitProblem?>()
-
+    return withContext(Dispatchers.IO) {
       val executor = DefaultRunExecutor.getRunExecutorInstance()
       val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build()
       val executionResult = environment?.state?.execute(executor, MyRunner()) ?: return@withContext null
       val handler = executionResult.processHandler ?: return@withContext null
       val resultsForm = executionResult.executionConsole?.component as? SMTestRunnerResultsForm ?: return@withContext null
 
-      resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
-        override fun onTestingFinished(sender: TestResultsViewer) {
-          val rootNode = sender.testsRootNode
-          if (rootNode != null && rootNode.isDefect) {
-            info.complete(FailedTestCommitProblem(TestsUIUtil.getTestSummary(rootNode),
-                                                  (sender as SMTestRunnerResultsForm).historyFileName))
+      suspendCoroutine<Any?> { continuation ->
+        resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
+          override fun onTestingFinished(sender: TestResultsViewer) {
+            continuation.resume(null)
           }
-          else {
-            info.complete(null)
-          }
-        }
-      })
-
-      if (!handler.isStartNotified) {
-        handler.startNotify()
+        })
+        if (!handler.isStartNotified) handler.startNotify()
       }
 
-      val commitProblem = info.await()
+      val rootNode = resultsForm.testsRootNode
+      val commitProblem = if (rootNode.isDefect) {
+        awaitSavingHistory(resultsForm)
+        FailedTestCommitProblem(TestsUIUtil.getTestSummary(rootNode), resultsForm.historyFileName)
+      }
+      else null
 
-      launch {
-        withTimeout(timeMillis = 600000) {
-          while (getHistoryFile(resultsForm.historyFileName).second == null) {
-            delay(timeMillis = 500)
-          }
-
-          UIUtil.invokeLaterIfNeeded {
-            Disposer.dispose(resultsForm)
-          }
-        }  
+      UIUtil.invokeLaterIfNeeded {
+        Disposer.dispose(resultsForm)
       }
 
       return@withContext commitProblem
+    }
+  }
+
+  private suspend fun awaitSavingHistory(resultsForm: SMTestRunnerResultsForm) {
+    withTimeout(timeMillis = 600000) {
+      while (getHistoryFile(resultsForm.historyFileName).second == null) {
+        delay(timeMillis = 500)
+      }
     }
   }
 
