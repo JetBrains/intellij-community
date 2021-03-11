@@ -43,31 +43,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     myManager = PsiManager.getInstance(project);
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(
-      key -> {
-        VirtualFile file = key;
-        VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
-        if (original != null) {
-          file = original;
-        }
-        GlobalSearchScope scope = null;
-        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
-          scope = resolveScopeProvider.getResolveScope(file, myProject);
-          if (scope != null) break;
-        }
-        if (scope == null) scope = getInherentResolveScope(file);
-        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-          SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
-          if (extra != null) {
-            scope = scope.union(extra);
-          }
-        }
-        if (original != null && !scope.contains(key)) {
-          scope = scope.union(GlobalSearchScope.fileScope(myProject, key));
-        }
-        return scope;
-      },
-      ContainerUtil::createConcurrentWeakKeySoftValueMap);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.create(this::createScopeByFile, ContainerUtil::createConcurrentWeakKeySoftValueMap);
 
     myProject.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
       @Override
@@ -82,11 +58,38 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     ResolveScopeEnlarger.EP_NAME.addChangeListener(() -> myDefaultResolveScopesCache.clear(), this);
   }
 
+  @NotNull
+  private GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
+    VirtualFile file = key;
+    VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
+    if (original != null) {
+      file = original;
+    }
+    GlobalSearchScope scope = null;
+    for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
+      scope = resolveScopeProvider.getResolveScope(file, myProject);
+      if (scope != null) break;
+    }
+    if (scope == null) scope = getInherentResolveScope(file);
+    for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+      SearchScope extra = enlarger.getAdditionalResolveScope(file, myProject);
+      if (extra != null) {
+        scope = scope.union(extra);
+      }
+    }
+    if (original != null && !scope.contains(key)) {
+      scope = scope.union(GlobalSearchScope.fileScope(myProject, key));
+    }
+    return scope;
+  }
+
+  @NotNull
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
-  private GlobalSearchScope getInherentResolveScope(VirtualFile vFile) {
+  @NotNull
+  private GlobalSearchScope getInherentResolveScope(@NotNull VirtualFile vFile) {
     ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     Module module = projectFileIndex.getModuleForFile(vFile);
     if (module != null) {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public final class JavaOutOfSourcesResolveScopeProvider extends ResolveScopeProvider {
   @Nullable
   @Override
-  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
+  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {
     // For java only! For other languages resolve may be implemented with different rules, requiring larger scope.
     final FileType type = file.getFileType();
     if (type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage() == JavaLanguage.INSTANCE) {
