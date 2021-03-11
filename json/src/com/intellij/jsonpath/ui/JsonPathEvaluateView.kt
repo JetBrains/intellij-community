@@ -68,7 +68,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     override fun createEditor(): EditorEx {
       val editor = super.createEditor()
 
-      editor?.setBorder(JBUI.Borders.empty())
+      editor.setBorder(JBUI.Borders.empty())
       editor.component.border = JBUI.Borders.empty(4, 0, 3, 6)
       editor.component.isOpaque = false
       editor.backgroundColor = UIUtil.getTextFieldBackground()
@@ -76,9 +76,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
       if (psiFile != null) {
         psiFile.putUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY, true)
-        psiFile.putUserData(JSON_PATH_EVALUATE_SOURCE_KEY, Supplier {
-          getJsonFile()
-        })
+        psiFile.putUserData(JSON_PATH_EVALUATE_SOURCE_KEY, Supplier(::getJsonFile))
       }
 
       return editor
@@ -114,6 +112,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     val historyButtonWrapper = NonOpaquePanel(BorderLayout())
     historyButtonWrapper.border = JBUI.Borders.empty(3, 6, 3, 6)
     historyButtonWrapper.add(historyButton, BorderLayout.NORTH)
+
+    searchTextField.setFontInheritedFromLAF(false) // use font as in regular editor
 
     searchWrapper.add(historyButtonWrapper, BorderLayout.WEST)
     searchWrapper.add(searchTextField, BorderLayout.CENTER)
