@@ -106,7 +106,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }
     finally {
-      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory())
+      PathKt.delete(BuildManager.getInstance().getLocalBuildSystemDirectory())
     }
   }
 

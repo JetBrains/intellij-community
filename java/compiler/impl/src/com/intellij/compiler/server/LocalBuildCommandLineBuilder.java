@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +16,10 @@ import java.util.List;
 
 class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   private final GeneralCommandLine myCommandLine = new GeneralCommandLine();
+  private final Project myProject;
 
-  LocalBuildCommandLineBuilder(String vmExecutablePath) {
+  LocalBuildCommandLineBuilder(@NotNull Project project, String vmExecutablePath) {
+    myProject = project;
     myCommandLine.setExePath(vmExecutablePath);
   }
 
@@ -57,7 +60,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   @NotNull
   public Path getHostWorkingDirectory() {
-    return BuildManager.getInstance().getBuildSystemDirectory();
+    return BuildManager.getInstance().getBuildSystemDirectory(myProject);
   }
 
   @Override
@@ -72,7 +75,7 @@ class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public String getYjpAgentPath(YourKitProfilerService yourKitProfilerService) {
-    return BuildManager.getInstance().getBuildSystemDirectory()
+    return BuildManager.getInstance().getBuildSystemDirectory(myProject)
       .resolve(yourKitProfilerService.getYKAgentFullName())
       .toAbsolutePath().toString();
   }
