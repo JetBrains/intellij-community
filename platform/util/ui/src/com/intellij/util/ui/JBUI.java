@@ -332,6 +332,26 @@ public class JBUI {
       return customLine(color, 1);
     }
 
+    public static @NotNull Border customLineTop(Color color) {
+      return customLine(color, 1, 0, 0, 0);
+    }
+
+    public static @NotNull Border customLineLeft(Color color) {
+      return customLine(color, 0, 1, 0, 0);
+    }
+
+    public static @NotNull Border customLineRight(Color color) {
+      return customLine(color, 0, 0, 0, 1);
+    }
+
+    public static @NotNull Border customLineBottom(Color color) {
+      return customLine(color, 0, 0, 1, 0);
+    }
+
+    public static @Nullable Border compound(@Nullable Border outside, @Nullable Border inside) {
+      return inside == null ? outside : outside == null ? inside : new CompoundBorder(outside, inside);
+    }
+
     @NotNull
     public static Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
       if (source == null) return extra;

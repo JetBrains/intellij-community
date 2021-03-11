@@ -39,6 +39,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.ListHoverListener;
@@ -76,7 +77,6 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  */
 public final class Switcher extends BaseSwitcherAction {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
-  private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
 
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
@@ -250,9 +250,8 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getTextAtLeft, mySpeedSearch));
-      toolWindows.setPreferredSize(new Dimension(JBUI.scale(200), toolWindows.getPreferredSize().height));
-
-      toolWindows.setBorder(JBUI.Borders.empty(5, 5, 5, 20));
+      toolWindows.setVisibleRowCount(toolWindows.getModel().getSize());
+      toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
@@ -350,6 +349,7 @@ public final class Switcher extends BaseSwitcherAction {
       };
       files = JBListWithOpenInRightSplit
         .createListWithOpenInRightSplitter(createModel(filesModel, FileInfo::getNameForRendering, mySpeedSearch), null, true);
+      files.setVisibleRowCount(toolWindows.getModel().getSize());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(e -> {
         if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
@@ -368,25 +368,14 @@ public final class Switcher extends BaseSwitcherAction {
       ScrollingUtil.ensureSelectionExists(files);
 
       if (filesModel.getSize() > 0) {
-        files.setAlignmentY(1f);
-        final JScrollPane pane = ScrollPaneFactory.createScrollPane(files, true);
-        pane.setPreferredSize(new Dimension(Math.max(header.getPreferredSize().width - toolWindows.getPreferredSize().width,
-                                                     files.getPreferredSize().width),
-                                            20 * 20));
-        Border border = JBUI.Borders.merge(
-          JBUI.Borders.emptyLeft(9),
-          new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsLeft(1)),
-          true
-        );
-        pane.setBorder(border);
-        addToCenter(pane);
+        addToCenter(new SwitcherScrollPane(files, JBUI.CurrentTheme.Popup.separatorColor()));
         int selectionIndex = getFilesSelectedIndex(project, files, forward);
         if (selectionIndex > -1) {
           files.setSelectedIndex(selectionIndex);
         }
       }
       addToTop(header);
-      addToLeft(toolWindows);
+      addToLeft(new SwitcherScrollPane(toolWindows, null));
       addToBottom(footer);
 
       if (mySpeedSearch != null) {
@@ -1051,6 +1040,26 @@ public final class Switcher extends BaseSwitcherAction {
         );
       }
       return myNameForRendering;
+    }
+  }
+
+
+  private static final class SwitcherScrollPane extends JBScrollPane {
+    private int width;
+
+    SwitcherScrollPane(@NotNull Component view, @Nullable Color color) {
+      super(view, VERTICAL_SCROLLBAR_AS_NEEDED, color == null ? HORIZONTAL_SCROLLBAR_NEVER : HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      setBorder(color == null ? JBUI.Borders.empty() : JBUI.Borders.customLineLeft(color));
+      setViewportBorder(JBUI.Borders.empty());
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      if (isPreferredSizeSet()) return size;
+      if (HORIZONTAL_SCROLLBAR_NEVER != getHorizontalScrollBarPolicy()) return size;
+      size.width = width = Math.max(size.width, width);
+      return size;
     }
   }
 }
