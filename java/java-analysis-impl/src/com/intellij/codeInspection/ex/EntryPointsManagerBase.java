@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -506,14 +507,9 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         }
       }
     }
-    boolean annotationsMatch = AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
-                               AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
-    if (annotationsMatch) return true;
-    for (PsiAnnotation annotation : owner.getAnnotations()) {
-      PsiClass annClass = annotation.resolveAnnotationType();
-      if (AnnotationUtil.checkAnnotatedUsingPatterns(annClass, ADDITIONAL_ANNOTATIONS)) return true;
-    }
-    return false;
+    return AnnotationUtil.checkAnnotatedUsingPatterns(owner, ADDITIONAL_ANNOTATIONS) ||
+           AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations()) ||
+           MetaAnnotationUtil.isMetaAnnotated(owner, ADDITIONAL_ANNOTATIONS);
   }
 
   private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<? super PsiClass> visited) {

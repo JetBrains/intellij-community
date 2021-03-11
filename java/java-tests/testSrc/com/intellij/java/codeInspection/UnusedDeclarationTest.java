@@ -99,7 +99,7 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   }
 
   public void testAdditionalAnnotations() {
-    final List<String> testAnnotations = List.of("Annotated", "RequestMapping");
+    final List<String> testAnnotations = List.of("Annotated", "RequestMapping", "Ann1");
     EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.addAll(testAnnotations);
     try {
       doTest();

@@ -24,14 +24,16 @@ public @interface RequestMapping {
 @interface PostMapping {
 }
 
-@Target({ElementType.TYPE, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-@interface Ann1 {
-}
-
 enum RequestMethod {
   GET, POST
 }
+
+@interface Ann1 {}
+@Ann1
+@interface Ann2 {}
+@Ann2
+@interface Ann3 {}
+@interface Ann4 {}
 
 // test
 
@@ -46,10 +48,13 @@ class Controller {
   }
 }
 
-@Ann1
+@Ann3
 class A {
 }
 
 @RequestMapping
 class B {
 }
+
+@Ann4
+class C {}
