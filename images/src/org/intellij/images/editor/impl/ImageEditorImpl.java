@@ -188,8 +188,12 @@ public final class ImageEditorImpl implements ImageEditor {
   void contentsChanged(@NotNull VirtualFileEvent event) {
     if (file.equals(event.getFile())) {
       // Change document
-      Runnable postRunnable = () -> setValue(file);
-      RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
+      refreshFile();
     }
+  }
+
+  public void refreshFile() {
+    Runnable postRunnable = () -> setValue(file);
+    RefreshQueue.getInstance().refresh(true, false, postRunnable, ModalityState.current(), file);
   }
 }
