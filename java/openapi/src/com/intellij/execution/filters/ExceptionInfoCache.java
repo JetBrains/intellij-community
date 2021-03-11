@@ -26,8 +26,16 @@ public class ExceptionInfoCache {
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
 
-  public ExceptionInfoCache(GlobalSearchScope searchScope) {
-    myProject = Objects.requireNonNull(searchScope.getProject());
+  /**
+   * @deprecated use {@link #ExceptionInfoCache(Project, GlobalSearchScope)}
+   */
+  @Deprecated
+  public ExceptionInfoCache(@NotNull GlobalSearchScope searchScope) {
+    this(Objects.requireNonNull(searchScope.getProject()), searchScope);
+  }
+
+  public ExceptionInfoCache(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    myProject = project;
     mySearchScope = searchScope;
   }
 

@@ -122,7 +122,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass psiClass = myFixture.addClass("package p; public class A {\n" +
                                            "  public void foo() {}\n" +
                                            "}");
-    ExceptionWorker worker = new ExceptionWorker(new ExceptionInfoCache(GlobalSearchScope.projectScope(getProject())));
+    ExceptionWorker worker = new ExceptionWorker(new ExceptionInfoCache(getProject(), GlobalSearchScope.projectScope(getProject())));
     worker.execute(line, line.length());
     PsiClass aClass = worker.getPsiClass();
     assertNotNull(aClass);
