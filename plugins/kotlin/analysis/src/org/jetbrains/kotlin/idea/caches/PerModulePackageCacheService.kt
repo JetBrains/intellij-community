@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
@@ -38,6 +36,7 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
@@ -150,7 +149,7 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
                     return
                 }
                 if (child.getParentOfType<KtPackageDirective>(false) != null)
-                    ServiceManager.getService(project, PerModulePackageCacheService::class.java).notifyPackageChange(file)
+                    PerModulePackageCacheService.getInstance(project).notifyPackageChange(file)
             }
             PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED -> {
                 val parent = event.parent ?: run {
@@ -162,7 +161,7 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
                     (!event.isGenericChange && (childrenOfType.any() || parent is KtPackageDirective)) ||
                     (childrenOfType.any { it.name.isEmpty() } && parent is KtFile)
                 ) {
-                    ServiceManager.getService(project, PerModulePackageCacheService::class.java).notifyPackageChange(file)
+                    PerModulePackageCacheService.getInstance(project).notifyPackageChange(file)
                 }
             }
             else -> error("unsupported event code ${event.code} for PsiEvent $event")
@@ -409,8 +408,7 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         const val FULL_DROP_THRESHOLD = 1000
         private val LOG = Logger.getInstance(this::class.java)
 
-        fun getInstance(project: Project): PerModulePackageCacheService =
-            ServiceManager.getService(project, PerModulePackageCacheService::class.java)
+        fun getInstance(project: Project): PerModulePackageCacheService = project.getServiceSafe()
 
         var Project.DEBUG_LOG_ENABLE_PerModulePackageCache: Boolean
                 by NotNullableUserDataProperty<Project, Boolean>(Key.create("debug.PerModulePackageCache"), false)

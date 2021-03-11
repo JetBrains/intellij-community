@@ -5,12 +5,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
-import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.impl.CachedIntentions
-import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInspection.SuppressableProblemGroup
@@ -24,7 +23,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -79,7 +77,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
-        if ("createfromusage" in testDataPath.toLowerCase()) {
+        if ("createfromusage" in testDataDirectory.path.toLowerCase()) {
+            // TODO: WTF
             KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
         } else {
             super.getProjectDescriptor()
@@ -111,7 +110,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             var expectedErrorMessage: String? = ""
             var fixtureClasses = emptyList<String>()
             try {
-                fileText = FileUtil.loadFile(testFile, CharsetToolkit.UTF8_CHARSET)
+                fileText = FileUtil.loadFile(testFile, CharsetToolkit.UTF8)
                 TestCase.assertTrue("\"<caret>\" is missing in file \"${testFile.path}\"", fileText.contains("<caret>"))
 
                 fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $FIXTURE_CLASS_DIRECTIVE: ")

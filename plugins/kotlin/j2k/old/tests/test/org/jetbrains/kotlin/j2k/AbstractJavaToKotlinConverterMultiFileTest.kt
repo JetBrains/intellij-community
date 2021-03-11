@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -36,14 +35,12 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         val psiManager = PsiManager.getInstance(project)
 
         val filesToConvert = File(dirPath).listFiles { _, name -> name.endsWith(".java") }
-        val psiFilesToConvert = ArrayList<PsiJavaFile>()
-        for (javaFile in filesToConvert) {
+        val psiFilesToConvert = filesToConvert.map { javaFile ->
             val virtualFile = addFile(javaFile, "test")
-            val psiFile = psiManager.findFile(virtualFile) as PsiJavaFile
-            psiFilesToConvert.add(psiFile)
+            psiManager.findFile(virtualFile) as PsiJavaFile
         }
 
-        val externalFiles = File(dirPath + File.separator + "external").listFiles { _, name -> name.endsWith(".java") || name.endsWith(".kt") }
+        val externalFiles = File(dirPath, "external").listFiles { _, name -> name.endsWith(".java") || name.endsWith(".kt") }
         val externalPsiFiles = ArrayList<PsiFile>()
         for (file in externalFiles) {
             val virtualFile = addFile(file, "test")
