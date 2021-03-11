@@ -8,6 +8,6 @@ JsonPathFile
     JsonPathSegmentExpressionImpl(SEGMENT_EXPRESSION)
       PsiElement([)('[')
       JsonPathSliceExpressionImpl(SLICE_EXPRESSION)
-        PsiElement(INTEGER_NUMBER)('-1')
         PsiElement(:)(':')
+        PsiElement(INTEGER_NUMBER)('2')
       PsiElement(])(']')
