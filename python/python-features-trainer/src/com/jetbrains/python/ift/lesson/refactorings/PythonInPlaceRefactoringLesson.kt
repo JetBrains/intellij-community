@@ -2,6 +2,7 @@
 package com.jetbrains.python.ift.lesson.refactorings
 
 import com.intellij.icons.AllIcons
+import com.intellij.refactoring.RefactoringBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -48,7 +49,7 @@ class PythonInPlaceRefactoringLesson
         PythonLessonsBundle.message("python.in.place.refactoring.invoke.intentions",
                               icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { ui -> // no highlighting
-        ui.toString().contains("Rename usages")
+        ui.toString().contains("'s'")
       }
       proposeRestore {
         checkFirstChange()
@@ -107,8 +108,10 @@ class PythonInPlaceRefactoringLesson
       showIntentionsTaskId = taskId
       text(PythonLessonsBundle.message("python.in.place.refactoring.invoke.intention.for.parameter",
                                        icon(AllIcons.Gutter.SuggestedRefactoringBulb), action(it)))
+      val updateUsagesText = RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
+                                                       RefactoringBundle.message("suggested.refactoring.usages"))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains("Update usages to")
+        item.toString().contains(updateUsagesText)
       }
       proposeRestore {
         checkSecondChange()
@@ -131,7 +134,7 @@ class PythonInPlaceRefactoringLesson
     task {
       text(PythonLessonsBundle.message("python.in.place.refactoring.signature.preview", LessonUtil.rawEnter()))
       triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JLabel -> // no highlighting
-        ui.text == "Add values for new parameters:"
+        ui.text == RefactoringBundle.message("suggested.refactoring.parameter.values.label.text")
       }
       restoreAfterStateBecomeFalse(restoreId = showIntentionsTaskId) {
         previous.ui?.isShowing != true
