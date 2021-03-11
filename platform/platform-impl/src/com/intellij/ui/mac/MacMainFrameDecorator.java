@@ -2,6 +2,7 @@
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
+import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ide.ActiveWindowsWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -120,29 +121,29 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
       // Native full screen listener can be set only once
       FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenListener() {
         @Override
-        public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowEnteringFullScreen(FullScreenEvent event) {
           myDispatcher.getMulticaster().windowEnteringFullScreen(event);
         }
 
         @Override
-        public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowEnteredFullScreen(FullScreenEvent event) {
           myDispatcher.getMulticaster().windowEnteredFullScreen(event);
         }
 
         @Override
-        public void windowExitingFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowExitingFullScreen(FullScreenEvent event) {
           myDispatcher.getMulticaster().windowExitingFullScreen(event);
         }
 
         @Override
-        public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowExitedFullScreen(FullScreenEvent event) {
           myDispatcher.getMulticaster().windowExitedFullScreen(event);
         }
       });
 
       myDispatcher.addListener(new FSAdapter() {
         @Override
-        public void windowEnteringFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowEnteringFullScreen(FullScreenEvent event) {
           JRootPane rootPane = myFrame.getRootPane();
           if (rootPane != null && rootPane.getBorder() != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
             rootPane.setBorder(null);
@@ -151,7 +152,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
 
         @Override
-        public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowEnteredFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
           if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
@@ -160,7 +161,7 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         }
 
         @Override
-        public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+        public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
           if (rootPane instanceof IdeRootPane && Registry.is("ide.mac.transparentTitleBarAppearance")) {
@@ -201,13 +202,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
     AsyncPromise<Boolean> promise = new AsyncPromise<>();
     myDispatcher.addListener(new FSAdapter() {
       @Override
-      public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
+      public void windowExitedFullScreen(FullScreenEvent event) {
         promise.setResult(false);
         myDispatcher.removeListener(this);
       }
 
       @Override
-      public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
+      public void windowEnteredFullScreen(FullScreenEvent event) {
         promise.setResult(true);
         myDispatcher.removeListener(this);
       }
