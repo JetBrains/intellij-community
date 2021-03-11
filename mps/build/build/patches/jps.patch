@@ -1,0 +1,104 @@
+Index: community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectEntitiesLoader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectEntitiesLoader.kt	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
++++ community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectEntitiesLoader.kt	(date 1615489881670)
+@@ -90,10 +90,10 @@
+                                                 fileInDirectorySourceNames: FileInDirectorySourceNames): JpsProjectSerializers {
+     val projectDirUrl = configLocation.projectDir.url
+     val directorySerializersFactories = ArrayList<JpsDirectoryEntitiesSerializerFactory<*>>()
+-    val librariesDirectoryUrl = "$projectDirUrl/.idea/libraries"
++    val librariesDirectoryUrl = "$projectDirUrl/.mps/libraries"
+     directorySerializersFactories += JpsLibrariesDirectorySerializerFactory(librariesDirectoryUrl)
+     if (serializeArtifacts) {
+-      directorySerializersFactories += JpsArtifactsDirectorySerializerFactory("$projectDirUrl/.idea/artifacts")
++      directorySerializersFactories += JpsArtifactsDirectorySerializerFactory("$projectDirUrl/.mps/artifacts")
+     }
+     val externalStorageRoot = externalStorageMapping.externalStorageRoot
+     val internalLibrariesDirUrl = virtualFileManager.fromUrl(librariesDirectoryUrl)
+@@ -105,7 +105,7 @@
+       entityTypeSerializers = listOf(JpsLibrariesExternalFileSerializer(librariesExternalStorageFile, internalLibrariesDirUrl)),
+       directorySerializersFactories = directorySerializersFactories,
+       moduleListSerializers = listOf(
+-        ModuleListSerializerImpl("$projectDirUrl/.idea/modules.xml", virtualFileManager, externalModuleListSerializer,
++        ModuleListSerializerImpl("$projectDirUrl/.mps/modules.xml", virtualFileManager, externalModuleListSerializer,
+                                  externalStorageConfigurationManager),
+         externalModuleListSerializer
+       ),
+@@ -119,7 +119,7 @@
+   }
+
+   private fun isExternalStorageEnabled(reader: JpsFileContentReader, projectDirUrl: String): Boolean {
+-    val component = reader.loadComponent("$projectDirUrl/.idea/misc.xml", "ExternalStorageConfigurationManager")
++    val component = reader.loadComponent("$projectDirUrl/.mps/misc.xml", "ExternalStorageConfigurationManager")
+     return component?.getAttributeValue("enabled") == "true"
+   }
+
+@@ -165,7 +165,7 @@
+
+   fun createJpsEntitySourceForProjectLibrary(configLocation: JpsProjectConfigLocation) = when (configLocation) {
+     is JpsProjectConfigLocation.DirectoryBased ->
+-      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".idea/libraries"), configLocation)
++      JpsFileEntitySource.FileInDirectory(configLocation.projectDir.append(".mps/libraries"), configLocation)
+     is JpsProjectConfigLocation.FileBased -> JpsFileEntitySource.ExactFile(configLocation.iprFile, configLocation)
+   }
+ }
+Index: community/platform/configuration-store-impl/src/ProjectStoreBridge.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
++++ community/platform/configuration-store-impl/src/ProjectStoreBridge.kt	(date 1615489881658)
+@@ -195,7 +195,7 @@
+   val fileName = PathUtil.getFileName(filePath)
+   val parentPath = PathUtil.getParentPath(filePath)
+   val parentFileName = PathUtil.getFileName(parentPath)
+-  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".idea") {
++  if (FileUtil.extensionEquals(filePath, "ipr") || fileName == "misc.xml" && parentFileName == ".mps") {
+     collapsedPath = "\$PROJECT_FILE$"
+     splitterClass = StateSplitterEx::class.java
+   }
+@@ -220,7 +220,7 @@
+             return providerFactory.getOrCreateStorageSpec(fileName)
+           }
+         }
+-        error("$filePath is not under .idea directory and not under external system cache")
++        error("$filePath is not under .mps directory and not under external system cache")
+       }
+     }
+   }
+Index: community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
++++ community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsExternalStorageMapping.kt	(date 1615489946470)
+@@ -20,7 +20,7 @@
+       val directoryPath = JpsPathUtil.urlToPath(internalSource.directory.url)
+       val directoryName = PathUtil.getFileName(directoryPath)
+       val parentPath = PathUtil.getParentPath(directoryPath)
+-      if (PathUtil.getFileName(parentPath) == ".idea" && (directoryName == "libraries" || directoryName == "artifacts")) {
++      if (PathUtil.getFileName(parentPath) == ".mps" && (directoryName == "libraries" || directoryName == "artifacts")) {
+         JpsFileEntitySource.ExactFile(externalStorageRoot.append("project/$directoryName.xml"), projectLocation)
+       }
+       else {
+Index: platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
++++ community/platform/workspaceModel/ide/src/com/intellij/workspaceModel/ide/impl/jps/serialization/JpsProjectSerializersImpl.kt	(date 1615489957498)
+@@ -610,7 +610,7 @@
+ fun isExternalModuleFile(filePath: String): Boolean {
+   val parentPath = PathUtil.getParentPath(filePath)
+   return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
+-         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
++         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".mps"
+ }
+
+ internal fun getInternalFileSource(source: EntitySource) = when (source) {

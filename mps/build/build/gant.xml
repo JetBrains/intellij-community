@@ -225,6 +225,18 @@
             <arg value="apply"/>
             <arg value="${patchFile4}"/>
         </exec>
+
+        <property name="patchJps"
+                  value="${basedir}/patches/jps.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchJps}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchJps}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
