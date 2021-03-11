@@ -75,6 +75,7 @@ public abstract class ActionPlaces {
   public static final String NAVIGATION_BAR_TOOLBAR = "NavBarToolbar";
   public static final String STATE_WIDGET_ACTION_BAR = "StateWidgetActionBar";
   public static final String NEW_TOOLBAR = "NewToolbar";
+  public static final String TOOLBAR_DECORATOR_TOOLBAR = "ToolbarDecorator";
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
