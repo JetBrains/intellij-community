@@ -950,9 +950,29 @@ public final class Switcher extends BaseSwitcherAction {
 
       @Nullable
       @Override
-      protected Object findElement(@NotNull String s) {
-        final List<SpeedSearchObjectWithWeight> elements = SpeedSearchObjectWithWeight.findElement(s, this);
-        return elements.isEmpty() ? null : elements.get(0).node;
+      protected Object findElement(@NotNull String pattern) {
+        boolean toolWindowsFocused = myComponent.toolWindows.hasFocus();
+        JList<?> firstList = !toolWindowsFocused ? myComponent.files : myComponent.toolWindows;
+        JList<?> secondList = toolWindowsFocused ? myComponent.files : myComponent.toolWindows;
+        Object element = findElementIn(firstList, pattern);
+        return element != null ? element : findElementIn(secondList, pattern);
+      }
+
+      private <T> @Nullable T findElementIn(@NotNull JList<T> list, @NotNull String pattern) {
+        T foundElement = null;
+        int foundDegree = 0;
+        ListModel<T> model = list.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+          T element = model.getElementAt(i);
+          String text = getElementText(element);
+          if (text == null) continue;
+          int degree = getComparator().matchingDegree(pattern, text);
+          if (foundElement == null || foundDegree < degree) {
+            foundElement = element;
+            foundDegree = degree;
+          }
+        }
+        return foundElement;
       }
 
       @Override
