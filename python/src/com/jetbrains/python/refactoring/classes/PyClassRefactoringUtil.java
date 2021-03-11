@@ -105,18 +105,6 @@ public final class PyClassRefactoringUtil {
     return currentValue.getText();
   }
 
-  @NotNull
-  public static List<PyFunction> copyMethods(Collection<? extends PyFunction> methods, PyClass superClass, boolean skipIfExist ) {
-    if (methods.isEmpty()) {
-      return Collections.emptyList();
-    }
-    for (final PsiElement e : methods) {
-      rememberNamedReferences(e);
-    }
-    final PyFunction[] elements = methods.toArray(PyFunction.EMPTY_ARRAY);
-    return addMethods(superClass, skipIfExist, elements);
-  }
-
   /**
    * Adds methods to class.
    *

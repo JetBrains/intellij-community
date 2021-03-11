@@ -16,14 +16,22 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.*;
 
@@ -189,6 +197,23 @@ public class PyAddImportTest extends PyTestCase {
   // PY-6054
   public void testRelativeImportWithDotsOnly() {
     doTestRelativeImport("foo", "lib", "foo/bar/test");
+  }
+
+  public void testImportForMethodCannotBeAdded() {
+    String testName = getTestName(true);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("main.py");
+    Collection<PyClass> pyClasses = PyClassNameIndex.find("MyClass", myFixture.getProject(), false);
+    PyClass pyClass = assertOneElement(pyClasses);
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    PyFunction method = pyClass.findMethodByName("method", false, typeEvalContext);
+    assertNotNull(method);
+    Ref<Boolean> inserted = Ref.create();
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      inserted.set(PyPsiRefactoringUtil.insertImport(myFixture.getFile(), method, null));
+    });
+    assertFalse(inserted.get());
+    myFixture.checkResultByFile(testName + "/main.py");
   }
 
   private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {

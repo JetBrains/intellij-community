@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
@@ -233,9 +234,13 @@ public class PyPsiRefactoringUtil {
       containingQName = qname.removeLastComponent();
       importedName = qname.getLastComponent();
     }
-    else {
+    // See PyClassRefactoringUtil.DynamicNamedElement
+    else if (PyUtil.isTopLevel(element) || element instanceof LightElement) {
       containingQName = qname;
       importedName = getOriginalName(element);
+    }
+    else {
+      return false;
     }
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, elementSource);
     if (preferFromImport && !containingQName.getComponents().isEmpty() || !importingModuleOrPackage) {
