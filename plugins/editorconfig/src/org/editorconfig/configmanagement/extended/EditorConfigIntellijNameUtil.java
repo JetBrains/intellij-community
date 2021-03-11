@@ -2,7 +2,6 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
-import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
 import com.intellij.application.options.codeStyle.properties.LanguageCodeStylePropertyMapper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,9 @@ public final class EditorConfigIntellijNameUtil {
 
   @NotNull
   public static List<String> toEditorConfigNames(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String propertyName) {
+    if (isIgnored(propertyName)) {
+      return Collections.emptyList();
+    }
     switch (IntellijPropertyKindMap.getPropertyKind(propertyName)) {
       case EDITOR_CONFIG_STANDARD:
         return Collections.singletonList(propertyName);
@@ -75,6 +77,11 @@ public final class EditorConfigIntellijNameUtil {
            "indent_style".equals(propertyName) ||
            "tab_width".equals(propertyName) ||
            "continuation_indent_size".equals(propertyName);
+  }
+
+  public static boolean isIgnored(@NotNull String propertyName) {
+    // TODO<rv>: Provide an API instead of a hardcoded value
+    return "uniform_indent".equals(propertyName);
   }
 
 }
