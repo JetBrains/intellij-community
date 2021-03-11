@@ -192,6 +192,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniMode(false);
+
+    if (isAsyncUpdateSupportedForPlace()) {
+      addLoadingIcon();
+    }
   }
 
   @Override
@@ -1136,7 +1140,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private CancellablePromise<List<AnAction>> myLastUpdate;
-  private boolean myForcedUpdateRequested;
+  private boolean myForcedUpdateRequested = true;
+
+  private void addLoadingIcon() {
+    AsyncProcessIcon icon = new AsyncProcessIcon(myPlace);
+    icon.setBorder(JBUI.Borders.empty(4));
+    add(icon);
+  }
 
   protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
     return !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild();
