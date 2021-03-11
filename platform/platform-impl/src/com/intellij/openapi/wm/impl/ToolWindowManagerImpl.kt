@@ -1340,7 +1340,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
     val show = Runnable {
       val tracker: PositionTracker<Balloon>
-      if (button.isShowing) {
+      if (entry.toolWindow.isVisible &&
+          (entry.toolWindow.type == ToolWindowType.WINDOWED ||
+           entry.toolWindow.type == ToolWindowType.FLOATING)) {
+        tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
+      }
+      else if (!button.isShowing) {
+        tracker = createPositionTracker(toolWindowPane!!, anchor)
+      }
+      else {
         tracker = object : PositionTracker<Balloon>(button) {
           override fun recalculateLocation(`object`: Balloon): RelativePoint? {
             val otherEntry = idToEntry[options.toolWindowId] ?: return null
@@ -1350,21 +1358,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
               return null
             }
             return RelativePoint(stripeButton, Point(stripeButton.bounds.width / 2, stripeButton.height / 2 - 2))
-          }
-        }
-      }
-      else {
-        tracker = object : PositionTracker<Balloon>(toolWindowPane) {
-          override fun recalculateLocation(`object`: Balloon): RelativePoint {
-            val bounds = toolWindowPane!!.bounds
-            val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
-            when {
-              ToolWindowAnchor.TOP == anchor -> target.y = 0
-              ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
-              ToolWindowAnchor.LEFT == anchor -> target.x = 0
-              ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
-            }
-            return RelativePoint(toolWindowPane!!, target)
           }
         }
       }
@@ -1404,16 +1397,24 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       position.set(Balloon.Position.atLeft)
     }
     val show = Runnable {
-      val tracker = object : PositionTracker<Balloon>(button) {
-        override fun recalculateLocation(`object`: Balloon): RelativePoint? {
-          val otherEntry = idToEntry[options.toolWindowId] ?: return null
-          if (otherEntry.readOnlyWindowInfo.largeStripeAnchor != anchor) {
-            `object`.hide()
-            return null
-          }
+      val tracker: PositionTracker<Balloon>
+      if (entry.toolWindow.isVisible &&
+          (entry.toolWindow.type == ToolWindowType.WINDOWED ||
+           entry.toolWindow.type == ToolWindowType.FLOATING)) {
+        tracker = createPositionTracker(entry.toolWindow.component, ToolWindowAnchor.BOTTOM)
+      }
+      else {
+        tracker = object : PositionTracker<Balloon>(button) {
+          override fun recalculateLocation(`object`: Balloon): RelativePoint? {
+            val otherEntry = idToEntry[options.toolWindowId] ?: return null
+            if (otherEntry.readOnlyWindowInfo.largeStripeAnchor != anchor) {
+              `object`.hide()
+              return null
+            }
 
-          return RelativePoint(button,
-                               Point(if (position.get() == Balloon.Position.atRight) 0 else button.bounds.width, button.height / 2))
+            return RelativePoint(button,
+                                 Point(if (position.get() == Balloon.Position.atRight) 0 else button.bounds.width, button.height / 2))
+          }
         }
       }
       if (!balloon.isDisposed) {
@@ -1426,6 +1427,22 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
     else {
       SwingUtilities.invokeLater(show)
+    }
+  }
+
+  private fun createPositionTracker(component: Component, anchor: ToolWindowAnchor): PositionTracker<Balloon> {
+    return object : PositionTracker<Balloon>(component) {
+      override fun recalculateLocation(`object`: Balloon): RelativePoint {
+        val bounds = component.bounds
+        val target = StartupUiUtil.getCenterPoint(bounds, Dimension(1, 1))
+        when {
+          ToolWindowAnchor.TOP == anchor -> target.y = 0
+          ToolWindowAnchor.BOTTOM == anchor -> target.y = bounds.height - 3
+          ToolWindowAnchor.LEFT == anchor -> target.x = 0
+          ToolWindowAnchor.RIGHT == anchor -> target.x = bounds.width
+        }
+        return RelativePoint(component, target)
+      }
     }
   }
 
