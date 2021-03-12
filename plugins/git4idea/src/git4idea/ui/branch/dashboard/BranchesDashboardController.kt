@@ -66,11 +66,11 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)
 
-  fun checkForBranchesUpdate(): Boolean {
+  fun reloadBranches(force: Boolean): Boolean {
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project)
-    val localChanged = localBranches.size != newLocalBranches.size || !localBranches.containsAll(newLocalBranches)
-    val remoteChanged = remoteBranches.size != newRemoteBranches.size || !remoteBranches.containsAll(newRemoteBranches)
+    val localChanged = force || localBranches.size != newLocalBranches.size || !localBranches.containsAll(newLocalBranches)
+    val remoteChanged = force || remoteBranches.size != newRemoteBranches.size || !remoteBranches.containsAll(newRemoteBranches)
 
     if (localChanged) {
       localBranches.clear()

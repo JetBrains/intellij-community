@@ -376,7 +376,8 @@ internal class FilteringBranchesTree(project: Project,
 
   private fun buildTreeNodesIfNeeded(): Boolean {
     with(uiController) {
-      val changed = checkForBranchesUpdate()
+      val forceReload = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true
+      val changed = reloadBranches(forceReload)
       if (!changed) return false
 
       refreshNodeDescriptorsModel()
