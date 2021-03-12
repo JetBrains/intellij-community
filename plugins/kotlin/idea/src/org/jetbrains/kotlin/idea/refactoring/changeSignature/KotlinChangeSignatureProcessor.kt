@@ -94,39 +94,46 @@ class KotlinChangeSignatureProcessor(
 
         val primaryConstructor = ktChangeInfo.method as? KtPrimaryConstructor
         if (primaryConstructor != null) {
-            for ((index, parameter) in primaryConstructor.valueParameters.withIndex()) {
-                if (!parameter.isOverridable) continue
-
-                val parameterInfo = ktChangeInfo.newParameters.find { it.originalIndex == index } ?: continue
-                val descriptor = parameter.resolveToDescriptorIfAny() as? PropertyDescriptor ?: continue
-                val methodDescriptor = KotlinChangeSignatureData(
-                    descriptor,
-                    parameter,
-                    listOf(descriptor),
-                )
-
-                val propertyChangeInfo = KotlinChangeInfo(
-                    methodDescriptor,
-                    name = parameterInfo.name,
-                    newReturnTypeInfo = parameterInfo.currentTypeInfo,
-                    context = parameter,
-                )
-
-                ktChangeInfo.registerInnerChangeInfo(propertyChangeInfo)
-                KotlinChangeSignatureProcessor(myProject, propertyChangeInfo, commandName).findUsages().mapNotNullTo(allUsages) {
-                    if (it is KotlinWrapperForJavaUsageInfos) return@mapNotNullTo it
-
-                    val element = it.element
-                    if (element != null && !(it is KotlinCallableDefinitionUsage<*> && it.element == parameter))
-                        KotlinWrapperForPropertyInheritorsUsage(propertyChangeInfo, it, element)
-                    else
-                        null
-                }
-            }
+            findConstructorPropertyUsages(primaryConstructor, allUsages)
         }
 
         super.findUsages().filterTo(allUsages) { it is KotlinUsageInfo<*> || it is UnresolvableCollisionUsageInfo }
         return allUsages.toTypedArray()
+    }
+
+    private fun findConstructorPropertyUsages(
+        primaryConstructor: KtPrimaryConstructor,
+        allUsages: ArrayList<UsageInfo>
+    ) {
+        for ((index, parameter) in primaryConstructor.valueParameters.withIndex()) {
+            if (!parameter.isOverridable) continue
+
+            val parameterInfo = ktChangeInfo.newParameters.find { it.originalIndex == index } ?: continue
+            val descriptor = parameter.resolveToDescriptorIfAny() as? PropertyDescriptor ?: continue
+            val methodDescriptor = KotlinChangeSignatureData(
+                descriptor,
+                parameter,
+                listOf(descriptor),
+            )
+
+            val propertyChangeInfo = KotlinChangeInfo(
+                methodDescriptor,
+                name = parameterInfo.name,
+                newReturnTypeInfo = parameterInfo.currentTypeInfo,
+                context = parameter,
+            )
+
+            ktChangeInfo.registerInnerChangeInfo(propertyChangeInfo)
+            KotlinChangeSignatureProcessor(myProject, propertyChangeInfo, commandName).findUsages().mapNotNullTo(allUsages) {
+                if (it is KotlinWrapperForJavaUsageInfos) return@mapNotNullTo it
+
+                val element = it.element
+                if (element != null && !(it is KotlinCallableDefinitionUsage<*> && element == parameter))
+                    KotlinWrapperForPropertyInheritorsUsage(propertyChangeInfo, it, element)
+                else
+                    null
+            }
+        }
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
