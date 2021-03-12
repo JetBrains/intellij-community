@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 
 class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = CodeCleanupCheckinHandler(panel)
@@ -27,7 +29,10 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   override fun runCheckinHandlers(runnable: Runnable) {
     if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
       val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
-      GlobalInspectionContextBase.modalCodeCleanup(project, AnalysisScope(project, filesToProcess), runnable)
+      val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
+      val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
+
+      globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, runnable, true)
     }
     else {
       runnable.run()
