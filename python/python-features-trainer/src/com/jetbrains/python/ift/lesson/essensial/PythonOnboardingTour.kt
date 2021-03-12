@@ -372,7 +372,7 @@ class PythonOnboardingTour :
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 400))
+           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 400))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         isDemoFilePath(path)
       }
@@ -381,7 +381,7 @@ class PythonOnboardingTour :
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.open.file", code(demoFileName)),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
+           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false
         virtualFile.name == demoFileName
