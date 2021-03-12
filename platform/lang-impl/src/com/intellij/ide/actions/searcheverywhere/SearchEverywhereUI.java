@@ -1149,9 +1149,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
       boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
+      boolean multilineText = showFindInFilesAction || showResetScope || showResetFilter;
 
-      if (showFindInFilesAction || showResetScope || showResetFilter) {
-        emptyStatus.appendLine("").appendLine("");
+      if (multilineText) {
+        emptyStatus.appendText(".").appendLine("").appendLine("");
       }
 
       final AtomicBoolean firstPartAdded = new AtomicBoolean();
@@ -1192,6 +1193,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
               emptyStatus.appendText(" (" + findInFilesShortcut + ")");
             }
           });
+      }
+
+      if (multilineText) {
+        emptyStatus.appendText(".");
       }
     }
 
