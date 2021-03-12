@@ -154,49 +154,30 @@ class RuntimeChooserDialog(
 
       //download row
       row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
-        val locationLabel = JBTextField()
-        locationLabel.isEditable = false
-        locationLabel.invoke(growX)
-
-        val updateLocation = {
-          (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
-            locationLabel.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
-          }
-        }
-        updateLocation()
-        jdkCombobox.addItemListener { updateLocation() }
-      }.onlyVisibleWhenSelected { it is RuntimeChooserItemWithFixedLocation }
-
-      //download row
-      row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
           fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        ).constraints(growX).component
+        ).constraints(growX)
+          .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
+          .component
 
         val updateLocation = {
           (jdkCombobox.selectedItem as? RuntimeChooserDownloadableItem)?.let { item ->
             jdkInstallDirSelector.text = model.getDefaultInstallPathFor(item.item)
+            jdkInstallDirSelector.isEditable = true
+            jdkInstallDirSelector.setButtonEnabled(true)
+          }
+
+          (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
+            jdkInstallDirSelector.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
+            jdkInstallDirSelector.isEditable = false
+            jdkInstallDirSelector.setButtonEnabled(false)
           }
         }
         updateLocation()
         jdkCombobox.addItemListener { updateLocation() }
-      }.onlyVisibleWhenSelected { it is RuntimeChooserDownloadableItem }
-
-      row {
-        comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
-      }.onlyVisibleWhenSelected { it is RuntimeChooserDownloadableItem }
+      }
     }
-  }
-
-  private fun Row.onlyVisibleWhenSelected(isVisible: (RuntimeChooserItem?) -> Boolean) {
-    val updateVisible = {
-      val visible = isVisible(jdkCombobox.selectedItem as? RuntimeChooserItem)
-      this@onlyVisibleWhenSelected.visible = visible
-      this@onlyVisibleWhenSelected.enabled = visible
-    }
-    updateVisible()
-    jdkCombobox.addItemListener { updateVisible() }
   }
 }
