@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
@@ -43,6 +44,7 @@ public final class ObjectUtils {
    * 
    * In Java 11 compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
   */
+  @ReviseWhenPortedToJDK("9")
   public static void reachabilityFence(@SuppressWarnings("unused") Object o) {}
 
   private static final class Sentinel {
