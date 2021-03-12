@@ -532,7 +532,13 @@ public final class EditorTestUtil {
       marks.sort(Comparator.comparingInt(mark -> mark.first));
       for (int i = marks.size() - 1; i >= 0; i--) {
         Pair<Integer, String> mark = marks.get(i);
-        sb.insert(mark.first, mark.second);
+        int offset = mark.first;
+        if (0 <= offset && offset <= sb.length()) {
+          sb.insert(offset, mark.second);
+        }
+        else {
+          sb.insert(Math.max(0, Math.min(offset, sb.length())), "!!!" + mark.second + "@[" + offset + "]");
+        }
       }
 
       return sb.toString();
