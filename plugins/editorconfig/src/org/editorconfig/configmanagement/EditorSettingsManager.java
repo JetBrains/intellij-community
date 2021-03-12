@@ -5,6 +5,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,6 +17,7 @@ import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.List;
 
 public class EditorSettingsManager implements EditorFactoryListener {
@@ -43,7 +46,7 @@ public class EditorSettingsManager implements EditorFactoryListener {
   private static void applyMaxLineLength(Project project, String maxLineLength, Editor editor, VirtualFile file) {
     if (maxLineLength.isEmpty()) return;
     if ("off".equals(maxLineLength)) {
-      editor.getSettings().setRightMarginShown(false);
+      setRightMarginShown(editor, false);
       return;
     }
     try {
@@ -52,10 +55,16 @@ public class EditorSettingsManager implements EditorFactoryListener {
         Utils.invalidConfigMessage(project, maxLineLength, maxLineLengthKey, file.getCanonicalPath());
         return;
       }
-      editor.getSettings().setRightMarginShown(true);
+      setRightMarginShown(editor, true);
       editor.getSettings().setRightMargin(length);
     } catch (NumberFormatException e) {
       Utils.invalidConfigMessage(project, maxLineLength, maxLineLengthKey, file.getCanonicalPath());
     }
+  }
+
+  private static void setRightMarginShown(@NotNull Editor editor, boolean isShown) {
+    Color rightMarginColor =
+      isShown ? EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) : null;
+    editor.getColorsScheme().setColor(EditorColors.RIGHT_MARGIN_COLOR, rightMarginColor);
   }
 }
