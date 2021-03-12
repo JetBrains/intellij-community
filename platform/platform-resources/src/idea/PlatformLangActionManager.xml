@@ -87,6 +87,9 @@
       <action id="ProblemsView.SortFoldersFirst"
               icon="AllIcons.ObjectBrowser.SortByType"
               class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+      <action id="ProblemsView.SortByGroupId"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.analysis.problemsView.toolWindow.SortByGroupId"/>
       <action id="ProblemsView.SortBySeverity"
               icon="AllIcons.Nodes.SortBySeverity"
               class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
@@ -100,6 +103,7 @@
         <reference ref="ProblemsView.SeverityFilters"/>
         <separator/>
         <reference ref="ProblemsView.SortFoldersFirst"/>
+        <reference ref="ProblemsView.SortByGroupId"/>
         <reference ref="ProblemsView.SortBySeverity"/>
         <reference ref="ProblemsView.SortByName"/>
       </group>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -28,6 +28,9 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
   var severity: Int = 0
     private set
 
+  var groupId: String? = null
+    private set
+
   override fun getLeafState() = LeafState.ALWAYS
 
   override fun getName() = text
@@ -44,10 +47,12 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
     line = (problem as? FileProblem)?.line ?: -1
     column = (problem as? FileProblem)?.column ?: -1
     severity = (problem as? HighlightingProblem)?.severity ?: -1
+    groupId = (problem as? HighlightingProblem)?.info?.inspectionToolId
     presentation.addText(text, REGULAR_ATTRIBUTES)
     presentation.setIcon(problem.icon)
     presentation.tooltip = problem.description
     if (line >= 0) presentation.addText(" :${line + 1}", GRAYED_ATTRIBUTES)
+    groupId?.let { presentation.addText(" < $it", GRAYED_ATTRIBUTES) }
   }
 
   override fun hashCode() = hash(project, problem)

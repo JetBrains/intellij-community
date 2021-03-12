@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
@@ -133,6 +133,18 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     @Override
     public void setSelected(boolean selected) {
       myState.setSortFoldersFirst(selected);
+      myTreeModel.setComparator(createComparator());
+    }
+  };
+  private final Option mySortByGroupId = new Option() {
+    @Override
+    public boolean isSelected() {
+      return myState.getSortByGroupId();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      myState.setSortByGroupId(selected);
       myTreeModel.setComparator(createComparator());
     }
   };
@@ -369,6 +381,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
+      isNotNullAndSelected(getSortByGroupId()),
       isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));
   }
@@ -383,6 +396,10 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   @Nullable Option getSortFoldersFirst() {
     return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
+  }
+
+  @Nullable Option getSortByGroupId() {
+    return this instanceof HighlightingPanel ? mySortByGroupId : null;
   }
 
   @Nullable Option getSortBySeverity() {

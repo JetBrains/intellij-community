@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,6 +9,7 @@ import java.util.function.Function
 internal class AutoscrollToSource : ProblemsViewToggleAction({ it.autoscrollToSource })
 internal class ShowPreview : ProblemsViewToggleAction({ it.showPreview })
 internal class SortFoldersFirst : ProblemsViewToggleAction({ it.sortFoldersFirst })
+internal class SortByGroupId : ProblemsViewToggleAction({ it.sortByGroupId })
 internal class SortBySeverity : ProblemsViewToggleAction({ it.sortBySeverity })
 internal class SortByName : ProblemsViewToggleAction({ it.sortByName })
 
