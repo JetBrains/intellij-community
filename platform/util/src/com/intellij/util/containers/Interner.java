@@ -16,7 +16,7 @@ public abstract class Interner<T> {
     return new WeakInterner<>();
   }
 
-  public static @NotNull <T> Interner<T> createStringInterner() {
+  public static @NotNull Interner<String> createStringInterner() {
     // weak interner exposes TObjectHashingStrategy
     return new HashSetInterner<>();
   }

@@ -49,7 +49,7 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY)
       val pathsByName = paths.associateBy { it.moduleName }
-      val interner = Interner.createStringInterner<String>()
+      val interner = Interner.createStringInterner()
       return modules.map { create(pathsByName[it.name]!!, it, parentDisposable, interner) }
     }
 
