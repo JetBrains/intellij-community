@@ -44,7 +44,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,25 +201,20 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setForeground(UIUtil.getContextHelpForeground());
     myForeignPluginWarningLabel = ComponentsKt.htmlComponent();
 
-    JPanel controls = new JPanel(new BorderLayout());
-    controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
-    controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR, new DefaultActionGroup(new BackAction(), new ForwardAction()), true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    ((ActionToolbarImpl)toolbar).setForceMinimumSize(true);
+    toolbar.setTargetComponent(myCountLabel);
 
     JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(3, 0), 0, 0));
+    panel.add(toolbar.getComponent(), new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 10), 0, 0));
     panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
     panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, EAST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(2, 1, 3, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
-  }
-
-  private static JComponent actionToolbar(@NonNls String id, AnAction action) {
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(id, new DefaultActionGroup(action), true);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    toolbar.getComponent().setBorder(JBUI.Borders.empty());
-    ((ActionToolbarImpl)toolbar).setForceMinimumSize(true);
-    return toolbar.getComponent();
   }
 
   @Override
