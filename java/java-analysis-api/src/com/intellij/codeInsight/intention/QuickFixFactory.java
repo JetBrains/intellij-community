@@ -514,4 +514,6 @@ public abstract class QuickFixFactory {
                                                                           @NotNull PsiType enclosingClassType);
 
   public abstract @NotNull IntentionAction createConvertInterfaceContainingNotAllowedToClassFix(@NotNull PsiClass aClass);
+
+  public abstract @NotNull IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
 }

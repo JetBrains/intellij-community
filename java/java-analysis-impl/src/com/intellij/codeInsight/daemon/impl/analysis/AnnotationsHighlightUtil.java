@@ -143,7 +143,12 @@ public final class AnnotationsHighlightUtil {
     if (value instanceof PsiArrayInitializerMemberValue) {
       if (expectedType instanceof PsiArrayType) return null;
       String description = JavaErrorBundle.message("annotation.illegal.array.initializer", JavaHighlightUtil.formatType(expectedType));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(value).descriptionAndTooltip(description).create();
+      PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
+      if (arrayValue.getInitializers().length == 1) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnwrapArrayInitializerMemberValueAction(arrayValue));
+      }
+      return info;
     }
 
     if (value instanceof PsiExpression) {
