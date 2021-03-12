@@ -26,6 +26,7 @@ public final class InTextDirectivesUtils {
     private static final String DIRECTIVES_FILE_NAME = "directives.txt";
 
     public static final String IGNORE_BACKEND_DIRECTIVE_PREFIX = "// IGNORE_BACKEND: ";
+    public static final String MUTED_DIRECTIVE_PREFIX = "// MUTED: ";
 
     private InTextDirectivesUtils() {
     }
@@ -246,5 +247,11 @@ public final class InTextDirectivesUtils {
 
     public static boolean isIgnoredTarget(TargetBackend targetBackend, File file) {
         return isIgnoredTarget(targetBackend, file, IGNORE_BACKEND_DIRECTIVE_PREFIX);
+    }
+
+    public static void checkIfMuted(String fileText) {
+        List<String> muted = findListWithPrefixes(fileText, MUTED_DIRECTIVE_PREFIX);
+        if (muted.isEmpty()) return;
+        throw new RuntimeException("muted:" + muted);
     }
 }

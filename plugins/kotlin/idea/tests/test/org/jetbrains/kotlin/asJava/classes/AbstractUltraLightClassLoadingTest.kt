@@ -7,8 +7,6 @@ package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.PsiClassRenderer
-import org.jetbrains.kotlin.asJava.PsiClassRenderer.renderClass
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkByJavaFile
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.checkDescriptorsLeak
@@ -17,7 +15,6 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -25,6 +22,8 @@ abstract class AbstractUltraLightClassLoadingTest : KotlinLightCodeInsightFixtur
 
     open fun doTest(testDataPath: String) {
         val sourceText = File(testDataPath).readText()
+        InTextDirectivesUtils.checkIfMuted(sourceText);
+
         withCustomCompilerOptions(sourceText, project, module) {
             val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
 
