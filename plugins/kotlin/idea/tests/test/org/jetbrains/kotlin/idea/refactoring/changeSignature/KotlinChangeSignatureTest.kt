@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
+import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -119,7 +120,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     private fun createChangeSignatureContext(): ChangeSignatureContext {
-        val element = findTargetElement()?.safeAs<KtElement>().sure { "Target element is null" }
+        val element = findTargetElement().assertedCast<KtElement> { "Target element is null" }
         val context = file
             .findElementAt(editor.caretModel.offset)
             ?.getNonStrictParentOfType<KtElement>()
