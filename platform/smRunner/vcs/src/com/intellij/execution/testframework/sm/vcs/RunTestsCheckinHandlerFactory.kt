@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
+import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -135,7 +136,8 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val runner = ProgramRunner.getRunner(executor.id, configurationSettings.configuration) ?: return
     val executionResult = environment.state?.execute(executor, runner) ?: return
     val handler = executionResult.processHandler ?: return
-    val resultsForm = executionResult.executionConsole?.component as? SMTestRunnerResultsForm ?: return
+    val executionConsole = executionResult.executionConsole ?: return
+    val resultsForm = executionConsole?.component as? SMTestRunnerResultsForm ?: return
 
     suspendCoroutine<Any?> { continuation ->
       resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
@@ -152,9 +154,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       problems.add (FailureDescription(resultsForm.historyFileName, configurationSettings.name, TestsUIUtil.getTestSummary(rootNode)))
     }
 
-    UIUtil.invokeLaterIfNeeded {
-      Disposer.dispose(resultsForm)
-    }
+    disposeConsole(executionConsole)
     return
   }
 
@@ -260,6 +260,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val runConfiguration = getConfiguredRunConfiguration()?: return ReturnResult.COMMIT
     val failedTests = RunTask(runConfiguration).getFailedTests()
     if (failedTests == null) return ReturnResult.COMMIT
+    if (failedTests.problems.contains(canceledDescription)) return ReturnResult.CANCEL
     val commitActionText = StringUtil.removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
     return when (askToReview(failedTests, commitActionText)) {
       Messages.YES -> {
@@ -286,8 +287,14 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     return SmRunnerBundle.message("checkbox.run.tests.before.commit", name)
   }
 
+  private fun disposeConsole(executionConsole: ExecutionConsole) {
+    UIUtil.invokeLaterIfNeeded {
+      Disposer.dispose(executionConsole)
+    }
+  }
+
   inner class RunTask(private val runConfiguration : RunnerAndConfigurationSettings) 
-    : Task.WithResult<FailedTestCommitProblem?, Exception>(project, getOptionTitle(runConfiguration.name), false) {
+    : Task.WithResult<FailedTestCommitProblem?, Exception>(project, getOptionTitle(runConfiguration.name), true) {
 
     fun getFailedTests(): FailedTestCommitProblem? {
       queue()
@@ -314,7 +321,9 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
         configuration.getConfigurationsWithTargets(runManager)
           .map { runManager.findSettings(it.key) }
           .filterNotNull()
-          .forEach { startConfiguration(executor, problems, indicator, it) }
+          .all {
+            startConfiguration(executor, problems, indicator, it)
+          }
       }
       else {
         startConfiguration(executor, problems, indicator, runConfiguration)
@@ -326,12 +335,13 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     private fun startConfiguration(executor: Executor,
                                    problems: ArrayList<FailureDescription>,
                                    indicator: ProgressIndicator,
-                                   configuration: RunnerAndConfigurationSettings)  {
+                                   configuration: RunnerAndConfigurationSettings) : Boolean {
       val environment = ExecutionUtil.createEnvironment(executor, configuration)?.build()
-      val runner = ProgramRunner.getRunner(executor.id, configuration.configuration) ?: return
-      val executionResult = environment?.state?.execute(executor, runner) ?: return
-      val handler = executionResult.processHandler ?: return
-      val resultsForm = executionResult.executionConsole?.component as? SMTestRunnerResultsForm ?: return
+      val runner = ProgramRunner.getRunner(executor.id, configuration.configuration) ?: return false
+      val executionResult = environment?.state?.execute(executor, runner) ?: return false
+      val handler = executionResult.processHandler ?: return false
+      val executionConsole = executionResult.executionConsole ?: return false
+      val resultsForm = executionConsole.component as? SMTestRunnerResultsForm ?: return false
 
       resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
         override fun onTestingFinished(sender: TestResultsViewer) {
@@ -343,6 +353,13 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
         override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) {
           indicator.text = SmRunnerBundle.message("progress.text.running.tests", getPresentableName(test))
+          try {
+            indicator.checkCanceled()
+          }
+          catch (e: ProcessCanceledException) {
+            handler.destroyProcess()
+            problems.add(canceledDescription)
+          }
         }
 
         private fun getPresentableName(test: SMTestProxy): String {
@@ -359,18 +376,21 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
         handler.startNotify()
       }
 
-      val threshold = System.currentTimeMillis() + 60000
-      while (getHistoryFile(resultsForm.historyFileName).second == null) {
-        Thread.sleep(500)
-        if (System.currentTimeMillis() > threshold) {
-          break
+      val canceled = problems.contains(canceledDescription)
+      if (!canceled) {
+        val threshold = System.currentTimeMillis() + 60000
+        while (getHistoryFile(resultsForm.historyFileName).second == null) {
+          Thread.sleep(500)
+          if (System.currentTimeMillis() > threshold) {
+            break
+          }
         }
       }
 
-      UIUtil.invokeLaterIfNeeded {
-        Disposer.dispose(resultsForm)
-      }
-      return
+      disposeConsole(executionConsole)
+      return !canceled
     }
   }
 }
+
+private val canceledDescription = FailureDescription("", "", "CANCELED")
