@@ -82,6 +82,44 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
 }
 
 
+internal class SwitcherNextProblemAction : SwitcherProblemAction(true)
+internal class SwitcherPreviousProblemAction : SwitcherProblemAction(false)
+internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction() {
+  private fun getFileList(event: AnActionEvent) =
+    Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
+
+  private fun getErrorIndex(list: JList<Switcher.FileInfo>): Int? {
+    val model = list.model ?: return null
+    val size = model.size
+    if (size <= 0) return null
+    val range = 0 until size
+    val start = when (forward) {
+      true -> list.leadSelectionIndex.let { if (range.first <= it && it < range.last) it + 1 else range.first }
+      else -> list.leadSelectionIndex.let { if (range.first < it && it <= range.last) it - 1 else range.last }
+    }
+    for (i in range) {
+      val index = when (forward) {
+        true -> (start + i).let { if (it > range.last) it - size else it }
+        else -> (start - i).let { if (it < range.first) it + size else it }
+      }
+      if (model.getElementAt(index)?.isProblemFile == true) return index
+    }
+    return null
+  }
+
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = getFileList(event) != null
+  }
+
+  override fun actionPerformed(event: AnActionEvent) {
+    val list = getFileList(event) ?: return
+    val index = getErrorIndex(list) ?: return
+    list.selectedIndex = index
+    list.ensureIndexIsVisible(index)
+  }
+}
+
+
 internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList<*>, vararg listActionIds: String)
   : FocusListener, AbstractAction() {
 

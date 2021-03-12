@@ -1007,7 +1007,7 @@ public final class Switcher extends BaseSwitcherAction {
       FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
       open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
 
-      boolean hasProblem = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
+      boolean hasProblem = value.isProblemFile();
       TextAttributes attributes =
         new TextAttributes(fileStatus.getColor(), null, hasProblem ? JBColor.red : null, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
       append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
@@ -1033,6 +1033,11 @@ public final class Switcher extends BaseSwitcherAction {
     FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
       myProject = project;
+    }
+
+    boolean isProblemFile() {
+      WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
+      return solver != null && solver.isProblemFile(first);
     }
 
     @NlsSafe String getNameForRendering() {
