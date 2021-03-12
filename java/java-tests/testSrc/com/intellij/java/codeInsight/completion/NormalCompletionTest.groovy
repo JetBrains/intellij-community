@@ -2378,4 +2378,10 @@ class Abc {
                           "  }\n" +
                           "}")
   }
+
+  void testAfterTry() {
+    myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['catch', 'finally']
+  }
 }

@@ -192,6 +192,17 @@ public class JavaKeywordCompletion {
   }
 
   private void addStatementKeywords() {
+    if (psiElement()
+      .withText("}")
+      .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
+      .accepts(myPrevLeaf)) {
+      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CATCH), TailTypes.CATCH_LPARENTH));
+      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.FINALLY), TailTypes.FINALLY_LBRACE));
+      if (myPrevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
+        return;
+      }
+    }
+
     addKeyword(new OverridableSpace(createKeyword(PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
     addKeyword(new OverridableSpace(createKeyword(PsiKeyword.WHILE), TailTypes.WHILE_LPARENTH));
     addKeyword(new OverridableSpace(createKeyword(PsiKeyword.DO), TailTypes.DO_LBRACE));
@@ -217,15 +228,6 @@ public class JavaKeywordCompletion {
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(myPrevLeaf)) {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ELSE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
-
-    if (psiElement()
-        .withText("}")
-        .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
-        .accepts(myPrevLeaf)) {
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CATCH), TailTypes.CATCH_LPARENTH));
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.FINALLY), TailTypes.FINALLY_LBRACE));
-    }
-
   }
 
   void addKeywords() {
@@ -254,6 +256,13 @@ public class JavaKeywordCompletion {
 
       addBreakContinue();
       addStatementKeywords();
+
+      if (myPrevLeaf.textMatches("}") &&
+          myPrevLeaf.getParent() instanceof PsiCodeBlock &&
+          myPrevLeaf.getParent().getParent() instanceof PsiTryStatement &&
+          myPrevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
+        return;
+      }
     }
 
     addThisSuper();
