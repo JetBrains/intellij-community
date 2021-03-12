@@ -82,7 +82,7 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
                 .toList()
                 .asReversed()
                 .forEach {
-                    applyIfApplicable(it.element ?: return@forEach)
+                    it.element?.let(::applyIfApplicable)
                 }
 
             return root
