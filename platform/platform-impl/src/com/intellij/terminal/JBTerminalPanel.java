@@ -143,7 +143,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
         // according to com.intellij.ui.components.JBScrollBar.getPreciseDelta implementation.
         e = copyEventWithScaledRotation(event, JBUIScale.scale(10));
       }
-      ((JBScrollBar)scrollBar).handleMouseWheelEvent(e);
+      boolean handled = ((JBScrollBar)scrollBar).handleMouseWheelEvent(e);
+      if (!handled && LOG.isDebugEnabled()) {
+        LOG.debug("Mouse wheel event not handled");
+      }
     }
     else {
       super.handleMouseWheelEvent(event, scrollBar);
