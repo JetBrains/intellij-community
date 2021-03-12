@@ -76,8 +76,7 @@ public class RefreshAllExternalProjectsAction extends DumbAwareAction {
     if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
       for (ProjectSystemId externalSystemId : systemIds) {
         ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
-        ImportSpecBuilder importSpec = new ImportSpecBuilder(project, externalSystemId);
-        ExternalSystemUtil.refreshProjects(importSpec.forceWhenUptodate(true));
+        ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, externalSystemId));
       }
     }
   }
