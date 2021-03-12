@@ -106,8 +106,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected var toolbarDecorator: ToolbarDecorator? = null
   private var isFolderCreating = false
   protected val toolbarAddAction = MyToolbarAddAction()
-  private val runDashboardTypesPanel = RunDashboardTypesPanel(project)
-
   private var isModified = false
 
   companion object {
@@ -152,7 +150,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       getTypesToShow(project, showApplicableTypesOnly, allTypes, hideVirtualConfigurations)
         .sortedWith(kotlin.Comparator { type1, type2 -> compareTypesForUi(type1!!, type2!!) })
 
-    internal fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
+    fun getTypesToShow(project: Project, showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>, hideVirtualConfigurations : Boolean = false): List<ConfigurationType> {
       val allVisibleTypes = if (hideVirtualConfigurations) allTypes.filter { it !is VirtualConfigurationType } else allTypes
       if (showApplicableTypesOnly) {
         val applicableTypes = allVisibleTypes.filter { configurationType -> configurationType.configurationFactories.any { it.isApplicable(project) } }
@@ -428,10 +426,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         val settingsWrapper = JPanel(BorderLayout())
         settingsWrapper.add(settingsPanel, BorderLayout.WEST)
         settingsWrapper.add(Box.createGlue(), BorderLayout.CENTER)
-
-        wrapper.add(runDashboardTypesPanel, BorderLayout.CENTER)
-        runDashboardTypesPanel.addChangeListener(this::defaultsSettingsChanged)
-        runDashboardTypesPanel.border = JBUI.Borders.empty(0, 0, 20, 0)
         wrapper.add(settingsWrapper, BorderLayout.SOUTH)
       }
 
@@ -454,8 +448,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun defaultsSettingsChanged() {
     isModified = recentsLimit.text != recentsLimit.getClientProperty(INITIAL_VALUE_KEY) ||
                  confirmation.isSelected != confirmation.getClientProperty(INITIAL_VALUE_KEY) ||
-                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY) ||
-                 runDashboardTypesPanel.isModified()
+                 confirmationDeletionFromPopup.isSelected != confirmationDeletionFromPopup.getClientProperty(INITIAL_VALUE_KEY)
   }
 
   private fun createSettingsPanel(): JPanel {
@@ -535,8 +528,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     confirmationDeletionFromPopup.isSelected = config.isDeletionFromPopupRequiresConfirmation
     confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
 
-    runDashboardTypesPanel.reset()
-
     for (each in additionalSettings) {
       each.first.reset()
     }
@@ -576,8 +567,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       confirmation.putClientProperty(INITIAL_VALUE_KEY, confirmation.isSelected)
       manager.config.isDeletionFromPopupRequiresConfirmation = confirmationDeletionFromPopup.isSelected
       confirmationDeletionFromPopup.putClientProperty(INITIAL_VALUE_KEY, confirmationDeletionFromPopup.isSelected)
-
-      runDashboardTypesPanel.apply()
       additionalSettings.forEach { it.first.apply() }
 
       manager.setOrder(Comparator.comparingInt(ToIntFunction { settingsToOrder.getInt(it) }), isApplyAdditionalSortByTypeAndGroup = false)
