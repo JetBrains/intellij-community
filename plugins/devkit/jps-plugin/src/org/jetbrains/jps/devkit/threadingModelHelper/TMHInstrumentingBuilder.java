@@ -59,7 +59,7 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      if (TMHInstrumenter.instrument(reader, writer)) {
+      if (TMHInstrumenter.instrument(reader, writer, false)) {
         return new BinaryContent(writer.toByteArray());
       }
     } catch (Throwable e) {

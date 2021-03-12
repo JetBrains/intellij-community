@@ -10,9 +10,16 @@ import java.util.Map;
 import java.util.Set;
 
 public final class TMHInstrumenter {
-  static boolean instrument(ClassReader classReader, ClassVisitor classWriter, Set<TMHAssertionGenerator> generators) {
+  static boolean instrument(ClassReader classReader,
+                            ClassVisitor classWriter,
+                            Set<TMHAssertionGenerator> generators,
+                            boolean generateLineNumbers) {
     AnnotatedMethodsCollector collector = new AnnotatedMethodsCollector(generators);
-    classReader.accept(collector, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+    int options = ClassReader.SKIP_FRAMES;
+    if (!generateLineNumbers) {
+      options |= ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG;
+    }
+    classReader.accept(collector, options);
     if (collector.annotatedMethods.isEmpty()) {
       return false;
     }
@@ -21,13 +28,13 @@ public final class TMHInstrumenter {
     return true;
   }
 
-  public static boolean instrument(ClassReader classReader, ClassVisitor classWriter) {
+  public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
     return instrument(classReader, classWriter, ContainerUtil.immutableSet(
       new TMHAssertionGenerator.AssertEdt(),
       new TMHAssertionGenerator.AssertBackgroundThread(),
       new TMHAssertionGenerator.AssertReadAccess(),
       new TMHAssertionGenerator.AssertWriteAccess()
-    ));
+    ), generateLineNumbers);
   }
 
   private static class AnnotatedMethodsCollector extends ClassVisitor {
