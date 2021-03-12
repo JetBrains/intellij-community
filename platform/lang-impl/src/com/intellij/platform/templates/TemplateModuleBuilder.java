@@ -117,17 +117,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           }
         });
 
-        StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            try {
-              ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
-              modifiableModuleModel.renameModule(module, module.getProject().getName());
-              modifiableModuleModel.commit();
-              fixModuleName(module);
-            }
-            catch (ModuleWithNameAlreadyExists exists) {
-              // do nothing
-            }
+        StartupManager.getInstance(project).registerStartupActivity(() -> {
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              try {
+                ModifiableModuleModel modifiableModuleModel = ModuleManager.getInstance(project).getModifiableModel();
+                modifiableModuleModel.renameModule(module, module.getProject().getName());
+                modifiableModuleModel.commit();
+                fixModuleName(module);
+              }
+              catch (ModuleWithNameAlreadyExists exists) {
+                // do nothing
+              }
+            });
           });
         });
         return module;
