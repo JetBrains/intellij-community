@@ -6,10 +6,12 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.DebuggerContext
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DescriptorWithParentObject
+import com.intellij.debugger.ui.tree.render.NodeRenderer
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
@@ -18,6 +20,7 @@ import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
+import java.util.concurrent.CompletableFuture
 
 class GetterDescriptor(
     private val parentObject: ObjectReference,
@@ -49,11 +52,15 @@ class GetterDescriptor(
 
     override fun getObject() = parentObject
 
-    override fun getDescriptorEvaluation(context: DebuggerContext): PsiExpression = throw EvaluateException("Getter evaluation is not supported")
+    override fun getDescriptorEvaluation(context: DebuggerContext): PsiExpression =
+        throw EvaluateException("Getter evaluation is not supported")
 
     override fun getName() = name
 
     override fun getType(): Type? = getter.safeReturnType()
+
+    override fun getRenderer(debugProcess: DebugProcessImpl?): CompletableFuture<NodeRenderer> =
+        getRenderer(type, debugProcess)
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?) =
         evaluationContext?.debugProcess?.invokeMethod(evaluationContext, parentObject, getter, emptyList())
