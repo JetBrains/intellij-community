@@ -124,12 +124,12 @@ public final class ProgressRunner<R> {
 
   @NotNull
   public ProgressRunner<R> sync() {
-    return new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
+    return isSync ? this : new ProgressRunner<>(myComputation, true, isModal, myThreadToUse, myProgressIndicatorFuture);
   }
 
   @NotNull
   public ProgressRunner<R> modal() {
-    return new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
+    return isModal ? this : new ProgressRunner<>(myComputation, isSync, true, myThreadToUse, myProgressIndicatorFuture);
   }
 
   /**
@@ -139,7 +139,7 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressRunner<R> onThread(@NotNull ThreadToUse thread) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
+    return thread == myThreadToUse ? this : new ProgressRunner<>(myComputation, isSync, isModal, thread, myProgressIndicatorFuture);
   }
 
   /**
@@ -149,7 +149,14 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressRunner<R> withProgress(@NotNull ProgressIndicator progressIndicator) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
+    ProgressIndicator myIndicator;
+    try {
+      myIndicator = myProgressIndicatorFuture.isDone() ? myProgressIndicatorFuture.get() : null;
+    }
+    catch (InterruptedException | ExecutionException e) {
+      myIndicator = null;
+    }
+    return progressIndicator.equals(myIndicator) ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, CompletableFuture.completedFuture(progressIndicator));
   }
 
   /**
@@ -160,7 +167,7 @@ public final class ProgressRunner<R> {
    */
   @NotNull
   public ProgressRunner<R> withProgress(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture) {
-    return new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
+    return myProgressIndicatorFuture == progressIndicatorFuture ? this : new ProgressRunner<>(myComputation, isSync, isModal, myThreadToUse, progressIndicatorFuture);
   }
 
   /**
