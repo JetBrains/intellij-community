@@ -2384,4 +2384,28 @@ class Abc {
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['catch', 'finally']
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNullable() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('?')
+    myFixture.checkResult("import org.jetbrains.annotations.Nullable;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @Nullable String\n" +
+                          "}")
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testInsertNotNull() {
+    myFixture.configureByText("Test.java", "class X {Stri<caret>}")
+    myFixture.completeBasic()
+    myFixture.type('!')
+    myFixture.checkResult("import org.jetbrains.annotations.NotNull;\n" +
+                          "\n" +
+                          "class X {\n" +
+                          "    @NotNull String\n" +
+                          "}")
+  }
 }
