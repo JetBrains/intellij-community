@@ -225,7 +225,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     branchesTreeWithLogPanel.addToLeft(branchesPanelExpandableController.expandControlPanel).addToCenter(branchViewSplitter)
     mainPanel.isFocusCycleRoot = true
     mainPanel.focusTraversalPolicy = BRANCHES_UI_FOCUS_TRAVERSAL_POLICY
-    startLoadingBranches()
   }
 
   fun toggleBranchesPanelVisibility() {
