@@ -442,15 +442,15 @@ public final class AboutPopup {
     }
 
     private static JBRectangle getTextRendererRect() {
-      return new JBRectangle(115, 156, 500, 220);
+      return new JBRectangle(49, 169, 500, 220);
     }
 
     private static JBPoint getCopyrightCoord() {
-      return new JBPoint(115, 395);
+      return new JBPoint(49, 345);
     }
 
     private static JBPoint getCopyIconCoord() {
-      return new JBPoint(66, 156);
+      return new JBPoint(15, 155);
     }
 
     public String getText() {
