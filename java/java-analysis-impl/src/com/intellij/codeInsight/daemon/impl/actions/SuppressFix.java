@@ -112,8 +112,9 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiJavaDocumentedElement container = getContainer(element);
     if (container == null) return;
+    PsiFile file = element.getContainingFile();
     doSuppress(project, container);
-    UndoUtil.markPsiFileForUndo(element.getContainingFile());
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   @NotNull
