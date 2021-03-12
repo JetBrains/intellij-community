@@ -210,7 +210,7 @@ public final class BuildManager implements Disposable {
   };
 
 
-  private class GCRunnable implements Runnable {
+  private static class GCRunnable implements Runnable {
 
     private final Path myBuildSystemDir;
 
@@ -1562,7 +1562,7 @@ public final class BuildManager implements Disposable {
     else {
       hashFunction = s -> wslPath.getDistribution().getWslPath(s).hashCode();
     }
-    return Utils.getDataStorageRoot(getBuildSystemDirectory(project).toFile(), getProjectPath(project), hashFunction);
+    return Utils.getDataStorageRoot(getBuildSystemDirectory(project).toFile(), projectPath, hashFunction);
   }
 
   private static File getUsageFile(@NotNull File projectSystemDir) {
