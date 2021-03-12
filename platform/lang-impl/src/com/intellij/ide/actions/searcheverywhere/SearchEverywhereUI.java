@@ -80,6 +80,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -1156,12 +1157,14 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       final AtomicBoolean firstPartAdded = new AtomicBoolean();
+      final AtomicInteger actionsPrinted = new AtomicInteger(0);
       if (showResetScope) {
         ActionListener resetScopeListener = e -> myHeader.resetScope();
         emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.reset.scope"));
         emptyStatus.appendText(" "+StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, resetScopeListener);
         firstPartAdded.set(true);
+        actionsPrinted.incrementAndGet();
       }
 
       if (showResetFilter) {
@@ -1174,6 +1177,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         emptyStatus.appendText(firstPartAdded.get() ? Strings.toLowerCase(resetFilterMessage) : resetFilterMessage,
                                SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, clearFiltersAction);
         firstPartAdded.set(true);
+
+        if (actionsPrinted.incrementAndGet() >= 2) {
+          emptyStatus.appendLine("");
+          actionsPrinted.set(0);
+        }
       }
 
       if (showFindInFilesAction) {
@@ -1192,6 +1200,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             if (!StringUtil.isEmpty(findInFilesShortcut)) {
               emptyStatus.appendText(" (" + findInFilesShortcut + ")");
             }
+
+            if (actionsPrinted.incrementAndGet() >= 2) {
+              emptyStatus.appendLine("");
+              actionsPrinted.set(0);
+            }
+
             emptyStatus.appendText(" " + IdeBundle.message("searcheverywhere.to.perform.fulltext.search"));
           });
       }
