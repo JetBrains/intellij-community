@@ -6,6 +6,6 @@ class HelperVariable {
               t +
               "that: " +
               t;
-      System.out.println(sb);
+    System.out.println(sb);
   }
 }

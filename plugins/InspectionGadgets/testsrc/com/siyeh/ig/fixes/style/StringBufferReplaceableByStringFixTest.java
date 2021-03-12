@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -73,6 +73,8 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testJoiner() { doTestFor("StringJoiner"); }
   public void testJoiner2() { doTestFor("StringJoiner"); }
   public void testCharacterPlusAppend() { doTestFor("StringBuilder"); }
+  public void testSideEffect() { doTestFor("StringBuilder"); }
+  public void testSideEffect2() { doTestFor("StringBuilder"); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
