@@ -1149,9 +1149,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       boolean showFindInFilesAction = myHeader.getSelectedTab().getContributors().stream().anyMatch(contributor -> contributor.showInFindResults());
       boolean showResetScope = myHeader.canResetScope();
       boolean showResetFilter = myHeader.getSelectedTab().canClearFilter();
-      boolean multilineText = showFindInFilesAction || showResetScope || showResetFilter;
+      boolean anyActionAllowed = showFindInFilesAction || showResetScope || showResetFilter;
 
-      if (multilineText) {
+      if (anyActionAllowed) {
         emptyStatus.appendText(".").appendLine("").appendLine("");
       }
 
@@ -1192,10 +1192,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             if (!StringUtil.isEmpty(findInFilesShortcut)) {
               emptyStatus.appendText(" (" + findInFilesShortcut + ")");
             }
+            emptyStatus.appendText(" " + IdeBundle.message("searcheverywhere.to.perform.fulltext.search"));
           });
       }
 
-      if (multilineText) {
+      if (anyActionAllowed) {
         emptyStatus.appendText(".");
       }
     }
