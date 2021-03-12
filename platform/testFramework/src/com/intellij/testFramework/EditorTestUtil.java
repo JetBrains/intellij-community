@@ -32,10 +32,7 @@ import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -494,34 +491,47 @@ public final class EditorTestUtil {
   }
 
   private static String getActualStateAsTestTemplate(@NotNull Editor editor) {
-    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
-    List<Caret> allCarets = new ArrayList<>(editor.getCaretModel().getAllCarets());
-    for (int i = allCarets.size() - 1; i >= 0; i--) {
-      Caret caret = allCarets.get(i);
+    ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+
+    // There's no guarantee on the order the carets are enumerated,
+    // and in any case we should be prepared that something might go wrong.
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
       boolean hasSelection = caret.hasSelection();
-      if (hasSelection) sb.insert(caret.getSelectionEnd(), SELECTION_END_TAG);
-      sb.insert(caret.getOffset(), CARET_TAG);
-      if (hasSelection) sb.insert(caret.getSelectionStart(), SELECTION_START_TAG);
+      if (hasSelection) addMark(marks, caret.getSelectionStart(), SELECTION_START_TAG);
+      addMark(marks, caret.getOffset(), CARET_TAG);
+      if (hasSelection) addMark(marks, caret.getSelectionEnd(), SELECTION_END_TAG);
     }
-    return sb.toString();
+    return insertMarks(marks, editor.getDocument().getCharsSequence());
   }
 
   private static String getExpectedStateAsTestTemplate(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
-    StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
-    for (int i = carets.size() - 1; i >= 0; i--) {
-      CaretInfo expected = carets.get(i);
+    ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+
+    // The expected state is properly sorted already, so it doesn't require extra sorting,
+    // but for sake of consistency we use the same approach as for the actual caret state.
+    for (CaretInfo expected : carets) {
       LogicalPosition position = expected.position;
       TextRange selection = expected.selection;
 
-      ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
-      if (selection != null) marks.add(Pair.create(selection.getEndOffset(), SELECTION_END_TAG));
-      if (position != null) marks.add(Pair.create(editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG));
-      if (selection != null) marks.add(Pair.create(selection.getStartOffset(), SELECTION_START_TAG));
-      marks.sort(Comparator.comparingInt((Pair<Integer, String> mark) -> mark.first).reversed());
+      if (selection != null) addMark(marks, selection.getStartOffset(), SELECTION_START_TAG);
+      if (position != null) addMark(marks, editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG);
+      if (selection != null) addMark(marks, selection.getEndOffset(), SELECTION_END_TAG);
+    }
+    return insertMarks(marks, editor.getDocument().getCharsSequence());
+  }
 
-      for (Pair<Integer, String> mark : marks) {
-        sb.insert(mark.first, mark.second);
-      }
+  private static void addMark(@NotNull ArrayList<Pair<Integer, String>> marks, int offset, @NotNull String s) {
+    Pair<Integer, String> mark = Pair.create(offset, s);
+    marks.add(mark);
+  }
+
+  private static @NotNull String insertMarks(@NotNull ArrayList<Pair<Integer, String>> marks,
+                                             @NotNull @NlsSafe CharSequence text) {
+    StringBuilder sb = new StringBuilder(text);
+    marks.sort(Comparator.comparingInt(mark -> mark.first));
+    for (int i = marks.size() - 1; i >= 0; i--) {
+      Pair<Integer, String> mark = marks.get(i);
+      sb.insert(mark.first, mark.second);
     }
     return sb.toString();
   }
