@@ -975,7 +975,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (target || variableNode == null) return false;
         return isApplicableMinCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.MAXIMUM_UNLIMITED:
-        if (variableNode == null) return false;
+        if (target || variableNode == null) return false;
         return isApplicableMaxCount(variableNode) || isApplicableMinMaxCount(variableNode);
       case UIUtil.REFERENCE:
         if (completePattern || variableNode == null) return false;

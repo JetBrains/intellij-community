@@ -151,6 +151,7 @@ public class FilterPanel implements FilterTable {
     }
     else if (filter.hasFilter()) {
       filter.clearFilter();
+      myConstraintChangedCallback.run();
     }
   }
 
