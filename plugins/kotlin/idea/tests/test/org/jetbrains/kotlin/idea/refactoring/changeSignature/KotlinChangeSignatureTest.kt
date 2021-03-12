@@ -290,7 +290,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
 
         if (withError) {
-            TestCase.assertNotNull(exception)
+            TestCase.assertNotNull("No errors found", exception)
         } else {
             exception?.let { throw it }
         }
