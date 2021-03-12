@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -88,6 +89,30 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testRequiresWriteLockAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
+  }
+
+  public void testLineNumber() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenBodyHasTwoStatements() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8, 9), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenEmptyBody() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 7), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenOtherMethodBefore() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 12, 12), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 
   private void doEdtTest() throws Exception {
