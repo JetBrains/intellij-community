@@ -43,8 +43,7 @@ public class JBCefJSQueryOSRTest {
     TestScaleHelper.restoreProperties();
   }
 
-  // [tav] todo: depends on JBR-3175
-  //@Test
+  @Test
   public void test1() {
     JBCefClient client = JBCefApp.getInstance().createClient();
     client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
