@@ -782,7 +782,7 @@ class JavaToJKTreeBuilder constructor(
             val plainAnnotations = annotations.mapNotNull { annotation ->
                 when {
                     annotation !is PsiAnnotation -> null
-                    annotation.qualifiedName == DEPRECATED_ANNOTAION_FQ_NAME && deprecatedAnnotation != null -> null
+                    annotation.qualifiedName == DEPRECATED_ANNOTATION_FQ_NAME && deprecatedAnnotation != null -> null
                     AnnotationTargetUtil.isTypeAnnotation(annotation) -> null
                     else -> annotation.toJK()
                 }
@@ -1076,12 +1076,24 @@ class JavaToJKTreeBuilder constructor(
 
     private fun PsiElement.throwCanNotConvertError(message: String? = null): Nothing {
         throw KotlinExceptionWithAttachments("Cannot convert the following Java element ${this::class}" + message?.let { " due to `$it`" })
-            .withAttachment("elementText", text)
-            .withAttachment("file", containingFile?.text)
+            .also {
+                try {
+                    it.withAttachment("elementText", text)
+                } catch (e: Exception) {
+                    it.withAttachment("elementText.error", e.message)
+                }
+            }
+            .also {
+                try {
+                    it.withAttachment("file", containingFile?.text)
+                } catch (e: Exception) {
+                    it.withAttachment("file.error", e.message)
+                }
+            }
     }
 
     companion object {
-        private const val DEPRECATED_ANNOTAION_FQ_NAME = "java.lang.Deprecated"
+        private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
     }
 }
 
