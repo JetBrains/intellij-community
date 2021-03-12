@@ -446,8 +446,8 @@ public final class EditorTestUtil {
     }
     catch (AssertionError e) {
       try {
-        assertEquals(e.getMessage(), getExpectedStateAsTestTemplate(editor, caretState.carets),
-                     getActualStateAsTestTemplate(editor));
+        assertEquals(e.getMessage(), CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets),
+                     CaretAndSelectionMarkup.renderActualState(editor));
       }
       catch (AssertionError exception) {
         exception.addSuppressed(e);
@@ -490,50 +490,53 @@ public final class EditorTestUtil {
     }
   }
 
-  private static String getActualStateAsTestTemplate(@NotNull Editor editor) {
-    ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+  private static class CaretAndSelectionMarkup {
+    private final @NotNull ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
 
-    // There's no guarantee on the order the carets are enumerated,
-    // and in any case we should be prepared that something might go wrong.
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      boolean hasSelection = caret.hasSelection();
-      if (hasSelection) addMark(marks, caret.getSelectionStart(), SELECTION_START_TAG);
-      addMark(marks, caret.getOffset(), CARET_TAG);
-      if (hasSelection) addMark(marks, caret.getSelectionEnd(), SELECTION_END_TAG);
+    static @NotNull String renderActualState(@NotNull Editor editor) {
+      CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
+      // There's no guarantee on the order the carets are enumerated,
+      // and in any case we should be prepared that something might go wrong.
+      for (Caret caret : editor.getCaretModel().getAllCarets()) {
+        boolean hasSelection = caret.hasSelection();
+        if (hasSelection) markup.addMark(caret.getSelectionStart(), SELECTION_START_TAG);
+        markup.addMark(caret.getOffset(), CARET_TAG);
+        if (hasSelection) markup.addMark(caret.getSelectionEnd(), SELECTION_END_TAG);
+      }
+      return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
-    return insertMarks(marks, editor.getDocument().getCharsSequence());
-  }
 
-  private static String getExpectedStateAsTestTemplate(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
-    ArrayList<Pair<Integer, String>> marks = new ArrayList<>();
+    static @NotNull String renderExpectedState(@NotNull Editor editor, @NotNull List<CaretInfo> carets) {
+      CaretAndSelectionMarkup markup = new CaretAndSelectionMarkup();
+      // The expected state is properly sorted already, so it doesn't require extra sorting,
+      // but for sake of consistency we use the same approach as for the actual caret state.
+      for (CaretInfo expected : carets) {
+        LogicalPosition position = expected.position;
+        TextRange selection = expected.selection;
 
-    // The expected state is properly sorted already, so it doesn't require extra sorting,
-    // but for sake of consistency we use the same approach as for the actual caret state.
-    for (CaretInfo expected : carets) {
-      LogicalPosition position = expected.position;
-      TextRange selection = expected.selection;
-
-      if (selection != null) addMark(marks, selection.getStartOffset(), SELECTION_START_TAG);
-      if (position != null) addMark(marks, editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG);
-      if (selection != null) addMark(marks, selection.getEndOffset(), SELECTION_END_TAG);
+        if (selection != null) markup.addMark(selection.getStartOffset(), SELECTION_START_TAG);
+        if (position != null) markup.addMark(editor.getDocument().getLineStartOffset(position.line) + position.column, CARET_TAG);
+        if (selection != null) markup.addMark(selection.getEndOffset(), SELECTION_END_TAG);
+      }
+      return markup.insertMarks(editor.getDocument().getCharsSequence());
     }
-    return insertMarks(marks, editor.getDocument().getCharsSequence());
-  }
 
-  private static void addMark(@NotNull ArrayList<Pair<Integer, String>> marks, int offset, @NotNull String s) {
-    Pair<Integer, String> mark = Pair.create(offset, s);
-    marks.add(mark);
-  }
-
-  private static @NotNull String insertMarks(@NotNull ArrayList<Pair<Integer, String>> marks,
-                                             @NotNull @NlsSafe CharSequence text) {
-    StringBuilder sb = new StringBuilder(text);
-    marks.sort(Comparator.comparingInt(mark -> mark.first));
-    for (int i = marks.size() - 1; i >= 0; i--) {
-      Pair<Integer, String> mark = marks.get(i);
-      sb.insert(mark.first, mark.second);
+    private void addMark(int offset, @NotNull String s) {
+      Pair<Integer, String> mark = Pair.create(offset, s);
+      marks.add(mark);
     }
-    return sb.toString();
+
+    private @NotNull String insertMarks(@NotNull @NlsSafe CharSequence text) {
+      StringBuilder sb = new StringBuilder(text);
+
+      marks.sort(Comparator.comparingInt(mark -> mark.first));
+      for (int i = marks.size() - 1; i >= 0; i--) {
+        Pair<Integer, String> mark = marks.get(i);
+        sb.insert(mark.first, mark.second);
+      }
+
+      return sb.toString();
+    }
   }
 
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {
