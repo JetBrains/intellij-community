@@ -215,7 +215,7 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
 
     @TestMetadata("InMethodVarargParameter.kt")
     public void testInMethodVarargParameter() throws Exception {
-        runTest("idea/testData/resolve/references/InMethodVarargParameter.kt");
+        runTest("testData/resolve/references/InMethodVarargParameter.kt");
     }
 
     @TestMetadata("InObjectClassObject.kt")
@@ -230,12 +230,12 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
 
     @TestMetadata("InVaragReferenceInFunctionBody.kt")
     public void testInVaragReferenceInFunctionBody() throws Exception {
-        runTest("idea/testData/resolve/references/InVaragReferenceInFunctionBody.kt");
+        runTest("testData/resolve/references/InVaragReferenceInFunctionBody.kt");
     }
 
     @TestMetadata("InVaragReferenceInNamedParameter.kt")
     public void testInVaragReferenceInNamedParameter() throws Exception {
-        runTest("idea/testData/resolve/references/InVaragReferenceInNamedParameter.kt");
+        runTest("testData/resolve/references/InVaragReferenceInNamedParameter.kt");
     }
 
     @TestMetadata("JavaAnnotationParameter.kt")
