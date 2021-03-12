@@ -120,6 +120,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     tree.toggleGrouping(key, state)
   }
 
+  internal fun isGroupingEnabled(key: GroupingKey) = tree.isGroupingEnabled(key)
+
   internal fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
     return tree.getSelectedRepositories(branchInfo)
   }
@@ -283,6 +285,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   fun refreshTree() {
     tree.refreshTree()
+  }
+
+  fun refreshTreeModel() {
+    tree.refreshNodeDescriptorsModel()
   }
 
   fun startLoadingBranches() {

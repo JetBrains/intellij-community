@@ -205,6 +205,8 @@ internal class FilteringBranchesTree(project: Project,
     refreshTree()
   }
 
+  fun isGroupingEnabled(key: GroupingKey) = groupingConfig[key] == true
+
   init {
     runInEdt {
       PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
@@ -349,7 +351,7 @@ internal class FilteringBranchesTree(project: Project,
   }
 
   fun rebuildTree(initial: Boolean): Boolean {
-    val rebuilded = buildTreeNodesIfNeeded()
+    val rebuilded = uiController.reloadBranches()
     val treeState = project.service<BranchesTreeStateHolder>()
     if (!initial) {
       treeState.createNewState()
@@ -374,23 +376,7 @@ internal class FilteringBranchesTree(project: Project,
     treeState.applyStateToTree()
   }
 
-  private fun buildTreeNodesIfNeeded(): Boolean {
-    with(uiController) {
-      val forceReload = groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true
-      val changed = reloadBranches(forceReload)
-      if (!changed) return false
-
-      if (showOnlyMy) {
-        updateBranchesIsMyState()
-      }
-      else {
-        refreshNodeDescriptorsModel()
-      }
-      return changed
-    }
-  }
-
-  private fun refreshNodeDescriptorsModel() {
+  fun refreshNodeDescriptorsModel() {
     with(uiController) {
       nodeDescriptorsModel.clear()
 

@@ -66,7 +66,21 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)
 
-  fun reloadBranches(force: Boolean): Boolean {
+  fun reloadBranches(): Boolean {
+    val forceReload = ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+    val changed = reloadBranches(forceReload)
+    if (!changed) return false
+
+    if (showOnlyMy) {
+      updateBranchesIsMyState()
+    }
+    else {
+      ui.refreshTreeModel()
+    }
+    return changed
+  }
+
+  private fun reloadBranches(force: Boolean): Boolean {
     ui.startLoadingBranches()
 
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project)
@@ -102,7 +116,7 @@ internal class BranchesDashboardController(private val project: Project,
     ui.refreshTree()
   }
 
-  fun updateBranchesIsMyState() {
+  private fun updateBranchesIsMyState() {
     VcsProjectLog.runWhenLogIsReady(project) {
       val allBranches = localBranches + remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
