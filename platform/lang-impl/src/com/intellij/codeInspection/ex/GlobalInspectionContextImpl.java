@@ -834,10 +834,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ProgressManager.getInstance().run(task);
   }
 
-  private @NotNull CleanupProblems findProblems(@NotNull AnalysisScope scope,
-                                                @NotNull InspectionProfile profile,
-                                                @NotNull ProgressIndicator progressIndicator,
-                                                @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
+  public @NotNull CleanupProblems findProblems(@NotNull AnalysisScope scope,
+                                               @NotNull InspectionProfile profile,
+                                               @NotNull ProgressIndicator progressIndicator,
+                                               @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     progressIndicator.setIndeterminate(false);
@@ -934,7 +934,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @NotNull CleanupProblems problems,
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable) {
-    if (problems.files.isEmpty()) {
+    if (problems.getFiles().isEmpty()) {
       if (commandName != null) {
         NOTIFICATION_GROUP.createNotification(InspectionsBundle.message(scope.isIncludeTestSource() ? "inspection.no.problems.message"
                                                                                                     : "inspection.no.problems.no.tests.message",
@@ -947,9 +947,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       return;
     }
 
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.files)) return;
-    CleanupInspectionUtil.getInstance()
-      .applyFixesNoSort(getProject(), LangBundle.message("code.cleanup"), problems.problemDescriptors, null, false, problems.isGlobalScope);
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(problems.getFiles())) return;
+    CleanupInspectionUtil.getInstance().applyFixesNoSort(
+      getProject(), LangBundle.message("code.cleanup"), problems.getProblemDescriptors(), null, false, problems.isGlobalScope());
     if (postRunnable != null) {
       postRunnable.run();
     }
@@ -996,17 +996,5 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         throw new RuntimeException(e);
       }
     });
-  }
-
-  private static class CleanupProblems {
-    private final @NotNull Set<PsiFile> files;
-    private final @NotNull List<ProblemDescriptor> problemDescriptors;
-    private final boolean isGlobalScope;
-
-    private CleanupProblems(@NotNull Set<PsiFile> files, @NotNull List<ProblemDescriptor> problemDescriptors, boolean isGlobalScope) {
-      this.files = files;
-      this.problemDescriptors = problemDescriptors;
-      this.isGlobalScope = isGlobalScope;
-    }
   }
 }
