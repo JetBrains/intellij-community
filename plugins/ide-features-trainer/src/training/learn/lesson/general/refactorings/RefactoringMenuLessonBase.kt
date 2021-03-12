@@ -8,6 +8,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
+import training.util.adaptToNotNativeLocalization
 import javax.swing.JList
 
 abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
@@ -18,20 +19,27 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       restoreIfModifiedOrMoved()
       LessonsBundle.message("refactoring.menu.show.refactoring.list", action(it))
     }
-    task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
-      text(LessonsBundle.message("refactoring.menu.introduce.parameter", strong(it)))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
-        ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
-      }
-      restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
-      test {
-        type("pa")
+
+    if (!adaptToNotNativeLocalization) {
+      task(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()) {
+        text(LessonsBundle.message("refactoring.menu.introduce.parameter.eng", strong(it)))
+        triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { ui: JList<*> ->
+          ui.model.size > 0 && ui.model.getElementAt(0).toString().contains(it)
+        }
+        restoreAfterStateBecomeFalse { focusOwner !is JBList<*> }
+        test {
+          type("pa")
+        }
       }
     }
 
     task("IntroduceParameter") {
-      text(LessonsBundle.message("refactoring.menu.start.refactoring",
-                                 action("EditorChooseLookupItem"), LessonUtil.actionName(it)))
+      val message = if (adaptToNotNativeLocalization) {
+        LessonsBundle.message("refactoring.menu.introduce.parameter",
+                              strong(ActionsBundle.message("action.IntroduceParameter.text").dropMnemonic()), LessonUtil.rawEnter())
+      }
+      else LessonsBundle.message("refactoring.menu.start.refactoring", action("EditorChooseLookupItem"), LessonUtil.actionName(it))
+      text(message)
       trigger(it)
       stateCheck { hasInplaceRename() }
       restoreState(delayMillis = defaultRestoreDelay, restoreId = showPopupTaskId) { focusOwner !is JBList<*> }

@@ -2,6 +2,7 @@
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -35,6 +36,7 @@ import java.awt.Component
 import java.awt.Desktop
 import java.awt.Dimension
 import java.net.URI
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.swing.*
@@ -76,6 +78,9 @@ val featureTrainerVersion: String by lazy {
   val featureTrainerPluginId = PluginManagerCore.getPluginByClassName(CourseManager::class.java.name)
   PluginManagerCore.getPlugin(featureTrainerPluginId)?.version ?: "UNKNOWN"
 }
+
+val adaptToNotNativeLocalization: Boolean
+  get() = Registry.`is`("ift.adapt.to.not.native.localization") || DynamicBundle.getLocale() != Locale.ENGLISH
 
 fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
