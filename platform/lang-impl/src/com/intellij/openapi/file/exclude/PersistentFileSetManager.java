@@ -2,6 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileTypes.FileType;
@@ -56,9 +57,12 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
     return myMap.get(file);
   }
 
-  protected void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
-    WriteAction.run(() -> CachedFileType.clearCache());
-    FileContentUtilCore.reparseFiles(files);
+  private static void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
+    // later because component load could be performed in background
+    ApplicationManager.getApplication().invokeLater(() -> {
+      WriteAction.run(() -> CachedFileType.clearCache());
+      FileContentUtilCore.reparseFiles(files);
+    });
   }
 
   @NotNull

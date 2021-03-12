@@ -13,8 +13,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-
 /**
  * Storage for file types user selected in "Override File Type" action
  */
@@ -27,12 +25,6 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
 
   public static OverrideFileTypeManager getInstance() {
     return ServiceManager.getService(OverrideFileTypeManager.class);
-  }
-
-  @Override
-  protected void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
-    // later to avoid reparse during service init which led to recursive initialization
-    ApplicationManager.getApplication().invokeLater(() -> super.onFileSettingsChanged(files));
   }
 
   @TestOnly

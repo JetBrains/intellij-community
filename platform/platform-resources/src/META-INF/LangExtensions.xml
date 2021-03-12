@@ -403,7 +403,7 @@
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager" preload="true"/>
     <fileTypeOverrider implementation="com.intellij.openapi.file.exclude.UserFileTypeOverrider"/>
 
     <fileTypeDetector implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$Detector"/>
