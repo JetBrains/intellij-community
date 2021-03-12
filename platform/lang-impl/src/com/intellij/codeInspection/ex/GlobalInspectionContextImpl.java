@@ -226,10 +226,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
     if (!(myView == null ? newView : myView).hasProblems()) {
       int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
-      NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+      NOTIFICATION_GROUP.createNotification(InspectionsBundle.message(scope.isIncludeTestSource() ? "inspection.no.problems.message"
+                                                                                                  : "inspection.no.problems.no.tests.message",
                                                                       totalFiles,
-                                                                      scope.getShortenName()),
-                                            MessageType.INFO).notify(getProject());
+                                                                      scope.getShortenName()), MessageType.INFO).notify(getProject());
       close(true);
       if (newView != null) {
         Disposer.dispose(newView);
@@ -936,7 +936,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @Nullable Runnable postRunnable) {
     if (problems.files.isEmpty()) {
       if (commandName != null) {
-        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()), MessageType.INFO).notify(getProject());
+        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message(scope.isIncludeTestSource() ? "inspection.no.problems.message"
+                                                                                                    : "inspection.no.problems.no.tests.message",
+                                                                        scope.getFileCount(),
+                                                                        scope.getDisplayName()), MessageType.INFO).notify(getProject());
       }
       if (postRunnable != null) {
         postRunnable.run();
