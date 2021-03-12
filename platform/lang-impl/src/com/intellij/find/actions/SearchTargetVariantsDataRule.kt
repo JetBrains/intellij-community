@@ -35,7 +35,7 @@ class SearchTargetVariantsDataRule : GetDataRule {
         catch (ignore: IndexNotReadyException) { }
       }
     }
-    else {
+    else if (usageTargets.isNotEmpty()) {
       val target: UsageTarget = usageTargets[0]
       allTargets += if (target is PsiElement2UsageTargetAdapter) {
         PsiTargetVariant(target.element)
