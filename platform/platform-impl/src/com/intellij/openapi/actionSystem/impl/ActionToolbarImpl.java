@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
@@ -1128,6 +1130,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled)
         .onSuccess(actions -> actionsUpdated(forcedActual, actions))
+        .onError(ex -> {
+          if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
+            LOG.error(ex);
+          }
+        })
         .onProcessed(__ -> myLastUpdate = null);
     }
     else {
