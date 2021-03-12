@@ -442,6 +442,7 @@ public class ExceptionWorker {
     }
 
     private @Nullable PsiElement getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+      if (!file.isValid()) return null;
       PsiElement element = file.findElementAt(lineStart);
       List<PsiElement> candidates = new ArrayList<>();
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
