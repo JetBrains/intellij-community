@@ -21,7 +21,7 @@ class RestPythonPreviewProvider : RestPreviewProvider() {
     val output = PySdkUtil.getProcessOutput(commandLine, virtualFile.parent.path, null, 5000,
                                             text.toByteArray(Charsets.UTF_8), false)
     return if (output.isCancelled || output.isTimeout)
-      Pair("", "Failed to generate html.")
-    else Pair(output.stdout, "<h3>Error output:</h3>" + output.stderr)
+      Pair("", PythonRestBundle.message("python.rest.failed.to.generate.html"))
+    else Pair(output.stdout, "<h3>" + PythonRestBundle.message("python.rest.error.output") + "</h3>" + output.stderr)
   }
 }
