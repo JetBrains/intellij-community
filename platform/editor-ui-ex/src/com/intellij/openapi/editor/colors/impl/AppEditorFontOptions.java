@@ -4,7 +4,8 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
+import com.intellij.openapi.components.ReportValue;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,11 +23,13 @@ import java.util.Arrays;
 import java.util.List;
 
 @State(name = "DefaultFont", storages = @Storage("editor.xml"))
-public final class AppEditorFontOptions implements PersistentStateComponent<AppEditorFontOptions.PersistentFontPreferences> {
+public final class AppEditorFontOptions implements
+                                        PersistentStateComponentWithModificationTracker<AppEditorFontOptions.PersistentFontPreferences> {
   private static final Logger LOG = Logger.getInstance(AppEditorFontOptions.class);
   public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
 
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
+  private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
   public AppEditorFontOptions() {
     Application app = ApplicationManager.getApplication();
@@ -34,14 +38,27 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
     }
   }
 
+  @Override
+  public long getStateModificationCount() {
+    return myTracker.getModificationCount();
+  }
+
   public static class PersistentFontPreferences {
+    @ReportValue
     public int FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE;
+    @ReportValue
     public @NlsSafe @NotNull String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
+    @ReportValue
     public @NlsSafe @Nullable String FONT_REGULAR_SUB_FAMILY;
+    @ReportValue
     public @NlsSafe @Nullable String FONT_BOLD_SUB_FAMILY;
+    @ReportValue
     public float FONT_SCALE = 1.0f;
+    @ReportValue
     public float LINE_SPACING = FontPreferences.DEFAULT_LINE_SPACING;
+    @ReportValue
     public boolean USE_LIGATURES = false;
+    @ReportValue
     public @NlsSafe @Nullable String SECONDARY_FONT_FAMILY;
 
     /**
@@ -110,6 +127,11 @@ public final class AppEditorFontOptions implements PersistentStateComponent<AppE
 
   public static void initDefaults(@NotNull ModifiableFontPreferences fontPreferences) {
     copyState(PersistentFontPreferences.getDefaultState(), fontPreferences);
+  }
+
+  public void update(@NotNull FontPreferences newPreferences) {
+    newPreferences.copyTo(myFontPreferences);
+    myTracker.incModificationCount();
   }
 
   public @NotNull FontPreferences getFontPreferences() {
