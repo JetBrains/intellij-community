@@ -1225,7 +1225,7 @@ class DistributionJARsBuilder {
       def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
       if (toPublish) {
         //JetProfile uploaded broken date for the release version of PDB plugin, so we have to fix for 203 branch
-        if (releaseVersion == "2020300" && text.contains("code=\"PDB\"")) {
+        if (releaseVersion == "2020300" && (text.contains("code=\"PDB\"") || text.contains("code=\"PSI\""))) {
           releaseDate = "20200922"
         }
       }
