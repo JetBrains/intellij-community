@@ -318,10 +318,8 @@ internal object BranchesDashboardActions {
         val branchOne = branches.elementAt(0)
         val branchTwo = branches.elementAt(1)
         val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
-        val commonRepositories =
-          with(controller) { getSelectedRepositories(branchOne) intersect getSelectedRepositories(branchTwo) }
 
-        if (commonRepositories.isEmpty()) {
+        if (branchOne.branchName == branchTwo.branchName || controller.commonRepositories(branchOne, branchTwo).isEmpty()) {
           e.presentation.isEnabled = false
           e.presentation.description = message("action.Git.Compare.Selected.description.disabled")
         }
@@ -333,10 +331,13 @@ internal object BranchesDashboardActions {
       val branches = e.getData(GIT_BRANCHES)!!
       val branchOne = branches.elementAt(0)
       val branchTwo = branches.elementAt(1)
-      val commonRepositories =
-        with(controller) { getSelectedRepositories(branchOne) intersect getSelectedRepositories(branchTwo) }
+      val commonRepositories = controller.commonRepositories(branchOne, branchTwo)
 
       GitBrancher.getInstance(e.project!!).compareAny(branchOne.branchName, branchTwo.branchName, commonRepositories.toList())
+    }
+
+    private fun BranchesDashboardController.commonRepositories(branchOne: BranchInfo, branchTwo: BranchInfo): Collection<GitRepository>{
+      return getSelectedRepositories(branchOne) intersect getSelectedRepositories(branchTwo)
     }
   }
 
