@@ -31,7 +31,7 @@ import java.util.concurrent.Future
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 
-data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
+internal data class TaskProperties(var hasDetection: Boolean = false, var messagesNumber: Int = 0)
 
 internal object LessonExecutorUtil {
   /** This task is a real task with some event required and corresponding text. Used for progress indication. */
@@ -147,6 +147,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
   var hasDetection = false
 
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
+    if (useBalloon?.duplicateMessage == false) return
     textCount++
   }
 
@@ -204,6 +205,7 @@ private class ExtractTaskPropertiesContext(override val project: Project) : Task
 private class ExtractTextTaskContext(override val project: Project) : TaskContext() {
   val messages = ArrayList<String>()
   override fun text(text: String, useBalloon: LearningBalloonConfig?) {
+    if (useBalloon?.duplicateMessage == false) return
     messages.add(text)
   }
 }
