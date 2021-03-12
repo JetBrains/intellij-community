@@ -417,7 +417,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addParameter(createNewParameter(defaultValueForCall = KtPsiFactory(project).createExpression("42")))
     }
 
-    fun testCaretAtReferenceAsValueParameter() = doTestConflict { }
+    fun testCaretAtReferenceAsValueParameter() = doTestConflict()
 
     fun testSynthesized() = doTestConflict()
 
