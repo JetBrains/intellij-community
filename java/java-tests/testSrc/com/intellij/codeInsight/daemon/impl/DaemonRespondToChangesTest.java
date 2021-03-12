@@ -2006,10 +2006,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testChangingSettingsHasImmediateEffectOnOpenedEditor() {
     executeWithReparseDelay(0, () -> {
-      configureByText(JavaFileType.INSTANCE, "class C { \n" +
-                                         "  void m() {\n" +
-                                         "  } \n" +
-                                         "}");
+      @Language("JAVA")
+      String text = "class C { \n" +
+                    "  void m() {\n" +
+                    "  } \n" +
+                    "}";
+      configureByText(JavaFileType.INSTANCE, text);
       CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
       waitForDaemon();
       checkFoldingState("[FoldRegion -(22:27), placeholder='{}']");
