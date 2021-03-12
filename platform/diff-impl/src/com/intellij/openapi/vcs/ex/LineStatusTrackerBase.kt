@@ -20,7 +20,6 @@ import com.intellij.diff.util.DiffUtil.executeWriteCommand
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteThread
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.undo.UndoUtil
@@ -129,7 +128,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
 
     if (!ApplicationManager.getApplication().isDispatchThread || LOCK.isHeldByCurrentThread) {
-      WriteThread.submit(runnable)
+      ApplicationManager.getApplication().invokeLater(runnable)
     }
     else {
       runnable.run()
