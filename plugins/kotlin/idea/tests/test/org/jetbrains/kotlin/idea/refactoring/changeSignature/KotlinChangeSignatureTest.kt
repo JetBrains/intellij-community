@@ -305,12 +305,29 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         type: KotlinTypeInfo = kotlinIntType,
         callableDescriptor: CallableDescriptor = baseDescriptor,
         defaultValueForCall: KtExpression? = null,
+        defaultValueAsDefaultParameter: Boolean = false,
     ): KotlinParameterInfo = KotlinParameterInfo(
         callableDescriptor = callableDescriptor,
         name = name,
         originalTypeInfo = type,
         defaultValueForCall = defaultValueForCall,
+        defaultValueAsDefaultParameter = defaultValueAsDefaultParameter,
     )
+
+    private fun KotlinMutableMethodDescriptor.createNewIntParameter(
+        defaultValueForCall: KtExpression? = null,
+        withDefaultValue: Boolean = false,
+    ): KotlinParameterInfo = createNewParameter(
+        name = "i",
+        type = kotlinIntType,
+        callableDescriptor = baseDescriptor,
+        defaultValueForCall = defaultValueForCall,
+    ).apply { 
+        if (withDefaultValue) {
+            defaultValueAsDefaultParameter = true
+            this.defaultValueForCall = defaultValueForCall ?: kotlinDefaultIntValue
+        }
+    }
 
     private fun doTestWithDescriptorModification(modificator: KotlinMutableMethodDescriptor.() -> Unit) {
         configureFiles()
@@ -357,6 +374,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     private val kotlinIntType get() = KotlinTypeInfo(true, BUILT_INS.intType)
     private val kotlinAnyType get() = KotlinTypeInfo(false, BUILT_INS.anyType)
     private val kotlinStringType get() = KotlinTypeInfo(false, BUILT_INS.stringType)
+    private val kotlinDefaultIntValue: KtExpression get() = KtPsiFactory(project).createExpression("42")
 
     private fun KotlinChangeInfo.createKotlinStringParameter(defaultValueForCall: KtExpression? = null) = createKotlinParameter(
         name = "s",
@@ -446,11 +464,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     )
 
     fun testAddParameterToInvokeFunction() = doTestWithDescriptorModification {
-        addParameter(createNewParameter(defaultValueForCall = KtPsiFactory(project).createExpression("42")))
+        addParameter(createNewIntParameter(defaultValueForCall = kotlinDefaultIntValue))
     }
 
     fun testAddParameterToInvokeFunctionFromObject() = doTestWithDescriptorModification {
-        addParameter(createNewParameter(defaultValueForCall = KtPsiFactory(project).createExpression("42")))
+        addParameter(createNewIntParameter(defaultValueForCall = kotlinDefaultIntValue))
     }
 
     fun testCaretAtReferenceAsValueParameter() = doTestConflict()
@@ -504,22 +522,22 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf("a.b.c.Dep"),
         )
 
-        addParameter(createNewParameter(defaultValueForCall = expression))
+        addParameter(createNewIntParameter(defaultValueForCall = expression))
     }
 
     fun testAddFunctionParameterWithDefaultValue2() = doTestWithDescriptorModification {
         val expression = createExpressionWithImports(method, "MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP"))
-        addParameter(createNewParameter(defaultValueForCall = expression))
+        addParameter(createNewIntParameter(defaultValueForCall = expression))
     }
 
     fun testAddFunctionReceiverWithDefaultValue() = doTestWithDescriptorModification {
         val expression = createExpressionWithImports(method, "Dep.MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep"))
-        receiver = createNewParameter(defaultValueForCall = expression)
+        receiver = createNewIntParameter(defaultValueForCall = expression)
     }
 
     fun testAddPropertyReceiverWithDefaultValue() = doTestWithDescriptorModification {
         val expression = createExpressionWithImports(method, "Dep.MY_CONSTANT_FROM_DEP", listOf("a.b.c.Dep"))
-        receiver = createNewParameter(defaultValueForCall = expression)
+        receiver = createNewIntParameter(defaultValueForCall = expression)
     }
 
     fun testAddPropertyReceiverWithDefaultValue2() = doTestWithDescriptorModification {
@@ -529,7 +547,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP"),
         )
 
-        receiver = createNewParameter(defaultValueForCall = expression)
+        receiver = createNewIntParameter(defaultValueForCall = expression)
     }
 
     fun testAddPropertyReceiverWithComplexDefaultValue() = doTestWithDescriptorModification {
@@ -539,7 +557,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
             imports = listOf("a.b.c.Dep.Companion.MY_CONSTANT_FROM_DEP", "a.b.Dep2.Companion.NUMBER", "a.b.Dep2"),
         )
 
-        receiver = createNewParameter(defaultValueForCall = expression)
+        receiver = createNewIntParameter(defaultValueForCall = expression)
     }
 
     fun testConstructor() = doTest {
@@ -627,13 +645,11 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     fun testInvokeOperatorInClass() = doTest {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("42")
-        addParameter(createKotlinIntParameter(defaultValueForCall = defaultValueForCall))
+        addParameter(createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue))
     }
 
     fun testInvokeOperatorInObject() = doTest {
-        val defaultValueForCall = KtPsiFactory(project).createExpression("42")
-        addParameter(createKotlinIntParameter(defaultValueForCall = defaultValueForCall))
+        addParameter(createKotlinIntParameter(defaultValueForCall = kotlinDefaultIntValue))
     }
 
     fun testRemoveUsedReceiver() = doTestConflict {
