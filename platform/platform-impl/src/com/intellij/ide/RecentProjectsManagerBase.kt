@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
@@ -45,7 +45,6 @@ import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -426,7 +425,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
                                       showWelcomeScreen = false,
                                       frameManager = value.frame,
                                       projectWorkspaceId = value.projectWorkspaceId)
-        val project = openProject(Paths.get(key), options)
+        val project = openProject(Path.of(key), options)
         if (!someProjectWasOpened) {
           someProjectWasOpened = project != null
         }
@@ -451,7 +450,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
     val reversedList = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
     for (entry in openPaths.reversed()) {
-      val path = Paths.get(entry.key)
+      val path = Path.of(entry.key)
       if (entry.value.frame == null || !ProjectUtil.isValidProjectPath(path)) {
         return false
       }
@@ -708,7 +707,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val file = Paths.get(path)
+  val file = Path.of(path)
   if (!file.isDirectory()) {
     return FileUtilRt.getNameWithoutExtension(file.fileName.toString())
   }
