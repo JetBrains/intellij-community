@@ -213,7 +213,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
         result.add(navigatable);
       }
     }
-    return result.toArray(new Navigatable[0]);
+    return result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   private Navigatable getNavigatable(HierarchyNodeDescriptor descriptor) {

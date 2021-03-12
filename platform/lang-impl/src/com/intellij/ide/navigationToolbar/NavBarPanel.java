@@ -742,7 +742,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       List<Navigatable> elements = selection.get().filter(Navigatable.class).toList();
-      return elements.isEmpty() ? null : elements.toArray(new Navigatable[0]);
+      return elements.isEmpty() ? null : elements.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {

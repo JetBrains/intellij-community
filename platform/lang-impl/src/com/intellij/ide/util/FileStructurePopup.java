@@ -572,7 +572,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
         List<Navigatable> result = getSelectedElements().filter(Navigatable.class).toList();
-        return result.isEmpty() ? null : result.toArray(new Navigatable[0]);
+        return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
         return myPopup;

@@ -57,9 +57,9 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
-final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 
-    private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
+final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private final ThumbnailView thumbnailView;
     private final CopyPasteSupport copyPasteSupport;

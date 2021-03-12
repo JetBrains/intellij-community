@@ -489,7 +489,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable1 != null) navigatables.add(navigatable1);
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
-    return navigatables.toArray(new Navigatable[0]);
+    return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   private static class MyJBTable extends JBTable {

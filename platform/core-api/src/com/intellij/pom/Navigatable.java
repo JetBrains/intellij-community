@@ -8,6 +8,9 @@ package com.intellij.pom;
  * instance which opens a file in editor and put caret to a specific location use {@link com.intellij.openapi.fileEditor.OpenFileDescriptor}.
  */
 public interface Navigatable {
+
+  Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[0];
+
   /**
    * Open editor and select/navigate to the object there if possible.
    * Just do nothing if navigation is not possible like in case of a package

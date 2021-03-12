@@ -377,7 +377,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           navigatables.add((Navigatable)node);
         }
       }
-      return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
+      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
     return null;
   }
