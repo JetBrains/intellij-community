@@ -51,21 +51,14 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
     int bottomRightWidth = Shadow.BottomRight.getIconWidth();
     int bottomRightHeight = Shadow.BottomRight.getIconHeight();
 
-    int topWidth = Shadow.Top.getIconWidth();
-
-    int bottomWidth = Shadow.Bottom.getIconWidth();
+    int rightWidth = Shadow.Right.getIconWidth();
     int bottomHeight = Shadow.Bottom.getIconHeight();
 
-    int leftHeight = Shadow.Left.getIconHeight();
+    drawLine(component, g, Shadow.Top, width, topLeftWidth, topRightWidth, 0, true);
+    drawLine(component, g, Shadow.Bottom, width, bottomLeftWidth, bottomRightWidth, height - bottomHeight, true);
 
-    int rightWidth = Shadow.Right.getIconWidth();
-    int rightHeight = Shadow.Right.getIconHeight();
-
-    drawLine(component, g, Shadow.Top, width, topLeftWidth, topRightWidth, topWidth, 0, true);
-    drawLine(component, g, Shadow.Bottom, width, bottomLeftWidth, bottomRightWidth, bottomWidth, height - bottomHeight, true);
-
-    drawLine(component, g, Shadow.Left, height, topLeftHeight, bottomLeftHeight, leftHeight, 0, false);
-    drawLine(component, g, Shadow.Right, height, topRightHeight, bottomRightHeight, rightHeight, width - rightWidth, false);
+    drawLine(component, g, Shadow.Left, height, topLeftHeight, bottomLeftHeight, 0, false);
+    drawLine(component, g, Shadow.Right, height, topRightHeight, bottomRightHeight, width - rightWidth, false);
 
     Shadow.TopLeft.paintIcon(component, g, 0, 0);
     Shadow.TopRight.paintIcon(component, g, width - topRightWidth, 0);
@@ -79,40 +72,23 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
                                int fullLength,
                                int start,
                                int end,
-                               int step,
                                int start2,
                                boolean horizontal) {
     int length = fullLength - start - end;
-    int count = length / step;
-    int calcLength = step * count;
-    int lastValue = start + calcLength;
+    Icon iconSnapshot = IconLoader.getIconSnapshot(icon);
+    Image image = IconLoader.toImage(iconSnapshot, ScaleContext.create(component));
 
     if (horizontal) {
-      for (int i = start; i < lastValue; i += step) {
-        icon.paintIcon(component, g, i, start2);
-      }
+      StartupUiUtil.drawImage(g, image,
+                              new Rectangle(start, start2, length, iconSnapshot.getIconHeight()),
+                              new Rectangle(0, 0, iconSnapshot.getIconWidth(), iconSnapshot.getIconHeight()),
+                              component);
     }
     else {
-      for (int i = start; i < lastValue; i += step) {
-        icon.paintIcon(component, g, start2, i);
-      }
-    }
-
-    if (calcLength < length) {
-      Icon iconSnapshot = IconLoader.getIconSnapshot(icon);
-      Image image = IconLoader.toImage(iconSnapshot, ScaleContext.create(component));
-      if (horizontal) {
-        StartupUiUtil.drawImage(g, image,
-                                new Rectangle(lastValue, start2, length - calcLength, iconSnapshot.getIconHeight()),
-                                new Rectangle(0, 0, length - calcLength, iconSnapshot.getIconHeight()),
-                                component);
-      }
-      else {
-        UIUtil.drawImage(g, image,
-                         new Rectangle(start2, lastValue, iconSnapshot.getIconWidth(), length - calcLength),
-                         new Rectangle(0, 0, iconSnapshot.getIconWidth(), length - calcLength),
-                         component);
-      }
+      UIUtil.drawImage(g, image,
+                       new Rectangle(start2, start, iconSnapshot.getIconWidth(), length),
+                       new Rectangle(0, 0, iconSnapshot.getIconWidth(), iconSnapshot.getIconHeight()),
+                       component);
     }
   }
 
