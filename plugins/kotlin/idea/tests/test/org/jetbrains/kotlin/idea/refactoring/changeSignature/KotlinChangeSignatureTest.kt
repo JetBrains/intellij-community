@@ -322,10 +322,19 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         type = kotlinIntType,
         callableDescriptor = baseDescriptor,
         defaultValueForCall = defaultValueForCall,
-    ).apply { 
+    ).apply {
         if (withDefaultValue) {
             defaultValueAsDefaultParameter = true
             this.defaultValueForCall = defaultValueForCall ?: kotlinDefaultIntValue
+        }
+    }
+
+    private fun KotlinMutableMethodDescriptor.addNewIntParameterWithValue(asParameter: Boolean, index: Int? = null) {
+        val newIntParameter = createNewIntParameter(defaultValueForCall = kotlinDefaultIntValue, withDefaultValue = asParameter)
+        if (index != null) {
+            addParameter(index, newIntParameter)
+        } else {
+            addParameter(newIntParameter)
         }
     }
 
@@ -463,12 +472,60 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
     """.trimIndent()
     )
 
+    fun testAddNewParameterWithDefaultValueToFunctionWithEmptyArguments() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddNewLastParameterWithDefaultValue() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddNewLastParameterWithDefaultValue2() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddNewLastParameterWithDefaultValue3() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true)
+    }
+
+    fun testAddNewFirstParameterWithDefaultValue() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true, 0)
+    }
+
+    fun testAddNewMiddleParameterWithDefaultValue() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(true, 2)
+    }
+
+    fun testAddNewParameterToFunctionWithEmptyArguments() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false)
+    }
+
+    fun testAddNewLastParameter() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false)
+    }
+
+    fun testAddNewLastParameter2() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false)
+    }
+
+    fun testAddNewLastParameter3() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false)
+    }
+
+    fun testAddNewFirstParameter() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false, 0)
+    }
+
+    fun testAddNewMiddleParameter() = doTestWithDescriptorModification {
+        addNewIntParameterWithValue(false, 2)
+    }
+
     fun testAddParameterToInvokeFunction() = doTestWithDescriptorModification {
-        addParameter(createNewIntParameter(defaultValueForCall = kotlinDefaultIntValue))
+        addNewIntParameterWithValue(false)
     }
 
     fun testAddParameterToInvokeFunctionFromObject() = doTestWithDescriptorModification {
-        addParameter(createNewIntParameter(defaultValueForCall = kotlinDefaultIntValue))
+        addNewIntParameterWithValue(false)
     }
 
     fun testCaretAtReferenceAsValueParameter() = doTestConflict()
