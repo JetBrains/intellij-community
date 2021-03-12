@@ -28,7 +28,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class TMHInstrumenterTest extends UsefulTestCase {
-  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
+  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
 
   private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
   private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
