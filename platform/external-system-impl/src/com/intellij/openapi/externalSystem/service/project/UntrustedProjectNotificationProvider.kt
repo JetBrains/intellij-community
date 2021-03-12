@@ -32,7 +32,7 @@ class UntrustedProjectNotificationProvider : EditorNotifications.Provider<Editor
     if (providers.isEmpty()) {
       return null
     }
-    return UntrustedProjectEditorNotificationPanel(fileEditor) {
+    return UntrustedProjectEditorNotificationPanel(project, fileEditor) {
       if (confirmLoadingUntrustedProject(project, providers.map { it.systemId })) {
         for (provider in providers) {
           provider.loadAllLinkedProjects(project)
