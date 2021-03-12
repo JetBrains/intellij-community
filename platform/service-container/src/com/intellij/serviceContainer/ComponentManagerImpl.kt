@@ -66,21 +66,29 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     @Internal
     val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
+    private val isStrictLightServiceCheck = PluginManagerCore.isRunningFromSources()
+
     // not as file level function to avoid scope cluttering
     @Internal
     fun isLightService(serviceClass: Class<*>): Boolean {
-      if (!serviceClass.isAnnotationPresent(Service::class.java)) {
+      if (!isStrictLightServiceCheck) {
+        return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
+      }
+
+      // Modifier.isFinal implies isInterface, but for slow check we have to first check annotation to assert that class must be final
+      // to avoid potentially expensive isAnnotationPresent call, first we check isInterface
+      if (serviceClass.isInterface || !serviceClass.isAnnotationPresent(Service::class.java)) {
         return false
       }
       if (!Modifier.isFinal(serviceClass.modifiers)) {
         throw IllegalStateException("$serviceClass must be final because it's marked as @Service")
       }
-      val acceptableCtr: Constructor<*>? = serviceClass
-        .declaredConstructors
-        .filter { c -> c.parameterCount == 0 ||
-                  // the only "Project" parameter is ok
-                  c.parameterCount == 1 && c.parameterTypes[0] == com.intellij.openapi.project.Project::class.java }
-        .firstOrNull()
+      val acceptableCtr: Constructor<*>? = // the only "Project" parameter is ok
+        serviceClass.declaredConstructors.firstOrNull { c ->
+          c.parameterCount == 0 ||
+          // the only "Project" parameter is ok
+          c.parameterCount == 1 && c.parameterTypes[0] === Project::class.java
+        }
       if (acceptableCtr == null) {
         throw IllegalStateException("@Service $serviceClass must contain default constructor or constructor(Project) but got: ${serviceClass.declaredConstructors.asList()}")
       }
