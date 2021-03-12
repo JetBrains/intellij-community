@@ -138,7 +138,9 @@ static def jbrArch() {
   if (arch == '32') return 'i586'
   if (arch == '64') return 'x64'
   def os = OperatingSystem.current()
-  return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'i586'
+  if (os.isWindows()) return System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'i586'
+  if (os.isMacOsX()) return System.getProperty("os.arch") != 'aarch64' ? 'x64' : 'aarch64'
+  if (os.isLinux()) return 'x64'
 }
 
 @SuppressWarnings("GrMethodMayBeStatic")
