@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.ui.popup.PopupState
@@ -55,6 +56,8 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.datatransfer.Transferable
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -218,13 +221,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
           showTemplateConfigurable(userObject)
         }
         else if (userObject is ConfigurationType) {
-          val factories = userObject.configurationFactories
-          if (factories.size == 1) {
-            showTemplateConfigurable(factories[0])
-          }
-          else {
-            drawPressAddButtonMessage(userObject)
-          }
+           drawPressAddButtonMessage(userObject)
         }
       }
       updateDialog()
@@ -233,7 +230,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     sortTopLevelBranches()
     tree.emptyText.appendText(ExecutionBundle.message("status.text.no.run.configurations.added")).appendLine(
       ExecutionBundle.message("status.text.add.new"), LINK_PLAIN_ATTRIBUTES) {
-      toolbarAddAction.showAddPopup(true, tree)}
+      toolbarAddAction.showAddPopup(true, it.source as MouseEvent)}
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
@@ -416,6 +413,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val panel = JPanel(BorderLayout())
+    if (!(configurationType is UnknownConfigurationType)) {
+      createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
+        panel.add(it, BorderLayout.CENTER)
+      }
+    }
     if (configurationType == null) {
       val wrapper = JPanel(BorderLayout())
       if (project.isDefault || !DumbService.isDumb(project)) {
@@ -445,6 +447,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     rightPanel.revalidate()
     rightPanel.repaint()
   }
+
+  protected open fun createTipPanelAboutAddingNewRunConfiguration(configurationType: ConfigurationType?): JComponent? = null
 
   protected open fun createLeftPanel(): JComponent {
     initTree()
@@ -951,7 +955,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       showAddPopup(true, null)
     }
 
-    fun showAddPopup(showApplicableTypesOnly: Boolean, component: JComponent?) {
+    fun showAddPopup(showApplicableTypesOnly: Boolean, clickEvent: MouseEvent?) {
       if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes, true).toMutableList()
@@ -967,8 +971,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           { showAddPopup(false, null) }, true)
       //new TreeSpeedSearch(myTree);
       myPopupState.prepareToShow(popup)
-      if (component == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
-      else popup.showInBestPositionFor(DataManager.getInstance().getDataContext(component))
+      if (clickEvent == null) popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
+      else popup.show(RelativePoint(clickEvent))
     }
   }
 
