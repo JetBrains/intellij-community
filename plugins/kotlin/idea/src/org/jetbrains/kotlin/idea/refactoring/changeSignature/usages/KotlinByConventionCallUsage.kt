@@ -68,7 +68,13 @@ class KotlinByConventionCallUsage(
         val resolvedCall = resolvedCall ?: return true
         val callExpression = convertedCallExpression ?: return true
         val callProcessor = KotlinFunctionCallUsage(callExpression, callee, resolvedCall)
-        val newExpression = callProcessor.processUsageAndGetResult(changeInfo, callExpression, allUsages, true) as? KtExpression
+        val newExpression = callProcessor.processUsageAndGetResult(
+            changeInfo = changeInfo,
+            element = callExpression,
+            allUsages = allUsages,
+            skipRedundantArgumentList = true,
+        ) as? KtExpression
+
         val qualifiedCall = newExpression?.getQualifiedExpressionForSelectorOrThis() as? KtDotQualifiedExpression
         if (qualifiedCall != null) {
             foldExpression(qualifiedCall, changeInfo)
