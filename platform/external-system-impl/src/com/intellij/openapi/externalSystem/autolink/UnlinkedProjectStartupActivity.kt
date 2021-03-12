@@ -62,9 +62,7 @@ class UnlinkedProjectStartupActivity : StartupActivity.Background {
     findUnlinkedProjectBuildFiles(project, externalProjectPath) {
       val unlinkedProjects = it.filter { (_, buildFiles) -> buildFiles.isNotEmpty() }
       val singleUnlinkedProject = unlinkedProjects.keys.singleOrNull()
-      if (singleUnlinkedProject != null &&
-          !Registry.`is`("external.system.auto.import.disabled") &&
-          ExternalSystemUtil.isTrusted(project, singleUnlinkedProject.systemId)) {
+      if (singleUnlinkedProject != null && !Registry.`is`("external.system.auto.import.disabled")) {
         if (LOG.isDebugEnabled) {
           val projectId = singleUnlinkedProject.getProjectId(externalProjectPath)
           LOG.debug("Auto-linked ${projectId.readableName} project")
