@@ -89,7 +89,7 @@ fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> Message
     .asWarning()
     .ask(project)
   project.setTrusted(answer)
-  TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(answer)
+  TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)
   return answer
 }
 
@@ -151,14 +151,15 @@ private sealed class TrustedCheckResult {
   class NotTrusted(val url: String?): TrustedCheckResult()
 }
 
-private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult = getImplicitTrustedCheckResult(project.basePath?.let { Paths.get(it) })
+private fun getImplicitTrustedCheckResult(project: Project): TrustedCheckResult =
+  getImplicitTrustedCheckResult(project.basePath?.let { Paths.get(it) }, project)
 
-private fun getImplicitTrustedCheckResult(projectDir: Path?): TrustedCheckResult {
+private fun getImplicitTrustedCheckResult(projectDir: Path?, project: Project? = null): TrustedCheckResult {
   if (isTrustedCheckDisabled()) {
     return Trusted
   }
   if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
-    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log()
+    TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
     return Trusted
   }
   return NotTrusted(null)
