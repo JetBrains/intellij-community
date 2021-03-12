@@ -1569,6 +1569,24 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/addUnsafeVarianceAnnotation")
+    public static class AddUnsafeVarianceAnnotation extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("parameterType.kt")
+        public void testParameterType() throws Exception {
+            runTest("testData/quickfix/addUnsafeVarianceAnnotation/parameterType.kt");
+        }
+
+        @TestMetadata("returnType.kt")
+        public void testReturnType() throws Exception {
+            runTest("testData/quickfix/addUnsafeVarianceAnnotation/returnType.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addValVar")
     public static class AddValVar extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
