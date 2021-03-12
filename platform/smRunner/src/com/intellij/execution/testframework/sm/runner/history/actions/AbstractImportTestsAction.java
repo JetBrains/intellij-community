@@ -85,27 +85,15 @@ public abstract class AbstractImportTestsAction extends AnAction {
       return;
     }
 
-    doImport(project, file, myProperties, null);
+    doImport(project, file, null);
   }
 
-  public static void doImport(Project project, VirtualFile file, Long executionId) {
-    doImport(project, file, null, executionId);
-  }
-
-  private static void doImport(Project project,
-                               VirtualFile file,
-                               SMTRunnerConsoleProperties currentConsoleProperties,
-                               Long executionId) {
+  public static void doImport(Project project,
+                              VirtualFile file,
+                              Long executionId) {
     try {
       final ImportRunProfile profile = new ImportRunProfile(file, project);
-      SMTRunnerConsoleProperties properties = profile.getProperties();
-      if (properties == null) {
-        properties = currentConsoleProperties;
-        LOG.info("Failed to detect test framework in " + file.getPath() +
-                 "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
-      }
-      final Executor executor = properties != null ? properties.getExecutor()
-                                                   : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+      final Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
       ExecutionTarget target = profile.getTarget();
       if (target != null) {
@@ -146,7 +134,6 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private final Project myProject;
     private RunConfiguration myConfiguration;
     private boolean myImported;
-    private SMTRunnerConsoleProperties myProperties;
     private String myTargetId;
 
     public ImportRunProfile(VirtualFile file, Project project) {
@@ -205,13 +192,6 @@ public abstract class AbstractImportTestsAction extends AnAction {
                     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
                     runManager.readBeforeRunTasks(config.getChild("method"),
                                                   new RunnerAndConfigurationSettingsImpl(runManager), myConfiguration);
-
-                    final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-                    if (executor != null) {
-                      if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
-                        myProperties = ((SMRunnerConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor);
-                      }
-                    }
                   }
                 }
                 myTargetId = config.getAttributeValue("target");
@@ -282,11 +262,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
     @Nullable
     @Override
     public Icon getIcon() {
-      return myProperties != null ? myProperties.getConfiguration().getIcon() : null;
-    }
-
-    public SMTRunnerConsoleProperties getProperties() {
-      return myProperties;
+      return myConfiguration != null ? myConfiguration.getIcon() : null;
     }
 
     public RunConfiguration getInitialConfiguration() {

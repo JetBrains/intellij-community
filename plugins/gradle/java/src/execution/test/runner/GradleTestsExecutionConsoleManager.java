@@ -23,12 +23,14 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
@@ -99,8 +101,10 @@ public class GradleTestsExecutionConsoleManager
     if (settings == null) {
       RunProfile runProfile = env.getRunProfile();
       if (runProfile instanceof AbstractImportTestsAction.ImportRunProfile) {
-        consoleProperties = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getProperties();
         configuration = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getInitialConfiguration();
+        if (configuration instanceof SMRunnerConsolePropertiesProvider) {
+          consoleProperties = ((SMRunnerConsolePropertiesProvider)configuration).createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance());
+        }
       }
       else {
         return null;
