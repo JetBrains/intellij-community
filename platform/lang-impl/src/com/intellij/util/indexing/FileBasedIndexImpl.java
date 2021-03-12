@@ -822,13 +822,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateStarted(Project project) {
-    fireUpdateStarted(project);
     if (myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
       ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).dropMemorySnapshot(project);
     }
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
+    fireUpdateStarted(project);
   }
 
   void fireUpdateStarted(Project project) {
