@@ -335,7 +335,9 @@ public final class AnnotationsHighlightUtil {
     psiElement().withParent(PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiAnnotationMethod.class),
-    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT)
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT),
+    // Unterminated parameter list like "void test(@NotNull String)": error on annotation looks annoying here
+    psiElement().withParents(PsiModifierList.class, PsiParameterList.class)
   );
 
   public static HighlightInfo checkApplicability(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel level, @NotNull PsiFile file) {

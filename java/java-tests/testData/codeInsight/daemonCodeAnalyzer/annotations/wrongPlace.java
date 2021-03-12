@@ -13,6 +13,9 @@ abstract class C {
 
   @Anno(nested = {@Anno, @Anno})
   void notWrong() { }
+
+  void test(@Anno String<error descr="Identifier expected">)</error> {
+  }
 }
 
 class B extends <error descr="Type annotations are not supported at language level '7'">@Deprecated</error> Object { }
