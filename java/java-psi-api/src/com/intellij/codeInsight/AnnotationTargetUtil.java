@@ -242,7 +242,7 @@ public final class AnnotationTargetUtil {
       else if (parent instanceof PsiVariable) {
         type = ((PsiVariable)parent).getTypeElement();
       }
-      if (type != null && !type.getType().equals(PsiType.VOID)) return type;
+      if (type != null && type.acceptsAnnotations()) return type;
     }
     return list;
   }
