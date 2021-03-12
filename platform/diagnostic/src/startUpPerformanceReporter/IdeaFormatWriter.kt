@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -17,7 +17,6 @@ import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal abstract class IdeaFormatWriter(private val activities: Map<String, MutableList<ActivityImpl>>,
@@ -26,7 +25,12 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
   private val logPrefix = "=== Start: StartUp Measurement ===\n"
   protected val stringWriter = ExposingCharArrayWriter()
 
-  fun write(timeOffset: Long, items: List<ActivityImpl>, serviceActivities: Map<String, MutableList<ActivityImpl>>, instantEvents: List<ActivityImpl>, end: Long, projectName: String) {
+  fun write(timeOffset: Long,
+            items: List<ActivityImpl>,
+            serviceActivities: Map<String, MutableList<ActivityImpl>>,
+            instantEvents: List<ActivityImpl>,
+            end: Long,
+            projectName: String) {
     stringWriter.write(logPrefix)
 
     val writer = JsonFactory().createGenerator(stringWriter)
@@ -44,7 +48,7 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
         writeExtraData(writer)
 
         writer.array("traceEvents") {
-          TraceEventFormatWriter(timeOffset, instantEvents, threadNameManager).writeInstantEvents(writer)
+          writeInstantEvents(writer, instantEvents, timeOffset, threadNameManager)
         }
 
         writeServiceEvents(writer, serviceActivities, timeOffset)
@@ -106,7 +110,6 @@ internal abstract class IdeaFormatWriter(private val activities: Map<String, Mut
   fun toByteBuffer(): ByteBuffer {
     return stringWriter.toByteBuffer(logPrefix.length)
   }
-
 
   private fun writeParallelActivities(startTime: Long, writer: JsonGenerator) {
     // sorted to get predictable JSON
@@ -200,6 +203,30 @@ private fun compactName(name: String): String {
     }
   }
   return name
+}
+
+private fun writeInstantEvents(writer: JsonGenerator,
+                               instantEvents: List<ActivityImpl>,
+                               timeOffset: Long,
+                               threadNameManager: ThreadNameManager) {
+  for (event in instantEvents) {
+    writer.obj {
+      writeCommonFields(event, writer, timeOffset, threadNameManager)
+      writer.writeStringField("ph", "i")
+      writer.writeStringField("s", "g")
+    }
+  }
+}
+
+private fun writeCommonFields(event: ActivityImpl, writer: JsonGenerator, timeOffset: Long, threadNameManager: ThreadNameManager) {
+  writer.writeStringField("name", event.name)
+  writer.writeNumberField("ts", TimeUnit.NANOSECONDS.toMicros(event.start - timeOffset))
+  writer.writeNumberField("pid", 1)
+  writer.writeStringField("tid", threadNameManager.getThreadName(event))
+
+  event.category?.let {
+    writer.writeStringField("cat", it.jsonName)
+  }
 }
 
 class ExposingCharArrayWriter : CharArrayWriter(8192) {

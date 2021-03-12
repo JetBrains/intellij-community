@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.startUpPerformanceReporter
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -18,13 +18,12 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
-import com.intellij.util.io.outputStream
 import com.intellij.util.io.write
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import java.nio.ByteBuffer
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -92,10 +91,10 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
                    category == ActivityCategory.MODULE_SERVICE ||
                    category == ActivityCategory.SERVICE_WAITING) {
             services.add(item)
-            serviceActivities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
+            serviceActivities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
           }
           else {
-            activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
+            activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
           }
         }
       }
@@ -120,26 +119,17 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       val currentReport = w.toByteBuffer()
 
       val perfFilePath = System.getProperty("idea.log.perf.stats.file")
-      val traceFilePath = System.getProperty("idea.log.perf.trace.file")
-      val mayLogReport = SystemProperties.getBooleanProperty("idea.log.perf.stats",
-                                                             ApplicationManager.getApplication().isInternal
-                                                             || ApplicationInfoEx.getInstanceEx().build.isSnapshot)
-
-      if (!perfFilePath.isNullOrBlank() && !ApplicationManager.getApplication().isUnitTestMode && mayLogReport) {
-        w.writeToLog(LOG)
-      }
-
       if (!perfFilePath.isNullOrBlank()) {
-        LOG.info("StartUp Measurement report was written to: $perfFilePath")
-        Paths.get(perfFilePath).write(currentReport)
-      }
-
-      if (!traceFilePath.isNullOrBlank()) {
-        LOG.info("StartUp trace report was written to: $traceFilePath")
-        val traceEventFormat = TraceEventFormatWriter(startTime, instantEvents, threadNameManager)
-        Paths.get(traceFilePath).outputStream().writer().use {
-          traceEventFormat.write(items, activities, services, it)
+        val app = ApplicationManager.getApplication()
+        if (!app.isUnitTestMode &&
+            SystemProperties.getBooleanProperty("idea.log.perf.stats",
+                                                app.isInternal ||
+                                                ApplicationInfoEx.getInstanceEx().build.isSnapshot)) {
+          w.writeToLog(LOG)
         }
+
+        LOG.info("StartUp Measurement report was written to: $perfFilePath")
+        Path.of(perfFilePath).write(currentReport)
       }
       return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
     }
