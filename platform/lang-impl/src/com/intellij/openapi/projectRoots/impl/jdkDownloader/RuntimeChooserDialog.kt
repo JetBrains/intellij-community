@@ -4,6 +4,8 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -11,11 +13,18 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.JBColor
+import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.components.BorderLayoutPanel
+import java.awt.Color
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
@@ -79,6 +88,27 @@ class RuntimeChooserDialog(
     return RuntimeChooserDialogResult.Cancel
   }
 
+  override fun createTitlePane(): JComponent {
+    return object : BorderLayoutPanel() {
+      init {
+        border = JBUI.Borders.merge(JBUI.Borders.empty(10), IdeBorderFactory.createBorder(JBColor.border(), SideBorder.BOTTOM), true)
+
+        addToCenter(JBLabel().apply {
+          icon = AllIcons.General.Warning
+          text = HtmlChunk
+            .html()
+            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn"))
+            .toString()
+        })
+
+        withPreferredWidth(400)
+      }
+
+      override fun getBackground(): Color? =
+        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND) ?: super.getBackground()
+    }
+  }
+
   override fun createCenterPanel(): JComponent {
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
@@ -104,19 +134,6 @@ class RuntimeChooserDialog(
     }
 
     return panel {
-
-
-      noteRowInTheDialog()
-
-      row("") {
-        label(
-          HtmlChunk
-            .html()
-            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn"))
-            .toString()
-        ).growPolicy(GrowPolicy.MEDIUM_TEXT).constraints(growX, growY).component.icon = AllIcons.General.Warning
-      }
-
       row(LangBundle.message("dialog.label.choose.ide.runtime.current")) {
         val control = SimpleColoredComponent()
         control().constraints(growX)
