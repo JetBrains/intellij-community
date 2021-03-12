@@ -44,4 +44,10 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE = "org.junit.platform.engine.TestEngine";
   public static final String ORG_JUNIT_PLATFORM_ENGINE = "org.junit.platform.engine";
   public static final String ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION = "org.junit.jupiter.api.extension.RegisterExtension";
+  public static final String ORG_JUNIT_JUPITER_API_METHOD_ORDERER_ORDER_ANNOTATION = "org.junit.jupiter.api.MethodOrderer.OrderAnnotation";
+  public static final String ORG_JUNIT_JUPITER_API_ORDER = "org.junit.jupiter.api.Order";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_METHOD_ORDER = "org.junit.jupiter.api.TestMethodOrder";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_FACTORY = "org.junit.jupiter.api.TestFactory";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_TEMPLATE = "org.junit.jupiter.api.TestTemplate";
+  public static final String ORG_JUNIT_JUPITER_API_DYNAMIC_TEST = "org.junit.jupiter.api.DynamicTest";
 }

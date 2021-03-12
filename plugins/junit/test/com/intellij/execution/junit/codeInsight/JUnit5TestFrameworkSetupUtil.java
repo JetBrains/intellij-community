@@ -70,6 +70,43 @@ public class JUnit5TestFrameworkSetupUtil {
                         "public @interface BeforeEach {}");
     fixture.addClass("package org.junit.jupiter.api;\n" +
                         "public interface RepetitionInfo {}");
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public @interface Order {\n" +
+                     "	int value();\n" +
+                     "}" );
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public @interface TestMethodOrder {\n" +
+                     "	Class<? extends MethodOrderer> value();\n" +
+                     "}" );
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public interface MethodOrderer {\n" +
+                     "	void orderMethods(MethodOrdererContext context);\n" +
+                     "\n" +
+                     "	default Optional<ExecutionMode> getDefaultExecutionMode() {\n" +
+                     "		return Optional.empty();\n" +
+                     "	}\n" +
+                     "\n" +
+                     "	class Alphanumeric implements MethodOrderer {\n" +
+                     "		@Override\n" +
+                     "		public void orderMethods(MethodOrdererContext context) {}\n" +
+                     "	}\n" +
+                     "\n" +
+                     "	class OrderAnnotation implements MethodOrderer {\n" +
+                     "		@Override\n" +
+                     "		public void orderMethods(MethodOrdererContext context) {}\n" +
+                     "	}\n" +
+                     "\n" +
+                     "	class Random implements MethodOrderer {\n" +
+                     "		@Override\n" +
+                     "		public void orderMethods(MethodOrdererContext context) {}\n" +
+                     "	}\n" +
+                     "}" );
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public interface MethodOrdererContext {}" );
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public @interface TestFactory {}" );
+    fixture.addClass("package org.junit.jupiter.api;\n" +
+                     "public @interface TestTemplate {}" );
     return fixture;
   }
 }
