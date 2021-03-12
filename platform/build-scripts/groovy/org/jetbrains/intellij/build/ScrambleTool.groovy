@@ -30,7 +30,7 @@ interface ScrambleTool {
    *  else
    *     "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub"
    */
-  void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, Path targetDir)
+  void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, Path targetDir, Path pluginsDir)
 
   /**
    * @return list of names of JAR files which cannot be included into the product 'lib' directory in plain form
