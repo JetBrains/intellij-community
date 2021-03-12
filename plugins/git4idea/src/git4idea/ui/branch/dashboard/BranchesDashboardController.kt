@@ -81,14 +81,8 @@ internal class BranchesDashboardController(private val project: Project,
       remoteBranches.addAll(newRemoteBranches)
     }
 
-    val changed = localChanged || remoteChanged
-    if (changed) {
-      if (showOnlyMy) {
-        updateBranchesIsMyState()
-      }
-      ui.stopLoadingBranches()
-    }
-    return changed
+    ui.stopLoadingBranches()
+    return localChanged || remoteChanged
   }
 
   private fun updateBranchesIsFavoriteState() {
@@ -106,7 +100,7 @@ internal class BranchesDashboardController(private val project: Project,
     ui.refreshTree()
   }
 
-  private fun updateBranchesIsMyState() {
+  fun updateBranchesIsMyState() {
     VcsProjectLog.runWhenLogIsReady(project) {
       val allBranches = localBranches + remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }

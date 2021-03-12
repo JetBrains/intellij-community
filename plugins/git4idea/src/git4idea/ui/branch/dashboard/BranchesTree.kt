@@ -380,8 +380,12 @@ internal class FilteringBranchesTree(project: Project,
       val changed = reloadBranches(forceReload)
       if (!changed) return false
 
-      refreshNodeDescriptorsModel()
-
+      if (showOnlyMy) {
+        updateBranchesIsMyState()
+      }
+      else {
+        refreshNodeDescriptorsModel()
+      }
       return changed
     }
   }
