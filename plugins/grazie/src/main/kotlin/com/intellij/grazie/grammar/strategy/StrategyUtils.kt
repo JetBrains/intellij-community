@@ -124,8 +124,20 @@ object StrategyUtils {
    * @param checkType predicate to check if type is accepted
    * @return sequence of siblings with whitespace tokens
    */
-  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) = sequence {
-    fun PsiElement.process(checkType: (IElementType?) -> Boolean, next: Boolean) = sequence<PsiElement> {
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
+    getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
+
+  /**
+   * Get all siblings of [element] of same type and text domain accepted by [checkSibling]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param checkSibling predicate to check if sibling is accepted
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
+    sequence {
+    fun PsiElement.process(checkSibling: (PsiElement?) -> Boolean, next: Boolean) = sequence<PsiElement> {
       val whitespaceTokens = strategy.getWhiteSpaceTokens()
       var newLinesBetweenSiblingsCount = 0
 
@@ -134,7 +146,7 @@ object StrategyUtils {
         val candidate = if (next) sibling.nextSibling else sibling.prevSibling
         val type = candidate.elementType
         sibling = when {
-          checkType(type) -> {
+          checkSibling(candidate) -> {
             newLinesBetweenSiblingsCount = 0
             candidate
           }
@@ -149,9 +161,9 @@ object StrategyUtils {
       }
     }
 
-    yieldAll(element.process(checkType, false).toList().asReversed())
+    yieldAll(element.process(checkSibling, false).toList().asReversed())
     yield(element)
-    yieldAll(element.process(checkType, true))
+    yieldAll(element.process(checkSibling, true))
   }
 
   private fun quotesOffset(str: CharSequence): Int {
