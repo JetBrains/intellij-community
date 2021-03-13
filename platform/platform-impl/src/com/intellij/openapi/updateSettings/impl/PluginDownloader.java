@@ -354,23 +354,27 @@ public final class PluginDownloader {
     return new PluginDownloader(descriptor, url, buildNumber);
   }
 
-  public static @NotNull PluginNode createPluginNode(@Nullable String host, @NotNull PluginDownloader downloader) {
-    IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+  public @NotNull PluginNode toPluginNode() {
+    return toPluginNode(null);
+  }
+
+  public @NotNull PluginNode toPluginNode(@Nullable String host) {
+    IdeaPluginDescriptor descriptor = getDescriptor();
     if (descriptor instanceof PluginNode) {
       return (PluginNode)descriptor;
     }
 
-    PluginNode node = new PluginNode(downloader.myPluginId);
-    node.setName(downloader.getPluginName());
-    node.setProductCode(downloader.getProductCode());
-    node.setReleaseDate(downloader.getReleaseDate());
-    node.setReleaseVersion(downloader.getReleaseVersion());
-    node.setLicenseOptional(downloader.isLicenseOptional());
-    node.setVersion(downloader.getPluginVersion());
+    PluginNode node = new PluginNode(getId());
+    node.setName(getPluginName());
+    node.setProductCode(getProductCode());
+    node.setReleaseDate(getReleaseDate());
+    node.setReleaseVersion(getReleaseVersion());
+    node.setLicenseOptional(isLicenseOptional());
+    node.setVersion(getPluginVersion());
     node.setRepositoryName(host);
-    node.setDownloadUrl(downloader.myPluginUrl);
-    node.setDependencies(downloader.myDependencies);
-    node.setDescription(downloader.myDescription);
+    node.setDownloadUrl(myPluginUrl);
+    node.setDependencies(myDependencies);
+    node.setDescription(myDescription);
     return node;
   }
 }

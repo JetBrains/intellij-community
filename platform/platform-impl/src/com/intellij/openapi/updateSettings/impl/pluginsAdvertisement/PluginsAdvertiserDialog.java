@@ -4,7 +4,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -29,8 +28,6 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final @NotNull SortedSet<PluginDownloader> myPluginToInstall;
   private final @NotNull List<? extends IdeaPluginDescriptor> myCustomPlugins;
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
-
-  private final PluginManagerMain.PluginEnabler.HEADLESS pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
 
   private final @Nullable Function<? super Boolean, Void> myFinishFunction;
 
@@ -85,14 +82,14 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   private boolean doInstallPlugins() {
-    Set<PluginDescriptor> pluginsToEnable = new HashSet<>();
+    Set<IdeaPluginDescriptor> pluginsToEnable = new HashSet<>();
     List<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myPluginToInstall) {
-      PluginDescriptor plugin = downloader.getDescriptor();
+      IdeaPluginDescriptor plugin = downloader.getDescriptor();
       if (!mySkippedPlugins.contains(plugin.getPluginId())) {
         pluginsToEnable.add(plugin);
         if (plugin.isEnabled()) {
-          nodes.add(PluginDownloader.createPluginNode(null, downloader));
+          nodes.add(downloader.toPluginNode());
         }
       }
     }
@@ -101,10 +98,15 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       return false;
     }
 
+    PluginManagerMain.PluginEnabler pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
     Runnable notifyRunnable = () -> {
-      if (nodes.stream().anyMatch(o -> PluginManagerCore.getPlugin(o.getPluginId()) == null)) {
+      boolean notInstalled = nodes
+        .stream()
+        .map(PluginNode::getPluginId)
+        .anyMatch(pluginId -> PluginManagerCore.getPlugin(pluginId) == null);
+      if (notInstalled) {
         PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
