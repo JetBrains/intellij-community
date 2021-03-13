@@ -127,10 +127,7 @@ public final class PyClassRefactoringUtil {
         continue; //We skip adding if class already has this method.
       }
 
-
-      final PyFunction newMethod = insertMethodInProperPlace(destStatementList, method);
-      result.add(newMethod);
-      restoreNamedReferences(newMethod);
+      result.add(insertMethodInProperPlace(destStatementList, method));
     }
 
     PyPsiUtils.removeRedundantPass(destStatementList);

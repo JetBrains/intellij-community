@@ -133,11 +133,7 @@ class MethodsManager extends MembersManager<PyFunction> {
                                      boolean skipIfExist,
                                      PyClass @NotNull... to) {
     if (methodsToMove.isEmpty() || to.length == 0) return Collections.emptyList();
-
     final List<PyElement> result = new ArrayList<>();
-    for (PyFunction method : methodsToMove) {
-      PyClassRefactoringUtil.rememberNamedReferences(method);
-    }
     for (PyClass destClass : to) {
       //We move copies here because there may be several destinations
       PyFunction[] copies = ContainerUtil.map2Array(methodsToMove, PyFunction.EMPTY_ARRAY, m -> (PyFunction)m.copy());
