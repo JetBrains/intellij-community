@@ -34,15 +34,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.*;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
  */
 public class PluginUpdateDialog extends DialogWrapper {
-  private final Collection<PluginDownloader> myDownloaders;
+
+  private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
 
   private final MyPluginModel myPluginModel;
@@ -56,19 +59,20 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatedPlugins,
-                            @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
+                            @Nullable Collection<PluginNode> customRepositoryPlugins) {
     this(project, updatedPlugins, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatedPlugins) {
+  PluginUpdateDialog(@Nullable Project project,
+                     @NotNull Collection<PluginDownloader> updatedPlugins) {
     this(project, updatedPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   private PluginUpdateDialog(@Nullable Project project,
-                             Collection<PluginDownloader> updatedPlugins,
-                             @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins,
+                             @NotNull Collection<PluginDownloader> updatedPlugins,
+                             @Nullable Collection<PluginNode> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -77,7 +81,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), e -> {
       close(CANCEL_EXIT_CODE);
-      UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.getPluginDescriptor()));
+      UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
     });
 
     myPluginModel = new MyPluginModel(project) {
@@ -87,7 +91,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      protected @NotNull Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+      protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
         return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
       }
     };

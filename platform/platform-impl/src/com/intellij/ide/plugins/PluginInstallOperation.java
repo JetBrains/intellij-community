@@ -41,10 +41,10 @@ public class PluginInstallOperation {
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build();
 
-  private final List<PluginNode> myPluginsToInstall;
-  private final Collection<? extends IdeaPluginDescriptor> myCustomReposPlugins;
-  private final PluginManagerMain.PluginEnabler myPluginEnabler;
-  private final ProgressIndicator myIndicator;
+  private final @NotNull List<PluginNode> myPluginsToInstall;
+  private final @NotNull Collection<PluginNode> myCustomReposPlugins;
+  private final @NotNull PluginManagerMain.PluginEnabler myPluginEnabler;
+  private final @NotNull ProgressIndicator myIndicator;
   private boolean mySuccess = true;
   private final Set<PluginInstallCallbackData> myDependant = new HashSet<>();
   private boolean myAllowInstallWithoutRestart = false;
@@ -58,17 +58,19 @@ public class PluginInstallOperation {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                List<? extends IdeaPluginDescriptor> customReposPlugins,
-                                PluginManagerMain.PluginEnabler pluginEnabler,
+                                @NotNull List<? extends IdeaPluginDescriptor> customReposPlugins,
+                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
-    this(pluginsToInstall, (Collection<? extends IdeaPluginDescriptor>)customReposPlugins, pluginEnabler, indicator);
+    this(pluginsToInstall,
+         (Collection<PluginNode>)ContainerUtil.filterIsInstance(customReposPlugins, PluginNode.class),
+         pluginEnabler,
+         indicator);
   }
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
-                                Collection<? extends IdeaPluginDescriptor> customReposPlugins,
-                                PluginManagerMain.PluginEnabler pluginEnabler,
+                                @NotNull Collection<PluginNode> customReposPlugins,
+                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
-
     myPluginsToInstall = pluginsToInstall;
     myCustomReposPlugins = customReposPlugins;
     myPluginEnabler = pluginEnabler;
@@ -156,11 +158,10 @@ public class PluginInstallOperation {
     List<String> hosts = new SmartList<>();
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
-    Map<PluginId, IdeaPluginDescriptor> allPlugins = new HashMap<>();
+    Map<PluginId, PluginNode> allPlugins = new HashMap<>();
     for (String host : hosts) {
       try {
-        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, myIndicator);
-        for (IdeaPluginDescriptor descriptor : descriptors) {
+        for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
           allPlugins.put(descriptor.getPluginId(), descriptor);
         }
       }
@@ -170,13 +171,10 @@ public class PluginInstallOperation {
 
     for (PluginNode node : myPluginsToInstall) {
       if (node.getRepositoryName() == PluginInstaller.UNKNOWN_HOST_MARKER) {
-        IdeaPluginDescriptor descriptor = allPlugins.get(node.getPluginId());
+        PluginNode descriptor = allPlugins.get(node.getPluginId());
+        node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
         if (descriptor != null) {
-          node.setRepositoryName(((PluginNode)descriptor).getRepositoryName());
-          node.setDownloadUrl(((PluginNode)descriptor).getDownloadUrl());
-        }
-        else {
-          node.setRepositoryName(null);
+          node.setDownloadUrl(descriptor.getDownloadUrl());
         }
       }
     }

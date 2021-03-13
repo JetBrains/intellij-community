@@ -6,6 +6,8 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -16,8 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 public class RepositoryHelperTest {
   @Rule public TempDirectory tempDir = new TempDirectory();
@@ -29,19 +30,19 @@ public class RepositoryHelperTest {
 
   @Test
   public void testWrongFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>");
-    assertEquals(0, list.size());
+    List<PluginNode> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><root/>");
+    assertTrue(list.isEmpty());
   }
 
   @Test(expected = IOException.class)
   public void testFormatErrors() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><id>42</id>");
-    assertEquals(0, list.size());
+    List<PluginNode> list = loadPlugins("<?xml version=\"1.0\" encoding=\"UTF-8\"?><id>42</id>");
+    assertTrue(list.isEmpty());
   }
 
   @Test
   public void testFullFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugin-repository>\n" +
       "  <ff>\"J2EE\"</ff>\n" +
@@ -82,7 +83,7 @@ public class RepositoryHelperTest {
     Map<PluginId, Set<String>> brokenPluginsMap = Collections.singletonMap(PluginId.getId(id), Collections.singleton(version));
     PluginManagerCore.updateBrokenPlugins(brokenPluginsMap);
 
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugin-repository>\n" +
       "  <category name=\"Whatever\">\n" +
@@ -103,7 +104,7 @@ public class RepositoryHelperTest {
 
   @Test
   public void testSimpleFormat() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<plugins>\n" +
       "  <plugin id=\"my.plugin.1\" url=\"plugin1.zip\" version=\"1.2.3\"/>\n" +
       "  <plugin id=\"my.plugin.2\" url=\"plugin2.jar\" version=\"4.5.6\">\n" +
@@ -117,7 +118,7 @@ public class RepositoryHelperTest {
 
   @Test
   public void testSimpleFormatWithProlog() throws IOException {
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugins>\n" +
       "  <plugin id=\"org.jetbrains.kotlin\" url=\"kotlin-plugin-0.9.999.zip\" version=\"0.9.999\" />\n" +
@@ -138,7 +139,7 @@ public class RepositoryHelperTest {
   @Test
   public void testListFiltering() throws IOException {
     int current = PluginManagerCore.getBuildNumber().getComponents()[0], next = current + 1;
-    List<IdeaPluginDescriptor> list = loadPlugins(
+    List<PluginNode> list = loadPlugins(
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
       "<plugin-repository>\n" +
       "  <category name=\"Test\">\n" +
@@ -162,11 +163,12 @@ public class RepositoryHelperTest {
     assertEquals("0.2", list.get(0).getVersion());
   }
 
-  private List<IdeaPluginDescriptor> loadPlugins(String data) throws IOException {
+  private @NotNull List<PluginNode> loadPlugins(@NotNull String data) throws IOException {
     return loadPlugins(data, null);
   }
 
-  private List<IdeaPluginDescriptor> loadPlugins(String data, BuildNumber build) throws IOException {
+  private @NotNull List<PluginNode> loadPlugins(@NotNull String data,
+                                                @Nullable BuildNumber build) throws IOException {
     File tempFile = tempDir.newFile("repo.xml");
     FileUtil.writeToFile(tempFile, data);
     String url = tempFile.toURI().toURL().toString();

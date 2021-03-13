@@ -27,7 +27,7 @@ open class PluginAdvertiserService {
 
   fun run(
     project: Project,
-    customPlugins: List<IdeaPluginDescriptor>,
+    customPlugins: List<PluginNode>,
     unknownFeatures: Set<UnknownFeature>,
   ) {
     val features = MultiMap.createSet<PluginId, UnknownFeature>()

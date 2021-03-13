@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,21 +57,38 @@ public final class PluginManagerMain {
     int m1 = JBUIScale.scale(2);
     int m2 = JBUIScale.scale(5);
     return String.format(
-           "<html><head>" +
-           "    <style type=\"text/css\">" +
-           "        p {" +
-           "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
-           "        }" +
-           "    </style>" +
-           "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
-           fontSize, m1, m1, fontSize, m2, m2);
+      "<html><head>" +
+      "    <style type=\"text/css\">" +
+      "        p {" +
+      "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+      "        }" +
+      "    </style>" +
+      "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+      fontSize, m1, m1, fontSize, m2, m2);
   }
 
+  /**
+   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, PluginEnabler, Runnable)}
+   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, PluginEnabler, Consumer)}.
+   */
+  @Deprecated(since = "2020.2", forRemoval = true)
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
                                         @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
                                         @Nullable Runnable onSuccess,
                                         @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
+    return downloadPluginsAndCleanup(plugins,
+                                     ContainerUtil.filterIsInstance(customPlugins, PluginNode.class),
+                                     onSuccess,
+                                     pluginEnabler,
+                                     cleanup);
+  }
+
+  public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
+                                                  @NotNull Collection<PluginNode> customPlugins,
+                                                  @Nullable Runnable onSuccess,
+                                                  @NotNull PluginEnabler pluginEnabler,
+                                                  @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
                            customPlugins,
                            false,
@@ -80,7 +98,7 @@ public final class PluginManagerMain {
   }
 
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
-                                        @NotNull Collection<? extends IdeaPluginDescriptor> customPlugins,
+                                        @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull PluginEnabler pluginEnabler,
@@ -91,7 +109,6 @@ public final class PluginManagerMain {
                                                                 IdeBundle.message("progress.download.plugins"),
                                                                 true,
                                                                 PluginManagerUISettings.getInstance()) {
-
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {

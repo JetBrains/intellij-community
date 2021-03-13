@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.advertiser.KnownExtensions
 import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
@@ -37,7 +36,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 
     try {
       if (extensions == null) {
-        val extensionsMap = getExtensionsFromMarketPlace(customPlugins)
+        val extensionsMap = getExtensionsFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet())
         extensionsService.extensions = KnownExtensions(extensionsMap)
         if (project.isDisposed) {
           return
@@ -57,9 +56,8 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
 
   companion object {
 
-    private fun getExtensionsFromMarketPlace(customPlugins: List<IdeaPluginDescriptor>): Map<String, Set<PluginData>> {
-      val customPluginIds = customPlugins.map { it.pluginId.idString }.toSet()
-
+    @JvmStatic
+    private fun getExtensionsFromMarketPlace(customPluginIds: Set<String>): Map<String, Set<PluginData>> {
       @Suppress("DEPRECATION") val params = mapOf("featureType" to FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
       return MarketplaceRequests.Instance
         .getFeatures(params)

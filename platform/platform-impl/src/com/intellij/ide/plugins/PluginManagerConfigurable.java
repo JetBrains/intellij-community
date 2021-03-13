@@ -37,7 +37,6 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.JBColor;
@@ -67,6 +66,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -356,7 +356,8 @@ public final class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
+            Map<String, List<PluginNode>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
+              .getCustomRepositoryPluginMap();
             try {
               addGroupViaLightDescriptor(groups, IdeBundle.message("plugins.configurable.featured"), "is_featured_search=true",
                                          "/sortBy:featured");
@@ -371,20 +372,18 @@ public final class PluginManagerConfigurable
             }
 
             for (String host : UpdateSettings.getInstance().getPluginHosts()) {
-              List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
+              List<PluginNode> allDescriptors = customRepositoriesMap.get(host);
               if (allDescriptors != null) {
-                addGroup(groups, IdeBundle.message("plugins.configurable.repository.0", host), "/repository:\"" + host + "\"",
-                         descriptors -> {
-                           int allSize = allDescriptors.size();
-                           descriptors.addAll(ContainerUtil.getFirstItems(allDescriptors, ITEMS_PER_GROUP));
-                           PluginsGroup.sortByName(descriptors);
-                           return allSize > ITEMS_PER_GROUP;
+                addGroup(groups,
+                         IdeBundle.message("plugins.configurable.repository.0", host),
+                         "/repository:\"" + host + "\"",
+                         allDescriptors,
+                         group -> {
+                           PluginsGroup.sortByName(group.descriptors);
+                           return allDescriptors.size() > ITEMS_PER_GROUP;
                          });
               }
             }
-          }
-          catch (IOException e) {
-            LOG.info(e);
           }
           finally {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -451,12 +450,10 @@ public final class PluginManagerConfigurable
               case TAG:
                 if (myTagsSorted == null || myTagsSorted.isEmpty()) {
                   Set<String> allTags = new HashSet<>();
-                  for (IdeaPluginDescriptor descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
-                    if (descriptor instanceof PluginNode) {
-                      List<String> tags = ((PluginNode)descriptor).getTags();
-                      if (tags != null && !tags.isEmpty()) {
-                        allTags.addAll(tags);
-                      }
+                  for (PluginNode descriptor : CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()) {
+                    List<String> tags = descriptor.getTags();
+                    if (tags != null && !tags.isEmpty()) {
+                      allTags.addAll(tags);
                     }
                   }
                   try {
@@ -641,13 +638,14 @@ public final class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
-                Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
+                Map<String, List<PluginNode>> customRepositoriesMap =
+                  CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
                 SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
                 if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
-                    List<IdeaPluginDescriptor> descriptors = customRepositoriesMap.get(repository);
+                    List<PluginNode> descriptors = customRepositoriesMap.get(repository);
                     if (descriptors == null) {
                       continue;
                     }
@@ -655,7 +653,7 @@ public final class PluginManagerConfigurable
                       result.descriptors.addAll(descriptors);
                     }
                     else {
-                      for (IdeaPluginDescriptor descriptor : descriptors) {
+                      for (PluginNode descriptor : descriptors) {
                         if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
                           result.descriptors.add(descriptor);
                         }
@@ -668,23 +666,17 @@ public final class PluginManagerConfigurable
                 }
 
                 List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
-                Collection<IdeaPluginDescriptor> plugins = RepositoryHelper.mergePluginsFromRepositories(
-                  pluginsFromMarketplace,
-                  ContainerUtil.flatten(customRepositoriesMap.values()), false
-                ); // compare plugin versions between marketplace & custom repositories
+                // compare plugin versions between marketplace & custom repositories
+                List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
+                Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
+                                                                                               customPlugins,
+                                                                                               false);
                 result.descriptors.addAll(0, plugins);
 
                 if (parser.searchQuery != null) {
-                  List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
-
-                  for (Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
-                    for (IdeaPluginDescriptor descriptor : entry.getValue()) {
-                      if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
-                        descriptors.add(descriptor);
-                      }
-                    }
-                  }
-
+                  List<PluginNode> descriptors = ContainerUtil.filter(customPlugins,
+                                                                      descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
+                                                                                                                  parser.searchQuery));
                   result.descriptors.addAll(0, descriptors);
                 }
 
@@ -1602,18 +1594,25 @@ public final class PluginManagerConfigurable
     return pane;
   }
 
-  private void addGroup(
-    @NotNull List<? super PluginsGroup> groups,
-    @NotNull @Nls String name,
-    @NotNull String showAllQuery,
-    @NotNull ThrowableNotNullFunction<? super List<IdeaPluginDescriptor>, Boolean, ? extends IOException> function
-  )
-    throws IOException {
+  private void addGroup(@NotNull List<? super PluginsGroup> groups,
+                        @NotNull @Nls String name,
+                        @NotNull String showAllQuery,
+                        @NotNull List<PluginNode> customPlugins,
+                        @NotNull Predicate<? super PluginsGroup> predicate) {
     PluginsGroup group = new PluginsGroup(name);
 
-    if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
-      group.rightAction =
-        new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"), null, myMarketplaceTab.mySearchListener, showAllQuery);
+    int i = 0;
+    for (Iterator<? extends IdeaPluginDescriptor> iterator = customPlugins.iterator();
+         iterator.hasNext() && i < ITEMS_PER_GROUP;
+         i++) {
+      group.descriptors.add(iterator.next());
+    }
+
+    if (predicate.test(group)) {
+      group.rightAction = new LinkLabel<>(IdeBundle.message("plugins.configurable.show.all"),
+                                          null,
+                                          myMarketplaceTab.mySearchListener,
+                                          showAllQuery);
       group.rightAction.setBorder(JBUI.Borders.emptyRight(5));
     }
 
@@ -1622,17 +1621,16 @@ public final class PluginManagerConfigurable
     }
   }
 
-  private void addGroupViaLightDescriptor(
-    @NotNull List<? super PluginsGroup> groups,
-    @NotNull @Nls String name,
-    @NotNull @NonNls String query,
-    @NotNull @NonNls String showAllQuery
-  ) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> {
-      List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
-      descriptors.addAll(ContainerUtil.getFirstItems(pluginNodes, ITEMS_PER_GROUP));
-      return pluginNodes.size() >= ITEMS_PER_GROUP;
-    });
+  private void addGroupViaLightDescriptor(@NotNull List<? super PluginsGroup> groups,
+                                          @NotNull @Nls String name,
+                                          @NotNull @NonNls String query,
+                                          @NotNull @NonNls String showAllQuery) throws IOException {
+    List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
+    addGroup(groups,
+             name,
+             showAllQuery,
+             pluginNodes,
+             __ -> pluginNodes.size() >= ITEMS_PER_GROUP);
   }
 
   @Override

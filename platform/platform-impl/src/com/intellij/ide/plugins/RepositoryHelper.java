@@ -23,14 +23,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
-import static java.util.Collections.singletonMap;
+import java.util.stream.Collectors;
 
 /**
  * @author stathik
@@ -55,6 +52,7 @@ public final class RepositoryHelper {
 
   /**
    * Loads list of plugins, compatible with a current build, from a main plugin repository.
+   *
    * @deprecated Use `loadPlugins` only for custom repositories. Use {@link MarketplaceRequests} for getting descriptors.
    */
   @Deprecated
@@ -65,23 +63,28 @@ public final class RepositoryHelper {
 
   /**
    * Use method only for getting plugins from custom repositories
+   *
+   * @deprecated Pleause use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
    */
-  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
-    return loadPlugins(repositoryUrl, null, indicator);
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
+                                                                @Nullable ProgressIndicator indicator) throws IOException {
+    return new ArrayList<>(loadPlugins(repositoryUrl, null, indicator));
   }
 
   /**
    * Use method only for getting plugins from custom repositories
    */
-  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
-                                                                @Nullable BuildNumber build,
-                                                                @Nullable ProgressIndicator indicator) throws IOException {
+  public static @NotNull List<PluginNode> loadPlugins(@Nullable String repositoryUrl,
+                                                      @Nullable BuildNumber build,
+                                                      @Nullable ProgressIndicator indicator) throws IOException {
     Path pluginListFile;
     Url url;
     if (repositoryUrl == null) {
       LOG.error("Using deprecated API for getting plugins from Marketplace");
       String base = ApplicationInfoImpl.getShadowInstance().getPluginsListUrl();
-      url = Urls.newFromEncoded(base).addParameters(singletonMap("uuid", PermanentInstallationID.get()));  // NON-NLS
+      url = Urls.newFromEncoded(base).addParameters(Map.of("uuid", PermanentInstallationID.get()));  // NON-NLS
       pluginListFile = Paths.get(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     }
     else {
@@ -90,45 +93,28 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(build)));
+      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(build)));
     }
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    List<PluginNode> descriptors = MarketplaceRequests.getInstance().readOrUpdateFile(
-      pluginListFile,
-      url.toExternalForm(),
-      indicator,
-      IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority()),
-      reader -> parsePluginList(reader)
-    );
-    return process(descriptors, repositoryUrl, build);
+    List<PluginNode> descriptors = MarketplaceRequests.getInstance()
+      .readOrUpdateFile(pluginListFile,
+                        url.toExternalForm(),
+                        indicator,
+                        IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority()),
+                        MarketplaceRequests::parsePluginList);
+    return process(descriptors,
+                   build != null ? build : PluginManagerCore.getBuildNumber(),
+                   repositoryUrl);
   }
 
-  /**
-   * Reads cached plugin descriptors from a file. Returns {@code null} if cache file does not exist.
-   * @deprecated use `MarketplaceRequest.getMarketplaceCachedPlugins`
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @Nullable List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
-    File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
-    return file.length() > 0 ? process(loadPluginList(file), null, null) : null;
-  }
-
-  private static List<PluginNode> loadPluginList(File file) throws IOException {
-    try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), StandardCharsets.UTF_8)) {
-      return parsePluginList(reader);
-    }
-  }
-
-  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
-    Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
-    if (build == null) {
-      build = PluginManagerCore.getBuildNumber();
-    }
+  private static List<PluginNode> process(List<PluginNode> list,
+                                                   @NotNull BuildNumber build,
+                                                   @Nullable String repositoryUrl) {
+    Map<PluginId, PluginNode> result = new LinkedHashMap<>(list.size());
 
     boolean isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
 
@@ -153,7 +139,7 @@ public final class RepositoryHelper {
         node.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
       }
 
-      IdeaPluginDescriptor previous = result.get(pluginId);
+      PluginNode previous = result.get(pluginId);
       if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
         result.put(pluginId, node);
       }
@@ -161,7 +147,10 @@ public final class RepositoryHelper {
       addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
     }
 
-    return new ArrayList<>(result.values());
+    return result
+      .values()
+      .stream()
+      .collect(Collectors.toUnmodifiableList());
   }
 
   /**
@@ -191,16 +180,16 @@ public final class RepositoryHelper {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Collection<IdeaPluginDescriptor> mergePluginsFromRepositories(@NotNull Collection<? extends IdeaPluginDescriptor> marketplacePlugins,
-                                                                                       @NotNull Collection<? extends IdeaPluginDescriptor> customPlugins,
-                                                                                       boolean addMissing) {
-    Map<PluginId, IdeaPluginDescriptor> compatiblePluginMap = new HashMap<>(marketplacePlugins.size());
+  public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(@NotNull List<PluginNode> marketplacePlugins,
+                                                                             @NotNull List<PluginNode> customPlugins,
+                                                                             boolean addMissing) {
+    Map<PluginId, PluginNode> compatiblePluginMap = new HashMap<>(marketplacePlugins.size());
 
-    for (IdeaPluginDescriptor marketplacePlugin : marketplacePlugins) {
+    for (PluginNode marketplacePlugin : marketplacePlugins) {
       compatiblePluginMap.put(marketplacePlugin.getPluginId(), marketplacePlugin);
     }
 
-    for (IdeaPluginDescriptor customPlugin : customPlugins) {
+    for (PluginNode customPlugin : customPlugins) {
       PluginId pluginId = customPlugin.getPluginId();
       IdeaPluginDescriptor plugin = compatiblePluginMap.get(pluginId);
       if (plugin == null && addMissing ||

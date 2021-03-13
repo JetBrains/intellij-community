@@ -5,10 +5,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SettingsEntryPointAction;
 import com.intellij.ide.actions.SettingsEntryPointAction.IconState;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -32,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -49,7 +46,7 @@ public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoin
   private static @Nullable Collection<IdeaPluginDescriptor> myIncompatiblePlugins;
 
   private static Collection<PluginDownloader> myUpdatedPlugins;
-  private static Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
+  private static Collection<PluginNode> myCustomRepositoryPlugins;
 
   private static PluginUpdatesService myUpdatesService;
   private static PluginStateListener myPluginStateListener;
@@ -115,7 +112,7 @@ public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoin
       PluginStateManager.addStateListener(myPluginStateListener = new PluginStateListener() {
         @Override
         public void install(@NotNull IdeaPluginDescriptor descriptor) {
-          removePluginsUpdate(Collections.singleton(descriptor));
+          removePluginsUpdate(Set.of(descriptor.getPluginId()));
         }
 
         @Override
@@ -158,28 +155,28 @@ public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoin
   }
 
   public static void newPluginUpdates(@Nullable Collection<PluginDownloader> updatedPlugins,
-                                      @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
-    newPluginUpdates(updatedPlugins, customRepositoryPlugins,
+                                      @Nullable Collection<PluginNode> customRepositoryPlugins) {
+    newPluginUpdates(updatedPlugins,
+                     customRepositoryPlugins,
                      updatedPlugins != null ? IconState.ApplicationComponentUpdate : IconState.Current);
   }
 
   private static void newPluginUpdates(@Nullable Collection<PluginDownloader> updatedPlugins,
-                                       @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins,
+                                       @Nullable Collection<PluginNode> customRepositoryPlugins,
                                        @NotNull IconState state) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
     SettingsEntryPointAction.updateState(state);
   }
 
-  public static void removePluginsUpdate(@NotNull Collection<IdeaPluginDescriptor> descriptors) {
+  public static void removePluginsUpdate(@NotNull Set<PluginId> pluginIds) {
     if (myUpdatedPlugins != null) {
-      List<PluginDownloader> updatedPlugins =
-        ContainerUtil.filter(myUpdatedPlugins, downloader -> {
-          PluginId pluginId = downloader.getId();
-          return ContainerUtil.find(descriptors, descriptor -> descriptor.getPluginId().equals(pluginId)) == null;
-        });
+      List<PluginDownloader> updatedPlugins = ContainerUtil.filter(myUpdatedPlugins,
+                                                                   downloader -> !pluginIds.contains(downloader.getId()));
       if (myUpdatedPlugins.size() != updatedPlugins.size()) {
-        newPluginUpdates(updatedPlugins.isEmpty() ? null : updatedPlugins, myCustomRepositoryPlugins, IconState.Current);
+        newPluginUpdates(updatedPlugins.isEmpty() ? null : updatedPlugins,
+                         myCustomRepositoryPlugins,
+                         IconState.Current);
       }
     }
   }

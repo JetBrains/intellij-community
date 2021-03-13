@@ -26,14 +26,13 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   private final @Nullable Project myProject;
   private final @NotNull SortedSet<PluginDownloader> myPluginToInstall;
-  private final @NotNull List<? extends IdeaPluginDescriptor> myCustomPlugins;
+  private final @NotNull List<PluginNode> myCustomPlugins;
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
-
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
 
   PluginsAdvertiserDialog(@Nullable Project project,
                           @NotNull Set<PluginDownloader> pluginsToInstall,
-                          @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
+                          @NotNull List<PluginNode> customPlugins,
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
@@ -47,7 +46,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   PluginsAdvertiserDialog(@Nullable Project project,
                           @NotNull Set<PluginDownloader> pluginsToInstall,
-                          @NotNull List<? extends IdeaPluginDescriptor> customPlugins) {
+                          @NotNull List<PluginNode> customPlugins) {
     this(project, pluginsToInstall, customPlugins, null);
   }
 

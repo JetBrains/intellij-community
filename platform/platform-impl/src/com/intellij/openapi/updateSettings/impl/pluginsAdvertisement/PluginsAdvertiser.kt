@@ -3,8 +3,8 @@
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.util.PropertiesComponent
@@ -79,7 +79,7 @@ internal fun getBundledPluginToInstall(plugins: Collection<PluginData>): List<St
  * Loads list of plugins, compatible with a current build, from all configured repositories
  */
 @JvmOverloads
-internal fun loadPluginsFromCustomRepositories(indicator: ProgressIndicator? = null): List<IdeaPluginDescriptor> {
+internal fun loadPluginsFromCustomRepositories(indicator: ProgressIndicator? = null): List<PluginNode> {
   return RepositoryHelper
     .getPluginHosts()
     .filterNot {
@@ -87,12 +87,12 @@ internal fun loadPluginsFromCustomRepositories(indicator: ProgressIndicator? = n
       && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()
     }.flatMap {
       try {
-        RepositoryHelper.loadPlugins(it, indicator)
+        RepositoryHelper.loadPlugins(it, null, indicator)
       }
       catch (e: IOException) {
         LOG.info("Couldn't load plugins from $it: $e")
         LOG.debug(e)
-        emptyList<IdeaPluginDescriptor>()
+        emptyList<PluginNode>()
       }
     }.distinctBy { it.pluginId }
 }

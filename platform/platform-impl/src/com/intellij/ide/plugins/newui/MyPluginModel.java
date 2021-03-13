@@ -1139,8 +1139,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }).collect(Collectors.toSet());
   }
 
-  @NotNull
-  protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+  protected @NotNull Collection<PluginNode> getCustomRepoPlugins() {
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 

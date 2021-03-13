@@ -26,7 +26,7 @@ final class InstallAndEnableTask extends Task.Modal {
   private final @NotNull Set<PluginId> myPluginIds;
   private final boolean myShowDialog;
   private @NotNull final Runnable myOnSuccess;
-  private List<? extends IdeaPluginDescriptor> myCustomPlugins;
+  private @Nullable List<PluginNode> myCustomPlugins;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,
