@@ -56,7 +56,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setVisible(getStackFrameDescriptor(e.getDataContext()) != null);
+    e.getPresentation().setEnabledAndVisible(getStackFrameDescriptor(e.getDataContext()) != null);
   }
 
   private static StackFrameDescriptorImpl getStackFrameDescriptor(DataContext dataContext) {
