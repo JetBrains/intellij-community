@@ -49,6 +49,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -331,7 +332,7 @@ public class UsageViewImpl implements UsageViewEx {
       @Override
       public void excludeNode(@NotNull DefaultMutableTreeNode node) {
         Set<Node> nodes = new HashSet<>();
-        collectAllChildNodes(node, nodes);
+        TreeUtil.treeNodeTraverser(node).traverse().filter(Node.class).addAllTo(nodes);
         collectParentNodes(node, true, nodes);
         setExcludeNodes(nodes, true, true);
       }
@@ -339,7 +340,7 @@ public class UsageViewImpl implements UsageViewEx {
       @Override
       public void excludeNodeSilently(@NotNull DefaultMutableTreeNode node) {
         Set<Node> nodes = new HashSet<>();
-        collectAllChildNodes(node, nodes);
+        TreeUtil.treeNodeTraverser(node).traverse().filter(Node.class).addAllTo(nodes);
         collectParentNodes(node, true, nodes);
         setExcludeNodes(nodes, true, false);
       }
@@ -383,7 +384,7 @@ public class UsageViewImpl implements UsageViewEx {
       @Override
       public void includeNode(@NotNull DefaultMutableTreeNode node) {
         Set<Node> nodes = new HashSet<>();
-        collectAllChildNodes(node, nodes);
+        TreeUtil.treeNodeTraverser(node).traverse().filter(Node.class).addAllTo(nodes);
         collectParentNodes(node, false, nodes);
         setExcludeNodes(nodes, false, true);
       }
@@ -1846,45 +1847,27 @@ public class UsageViewImpl implements UsageViewEx {
   @Nullable
   private Node getSelectedNode() {
     EDT.assertIsEdt();
-    TreePath leadSelectionPath = myTree.getLeadSelectionPath();
-    if (leadSelectionPath == null) return null;
-
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadSelectionPath.getLastPathComponent();
+    TreePath path = myTree.getLeadSelectionPath();
+    Object node = path == null ? null : path.getLastPathComponent();
     return node instanceof Node ? (Node)node : null;
   }
 
-  private Node @Nullable [] getSelectedNodes() {
+  @NotNull
+  private JBIterable<TreeNode> selectedNodes() {
     EDT.assertIsEdt();
-    TreePath[] leadSelectionPath = myTree.getSelectionPaths();
-    if (leadSelectionPath == null || leadSelectionPath.length == 0) return null;
-
-    List<Node> result = new ArrayList<>();
-    for (TreePath comp : leadSelectionPath) {
-      Object lastPathComponent = comp.getLastPathComponent();
-      if (lastPathComponent instanceof Node) {
-        Node node = (Node)lastPathComponent;
-        result.add(node);
-      }
-    }
-    return result.isEmpty() ? null : result.toArray(new Node[0]);
+    return JBIterable.of(myTree.getSelectionPaths()).map(TreePath::getLastPathComponent).filter(TreeNode.class);
   }
 
   @Override
   @NotNull
   public Set<Usage> getSelectedUsages() {
     EDT.assertIsEdt();
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths == null) {
-      return Collections.emptySet();
-    }
+    return allUsagesRecursive(selectedNodes()).toSet();
+  }
 
-    Set<Usage> usages = new HashSet<>();
-    for (TreePath selectionPath : selectionPaths) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      collectUsages(node, usages);
-    }
-
-    return usages;
+  private static @NotNull JBIterable<@NotNull Usage> allUsagesRecursive(@NotNull JBIterable<TreeNode> selection) {
+    return TreeUtil.treeNodeTraverser(null).withRoots(selection).traverse()
+      .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null);
   }
 
   @Override
@@ -1899,52 +1882,6 @@ public class UsageViewImpl implements UsageViewEx {
     List<Usage> usages = new ArrayList<>(getUsages());
     usages.sort(USAGE_COMPARATOR);
     return usages;
-  }
-
-  private static void collectUsages(@NotNull DefaultMutableTreeNode node, @NotNull Set<? super Usage> usages) {
-    if (node instanceof UsageNode) {
-      UsageNode usageNode = (UsageNode)node;
-      Usage usage = usageNode.getUsage();
-      usages.add(usage);
-    }
-
-    Enumeration<?> enumeration = node.children();
-    while (enumeration.hasMoreElements()) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
-      collectUsages(child, usages);
-    }
-  }
-
-  private static void collectAllChildNodes(@NotNull DefaultMutableTreeNode node, @NotNull Set<? super Node> nodes) {
-    if (node instanceof Node) {
-      nodes.add((Node)node);
-    }
-
-    Enumeration<?> enumeration = node.children();
-    while (enumeration.hasMoreElements()) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)enumeration.nextElement();
-      collectAllChildNodes(child, nodes);
-    }
-  }
-
-  private UsageTarget @Nullable [] getSelectedUsageTargets() {
-    EDT.assertIsEdt();
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths == null) return null;
-
-    Set<UsageTarget> targets = new HashSet<>();
-    for (TreePath selectionPath : selectionPaths) {
-      Object lastPathComponent = selectionPath.getLastPathComponent();
-      if (lastPathComponent instanceof UsageTargetNode) {
-        UsageTargetNode usageTargetNode = (UsageTargetNode)lastPathComponent;
-        UsageTarget target = usageTargetNode.getTarget();
-        if (target.isValid()) {
-          targets.add(target);
-        }
-      }
-    }
-
-    return targets.isEmpty() ? null : targets.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -1970,21 +1907,6 @@ public class UsageViewImpl implements UsageViewEx {
       } : null;
     }
     return null;
-  }
-
-  /* nodes with non-valid data are not included */
-  private static Navigatable[] getNavigatablesForNodes(Node[] nodes) {
-    if (nodes == null) {
-      return null;
-    }
-    List<Navigatable> result = new ArrayList<>();
-    for (Node node : nodes) {
-      Object userObject = node.getUserObject();
-      if (userObject instanceof Navigatable) {
-        result.add((Navigatable)userObject);
-      }
-    }
-    return result.toArray(new Navigatable[0]);
   }
 
   boolean areTargetsValid() {
@@ -2020,15 +1942,10 @@ public class UsageViewImpl implements UsageViewEx {
         @Nullable
         @Override
         public Collection<String> getTextLinesToCopy() {
-          Node[] selectedNodes = getSelectedNodes();
-          if (selectedNodes != null && selectedNodes.length > 0) {
-            List<String> lines = new ArrayList<>();
-            for (Node node : selectedNodes) {
-              lines.add(node.getText(UsageViewImpl.this));
-            }
-            return lines;
-          }
-          return null;
+          List<String> lines = selectedNodes()
+            .filterMap(o -> o instanceof Node ? ((Node)o).getText(UsageViewImpl.this) : null)
+            .toList();
+          return lines.isEmpty() ? null : lines;
         }
       };
     }
@@ -2088,66 +2005,67 @@ public class UsageViewImpl implements UsageViewEx {
       else if (USAGE_VIEW_KEY.is(dataId)) {
         return UsageViewImpl.this;
       }
-      else if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
-        return myExclusionHandler;
-      }
-
-      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        Node[] nodes = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNodes() : null;
-        return getNavigatablesForNodes(nodes);
-      }
-
-      else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
-        return myTextFileExporter;
-      }
-
-      else if (USAGES_KEY.is(dataId)) {
-        Set<Usage> selectedUsages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
-        return selectedUsages == null ? null : selectedUsages.toArray(Usage.EMPTY_ARRAY);
-      }
-
-      else if (USAGE_TARGETS_KEY.is(dataId)) {
-        UsageTarget[] targets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
-        return targets;
-      }
-
-      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        Set<Usage> usages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
-        Usage[] ua = usages == null ? null : usages.toArray(Usage.EMPTY_ARRAY);
-        UsageTarget[] usageTargets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
-        return UsageDataUtil.provideVirtualFileArray(ua, usageTargets);
-      }
       else if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
       else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return myCopyProvider;
       }
-      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          return getSelectedUsages()
-            .stream()
-            .filter(u -> u instanceof PsiElementUsage)
-            .map(u -> ((PsiElementUsage)u).getElement())
-            .filter(Objects::nonNull)
-            .toArray(PsiElement.ARRAY_FACTORY::create);
-        }
+      else if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+        return myExclusionHandler;
+      }
+      else if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
+        return myTextFileExporter;
+      }
+      else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        return selectedNodes().filterMap(TreeUtil::getUserObject).filter(Navigatable.class).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      }
+      else if (USAGES_KEY.is(dataId)) {
+        return allUsagesRecursive(selectedNodes()).unique().toArray(Usage.EMPTY_ARRAY);
+      }
+      else if (USAGE_TARGETS_KEY.is(dataId)) {
+        return selectedNodes().filterMap(o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null).toArray(UsageTarget.EMPTY_ARRAY);
+      }
+      else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes())
+          .traverse()
+          .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
+                          o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
+          .flatMap(o -> o instanceof UsageInFile ? JBIterable.of(((UsageInFile)o).getFile()) :
+                        o instanceof UsageInFiles ? JBIterable.of(((UsageInFiles)o).getFiles()) :
+                        o instanceof UsageTarget ? JBIterable.of(((UsageTarget)o).getFiles()) : JBIterable.empty())
+          .filter(VirtualFile::isValid)
+          .unique()
+          .toArray(VirtualFile.EMPTY_ARRAY);
       }
       else {
-        // can arrive here outside EDT from usage view preview.
-        // ignore all these fancy actions in this case.
-        Node node = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNode() : null;
-        Object userObject = TreeUtil.getUserObject(node);
-        if (userObject instanceof DataProvider) {
-          DataProvider dataProvider = (DataProvider)userObject;
-          Object data = dataProvider.getData(dataId);
-          if (data != null) {
-            return data;
-          }
+        DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
+        JBIterable<TreeNode> selection = selectedNodes();
+        if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+          return JBIterable.<DataProvider>of(o -> getSlowData(o, selection))
+            .append(selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider));
+        }
+        if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && selection.isEmpty()) {
+          return PsiElement.EMPTY_ARRAY;
+        }
+        else if (selectedProvider != null) {
+          return selectedProvider.getData(dataId);
         }
       }
       return null;
     }
+  }
+
+  @Nullable
+  private static Object getSlowData(@NotNull String dataId, @NotNull JBIterable<TreeNode> selectedNodes) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      return allUsagesRecursive(selectedNodes)
+        .filter(PsiElementUsage.class)
+        .unique()
+        .filterMap(PsiElementUsage::getElement)
+        .toArray(PsiElement.EMPTY_ARRAY);
+    }
+    return null;
   }
 
   private final class ButtonPanel extends JPanel {
