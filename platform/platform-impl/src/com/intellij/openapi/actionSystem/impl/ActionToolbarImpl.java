@@ -1128,8 +1128,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
-      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled)
-        .onSuccess(actions -> actionsUpdated(forcedActual, actions))
+      myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
+      myLastUpdate.onSuccess(actions -> actionsUpdated(forcedActual, actions))
         .onError(ex -> {
           if (!(ex instanceof ControlFlowException || ex instanceof CancellationException)) {
             LOG.error(ex);

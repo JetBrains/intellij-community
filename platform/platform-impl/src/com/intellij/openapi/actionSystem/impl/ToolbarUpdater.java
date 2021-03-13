@@ -27,6 +27,7 @@ public abstract class ToolbarUpdater implements Activatable {
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
+  /** @noinspection FieldCanBeLocal*/
   private final TimerListener myTimerListener = new MyTimerListener();
   private final WeakTimerListener myWeakTimerListener;
 
@@ -65,13 +66,13 @@ public abstract class ToolbarUpdater implements Activatable {
 
   public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
     Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
-    Application app = ApplicationManager.getApplication();
-    if (now || (app.isUnitTestMode() && app.isDispatchThread())) {
+    Application application = ApplicationManager.getApplication();
+    if (now || application.isUnitTestMode() && application.isDispatchThread()) {
       updateRunnable.run();
     }
-    else if (!app.isHeadlessEnvironment()) {
+    else if (!application.isHeadlessEnvironment()) {
       IdeFocusManager focusManager = IdeFocusManager.getInstance(null);
-      if (app.isDispatchThread() && myComponent.isShowing()) {
+      if (application.isDispatchThread()) {
         focusManager.doWhenFocusSettlesDown(updateRunnable);
       }
       else {
@@ -144,7 +145,10 @@ public abstract class ToolbarUpdater implements Activatable {
     @Override
     public void run() {
       ToolbarUpdater updater = myUpdaterRef.get();
-      if (updater == null || (!updater.myComponent.isVisible() && !ApplicationManager.getApplication().isUnitTestMode() && !myIncludeInvisible)) {
+      JComponent component = updater == null ? null : updater.myComponent;
+      if (component == null ||
+          !ApplicationManager.getApplication().isUnitTestMode() &&
+          (!component.isDisplayable() || !component.isShowing() && !myIncludeInvisible)) {
         return;
       }
 
