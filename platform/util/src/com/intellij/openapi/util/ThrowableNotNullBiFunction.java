@@ -6,6 +6,6 @@ import org.jetbrains.annotations.NotNull;
 @FunctionalInterface
 public interface ThrowableNotNullBiFunction<T, U, R, E extends Throwable> {
 
-  @NotNull R fun(@NotNull T t1, @NotNull U t2) throws E;
+  @NotNull R fun(@NotNull T t, @NotNull U u) throws E;
 }
 
