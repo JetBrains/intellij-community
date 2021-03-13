@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -16,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Comparing;
@@ -57,32 +55,6 @@ public final class PluginInstaller {
   private static final String PLUGINS_PRESELECTION_PATH = "plugins.preselection.path";
 
   private PluginInstaller() { }
-
-  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<? extends IdeaPluginDescriptor> customOrAllPlugins,
-                                         boolean allowInstallWithoutRestart,
-                                         PluginManagerMain.PluginEnabler pluginEnabler,
-                                         Runnable onSuccess,
-                                         @NotNull ProgressIndicator indicator) {
-    //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
-    PluginInstallOperation operation = new PluginInstallOperation(pluginsToInstall, customOrAllPlugins, pluginEnabler, indicator);
-    operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-    operation.run();
-    boolean success = operation.isSuccess();
-    if (success) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (allowInstallWithoutRestart) {
-          for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-            installAndLoadDynamicPlugin(install.getFile(), null, install.getPluginDescriptor());
-          }
-        }
-        if (onSuccess != null) {
-          onSuccess.run();
-        }
-      });
-    }
-    return success;
-  }
 
   /**
    * @return true if restart is needed

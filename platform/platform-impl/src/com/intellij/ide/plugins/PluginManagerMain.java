@@ -37,10 +37,11 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 public final class PluginManagerMain {
   private static final String TEXT_SUFFIX = "</body></html>";
@@ -65,60 +66,78 @@ public final class PluginManagerMain {
            fontSize, m1, m1, fontSize, m2, m2);
   }
 
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
+  public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
+                                        @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
+                                        @Nullable Runnable onSuccess,
+                                        @NotNull PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
-    return downloadPlugins(plugins, customPlugins, false, onSuccess, pluginEnabler, cleanup);
+    return downloadPlugins(plugins,
+                           customPlugins,
+                           false,
+                           onSuccess,
+                           pluginEnabler,
+                           cleanup != null ? __ -> cleanup.run() : null);
   }
 
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
+  public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
+                                        @NotNull Collection<? extends IdeaPluginDescriptor> customPlugins,
                                         boolean allowInstallWithoutRestart,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
-                                        @Nullable Runnable cleanup) throws IOException {
-    Function<Boolean, Void> function = cleanup == null ? null : aBoolean -> {
-      cleanup.run();
-      return null;
-    };
-    return downloadPlugins(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function);
-  }
-
-  public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<? extends IdeaPluginDescriptor> customPlugins,
-                                        boolean allowInstallWithoutRestart,
-                                        Runnable onSuccess,
-                                        PluginEnabler pluginEnabler,
-                                        @Nullable Function<? super Boolean, Void> function) throws IOException {
-    boolean[] result = new boolean[1];
+                                        @Nullable Runnable onSuccess,
+                                        @NotNull PluginEnabler pluginEnabler,
+                                        @Nullable Consumer<? super Boolean> function) throws IOException {
     try {
-      ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
+      boolean[] result = new boolean[1];
+      ProgressManager.getInstance().run(new Task.Backgroundable(null,
+                                                                IdeBundle.message("progress.download.plugins"),
+                                                                true,
+                                                                PluginManagerUISettings.getInstance()) {
+
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            if (PluginInstaller.prepareToInstall(plugins, customPlugins, allowInstallWithoutRestart, pluginEnabler, onSuccess, indicator)) {
-              result[0] = true;
+            //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+            PluginInstallOperation operation = new PluginInstallOperation(plugins,
+                                                                          customPlugins,
+                                                                          pluginEnabler,
+                                                                          indicator);
+            operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
+            operation.run();
+
+            boolean success = operation.isSuccess();
+            result[0] = success;
+            if (success) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (allowInstallWithoutRestart) {
+                  for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+                    PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
+                                                                null,
+                                                                install.getPluginDescriptor());
+                  }
+                }
+                if (onSuccess != null) {
+                  onSuccess.run();
+                }
+              });
             }
           }
           finally {
             if (function != null) {
-              ApplicationManager.getApplication().invokeLater(() -> function.apply(result[0]));
+              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]));
             }
           }
         }
       });
+      return result[0];
     }
     catch (RuntimeException e) {
-      if (e.getCause() != null && e.getCause() instanceof IOException) {
-        throw (IOException)e.getCause();
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
       }
       else {
         throw e;
       }
     }
-    return result[0];
   }
 
   public static void pluginInfoUpdate(IdeaPluginDescriptor plugin,

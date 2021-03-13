@@ -74,11 +74,13 @@ final class InstallAndEnableTask extends Task.Modal {
     new PluginsAdvertiserDialog(null,
                                 myPlugins,
                                 myCustomPlugins,
-                                result -> {
-                                  if (result) {
-                                    myOnSuccess.run();
-                                  }
-                                  return null;
-                                }).doInstallPlugins(myShowDialog);
+                                this::runOnSuccess)
+      .doInstallPlugins(myShowDialog);
+  }
+
+  private void runOnSuccess(boolean onSuccess) {
+    if (onSuccess) {
+      myOnSuccess.run();
+    }
   }
 }

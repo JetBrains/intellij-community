@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 /**
  * @author anna
@@ -29,12 +29,12 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final @NotNull List<? extends IdeaPluginDescriptor> myCustomPlugins;
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
 
-  private final @Nullable Function<? super Boolean, Void> myFinishFunction;
+  private final @Nullable Consumer<? super Boolean> myFinishFunction;
 
   PluginsAdvertiserDialog(@Nullable Project project,
                           @NotNull Set<PluginDownloader> pluginsToInstall,
                           @NotNull List<? extends IdeaPluginDescriptor> customPlugins,
-                          @Nullable Function<? super Boolean, Void> finishFunction) {
+                          @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
     myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
@@ -113,7 +113,12 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     DisabledPluginsState.enablePlugins(pluginsToEnable, true);
     if (!nodes.isEmpty()) {
       try {
-        PluginManagerMain.downloadPlugins(nodes, myCustomPlugins, true, notifyRunnable, pluginHelper, myFinishFunction);
+        PluginManagerMain.downloadPlugins(nodes,
+                                          myCustomPlugins,
+                                          true,
+                                          notifyRunnable,
+                                          pluginHelper,
+                                          myFinishFunction);
       }
       catch (IOException e) {
         LOG.error(e);
