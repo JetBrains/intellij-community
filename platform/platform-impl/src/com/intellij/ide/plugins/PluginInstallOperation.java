@@ -15,11 +15,11 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
@@ -205,7 +206,8 @@ public class PluginInstallOperation {
     return result;
   }
 
-  private boolean prepareToInstallWithCallback(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
+  private boolean prepareToInstallWithCallback(@NotNull PluginNode pluginNode,
+                                               @NotNull List<PluginId> pluginIds) throws IOException {
     PluginId id = pluginNode.getPluginId();
     ActionCallback localCallback = myLocalInstallCallbacks.remove(id);
 
@@ -229,9 +231,10 @@ public class PluginInstallOperation {
     }
   }
 
-  private boolean prepareToInstall(PluginNode pluginNode, List<PluginId> pluginIds) throws IOException {
-    Ref<IdeaPluginDescriptor> toDisable = checkDependenciesAndReplacements(pluginNode, pluginIds);
-    if (toDisable == null) return false;
+  private boolean prepareToInstall(@NotNull PluginNode pluginNode,
+                                   @NotNull List<PluginId> pluginIds) throws IOException {
+    if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
+    IdeaPluginDescriptor toDisable = checkDependenciesAndReplacements(pluginNode);
 
     myShownErrors = false;
 
@@ -259,8 +262,8 @@ public class PluginInstallOperation {
       }
       myDependant.add(new PluginInstallCallbackData(downloader.getFile().toPath(), descriptor, !allowNoRestart));
       pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
-      if (!toDisable.isNull()) {
-        myPluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));
+      if (toDisable != null) {
+        myPluginEnabler.disablePlugins(Set.of(toDisable));
       }
     }
     else {
@@ -271,35 +274,41 @@ public class PluginInstallOperation {
     return true;
   }
 
-  @Nullable
-  public Ref<IdeaPluginDescriptor> checkDependenciesAndReplacements(IdeaPluginDescriptor pluginNode, @Nullable List<PluginId> pluginIds) {
-    if (!checkMissingDependencies(pluginNode, pluginIds)) return null;
-
-    Ref<IdeaPluginDescriptor> toDisable = Ref.create(null);
+  @Nullable IdeaPluginDescriptor checkDependenciesAndReplacements(@NotNull IdeaPluginDescriptor pluginNode) {
     PluginReplacement pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.getExtensions(),
                                                              r -> r.getNewPluginId().equals(pluginNode.getPluginId().getIdString()));
-    if (pluginReplacement != null) {
-      IdeaPluginDescriptor oldPlugin = PluginManagerCore.getPlugin(pluginReplacement.getOldPluginDescriptor().getPluginId());
-      if (oldPlugin == null) {
-        LOG.warn("Plugin with id '" + pluginReplacement.getOldPluginDescriptor().getPluginId() + "' not found");
-      }
-      else if (!myPluginEnabler.isDisabled(oldPlugin.getPluginId())) {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          String title = IdeBundle.message("plugin.manager.obsolete.plugins.detected.title");
-          String message = pluginReplacement.getReplacementMessage(oldPlugin, pluginNode);
-          if (Messages
-                .showYesNoDialog(message, title, IdeBundle.message("button.disable"), Messages.getNoButton(), Messages.getWarningIcon()) ==
-              Messages.YES) {
-            toDisable.set(oldPlugin);
-          }
-        }, ModalityState.any());
-      }
+    if (pluginReplacement == null) {
+      return null;
     }
-    return toDisable;
+
+    PluginId oldPluginId = pluginReplacement.getOldPluginDescriptor().getPluginId();
+    IdeaPluginDescriptor oldPlugin = PluginManagerCore.getPlugin(oldPluginId);
+    if (oldPlugin == null) {
+      LOG.warn("Plugin with id '" + oldPluginId + "' not found");
+      return null;
+    }
+
+    if (myPluginEnabler.isDisabled(oldPlugin.getPluginId())) {
+      return null;
+    }
+
+    AtomicBoolean toDisable = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      boolean choice = MessageDialogBuilder
+        .yesNo(pluginReplacement.getReplacementMessage(oldPlugin, pluginNode),
+               IdeBundle.message("plugin.manager.obsolete.plugins.detected.title"))
+        .yesText(IdeBundle.message("button.disable"))
+        .noText(Messages.getNoButton())
+        .icon(Messages.getWarningIcon())
+        .guessWindowAndAsk();
+      toDisable.set(choice);
+    }, ModalityState.any());
+
+    return toDisable.get() ? oldPlugin : null;
   }
 
-  private boolean checkMissingDependencies(@NotNull IdeaPluginDescriptor pluginNode,
-                                           @Nullable List<PluginId> pluginIds) {
+  boolean checkMissingDependencies(@NotNull IdeaPluginDescriptor pluginNode,
+                                   @Nullable List<PluginId> pluginIds) {
     // check for dependent plugins at first.
     List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
     if (!dependencies.isEmpty()) {

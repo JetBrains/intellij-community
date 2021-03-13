@@ -145,6 +145,28 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param canBeCanceled   whether "Cancel" button is shown on the progress window.
    * @param project         the project in the context of which the operation is executed.
    * @param parentComponent the component which will be used to calculate the progress window ancestor
+   * @return true result of operation
+   * @throws E exception thrown by process
+   */
+  @ApiStatus.Internal
+  public abstract <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
+                                                                                 @NotNull @ProgressTitle String progressTitle,
+                                                                                 boolean canBeCanceled,
+                                                                                 @Nullable Project project,
+                                                                                 @Nullable JComponent parentComponent) throws E;
+
+
+  /**
+   * Runs the specified operation in a background thread and shows a modal progress dialog in the
+   * main thread while the operation is executing.
+   * If a dialog can't be shown (e.g. under write action or in headless environment),
+   * runs the given operation synchronously in the calling thread.
+   *
+   * @param process         the operation to execute.
+   * @param progressTitle   the title of the progress window.
+   * @param canBeCanceled   whether "Cancel" button is shown on the progress window.
+   * @param project         the project in the context of which the operation is executed.
+   * @param parentComponent the component which will be used to calculate the progress window ancestor
    * @return true if the operation completed successfully, false if it was cancelled.
    */
   public abstract boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
@@ -173,6 +195,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
+
   /**
    * Runs a specified {@code process} in a background thread and shows a progress dialog, which can be made non-modal by pressing
    * background button. Upon successful termination of the process a {@code successRunnable} will be called in Swing UI thread and

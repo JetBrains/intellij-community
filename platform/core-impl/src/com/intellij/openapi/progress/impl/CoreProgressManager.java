@@ -259,12 +259,21 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
   }
 
+  @Override
+  public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
+                                                                        @NotNull String progressTitle,
+                                                                        boolean canBeCanceled,
+                                                                        @Nullable Project project) throws E {
+    return runProcessWithProgressSynchronously(process, progressTitle, canBeCanceled, project, null);
+  }
+
   // FROM EDT->UI: bg OR calling if can't
   @Override
   public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull ThrowableComputable<T, E> process,
                                                                         @NotNull @ProgressTitle String progressTitle,
                                                                         boolean canBeCanceled,
-                                                                        @Nullable Project project) throws E {
+                                                                        @Nullable Project project,
+                                                                        @Nullable JComponent parentComponent) throws E {
     AtomicReference<T> result = new AtomicReference<>();
     AtomicReference<Throwable> exception = new AtomicReference<>();
 
@@ -279,7 +288,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           exception.set(t);
         }
       }
-    }, null);
+    }, parentComponent);
 
     Throwable t = exception.get();
     if (t != null) {
@@ -316,7 +325,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                    @Nullable Runnable canceledRunnable) {
     runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable, PerformInBackgroundOption.DEAF);
   }
-
 
   // bg; runnables on UI/EDT?
   @Override

@@ -110,7 +110,6 @@ public final class PluginManagerMain {
                 if (allowInstallWithoutRestart) {
                   for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
                     PluginInstaller.installAndLoadDynamicPlugin(install.getFile(),
-                                                                null,
                                                                 install.getPluginDescriptor());
                   }
                 }
