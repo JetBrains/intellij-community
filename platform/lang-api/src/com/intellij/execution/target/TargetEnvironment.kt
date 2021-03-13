@@ -80,11 +80,7 @@ abstract class TargetEnvironment(
     val target: Int?
   )
 
-  /**
-   * TODO Do we really need to have two different kinds of bind mounts?
-   *  Docker and SSH provides bi-directional access to the target files.
-   */
-  interface UploadableVolume {
+  interface Volume {
     val localRoot: Path
 
     val targetRoot: String
@@ -92,10 +88,17 @@ abstract class TargetEnvironment(
     /**
      * Returns the resulting remote path (even if it's predictable, many tests rely on specific, usually relative paths)
      * of uploading `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`.
-     * Does not perform actual upload.
+     * Does not perform any kind of bytes transfer.
      */
     @Throws(IOException::class)
     fun resolveTargetPath(relativePath: String): String
+  }
+
+  /**
+   * TODO Do we really need to have two different kinds of bind mounts?
+   *  Docker and SSH provides bi-directional access to the target files.
+   */
+  interface UploadableVolume : Volume {
 
     /**
      * Upload `"$localRootPath/$relativePath"` to `"$targetRoot/$relativePath"`
@@ -105,11 +108,7 @@ abstract class TargetEnvironment(
                targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator)
   }
 
-  interface DownloadableVolume {  // TODO Would it be better if there is no inheritance from the upload Volume?
-    /* The only difference from the old [DownloadVolume]. */
-    val localRoot: Path
-
-    val targetRoot: String
+  interface DownloadableVolume : Volume {
 
     @Throws(IOException::class)
     fun download(relativePath: String, progressIndicator: ProgressIndicator)
