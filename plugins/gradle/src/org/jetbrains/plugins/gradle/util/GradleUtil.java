@@ -98,12 +98,12 @@ public final class GradleUtil {
    */
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
-    final File wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
+    Path wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
     if (wrapperPropertiesFile == null) return null;
 
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
     try {
-      final Properties props = GUtil.loadProperties(wrapperPropertiesFile);
+      final Properties props = GUtil.loadProperties(Files.newInputStream(wrapperPropertiesFile));
       String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
       if (isEmpty(distributionUrl)) {
         throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
@@ -131,14 +131,14 @@ public final class GradleUtil {
     }
     catch (Exception e) {
       GradleLog.LOG.warn(
-        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.getAbsolutePath()), e);
+        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.toAbsolutePath()), e);
     }
     return null;
   }
 
-  private static URI prepareDistributionUri(String distributionUrl, File propertiesFile) throws URISyntaxException {
+  private static URI prepareDistributionUri(String distributionUrl, Path propertiesFile) throws URISyntaxException {
     URI source = new URI(distributionUrl);
-    return source.getScheme() != null ? source : new File(propertiesFile.getParentFile(), source.getSchemeSpecificPart()).toURI();
+    return source.getScheme() != null ? source : propertiesFile.resolveSibling(source.getSchemeSpecificPart()).toUri();
   }
 
   /**
@@ -196,7 +196,7 @@ public final class GradleUtil {
   }
 
   @Nullable
-  public static File findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
+  public static Path findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -229,7 +229,7 @@ public final class GradleUtil {
         ));
         return null;
       }
-      return candidates.get(0).toFile();
+      return candidates.get(0);
     }
     catch (IOException e) {
       GradleLog.LOG.warn("Couldn't list gradle wrapper directory " + wrapperDir, e);

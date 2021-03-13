@@ -51,6 +51,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -192,9 +193,9 @@ public class GradleExecutionHelper {
             launcher.forTasks("wrapper");
             launcher.run();
 
-            File wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+            Path wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
             if (wrapperPropertiesFile != null) {
-              settings.setWrapperPropertyFile(wrapperPropertiesFile.getPath());
+              settings.setWrapperPropertyFile(wrapperPropertiesFile.toString());
             }
             return null;
           }
