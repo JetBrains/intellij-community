@@ -19,7 +19,7 @@ public abstract class MutedLogger extends Logger {
 
   private static final Cache<String, LoggerWithCounter> ourCache = Caffeine.newBuilder()
     .maximumSize(1000)
-    .expireAfterAccess(1, TimeUnit.MINUTES)
+    .expireAfterAccess(5, TimeUnit.MINUTES)
     .removalListener((RemovalListener<String, LoggerWithCounter>)(key, value, cause) -> {
       if (key != null && value != null) {
         String hash = Objects.requireNonNull(StringUtil.substringBefore(key, ":"));
