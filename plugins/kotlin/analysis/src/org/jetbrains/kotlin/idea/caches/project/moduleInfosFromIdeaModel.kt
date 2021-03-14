@@ -64,15 +64,29 @@ class IdeaModelInfosCache(
 }
 
 // Workaround for duplicated libraries, see KT-42607
-private class LibraryWrapper(val library: LibraryEx) {
+internal class LibraryWrapper(val library: LibraryEx) {
+    private val allRootUrls by lazy {
+            mutableSetOf<String>().apply {
+                for (orderRootType in OrderRootType.getAllTypes()) {
+                    ProgressManager.checkCanceled()
+                    addAll(library.rootProvider.getUrls(orderRootType))
+                }
+            }
+        }
+
+    private val hashCode by lazy {
+        31 + allRootUrls.hashCode()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is LibraryWrapper) return false
 
-        return library.hasEqualRoots(other.library)
+        if (allRootUrls != other.allRootUrls) return false
+        return library.excludedRootUrls.contentEquals(other.library.excludedRootUrls)
     }
 
-    override fun hashCode(): Int = library.rootBasedHashCode()
+    override fun hashCode(): Int = hashCode
 }
 
 internal fun Library.asLibraryEx(): LibraryEx {
@@ -80,29 +94,7 @@ internal fun Library.asLibraryEx(): LibraryEx {
     return this
 }
 
-private fun Library.wrap() = LibraryWrapper(this.asLibraryEx())
-
-private val LibraryEx.lazyAllRootUrls
-    get() = lazy {
-        mutableSetOf<String>().apply {
-            for (orderRootType in OrderRootType.getAllTypes()) {
-                ProgressManager.checkCanceled()
-                addAll(rootProvider.getUrls(orderRootType))
-            }
-        }
-    }
-
-internal val LibraryEx.allRootUrls: Set<String>
-    get() = lazyAllRootUrls.value
-
-internal fun LibraryEx.hasEqualRoots(other: LibraryEx): Boolean {
-    if (allRootUrls != other.allRootUrls) return false
-    return excludedRootUrls.contentEquals(other.excludedRootUrls)
-}
-
-internal fun LibraryEx.rootBasedHashCode(): Int {
-    return 31 + allRootUrls.hashCode()
-}
+internal fun Library.wrap() = LibraryWrapper(this.asLibraryEx())
 
 private fun collectModuleInfosFromIdeaModel(
     project: Project
@@ -110,14 +102,14 @@ private fun collectModuleInfosFromIdeaModel(
     val ideaModules = ModuleManager.getInstance(project).modules.toList()
 
     //TODO: (module refactoring) include libraries that are not among dependencies of any module
-    val ideaLibraries = ideaModules.flatMap {
-        ModuleRootManager.getInstance(it).orderEntries.filterIsInstance<LibraryOrderEntry>().map {
+    val ideaLibraries = ideaModules.flatMap { module ->
+        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<LibraryOrderEntry>().map {
             it.library?.wrap()
         }
     }.filterNotNull().toSet()
 
-    val sdksFromModulesDependencies = ideaModules.flatMap {
-        ModuleRootManager.getInstance(it).orderEntries.filterIsInstance<JdkOrderEntry>().map {
+    val sdksFromModulesDependencies = ideaModules.flatMap { module ->
+        ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<JdkOrderEntry>().map {
             it.jdk
         }
     }

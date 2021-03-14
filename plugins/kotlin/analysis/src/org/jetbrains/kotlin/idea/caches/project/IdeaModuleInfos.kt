@@ -231,7 +231,7 @@ private class ModuleTestSourceScope(module: Module) : ModuleSourceScope(module) 
 abstract class LibraryInfo(override val project: Project, val library: Library) :
     IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
 
-    private val libraryEx: LibraryEx = library.asLibraryEx()
+    private val libraryWrapper = library.wrap()
 
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
@@ -279,14 +279,10 @@ abstract class LibraryInfo(override val project: Project, val library: Library) 
         if (this === other) return true
         if (other !is LibraryInfo) return false
 
-        return libraryEx.hasEqualRoots(other.libraryEx)
+        return libraryWrapper == other.libraryWrapper
     }
 
-    private val lazyHashCode: Int by lazy {
-        libraryEx.rootBasedHashCode()
-    }
-
-    override fun hashCode(): Int = lazyHashCode
+    override fun hashCode() = libraryWrapper.hashCode()
 }
 
 data class LibrarySourceInfo(override val project: Project, val library: Library, override val binariesModuleInfo: BinaryModuleInfo) :
