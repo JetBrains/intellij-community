@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.concurrency.JobLauncher
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
@@ -42,11 +41,9 @@ class InlayHintsPass(
       Processor { collector ->
         // TODO [roman.ivanov] it is not good to create separate traverser here as there may be many hints providers
         val traverser = SyntaxTraverser.psiTraverser(rootElement)
-        ReadAction.nonBlocking {
-          for (element in traverser.preOrderDfsTraversal()) {
-            if (!collector.collectHints(element, myEditor)) break
-          }
-        }.executeSynchronously()
+        for (element in traverser.preOrderDfsTraversal()) {
+          if (!collector.collectHints(element, myEditor)) break
+        }
         val hints = collector.sink.complete()
         buffers.add(hints)
         true
