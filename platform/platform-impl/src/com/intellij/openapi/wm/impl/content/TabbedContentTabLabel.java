@@ -3,12 +3,12 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -57,32 +57,14 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   }
 
   @Override
-  protected void fillIcons(@NotNull List<? super AdditionalIcon> icons) {
-    icons.add(new AdditionalIcon(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
-                                                JBUI.CurrentTheme.ToolWindow.comboTabIcon(false))) {
-      @NotNull
-      @Override
-      public Rectangle getRectangle() {
-        return new Rectangle(getX(), 0, getIconWidth(), getHeight());
-      }
+  protected void fillActions(@NotNull List<? super ContentTabAction> actions) {
+    actions.add(new SelectContentTabAction());
+    super.fillActions(actions);
+  }
 
-      @Override
-      public boolean getActive() {
-        return mouseOverIcon(this) || isPopupShown();
-      }
-
-      @Override
-      public boolean getAvailable() {
-        return hasMultipleTabs();
-      }
-
-      @NotNull
-      @Override
-      public Runnable getAction() {
-        return () -> selectContent();
-      }
-    });
-    super.fillIcons(icons);
+  @Override
+  protected @NotNull AdditionalIcon createIcon(@NotNull ContentTabAction action) {
+    return new TabbedContentTabAdditionalIcon(action);
   }
 
   @Override
@@ -99,5 +81,33 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
 
   private boolean hasMultipleTabs() {
     return myContent != null && myContent.hasMultipleTabs();
+  }
+
+  private class SelectContentTabAction extends ContentTabAction {
+    private SelectContentTabAction() {
+      super(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
+                           JBUI.CurrentTheme.ToolWindow.comboTabIcon(false)));
+    }
+
+    @Override
+    public boolean getAvailable() {
+      return hasMultipleTabs();
+    }
+
+    @Override
+    public void runAction() {
+      selectContent();
+    }
+  }
+
+  protected class TabbedContentTabAdditionalIcon extends ContentTabAdditionalIcon {
+    public TabbedContentTabAdditionalIcon(@NotNull ContentTabAction action) {
+      super(action);
+    }
+
+    @Override
+    public boolean getActive() {
+      return super.getActive() || isPopupShown();
+    }
   }
 }

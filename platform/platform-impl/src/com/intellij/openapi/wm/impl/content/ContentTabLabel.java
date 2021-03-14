@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.LayeredIcon;
@@ -31,9 +32,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 
 class ContentTabLabel extends BaseLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -41,7 +42,6 @@ class ContentTabLabel extends BaseLabel {
   private static final int ICONS_GAP = JBUIScale.scale(3);
   private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
   private final LayeredIcon myRegularCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
-  private final ActiveIcon myCloseIcon = new ActiveIcon(myActiveCloseIcon, myRegularCloseIcon);
   @NotNull
   private final Content myContent;
   private final TabContentLayout myLayout;
@@ -49,56 +49,6 @@ class ContentTabLabel extends BaseLabel {
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
   private @NlsContexts.Label String myText;
   private int myIconWithInsetsWidth;
-
-  private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
-
-    @NotNull
-    @Override
-    public Rectangle getRectangle() {
-      return new Rectangle(getX(), 0, getIconWidth(), getHeight());
-    }
-
-    @Override
-    public boolean getActive() {
-      return mouseOverIcon(this);
-    }
-
-    @Override
-    public boolean getAvailable() {
-      return canBeClosed();
-    }
-
-    @NotNull
-    @Override
-    public Runnable getAction() {
-      return () -> {
-        Content content = getContent();
-        if (content.isPinned()) {
-          content.setPinned(false);
-          return;
-        }
-        ContentManager contentManager = myUi.window.getContentManagerIfCreated();
-        if (contentManager != null) {
-          contentManager.removeContent(content, true);
-        }
-      };
-    }
-
-    @Override
-    public boolean getAfterText() {
-      return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
-    }
-
-    @NotNull
-    @Override
-    public String getTooltip() {
-      if (getContent().isPinned()) {
-        return IdeBundle.message("action.unpin.tab.tooltip");
-      }
-      String text = KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-      return text.isEmpty() || !isSelected() ? IdeBundle.message("tooltip.close.tab") : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
-    }
-  };
 
   private CurrentTooltip currentIconTooltip;
 
@@ -140,7 +90,7 @@ class ContentTabLabel extends BaseLabel {
     protected void execute(@NotNull MouseEvent e) {
       for (AdditionalIcon icon : myAdditionalIcons) {
         if (mouseOverIcon(icon)) {
-          icon.getAction().run();
+          icon.runAction();
           return;
         }
       }
@@ -201,7 +151,9 @@ class ContentTabLabel extends BaseLabel {
     myLayout = layout;
     myContent = content;
 
-    fillIcons(myAdditionalIcons);
+    List<ContentTabAction> objects = new ArrayList<>();
+    fillActions(objects);
+    myAdditionalIcons.addAll(ContainerUtil.map(objects, this::createIcon));
 
     behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
@@ -228,8 +180,12 @@ class ContentTabLabel extends BaseLabel {
     repaint();
   }
 
-  protected void fillIcons(@NotNull List<? super AdditionalIcon> icons) {
-    icons.add(closeTabIcon);
+  protected void fillActions(@NotNull List<? super ContentTabAction> actions) {
+    actions.add(new CloseContentTabAction());
+  }
+
+  protected @NotNull AdditionalIcon createIcon(@NotNull ContentTabAction action) {
+    return new ContentTabAdditionalIcon(action);
   }
 
   @Override
@@ -393,6 +349,64 @@ class ContentTabLabel extends BaseLabel {
     CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
       this.currentTooltip = currentTooltip;
       this.icon = icon;
+    }
+  }
+
+  private class CloseContentTabAction extends ContentTabAction {
+    private CloseContentTabAction() {
+      super(new ActiveIcon(myActiveCloseIcon, myRegularCloseIcon));
+    }
+
+    @Override
+    public boolean getAvailable() {
+      return canBeClosed();
+    }
+
+    @Override
+    public void runAction() {
+      Content content = getContent();
+      if (content.isPinned()) {
+        content.setPinned(false);
+        return;
+      }
+      ContentManager contentManager = myUi.window.getContentManagerIfCreated();
+      if (contentManager != null) {
+        contentManager.removeContent(content, true);
+      }
+    }
+
+    @Override
+    public boolean getAfterText() {
+      return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
+    }
+
+    @NotNull
+    @Override
+    public String getTooltip() {
+      if (getContent().isPinned()) {
+        return IdeBundle.message("action.unpin.tab.tooltip");
+      }
+      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB);
+      String text = KeymapUtil.getShortcutsText(shortcuts);
+      return text.isEmpty() || !isSelected()
+             ? IdeBundle.message("tooltip.close.tab")
+             : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
+    }
+  }
+
+  protected class ContentTabAdditionalIcon extends AdditionalIcon {
+    public ContentTabAdditionalIcon(@NotNull ContentTabAction action) {
+      super(action);
+    }
+
+    @Override
+    public boolean getActive() {
+      return mouseOverIcon(this);
+    }
+
+    @Override
+    public int getHeight() {
+      return ContentTabLabel.this.getHeight();
     }
   }
 }
