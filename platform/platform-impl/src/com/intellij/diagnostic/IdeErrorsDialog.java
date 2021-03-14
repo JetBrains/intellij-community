@@ -55,7 +55,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.util.List;
@@ -143,7 +143,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               }
             });
           }
-          catch (UnknownHostException e) {
+          catch (SocketTimeoutException e) {
             LOG.debug(e);
             UIUtil.invokeLaterIfNeeded(() -> {
               if (isShowing()) {

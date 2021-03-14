@@ -47,7 +47,7 @@ import java.util.zip.GZIPOutputStream;
 final class ITNProxy {
   private static final String DEFAULT_USER = "idea_anonymous";
   private static final String DEFAULT_PASS = "guest";
-  private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.intellij.net/data?category=developers";
+  private static final String DEVELOPERS_LIST_URL = "https://ea-engine.labs.jb.gg/data?category=developers";
   private static final String NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr";
   private static final String NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/";
 
@@ -89,7 +89,7 @@ final class ITNProxy {
   }
 
   static @NotNull List<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
-    return HttpRequests.request(DEVELOPERS_LIST_URL).connect(request -> {
+    return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect(request -> {
       List<Developer> developers = new ArrayList<>();
       developers.add(Developer.NULL);
 
