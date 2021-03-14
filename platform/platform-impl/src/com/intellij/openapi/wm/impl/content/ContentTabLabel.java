@@ -13,7 +13,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
+import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.LayeredIcon;
@@ -43,7 +45,7 @@ class ContentTabLabel extends BaseLabel {
   private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
   private final LayeredIcon myRegularCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
   @NotNull
-  private final Content myContent;
+  protected final Content myContent;
   private final TabContentLayout myLayout;
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
@@ -108,6 +110,11 @@ class ContentTabLabel extends BaseLabel {
       }
     }
   };
+
+  boolean showIfSingle() {
+    return !StringUtil.isEmptyOrSpaces(myText) ||
+           hasActiveIcons();
+  }
 
   @Override
   public void setText(@NlsContexts.Label String text) {
@@ -181,6 +188,10 @@ class ContentTabLabel extends BaseLabel {
   }
 
   protected void fillActions(@NotNull List<? super ContentTabAction> actions) {
+    ContentTabActionProvider.EP_NAME.forEachExtensionSafe(provider -> {
+      actions.addAll(provider.createTabActions(myContent));
+    });
+
     actions.add(new CloseContentTabAction());
   }
 
@@ -195,7 +206,7 @@ class ContentTabLabel extends BaseLabel {
     boolean hovered = isHovered();
 
     if (hovered) {
-      if (invalid()) {
+      if (hasActiveIcons()) {
         repaint();
       }
 
@@ -210,7 +221,7 @@ class ContentTabLabel extends BaseLabel {
     showTooltip(null);
   }
 
-  protected boolean invalid() {
+  private boolean hasActiveIcons() {
     return myAdditionalIcons.stream().anyMatch(icon -> icon.getAvailable());
   }
 

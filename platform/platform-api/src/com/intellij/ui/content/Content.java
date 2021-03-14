@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +30,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String IS_CLOSABLE = "isClosable";
   String PROP_ALERT = "alerting";
   String PROP_TAB_COLOR = "tabColor";
+  String PROP_TAB_LAYOUT = "tabLayout";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");

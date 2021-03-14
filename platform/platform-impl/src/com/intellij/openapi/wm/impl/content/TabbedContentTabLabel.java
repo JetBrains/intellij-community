@@ -16,11 +16,9 @@ import java.util.List;
  */
 public final class TabbedContentTabLabel extends ContentTabLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
-  private final TabbedContent myContent;
 
   public TabbedContentTabLabel(@NotNull TabbedContent content, @NotNull TabContentLayout layout) {
     super(content, layout);
-    myContent = content;
   }
 
   private boolean isPopupShown() {
@@ -51,9 +49,8 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   @Override
   public void update() {
     super.update();
-    if (myContent != null) {
-      setText(myContent.getDisplayName());
-    }
+    //noinspection DialogTitleCapitalization
+    setText(myContent.getDisplayName());
   }
 
   @Override
@@ -76,11 +73,11 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   @NotNull
   @Override
   public TabbedContent getContent() {
-    return myContent;
+    return (TabbedContent)super.getContent();
   }
 
   private boolean hasMultipleTabs() {
-    return myContent != null && myContent.hasMultipleTabs();
+    return getContent().hasMultipleTabs();
   }
 
   private class SelectContentTabAction extends ContentTabAction {

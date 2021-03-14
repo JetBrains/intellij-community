@@ -94,6 +94,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+        /**
+         * @see Content#PROP_TAB_LAYOUT
+         */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
           update();
@@ -140,6 +143,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   @NotNull
   public String getToolWindowId() {
     return window.getId();
+  }
+
+  @NotNull
+  public ToolWindow getWindow() {
+    return window;
   }
 
   private boolean isResizeable() {

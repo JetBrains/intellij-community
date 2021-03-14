@@ -642,4 +642,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       contentUi.rebuild();
     }
   }
+
+  @Nullable
+  public ContentUI getUI() {
+    return myUI;
+  }
 }

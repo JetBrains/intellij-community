@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
@@ -256,7 +255,7 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       return true;
     }
     else if (size == 1) {
-      return !StringUtil.isEmpty(myTabs.get(0).getContent().getToolwindowTitle());
+      return myTabs.get(0).showIfSingle();
     }
     else {
       return false;
