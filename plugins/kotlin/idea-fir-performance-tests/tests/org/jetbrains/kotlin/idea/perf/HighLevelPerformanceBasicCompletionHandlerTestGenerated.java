@@ -149,6 +149,11 @@ public class HighLevelPerformanceBasicCompletionHandlerTestGenerated extends Abs
         runTest("idea/idea-completion/testData/handlers/basic/KT36306.kt");
     }
 
+    @TestMetadata("LocalFunction.kt")
+    public void testLocalFunction() throws Exception {
+        runTest("idea/idea-completion/testData/handlers/basic/LocalFunction.kt");
+    }
+
     @TestMetadata("NestedTypeArg.kt")
     public void testNestedTypeArg() throws Exception {
         runTest("idea/idea-completion/testData/handlers/basic/NestedTypeArg.kt");
@@ -451,6 +456,11 @@ public class HighLevelPerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("HigherOrderSuspendFunctionWithArgs.kt")
         public void testHigherOrderSuspendFunctionWithArgs() throws Exception {
             runTest("idea/idea-completion/testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");
+        }
+
+        @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
+        public void testInsertFunctionLiteralForLocalFunction() throws Exception {
+            runTest("idea/idea-completion/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
