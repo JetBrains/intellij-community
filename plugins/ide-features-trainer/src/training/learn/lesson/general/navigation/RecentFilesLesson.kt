@@ -142,7 +142,10 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.locations.search.jump", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != existedFile.substringAfterLast('/') }
+      triggerByListItemAndHighlight { item ->
+        item.toString().contains(transitionFileName)
+      }
+      stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
