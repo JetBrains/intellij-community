@@ -32,11 +32,11 @@ class GradleRuntimeType : LanguageRuntimeType<GradleRuntimeTargetConfiguration>(
                                   config: GradleRuntimeTargetConfiguration,
                                   targetEnvironmentType: TargetEnvironmentType<*>,
                                   targetSupplier: Supplier<TargetEnvironmentConfiguration>): Configurable {
-    return GradleRuntimeTargetUI(config)
+    return GradleRuntimeTargetUI(config, targetEnvironmentType, targetSupplier, project)
   }
 
   override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): GradleRuntimeTargetConfiguration? {
-    return target.runtimes.findByType<GradleRuntimeTargetConfiguration>()
+    return target.runtimes.findByType()
   }
 
   override fun duplicateConfig(config: GradleRuntimeTargetConfiguration): GradleRuntimeTargetConfiguration =
