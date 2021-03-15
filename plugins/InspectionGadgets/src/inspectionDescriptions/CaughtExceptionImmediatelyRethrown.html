@@ -1,11 +1,18 @@
 <html>
 <body>
-Reports any <b>catch</b> block where
+Reports any <code>catch</code> block where
 the caught exception is immediately rethrown, without performing any action on it.
-Such <b>catch</b> blocks are unnecessary or lack error
+Such <code>catch</code> blocks are unnecessary or have no error
 handling.
 <!-- tooltip end -->
-<p>
+<p>Example:</p>
+<pre>
+        try {
+            new FileInputStream("");
+        } catch (FileNotFoundException e) {
+            throw e;
+        }
+</pre>
 
 </body>
 </html>
