@@ -420,6 +420,9 @@ final class CommunityRepositoryModules {
 
       // contents of "/plugins/android/lib/layoutlib/" will be downloaded by the AndroidPlugin on demand
 
+      // Android Studio project libraries that implicitly go to Android Studio platform libs
+      withProjectLibrary("kotlinx-coroutines-guava")
+      withProjectLibrary("sqlite-inspector-proto")
       withProjectLibrary("transport-proto")
       withProjectLibrary("perfetto-proto")
       withProjectLibrary("studio-proto")
