@@ -361,7 +361,7 @@ class KotlinFunctionCallUsage(
         val lastParameterIndex = newParameters.lastIndex
         var firstNamedIndex = newArgumentInfos.firstOrNull {
             it.wasNamed
-                    || (it.parameter.isNewParameter && purelyNamedCall)
+                    || (it.parameter.isNewParameter && (purelyNamedCall || it.parameter.defaultValueAsDefaultParameter))
                     || (it.resolvedArgument is VarargValueArgument && it.parameterIndex < lastParameterIndex)
         }?.parameterIndex
         if (firstNamedIndex == null) {
