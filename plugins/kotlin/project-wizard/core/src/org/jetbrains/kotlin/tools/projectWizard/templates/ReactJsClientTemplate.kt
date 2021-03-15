@@ -135,9 +135,9 @@ class ReactJsClientTemplate : JsClientTemplate() {
 
         private fun wrapperDependency(artifact: String, version: Version) =
             ArtifactBasedLibraryDependencyIR(
-                MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS_BINTRAY, "org.jetbrains", artifact),
-                version,
-                DependencyType.MAIN
+              MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS, "org.jetbrains", artifact),
+              version,
+              DependencyType.MAIN
             )
     }
 }
