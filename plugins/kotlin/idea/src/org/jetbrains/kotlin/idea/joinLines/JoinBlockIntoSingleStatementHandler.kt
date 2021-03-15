@@ -9,6 +9,7 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention
@@ -55,12 +56,15 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
             }
         }
 
-        return if (oneLineReturnFunction != null) {
+        val resultExpression = if (oneLineReturnFunction != null) {
             useExpressionBodyInspection.simplify(oneLineReturnFunction, false)
-            oneLineReturnFunction.bodyExpression!!.startOffset
+            oneLineReturnFunction.bodyExpression ?: return CANNOT_JOIN
         } else {
-            val newStatement = block.replace(statement)
-            newStatement.textRange!!.startOffset
+            block.replace(statement)
         }
+
+        return resultExpression.let {
+            CodeStyleManager.getInstance(it.project).reformat(it, true)
+        }.startOffset
     }
 }
