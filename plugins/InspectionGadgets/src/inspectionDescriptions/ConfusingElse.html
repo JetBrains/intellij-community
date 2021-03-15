@@ -1,11 +1,28 @@
 <html>
 <body>
-Reports redundant <b>else</b> keywords in <b>if</b>&mdash;<b>else</b> statements and statement chains.
-An <b>else</b> keyword is redundant when all previous <b>if</b> branches in the chain don't complete normally
-because they end with <b>return</b>, <b>throw</b>, <b>break</b>, or <b>continue</b> statement.
+Reports redundant <code>else</code> keywords in <code>if</code>&mdash;<code>else</code> statements and statement chains.
 <p>
-  In these cases the statements from the <b>else</b> branch can be placed after the <b>if</b> statement and
-  the <b>else</b> keyword can be removed.
-  <!-- tooltip end -->
+An <code>else</code> keyword is redundant when all previous <code>if</code> branches in the chain don't complete normally
+because they end with <code>return</code>, <code>throw</code>, <code>break</code>, or <code>continue</code> statement.
+In these cases the statements from the <code>else</code> branch can be placed after the <code>if</code> statement and
+the <code>else</code> keyword can be removed.
+</p>
+<p>Example:</p>
+<pre>
+  if (name == null) {
+      throw new IllegalArgumentException();
+  } else {
+      System.out.println(name);
+  }
+</pre>
+<p>After the quick-fix applied the result looks like:</p>
+<pre>
+  if (name == null) {
+      throw new IllegalArgumentException();
+  }
+  System.out.println(name);
+</pre>
+<!-- tooltip end -->
+<p>Disable the checkbox below to ignore cases when the <code>if</code>&mdash;<code>else</code> statement is the last statement in the code block.</p>
 </body>
 </html>

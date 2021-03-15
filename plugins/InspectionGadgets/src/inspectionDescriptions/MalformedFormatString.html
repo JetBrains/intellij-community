@@ -1,14 +1,14 @@
 <html>
 <body>
-Reports malformed format strings. Format strings
-are reported if they are compile-time constants used as arguments to appropriate methods on
-<b>java.util.Formatter</b>,
-<b>java.lang.String</b>,
-<b>java.io.PrintWriter</b>,
-or <b>java.io.PrintStream</b>
-and do not fit the standard Java format string syntax.
+Reports malformed format strings in case when they don't fit the standard Java syntax.
+<p>By default, inspection consider a compile-time constant as a format string if it's used as argument to appropriate methods on
+<code>java.util.Formatter</code>, <code>java.lang.String</code>, <code>java.io.PrintWriter</code> or <code>java.io.PrintStream</code>.
+</p>
+<p>Example:</p>
+<pre>
+  String.format("x = %d, y = %d", 42);
+</pre>
 <!-- tooltip end -->
-<p>
-
+<p>Use settings below to mark additional classes and methods as related to the string formatting.</p>
 </body>
 </html>

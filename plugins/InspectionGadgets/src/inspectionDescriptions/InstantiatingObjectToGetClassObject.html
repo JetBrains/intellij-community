@@ -1,10 +1,16 @@
 <html>
 <body>
-Reports any cases where new objects are instantiated for the purpose
+Reports cases where new objects are instantiated for the purpose
 of accessing its class object. It is more performant to access the class object
 directly by name.
+<p>Example:</p>
+<pre>
+  Class&lt;?&gt; c = new Sample().getClass();
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  Class&lt;?&gt; c = Sample.class;
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

@@ -1,13 +1,32 @@
 <html>
 <body>
-  Reports all anonymous classes which can be replaced with lambda expressions.
-  <p>
-    Note that if an anonymous class is converted into a stateless lambda, the same lambda object 
-    can be reused by Java runtime during subsequent invocations. On the other hand, when an anonymous class is used,
-    separate objects are created every time. Thus, applying the quick-fix can cause the semantics change in rare cases, 
-    e.g. when anonymous class instances are used as <code>HashMap</code> keys.
-  </p>
-  <p>
-  Lambda syntax is not supported under Java 1.7 or earlier JVMs.
+Reports anonymous classes which can be replaced with lambda expressions.
+<p>Example:</p>
+<pre>
+  new Thread(new Runnable() {
+    @Override
+    public void run() {
+      // run thread
+    }
+  });
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  new Thread(() -> {
+    // run thread
+  });
+</pre>
+<p>
+Note that if an anonymous class is converted into a stateless lambda, the same lambda object
+can be reused by Java runtime during subsequent invocations. On the other hand, when an anonymous class is used,
+separate objects are created every time. Thus, applying the quick-fix can cause the semantics change in rare cases,
+e.g. when anonymous class instances are used as <code>HashMap</code> keys.
+</p>
+<p>Lambda syntax is not supported under Java 1.7 or earlier JVMs.</p>
+<!-- tooltip end -->
+<p>
+Configure the checkbox below to ignore cases when the anonymous class implements an
+interface without <code>@FunctionalInterface</code> annotation.
+</p>
 </body>
 </html>

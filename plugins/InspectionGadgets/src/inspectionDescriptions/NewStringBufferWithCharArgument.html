@@ -1,12 +1,16 @@
 <html>
 <body>
-Reports any <b>new StringBuffer()</b>
-and <b>new StringBuilder()</b> calls with an argument
-of type <b>char</b>. Such an argument is silently
-cast to an integer and interpreted as initial capacity of the buffer. Usually this is
-not what was intended.
+Reports calls to <code>new StringBuffer()</code> and <code>new StringBuilder()</code> with an argument of type <code>char</code>.
+In this case <code>char</code> is silently cast to an integer and interpreted as initial capacity of the buffer.
+In this case <code>char</code> probably should be replaced with a string literal.
+<p>Example:</p>
+<pre>
+  new StringBuilder('(').append("1").append(')');
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  new StringBuilder("(").append("1").append(')');
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
