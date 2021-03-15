@@ -5,6 +5,16 @@ operation since any boxed value will first be auto-unboxed before boxing the
 value again. If done inside an inner loop such code may cause performance
 problems.
 <!-- tooltip end -->
+<p>Example: </p>
+<pre>
+  Integer value = 1;
+  method(Integer.valueOf(value));
+</pre>
+<p>After applying the fix: </p>
+<pre>
+  Integer value = 1;
+  method(value);
+</pre>
 <p>
 </body>
 </html>
