@@ -1,16 +1,17 @@
 package org.jetbrains.kotlin.psi
 
+import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.injection.Injectable
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.lang.IllegalArgumentException
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
@@ -374,6 +375,65 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
                 """, "HTML"
             ), true
         )
+    }
+    
+    fun testOneLineTrimIndentAndSpaces() {
+        myFixture.configureByText(
+            "Foo.kt", mkFoo("""<caret><html></html>""", "HTML")
+        )
+
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor()
+        editorTestFixture.type(" ")
+        editorTestFixture.type(" ")
+        editorTestFixture.type(" ")
+        val injectedFile = editorTestFixture.file
+        TestCase.assertEquals("<html></html>", injectedFile.text)
+        myFixture.checkResult(
+            "Foo.kt", mkFoo(
+                """   <html></html>""", "HTML"
+            ), true
+        )
+    }
+    
+    fun testMultilineTabLineTrimIndentAndSpaces() {
+        myFixture.configureByText(
+            "Foo.kt", mkFoo(
+                """
+                    {
+                      "abc": 1<caret>
+                    }
+                """,
+                "JSON"
+            )
+
+        )
+
+        val quickEditHandler = QuickEditAction().invokeImpl(project,  myInjectionFixture.topLevelEditor,  myInjectionFixture.topLevelFile)
+
+        val editorTestFixture = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+        TestCase.assertEquals("{\n  \"abc\": 1\n}", editorTestFixture.file.text)
+        TestCase.assertEquals(quickEditHandler.newFile, editorTestFixture.file)
+        editorTestFixture.performEditorAction(IdeActions.ACTION_SELECT_ALL)
+        editorTestFixture.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        TestCase.assertTrue(quickEditHandler.isValid)
+        TestCase.assertEquals("  {\n    \"abc\": 1\n  }", quickEditHandler.newFile.text)
+        myInjectionFixture.assertInjectedContent("  {\n    \"abc\": 1\n  }")
+        TestCase.assertEquals(quickEditHandler.newFile, editorTestFixture.file)
+        myFixture.checkResult(
+            "Foo.kt", mkFoo(
+                """
+                      {
+                        "abc": 1
+                      }
+                """,
+                "JSON"
+            )
+            , true
+        )
+        quickEditHandler.closeEditorForTest();
+        PsiDocumentManager.getInstance(project).reparseFiles(listOf(myInjectionFixture.topLevelFile.virtualFile), true)
+        myInjectionFixture.assertInjectedContent("{\n  \"abc\": 1\n}")
     }
 
     fun testNewLineJSONAuthoComma() {
