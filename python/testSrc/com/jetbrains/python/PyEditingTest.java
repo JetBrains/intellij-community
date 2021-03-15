@@ -81,7 +81,7 @@ public class PyEditingTest extends PyTestCase {
   public void testAutoRemoveTriple() {
     doTestBackspace("closedTripleQuoteBackspace", new LogicalPosition(1, 3));
   }
-  
+
   // PY-19084
   public void testNoAoutoclosingAtTheEnd() {
     assertEquals("'''docstring'''", doTestTyping("'''docstring''", 14,  '\''));
@@ -325,7 +325,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterDocStringStubInFunctionWithSelf() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
   }
-  
+
   // PY-16656
   public void testEnterDocStringStubInStaticMethodWithSelf() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
@@ -366,7 +366,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterDocstringStubWhenFunctionDocstringBelow() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
   }
-  
+
   // PY-17183
   public void testEnterDocstringStubWhenClassDocstringBelow() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
@@ -837,19 +837,15 @@ public class PyEditingTest extends PyTestCase {
   }
 
   public void testOverTypingColonInFStringFragment() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestTyping("s = f'{(lambda<caret>: 42)}'",
-                   ":",
-                   "s = f'{(lambda:<caret> 42)}'");
-    });
+    doTestTyping("s = f'{(lambda<caret>: 42)}'",
+                 ":",
+                 "s = f'{(lambda:<caret> 42)}'");
   }
 
   public void testOverTypingFormatStartInFStringFragment() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doTestTyping("s = f'{42<caret>:3d}'",
-                   ":",
-                   "s = f'{42:<caret>:3d}'");
-    });
+    doTestTyping("s = f'{42<caret>:3d}'",
+                 ":",
+                 "s = f'{42:<caret>:3d}'");
   }
 
   @NotNull

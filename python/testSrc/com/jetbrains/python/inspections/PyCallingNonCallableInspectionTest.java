@@ -26,27 +26,27 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   public void testTupleNonCallable() {
     doTest();
   }
-  
+
   public void testStaticMeth() {
     doTest();
   }
-  
+
   public void testConcealer() {
     doTest();
   }
-  
+
   public void testModule() {
     doTest();
   }
-  
+
   public void testClassAsCallable() {  // PY-4061
     doTest();
   }
-  
+
   public void testClassAssignments() {  // PY-4061
     doTest();
   }
-  
+
   public void testNamedTupleCallable() {
     doTest();
   }
@@ -55,7 +55,7 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
   public void testCallableCheck() {
     doTest();
   }
-  
+
   public void testClassMethodFirstParam() {
     doTest();
   }
@@ -139,12 +139,9 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
 
   // PY-41676
   public void testThereIsNoInspectionOnCallProtectedByHasattr() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestByText("def test(obj):\n" +
-                         "    if hasattr(obj, \"anything\"):\n" +
-                         "        pkgs = obj.anything()")
-    );
+    doTestByText("def test(obj):\n" +
+                 "    if hasattr(obj, \"anything\"):\n" +
+                 "        pkgs = obj.anything()");
   }
 
   @NotNull

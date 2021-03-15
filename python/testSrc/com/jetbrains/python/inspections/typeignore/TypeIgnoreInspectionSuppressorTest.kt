@@ -7,9 +7,8 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.*
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
-import com.jetbrains.python.psi.LanguageLevel
 
-class TypeIgnoreInspectionSuppressorTest: PyTestCase() {
+class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
 
   fun testCaseInsensitiveness() {
     doTestByText("""
@@ -184,12 +183,10 @@ class TypeIgnoreInspectionSuppressorTest: PyTestCase() {
 
   private fun doTestByText(notTrimmedText: String) {
     val text = notTrimmedText.trimIndent()
-    runWithLanguageLevel(LanguageLevel.getLatest()) {
-      myFixture.enableInspections(inspections)
-      val currentFile: PsiFile = myFixture.configureByText(PythonFileType.INSTANCE, text)
-      myFixture.checkHighlighting()
-      assertSdkRootsNotParsed(currentFile)
-    }
+    myFixture.enableInspections(inspections)
+    val currentFile: PsiFile = myFixture.configureByText(PythonFileType.INSTANCE, text)
+    myFixture.checkHighlighting()
+    assertSdkRootsNotParsed(currentFile)
   }
 
   companion object {

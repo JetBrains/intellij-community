@@ -242,7 +242,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // PY-46099
   public void testNoClassCastExceptionInCopiedFunctionWithClassInitAndMethodCall() {
-    runWithLanguageLevel(LanguageLevel.getLatest(),
-                         () -> doSimpleTest("Baz", "Bar", null, true, false, ".baz"));
+    doSimpleTest("Baz", "Bar", null, true, false, ".baz");
   }
 }
