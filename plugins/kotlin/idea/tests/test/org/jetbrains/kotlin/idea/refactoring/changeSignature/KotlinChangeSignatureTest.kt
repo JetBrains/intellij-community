@@ -488,6 +488,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addNewIntParameterWithValue(true)
     }
 
+    fun testAddNewLastParameterWithDefaultValueToJava() = doTestConflict {
+        addParameter(createKotlinIntParameter(defaultValueAsDefaultParameter = true))
+    }
+
     fun testAddNewFirstParameterWithDefaultValue() = doTestWithDescriptorModification {
         addNewIntParameterWithValue(true, 0)
     }

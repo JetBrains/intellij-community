@@ -675,7 +675,8 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val javaChangeInfo = wrapper.javaChangeInfo
         val javaUsageInfos = wrapper.javaUsageInfos
         val parametersToRemove = javaChangeInfo.toRemoveParm()
-        val noDefaultValues = javaChangeInfo.newParameters.all { it.defaultValue.isNullOrBlank() }
+        val hasDefaultValue = javaChangeInfo.newParameters.any { !it.defaultValue.isNullOrBlank() }
+        val hasDefaultParameter = kotlinChangeInfo.newParameters.any { it.defaultValueAsDefaultParameter }
 
         for (javaUsage in javaUsageInfos) when (javaUsage) {
             is OverriderUsageInfo -> {
@@ -689,12 +690,13 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
 
             is MethodCallUsageInfo -> {
-                if (noDefaultValues) continue
+                val conflictMessage = when {
+                    hasDefaultValue -> KotlinBundle.message("change.signature.conflict.text.kotlin.default.value.in.non.kotlin.files")
+                    hasDefaultParameter -> KotlinBundle.message("change.signature.conflict.text.kotlin.default.parameter.in.non.kotlin.files")
+                    else -> continue
+                }
 
-                result.putValue(
-                    javaUsage.element,
-                    KotlinBundle.message("change.signature.conflict.text.kotlin.default.value.in.non.kotlin.files")
-                )
+                result.putValue(javaUsage.element, conflictMessage)
             }
         }
     }
