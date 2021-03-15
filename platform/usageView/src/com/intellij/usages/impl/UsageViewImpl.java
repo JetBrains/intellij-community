@@ -165,7 +165,6 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
-  private boolean myDisposeSmartPointersOnClose = true;
   private final ExecutorService updateRequests = AppExecutorUtil
     .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
                                           JobSchedulerImpl.getJobPoolParallelism(), this);
@@ -1627,9 +1626,7 @@ public class UsageViewImpl implements UsageViewEx {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
     }
-    if (myDisposeSmartPointersOnClose) {
-      disposeSmartPointers();
-    }
+    disposeSmartPointers();
   }
 
   private void disposeSmartPointers() {
@@ -2205,10 +2202,6 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
 
-      // can't dispose pointers because refactoring might want to re-use the usage infos from the preview
-      myDisposeSmartPointersOnClose = false;
-      close();
-
       try {
         if (myCommandName == null) {
           myProcessRunnable.run();
@@ -2222,7 +2215,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
       finally {
-        disposeSmartPointers();
+        close();
       }
     }
   }
