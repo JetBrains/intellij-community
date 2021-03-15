@@ -21,8 +21,8 @@ internal class ProblemsViewState : BaseState() {
   var showPreview by property(false)
   var showToolbar by property(true)
 
+  var groupByToolId by property(false)
   var sortFoldersFirst by property(true)
-  var sortByGroupId by property(false)
   var sortBySeverity by property(true)
   var sortByName by property(false)
 

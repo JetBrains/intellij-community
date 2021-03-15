@@ -123,6 +123,18 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
       updatePreview();
     }
   };
+  private final Option myGroupByToolId = new Option() {
+    @Override
+    public boolean isSelected() {
+      return myState.getGroupByToolId();
+    }
+
+    @Override
+    public void setSelected(boolean selected) {
+      myState.setGroupByToolId(selected);
+      myTreeModel.structureChanged(null);
+    }
+  };
   @SuppressWarnings("unused")
   private final Option mySortFoldersFirst = new Option() {
     @Override
@@ -133,18 +145,6 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     @Override
     public void setSelected(boolean selected) {
       myState.setSortFoldersFirst(selected);
-      myTreeModel.setComparator(createComparator());
-    }
-  };
-  private final Option mySortByGroupId = new Option() {
-    @Override
-    public boolean isSelected() {
-      return myState.getSortByGroupId();
-    }
-
-    @Override
-    public void setSelected(boolean selected) {
-      myState.setSortByGroupId(selected);
       myTreeModel.setComparator(createComparator());
     }
   };
@@ -381,7 +381,6 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
-      isNotNullAndSelected(getSortByGroupId()),
       isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));
   }
@@ -394,12 +393,12 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     return myShowPreview;
   }
 
-  @Nullable Option getSortFoldersFirst() {
-    return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
+  @Nullable Option getGroupByToolId() {
+    return this instanceof HighlightingPanel ? myGroupByToolId : null;
   }
 
-  @Nullable Option getSortByGroupId() {
-    return this instanceof HighlightingPanel ? mySortByGroupId : null;
+  @Nullable Option getSortFoldersFirst() {
+    return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
   @Nullable Option getSortBySeverity() {

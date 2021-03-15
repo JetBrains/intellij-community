@@ -6,15 +6,14 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
-internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent) {
-
-  val file = parent.file
+internal class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
 
   var text: String = ""
     private set
@@ -26,9 +25,6 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
     private set
 
   var severity: Int = 0
-    private set
-
-  var groupId: String? = null
     private set
 
   override fun getLeafState() = LeafState.ALWAYS
@@ -47,12 +43,10 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
     line = (problem as? FileProblem)?.line ?: -1
     column = (problem as? FileProblem)?.column ?: -1
     severity = (problem as? HighlightingProblem)?.severity ?: -1
-    groupId = (problem as? HighlightingProblem)?.info?.inspectionToolId
     presentation.addText(text, REGULAR_ATTRIBUTES)
     presentation.setIcon(problem.icon)
     presentation.tooltip = problem.description
     if (line >= 0) presentation.addText(" :${line + 1}", GRAYED_ATTRIBUTES)
-    groupId?.let { presentation.addText(" < $it", GRAYED_ATTRIBUTES) }
   }
 
   override fun hashCode() = hash(project, problem)

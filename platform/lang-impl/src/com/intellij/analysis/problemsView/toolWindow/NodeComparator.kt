@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil.naturalCompare
 
 internal data class NodeComparator(
   private val sortFoldersFirst: Boolean,
-  private val sortByGroupId: Boolean,
   private val sortBySeverity: Boolean,
   private val sortByName: Boolean)
   : Comparator<Node?> {
@@ -25,10 +24,6 @@ internal data class NodeComparator(
   }
 
   private fun compare(node1: ProblemNode, node2: ProblemNode): Int {
-    if (sortByGroupId) {
-      val result = compareGroupId(node1.groupId, node2.groupId)
-      if (result != 0) return result
-    }
     if (sortBySeverity) {
       val result = node2.severity.compareTo(node1.severity)
       if (result != 0) return result
@@ -46,12 +41,5 @@ internal data class NodeComparator(
   private fun comparePosition(node1: ProblemNode, node2: ProblemNode): Int {
     val result = node1.line.compareTo(node2.line)
     return if (result != 0) result else node1.column.compareTo(node2.column)
-  }
-
-  private fun compareGroupId(id1: String?, id2: String?) = when {
-    id1 == null && id2 == null -> 0
-    id1 == null -> 1
-    id2 == null -> -1
-    else -> naturalCompare(id1, id2)
   }
 }
