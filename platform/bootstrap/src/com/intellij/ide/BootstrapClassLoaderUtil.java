@@ -27,6 +27,7 @@ public final class BootstrapClassLoaderUtil {
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
   private static final @NonNls String MARKETPLACE_PLUGIN_DIR = "marketplace";
+  private static final String MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -56,8 +57,14 @@ public final class BootstrapClassLoaderUtil {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
 
     Path pluginDir = Path.of(PathManager.getPluginsPath());
-    Path marketPlaceBootDir = pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
-    Path mpBoot = marketPlaceBootDir.resolve("marketplace-bootstrap.jar");
+    Path marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
+    Path mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
+    if (!Files.exists(mpBoot)) {
+      pluginDir = Path.of(PathManager.getPreInstalledPluginsPath());
+      marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
+      mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
+    }
+
     boolean installMarketplace = shouldInstallMarketplace(distDir, mpBoot);
     if (installMarketplace) {
       Path marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar");
@@ -93,6 +100,11 @@ public final class BootstrapClassLoaderUtil {
     }
 
     return new PathClassLoader(builder);
+  }
+
+  @NotNull
+  private static Path findMarketplaceBootDir(Path pluginDir) {
+    return pluginDir.resolve(MARKETPLACE_PLUGIN_DIR).resolve("lib/boot");
   }
 
   private static List<Path> loadClassPathFromDevBuildServer(@NotNull Path distDir) throws IOException {
