@@ -22,6 +22,7 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.nio.file.Paths
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = Logger.getInstance(GradleCommandLineProjectConfigurator::class.java)
@@ -53,13 +54,13 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
       linkProjects(basePath, project)
     }
 
-    val externalSystemState = ConcurrentHashMap<ExternalSystemTaskId, ExternalSystemState>()
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-    progressManager.addNotificationListener(StateNotificationListener(externalSystemState))
+    val notificationListener = StateNotificationListener()
+    progressManager.addNotificationListener(notificationListener)
 
     importProjects(project)
 
-    checkImportState(externalSystemState)
+    notificationListener.waitForImportEnd()
   }
 
   private fun linkProjects(basePath: String, project: Project) {
@@ -111,38 +112,46 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     return false
   }
 
-  private fun checkImportState(externalSystemState: Map<ExternalSystemTaskId, ExternalSystemState>) {
-    externalSystemState.forEach { (key, value) ->
-      if (value != ExternalSystemState.SUCCESS) {
-        throw IllegalStateException("Gradle project ${key.ideProjectId} import failed. Project import status: $value")
-      }
-    }
-  }
 
-  class StateNotificationListener(private val externalSystemState: MutableMap<ExternalSystemTaskId, ExternalSystemState>) :
-    ExternalSystemTaskNotificationListenerAdapter() {
+  class StateNotificationListener : ExternalSystemTaskNotificationListenerAdapter() {
+    private val externalSystemState = ConcurrentHashMap<ExternalSystemTaskId, CompletableFuture<ExternalSystemTaskId>>()
+
     override fun onSuccess(id: ExternalSystemTaskId) {
-      externalSystemState[id] = ExternalSystemState.SUCCESS
       LOG.info("Gradle import success: ${id.ideProjectId}")
+      val future = externalSystemState[id] ?: return
+      future.complete(id)
     }
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-      externalSystemState[id] = ExternalSystemState.FAILURE
       LOG.error("Gradle import failure ${id.ideProjectId}", e)
+      val future = externalSystemState[id] ?: return
+      future.completeExceptionally(IllegalStateException("Gradle project ${id.ideProjectId} import failed.", e))
     }
 
     override fun onCancel(id: ExternalSystemTaskId) {
-      externalSystemState[id] = ExternalSystemState.CANCELLED
       LOG.error("Gradle import canceled ${id.ideProjectId}")
+      val future = externalSystemState[id] ?: return
+      future.completeExceptionally(IllegalStateException("Import of ${id.ideProjectId} was canceled"))
     }
 
     override fun onStart(id: ExternalSystemTaskId) {
-      externalSystemState[id] = ExternalSystemState.STARTED
+      externalSystemState[id] = CompletableFuture()
       LOG.info("Gradle import started ${id.ideProjectId}")
+    }
+
+    fun waitForImportEnd() {
+      externalSystemState.values.forEach { it.get() }
+    }
+
+    override fun onEnd(id: ExternalSystemTaskId) {
+      val future = externalSystemState[id] ?: return
+      if (future.isDone) return
+      LOG.error("Gradle import finished ${id.ideProjectId} without success event")
+      future.completeExceptionally(IllegalStateException("Import of ${id.ideProjectId} was finished without success event"))
     }
   }
 
-  class LoggingNotificationListener() : ExternalSystemTaskNotificationListenerAdapter() {
+  class LoggingNotificationListener : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       val gradleText = (if (stdOut) "" else "STDERR: ") + text
       gradleLogWriter.write(gradleText)
@@ -152,12 +161,5 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     override fun onEnd(id: ExternalSystemTaskId) {
       gradleLogWriter.flush()
     }
-  }
-
-  enum class ExternalSystemState {
-    STARTED,
-    CANCELLED,
-    FAILURE,
-    SUCCESS
   }
 }
