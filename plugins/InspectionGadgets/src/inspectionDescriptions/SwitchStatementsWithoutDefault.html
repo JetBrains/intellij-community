@@ -1,7 +1,11 @@
 <html>
 <body>
-Reports <b>switch</b> statements that do not contain
-<b>default</b> labels.
+Reports <code>switch</code> statements that do not contain <code>default</code> labels. 
+Adding <code>default</code> label guarantees that all possible scenarios are covered and it becomes
+easier to make assumptions about current state of a program.
+<p>
+Note that by default inspection doesn't report <code>switch</code> on <code>enum</code> if all enum cases are covered. 
+This can be changed using option below.  
 <!-- tooltip end -->
 <p>
 
