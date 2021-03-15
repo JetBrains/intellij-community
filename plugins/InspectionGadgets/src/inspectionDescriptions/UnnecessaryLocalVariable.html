@@ -1,18 +1,30 @@
 <html>
 <body>
-Reports unnecessary local variables, which add
-nothing to the comprehensibility of a method. Variables caught include local variables
-which are immediately returned, local variables that are immediately assigned to another
-variable and then not used, and local variables which always have the same value as another
-local variable or parameter.
+Reports unnecessary local variables, which add nothing to the comprehensibility of a method.
+Variables caught include local variables which are immediately returned,
+local variables that are immediately assigned to another variable and then not used,
+and local variables which always have the same value as another local variable or parameter.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  boolean yes() {
+    boolean b = true;
+    return b;
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  boolean yes() {
+    return true;
+  }
+</pre>
 <p>
-Use the first checkbox below to have this inspection ignore variables which are immediately
-returned or thrown. Some coding styles suggest using such variables for clarity and
-ease of debugging.
+  Use the first checkbox below to have this inspection ignore immediately returned or thrown variables.
+  Some coding styles suggest using such variables for clarity and ease of debugging.
+</p>
 <p>
-Use the second checkbox below to have this inspection ignore variable which are annotated.
-<p>
+  Use the second checkbox below to have this inspection ignore annotated variables.
+</p>
 
 </body>
 </html>

@@ -63,7 +63,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
       }
 
       private void register(CompareInfo info, PsiElement nameElement) {
-        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
+        holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
