@@ -426,6 +426,10 @@ final class CommunityRepositoryModules {
       withProjectLibrary("studio-grpc")
       withProjectLibrary("layoutinspector-proto")
       withProjectLibrary("emulator-proto")
+
+      // Asset Studio images.
+      withResourceFromModule("intellij.android.core", "resources/images/asset_studio", "resources/images/asset_studio")
+
       // Profiler downloader will download all the other profiler libraries: profilers-transform.jar, perfa_okhttp.dex, perfa, perfd, simpleperf
       // Profiler downloader will also download instant run installers: /resources/installer
       // Profiler downloader will also download instant run transport: /resources/transport
