@@ -2,14 +2,20 @@
 <body>
 Reports multiple variables declared in a single declaration.
 Some coding standards prohibit such declarations.
+<p>Example:</p>
+<pre>
+  int x = 1, y = 2;
+</pre>
+<p>The quick-fix creates separate declaration for each variable:</p>
+<pre>
+  int x = 1;
+  int y = 2;
+</pre>
 <!-- tooltip end -->
-<p>
-Use the first checkbox below to ignore multiple variables declared in the initialization of a 'for' loop statement, e.g.:
-<pre><code><b>for</b> (int i = 0, max = list.size(); i < max; i++) {}</code></pre>
-<p>
-Use the second checkbox below to only warn when variables with different array dimensions are declared in a single declaration, e.g.:
-<pre><code>String s = "", array[];</code></pre>
-<p>
-<small>New in 2019.2</small>
+<p>Use the first checkbox below to ignore multiple variables declared in the initialization of a 'for' loop statement, e.g.:</p>
+<pre><b>for</b> (int i = 0, max = list.size(); i < max; i++) {}</pre>
+<p>Use the second checkbox below to only warn when variables with different array dimensions are declared in a single declaration, e.g.:</p>
+<pre>String s = "", array[];</pre>
+<p><small>New in 2019.2</small></p>
 </body>
 </html>

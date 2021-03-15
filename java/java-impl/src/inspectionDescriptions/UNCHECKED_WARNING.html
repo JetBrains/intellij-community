@@ -1,14 +1,16 @@
 <html>
 <body>
-Signals places where an unchecked warning is issued
-by the compiler, for example:
-<pre><code>
-
-  <b>void</b> f(HashMap map) {
-    map.put("key", "value");
-  }
-  
-</code></pre>
-Hint: Pass -Xlint:unchecked to javac to get more details.
+Reports the code where an unchecked warning is issued by the compiler. Every unchecked warning
+represents the potential for a <code>ClassCastException</code> at runtime.
+<p>Example:</p>
+<pre>
+  List items = Arrays.asList("string", "string");
+  List&lt;Integer&gt; numbers = Collections.unmodifiableList(items);
+</pre>
+<p>The quick-fix tries to generify and put all missed types in the current file:</p>
+<pre>
+  List&lt;String&gt; items = Arrays.asList("string", "string");
+  List&lt;Integer&gt; numbers = Collections.unmodifiableList(items);
+</pre>
 </body>
 </html>

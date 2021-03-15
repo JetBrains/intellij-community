@@ -1,7 +1,17 @@
 <html>
 <body>
-Reports calls to <b>Objects.equals(a, b)</b> where the first argument is statically known to be non-null.
-  Such a call can be safely replaced with <b>a.equals(b)</b> or <b>a == b</b> if both arguments are primitives.
+Reports calls to <code>Objects.equals(a, b)</code> where the first argument is statically known to be non-null.
+  Such a call can be safely replaced with <code>a.equals(b)</code> or <code>a == b</code> if both arguments are primitives.
+<p>Example:</p>
+<pre>
+  String defaultName = "default";
+  boolean isDefault = Objects.equals(defaultName, name);
+</pre>
+<p>After the quick-fix applied the result looks like:</p>
+<pre>
+  String defaultName = "default";
+  boolean isDefault = defaultName.equals(name);
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2018.3</small></p>
 </body>

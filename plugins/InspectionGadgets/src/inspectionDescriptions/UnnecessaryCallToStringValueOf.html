@@ -1,12 +1,34 @@
 <html>
 <body>
-Reports on any calls to static methods like <b>String.valueOf()</b> or <b>Integer.toString()</b> used in
-string concatenations and as arguments to the
-<b>print()</b> and <b>println()</b> methods of <b>java.io.PrintWriter</b> and <b>java.io.PrintStream</b>, the <b>append()</b>
-method of <b>java.lang.StringBuilder</b> and <b>java.lang.StringBuffer</b> or the <b>trace()</b>, <b>debug()</b>, <b>info()</b>,
-<b>warn()</b> and <b>error()</b> methods of <b>org.slf4j.Logger</b>. In these cases the conversion
-to string will be handled by the underlying library methods and an explicit call to <b>String.valueOf()</b> is not needed.
+Reports calls to static methods like <code>String.valueOf()</code> or <code>Integer.toString()</code> when they are used in
+ a string concatenation or as an argument of a library method where the explicit string conversion is not needed.
+
+<p>Example:</p>
+<pre>
+  System.out.println("Number: " + Integer.toString(count));
+</pre>
+<p>After the quick-fix applied the result looks like:</p>
+<pre>
+  System.out.println("Number: " + count);
+</pre>
 <!-- tooltip end -->
-<p>
+<p>Library methods where explicit string conversion considered as not needed:</p>
+<ul>
+  <li>
+    classes <code>java.io.PrintWriter</code>, <code>java.io.PrintStream</code>
+    <ul><li><code>print()</code>, <code>println()</code></li></ul>
+  </li>
+  <li>
+    classes <code>java.lang.StringBuilder</code>, <code>java.lang.StringBuffer</code>
+    <ul><li><code>append()</code></li></ul>
+  </li>
+
+  <li>
+    class <code>org.slf4j.Logger</code>
+    <ul>
+      <li><code>trace()</code>, <code>debug()</code>, <code>info()</code>, <code>warn()</code>, <code>error()</code></li>
+    </ul>
+  </li>
+</ul>
 </body>
 </html>
