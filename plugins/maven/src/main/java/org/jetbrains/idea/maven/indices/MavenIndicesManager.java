@@ -104,7 +104,9 @@ public final class MavenIndicesManager implements Disposable {
     if (doInitIndicesFields()) return;
 
     ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
-    myUserArchetypes = archetypes;
+    if (archetypes != null) {
+      myUserArchetypes = archetypes;
+    }
   }
 
   private synchronized boolean doInitIndicesFields() {
