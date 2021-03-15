@@ -255,11 +255,13 @@ public final class TypeConversionUtil {
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     //  jep-397
     if (languageLevel.isAtLeast(LanguageLevel.JDK_16_PREVIEW)) {
-      if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
-        if (!canConvertSealedTo(fromClass, toClass)) return false;
-      }
-      else if (toClass.hasModifierProperty(PsiModifier.SEALED)) {
-        if (!canConvertSealedTo(toClass, fromClass)) return false;
+      if (fromClass.isInterface() || toClass.isInterface()) {
+        if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
+          if (!canConvertSealedTo(fromClass, toClass)) return false;
+        }
+        else if (toClass.hasModifierProperty(PsiModifier.SEALED)) {
+          if (!canConvertSealedTo(toClass, fromClass)) return false;
+        }
       }
     }
     if (!fromClass.isInterface()) {
@@ -353,7 +355,7 @@ public final class TypeConversionUtil {
    * <p>See JEP-397 for more details.</p>
    */
   public static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass) {
-    if (!sealedClass.isInterface() && !psiClass.isInterface()) return true;
+    LOG.assertTrue(sealedClass.isInterface() || psiClass.isInterface());
     return canConvertSealedTo(sealedClass, psiClass, new HashSet<>());
   }
   
