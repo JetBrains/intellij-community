@@ -33,7 +33,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.DefaultLinkButtonUI;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.JBIterable;
@@ -781,7 +780,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     private final ActionLink myMultiProcessLink = new ActionLink("", e -> { triggerPopupShowing(); }) {
       @Override
       public void updateUI() {
-        setUI(DefaultLinkButtonUI.createUI(this));
+        super.updateUI();
         setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
       }
     };
