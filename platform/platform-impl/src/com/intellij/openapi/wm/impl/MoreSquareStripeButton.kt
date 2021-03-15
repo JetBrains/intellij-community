@@ -24,7 +24,8 @@ class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar) :
     HelpTooltip().
       setTitle(UIBundle.message("title.tool.window.square.more")).
       setLocation(HelpTooltip.Alignment.RIGHT).
-      installOn(this@MoreSquareStripeButton)
+      setInitialDelay(0).setHideDelay(0).
+      installOn(this)
   }
 
   companion object {
