@@ -1098,6 +1098,7 @@
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction"/>
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
+        <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
         <separator/>
         <group id="Internal.focusAndModality" popup="true">
           <action id="CheckMessagesButtonsOrderAction" internal="true"
