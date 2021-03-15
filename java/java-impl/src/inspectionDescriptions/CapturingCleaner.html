@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports Runnable passed to Cleaner.register() capturing reference that leads to memory leak.
+Reports Runnable passed to <code>Cleaner.register()</code> capturing reference that leads to memory leak.
 Possible sources of this problem:
 <ul>
   <li>Lambda using non static methods, fields or this itself</li>
@@ -8,7 +8,16 @@ Possible sources of this problem:
   <li>Instance method reference</li>
   <li>Access to outer class non static members from non static inner class</li>
 </ul>
-<p>This inspection is available since Java 9 only.</p>
+<!-- tooltip end -->
+<p>Sample of code that will be reported: </p>
+<pre>
+  int fileDescriptor;
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
+    System.out.println("adsad");
+    fileDescriptor = 0;
+  });
+</pre>
+<p>This inspection only reports if the language level of the project or module is 9 or higher</p>
 <p><small>New in 2018.1</small></p>
 </body>
 </html>
