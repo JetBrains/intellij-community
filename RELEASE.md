@@ -62,34 +62,6 @@ When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev
 
  1. Add an entry for the new version in [Kotlin compatibility metadata](https://dl.google.com/android/studio/plugins/compatibility.xml)
 --------------------------------------------------------------------------------
-Before the first release candidate, update the dev branch (like studio-1.4-dev):
-
- 1. Turn off null checking.
-
-    Edit .idea/compiler.xml and make sure null assertions are disabled by
-    adding the following line:
-
-    ```diff
-         <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
-    +    <addNotNullAssertions enabled="false" />
-         <excludeFromCompile>
-    ```
-
-    (We don't leave it in with enabled="true" because the IDE will automatically
-    remove it and then leave the .idea/compiler.xml file in an edited state
-    for all developers who open the project.)
-
-    Edit .idea/kotlinc.xml and disable assertions in the "additionalArguments"
-    option in "KotlinCompilerSettings":
-
-    ```diff
-       <component name="KotlinCompilerSettings">
-    -    <option name="additionalArguments" value="-version -Xjvm-default=enable -Xstrict-java-nullability-assertions" />
-    +    <option name="additionalArguments" value="-version -Xjvm-default=enable -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
-       </component>
-    ```
-
---------------------------------------------------------------------------------
 For stable, RC, beta builds :
 
  1. Ensure that the default update channel is set to RELEASE for stable build,
