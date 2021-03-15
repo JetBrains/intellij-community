@@ -298,7 +298,7 @@ public class HelpTooltip {
 
     if (installed == null) installImpl(component);
     else if (!equals(installed)) {
-      hideAndDispose(component);
+      installed.hideAndDispose(component);
       installImpl(component);
     }
   }
