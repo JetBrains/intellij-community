@@ -1,5 +1,6 @@
 // "Add 1st parameter to function 'foo'" "false"
 // ACTION: Change parameter 'i1' type of function 'foo' to 'String'
+// ACTION: Convert to 'buildString' call
 // ACTION: Create function 'foo'
 // ACTION: Do not show hints for current method
 // ACTION: Put arguments on separate lines

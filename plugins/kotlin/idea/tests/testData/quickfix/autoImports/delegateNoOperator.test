@@ -1,6 +1,7 @@
 // FILE: first.before.kt
 // "class org.jetbrains.kotlin.idea.quickfix.ImportFix" "false"
 // ERROR: Type 'String' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
+// ACTION: Convert to 'buildString' call
 // ACTION: To raw string literal
 
 package b

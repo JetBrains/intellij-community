@@ -1,5 +1,6 @@
 // "Let 'String' implement interface 'A'" "false"
 // ACTION: Change parameter 'a' type of function 'foo' to 'String'
+// ACTION: Convert to 'buildString' call
 // ACTION: To raw string literal
 // ACTION: Create function 'foo'
 // ERROR: Type mismatch: inferred type is String but A was expected
