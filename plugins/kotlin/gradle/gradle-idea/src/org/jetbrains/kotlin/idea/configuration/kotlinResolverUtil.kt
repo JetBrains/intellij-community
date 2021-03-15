@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -15,14 +16,22 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
 import com.intellij.util.PlatformUtils
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
+
+private var isNativeDebugSuggestionEnabled
+    get() =
+        PropertiesComponent.getInstance().getBoolean("isNativeDebugSuggestionEnabled", true)
+    set(value) {
+        PropertiesComponent.getInstance().setValue("isNativeDebugSuggestionEnabled", value)
+    }
 
 fun suggestNativeDebug(projectPath: String) {
     if (!PlatformUtils.isIdeaUltimate()) return
 
     val pluginId = PluginId.getId("com.intellij.nativeDebug")
     if (PluginManagerCore.isPluginInstalled(pluginId)) return
+
+    if (!isNativeDebugSuggestionEnabled) return
 
     val projectManager = ProjectManager.getInstance()
     val project = projectManager.openProjects.firstOrNull { it.basePath == projectPath } ?: return
@@ -35,10 +44,19 @@ fun suggestNativeDebug(projectPath: String) {
         }
     }
 
-    notificationGroup.createNotification(
+    val dontShowAction = object : NotificationAction(
+        KotlinIdeaGradleBundle.message("action.text.dontShowAgain")
+    ) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+            isNativeDebugSuggestionEnabled = false
+            notification.expire()
+        }
+    }
+
+    val notification = notificationGroup.createNotification(
         KotlinIdeaGradleBundle.message("title.plugin.suggestion"),
-        KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native"),
-        NotificationType.INFORMATION,
-        null
-    ).addAction(installAction).notify(project)
+        KotlinIdeaGradleBundle.message("notification.text.native.debug.provides.debugger.for.kotlin.native")
+    )
+    notification.addActions(listOf(installAction, dontShowAction))
+    notification.notify(project)
 }
