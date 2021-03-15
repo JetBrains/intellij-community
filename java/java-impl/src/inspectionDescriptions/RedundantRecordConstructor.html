@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports redundant constructors declared inside Java records. Examples:
-<pre><code>
+Reports redundant constructors declared inside Java records.
+<p>Examples:</p>
+<pre>
   record Point(int x, int y) {
     public Point {} // could be removed
   }
@@ -21,7 +22,7 @@ Reports redundant constructors declared inside Java records. Examples:
       this.to = to;
     }
   }
-</code></pre>
+</pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the configured language level is 14 Preview or 15 Preview.</p>
 <p><small>New in 2020.1</small></p>

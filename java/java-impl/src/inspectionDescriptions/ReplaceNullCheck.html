@@ -1,20 +1,23 @@
 <html>
 <body>
-This inspection suggests to replace null check with Objects/Stream static method.
-<!-- tooltip end -->
-Example:
-<pre><code>
+Suggests replacing null check with <code>Objects</code>/<code>Stream</code> static method.
+<p>Example:</p>
+<pre>
 if (message == null) {
   application.messageStorage().save(new EmptyMessage());
 } else {
   application.messageStorage().save(message);
 }
-</code></pre>
-<p>can be replaced with</p>
-<pre><code>
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
   application.messageStorage()
     .save(Objects.requireNonNullElseGet(message, () -> new EmptyMessage()));
-</code></pre>
+</pre>
+<!-- tooltip end -->
+<p>
+  Use the checkbox below to not warn if length of replacement bigger than original.
+</p>
 <p><small>New in 2017.3</small></p>
 </body>
 </html>

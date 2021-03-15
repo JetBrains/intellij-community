@@ -1,6 +1,16 @@
 <html>
 <body>
-Reports sealed classes whose permits clause doesn’t contain some of the subclasses from the same file.
+Reports sealed classes whose permits clause doesn't contain some of the subclasses from the same file.
+<p>Example:</p>
+<pre>
+  sealed class A {}
+  final class B extends A {}
+</pre>
+<p>After the fix is applied, the result will be like this:</p>
+<pre>
+  sealed class A permits B {}
+  final class B extends A {}
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2020.3</small></p>
 </body>

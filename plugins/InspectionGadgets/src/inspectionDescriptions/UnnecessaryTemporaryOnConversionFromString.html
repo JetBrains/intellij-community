@@ -2,15 +2,14 @@
 <body>
 Reports unnecessary creation of temporary objects when converting
 from Strings to primitive types.
-<p>
-For example:
-<code><pre>
-    new Integer("3").intValue()
-</pre></code>
-will be reported, and can be automatically converted to:
-<code><pre>
-    Integer.valueOf("3")
-</pre></code>
+<p>Example:</p>
+<pre>
+  new Integer("3").intValue()
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  Integer.valueOf("3")
+</pre>
 <!-- tooltip end -->
 <p>
 
