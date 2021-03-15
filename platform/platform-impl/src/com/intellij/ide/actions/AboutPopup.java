@@ -403,7 +403,7 @@ public final class AboutPopup {
         g2.setFont(JBUI.Fonts.miniFont());
       }
       else {
-        g2.setFont(JBUI.Fonts.create("Segoe UI", 12));
+        g2.setFont(JBUI.Fonts.create("Segoe UI", 10));
       }
 
       g2.setColor(createColor(appInfo.getAboutForeground()));
@@ -446,7 +446,7 @@ public final class AboutPopup {
     }
 
     private static JBPoint getCopyrightCoord() {
-      return new JBPoint(49, 345);
+      return new JBPoint(49, 365);
     }
 
     private static JBPoint getCopyIconCoord() {
