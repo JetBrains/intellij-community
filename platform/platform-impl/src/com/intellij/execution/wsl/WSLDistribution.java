@@ -304,8 +304,8 @@ public class WSLDistribution {
   }
 
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("[" + getId() + "] " +
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("[" + getId() + "] " +
                 "Patching: " +
                 commandLine.getCommandLineString() +
                 "; options: " +
