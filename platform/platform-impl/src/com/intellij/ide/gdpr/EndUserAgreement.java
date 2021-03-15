@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
@@ -27,6 +27,7 @@ public final class EndUserAgreement {
   private static final String PRIVACY_POLICY_DOCUMENT_NAME = "privacy";
   private static final String PRIVACY_POLICY_EAP_DOCUMENT_NAME = PRIVACY_POLICY_DOCUMENT_NAME + "Eap";
   private static final String EULA_DOCUMENT_NAME = "eua";
+  private static final String EULA_COMMUNITY_DOCUMENT_NAME = "euaCommunity";
   private static final String EULA_EAP_DOCUMENT_NAME = EULA_DOCUMENT_NAME + "Eap";
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
@@ -173,6 +174,9 @@ public final class EndUserAgreement {
 
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
+      if (PlatformUtils.isCommunityEdition()) {
+        return isEAP() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+      }
       return isEAP()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
