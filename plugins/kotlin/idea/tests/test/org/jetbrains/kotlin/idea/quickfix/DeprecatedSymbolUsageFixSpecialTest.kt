@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWith
@@ -38,8 +39,12 @@ class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCas
         val offset = editor.caretModel.offset
         val element = file.findElementAt(offset)
         val nameExpression = element!!.parents.firstIsInstance<KtSimpleNameExpression>()
+        val fix = ActionUtil.underModalProgress(project, "") {
+            DeprecatedSymbolUsageFix(nameExpression, ReplaceWith(pattern, emptyList(), false))
+        }
+
         project.executeWriteCommand("") {
-            DeprecatedSymbolUsageFix(nameExpression, ReplaceWith(pattern, emptyList(), false)).invoke(project, editor, file)
+            fix.invoke(project, editor, file)
         }
 
         myFixture.checkResultByFile("$testPath.after")
