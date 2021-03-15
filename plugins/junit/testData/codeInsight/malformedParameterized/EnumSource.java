@@ -16,12 +16,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class EnumSourceTest {
   @ParameterizedTest
-  @EnumSource(value = Foo.class, names = <warning descr="Can't resolve enum constant reference.">"invalid-value"</warning>, mode = EnumSource.Mode.INCLUDE)
+  @EnumSource(value = Foo.class, names = <warning descr="Can't resolve 'enum' constant reference.">"invalid-value"</warning>, mode = EnumSource.Mode.INCLUDE)
   void invalid() {
   }
 
   @ParameterizedTest
-  @EnumSource(value = Foo.class, names = <warning descr="Can't resolve enum constant reference.">"invalid-value"</warning>)
+  @EnumSource(value = Foo.class, names = <warning descr="Can't resolve 'enum' constant reference.">"invalid-value"</warning>)
   void invalidDefault() {
   }
 
@@ -41,12 +41,12 @@ class EnumSourceTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = Foo.class, names = {<warning descr="Can't resolve enum constant reference.">""</warning>})
+  @EnumSource(value = Foo.class, names = {<warning descr="Can't resolve 'enum' constant reference.">""</warning>})
   void empty() {
   }
 
   @ParameterizedTest
-  @EnumSource(value = Empty.class, names = {<warning descr="Can't resolve enum constant reference.">"S"</warning>})
+  @EnumSource(value = Empty.class, names = {<warning descr="Can't resolve 'enum' constant reference.">"S"</warning>})
   void emptyEnum() {
   }
 
@@ -60,7 +60,7 @@ class WithMetaAnnotations {
 
   @ParameterizedTest
   @MetaEnumSource
-  void <warning descr="Can't resolve enum constant reference.">empty</warning>() { }
+  void <warning descr="Can't resolve 'enum' constant reference.">empty</warning>() { }
 
   private enum Foo {AAA}
 }

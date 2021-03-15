@@ -1,4 +1,4 @@
-// "Replace with Comparator.comparing" "true"
+// "Replace with 'Comparator.comparing'" "true"
 
 import java.util.Comparator;
 import java.util.List;

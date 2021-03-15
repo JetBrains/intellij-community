@@ -64,8 +64,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description");
-          final String fixMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain");
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(fixMessage));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, ReplaceWithComparatorFix.newWithMessage(InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain")));
         }
       }
     };
@@ -510,17 +509,23 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
   static class ReplaceWithComparatorFix implements LocalQuickFix {
-    private final String myMessage;
+    private @Nls String myMessage;
 
     ReplaceWithComparatorFix(@Nls String message) {
-      myMessage = message;
+      myMessage = InspectionGadgetsBundle.message("replace.with.comparator.fix.text", message);
+    }
+
+    public static ReplaceWithComparatorFix newWithMessage(@Nls String message) {
+      final ReplaceWithComparatorFix fix = new ReplaceWithComparatorFix(message);
+      fix.myMessage = message;
+      return fix;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("replace.with.comparator.fix.text", myMessage);
+      return myMessage;
     }
 
     @Nls

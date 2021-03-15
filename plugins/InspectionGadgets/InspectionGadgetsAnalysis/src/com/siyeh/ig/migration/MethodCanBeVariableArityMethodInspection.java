@@ -34,6 +34,8 @@ import static com.siyeh.InspectionGadgetsBundle.message;
 
 public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
+  void process(String name, Object... objects) {}
+
   @SuppressWarnings({"PublicField"})
   public boolean ignoreByteAndShortArrayParameters = false;
 

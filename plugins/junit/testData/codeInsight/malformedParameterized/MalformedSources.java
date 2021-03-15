@@ -21,7 +21,7 @@ class ValueSourcesTest {
   void testWithStringValues(String s) { }
 
   @ParameterizedTest
-  @ValueSource(booleans = {<warning descr="No implicit conversion found to convert object of type boolean to int">false</warning>})
+  @ValueSource(booleans = {<warning descr="No implicit conversion found to convert object of type 'boolean' to 'int'">false</warning>})
   void testWithBooleanSource(int argument) { }
 
   @ParameterizedTest
@@ -39,11 +39,11 @@ class ValueSourcesTest {
 
   @ParameterizedTest
   @ValueSource(ints = {1})
-  <warning descr="Suspicious combination @Test and @ParameterizedTest">@org.junit.jupiter.api.Test</warning>
+  <warning descr="Suspicious combination '@Test' and '@ParameterizedTest'">@org.junit.jupiter.api.Test</warning>
   void testWithTestAnnotation(int i) { }
 
   @ValueSource(ints = {1})
-  <warning descr="Suspicious combination @Test and parameterized source">@org.junit.jupiter.api.Test</warning>
+  <warning descr="Suspicious combination '@Test' and parameterized source">@org.junit.jupiter.api.Test</warning>
   void testWithTestAnnotationNoParameterized(int i) { }
 
 }
@@ -65,7 +65,7 @@ class ParameterizedTestsDemo {
   void testWithParamsNoSource(int i) { }
 
   @ParameterizedTest
-  @EnumSource(<warning descr="No implicit conversion found to convert object of type E to int">E.class</warning>)
+  @EnumSource(<warning descr="No implicit conversion found to convert object of type 'E' to 'int'">E.class</warning>)
   void testWithEnumSource(int i) { }
 
   @ParameterizedTest
