@@ -1,8 +1,28 @@
 <html>
 <body>
-Reports any class initializers which may safely be made <b>static</b>.
+Reports any class initializers which may safely be made <code>static</code>.
 A class initializer may be static if it does not reference any of its class' non static methods
-and non static fields.
+and non static fields. Static initializers are executed once when the class is resolved,
+though non-static initializer are executed on each class instance creation.  
+<p><b>Example:</b></p>
+<pre>
+  class A {
+     public static String CONSTANT;
+     {
+        CONSTANT = "Hello";
+     }
+  }
+</pre>
+<p>After the quickfix is applied the result looks like:</p>
+<pre>
+  class A {
+     public static String CONSTANT;
+     static {
+        CONSTANT = "Hello"; //initialized now only once per class
+     }
+  }
+</pre>
+
 <!-- tooltip end -->
 <p>
 

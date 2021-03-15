@@ -3,9 +3,18 @@
 Reports any variables and parameters which are used in a loop condition
 and are not updated inside the loop. These may cause an infinite loop if executed and
 are probably not what was intended.
+<p><b>Example:</b></p>
+<pre>
+  void loopDoesNotLoop(boolean b) {
+      while (b) {
+        System.out.println();
+        break;
+      }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-  The option "Ignore possible non-local changes" suppresses warnings if condition can be updated indirectly (via called method
+    Use the checkbox below to disable this inspection if condition can be updated indirectly (e.g. via called method
   or concurrently from another thread).
 </p>
 

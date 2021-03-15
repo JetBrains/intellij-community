@@ -2493,7 +2493,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="MetaAnnotationWithoutRuntimeRetention"
                      bundle="messages.InspectionGadgetsBundle"
                      key="meta.annotation.without.runtime.retention" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.reflective.access.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.annotation.MetaAnnotationWithoutRuntimeRetentionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ArrayCreationWithoutNewKeyword" bundle="messages.InspectionGadgetsBundle"
                      key="array.creation.without.new.keyword.name" groupBundle="messages.InspectionsBundle"

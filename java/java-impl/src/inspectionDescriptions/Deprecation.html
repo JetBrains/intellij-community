@@ -1,5 +1,25 @@
 <html>
 <body>
-Reports where deprecated code is used in the specified inspection scope.
+Reports used deprecated code, e.g. <code>new Thread().stop();</code>. 
+By default it doesn't report deprecated code when it's impossible or hard to avoid it, e.g.
+the following code won't be reported:
+<pre>
+  abstract class A {
+     @Deprecated
+     abstract void m();
+  }
+  class B extends A {
+     @Override
+     void m() {
+        //doSmth;
+     }
+  }
+</pre>
+<!-- tooltip end -->
+<p>
+    Use the checkboxes below to enable this inspection inside deprecated members, 
+  overrides of abstract deprecated methods, non-static import statements, methods of deprecated classes or same top level classes.
+</p>
+
 </body>
 </html>

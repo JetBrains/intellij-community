@@ -2,9 +2,18 @@
 <body>
 Reports any attempts to reflectively check for the presence of an
 annotation which is not defined as being retained at runtime.
-Using <b>Class.isAnnotationPresent()</b> to test for an annotation
+Using <code>Class.isAnnotationPresent()</code> to test for an annotation
 which has source retention or class-file retention (the default) will always result in a negative result,
 but is easy to do inadvertently.
+<p><b>Example:</b></p>
+<pre>
+  { 
+    getClass().isAnnotationPresent(SourceAnnotation.class); //always false
+  }
+  
+  @Retention(RetentionPolicy.SOURCE)
+  @interface SourceAnnotation {}
+</pre>
 <!-- tooltip end -->
 <p>
 
