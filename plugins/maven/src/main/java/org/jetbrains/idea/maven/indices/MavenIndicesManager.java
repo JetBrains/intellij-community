@@ -95,13 +95,20 @@ public final class MavenIndicesManager implements Disposable {
     myUpdatingQueue.clear();
   }
 
-  private synchronized MavenIndices getIndicesObject() {
+  private MavenIndices getIndicesObject() {
     ensureInitialized();
     return myIndices;
   }
 
-  private synchronized void ensureInitialized() {
-    if (myIndices != null) return;
+  private void ensureInitialized() {
+    if (doInitIndicesFields()) return;
+
+    ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
+    myUserArchetypes = archetypes;
+  }
+
+  private synchronized boolean doInitIndicesFields() {
+    if (myIndices != null) return true;
     myIndexer = MavenServerManager.getInstance().createIndexer(myProject);
     myDownloadListener = new MavenServerDownloadListener() {
       @Override
@@ -119,8 +126,7 @@ public final class MavenIndicesManager implements Disposable {
         }
       }
     });
-
-    loadUserArchetypes();
+    return false;
   }
 
   @NotNull
@@ -170,9 +176,17 @@ public final class MavenIndicesManager implements Disposable {
     return getIndicesObject().getIndices();
   }
 
-  public synchronized MavenIndex ensureRemoteIndexExist(@NotNull Pair<String, String> remoteIndexIdAndUrl) {
+  public MavenIndex ensureRemoteIndexExist(@NotNull Pair<String, String> remoteIndexIdAndUrl) {
     try {
-      MavenIndices indicesObjectCache = getIndicesObject();
+      MavenIndices indicesObjectCache = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) {
+          return null;
+        }
+        else {
+          return getIndicesObject();
+        }
+      });
+      if (indicesObjectCache == null) return null;
       return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
     }
     catch (MavenIndexException e) {
@@ -348,7 +362,7 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  public synchronized Set<MavenArchetype> getArchetypes() {
+  public Set<MavenArchetype> getArchetypes() {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
@@ -362,25 +376,24 @@ public final class MavenIndicesManager implements Disposable {
     return result;
   }
 
-  public synchronized void addArchetype(MavenArchetype archetype) {
+  public void addArchetype(MavenArchetype archetype) {
     ensureInitialized();
-
-    int idx = myUserArchetypes.indexOf(archetype);
+    List<MavenArchetype> archetypes = myUserArchetypes;
+    int idx = archetypes.indexOf(archetype);
     if (idx >= 0) {
-      myUserArchetypes.set(idx, archetype);
+      archetypes.set(idx, archetype);
     }
     else {
-      myUserArchetypes.add(archetype);
+      archetypes.add(archetype);
     }
 
     saveUserArchetypes();
   }
 
-  private void loadUserArchetypes() {
+  private static ArrayList<MavenArchetype> loadUserArchetypes(Path file) {
     try {
-      Path file = getUserArchetypesFile();
       if (!PathKt.exists(file)) {
-        return;
+        return null;
       }
 
       // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
@@ -408,10 +421,11 @@ public final class MavenIndicesManager implements Disposable {
       ArrayList<MavenArchetype> listResult = new ArrayList<>(result);
       Collections.reverse(listResult);
 
-      myUserArchetypes = listResult;
+      return listResult;
     }
     catch (IOException | JDOMException e) {
       MavenLog.LOG.warn(e);
+      return null;
     }
   }
 
