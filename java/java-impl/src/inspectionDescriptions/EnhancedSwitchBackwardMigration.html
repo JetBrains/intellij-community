@@ -1,7 +1,24 @@
 <html>
 <body>
-Reports enhanced <b>switch</b> statements and expressions which can be replaced with a traditional <b>switch</b> statement.
-
+Reports enhanced <code>switch</code> statements and expressions, and suggest replacing them with a traditional <code>switch</code>
+statement.
+<p>Example:</p>
+<pre>
+  switch (condition) {
+    case foo -> throw null;
+    default -> b = true;
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+    switch (condition) {
+    case foo:
+      throw null;
+    default ->
+      bar = true;
+      break;
+  }
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2019.1</small></p>
 </body>

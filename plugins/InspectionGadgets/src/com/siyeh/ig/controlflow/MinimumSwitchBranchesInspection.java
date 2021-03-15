@@ -33,12 +33,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
+public class MinimumSwitchBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 
   @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
+
+  @Override
+  public @NotNull String getShortName() {
+    return "SwitchStatementWithTooFewBranches";
+  }
 
   @Override
   public JComponent createOptionsPanel() {
@@ -70,10 +75,10 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new SwitchStatementWithTooFewBranchesVisitor();
+    return new MinimumSwitchBranchesVisitor();
   }
 
-  private class SwitchStatementWithTooFewBranchesVisitor extends BaseInspectionVisitor {
+  private class MinimumSwitchBranchesVisitor extends BaseInspectionVisitor {
     @Override
     public void visitSwitchExpression(PsiSwitchExpression expression) {
       Object[] infos = processSwitch(expression);

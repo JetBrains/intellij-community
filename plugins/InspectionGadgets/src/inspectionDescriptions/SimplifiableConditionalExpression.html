@@ -1,14 +1,13 @@
 <html>
 <body>
-Reports conditional expressions that could be simplified. Examples:
-<pre>condition ? true : foo &rarr; condition || foo</pre>
-<pre>condition ? false : foo &rarr; !condition && foo</pre>
-<pre>condition ? foo : !foo &rarr; condition == foo</pre>
-<pre>condition ? true : false &rarr; condition</pre>
-<pre>a == b ? b : a &rarr; a</pre>
-<pre>result != null ? result : null &rarr; result</pre>
-<!-- tooltip end -->
-<p>
-
+Reports conditional expressions, and suggests simplifying it.
+<p>Example:</p>
+<pre>
+  condition ? true : foo
+</pre>
+<p>After the quick fix is applied the result looks like:</p>
+<pre>
+  condition || foo
+</pre>
 </body>
 </html>

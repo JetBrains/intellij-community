@@ -1,22 +1,22 @@
 <html>
 <body>
-Reports <b>for</b> loops which contain neither initialization or update components, and can thus be replaced by
-simpler <b>while</b> statements. Example:
-<pre><code>
+Reports <code>for</code> loops which contain neither initialization or update components, and suggests rewriting it as a <code>while</code>
+loop. This makes the code easier to read.
+<p>Example:</p>
+<pre>
   for(; exitCondition(); ) {
     process();
   }
-</code></pre>
-  This loop can be replaced with
-<pre><code>
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
   while(exitCondition()) {
     process();
   }
-</code></pre>
-A fix action is also available for other <code>for</code> loops, so you can replace any <code>for</code> loop with <code>while</code>.
+</pre>
+A quick-fix action is also available for other <code>for</code> loops, so you can replace any <code>for</code> loop with <code>while</code>.
 <!-- tooltip end -->
-<p>
-Use the checkbox below if you wish this inspection to ignore <b>for</b> loops with trivial or non-existent conditions.
+<p>Use the checkbox below if you wish this inspection to ignore <code>for</code> loops with trivial or non-existent conditions.
 <p>
 </body>
 </html>

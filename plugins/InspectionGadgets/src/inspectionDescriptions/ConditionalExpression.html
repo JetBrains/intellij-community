@@ -1,15 +1,30 @@
 <html>
 <body>
-Reports the ternary condition operator. Some coding standards prohibit the use of
-the condition operator, in favor of <b>if-else</b> statements.
-<!-- tooltip end -->
-<p>
-Use the first checkbox below to ignore simple assignments and returns and thus allow constructs like this:
+Reports usage of the ternary condition operator, and suggests rewriting it as an <code>if</code>/<code>else</code> statement. Some coding
+standards prohibit the use of the condition operator.
+<p>Example:</p>
 <pre>
-    String s = (foo == null) ? "" : foo.toString();
+  Object result = (condition) ? foo() : bar();
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  Object result;
+  if (condition) {
+    comp = foo();
+  }
+  else {
+    comp = bar();
+  }
+</pre>
+<!-- tooltip end -->
+<p>Use the first checkbox below to ignore simple assignments and returns and thus allow constructs like this:</p>
+<pre>
+  String s = (foo == null) ? "" : foo.toString();
 </pre>
 <p>
-Use the second checkbox below to ignore conditional expression in contexts where automatic replacement with an if statement is not possible.
-For example when the conditional expression is used as an argument to a <b>super()</b> constructor call.
+  Use the second checkbox below to ignore conditional expression in contexts where automatic replacement with an if statement is not
+  possible.
+  For example when the conditional expression is used as an argument to a <code>super()</code> constructor call.
+</p>
 </body>
 </html>

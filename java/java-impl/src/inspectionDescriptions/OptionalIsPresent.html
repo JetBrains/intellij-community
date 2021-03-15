@@ -1,9 +1,17 @@
 <html>
 <body>
-Reports conditions like <code>if(Optional.isPresent())</code> which could be rewritten in functional style.
+Reports conditions like <code>if(Optional.isPresent())</code> which could be rewritten in functional style. Functional style is shorter and
+easier to read.
+<p>Example:</p>
+<pre>
+  if (str.isPresent()) str.get().trim();
+</pre>
+<p>After the quick fix is applied the result looks like:</p>
+<pre>
+  str.ifPresent(String::trim);
+</pre>
 <!-- tooltip end -->
-<p>
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 <small>New in 2016.3</small>
 </body>
 </html>

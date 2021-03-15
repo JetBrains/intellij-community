@@ -1,10 +1,9 @@
 <html>
 <body>
 Reports non-short-circuit operations consuming an infinite stream. Such operations can only be completed by throwing an exception.
-<!-- tooltip end -->
 <p>Example:</p>
-<p><code>
+<pre>
   Stream.iterate(0, i -> i + 1).collect(Collectors.toList())
-</code></p>
+</pre>
 </body>
 </html>

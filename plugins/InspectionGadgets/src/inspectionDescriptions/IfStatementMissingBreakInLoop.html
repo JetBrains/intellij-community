@@ -1,29 +1,26 @@
 <html>
 <body>
-Reports cases in which a loop contains the <b>if</b> statement that can end with <b>break</b>.
-<p>
-  For instance, consider the following code:
-<pre><code>
-  <b>boolean</b> found = <b>false</b>;
-  <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {
-    <b>if</b> (Objects.equals(value, arr[i])) {
-      found = <b>true</b>;
+Reports cases in which a loop contains the <code>if</code> statement that can end with <code>break</code> without changing the semantics.
+<p>Example:</p>
+<pre>
+  boolean found = false;
+  for (int i = 0; i &lt; arr.length; i++) {
+    if (Objects.equals(value, arr[i])) {
+      found = true;
     }
   }
-</code></pre>
-In this case, iterations have no effect after the condition is met, and you can skip them by adding a <b>break</b>.
-<pre><code>
-  <b>boolean</b> found = <b>false</b>;
-  <b>for</b> (<b>int</b> i = 0; i &lt; arr.length; i++) {
-    <b>if</b> (Objects.equals(value, arr[i])) {
-      found = <b>true</b>;
-      <b>break</b>;
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  boolean found = false;
+  for (int i = 0; i &lt; arr.length; i++) {
+    if (Objects.equals(value, arr[i])) {
+      found = true;
+      break;
     }
   }
-</code></pre>
+</pre>
 <!-- tooltip end -->
-<p>
-  <small>New in 2019.2</small>
-</p>
+<small>New in 2019.2</small>
 </body>
 </html>

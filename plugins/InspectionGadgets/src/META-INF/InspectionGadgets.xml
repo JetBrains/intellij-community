@@ -738,14 +738,16 @@
                      bundle="messages.InspectionGadgetsBundle" key="switch.statement.with.confusing.declaration.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithConfusingDeclarationInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooFewBranches" bundle="messages.InspectionGadgetsBundle"
-                     key="switch.statement.with.too.few.branches.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooFewBranches"
+                     bundle="messages.InspectionGadgetsBundle"
+                     key="minimum.switch.branches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooManyBranches" bundle="messages.InspectionGadgetsBundle"
-                     key="switch.statement.with.too.many.branches.display.name" groupBundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.controlflow.MinimumSwitchBranchesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooManyBranches"
+                     bundle="messages.InspectionGadgetsBundle"
+                     key="maximum.switch.branches.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithTooManyBranchesInspection"/>
+                     implementationClass="com.siyeh.ig.controlflow.MaximumSwitchBranchesInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SwitchStatementWithoutDefaultBranch" shortName="SwitchStatementsWithoutDefault"
                      bundle="messages.InspectionGadgetsBundle" key="switch.statements.without.default.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
@@ -2487,9 +2489,9 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.exceptions.MultiCatchCanBeSplitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SingleElementAnnotation" bundle="messages.InspectionGadgetsBundle"
-                     key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
+                     key="shorthand.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.annotation.SingleElementAnnotationInspection"/>
+                     implementationClass="com.siyeh.ig.annotation.NonNormalizedAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MetaAnnotationWithoutRuntimeRetention"
                      bundle="messages.InspectionGadgetsBundle"
                      key="meta.annotation.without.runtime.retention" groupBundle="messages.InspectionsBundle"
