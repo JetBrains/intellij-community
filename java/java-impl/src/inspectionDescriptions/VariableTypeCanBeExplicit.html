@@ -1,5 +1,15 @@
 <html>
 <body>
-Reports local variables with a <b>var</b> type that can be replaced with an explicit type.
+Reports local variables with a <code>var</code> type that can be replaced with an explicit type.
+<!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 10 or higher.</p>
+<p>Example: </p>
+<pre>
+  var str = "Hello";
+</pre>
+<p>After: </p>
+<pre>
+  String str = "Hello";
+</pre>
 </body>
 </html>
