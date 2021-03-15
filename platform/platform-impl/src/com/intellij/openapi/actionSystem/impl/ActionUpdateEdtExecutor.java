@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,6 +42,11 @@ public final class ActionUpdateEdtExecutor {
       try {
         if (indicator == null || !indicator.isCanceled()) {
           result.set(supplier.get());
+        }
+      }
+      catch (ProcessCanceledException ex) {
+        if (indicator != null && indicator.isRunning()) {
+          indicator.cancel();
         }
       }
       finally {

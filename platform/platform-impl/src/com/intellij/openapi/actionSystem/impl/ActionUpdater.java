@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -70,7 +71,7 @@ final class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
-  private final Project myProject;
+  private final @Nullable Project myProject;
 
   private final Map<AnAction, Presentation> myUpdatedPresentations = new ConcurrentHashMap<>();
   private final Map<ActionGroup, List<AnAction>> myGroupChildren = new ConcurrentHashMap<>();
@@ -294,7 +295,8 @@ final class ActionUpdater {
     }
     ourPromises.add(promise);
 
-    ourExecutor.execute(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+    Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
+    ourExecutor.execute(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
           indicator.checkCanceled();
