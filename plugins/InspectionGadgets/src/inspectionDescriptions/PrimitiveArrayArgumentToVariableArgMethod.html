@@ -1,10 +1,18 @@
 <html>
 <body>
 Reports any calls to a variable arity method where the call has a primitive array in
-the variable arity parameter position (e.g <b>System.out.printf("%s", new int[]{1, 2, 3})</b> ).
+the variable arity parameter position (e.g <code>System.out.printf("%s", new int[]{1, 2, 3})</code> ).
 Such a primitive-array argument may be confusing, as it will be wrapped as a single-element array, rather than each individual
 element being boxed, as might be expected.
 <!-- tooltip end -->
+<p>Example: </p>
+<pre>
+  String.format("%s", new int[]{1, 2, 3});
+</pre>
+<p>After applying the fix: </p>
+<pre>
+  String.format("%s", (Object) new int[]{1, 2, 3});
+</pre>
 <p>
 
 </body>
