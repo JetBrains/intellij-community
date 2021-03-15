@@ -313,7 +313,11 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
         Future<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
         try {
           List<WSLDistribution> distributions = future.get(100, TimeUnit.MILLISECONDS);
-          roots.addAll(ContainerUtil.map(distributions, distribution -> distribution.getUNCRootPath()));
+          List<Path> wslRoots = ContainerUtil.map(distributions, WSLDistribution::getUNCRootPath);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Added WSL roots: " + wslRoots);
+          }
+          roots.addAll(wslRoots);
         }
         catch (InterruptedException | ExecutionException e) {
           LOG.error("Unexpected exception when fetching WSL distributions", e);
