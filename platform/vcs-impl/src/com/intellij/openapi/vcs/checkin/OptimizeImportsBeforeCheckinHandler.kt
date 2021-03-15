@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -64,6 +65,12 @@ private class BackgroundOptimizeImportsCheckinHandler(commitPanel: CheckinProjec
     OptimizeImportsBeforeCheckinHandler(project, commitPanel).beforeCheckinConfigurationPanel
 
   override fun isEnabled(): Boolean = settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT
+
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    indicator.text = VcsBundle.message("progress.text.optimizing.imports")
+
+    return super.runCheck(indicator)
+  }
 
   override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
     OptimizeImportsProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), COMMAND_NAME, null)

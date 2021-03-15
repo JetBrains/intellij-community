@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -59,7 +59,9 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(): TodoCommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): TodoCommitProblem? {
+    indicator.text = message("progress.text.checking.for.todo")
+
     val changes = commitPanel.selectedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 

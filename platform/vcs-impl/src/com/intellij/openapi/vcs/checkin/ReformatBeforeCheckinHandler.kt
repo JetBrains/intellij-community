@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -55,6 +56,12 @@ private class BackgroundReformatCheckinHandler(commitPanel: CheckinProjectPanel)
     ReformatBeforeCheckinHandler(project, commitPanel).beforeCheckinConfigurationPanel
 
   override fun isEnabled(): Boolean = settings.REFORMAT_BEFORE_PROJECT_COMMIT
+
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    indicator.text = message("progress.text.reformatting.code")
+
+    return super.runCheck(indicator)
+  }
 
   override fun createCodeProcessor(): AbstractLayoutCodeProcessor =
     ReformatCodeProcessor(project, getPsiFiles(project, commitPanel.virtualFiles), getReformatBeforeCommitCommandName(), null, true)

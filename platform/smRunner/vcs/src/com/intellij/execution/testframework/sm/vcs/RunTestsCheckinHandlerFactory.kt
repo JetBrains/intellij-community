@@ -107,9 +107,10 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun runCheck(): FailedTestCommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): FailedTestCommitProblem? {
     val configurationSettings = getConfiguredRunConfiguration() ?: return null
-    
+    indicator.text = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name)
+
     return withContext(Dispatchers.IO) {
       val problems = ArrayList<FailureDescription>()
       val executor = DefaultRunExecutor.getRunExecutorInstance()

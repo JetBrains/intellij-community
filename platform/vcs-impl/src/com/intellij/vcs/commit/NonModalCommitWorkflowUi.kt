@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -33,8 +34,7 @@ interface CommitProgressUi {
 
   var isDumbMode: Boolean
 
-  fun startProgress()
+  fun startProgress(): ProgressIndicator
   fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: () -> Unit)
   fun clearCommitCheckFailures()
-  fun endProgress()
 }

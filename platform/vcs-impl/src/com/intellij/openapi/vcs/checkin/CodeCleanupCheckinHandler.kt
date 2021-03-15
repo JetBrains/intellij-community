@@ -14,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Computable
@@ -59,8 +60,11 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(): CommitProblem? {
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    indicator.text = message("progress.text.inspecting.code")
     val cleanupProblems = findProblems()
+
+    indicator.text = message("progress.text.applying.fixes")
     applyFixes(cleanupProblems)
 
     return null
