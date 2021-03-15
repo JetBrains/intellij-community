@@ -12,6 +12,7 @@ import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -167,7 +168,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = action.getShortcutSet();
       if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
-        new AnAction(action.getTemplateText()) {
+        new DumbAwareAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
