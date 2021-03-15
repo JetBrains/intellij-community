@@ -1265,7 +1265,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       int end = selectionModel.getSelectionEnd();
       document.deleteString(start, end);
       selectionModel.removeSelection();
-      typeOffset = end;
+      typeOffset = start;
     }
     else {
       typeOffset = editor.getCaretModel().getOffset();
