@@ -130,6 +130,8 @@ public class HelpTooltip {
   private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
   private boolean isMultiline;
+  private int myInitialDelay = Registry.intValue("ide.tooltip.initialReshowDelay");
+  private int myHideDelay = Registry.intValue("ide.tooltip.initialDelay.highlighter");
   private int myDismissDelay;
   private String myToolTipText;
   private boolean initialShowScheduled;
@@ -209,6 +211,32 @@ public class HelpTooltip {
 
   public HelpTooltip setShortcut(@Nullable Shortcut shortcut) {
     this.shortcut = shortcut == null ? null : KeymapUtil.getShortcutText(shortcut);
+    return this;
+  }
+
+  /**
+   * Set HelpTooltip initial delay. Tooltip is show after component's mouse enter plus initial delay.
+   * @param initialDelay - non negative value for initial delay
+   * @return {@code this}
+   */
+  public HelpTooltip setInitialDelay(int initialDelay) {
+    if (initialDelay >= 0) {
+      myInitialDelay = initialDelay;
+    }
+
+    return this;
+  }
+
+  /**
+   * Set HelpTooltip hide delay. Tooltip is hidden after component's mouse exit plus hide delay.
+   * @param hideDelay - non negative value for hide delay
+   * @return {@code this}
+   */
+  public HelpTooltip setHideDelay(int hideDelay) {
+    if (hideDelay >= 0) {
+      myHideDelay = hideDelay;
+    }
+
     return this;
   }
 
@@ -304,7 +332,7 @@ public class HelpTooltip {
   }
 
   private void installImpl(@NotNull JComponent component) {
-    getDismissDelay();
+    initDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
     createMouseListeners();
@@ -314,7 +342,7 @@ public class HelpTooltip {
     installMouseListeners(component);
   }
 
-  protected final void getDismissDelay() {
+  protected final void initDismissDelay() {
     myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
   }
 
@@ -325,11 +353,11 @@ public class HelpTooltip {
           myPopup.cancel();
         }
         initialShowScheduled = true;
-        scheduleShow(e, Registry.intValue("ide.tooltip.initialReshowDelay"));
+        scheduleShow(e, myInitialDelay);
       }
 
       @Override public void mouseExited(MouseEvent e) {
-        scheduleHide(link == null, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+        scheduleHide(link == null, myHideDelay);
       }
 
       @Override public void mouseMoved(MouseEvent e) {
