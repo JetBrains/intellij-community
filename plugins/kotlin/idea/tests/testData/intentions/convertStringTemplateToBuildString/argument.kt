@@ -1,4 +1,5 @@
-// IS_APPLICABLE: false
+// WITH_RUNTIME
+
 fun test() {
     foo(<caret>"bar")
 }
