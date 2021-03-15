@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,5 +110,16 @@ public class ProcessOutput {
 
   public boolean isCancelled() {
     return myCancelled;
+  }
+
+  @Override
+  public String toString() {
+    return "ProcessOutput{" +
+           "myExitCode=" + myExitCode +
+           ", myTimeout=" + myTimeout +
+           ", myCancelled=" + myCancelled +
+           ", myStdoutBuilder=" + myStdoutBuilder +
+           ", myStderrBuilder=" + myStderrBuilder +
+           '}';
   }
 }
