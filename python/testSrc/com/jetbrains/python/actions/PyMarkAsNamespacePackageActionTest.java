@@ -30,7 +30,6 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myNspService = PyNamespacePackagesService.getInstance(myFixture.getModule());
-    setLanguageLevel(LanguageLevel.getLatest());
   }
 
   public void testPlainDirectory() {
