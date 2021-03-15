@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,13 +7,12 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.IntentionActionBean
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class IntentionDescriptionTest : LightPlatformTestCase() {
@@ -28,7 +27,7 @@ class IntentionDescriptionTest : LightPlatformTestCase() {
         for (tool in intentionTools) {
             val className = tool.className
             val shortName = className.substringAfterLast(".").replace("$", "")
-            val directory = File("idea/resources-en/intentionDescriptions/$shortName")
+            val directory = KotlinRoot.DIR.resolve("idea/resources-en/intentionDescriptions/$shortName")
             if (!directory.exists() || !directory.isDirectory) {
                 if (tool.categories != null) {
                     errors.append("No description directory for intention '").append(className).append("'\n")
@@ -55,10 +54,7 @@ class IntentionDescriptionTest : LightPlatformTestCase() {
 
     private fun String.isXmlIntentionName() = startsWith("Add") && endsWith("ToManifest")
 
-    private fun loadKotlinIntentions(): List<IntentionActionBean> {
-        val extensionPoint = Extensions.getRootArea().getExtensionPoint(IntentionManagerImpl.EP_INTENTION_ACTIONS)
-        return extensionPoint.extensions.toList().filter {
-            it.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
-        }
+    private fun loadKotlinIntentions(): List<IntentionActionBean> = IntentionManagerImpl.EP_INTENTION_ACTIONS.extensions.filter {
+        it.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
     }
 }
