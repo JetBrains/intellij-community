@@ -187,7 +187,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                           String realm,
                                           String scheme, CefAuthCallback callback)
         {
-          if (isProxy && !myPropertiesHelper.isTrue(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
+          if (isProxy && !myPropertiesHelper.is(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
             Credentials credentials = JBCefProxyAuthenticator.getCredentials(JBCefBrowserBase.this, host, port);
             if (credentials != null) {
               callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
