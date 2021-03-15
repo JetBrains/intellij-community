@@ -162,8 +162,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();
-        boolean focusOnNavigation = (myFirstShow && myPropertiesHelper.isTrue(Properties.FOCUS_ON_SHOW) ||
-                                    myPropertiesHelper.isTrue(Properties.FOCUS_ON_NAVIGATION)) ||
+        boolean focusOnNavigation = (myFirstShow && myPropertiesHelper.is(Properties.FOCUS_ON_SHOW) ||
+                                     myPropertiesHelper.is(Properties.FOCUS_ON_NAVIGATION)) ||
                                     componentFocused;
         myFirstShow = false;
 

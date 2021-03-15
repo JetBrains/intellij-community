@@ -60,8 +60,8 @@ public final class JBCefClient implements JBCefDisposable {
 
   @NotNull private final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
 
-  private static final int JS_QUERY_SLOT_POOL_DEF_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
-  private static final int JS_QUERY_SLOT_POOL_MAX_SIZE = 10000;
+  private static final int JS_QUERY_POOL_DEFAULT_SIZE = RegistryManager.getInstance().intValue("ide.browser.jcef.jsQueryPoolSize");
+  private static final int JS_QUERY_POOL_MAX_SIZE = 10000;
 
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
@@ -96,7 +96,7 @@ public final class JBCefClient implements JBCefDisposable {
         createPool.run();
       }
     });
-    if (JS_QUERY_SLOT_POOL_DEF_SIZE > 0) {
+    if (JS_QUERY_POOL_DEFAULT_SIZE > 0) {
       createPool.run();
     }
   }
@@ -170,10 +170,9 @@ public final class JBCefClient implements JBCefDisposable {
 
     @Nullable
     static JSQueryPool create(@NotNull JBCefClient client) {
-      Object size = client.getProperty(Properties.JS_QUERY_POOL_SIZE);
-      int poolSize = size instanceof Integer ? (Integer)size : JS_QUERY_SLOT_POOL_DEF_SIZE;
+      int poolSize = client.myPropertiesHelper.intValue(Properties.JS_QUERY_POOL_SIZE, JS_QUERY_POOL_DEFAULT_SIZE);
       if (poolSize > 0) {
-        poolSize = Math.min(poolSize, JS_QUERY_SLOT_POOL_MAX_SIZE);
+        poolSize = Math.min(poolSize, JS_QUERY_POOL_MAX_SIZE);
         return new JSQueryPool(client, poolSize);
       }
       return null;
