@@ -36,7 +36,7 @@ class KotlinUastReferencesTest : KotlinLightCodeInsightFixtureTestCase() {
 
     @Test
     fun `test original getter is visible when reference is under renaming`() {
-        registerReferenceContributor(testRootDisposable, MockPsiReferenceContributor::class.java)
+        registerReferenceContributor(myFixture.testRootDisposable, MockPsiReferenceContributor::class.java)
 
         myFixture.configureByText(
             "KotlinBean.kt", """
