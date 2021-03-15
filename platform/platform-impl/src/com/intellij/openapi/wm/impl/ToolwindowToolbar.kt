@@ -67,8 +67,6 @@ abstract class ToolwindowToolbar : JPanel() {
   }
 
   open class ToolwindowActionToolbar(val panel: JComponent) : ActionToolbarImpl(TOOLWINDOW_TOOLBAR_BAR, DefaultActionGroup(), false) {
-    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-      if (forced || canUpdateActions(newVisibleActions)) updateButtons(panel)
-    }
+    override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) = updateButtons(panel)
   }
 }
