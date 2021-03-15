@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils.CountingLoopType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,23 +100,21 @@ public final class CountingLoop {
   public static CountingLoop from(PsiForStatement forStatement) {
     // check that initialization is for(int/long i = <initial_value>;...;...)
     PsiDeclarationStatement initialization = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
-    if (initialization == null || initialization.getDeclaredElements().length != 1) return null;
-    PsiLocalVariable counter = tryCast(initialization.getDeclaredElements()[0], PsiLocalVariable.class);
+    if (initialization == null) return null;
+    PsiElement[] declaredElements = initialization.getDeclaredElements();
+    if (declaredElements.length != 1) return null;
+    PsiLocalVariable counter = tryCast(declaredElements[0], PsiLocalVariable.class);
     if(counter == null) return null;
-    if(!counter.getType().equals(PsiType.INT) && !counter.getType().equals(PsiType.LONG)) return null;
+    PsiType counterType = counter.getType();
+    if(!counterType.equals(PsiType.INT) && !counterType.equals(PsiType.LONG)) return null;
 
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(counter.getInitializer());
     if(initializer == null) return null;
 
     // check that increment is like for(...;...;i++)
-    boolean descending;
-    if(VariableAccessUtils.variableIsIncremented(counter, forStatement.getUpdate())) {
-      descending = false;
-    } else if (VariableAccessUtils.variableIsDecremented(counter, forStatement.getUpdate())) {
-      descending = true;
-    } else {
-      return null;
-    }
+    CountingLoopType countingLoopType = VariableAccessUtils.evaluateCountingLoopType(counter, forStatement.getUpdate());
+    if (countingLoopType == null) return null;
+    boolean descending = countingLoopType == CountingLoopType.DEC;
 
     // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
     PsiBinaryExpression condition = tryCast(PsiUtil.skipParenthesizedExprDown(forStatement.getCondition()), PsiBinaryExpression.class);
@@ -138,7 +137,7 @@ public final class CountingLoop {
       assert relationType != null;
     }
     if (!relationType.isSubRelation(RelationType.LT)) return null;
-    if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
+    if(!TypeConversionUtil.areTypesAssignmentCompatible(counterType, bound)) return null;
     if(VariableAccessUtils.variableIsAssigned(counter, forStatement.getBody())) return null;
     return new CountingLoop(forStatement, counter, initializer, bound, closed, descending, relationType == RelationType.NE);
   }

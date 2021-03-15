@@ -713,7 +713,7 @@ public class CFGBuilder {
             push(qualifierValue == null ? getFactory().getUnknown() : qualifierValue);
             moveTopValue(argCount);
           }
-          myAnalyzer.addBareCall(null, methodRef);
+          myAnalyzer.addBareCall(null, methodRef, method);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef), false);
           if (resultNullability == Nullability.NOT_NULL) {
