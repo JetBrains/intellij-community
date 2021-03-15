@@ -128,7 +128,6 @@ public final class MacOSApplicationProvider {
       } else {
         // TODO remove me [begin]
         Application application = Application.getApplication();
-        System.out.println("###### there97979");
 
         application.setAboutHandler((com.apple.eawt.AboutHandler) event -> {
           if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
