@@ -851,6 +851,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertStringTemplateToBuildStringIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToIndexedFunctionCallIntention</className>
       <category>Kotlin</category>
     </intentionAction>

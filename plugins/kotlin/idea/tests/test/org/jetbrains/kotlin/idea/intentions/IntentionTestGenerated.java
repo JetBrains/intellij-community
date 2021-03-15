@@ -6888,6 +6888,44 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertStringTemplateToBuildString")
+    public static class ConvertStringTemplateToBuildString extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/argument.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/basic2.kt");
+        }
+
+        @TestMetadata("basic3.kt")
+        public void testBasic3() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/basic3.kt");
+        }
+
+        @TestMetadata("empty.kt")
+        public void testEmpty() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/empty.kt");
+        }
+
+        @TestMetadata("raw.kt")
+        public void testRaw() throws Exception {
+            runTest("testData/intentions/convertStringTemplateToBuildString/raw.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertToBlockBody")
     public static class ConvertToBlockBody extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
