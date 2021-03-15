@@ -1336,12 +1336,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myInfoLabel.setText(null);
   }
 
-  private void showEmptyText(@Nullable String message) {
+  private void showEmptyText(@Nullable @NlsContexts.StatusText String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
-    emptyText.setText(message != null ? FindBundle.message("message.nothingFound.with.problem", message)
-                                      : FindBundle.message("message.nothingFound"));
     FindModel model = myHelper.getModel();
+    if (StringUtil.isEmpty(model.getStringToFind())) {
+      emptyText.setText(FindBundle.message("message.type.search.query"));
+    } else {
+      emptyText.setText(message != null ? message+"." : FindBundle.message("message.nothingFound"));
+    }
     if (mySelectedScope == FindPopupScopeUIImpl.DIRECTORY && !model.isWithSubdirectories()) {
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
                                                                SimpleTextAttributes.LINK_ATTRIBUTES,
