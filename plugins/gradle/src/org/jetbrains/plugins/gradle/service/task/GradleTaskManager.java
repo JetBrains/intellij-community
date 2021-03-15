@@ -30,6 +30,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.Task;
 import org.gradle.tooling.*;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.build.GradleEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_ADDR_SYS_PROP;
 import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DISPATCH_PORT_SYS_PROP;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
@@ -66,6 +68,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
   public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
+  public static final Key<Collection<VersionSpecificInitScript>> VERSION_SPECIFIC_SCRIPTS_KEY = Key.create("VERSION_SPECIFIC_SCRIPTS_KEY");
   private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
@@ -99,10 +102,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);
     Function<ProjectConnection, Void> f = connection -> {
+      BuildEnvironment buildEnvironment = null;
       try {
+        buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
         setupGradleScriptDebugging(effectiveSettings);
         setupDebuggerDispatchPort(effectiveSettings);
-        appendInitScriptArgument(tasks, jvmParametersSetup, effectiveSettings);
+        appendInitScriptArgument(tasks, jvmParametersSetup, effectiveSettings,
+                                 Optional.ofNullable(buildEnvironment)
+                                   .map(BuildEnvironment::getGradle)
+                                   .map(GradleEnvironment::getGradleVersion).orElse(null));
         try {
           for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
             effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
@@ -127,7 +135,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
         final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain();
         throw projectResolverChain.getUserFriendlyError(buildEnvironment, e, projectPath, null);
       }
@@ -189,6 +196,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,
                                               @Nullable String jvmParametersSetup,
                                               @NotNull GradleExecutionSettings effectiveSettings) {
+    appendInitScriptArgument(taskNames, jvmParametersSetup, effectiveSettings, null);
+  }
+
+  public static void appendInitScriptArgument(@NotNull List<String> taskNames,
+                                              @Nullable String jvmParametersSetup,
+                                              @NotNull GradleExecutionSettings effectiveSettings,
+                                              @Nullable String gradleVersion) {
     final List<String> initScripts = new ArrayList<>();
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
     for (GradleProjectResolverExtension resolverExtension : extensions) {
@@ -229,38 +243,48 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (!initScripts.isEmpty()) {
-      try {
-        GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
-        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(
-          StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
-        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
-      }
-      catch (IOException e) {
-        ExternalSystemException systemException = new ExternalSystemException(e);
-        systemException.initCause(e);
-        throw systemException;
-      }
+      GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
+      writeAndAppendScript(effectiveSettings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
     }
 
     final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
+      writeAndAppendScript(effectiveSettings, initScript, notNullize(effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY), "ijmiscinit"));
+    }
+
+    final Collection<VersionSpecificInitScript> scripts = effectiveSettings.getUserData(VERSION_SPECIFIC_SCRIPTS_KEY);
+    if (gradleVersion != null && scripts != null && !scripts.isEmpty()) {
       try {
-        String initScriptPrefix = effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY);
-        if (StringUtil.isEmpty(initScriptPrefix)) {
-          initScriptPrefix = "ijmiscinit";
-        }
-        else {
-          initScriptPrefix = FileUtil.sanitizeFileName(initScriptPrefix);
-        }
-        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefix);
-        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+        GradleVersion version = GradleVersion.version(gradleVersion);
+        scripts.stream()
+          .filter(script -> script.isApplicableTo(version))
+          .filter(script -> StringUtil.isNotEmpty(script.getScript()))
+          .forEach(script -> writeAndAppendScript(effectiveSettings, script.getScript(), notNullize(script.getFilePrefix(), "ijverspecinit")));
       }
-      catch (IOException e) {
-        ExternalSystemException externalSystemException = new ExternalSystemException(e);
-        externalSystemException.initCause(e);
-        throw externalSystemException;
+      catch (IllegalArgumentException e) {
+        LOG.error("Failed to parse gradle version value [" + gradleVersion + "]", e);
       }
     }
+  }
+
+  private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,
+                                           @NotNull String initScript,
+                                           @NotNull String initScriptPrefix) {
+    try {
+      String initScriptPrefixName = FileUtil.sanitizeFileName(initScriptPrefix);
+      File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefixName);
+      effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      throw wrapWithESException(e);
+    }
+  }
+
+  @NotNull
+  private static ExternalSystemException wrapWithESException(IOException e) {
+    ExternalSystemException externalSystemException = new ExternalSystemException(e);
+    externalSystemException.initCause(e);
+    return externalSystemException;
   }
 
   public static void setupGradleScriptDebugging(@NotNull GradleExecutionSettings effectiveSettings) {
@@ -325,7 +349,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                         "    if(project.path == '" + gradlePath + "') {\n" +
                         "        def overwrite = project.tasks.findByName('" + taskName + "') != null\n" +
                         "        project.tasks.create(name: '" + taskName + "', overwrite: overwrite, type: " + taskClass.getName() + ") {\n" +
-                        StringUtil.notNullize(taskConfiguration) + "\n" +
+                        notNullize(taskConfiguration) + "\n" +
                         "        }\n" +
                         "    }\n" +
                         "  }\n" +
