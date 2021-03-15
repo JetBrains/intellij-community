@@ -1449,7 +1449,7 @@
                      key="inspection.inconsistent.text.block.indent.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyCollectorInspection"
                      key="inspection.simplify.collector.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TrailingWhitespacesInTextBlock"
@@ -1460,22 +1460,22 @@
                      key="inspection.trailing.whitespaces.in.text.block.name"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyOptionalCallChains"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyOptionalCallChainsInspection"
                      key="inspection.simplify.optional.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      key="inspection.simplify.stream.api.call.chains.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObviousNullCheck"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ObviousNullCheckInspection"
                      key="inspection.obvious.null.check.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStreamOptionalCall"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
                      key="inspection.redundant.stream.optional.call.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantRecordConstructor" enabledByDefault="true" level="WARNING"
