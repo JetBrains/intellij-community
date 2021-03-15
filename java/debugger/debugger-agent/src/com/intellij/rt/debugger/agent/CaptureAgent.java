@@ -165,7 +165,10 @@ public final class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      if (className != null && classBeingRedefined == null) { // we do not support redefinition or retransform
+      // While we do not support redefinition or retransform, in case another agent is active
+      // we have to re-transform again. Otherwise the other agent might not be able to instrument the class properly without the structural
+      // changes applied by this agent.
+      if (className != null) {
         List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
         if (classPoints != null) {
           try {
