@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.configuration.KotlinWithGradleConfigurator.Comp
 import org.jetbrains.kotlin.idea.inspections.gradle.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
@@ -431,7 +431,7 @@ class GroovyBuildScriptManipulator(
 
     private fun GrStatement.replaceWithStatementFromText(snippet: String): GrStatement {
         val newStatement = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(snippet)
-        CodeStyleManager.getInstance(project).reformat(newStatement)
+        newStatement.reformatted()
         return replaceWithStatement(newStatement)
     }
 
@@ -487,7 +487,7 @@ class GroovyBuildScriptManipulator(
             if (statements.any { StringUtil.equalsIgnoreWhitespaces(it.text, text) }) return false
             val psiFactory = GroovyPsiElementFactory.getInstance(project)
             val newStatement = if (isStatement) psiFactory.createStatementFromText(text) else psiFactory.createExpressionFromText(text)
-            CodeStyleManager.getInstance(project).reformat(newStatement)
+            newStatement.reformatted()
             if (!isFirst && statements.isNotEmpty()) {
                 val lastStatement = statements[statements.size - 1]
                 if (lastStatement != null) {

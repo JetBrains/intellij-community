@@ -9,10 +9,10 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
 import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -63,8 +63,6 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
             block.replace(statement)
         }
 
-        return resultExpression.let {
-            CodeStyleManager.getInstance(it.project).reformat(it, true)
-        }.startOffset
+        return resultExpression.reformatted(true).startOffset
     }
 }

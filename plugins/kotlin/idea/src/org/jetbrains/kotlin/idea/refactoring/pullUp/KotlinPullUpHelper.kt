@@ -1,12 +1,11 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.light.LightField
 import com.intellij.psi.search.GlobalSearchScope
@@ -36,6 +35,7 @@ import org.jetbrains.kotlin.idea.refactoring.safeDelete.removeOverrideModifier
 import org.jetbrains.kotlin.idea.util.anonymousObjectSuperTypeOrNull
 import org.jetbrains.kotlin.idea.util.hasComments
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -543,7 +543,7 @@ class KotlinPullUpHelper(
                 else -> return
             }
 
-            movedMember.modifierList?.let { CodeStyleManager.getInstance(member.manager).reformat(it) }
+            movedMember.modifierList?.reformatted()
 
             applyMarking(movedMember, data.sourceToTargetClassSubstitutor, data.targetClassDescriptor)
             addMovedMember(movedMember)
@@ -661,7 +661,8 @@ internal fun KtNamedDeclaration.deleteWithCompanion() {
     if (containingClass is KtObjectDeclaration &&
         containingClass.isCompanion() &&
         containingClass.declarations.size == 1 &&
-        containingClass.getSuperTypeList() == null) {
+        containingClass.getSuperTypeList() == null
+    ) {
         containingClass.delete()
     } else {
         this.delete()

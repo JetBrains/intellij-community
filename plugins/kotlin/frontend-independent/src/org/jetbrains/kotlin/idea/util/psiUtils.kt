@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
@@ -45,3 +46,6 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
     return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
 }
 
+fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
+    CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
+}

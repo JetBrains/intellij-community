@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -144,8 +144,8 @@ class ConvertSealedClassToEnumIntention : SelfTargetingRangeIntention<KtClass>(
             firstEntry.parent.addBefore(psiFactory.createNewLine(), firstEntry)
         } else if (needSemicolon) {
             klass.declarations.firstOrNull()?.let { anchor ->
-                val delimiter = anchor.parent.addBefore(semicolon, anchor)
-                CodeStyleManager.getInstance(project).reformat(delimiter)
+                val delimiter = anchor.parent.addBefore(semicolon, anchor).reformatted()
+                delimiter.reformatted()
             }
         }
     }

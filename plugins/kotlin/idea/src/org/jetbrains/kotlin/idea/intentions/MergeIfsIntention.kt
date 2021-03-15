@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,9 +7,9 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
-import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -58,11 +58,7 @@ class MergeIfsIntention : SelfTargetingIntention<KtIfExpression>(KtIfExpression:
             }
 
             condition.replace(factory.createExpressionByPattern("$0 && $1", condition, secondCondition))
-            val newBody = then.replace(nestedBody).let {
-                CodeStyleManager.getInstance(it.project).reformat(it, true)
-            }
-
-            return newBody.textRange.startOffset
+            return then.replace(nestedBody).reformatted(true).textRange.startOffset
         }
 
         private fun KtExpression.nestedIf() = when (this) {

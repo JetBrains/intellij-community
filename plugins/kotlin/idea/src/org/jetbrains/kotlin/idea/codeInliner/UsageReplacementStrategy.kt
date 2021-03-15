@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,7 +14,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.ui.GuiUtils
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -133,9 +133,7 @@ private fun UsageReplacementStrategy.processUsages(
                 continue
             }
 
-            createReplacer(usage)?.invoke()?.parent?.parent?.parent?.let { block ->
-                CodeStyleManager.getInstance(block.project).reformat(block, true)
-            }
+            createReplacer(usage)?.invoke()?.parent?.parent?.parent?.reformatted(true)
         } catch (e: Throwable) {
             if (e is ControlFlowException) throw e
             LOG.error(e)

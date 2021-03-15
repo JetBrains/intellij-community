@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,13 +10,13 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
@@ -92,8 +92,8 @@ abstract class AbstractCreateDeclarationFix<D : KtNamedDeclaration>(
                     }
                     else -> targetFile.add(generated) as KtElement
                 }
-                val reformatted = CodeStyleManager.getInstance(project).reformat(generatedDeclaration)
-                val shortened = ShortenReferences.DEFAULT.process(reformatted as KtElement)
+
+                val shortened = ShortenReferences.DEFAULT.process(generatedDeclaration.reformatted() as KtElement)
                 EditorHelper.openInEditor(shortened)?.caretModel?.moveToOffset(
                     (shortened as? KtNamedDeclaration)?.nameIdentifier?.startOffset ?: shortened.startOffset,
                     true

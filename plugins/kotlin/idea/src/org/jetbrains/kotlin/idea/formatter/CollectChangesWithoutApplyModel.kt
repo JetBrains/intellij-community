@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,10 +13,10 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.FormattingDocumentModelImpl
 import org.jetbrains.kotlin.idea.formatter.FormattingChange.ReplaceWhiteSpace
 import org.jetbrains.kotlin.idea.formatter.FormattingChange.ShiftIndentInsideRange
+import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.NotNullablePsiCopyableUserDataProperty
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -44,7 +44,7 @@ sealed class FormattingChange {
 fun collectFormattingChanges(file: PsiFile): Set<FormattingChange> {
     try {
         file.collectFormattingChanges = true
-        CodeStyleManager.getInstance(file.project).reformat(file, true)
+        file.reformatted(true)
         return file.collectChangesFormattingModel?.requestedChanges ?: emptySet()
     } finally {
         file.collectFormattingChanges = false
