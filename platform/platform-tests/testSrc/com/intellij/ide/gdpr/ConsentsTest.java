@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.util.Pair;
@@ -181,7 +179,7 @@ public class ConsentsTest extends TestCase{
   }
 
   public void testUsageStatsPermission() {
-    final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, "");
+    final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
@@ -198,36 +196,21 @@ public class ConsentsTest extends TestCase{
     final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterConfirm.second);
     assertEquals(2, afterConfirm.first.size());
-    assertEquals("", storage.myBundled);
+    assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
     assertEquals(ConsentOptions.Permission.NO, options.isSendingUsageStatsAllowed());
   }
 
-  public void testDeletedConsentsNotVisible() {
-    final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_DELETED_CONSENTS_DATA, JSON_CONSENTS_DATA);
-    final ConsentOptions options = data.first;
-    final MemoryIOBackend storage = data.second;
-
-    final Pair<List<Consent>, Boolean> consents = options.getConsents();
-    assertTrue("Consents should require confirmation", consents.second);
-    assertEquals(1, consents.first.size());
-    assertEquals(JSON_DELETED_CONSENTS_DATA, storage.myDefaults);
-    assertEquals("", storage.myConfirmed);
-
-    assertNull(lookupConsent(CONSENT_ID_1, consents.first));
-    assertNotNull(lookupConsent(CONSENT_ID_USAGE_STATS, consents.first));
-  }
-
   public void testLoadReadAndConfirm() {
-    final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, "");
+    final Pair<ConsentOptions, MemoryIOBackend> data = createConsentOptions(JSON_CONSENTS_DATA, JSON_CONSENTS_DATA);
     final ConsentOptions options = data.first;
     final MemoryIOBackend storage = data.second;
 
     final Pair<List<Consent>, Boolean> beforeConfirm = options.getConsents();
     assertTrue("Consents should require confirmation", beforeConfirm.second);
     assertEquals(2, beforeConfirm.first.size());
-    assertEquals("", storage.myBundled);
+    assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertEquals("", storage.myConfirmed);
 
@@ -240,7 +223,7 @@ public class ConsentsTest extends TestCase{
     final Pair<List<Consent>, Boolean> afterConfirm = options.getConsents();
     assertFalse("Consents should NOT require confirmation", afterConfirm.second);
     assertEquals(2, afterConfirm.first.size());
-    assertEquals("", storage.myBundled);
+    assertEquals(JSON_CONSENTS_DATA, storage.myBundled);
     assertEquals(JSON_CONSENTS_DATA, storage.myDefaults);
     assertFalse("The storage should contain non-empty confirmed consents", StringUtil.isEmpty(storage.myConfirmed));
 
