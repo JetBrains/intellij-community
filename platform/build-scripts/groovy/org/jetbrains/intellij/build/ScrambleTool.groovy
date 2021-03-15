@@ -29,8 +29,10 @@ interface ScrambleTool {
    *     $buildContext.paths.projectHome/${pluginLayout.zkmScriptStub}"
    *  else
    *     "$buildContext.paths.projectHome/plugins/{@code pluginName}/build/script.zkm.stub"
+   *
+   *  @param additionalPluginsDir for non-bundled plugins points to a directory where these plugins are prepared.
    */
-  void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, Path targetDir, Path pluginsDir)
+  void scramblePlugin(BuildContext buildContext, PluginLayout pluginLayout, Path targetDir, Path additionalPluginsDir)
 
   /**
    * @return list of names of JAR files which cannot be included into the product 'lib' directory in plain form
