@@ -110,7 +110,7 @@ class KotlinChangeSignatureDialog(
 
                 val parameterName = getPresentationName(item)
                 val typeText = item.typeCodeFragment.text
-                val defaultValue = item.defaultValueCodeFragment.text
+                val defaultValue = if (!item.parameter.defaultValueAsDefaultParameter) item.defaultValueCodeFragment.text else ""
                 val separator = StringUtil.repeatSymbol(' ', getParamNamesMaxLength() - parameterName.length + 1)
                 val text = "$valOrVar$parameterName:$separator$typeText" + if (StringUtil.isNotEmpty(defaultValue)) {
                     KotlinBundle.message("text.default.value", defaultValue)

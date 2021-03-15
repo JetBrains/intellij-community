@@ -58,9 +58,8 @@ abstract class KotlinCallableParameterTableModel protected constructor(
             myTypeContext,
         )
 
-        val defaultValueForCall = resultParameterInfo.defaultValueForCall
         val defaultValueCodeFragment: PsiCodeFragment = psiFactory.createExpressionCodeFragment(
-            if (defaultValueForCall != null) defaultValueForCall.text else "",
+            resultParameterInfo.defaultValueForCall?.text ?: "",
             myDefaultValueContext,
         )
 
