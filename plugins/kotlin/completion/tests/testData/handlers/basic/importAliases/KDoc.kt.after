@@ -1,9 +1,9 @@
 // FIR_COMPARISON
-import java.sql.Date as SqlDate
+import java.util.List as UtilList
 
 /**
- * [SqlDate<caret>]
+ * [UtilList<caret>]
  */
 fun foo(){}
 
-// ELEMENT: SqlDate
+// ELEMENT: UtilList
