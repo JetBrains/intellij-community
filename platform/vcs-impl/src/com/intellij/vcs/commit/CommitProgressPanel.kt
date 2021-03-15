@@ -4,11 +4,14 @@ package com.intellij.vcs.commit
 import com.intellij.icons.AllIcons
 import com.intellij.ide.nls.NlsMessages.formatNarrowAndList
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor.onUiThread
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
@@ -26,6 +29,11 @@ import com.intellij.util.ui.SwingHelper.createHtmlViewer
 import com.intellij.util.ui.SwingHelper.setHtml
 import com.intellij.util.ui.UIUtil.getErrorForeground
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -47,7 +55,12 @@ private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
 }
 
 open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgressUi, InclusionListener, DocumentListener, Disposable {
-  private var progress: CommitChecksProgressIndicator? = null
+  private val scope = CoroutineScope(SupervisorJob() + onUiThread().coroutineDispatchingContext())
+    .also { Disposer.register(this) { it.cancel() } }
+
+  private val progressFlow = MutableStateFlow<CommitChecksProgressIndicator?>(null)
+  private var progress: CommitChecksProgressIndicator? by progressFlow::value
+
   private val failuresPanel = FailuresPanel()
   private val label = JBLabel().apply { isVisible = false }
 
@@ -73,6 +86,18 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     Disposer.register(commitWorkflowUi, this)
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
+
+    setupProgressVisibilityDelay()
+  }
+
+  @Suppress("EXPERIMENTAL_API_USAGE")
+  private fun setupProgressVisibilityDelay() {
+    progressFlow
+      .debounce(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
+      .onEach { indicator ->
+        if (indicator?.isRunning == true && failuresPanel.isEmpty()) indicator.component.isVisible = true
+      }
+      .launchIn(scope + CoroutineName("Commit checks indicator visibility"))
   }
 
   override fun dispose() = Unit
@@ -83,6 +108,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     val indicator = CommitChecksProgressIndicator()
     Disposer.register(this, indicator)
 
+    indicator.component.isVisible = false
     indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
       override fun start() = progressStarted()
       override fun stop() = progressStopped()
@@ -184,6 +210,8 @@ private class FailuresPanel : BorderLayoutPanel() {
     isOpaque = false
     isVisible = false
   }
+
+  fun isEmpty(): Boolean = failures.isEmpty()
 
   fun showDetails(event: HyperlinkEvent) {
     if (event.eventType != HyperlinkEvent.EventType.ACTIVATED) return
