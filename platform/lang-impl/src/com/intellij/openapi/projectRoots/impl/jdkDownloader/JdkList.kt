@@ -221,6 +221,11 @@ data class JdkPredicate(
     fun default() = createInstance(forWsl = false)
     fun forWSL() = createInstance(forWsl = true)
 
+    /**
+     * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
+     */
+    fun forCurrentProcess() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, setOf(JdkPlatform(currentOS, currentArch)))
+
     private fun createInstance(forWsl: Boolean = false): JdkPredicate {
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
