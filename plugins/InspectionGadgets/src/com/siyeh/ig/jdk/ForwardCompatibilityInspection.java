@@ -58,12 +58,17 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
             break;
           case PsiKeyword.VAR:
             if (languageLevel.isLessThan(LanguageLevel.JDK_10) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("var.identifier.warn");
+              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.VAR, 10);
             }
             break;
           case PsiKeyword.YIELD:
             if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
-              return JavaErrorBundle.message("yield.identifier.warn");
+              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.YIELD, 14);
+            }
+            break;
+          case PsiKeyword.RECORD:
+            if (languageLevel.isLessThan(LanguageLevel.JDK_16) && parent instanceof PsiClass) {
+              return JavaErrorBundle.message("restricted.identifier.warn", PsiKeyword.RECORD, 16);
             }
             break;
         }
