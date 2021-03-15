@@ -39,22 +39,22 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
   }
 
   override fun useInstallation(gradleHome: File?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleHome)
+    distribution = TargetGradleDistribution(gradleHome?.path, distributionFactory.getDistribution(gradleHome))
     return this
   }
 
   override fun useGradleVersion(gradleVersion: String?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleVersion)
+    distribution = TargetGradleDistribution(null, distributionFactory.getDistribution(gradleVersion))
     return this
   }
 
   override fun useDistribution(gradleDistribution: URI?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleDistribution)
+    distribution = TargetGradleDistribution(null, distributionFactory.getDistribution(gradleDistribution))
     return this
   }
 
   fun useClasspathDistribution(): GradleConnector {
-    distribution = distributionFactory.classpathDistribution
+    distribution = TargetGradleDistribution(null, distributionFactory.classpathDistribution)
     return this
   }
 
@@ -111,7 +111,8 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
     checkNotNull(connectionParameters.projectDir) { "A project directory must be specified before creating a connection." }
     if (distribution == null) {
       val searchUpwards = if (connectionParameters.isSearchUpwards != null) connectionParameters.isSearchUpwards else true
-      distribution = distributionFactory.getDefaultDistribution(connectionParameters.projectDir, searchUpwards)
+      distribution = TargetGradleDistribution(null,
+                                              distributionFactory.getDefaultDistribution(connectionParameters.projectDir, searchUpwards))
     }
     synchronized(connections) {
       if (stopped) {
