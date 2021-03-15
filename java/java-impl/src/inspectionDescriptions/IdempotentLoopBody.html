@@ -1,15 +1,19 @@
 <html>
 <body>
-Detects loops whose second and the subsequent iterations do not produce any additional side effects other than produced by the first iteration,
+Reports loops whose second and the subsequent iterations do not produce any additional side effects other than produced by the first iteration,
 which could indicate a programming error. Such loops may iterate only zero, one or infinite number of times.
-If infinite number of times case is unreachable, such loop could be replaced with <b>if</b> statement. Otherwise there's a danger that
-the program could stuck. Example:
+If infinite number of times case is unreachable, such loop could be replaced with <code>if</code> statement. Otherwise there's a danger that
+the program could stuck.
+<p>Example:</p>
 <pre>
-  int suffix = 1;
-  String name = baseName;
-  while(names.contains(name)) {
-    name = baseName + suffix; // error: suffix is not updated making loop body idempotent
-  }
+    public void foo(String baseName, String names) {
+        int suffix = 1;
+        String name = baseName;
+        while (names.contains(name)) {
+            // error: suffix is not updated making loop body idempotent
+            name = baseName + suffix;
+        }
+    }
 </pre>
 <!-- tooltip end -->
 <p><small>New in 2018.1</small></p>
