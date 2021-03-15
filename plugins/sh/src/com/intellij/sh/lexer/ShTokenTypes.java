@@ -50,6 +50,6 @@ public interface ShTokenTypes extends ShTypes {
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING);
 
-  TokenSet arithmeticOperationsForRemapping = TokenSet.create(PLUS, MINUS, DIV, MULT, MINUS_MINUS, PLUS_PLUS);
+  TokenSet arithmeticOperationsForRemapping = TokenSet.create(PLUS, MINUS, DIV, MULT, MOD,MINUS_MINUS, PLUS_PLUS);
   TokenSet numbers = TokenSet.create(INT, OCTAL, HEX);
 }
