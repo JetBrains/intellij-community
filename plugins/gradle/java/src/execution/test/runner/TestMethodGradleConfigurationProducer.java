@@ -30,6 +30,7 @@ import java.util.List;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.getMethodLocation;
 import static org.jetbrains.plugins.gradle.execution.test.runner.TestGradleConfigurationProducerUtilKt.applyTestConfiguration;
+import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom;
 
 /**
  * @author Vladislav.Soroka
@@ -103,8 +104,8 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     if (!hasTasksInConfiguration(source, context.getProject(), configuration.getSettings())) return false;
 
     final String scriptParameters = configuration.getSettings().getScriptParameters() + ' ';
-    final String testFilter = createTestFilter(contextLocation, containingClass, psiMethod);
-    return testFilter != null && scriptParameters.contains(testFilter);
+    final String testFilter = createTestFilterFrom(contextLocation, containingClass, psiMethod, true);
+    return !testFilter.isEmpty() && scriptParameters.contains(testFilter);
   }
 
   @Override
@@ -136,7 +137,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
     getTestTasksChooser().chooseTestTasks(context.getProject(), dataContext, classes, tasks -> {
         ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)fromContext.getConfiguration();
         ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-        Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
+        Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(context.getLocation(), psiClass, psiMethod, true);
         if (!applyTestConfiguration(settings, context.getModule(), tasks, classes, createFilter)) {
           LOG.warn("Cannot apply method test configuration, uses raw run configuration");
           performRunnable.run();
@@ -152,20 +153,9 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
                                                       @NotNull PsiMethod psiMethod,
                                                       PsiClass @NotNull ... containingClasses) {
     final ExternalSystemTaskExecutionSettings settings = configuration.getSettings();
-    final Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilter(context.getLocation(), psiClass, psiMethod);
+    final Function1<PsiClass, String> createFilter = (psiClass) -> createTestFilterFrom(context.getLocation(), psiClass, psiMethod, true);
     if (!applyTestConfiguration(settings, context.getModule(), containingClasses, createFilter)) return false;
     configuration.setName((containingClasses.length == 1 ? containingClasses[0].getName() + "." : "") + psiMethod.getName());
     return true;
-  }
-
-  @Nullable
-  private static String createTestFilter(@Nullable Location location, @NotNull PsiClass aClass, @NotNull PsiMethod psiMethod) {
-    String filter = GradleExecutionSettingsUtil.createTestFilterFrom(location, aClass, psiMethod, true);
-    return filter.isEmpty() ? null : filter;
-  }
-
-  @NotNull
-  public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
-    return GradleExecutionSettingsUtil.createTestFilterFromMethod(aClass, method, /*hasSuffix=*/true);
   }
 }

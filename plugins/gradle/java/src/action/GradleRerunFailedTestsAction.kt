@@ -16,66 +16,82 @@
 package org.jetbrains.plugins.gradle.action
 
 import com.intellij.execution.Executor
+import com.intellij.execution.Location
 import com.intellij.execution.actions.JavaRerunFailedTestsAction
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.plugins.gradle.execution.test.runner.*
-import org.jetbrains.plugins.gradle.util.containsSubSequenceInSequence
-import org.jetbrains.plugins.gradle.util.containsTasksInScriptParameters
-import java.util.*
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleSMTestProxy
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
+import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
+import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
+import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
+import org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.containsTasks
 
-/**
- * @author Vladislav.Soroka
- */
-class GradleRerunFailedTestsAction(consoleView: GradleTestsExecutionConsole) : JavaRerunFailedTestsAction(consoleView.console,
-                                                                                                          consoleView.properties) {
+class GradleRerunFailedTestsAction(
+  consoleView: GradleTestsExecutionConsole
+) : JavaRerunFailedTestsAction(
+  consoleView.console,
+  consoleView.properties
+) {
+
+  private val configuration: ExternalSystemRunConfiguration
+    get() = myConsoleProperties.configuration as ExternalSystemRunConfiguration
+
   override fun getRunProfile(environment: ExecutionEnvironment): MyRunProfile {
-    val configuration = myConsoleProperties.configuration as ExternalSystemRunConfiguration
-    val failedTests = getFailedTests(configuration.project)
+    val configuration = configuration.clone()
+    configuration.settings.setupRerunTestConfiguration(configuration.project)
     return object : MyRunProfile(configuration) {
       override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
-        val runProfile = (peer as ExternalSystemRunConfiguration).clone()
-        val project = runProfile.project
-        val javaPsiFacade = JavaPsiFacade.getInstance(project)
-        val projectScope = GlobalSearchScope.projectScope(project)
-        val settings = runProfile.settings.clone()
-        val tests = ContainerUtil.filterIsInstance(failedTests, GradleSMTestProxy::class.java)
-        val findTestSource = label@{ test: GradleSMTestProxy ->
-          test.className?.let { className ->
-            getSourceFile(javaPsiFacade.findClass(className, projectScope))
-          }
-        }
-        val createFilter = { test: GradleSMTestProxy ->
-          TestMethodGradleConfigurationProducer.createTestFilter(test.className, test.name)
-        }
-        val getTestsTaskToRun = { source: VirtualFile ->
-          val foundTasksToRun = GradleTestRunConfigurationProducer.findAllTestsTaskToRun(source, project)
-          val tasksToRun = ArrayList<List<String>>()
-          var isSpecificTask = false
-          for (tasks in foundTasksToRun) {
-            val escapedTasks = ContainerUtil.map(tasks) { it.escapeIfNeeded() }
-            if (containsSubSequenceInSequence(runProfile.settings.taskNames, escapedTasks) ||
-                containsTasksInScriptParameters(runProfile.settings.scriptParameters, escapedTasks)) {
-              ContainerUtil.addAllNotNull(tasksToRun, tasks)
-              isSpecificTask = true
-            }
-          }
-          if (!isSpecificTask && !foundTasksToRun.isEmpty()) {
-            ContainerUtil.addAllNotNull(tasksToRun, foundTasksToRun.iterator().next())
-          }
-          tasksToRun
-        }
-        val projectPath = settings.externalProjectPath
-        if (settings.applyTestConfiguration(projectPath, tests, findTestSource, createFilter, getTestsTaskToRun)) {
-          runProfile.settings.setFrom(settings)
-        }
-        return runProfile.getState(executor, environment)
+        return configuration.getState(executor, environment)
       }
     }
+  }
+
+  private fun ExternalSystemTaskExecutionSettings.setupRerunTestConfiguration(project: Project) {
+    val failedTests = getFailedTests(project)
+      .filterIsInstance<GradleSMTestProxy>()
+      .map { getTestLocationInfo(project, it) }
+    val findTestSource = { it: TestLocationInfo -> getSourceFile(it.element) }
+    val createFiler = { it: TestLocationInfo -> createTestFilterFrom(it.location, it.psiClass, it.psiMethod, true) }
+    val getTestsTaskToRun = { source: VirtualFile ->
+      val foundTasksToRun = findAllTestsTaskToRun(source, project)
+      foundTasksToRun
+        .filter { tasks -> containsTasks(tasks) }
+        .ifEmpty { listOfNotNull(foundTasksToRun.firstOrNull()) }
+    }
+    if (!applyTestConfiguration(externalProjectPath, failedTests, findTestSource, createFiler, getTestsTaskToRun)) {
+      LOG.warn("Cannot apply test configuration, uses previous run configuration")
+    }
+  }
+
+  private fun getTestLocationInfo(project: Project, testProxy: GradleSMTestProxy): TestLocationInfo {
+    val projectScope = GlobalSearchScope.projectScope(project)
+    val location = testProxy.getLocation(project, projectScope)
+    return when (val element = location?.psiElement) {
+      is PsiClass -> TestLocationInfo(location, element, element)
+      is PsiMethod -> TestLocationInfo(location, element, element.containingClass, element)
+      else -> TestLocationInfo(location)
+    }
+  }
+
+  private data class TestLocationInfo(
+    val location: Location<*>?,
+    val element: PsiElement? = null,
+    val psiClass: PsiClass? = null,
+    val psiMethod: PsiMethod? = null
+  )
+
+  companion object {
+    private val LOG = Logger.getInstance(GradleRerunFailedTestsAction::class.java)
   }
 }
