@@ -360,18 +360,22 @@ class KotlinFunctionCallUsage(
 
         val lastParameterIndex = newParameters.lastIndex
         var firstNamedIndex = newArgumentInfos.firstOrNull {
-            it.wasNamed
-                    || (it.parameter.isNewParameter && (purelyNamedCall || it.parameter.defaultValueAsDefaultParameter))
-                    || (it.resolvedArgument is VarargValueArgument && it.parameterIndex < lastParameterIndex)
+            it.parameter.isNewParameter && it.parameter.defaultValue != null ||
+                    it.resolvedArgument is VarargValueArgument && it.parameterIndex < lastParameterIndex
         }?.parameterIndex
+
         if (firstNamedIndex == null) {
-            val lastNonDefaultArgIndex = (lastParameterIndex downTo 0).firstOrNull { !newArgumentInfos[it].shouldSkip() }
-                ?: -1
+            val lastNonDefaultArgIndex = (lastParameterIndex downTo 0).firstOrNull { !newArgumentInfos[it].shouldSkip() } ?: -1
             firstNamedIndex = (0..lastNonDefaultArgIndex).firstOrNull { newArgumentInfos[it].shouldSkip() }
         }
 
         val lastPositionalIndex = if (firstNamedIndex != null) firstNamedIndex - 1 else lastParameterIndex
-        (lastPositionalIndex + 1..lastParameterIndex).forEach { newArgumentInfos[it].makeNamed(callee) }
+        val namedRange = lastPositionalIndex + 1..lastParameterIndex
+        for ((index, argument) in newArgumentInfos.withIndex()) {
+            if (purelyNamedCall || argument.wasNamed || index in namedRange) {
+                argument.makeNamed(callee)
+            }
+        }
 
         val psiFactory = KtPsiFactory(element.project)
 
@@ -421,8 +425,7 @@ class KotlinFunctionCallUsage(
         val lastNewParameter = newParameters.lastOrNull()
         val lastNewArgument = newArgumentList.arguments.lastOrNull()
         val oldLastResolvedArgument = getResolvedValueArgument(lastNewParameter?.oldIndex ?: -1) as? ExpressionValueArgument
-        val lambdaArgumentNotTouched =
-            lastOldArgument is KtLambdaArgument && oldLastResolvedArgument?.valueArgument == lastOldArgument
+        val lambdaArgumentNotTouched = lastOldArgument is KtLambdaArgument && oldLastResolvedArgument?.valueArgument == lastOldArgument
         val newLambdaArgumentAddedLast = lastNewParameter != null
                 && lastNewParameter.isNewParameter
                 && lastNewParameter.defaultValueForCall is KtLambdaExpression
