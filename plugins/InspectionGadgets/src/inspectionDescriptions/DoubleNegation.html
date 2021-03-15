@@ -1,9 +1,16 @@
 <html>
 <body>
-Reports double negation.
-<p>
-For example:
-<pre><code><b>if</b> (!!functionCall())</code></pre>
+Reports double negation that can be simplified.
+<p>Examples:</p>
+<pre>
+  if (!!functionCall()) {} // double negation
+  if (!(a != b)) {} // double negation
+</pre>
+<p>After quick-fix is applied, the result will be</p>
+<pre>
+  if (functionCall()) {}
+  if (a == b) {}
+</pre>
   <!-- tooltip end -->
 <p>
 
