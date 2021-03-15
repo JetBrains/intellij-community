@@ -1,11 +1,27 @@
 <html>
 <body>
-Reports methods taking a variable number of arguments, also known as varargs methods.
+Reports methods that accept an arbitrary number of parameters, also known as varargs methods.
 Such methods are not supported under Java 1.4 or earlier JVMs.
 The quickfix of this inspection replaces a variable argument
 parameter with the equivalent array parameter. Relevant arguments in calls to
 the method are wrapped in an array initializer expression.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  enum EnumConstants {
+  A(null), B, C;
+
+  EnumConstants(String... ss) {}
+}
+</pre>
+<p>After:</p>
+<pre>
+  enum EnumConstants {
+  A(null), B(new String[]{}), C(new String[]{});
+
+  EnumConstants(String[] ss) {}
+}
+</pre>
 <p>
 
 </body>
