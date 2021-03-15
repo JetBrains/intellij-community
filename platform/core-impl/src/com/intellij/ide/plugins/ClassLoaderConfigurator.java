@@ -414,6 +414,7 @@ final class ClassLoaderConfigurator {
         String parentId = parentDescriptor.id.getIdString();
         if (!(parentId.equals("Docker") ||
               parentId.equals("org.jetbrains.plugins.ruby") ||
+              parentId.equals("org.intellij.grails") ||
               parentId.equals("JavaScript"))) {
           throw new PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
                                     parentDescriptor.id);
