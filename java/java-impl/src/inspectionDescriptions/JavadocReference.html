@@ -1,5 +1,19 @@
 <html>
 <body>
-This inspection points out unresolved references inside javadoc
+This inspection points out unresolved references inside javadoc.
+<p>In the example there is no parameter <code>someParam</code> so it is highlighted:</p>
+<pre>
+class A {
+  /**
+  *   @param someParam description
+  **/
+  void foo() {}
+}
+</pre>
+<!-- tooltip end -->
+<p>
+  Use the checkbox to ignore inaccessible symbols in the place of javadoc.
+</p>
+
 </body>
 </html>

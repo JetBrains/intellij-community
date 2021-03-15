@@ -1,19 +1,20 @@
 <html>
 <body>
-Reports any methods which override methods in a superclass but
-do not have the <b>@java.lang.Override</b> annotation.
+Reports any methods which override methods in a superclass but do not have the <code>@java.lang.Override</code> annotation.
+Having annotation is good for readability because it shows intent. Also in this case compiler emits error when signature of the
+overridden method doesn't match super class method.
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to have this inspection ignore the
-<b>java.lang.Object</b> methods
-<b>equals()</b>,
-<b>hashCode()</b> and
-<b>toString()</b>. The risk of these methods
-going missing and thus your code not compiling anymore due to the
-<b>@Override</b> annotation is vanishingly small.
+  Use the first checkbox below to have this inspection ignore the
+  <code>java.lang.Object</code> methods
+  <code>equals()</code>,
+  <code>hashCode()</code> and
+  <code>toString()</code>. The risk of these methods going missing and thus your code not compiling anymore due to the
+  <code>@Override</code> annotation is vanishingly small.
+</p>
 <p>
-Use the second checkbox below to have this inspection ignore overriding methods
-in anonymous classes.
+  Use the second checkbox below to have this inspection ignore overriding methods in anonymous classes.
+</p>
 <p>This inspection only reports if the language level of the project or module is 5 or higher</p>
 
 </body>

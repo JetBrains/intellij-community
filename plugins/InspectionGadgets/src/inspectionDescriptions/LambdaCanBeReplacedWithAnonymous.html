@@ -1,7 +1,11 @@
 <html>
 <body>
 Reports lambda expressions which can be replaced with anonymous class.
-<p> The quick fix expands lambda expression to the anonymous class.
+<p> The quick fix expands lambda expression to the anonymous class.</p>
+<p>
+  It may be useful if you need to implement other methods inside the anonymous class or
+  if you need to downgrade to the previous Java versions.
+</p>
 <p>For example the lambda expression <code>s -> System.out.println(s)</code> can be expanded to the following class:
 <pre><code>new Consumer&lt;String&gt;() {
   @Override
@@ -9,5 +13,7 @@ Reports lambda expressions which can be replaced with anonymous class.
     System.out.println(s);
   }
 }</code></pre>
+<!-- tooltip end -->
+<p>This inspection is available since Java 8 only.</p>
 </body>
 </html>

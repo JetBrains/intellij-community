@@ -1,21 +1,51 @@
 <html>
 <body>
-Reports <b>catch</b> blocks which are empty or may ignore exception.
-While occasionally intended, empty <b>catch</b> blocks can make debugging extremely difficult.
+Reports <code>catch</code> blocks which are empty or may ignore exception.
+While occasionally intended, empty <code>catch</code> blocks can make debugging extremely difficult.
 Also ignoring catch parameter could be wrong. Finally it will be reported if it's statically detected
-that catch block may silently ignore important VM exceptions like <b>NullPointerException</b>. Ignoring such exception
+that catch block may silently ignore important VM exceptions like <code>NullPointerException</code>. Ignoring such exception
 (without logging or rethrowing it) may hide a bug.
 <p>
-  This inspection will not report any <b>catch</b> parameters named "ignore" or "ignored".
-  Conversely this inspection will warn on any <b>catch</b> parameters named "ignore" or "ignored" that are actually used.
-  Also <b>catch</b> parameters named "expected" or "ok" are not reported inside test sources.
+  This inspection will not report any <code>catch</code> parameters named "ignore" or "ignored".
+  Conversely this inspection will warn on any <code>catch</code> parameters named "ignore" or "ignored" that are actually used.
+  Also <code>catch</code> parameters named "expected" or "ok" are not reported inside test sources.
 </p>
 <p>
   For empty <b>catch</b> blocks an additional fix to generate the <b>catch</b> body is suggested.
   You can modify the "Catch Statement Body" template in
   <a href="settings://fileTemplates">Settings | Editor | File and Code Templates</a> (see the "Code" tab).
 </p>
+<p>Example:</p>
+<pre>
+class AAA {
+  public static void main(String[] args) {
+    try {
+      throwingMethod();
+    } catch (IOException ex) {
+
+    }
+  }
+}
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+class AAA {
+  public static void main(String[] args) {
+    try {
+      System.out.println(System.in.read());
+    } catch (IOException ignored) {
+
+    }
+  }
+}
+</pre>
   <!-- tooltip end -->
+<p>Use 'Do not warn when 'catch' block contains a comment' checkbox to ignore <code>catch</code> that contains comment inside.</p>
+<p>Use 'Do not warn when 'catch' block is not empty' checkbox to ignore <code>catch</code> that contains statements or comments inside while
+  the variable itself is not used.</p>
+<p>Use 'Do not warn when exception named 'ignore(d)' is not actually ignored' checkbox to ignore variables named <code>ignored</code>
+  if they are still used.</p>
+
 <p><small>New in 2018.1</small></p>
 </body>
 </html>

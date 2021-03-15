@@ -1,10 +1,11 @@
 <html>
 <body>
-Suggests to replace <code>for(Entry&lt;?,?&gt; entry : map.entrySet()) {...}</code> or
+Suggests replacing <code>for(Entry&lt;?,?&gt; entry : map.entrySet()) {...}</code> or
 <code>map.entrySet().forEach(entry -&gt; ...)</code> with <code>map.forEach((key, value) -> ...)</code>.
+It is better to avoid usage of <code>entrySet()</code> in this case entries have to be allocated.
 <p>
   When checkbox is checked, only <code>entrySet().forEach()</code> cases will be reported.
-  However the quick-fix action will be available for <code>for</code>-loops as well.
+  However, the quick-fix action will be available for <code>for</code>-loops as well.
 </p>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 8 or higher</p>
