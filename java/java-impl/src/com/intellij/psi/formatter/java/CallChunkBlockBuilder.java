@@ -37,6 +37,8 @@ public class CallChunkBlockBuilder {
   private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
   private final JavaCodeStyleSettings myJavaSettings;
   private final FormattingMode myFormattingMode;
+  private final Indent mySmartIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
+  private boolean isFirst = true;
 
   public CallChunkBlockBuilder(@NotNull CommonCodeStyleSettings settings, @NotNull JavaCodeStyleSettings javaSettings,
                                @NotNull FormattingMode formattingMode) {
@@ -61,24 +63,33 @@ public class CallChunkBlockBuilder {
       if (subNodes.size() > 1) {
         subBlocks.addAll(createJavaBlocks(subNodes.subList(1, subNodes.size())));
       }
-      return createSyntheticBlock(subBlocks, alignment, wrap, CHAINED_CALL_DEBUG_NAME);
+      return createSyntheticBlock(subBlocks, getChainedBlockIndent(true), alignment, wrap, CHAINED_CALL_DEBUG_NAME);
     }
     else {
-      return createSyntheticBlock(createJavaBlocks(subNodes), alignment, null, FRAGMENT_DEBUG_NAME);
+      return createSyntheticBlock(
+        createJavaBlocks(subNodes), getChainedBlockIndent(false), alignment, null, FRAGMENT_DEBUG_NAME);
     }
   }
 
   private Block createSyntheticBlock(@NotNull List<Block> subBlocks,
+                                     @NotNull Indent chainedBlockIndent,
                                      @Nullable Alignment alignment,
                                      @Nullable Wrap wrap,
                                      @NotNull final String debugName) {
-    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                  Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap) {
+    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, chainedBlockIndent, wrap) {
       @Override
       public String getDebugName() {
         return debugName + ": " + SyntheticCodeBlock.class.getSimpleName();
       }
     };
+  }
+
+  private Indent getChainedBlockIndent(boolean isChainedCall) {
+    if (isFirst) {
+      isFirst = false;
+      return Indent.getNoneIndent();
+    }
+    return isChainedCall ? mySmartIndent : Indent.getContinuationIndent();
   }
 
   @NotNull

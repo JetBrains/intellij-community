@@ -195,7 +195,7 @@ class LiveTemplateTest extends LiveTemplateTestCase {
     checkResultByText("class C {\n" +
                       "  bar() {\n" +
                       "      foo()\n" +
-                      "              <caret>\n" +
+                      "      <caret>\n" +
                       "      foo()\n" +
                       "  }\n" +
                       "}")

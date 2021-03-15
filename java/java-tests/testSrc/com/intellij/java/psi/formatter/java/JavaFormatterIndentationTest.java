@@ -715,4 +715,20 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIdea158691() {
+    doMethodTest(
+      "context.start(\n" +
+      "            first,\n" +
+      "            second)\n" +
+      "            .setPriority(1)\n" +
+      "            .build();",
+
+      "context.start(\n" +
+      "                first,\n" +
+      "                second)\n" +
+      "        .setPriority(1)\n" +
+      "        .build();"
+    );
+  }
 }
