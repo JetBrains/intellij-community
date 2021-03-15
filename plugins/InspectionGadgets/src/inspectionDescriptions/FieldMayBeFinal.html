@@ -1,9 +1,13 @@
 <html>
 <body>
-Reports any fields which may safely be made <b>final</b>.
-A <b>static</b> field may be final if it is initialized in its declaration
-or in one static class initializer, but not both. A non-static field may be final if it is initialized
-in its declaration or in one non-static class initializer or in all constructors.
+Reports any fields which may safely be made <code>final</code>.
+Using <code>final</code> variables makes code more error-prone and
+might lead to some additional compiler optimisations that will make your program run faster.
+<p>Field may safely be made <code>final</code> only if it's <code>private</code> (or defined in local / anonymous class) and:
+<ul>
+  <li>It is <code>static</code> and initialized either in its declaration or in one static class initializer</li>
+  <li>It is non-static and initialized either in its declaration or in one non-static class initializer or in all constructors</li>
+</ul>
 <!-- tooltip end -->
 <p>
 
