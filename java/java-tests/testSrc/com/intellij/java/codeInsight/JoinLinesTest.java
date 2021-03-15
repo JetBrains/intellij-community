@@ -198,6 +198,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   
   public void testUnwrapCodeBlockIfElse() { doTest(); }
   public void testUnwrapCodeBlockIfElse2() { doTest(); }
+  public void testIfBlockWithComment() { doTest(); }
   public void testAssignmentExpression() { doTest(); }
   public void testAssignmentExpression2() { doTest(); }
   public void testAssignmentExpressionPrecedence() { doTest(); }
