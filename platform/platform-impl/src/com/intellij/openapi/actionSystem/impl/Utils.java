@@ -17,9 +17,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -118,6 +120,20 @@ public final class Utils {
                                                  @NotNull String place,
                                                  boolean isContextMenu,
                                                  @Nullable ActionGroupVisitor visitor) {
+    return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
+                                 place, isContextMenu, visitor, null);
+
+  }
+
+  @NotNull
+  private static List<AnAction> expandActionGroupImpl(boolean isInModalContext,
+                                                      @NotNull ActionGroup group,
+                                                      @NotNull PresentationFactory presentationFactory,
+                                                      @NotNull DataContext context,
+                                                      @NotNull String place,
+                                                      boolean isContextMenu,
+                                                      @Nullable ActionGroupVisitor visitor,
+                                                      @Nullable Runnable onProcessed) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -127,6 +143,7 @@ public final class Utils {
     if (async) {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+      if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
       list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
         if (queue0 != null) {
           Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -142,9 +159,14 @@ public final class Utils {
       }
     }
     else {
-      list = DO_FULL_EXPAND ?
-             updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
-             updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+      try {
+        list = DO_FULL_EXPAND ?
+               updater.expandActionGroupFull(group, group instanceof CompactActionGroup) :
+               updater.expandActionGroupWithTimeout(group, group instanceof CompactActionGroup);
+      }
+      finally {
+        if (onProcessed != null) onProcessed.run();
+      }
     }
     return list;
   }
@@ -156,11 +178,37 @@ public final class Utils {
                        @NotNull DataContext context,
                        @NotNull String place,
                        boolean isWindowMenu,
-                       boolean useDarkIcons) {
-    List<AnAction> list = expandActionGroup(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, null);
+                       boolean useDarkIcons,
+                       @Nullable RelativePoint relativePoint) {
+    Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
+    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, null, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
+
+  static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull DataContext context, @NotNull String place) {
+    JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
+    JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
+    if (glassPane == null || !isAsyncDataContext(context)) return () -> {};
+    Component comp = point.getOriginalComponent();
+    boolean isMenuItem = comp instanceof ActionMenu;
+    AsyncProcessIcon icon = isMenuItem ? new AsyncProcessIcon(place) : new AsyncProcessIcon.Big(place);
+    Dimension size = icon.getPreferredSize();
+    icon.setSize(size);
+    Point location = point.getPoint(glassPane);
+    if (isMenuItem) {
+      location.x -= 2 * size.width;
+      location.y += (comp.getSize().height - size.height + 1) / 2;
+    }
+    else {
+      location.x -= size.width / 2;
+      location.y -= size.height / 2;
+    }
+    icon.setLocation(location);
+    glassPane.add(icon);
+    return () -> glassPane.remove(icon);
+  }
+
 
   private static void fillMenuInner(JComponent component,
                                     @NotNull List<? extends AnAction> list,

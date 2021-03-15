@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -103,7 +104,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       addPropertyChangeListener("updateChildren", new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-          updateChildren();
+          updateChildren(null);
         }
       });
       UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo("Menu", myGroup, myPlace));
@@ -119,7 +120,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
       myContext = Utils.wrapDataContext(myDataContextProvider != null ? myDataContextProvider.get() :
                                         DataManager.getInstance().getDataContext(component, x2, y2));
-      updateChildren();
+      updateChildren(new RelativePoint(component, new Point(x, y)));
       if (getComponentCount() == 0) {
         LOG.warn("no components in popup menu " + myPlace);
         return;
@@ -146,11 +147,11 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       if (!b) ReflectionUtil.resetField(this, "invoker");
     }
 
-    private void updateChildren() {
+    private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
       TimeoutUtil.run(
         () -> Utils.fillMenu(myGroup, this, !UISettings.getInstance().getDisableMnemonics(),
-                             myPresentationFactory, myContext, myPlace, false, false),
+                             myPresentationFactory, myContext, myPlace, false, false, point),
         1000, ms -> LOG.warn(ms + " ms to fill popup menu " + myPlace));
     }
 
@@ -179,7 +180,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         if (getComponentCount() == 0) {
-          updateChildren();
+          updateChildren(null);
         }
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
