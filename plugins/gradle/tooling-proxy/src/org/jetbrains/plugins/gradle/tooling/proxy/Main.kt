@@ -57,6 +57,10 @@ object Main {
     val workingDirectory = File(".").canonicalFile
     LOG.debug("Working directory: ${workingDirectory.absolutePath}")
     connector.forProjectDirectory(workingDirectory.absoluteFile)
+    val gradleHome = targetBuildParameters.gradleHome
+    if (gradleHome != null) {
+      connector.useInstallation(File(gradleHome))
+    }
     val resultHandler = BlockingResultHandler(Any::class.java)
 
     try {

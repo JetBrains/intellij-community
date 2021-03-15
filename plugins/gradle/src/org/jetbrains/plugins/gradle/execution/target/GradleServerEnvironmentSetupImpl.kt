@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.io.isDirectory
+import com.intellij.util.text.nullize
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.wrapper.WrapperExecutor
@@ -68,6 +69,10 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     val factory = if (environmentConfiguration.typeId == "local") LocalTargetEnvironmentFactory()
     else environmentConfiguration.createEnvironmentFactory(project)
+
+    environmentConfiguration.runtimes.findByType(GradleRuntimeTargetConfiguration::class.java)?.homePath?.nullize(true)?.also {
+      targetBuildParametersBuilder.useInstallation(it)
+    }
 
     val (request, targetArguments) =
       prepareTargetEnvironmentRequest(factory, consumerOperationParameters, targetPathMapper, environmentConfiguration, progressIndicator)

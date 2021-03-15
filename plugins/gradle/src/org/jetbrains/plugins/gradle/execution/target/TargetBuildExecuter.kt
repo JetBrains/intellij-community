@@ -29,6 +29,10 @@ internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>,
   }
 
   protected fun runWithHandler(handler: ResultHandler<Any?>) {
+    val gradleHomePath = connection.distribution.gradleHomePath
+    if (gradleHomePath != null) {
+      targetBuildParametersBuilder.useInstallation(gradleHomePath)
+    }
     GradleServerRunner(connection, consumerOperationParameters).run(targetBuildParametersBuilder, handler)
   }
 }
