@@ -145,7 +145,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     if (psiFile instanceof FileResolveScopeProvider) {
       return ((FileResolveScopeProvider)psiFile).getFileResolveScope();
     }
-    if (!psiFile.getOriginalFile().isPhysical()) {
+    if (!psiFile.getOriginalFile().isPhysical() && !psiFile.getViewProvider().isPhysical()) {
       return withFile(psiFile, GlobalSearchScope.allScope(myProject));
     }
     return getResolveScopeFromProviders(psiFile.getViewProvider().getVirtualFile());
