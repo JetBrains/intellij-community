@@ -6,6 +6,7 @@ import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Disposer;
@@ -40,6 +41,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
+
+  private static final Logger LOG = Logger.getInstance(FileTreeModel.class);
+
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;
   private volatile List<Root> roots;
@@ -304,12 +308,23 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       if (WSLUtil.isSystemCompatible() && Experiments.getInstance().isFeatureEnabled("wsl.p9.show.roots.in.file.chooser")) {
         CompletableFuture<List<WSLDistribution>> future = WslDistributionManager.getInstance().getInstalledDistributionsFuture();
         List<WSLDistribution> distributions = future.getNow(null);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("WSL distributions: " + (distributions != null ? distributions : "loading in background..."));
+        }
         if (distributions != null) {
           roots.addAll(ContainerUtil.map(distributions, distribution -> distribution.getUNCRootPath()));
         }
         else {
-          future.thenAccept(loadedDistributions -> {
-            addRoots(ContainerUtil.map(loadedDistributions, distribution -> distribution.getUNCRootPath()));
+          future.thenAccept(installedDistributions -> {
+            List<Path> wslRoots = ContainerUtil.map(installedDistributions, distribution -> distribution.getUNCRootPath());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("WSL distributions to add: " + wslRoots);
+            }
+            if (wslRoots.isEmpty()) return;
+            model.invoker.invokeLater(() -> {
+              // invokeLater to ensure model.roots are calculated
+              addRoots(wslRoots);
+            });
           });
         }
       }
@@ -317,10 +332,16 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private void addRoots(@NotNull List<Path> rootsToAdd) {
-      if (rootsToAdd.isEmpty()) return;
       List<Root> addedRoots = ContainerUtil.map(toVirtualFiles(rootsToAdd), file -> new Root(this, file));
       List<Root> oldRoots = model.roots;
-      model.roots = ContainerUtil.concat(oldRoots, addedRoots);
+      if (oldRoots == null) {
+        LOG.error("Roots have not been calculated yet, new roots won't be added");
+        return;
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adding new roots " + addedRoots + " to old roots " + oldRoots);
+      }
+      model.roots = List.copyOf(ContainerUtil.concat(oldRoots, addedRoots));
       model.treeNodesInserted(path, IntStream.range(oldRoots.size(), oldRoots.size() + rootsToAdd.size()).toArray(), addedRoots.toArray());
     }
 
