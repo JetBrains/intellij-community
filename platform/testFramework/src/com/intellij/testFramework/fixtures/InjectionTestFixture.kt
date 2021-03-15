@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
+import com.intellij.codeInsight.intention.impl.QuickEditHandler
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -73,9 +74,13 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun openInFragmentEditor(): EditorTestFixture {
-    val project = javaFixture.project
-    val quickEditHandler = QuickEditAction().invokeImpl(project, topLevelEditor, topLevelFile)
+    val quickEditHandler = QuickEditAction().invokeImpl(javaFixture.project, topLevelEditor, topLevelFile)
+    return openInFragmentEditor(quickEditHandler)
+  }
+  
+  fun openInFragmentEditor(quickEditHandler: QuickEditHandler): EditorTestFixture {
     val injectedFile = quickEditHandler.newFile
+    val project = javaFixture.project
     val documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedElement?.containingFile!!)
     val offset = topLevelEditor.caretModel.offset
     val unEscapedOffset = InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset)
