@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types
 
 import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
@@ -22,11 +23,18 @@ fun getLeastUpperBoundByAllWrites(block: GrControlFlowOwner,
       cache.getInferredType(instruction.descriptor, instruction, false, initialTypes) ?: PsiType.NULL
     }
     else if (instruction.element is GrFunctionalExpression) {
-      val owner: GrControlFlowOwner? = (instruction.element as GrFunctionalExpression).getControlFlowOwner()
-      owner?.run { getLeastUpperBoundByAllWrites(owner, initialTypes, descriptor) } ?: PsiType.NULL
+      val nestedFlowOwner: GrControlFlowOwner? = (instruction.element as GrFunctionalExpression).getControlFlowOwner()
+      if (nestedFlowOwner != null && ControlFlowUtils.getOverwrittenForeignVariableDescriptors(nestedFlowOwner).contains(descriptor)) {
+        getLeastUpperBoundByAllWrites(nestedFlowOwner, initialTypes, descriptor)
+      }
+      else {
+        PsiType.NULL
+      }
     }
     else PsiType.NULL
-    resultType = TypesUtil.getLeastUpperBound(resultType, inferred, block.manager) ?: PsiType.NULL
+    if (inferred != PsiType.NULL) {
+      resultType = TypesUtil.getLeastUpperBound(resultType, inferred, block.manager) ?: PsiType.NULL
+    }
   }
   return resultType
 }
