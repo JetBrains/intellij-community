@@ -188,7 +188,8 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   }
 
   private void checkMultiline() {
-    myMultiline = StringUtil.removeHtmlTags(getText()).contains(System.lineSeparator());
+    String text = getText();
+    myMultiline = text != null && StringUtil.removeHtmlTags(text).contains(System.lineSeparator());
   }
 
   @Override
