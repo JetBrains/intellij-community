@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.util.text.StringUtil
@@ -38,7 +39,8 @@ internal class HighlightingProblem(
 
   override val group: String?
     get() {
-      return info?.inspectionToolId
+      val id = info?.inspectionToolId ?: return null
+      return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.findById(id))
     }
 
   override val description: String?
