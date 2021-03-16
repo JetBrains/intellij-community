@@ -468,6 +468,14 @@ public class Py3CompletionTest extends PyTestCase {
     assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
   }
 
+  // PY-46178
+  public void testFStringLikeCompletionInsideUrl() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "city");
+  }
+
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
     doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
