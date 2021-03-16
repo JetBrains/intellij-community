@@ -758,7 +758,7 @@ public final class HighlightClassUtil {
     String description = JavaErrorBundle.message("not.allowed.in.interface");
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
     QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(element));
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertInterfaceContainingNotAllowedToClassFix(aClass));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertInterfaceToClassFix(aClass));
     return info;
   }
 

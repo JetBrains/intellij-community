@@ -1244,6 +1244,7 @@ public final class HighlightMethodUtil {
     boolean isExtension = method.hasModifierProperty(PsiModifier.DEFAULT);
     boolean isStatic = method.hasModifierProperty(PsiModifier.STATIC);
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
+    boolean isConstructor = method.isConstructor();
 
     final List<IntentionAction> additionalFixes = new ArrayList<>();
     String description = null;
@@ -1275,6 +1276,9 @@ public final class HighlightMethodUtil {
             IntentionAction makeDefaultFix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false);
             additionalFixes.add(PriorityIntentionActionWrapper.highPriority(makeDefaultFix));
             additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
+            if (isConstructor) {
+              additionalFixes.add(QUICK_FIX_FACTORY.createConvertInterfaceToClassFix(aClass));
+            }
           }
         }
       }

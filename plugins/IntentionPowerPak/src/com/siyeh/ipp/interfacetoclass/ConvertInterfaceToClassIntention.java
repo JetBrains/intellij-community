@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,6 +47,67 @@ public class ConvertInterfaceToClassIntention extends Intention {
   @Override
   public boolean startInWriteAction() {
     return false;
+  }
+
+  public static void convert(@NotNull PsiClass anInterface) {
+    final SearchScope searchScope = anInterface.getUseScope();
+    final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    inheritors.forEach(aClass -> {
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList == null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      if (referenceElements.length > 0) {
+        final PsiElement target = referenceElements[0].resolve();
+        if (target instanceof PsiClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)target).getQualifiedName())) {
+          conflicts.putValue(aClass, IntentionPowerPackBundle.message(
+            "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
+            RefactoringUIUtil.getDescription(aClass, true), RefactoringUIUtil.getDescription(target, true),
+            RefactoringUIUtil.getDescription(anInterface, false)));
+        }
+      }
+    });
+
+    final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
+    if (functionalExpression != null) {
+      final String conflictMessage = ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true) +
+                                     " will not compile after converting " +
+                                     RefactoringUIUtil.getDescription(anInterface, false) +
+                                     " to a class";
+      conflicts.putValue(functionalExpression, conflictMessage);
+    }
+    final boolean conflictsDialogOK;
+    if (conflicts.isEmpty()) {
+      conflictsDialogOK = true;
+    }
+    else {
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode()) {
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+      }
+      final ConflictsDialog conflictsDialog =
+        new ConflictsDialog(anInterface.getProject(), conflicts, () -> convertInterfaceToClass(anInterface, inheritors));
+      conflictsDialogOK = conflictsDialog.showAndGet();
+    }
+    if (conflictsDialogOK) {
+      convertInterfaceToClass(anInterface, inheritors);
+    }
+  }
+
+  public static boolean canConvertToClass(@NotNull PsiClass aClass) {
+    if (!aClass.isInterface() || aClass.isAnnotationType()) {
+      return false;
+    }
+    final SearchScope useScope = aClass.getUseScope();
+    for (PsiClass inheritor :
+      ClassInheritorsSearch.search(aClass, useScope, true)) {
+      if (inheritor.isInterface()) {
+        return false;
+      }
+    }
+    return !AnnotationUtil.isAnnotated(aClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, 0);
   }
 
   public static void changeInterfaceToClass(PsiClass anInterface) {
@@ -109,50 +171,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) {
     final PsiClass anInterface = (PsiClass)element.getParent();
-    final SearchScope searchScope = anInterface.getUseScope();
-    final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    inheritors.forEach(aClass -> {
-      final PsiReferenceList extendsList = aClass.getExtendsList();
-      if (extendsList == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-      if (referenceElements.length > 0) {
-        final PsiElement target = referenceElements[0].resolve();
-        if (target instanceof PsiClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)target).getQualifiedName())) {
-          conflicts.putValue(aClass, IntentionPowerPackBundle.message(
-            "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
-            RefactoringUIUtil.getDescription(aClass, true), RefactoringUIUtil.getDescription(target, true),
-            RefactoringUIUtil.getDescription(anInterface, false)));
-        }
-      }
-    });
-
-    final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
-    if (functionalExpression != null) {
-      final String conflictMessage = ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true) +
-                                     " will not compile after converting " +
-                                     RefactoringUIUtil.getDescription(anInterface, false) +
-                                     " to a class";
-      conflicts.putValue(functionalExpression, conflictMessage);
-    }
-    final boolean conflictsDialogOK;
-    if (conflicts.isEmpty()) {
-      conflictsDialogOK = true;
-    }
-    else {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isUnitTestMode()) {
-        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
-      }
-      final ConflictsDialog conflictsDialog =
-        new ConflictsDialog(anInterface.getProject(), conflicts, () -> convertInterfaceToClass(anInterface, inheritors));
-      conflictsDialogOK = conflictsDialog.showAndGet();
-    }
-    if (conflictsDialogOK) {
-      convertInterfaceToClass(anInterface, inheritors);
-    }
+    convert(anInterface);
   }
 
   private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors) {

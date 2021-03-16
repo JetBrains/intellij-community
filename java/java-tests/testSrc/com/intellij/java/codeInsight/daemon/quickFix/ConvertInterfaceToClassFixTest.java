@@ -3,10 +3,10 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
-public class ConvertInterfaceContainingNotAllowedToClassFixTest extends LightQuickFixParameterizedTestCase {
+public class ConvertInterfaceToClassFixTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/convertInterfaceContainingNotAllowedToClass";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/convertInterfaceToClass";
   }
 }

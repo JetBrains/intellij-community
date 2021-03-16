@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.siyeh.ipp.interfacetoclass;
+package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -7,14 +7,17 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.interfacetoclass.ConvertInterfaceToClassIntention;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConvertInterfaceContainingNotAllowedToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement implements PriorityAction {
+public class ConvertInterfaceToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement implements PriorityAction {
 
-  public ConvertInterfaceContainingNotAllowedToClassFix(@Nullable PsiClass aClass) {
+  public ConvertInterfaceToClassFix(@Nullable PsiClass aClass) {
     super(aClass);
   }
 
@@ -24,9 +27,8 @@ public class ConvertInterfaceContainingNotAllowedToClassFix extends LocalQuickFi
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    final PsiElement nameIdentifier = getNameIdentifier(startElement);
-    if (nameIdentifier == null) return false;
-    return new ConvertInterfaceToClassIntention().getElementPredicate().satisfiedBy(nameIdentifier);
+    if (!(startElement instanceof PsiClass)) return false;
+    return ConvertInterfaceToClassIntention.canConvertToClass((PsiClass)startElement);
   }
 
   @Override
@@ -35,9 +37,8 @@ public class ConvertInterfaceContainingNotAllowedToClassFix extends LocalQuickFi
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiElement nameIdentifier = getNameIdentifier(startElement);
-    if (nameIdentifier == null) return;
-    new ConvertInterfaceToClassIntention().processIntention(nameIdentifier);
+    if (!(startElement instanceof PsiClass)) return;
+    ConvertInterfaceToClassIntention.convert((PsiClass)startElement);
   }
 
   @Override
@@ -45,19 +46,13 @@ public class ConvertInterfaceContainingNotAllowedToClassFix extends LocalQuickFi
     return Priority.LOW;
   }
 
-  private static PsiIdentifier getNameIdentifier(@NotNull PsiElement element) {
-    final PsiClass aClass = ObjectUtils.tryCast(element, PsiClass.class);
-    if (aClass == null) return null;
-    return aClass.getNameIdentifier();
-  }
-
   @Override
   public @IntentionName @NotNull String getText() {
-    return new ConvertInterfaceToClassIntention().getText();
+    return IntentionPowerPackBundle.message("convert.interface.to.class.intention.name");
   }
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return new ConvertInterfaceToClassIntention().getFamilyName();
+    return IntentionPowerPackBundle.message("convert.interface.to.class.intention.family.name");
   }
 }
