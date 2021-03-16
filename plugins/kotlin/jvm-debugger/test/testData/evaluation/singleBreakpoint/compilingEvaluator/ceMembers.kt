@@ -26,17 +26,17 @@ fun foo(p: () -> Int) = p()
 // RESULT: 1: I
 
 // EXPRESSION: foo { publicVal }
-// RESULT: 1: I
+// RESULT: Method threw 'java.lang.IllegalAccessError' exception.
 
 // EXPRESSION: foo { protectedFun() }
-// RESULT: 1: I
+// RESULT: Method threw 'java.lang.IllegalAccessError' exception.
 
 // EXPRESSION: foo { protectedVal }
-// RESULT: 1: I
+// RESULT: Method threw 'java.lang.IllegalAccessError' exception.
 
 // EXPRESSION: foo { privateFun() }
-// RESULT: 1: I
+// RESULT: Method threw 'java.lang.VerifyError' exception.
 
 // EXPRESSION: foo { privateVal }
-// RESULT: 1: I
+// RESULT: Method threw 'java.lang.IllegalAccessError' exception.
 

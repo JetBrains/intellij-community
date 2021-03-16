@@ -5,4 +5,4 @@ class MyClass {
 val a = MyClass()
 a.test()
 
-// RESULT: 6: I
+// RESULT: Method threw 'java.lang.VerifyError' exception.
