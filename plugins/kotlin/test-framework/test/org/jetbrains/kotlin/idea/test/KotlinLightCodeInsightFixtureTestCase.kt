@@ -221,9 +221,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
                         InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME") ->
                     if (minJavaVersion != null) {
-                        val sdk = sdk(minJavaVersion)
                         object : KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
-                            override fun getSdk(): Sdk = sdk
+                            val sdkValue by lazy { sdk(minJavaVersion) }
+                            override fun getSdk(): Sdk = sdkValue
                         }
                     } else {
                         KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
@@ -242,21 +242,19 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         }
     }
 
-    private fun sdk(javaVersion: Int): Sdk {
-        return when (javaVersion) {
-            6 -> IdeaTestUtil.getMockJdk16()
-            8 -> IdeaTestUtil.getMockJdk18()
-            9 -> IdeaTestUtil.getMockJdk9()
-            11 -> {
-                if (SystemInfo.isJavaVersionAtLeast(javaVersion, 0, 0)) {
-                    PluginTestCaseBase.fullJdk()
-                } else {
-                    error("JAVA_HOME have to point at least to JDK 11")
-                }
-
+    private fun sdk(javaVersion: Int): Sdk = when (javaVersion) {
+        6 -> IdeaTestUtil.getMockJdk16()
+        8 -> IdeaTestUtil.getMockJdk18()
+        9 -> IdeaTestUtil.getMockJdk9()
+        11 -> {
+            if (SystemInfo.isJavaVersionAtLeast(javaVersion, 0, 0)) {
+                PluginTestCaseBase.fullJdk()
+            } else {
+                error("JAVA_HOME have to point at least to JDK 11")
             }
-            else -> error("Unsupported JDK version $javaVersion")
         }
+
+        else -> error("Unsupported JDK version $javaVersion")
     }
 
     protected open fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor = KotlinLightProjectDescriptor.INSTANCE
