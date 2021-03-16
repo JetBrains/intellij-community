@@ -384,7 +384,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public boolean acceptsAnnotations() {
-    return !PsiType.VOID.equals(getType());
+    if (isInferredType()) return false;
+    PsiType type = getType();
+    return !PsiType.VOID.equals(type) && !PsiType.NULL.equals(type);
   }
 
   @Override
