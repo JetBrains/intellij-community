@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.io.isDirectory
@@ -43,7 +44,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.Log4jLoggerFactory
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -239,20 +239,28 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         targetBuildArguments.add(arg to uploader.requestUploadIntoTarget(path, this, environmentConfiguration))
         val file = File(path)
         if (file.extension != GradleConstants.EXTENSION) continue
-        val fileContent = loadFile(file, StandardCharsets.UTF_8)
         if (file.name.startsWith("ijinit")) {
+          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
           // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle` file
-          val toolingExtensionsPaths = fileContent.substringAfter("initscript {\n" +
-                                                                  "  dependencies {\n" +
-                                                                  "    classpath files(").substringBefore(")\n" +
-                                                                                                          "  }")
-            .drop(10).dropLast(3).split("\"),mapPath(\"")
-          for (toolingExtensionsPath in toolingExtensionsPaths) {
-            javaParameters.classPath.add(toolingExtensionsPath)
-            localPathsToMap += toolingExtensionsPath
+          val toolingExtensionsPaths = fileContent
+            .substringAfter(
+              "initscript {\n" +
+              "  dependencies {\n" +
+              "    classpath files(", "")
+            .substringBefore(
+              ")\n" +
+              "  }", "")
+            .nullize()
+            ?.drop(10)?.dropLast(3)?.split("\"),mapPath(\"")
+          if (toolingExtensionsPaths != null) {
+            for (toolingExtensionsPath in toolingExtensionsPaths) {
+              javaParameters.classPath.add(toolingExtensionsPath)
+              localPathsToMap += toolingExtensionsPath
+            }
           }
         }
         else if (!file.name.startsWith("ijmapper")) {
+          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
           val regex = Regex("mapPath\\(['|\"](.{2,})['|\"][)]")
           val matches = regex.findAll(fileContent)
           val elements = matches.map { it.groupValues[1] }
