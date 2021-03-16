@@ -1,3 +1,3 @@
-val c = javax.swing.SwingUtilities.<caret>invokeLater {  }
+val c = java.util.concurrent.Executors.newFixedThreadPool(1).<caret>submit {  }
 
-// REF: (in javax.swing.SwingUtilities).invokeLater(Runnable)
+// REF: (in java.util.concurrent.ExecutorService).submit(Runnable)
