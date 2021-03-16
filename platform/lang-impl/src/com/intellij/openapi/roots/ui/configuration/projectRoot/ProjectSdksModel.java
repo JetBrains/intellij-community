@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -476,6 +477,9 @@ public class ProjectSdksModel implements SdkModel {
     // model with an expectation it would be updated later on
     String suggestedName = item.getSuggestedSdkName();
     String homeDir = FileUtil.toSystemIndependentName(item.getPlannedHomeDir());
+    if (WslDistributionManager.isWslPath(homeDir)) {
+      suggestedName += " (WSL)";
+    }
     Sdk sdk = createSdk(type, suggestedName, homeDir);
 
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
