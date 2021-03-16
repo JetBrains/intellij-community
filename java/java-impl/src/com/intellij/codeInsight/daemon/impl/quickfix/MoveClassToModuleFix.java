@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -128,7 +129,7 @@ public class MoveClassToModuleFix implements IntentionAction {
 
   private void moveClass(Project project, Editor editor, PsiFile file, PsiClass aClass) {
     RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
-    DataContext dataContext = ((EditorEx)editor).getDataContext();
+    DataContext dataContext = EditorUtil.getEditorDataContext(editor);
     final String fqName = aClass.getQualifiedName();
     LOG.assertTrue(fqName != null);
     PsiDirectory directory = PackageUtil
