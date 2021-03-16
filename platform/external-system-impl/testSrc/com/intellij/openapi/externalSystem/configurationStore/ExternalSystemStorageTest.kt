@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.mock.MockFacetType
@@ -498,6 +499,43 @@ class ExternalSystemStorageTest {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
+  @Test
+  fun `check project model saved correctly at internal storage after misc manual modification`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
+      val miscFile = File(project.projectFilePath!!)
+      miscFile.writeText("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+        </project>
+      """.trimIndent())
+      WriteAction.runAndWait<RuntimeException> {
+        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+      }
+    }
+  }
+
+  @Test
+  fun `check project model saved correctly at external storage after misc manual modification`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
+      val miscFile = File(project.projectFilePath!!)
+      miscFile.writeText("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ExternalStorageConfigurationManager" enabled="true" />
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+        </project>
+      """.trimIndent())
+      WriteAction.runAndWait<RuntimeException> {
+        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+      }
     }
   }
 
