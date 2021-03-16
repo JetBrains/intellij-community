@@ -41,18 +41,27 @@ public final class PythonMockSdk {
   }
 
   private static @NotNull Sdk create(@NotNull String name, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
-    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + name;
+    return create(name, new PyMockSdkType(level), level, additionalRoots);
+  }
+
+  public static @NotNull Sdk create(@NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    String sdkName = "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion();
+    return create(sdkName, pathSuffix, sdkType, level, additionalRoots);
+  }
+
+  public static @NotNull Sdk create(@NotNull String name, @NotNull String pathSuffix, @NotNull SdkTypeId sdkType, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + pathSuffix;
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
     roots.putValues(OrderRootType.CLASSES, createRoots(mockSdkPath, level));
     roots.putValues(OrderRootType.CLASSES, Arrays.asList(additionalRoots));
 
     MockSdk sdk = new MockSdk(
-      "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion(),
+      name,
       mockSdkPath + "/bin/python",
       toVersionString(level),
       roots,
-      new PyMockSdkType(level)
+      sdkType
     );
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
