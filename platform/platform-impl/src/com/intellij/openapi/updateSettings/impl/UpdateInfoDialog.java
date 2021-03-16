@@ -66,7 +66,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
                           boolean enableLink,
                           @Nullable Collection<PluginDownloader> updatedPlugins,
                           @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    super(enableLink);
+    super(project, enableLink);
     myProject = project;
     myUpdatedChannel = channel;
     myUpdatedPlugins = updatedPlugins;
@@ -215,7 +215,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateDialog(myUpdatedPlugins).showAndGet()) {
+    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateDialog(myProject, myUpdatedPlugins).showAndGet()) {
       return;  // update cancelled
     }
 

@@ -61,8 +61,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins) {
-    this(null, updatedPlugins, null, true);
+  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatedPlugins) {
+    this(project, updatedPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
@@ -70,7 +70,7 @@ public class PluginUpdateDialog extends DialogWrapper {
                              Collection<PluginDownloader> updatedPlugins,
                              @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins,
                              boolean platformUpdate) {
-    super(true);
+    super(project, true);
 
     myDownloaders = updatedPlugins;
     myPlatformUpdate = platformUpdate;
