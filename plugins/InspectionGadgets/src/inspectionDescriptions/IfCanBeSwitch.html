@@ -1,21 +1,46 @@
 <html>
 <body>
-Reports any <b>if</b> statements that can be replaced
-by a <b>switch</b> statement. This inspection will automatically suggest string
-switches when the project language level is Java 7 or higher.
+Reports any <code>if</code> statements that can be replaced with a <code>switch</code> statement.
+The result of transformation is usually shorter and more clear.
+<p>Example:</p>
+<pre>
+  void test(String str) {
+    if (str.equals("1")) {
+      System.out.println(1);
+    } else if (str.equals("2")) {
+      System.out.println(2);
+    } else if (str.equals("3")) {
+      System.out.println(3);
+    } else {
+      System.out.println(4);
+    }
+  }
+</pre>
+<p>After quick-fix is applied, the result will be:</p>
+<pre>
+  void test(String str) {
+    switch (str) {
+      case "1" -> System.out.println(1);
+      case "2" -> System.out.println(2);
+      case "3" -> System.out.println(3);
+      default -> System.out.println(4);
+    }
+  }
+</pre>
 <!-- tooltip end -->
+<p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 <p>
-Use the text field below to indicate the minimum number of <b>if</b> branches with condition
-an <b>if</b> statement should have to be reported.
-A terminal <b>else</b> branch (without <b>if</b>) is not counted
+Use the text field below to indicate the minimum number of <code>if</code> branches with condition
+an <code>if</code> statement should have to be reported.
+A terminal <code>else</code> branch (without <code>if</code>) is not counted.
 <p>
-Use the first checkbox below to have this inspection suggest <b>switch</b> statements on
+Use the first checkbox below to have this inspection suggest <code>switch</code> statements on
 primitive and boxed numbers and characters.
 <p>
-Use the second checkbox below to have this inspection suggest switch statements on
-enum constants.
+Use the second checkbox below to have this inspection suggest <code>switch</code> statements on
+<code>enum</code> constants.
 <p>
-Use the third checkbox below to only suggest switch statements which can't introduce a <b>NullPointerException</b>
+Use the third checkbox below to only suggest <code>switch</code> statements which can't introduce a <code>NullPointerException</code>.
 <p>
 </body>
 </html>
