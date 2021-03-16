@@ -1,4 +1,4 @@
-// "Fix all 'Comparator can be simplified' problems in file" "true"
+// "Fix all ''Comparator' can be simplified' problems in file" "true"
 import java.util.*;
 import java.util.stream.*;
 

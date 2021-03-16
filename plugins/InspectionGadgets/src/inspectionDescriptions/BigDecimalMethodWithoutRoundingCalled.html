@@ -1,10 +1,13 @@
 <html>
 <body>
-Reports calls to <b>divide()</b> or <b>setScale()</b> without a rounding mode argument.
-Such calls can lead to an <b>ArithmeticException</b> when the exact value cannot be represented in the result
+Reports calls to <code>divide()</code> or <code>setScale()</code> without a rounding mode argument.
+Such calls can lead to an <code>ArithmeticException</code> when the exact value cannot be represented in the result
 (e.g. because it has a non-terminating decimal expansion).
-Specifying a rounding mode prevents the <b>ArithmeticException</b>.
+Specifying a rounding mode prevents the <code>ArithmeticException</code>.
 <!-- tooltip end -->
-<p>
+<p>Example:</p>
+<pre>
+  BigDecimal.valueOf(1).divide(BigDecimal.valueOf(3));
+</pre>
 </body>
 </html>

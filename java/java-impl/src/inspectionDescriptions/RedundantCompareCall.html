@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports comparisons like <b>Integer.compare(a, b) == 0</b> which could be replaced simply with <b>a == b</b>.
+Reports comparisons where the <code>compare</code> function is superfluous.
 <!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  boolean result = Integer.compare(a, b) == 0;
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  boolean result = a == b;
+</pre>
 <p><small>New in 2018.2</small></p>
 </body>
 </html>
