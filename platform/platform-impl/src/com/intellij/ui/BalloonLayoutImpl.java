@@ -280,6 +280,10 @@ public class BalloonLayoutImpl implements BalloonLayout, Disposable {
     JComponent layeredPane = pane != null ? pane.getLayeredPane() : null;
     int eachColumnX = (layeredPane == null ? myLayeredPane.getWidth() : layeredPane.getX() + layeredPane.getWidth()) - 4;
 
+    if (pane != null && Registry.is("ide.new.stripes.ui", false)) {
+      eachColumnX += pane.getX();
+    }
+
     doLayout(columns.get(0), eachColumnX + 4, (int)myLayeredPane.getBounds().getMaxY());
   }
 
