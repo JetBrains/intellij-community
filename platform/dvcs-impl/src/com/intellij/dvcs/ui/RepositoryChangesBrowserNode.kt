@@ -10,8 +10,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getPresentableText
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getSingleTooltip
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
@@ -20,6 +18,8 @@ import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
+import com.intellij.vcs.branch.BranchPresentation.getPresentableText
+import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManager
