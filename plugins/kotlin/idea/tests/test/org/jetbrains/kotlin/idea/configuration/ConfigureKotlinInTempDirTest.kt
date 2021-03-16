@@ -5,9 +5,11 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.io.FileUtil
+import junit.framework.TestCase
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -21,16 +23,23 @@ import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 @RunWith(JUnit38ClassRunner::class)
 open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
+    private fun checkKotlincPresence(present: Boolean = true) {
+        TestCase.assertEquals(present, File(project.basePath, ".idea/kotlinc.xml").exists())
+    }
+
+    private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
+
     fun testNoKotlincExistsNoSettingsRuntime10() {
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        Assert.assertTrue(project.baseDir.findFileByRelativePath(".idea/kotlinc.xml") == null)
+        checkKotlincPresence(false)
     }
 
     fun testTwoModulesWithNonDefaultPath_doNotCopyInDefault() {
@@ -62,7 +71,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
         Assert.assertEquals(VersionView.RELEASED_VERSION, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(VersionView.RELEASED_VERSION, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        Assert.assertTrue(project.baseDir.findFileByRelativePath(".idea/kotlinc.xml") == null)
+        checkKotlincPresence(false)
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
@@ -75,7 +84,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
             autoAdvanceApiVersion = false
         }
         application.saveAll()
-        Assert.assertTrue(project.baseDir.findFileByRelativePath(".idea/kotlinc.xml") != null)
+        checkKotlincPresence()
     }
 
     fun testDropKotlincOnVersionAutoAdvance() {
@@ -87,7 +96,7 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
             autoAdvanceApiVersion = true
         }
         application.saveAll()
-        Assert.assertTrue(project.baseDir.findFileByRelativePath(".idea/kotlinc.xml") == null)
+        checkKotlincPresence(false)
     }
 
     fun testProject106InconsistentVersionInConfig() {
@@ -122,11 +131,11 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
     }
 
     fun testLoadAndSaveProjectWithV2FacetConfig() {
-        val moduleFileContentBefore = String(module.moduleFile!!.contentsToByteArray())
+        val moduleFileContentBefore = moduleFileContent()
         val application = ApplicationManager.getApplication() as ApplicationImpl
         application.isSaveAllowed = true
         application.saveAll()
-        val moduleFileContentAfter = String(module.moduleFile!!.contentsToByteArray())
+        val moduleFileContentAfter = moduleFileContent()
         Assert.assertEquals(moduleFileContentBefore, moduleFileContentAfter)
     }
 
@@ -165,16 +174,19 @@ open class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest()
             sourceMapEmbedSources = ""
         }
         application.saveAll()
-        Assert.assertTrue(project.baseDir.findFileByRelativePath(".idea/kotlinc.xml") == null)
+        checkKotlincPresence(false)
     }
 
     private fun doTestLoadAndSaveProjectWithFacetConfig(valueBefore: String, valueAfter: String) {
-        val moduleFileContentBefore = String(module.moduleFile!!.contentsToByteArray())
+        val facetManager = FacetManager.getInstance(module)
+        val moduleFileContentBefore = moduleFileContent()
         Assert.assertTrue(moduleFileContentBefore.contains(valueBefore))
         val application = ApplicationManager.getApplication() as ApplicationImpl
+        facetManager.allFacets.forEach { facetManager.facetConfigurationChanged(it) }
         application.isSaveAllowed = true
         application.saveAll()
-        val moduleFileContentAfter = String(module.moduleFile!!.contentsToByteArray())
+        val moduleFileContentAfter = moduleFileContent()
         Assert.assertEquals(moduleFileContentBefore.replace(valueBefore, valueAfter), moduleFileContentAfter)
     }
+
 }
