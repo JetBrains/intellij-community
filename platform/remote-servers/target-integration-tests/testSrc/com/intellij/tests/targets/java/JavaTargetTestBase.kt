@@ -397,7 +397,7 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
   @Test
   fun `test junit tests - run tests in directory`() {
     val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_DIRECTORY).also { conf ->
-      conf.persistentData.dirName = "${PathManager.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/targetApp/tests"
+      conf.persistentData.dirName = "$testAppPath/tests"
     }
 
     @Suppress("SpellCheckingInspection", "GrazieInspection")
