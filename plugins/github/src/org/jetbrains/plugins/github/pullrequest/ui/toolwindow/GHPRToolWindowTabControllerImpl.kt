@@ -248,7 +248,10 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
     override fun createPullRequest(requestFocus: Boolean) {
-      tab.displayName = GithubBundle.message("tab.title.pull.requests.new")
+      val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
+      tab.displayName = GithubBundle.message("tab.title.pull.requests.new",
+                                             GHUIUtil.getRepositoryDisplayName(allRepos,
+                                                                               dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
       wrapper.setContent(createComponent.value)
@@ -262,7 +265,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     override fun viewList(requestFocus: Boolean) {
       val allRepos = repositoryManager.knownRepositories.map(GHGitRepositoryMapping::repository)
-      tab.displayName = GithubBundle.message("tab.title.pull.requests.in",
+      tab.displayName = GithubBundle.message("tab.title.pull.requests.at",
                                              GHUIUtil.getRepositoryDisplayName(allRepos,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
