@@ -56,11 +56,11 @@ public final class BootstrapClassLoaderUtil {
     addIdeaLibraries(distDir.resolve("lib"), classpath);
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
 
-    Path pluginDir = Path.of(PathManager.getPluginsPath());
+    Path pluginDir = Path.of(PathManager.getPreInstalledPluginsPath());
     Path marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
     Path mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
     if (!Files.exists(mpBoot)) {
-      pluginDir = Path.of(PathManager.getPreInstalledPluginsPath());
+      pluginDir = Path.of(PathManager.getPluginsPath());
       marketPlaceBootDir = findMarketplaceBootDir(pluginDir);
       mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR);
     }
