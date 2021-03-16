@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *   The simplest way to run an animation:
  *
  *   <pre>
- *     new Animator().animate(
+ *     new JBAnimator().animate(
  *       new Animation((v) -> System.out.println(v))
  *     );
  *   </pre>
@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see Animations
  */
 @ApiStatus.Experimental
-public final class Animator implements Disposable {
+public final class JBAnimator implements Disposable {
 
   private int myPeriod = 16;
   private @NotNull Type myType = Type.IN_TIME;
@@ -68,22 +68,22 @@ public final class Animator implements Disposable {
   private final @NotNull AtomicLong myRunning = new AtomicLong();
   private final @NotNull AtomicBoolean myDisposed = new AtomicBoolean();
 
-  public Animator() {
+  public JBAnimator() {
     this(Thread.SWING_THREAD, null);
   }
 
   @SuppressWarnings("unused")
-  public Animator(@NotNull Disposable parentDisposable) {
+  public JBAnimator(@NotNull Disposable parentDisposable) {
     this(Thread.SWING_THREAD, parentDisposable);
   }
 
-  public Animator(@NotNull Thread threadToUse, @Nullable Disposable parentDisposable) {
+  public JBAnimator(@NotNull Thread threadToUse, @Nullable Disposable parentDisposable) {
     myService = threadToUse == Thread.SWING_THREAD ?
                 EdtExecutorService.getScheduledExecutorInstance() :
                 AppExecutorUtil.createBoundedScheduledExecutorService("Animator Pool", 1);
     if (parentDisposable == null) {
       if (threadToUse != Thread.SWING_THREAD) {
-        Logger.getInstance(Animator.class).error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
+        Logger.getInstance(JBAnimator.class).error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
       }
     }
     else {
@@ -108,7 +108,7 @@ public final class Animator implements Disposable {
    */
   public void animate(@NotNull Collection<@NotNull Animation> animations) {
     if (myDisposed.get()) {
-      Logger.getInstance(Animator.class).warn("Animator is already disposed");
+      Logger.getInstance(JBAnimator.class).warn("Animator is already disposed");
       return;
     }
 
@@ -202,7 +202,7 @@ public final class Animator implements Disposable {
     return myPeriod;
   }
 
-  public @NotNull Animator setPeriod(int period) {
+  public @NotNull JBAnimator setPeriod(int period) {
     myPeriod = Math.max(period, 5);
     return this;
   }
@@ -211,12 +211,12 @@ public final class Animator implements Disposable {
     return myCyclic;
   }
 
-  public @NotNull Animator setCyclic(boolean cyclic) {
+  public @NotNull JBAnimator setCyclic(boolean cyclic) {
     myCyclic = cyclic;
     return this;
   }
 
-  public @NotNull Animator ignorePowerSaveMode() {
+  public @NotNull JBAnimator ignorePowerSaveMode() {
     myIgnorePowerSaveMode = true;
     return this;
   }
@@ -225,7 +225,7 @@ public final class Animator implements Disposable {
     return myType;
   }
 
-  public @NotNull Animator setType(Type type) {
+  public @NotNull JBAnimator setType(Type type) {
     myType = type;
     return this;
   }

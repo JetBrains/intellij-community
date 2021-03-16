@@ -26,6 +26,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Point2D
@@ -66,6 +68,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       val showDemoBtn = JButton("Click to start a demo", AllIcons.Process.Step_1).also {
         it.border = JBUI.Borders.customLine(baseColor, 1)
         it.isContentAreaFilled = false
+        it.isOpaque = true
       }
       val showTestPageLnk = ActionLink("or load the testing page")
       addToCenter(OpaquePanel(VerticalLayout(15, SwingConstants.CENTER)).also {
@@ -77,10 +80,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
                           AllIcons.Process.Step_4, AllIcons.Process.Step_5, AllIcons.Process.Step_6,
                           AllIcons.Process.Step_7, AllIcons.Process.Step_8)
 
-      val iconAnimator = Animator(disposable).apply {
+      val iconAnimator = JBAnimator(disposable).apply {
         period = 60
         isCyclic = true
-        type = Animator.Type.EACH_FRAME
+        type = JBAnimator.Type.EACH_FRAME
 
         ignorePowerSaveMode()
       }
@@ -102,6 +105,8 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         transparent(showTestPageLnk.foreground, showTestPageLnk::setForeground).apply {
           runWhenScheduled {
             showDemoBtn.icon = EmptyIcon.ICON_16
+            showDemoBtn.isOpaque = false
+            showDemoBtn.repaint()
             Disposer.dispose(iconAnimator)
           }
           runWhenExpired {
@@ -127,6 +132,34 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           }
         }
       }
+
+      showDemoBtn.addMouseListener(object : MouseAdapter() {
+
+        private val consumers = arrayOf(
+          consumer(DoubleColorFunction(showDemoBtn.background, showDemoBtn.foreground), showDemoBtn::setBackground),
+          consumer(DoubleColorFunction(showDemoBtn.foreground, showDemoBtn.background), showDemoBtn::setForeground),
+        )
+
+        val animator = JBAnimator()
+        val statefulEasing = CubicBezierEasing(0.215, 0.61, 0.355, 1.0).stateful()
+
+        override fun mouseEntered(e: MouseEvent) {
+          animator.animate(Animation(*consumers).apply {
+            duration = 500
+            easing = statefulEasing.coerceIn(statefulEasing.value, 1.0)
+            duration = (duration * (1.0 - statefulEasing.value)).roundToInt()
+          })
+        }
+
+        override fun mouseExited(e: MouseEvent) {
+          animator.animate(Animation(*consumers).apply {
+            delay = 50
+            duration = 450
+            easing = statefulEasing.coerceIn(0.0, statefulEasing.value).reverse()
+            duration = (duration * statefulEasing.value).roundToInt()
+          })
+        }
+      })
     }
 
     private fun loadStage2() {
@@ -148,7 +181,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         addToTop(scroller)
       }
 
-      Animator().animate(let {
+      JBAnimator().animate(let {
         val to = Dimension(this@DemoPanel.width, 100)
         animation(scroller.preferredSize, to, scroller::setPreferredSize)
           .setEasing(bezier())
@@ -179,7 +212,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
       """.trimIndent()
 
       animate {
-        type = Animator.Type.EACH_FRAME
+        type = JBAnimator.Type.EACH_FRAME
 
         makeSequent(
           animation(scroller.preferredSize, size, scroller::setPreferredSize).apply {
@@ -242,7 +275,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           content.repaint()
         }
       )
-      val fillers = Animator(disposable)
+      val fillers = JBAnimator(disposable)
 
       addToLeft(AnimationSettings { options ->
         fillers.period = options.period
@@ -253,11 +286,18 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
         animations.forEach { animation ->
           animation.duration = options.duration
           animation.delay = options.delay
+          animation.easing = animation.easing.coerceIn(
+            options.coerceMin / 100.0,
+            options.coerceMax / 100.0
+          )
           if (options.inverse) {
             animation.easing = animation.easing.invert()
           }
           if (options.reverse) {
             animation.easing = animation.easing.reverse()
+          }
+          if (options.mirror) {
+            animation.easing = animation.easing.mirror()
           }
         }
         fillers.animate(animations)
@@ -303,7 +343,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     private fun createScrollPaneWithAnimatedActions(textArea: JBTextArea): JBScrollPane {
       val pane = JBScrollPane(textArea)
 
-      val commonAnimator = Animator(disposable)
+      val commonAnimator = JBAnimator(disposable)
 
       create("Scroll Down") {
         val from: Int = pane.verticalScrollBar.value
@@ -336,7 +376,10 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
     var cyclic: Boolean = false
     var reverse: Boolean = false
     var inverse: Boolean = false
-    var type: Animator.Type = Animator.Type.IN_TIME
+    var mirror: Boolean = false
+    var coerceMin: Int = 0
+    var coerceMax: Int = 100
+    var type: JBAnimator.Type = JBAnimator.Type.IN_TIME
   }
 
   private class AnimationSettings(val onStart: (Options) -> Unit) : BorderLayoutPanel() {
@@ -364,7 +407,14 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           checkBox("Inverse", options::inverse)
         }
         row {
-          comboBox(EnumComboBoxModel(Animator.Type::class.java), options::type, listCellRenderer { value, _, _ ->
+          checkBox("Mirror", options::mirror)
+        }
+        row("Coerce (%)") {
+          spinner(options::coerceMin, 0, 100, 5)
+          spinner(options::coerceMax, 0, 100, 5)
+        }
+        row {
+          comboBox(EnumComboBoxModel(JBAnimator.Type::class.java), options::type, listCellRenderer { value, _, _ ->
             text = value.toString().split("_").joinToString(" ") {
               it.toLowerCase().capitalize()
             }
@@ -482,9 +532,9 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
   private class SpringButtonPanel(text: String, start: Rectangle, val until: Int, val onFinish: Consumer<SpringButtonPanel>) : Wrapper() {
 
     val button = JButton(text)
-    val animator = Animator().apply {
+    val animator = JBAnimator().apply {
       period = 5
-      type = Animator.Type.IN_TIME
+      type = JBAnimator.Type.IN_TIME
     }
     val easing = Easing { x -> 1 + 2.7 * (x - 1).pow(3.0) + 1.7 * (x - 1).pow(2.0) }
     var turns = 0

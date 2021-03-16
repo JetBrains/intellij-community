@@ -17,8 +17,8 @@ import kotlin.math.roundToInt
 /**
  * Create animator and run some animations.
  */
-fun animate(block: Animator.() -> Collection<Animation>) {
-  val animator = Animator()
+fun animate(block: JBAnimator.() -> Collection<Animation>) {
+  val animator = JBAnimator()
   animator.animate(block(animator))
 }
 
@@ -76,6 +76,10 @@ fun animation(from: Color, to: Color, consumer: Consumer<Color>): Animation {
 }
 
 fun transparent(color: Color, consumer: Consumer<Color>) = animation(color, ColorUtil.withAlpha(color, 0.0), consumer)
+
+fun <T> consumer(function: DoubleFunction<T>, consumer: Consumer<T>): DoubleConsumer {
+  return DoubleConsumer { consumer.accept(function.apply(it)) }
+}
 
 private fun text(from: String, to: String): DoubleFunction<String> {
   val shorter = if (from.length < to.length) from else to

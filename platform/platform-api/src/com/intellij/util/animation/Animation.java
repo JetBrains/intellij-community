@@ -14,7 +14,7 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleFunction;
 
 /**
- * <p>Animation updates anything when {@link Animator} runs.</p>
+ * <p>Animation updates anything when {@link JBAnimator} runs.</p>
  *
  * <p>Holds 3 main options:</p>
  * <ul>
@@ -25,7 +25,7 @@ import java.util.function.DoubleFunction;
  *
  * <p>Delay and listeners are optional.</p>
  *
- * @see Animator
+ * @see JBAnimator
  * @see Easing
  */
 @ApiStatus.Experimental
@@ -39,6 +39,14 @@ public final class Animation {
 
   public Animation(@NotNull DoubleConsumer consumer) {
     myConsumer = consumer;
+  }
+
+  public Animation(DoubleConsumer @NotNull ... consumers) {
+    myConsumer = value -> {
+      for (DoubleConsumer consumer : consumers) {
+        consumer.accept(value);
+      }
+    };
   }
 
   public <T> Animation(@NotNull DoubleFunction<? extends T> function, @NotNull Consumer<T> consumer) {
@@ -121,7 +129,7 @@ public final class Animation {
         iterator.next().update(phase);
       } catch (Throwable t) {
         iterator.remove();
-        Logger.getInstance(Animator.class).error("Listener caused an error and was removed from listeners", t);
+        Logger.getInstance(JBAnimator.class).error("Listener caused an error and was removed from listeners", t);
       }
     }
   }
