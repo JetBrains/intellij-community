@@ -75,38 +75,30 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   }
 
   public void testImportForModuleFunction() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForModuleClass() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForAlias() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForAliasWithNonEmptyAttribute() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testUseImportPriorityWhenAddingImport() {
+    doTestBasicCompletion();
+  }
+
+  public void testDirectModuleAttributesSuggestedForNonEmptyAttributePrefix() {
+    doTestBasicCompletion();
+  }
+
+  private void doTestBasicCompletion() {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
