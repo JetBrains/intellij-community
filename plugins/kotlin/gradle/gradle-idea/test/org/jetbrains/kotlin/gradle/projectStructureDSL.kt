@@ -11,6 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
@@ -21,6 +24,7 @@ import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
+import java.io.File
 import kotlin.test.fail
 
 class MessageCollector {
@@ -346,6 +350,22 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         }
     }
 
+    fun assertNoDependencyInBuildClasses() {
+        val dependenciesInBuildDirectory = module.rootManager.orderEntries
+            .flatMap { orderEntry ->
+                orderEntry.getFiles(OrderRootType.SOURCES).toList().map { it.toIoFile() } +
+                        orderEntry.getFiles(OrderRootType.CLASSES).toList().map { it.toIoFile() } +
+                        orderEntry.getUrls(OrderRootType.CLASSES).toList().map { File(it) } +
+                        orderEntry.getUrls(OrderRootType.SOURCES).toList().map { File(it) }
+            }
+            .map { file -> file.systemIndependentPath }
+            .filter { path -> "/build/classes/" in path }
+
+        if (dependenciesInBuildDirectory.isNotEmpty()) {
+            report("References dependency in build directory:\n${dependenciesInBuildDirectory.joinToString("\n")}")
+        }
+    }
+
     fun run(body: ModuleInfo.() -> Unit = {}) {
         body()
         assertions.forEach { it.invoke(this) }
@@ -404,3 +424,5 @@ fun checkProjectStructure(
 
 private val ExportableOrderEntry.debugText: String
     get() = "$presentableName (${scope.displayName})"
+
+private fun VirtualFile.toIoFile(): File = VfsUtil.virtualToIoFile(this)
