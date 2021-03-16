@@ -104,8 +104,8 @@ class RuntimeChooserDialog(
         withPreferredWidth(400)
       }
 
-      override fun getBackground(): Color? =
-        EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.NOTIFICATION_BACKGROUND) ?: super.getBackground()
+      override fun getBackground() = JBUI.CurrentTheme.Notification.BACKGROUND
+      override fun getForeground() = JBUI.CurrentTheme.Notification.FOREGROUND
     }
   }
 
