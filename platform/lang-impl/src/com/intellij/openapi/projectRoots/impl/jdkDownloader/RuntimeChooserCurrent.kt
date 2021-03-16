@@ -7,49 +7,46 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreValidator.testNewJdkUnderProgress
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.SystemProperties
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.*
+import java.nio.file.Path
 
 interface RuntimeChooserItemWithFixedLocation {
   val homeDir: String
+  @get:NlsSafe val version: String?
+  @get:NlsSafe val displayName: String?
 }
 
 data class RuntimeChooserCurrentItem(
   val isBundled: Boolean,
   override val homeDir: String,
-  @NlsSafe val displayName: String?,
-  val version: String?
+  override val displayName: String?,
+  override val version: String?
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation {
   companion object
 }
 
 fun RuntimeChooserCurrentItem.Companion.currentRuntime(): RuntimeChooserCurrentItem {
-  val javaHome = SystemProperties.getJavaHome()
+  var javaHome = SystemProperties.getJavaHome()
+  var javaName: String? = null
+  var javaVersion: String? = System.getProperty("java.version") ?: null
   val isBundled = runCatching { PathManager.isUnderHomeDirectory(javaHome) }.getOrElse { false }
-  val info = runCatching { SdkVersionUtil.getJdkVersionInfo(javaHome) }.getOrNull()
 
-  val fullVersion = runCatching {
-    val releaseFile = Paths.get(javaHome, "release")
-    if (!Files.isRegularFile(releaseFile)) return@runCatching null
-    val p = Properties()
-    Files.newInputStream(releaseFile).use { p.load(it) }
-
-    p.getProperty("IMPLEMENTOR_VERSION")
-      ?.removeSurrounding("\"")
-      ?.trim()
-      ?.removePrefix("JBR-")
-      ?.trim()
-  }.getOrNull()
+  testNewJdkUnderProgress(false, { javaHome }, object : RuntimeChooserJreValidatorCallback<Unit> {
+    override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) {
+      javaHome = sdkHome.toString()
+      javaName = displayName
+      javaVersion = versionString
+    }
+    override fun onError(message: String) = Unit
+  })
 
   return RuntimeChooserCurrentItem(
     isBundled = isBundled,
     homeDir = javaHome,
-    displayName = info?.displayName,
-    version = fullVersion ?: info?.version?.toString(),
+    displayName = javaName,
+    version = javaVersion,
   )
 }
 

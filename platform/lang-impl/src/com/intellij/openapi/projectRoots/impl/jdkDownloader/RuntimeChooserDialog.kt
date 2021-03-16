@@ -114,7 +114,7 @@ class RuntimeChooserDialog(
       val jdkItem = jdkCombobox.selectedItem.castSafelyTo<RuntimeChooserCustomItem>() ?: return@run
       val home = Paths.get(jdkItem.homeDir)
       if (home.isDirectory()) {
-        return RuntimeChooserDialogResult.UseCustomJdk(jdkItem.version, home)
+        return RuntimeChooserDialogResult.UseCustomJdk(listOfNotNull(jdkItem.displayName, jdkItem.version).joinToString(" "), home)
       }
     }
 
