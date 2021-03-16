@@ -16,7 +16,7 @@ abstract class AbstractMultiFileSmartCompletionTest : KotlinCompletionTestCase()
     }
 
     protected fun doTest(unused: String) {
-        configureByFile(getTestName(false) + ".kt")
+        configureByFile(getTestName(false) + ".kt", "")
         AstAccessControl.testWithControlledAccessToAst(false, file.virtualFile, project, testRootDisposable) {
             testCompletion(
                 fileText = file.text,
