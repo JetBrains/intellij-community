@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionButtonComponent;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -22,6 +24,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.lang.reflect.Method;
 
 public final class PopupUtil {
@@ -188,5 +191,21 @@ public final class PopupUtil {
       }
     }
     return true;
+  }
+
+  public static void showForActionButtonEvent(@NotNull JBPopup popup, @NotNull AnActionEvent e) {
+    InputEvent inputEvent = e.getInputEvent();
+    if (inputEvent == null) {
+      popup.showInFocusCenter();
+    }
+    else {
+      Component component = inputEvent.getComponent();
+      if (component instanceof ActionButtonComponent) {
+        popup.showUnderneathOf(component);
+      }
+      else {
+        popup.showInCenterOf(component);
+      }
+    }
   }
 }

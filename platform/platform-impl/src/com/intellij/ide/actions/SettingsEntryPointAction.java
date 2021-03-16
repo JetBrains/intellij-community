@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,25 +66,10 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (!myShowPopup) {
-      return;
-    }
-    myShowPopup = false;
-
-    ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
-
-    InputEvent inputEvent = e.getInputEvent();
-    if (inputEvent == null) {
-      popup.showInFocusCenter();
-    }
-    else {
-      Component component = inputEvent.getComponent();
-      if (component instanceof ActionButtonComponent) {
-        popup.showUnderneathOf(component);
-      }
-      else {
-        popup.showInCenterOf(component);
-      }
+    if (myShowPopup) {
+      myShowPopup = false;
+      ListPopup popup = createMainPopup(e.getDataContext(), () -> myShowPopup = true);
+      PopupUtil.showForActionButtonEvent(popup, e);
     }
   }
 
