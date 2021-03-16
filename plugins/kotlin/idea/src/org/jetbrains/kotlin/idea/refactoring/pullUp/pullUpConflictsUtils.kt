@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -176,30 +176,33 @@ private fun KotlinPullUpData.checkAccidentalOverrides(
     if (memberDescriptor is CallableDescriptor && !member.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
         val memberDescriptorInTargetClass = memberDescriptor.substitute(sourceToTargetClassSubstitutor)
         if (memberDescriptorInTargetClass != null) {
-            HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope)
+            val sequence = HierarchySearchRequest<PsiElement>(targetClass, targetClass.useScope)
                 .searchInheritors()
                 .asSequence()
                 .filterNot { it.isSourceOrTarget(this) }
                 .mapNotNull { it.unwrapped as? KtClassOrObject }
-                .forEach {
-                    val subClassDescriptor = it.resolveToDescriptorWrapperAware(resolutionFacade) as ClassDescriptor
-                    val substitutor = getTypeSubstitutor(
-                        targetClassDescriptor.defaultType,
-                        subClassDescriptor.defaultType
-                    ) ?: TypeSubstitutor.EMPTY
-                    val memberDescriptorInSubClass =
-                        memberDescriptorInTargetClass.substitute(substitutor) as? CallableMemberDescriptor
-                    val clashingMemberDescriptor =
-                        memberDescriptorInSubClass?.let { subClassDescriptor.findCallableMemberBySignature(it) } ?: return
-                    val clashingMember = clashingMemberDescriptor.source.getPsi() ?: return
 
-                    val message = KotlinBundle.message(
-                        "text.member.0.in.super.class.will.clash.with.existing.member.of.1",
-                        memberDescriptor.renderForConflicts(),
-                        it.resolveToDescriptorWrapperAware(resolutionFacade).renderForConflicts()
-                    )
-                    conflicts.putValue(clashingMember, message.capitalize())
-                }
+            for (it in sequence) {
+                val subClassDescriptor = it.resolveToDescriptorWrapperAware(resolutionFacade) as ClassDescriptor
+                val substitutor = getTypeSubstitutor(
+                    targetClassDescriptor.defaultType,
+                    subClassDescriptor.defaultType
+                ) ?: TypeSubstitutor.EMPTY
+
+                val memberDescriptorInSubClass = memberDescriptorInTargetClass.substitute(substitutor) as? CallableMemberDescriptor
+                val clashingMemberDescriptor = memberDescriptorInSubClass?.let {
+                    subClassDescriptor.findCallableMemberBySignature(it)
+                } ?: continue
+
+                val clashingMember = clashingMemberDescriptor.source.getPsi() ?: continue
+                val message = KotlinBundle.message(
+                    "text.member.0.in.super.class.will.clash.with.existing.member.of.1",
+                    memberDescriptor.renderForConflicts(),
+                    it.resolveToDescriptorWrapperAware(resolutionFacade).renderForConflicts()
+                )
+
+                conflicts.putValue(clashingMember, message.capitalize())
+            }
         }
     }
 }
