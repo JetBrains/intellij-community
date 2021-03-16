@@ -1,5 +1,5 @@
 // FIR_COMPARISON
-fun <T> Iterable<T>.first() : T? {
+fun <T> Iterable<T>.foobarbaz() : T? {
     return this.iterator()?.next()
 }
 
@@ -8,4 +8,4 @@ fun main(args : Array<String>) {
     test.<caret>
 }
 
-// EXIST: first
+// EXIST: foobarbaz
