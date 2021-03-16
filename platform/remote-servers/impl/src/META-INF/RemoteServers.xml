@@ -30,7 +30,7 @@
                              id="RemoteServers"
                              provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
     <search.optionContributor implementation="com.intellij.remoteServer.impl.configuration.RemoteServerSearchableOptionContributor"/>
-    <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
+    <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner" id="DeployToServer"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
                     serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>
     <projectService serviceInterface="com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager"
