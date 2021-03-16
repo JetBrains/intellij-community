@@ -7,13 +7,19 @@ It has worse performance than regular initialization because of the additional c
 It can cause <code>equals()</code> comparisons to fail, if the <code>equals()</code> method does not accept subclasses as parameter
 (see link above).
 And finally, before Java 9 it could not be combined with the diamond operator, because that could not be used with anonymous classes.
-<p>Example of Double Brace Initialization:
-<pre><code>
-  List<Integer> list = new ArrayList<>() {{
+<p>Example:</p>
+<pre>
+  List&lt;Integer&gt; list = new ArrayList&lt;&gt;() {{
     add(1);
     add(2);
   }};
-</code></pre>
+</pre>
+<p>After quick-fix is applied, the result will be:</p>
+<pre>
+  List&lt;Integer&gt; list = new ArrayList&lt;&gt;();
+  list.add(1);
+  list.add(2);
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
