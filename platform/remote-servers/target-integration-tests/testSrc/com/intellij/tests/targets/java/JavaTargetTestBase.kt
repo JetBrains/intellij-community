@@ -44,6 +44,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Content
@@ -77,7 +78,7 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
   /** Expected contents of [targetFilePath]. */
   abstract val targetFileContent: String
 
-  override fun initOutputChecker(): OutputChecker = OutputChecker(testAppPath, appOutputPath)
+  override fun initOutputChecker(): OutputChecker = OutputChecker({ testAppPath }, { appOutputPath })
 
   override fun getTestAppPath(): String = "${PathManager.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/targetApp"
 
@@ -108,12 +109,9 @@ abstract class JavaTargetTestBase(protected val executionMode: ExecutionMode) : 
   override fun setUpModule() {
     super.setUpModule()
 
-    val libraryDescriptor = JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0")
-    AbstractTestFrameworkIntegrationTest.addMavenLibs(module, libraryDescriptor)
-
-    val contentRoot = LocalFileSystem.getInstance().findFileByPath(
-      "${PathManagerEx.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/targetApp")!!
+    val contentRoot = LocalFileSystem.getInstance().findFileByPath(testAppPath)!!
     ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel ->
+      MavenDependencyUtil.addFromMaven(model, "org.junit.jupiter:junit-jupiter-api:5.3.0", true)
       val contentEntry = model.addContentEntry(contentRoot)
       contentEntry.addSourceFolder(contentRoot.url + "/src", false)
       contentEntry.addSourceFolder(contentRoot.url + "/tests", true)
