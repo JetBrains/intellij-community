@@ -1,19 +1,28 @@
 <html>
 <body>
-Reports loops which could be replaced with single <code>String.repeat()</code> method (available since Java 11). E.g.:
+Reports loops which could be replaced with single <code>String.repeat()</code> method (available since Java 11).
+<p>Example:</p>
 <pre>
-  for(int i=0; i&lt;count; i++) {
-    sb.append('*');
+  void append(StringBuilder sb, int count, Object obj) {
+    for (int i = 0; i < count; i++) {
+      sb.append(obj);
+    }
   }
 </pre>
-Such code could be replaced with <code>sb.append("*".repeat(count));</code>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void append(StringBuilder sb, int count, Object obj) {
+    sb.append(String.valueOf(obj).repeat(Math.max(0, count)));
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-  By default the inspection may wrap count expression with <code>Math.max(0, count)</code> if it cannot prove statically that count is 
+  By default the inspection may wrap <code>count</code> with <code>Math.max(0, count)</code> if it cannot prove statically that count is
   non-negative. This is done to prevent possible semantics change, as <code>String.repeat()</code> rejects negative numbers.
-  You may disable this behavior via option if you don't like it. Similarly a String to repeat could be wrapped with 
+  You may disable this behavior via option if you don't like it. Similarly a string to repeat could be wrapped with
   <code>String.valueOf</code> to prevent possible <code>NullPointerException</code> if it's unknown whether it could be <code>null</code>.
 </p>
+<p>This inspection only reports if the language level of the project or module is 11 or higher</p>
 <p><small>New in 2019.1</small></p>
 </body>
 </html>

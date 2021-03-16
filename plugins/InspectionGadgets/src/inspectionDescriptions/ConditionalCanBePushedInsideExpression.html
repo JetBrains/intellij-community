@@ -1,12 +1,19 @@
 <html>
 <body>
 Reports conditional expressions with <em>then</em> and <em>else</em> branches so similar that the conditional expression can be pushed inside, thereby shortening the code.
-<p>For example the following conditional expression:
-  <pre><code>condition ? message("value: " + 1) : message("value: " + 2)</code></pre>
-Can be pushed inside and transformed into:
-  <pre><code>message("value: " + (condition ? 1 : 2))</code></pre>
+<p>Example:</p>
+<pre>
+  double g(int a, int b) {
+    return a == b ? Math.cos(0) : Math.cos(1);
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  double g(int a, int b) {
+    return Math.cos(a == b ? 0 : 1);
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-  <small>New in 2017.2</small>
+<p><small>New in 2017.2</small></p>
 </body>
 </html>

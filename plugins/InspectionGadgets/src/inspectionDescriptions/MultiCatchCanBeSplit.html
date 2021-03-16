@@ -1,22 +1,25 @@
 <html>
 <body>
-Reports <b>multi-catch</b> sections, like <code>try{} catch&nbsp;(IOException|RuntimeException&nbsp;e)&nbsp;{...}</code>
-<p> The quick fix splits multi-catch section into separate <b>catch</b> blocks.
+Reports multi-<code>catch</code> sections. The quick fix splits multi-catch section into separate <code>catch</code> blocks.
+<p>Example:</p>
+<pre>
+  try {
+    int i = getIndex();
+  } catch (NullPointerException|IndexOutOfBoundsException e) {
+    e.printStackTrace();
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  try {
+    int i = getIndex();
+  } catch (NullPointerException e) {
+    e.printStackTrace();
+  } catch (IndexOutOfBoundsException e) {
+    e.printStackTrace();
+  }
+</pre>
 <!-- tooltip end -->
-<p>For example, the multi-catch section
-<pre><code>
-try{}
-catch (IOException|RuntimeException e) {
-  /*handle the exception*/
-}</code></pre>
-is transformed into the following:
-<pre><code>
-try{}
-catch (IOException e) {
-  /*handle the exception*/
-}
-catch (RuntimeException e) {
-  /*handle the exception*/
-}</code></pre>
+<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
 </body>
 </html>

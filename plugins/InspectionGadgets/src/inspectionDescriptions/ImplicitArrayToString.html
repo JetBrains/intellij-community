@@ -1,11 +1,22 @@
 <html>
 <body>
-Reports any arrays used in <b>String</b>
-concatenations or as parameters to <b>java.io.PrintStream</b>
-methods (such as <b>System.out.println()</b>). Usually in such
-a case, the contents of the array were meant to be used and not the array object itself.
-<!-- tooltip end -->
+Reports any arrays used in <code>String</code> concatenations or as parameters to <code>java.io.PrintStream</code>
+methods (such as <code>System.out.println()</code>).
 <p>
-
+  Usually in such cases, the content of the array is meant to be used and not the array object itself.
+</p>
+<p>Example:</p>
+<pre>
+  void print(Object[] objects) {
+    System.out.println(objects);
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void print(Object[] objects) {
+    System.out.println(Arrays.toString(objects));
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

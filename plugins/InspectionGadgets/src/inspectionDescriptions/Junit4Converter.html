@@ -1,6 +1,25 @@
 <html>
 <body>
 Reports JUnit 3 test classes that can be converted to JUnit 4 test classes.
-<p>This inspection requires JUnit 4 available on the classpath and JDK 1.5 or higher.</p>
+<p>Example:</p>
+<pre>
+  public class MainTestCase extends junit.framework.TestCase {
+    public void test() {
+      Assert.assertTrue(true);
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  public class MainTestCase {
+    @org.junit.Test
+    public void test() {
+      Assert.assertTrue(true);
+    }
+  }
+</pre>
+<!-- tooltip end -->
+<p>This inspection requires JUnit 4 available on the classpath.</p>
+<p>This inspection only reports if the language level of the project or module is 5 or higher.</p>
 </body>
 </html>

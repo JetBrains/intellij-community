@@ -1,10 +1,41 @@
 <html>
 <body>
-This inspection points out the following javadoc comment flaws: <br> <br>
-&nbsp;- no javadoc where it is required <br>
-&nbsp;- required tag is missing <br>
-&nbsp;- invalid or incomplete tag <br>
-&nbsp;- javadoc description is missing or incomplete <br> <br>
+Reports the following javadoc comment flaws:
+<ul>
+  <li>no javadoc where it is required</li>
+  <li>required tag is missing</li>
+  <li>invalid or incomplete tag</li>
+  <li>javadoc description is missing or incomplete</li>
+</ul>
+<p>Example:</p>
+<pre>
+  class Main {
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  /**
+   *
+   */
+  class Main {
+  }
+</pre>
+<p>Example:</p>
+<pre>
+  String id(String value) {
+    return value;
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  /**
+   * @param value
+   * @return
+   */
+  String id(String value) {
+    return value;
+  }
+</pre>
 <!-- tooltip end -->
 Use tabs and corresponding inspection options below, to define visibility scope where javadoc is required, as well as the
 required javadoc tags for classes, methods, fields and inner classes.

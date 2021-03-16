@@ -1,15 +1,26 @@
 <html>
 <body>
-Reports on any calls to <code>toString()</code> used in string concatenations and as arguments to the
-<code>print()</code> and <code>println()</code> methods of <code>java.io.PrintWriter</code> and <code>java.io.PrintStream</code>, the <code>append()</code>
-method of <code>java.lang.StringBuilder</code> and <code>java.lang.StringBuffer</code> or the <code>trace()</code>, <code>debug()</code>, <code>info()</code>,
-<code>warn()</code> and <code>error()</code> methods of <code>org.slf4j.Logger</code>. In these cases the conversion
-to string will be handled by the underlying library methods and an explicit call to <code>toString()</code> is no needed.
+Reports calls to <code>toString()</code> that are used
+<ul>
+  <li>in string concatenations</li>
+  <li>in the <code>java.lang.StringBuilder#append()</code> or <code>java.lang.StringBuffer#append()</code> methods</li>
+  <li>in the methods of <code>java.io.PrintWriter</code> or <code>java.io.PrintStream</code></li>
+  <li>in the methods <code>org.slf4j.Logger</code></li>
+</ul>
+In these cases the conversion to string will be handled by the underlying library methods and the explicit call to <code>toString()</code> is not needed.
+<p>Example:</p>
+<pre>
+  System.out.println(this.toString())
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  System.out.println(this)
+</pre>
 <!-- tooltip end -->
 <p>
-Note that without the <code>toString()</code> call the code semantics might be different: if the expression is null 
- then the string <code>null</code> will be used instead of throwing a <code>NullPointerException</code>. Use the checkbox
- to avoid warnings for the values that could potentially be null.
+  Note that without the <code>toString()</code> call the code semantics might be different: if the expression is null
+  then the string <code>null</code> will be used instead of throwing a <code>NullPointerException</code>.
+  Use the checkbox to avoid warnings for the values that could potentially be null.
 </p>
 </body>
 </html>
