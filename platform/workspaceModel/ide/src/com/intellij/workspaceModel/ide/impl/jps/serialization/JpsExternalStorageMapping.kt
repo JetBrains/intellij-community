@@ -5,7 +5,6 @@ import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 
 interface JpsExternalStorageMapping {
