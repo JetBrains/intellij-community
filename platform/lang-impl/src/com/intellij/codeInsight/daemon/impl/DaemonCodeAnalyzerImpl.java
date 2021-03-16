@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.lightEdit.LightEdit;
@@ -634,7 +635,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (oldFuture.isDone()) {
       ConcurrencyUtil.manifestExceptionsIn(oldFuture);
     }
-    myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, delayNanos, TimeUnit.NANOSECONDS);
+    myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable.withClientId(ClientId.getCurrentOrNull()),
+                                              delayNanos, TimeUnit.NANOSECONDS);
   }
 
   // return true if the progress really was canceled
@@ -823,12 +825,28 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // made this class static and fields clearable to avoid leaks when this object stuck in invokeLater queue
   private static final class UpdateRunnable implements Runnable {
     private Project myProject;
+    private ClientId clientId;
+
     private UpdateRunnable(@NotNull Project project) {
       myProject = project;
     }
 
+    UpdateRunnable withClientId(ClientId clientId) {
+      this.clientId = clientId;
+      return this;
+    }
+
     @Override
     public void run() {
+      if (ClientId.isLocalId(clientId)) {
+        doRun();
+      }
+      else {
+        ClientId.withClientId(clientId, () -> doRun());
+      }
+    }
+
+    public void doRun() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       Project project = myProject;
       DaemonCodeAnalyzerImpl dca;

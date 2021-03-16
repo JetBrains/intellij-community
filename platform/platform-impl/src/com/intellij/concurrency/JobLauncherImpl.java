@@ -169,6 +169,7 @@ public final class JobLauncherImpl extends JobLauncher {
   private static final class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
     private final Consumer<? super Future<?>> myOnDoneCallback;
+    private final ClientId clientId;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
     private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
@@ -185,7 +186,12 @@ public final class JobLauncherImpl extends JobLauncher {
       protected boolean exec() {
         myStatus = Status.STARTED;
         try {
-          myAction.run();
+          if (ClientId.isLocalId(clientId)) {
+            myAction.run();
+          }
+          else {
+            ClientId.withClientId(clientId, myAction);
+          }
           complete(null); // complete manually before calling callback
         }
         catch (Throwable throwable) {
@@ -205,6 +211,7 @@ public final class JobLauncherImpl extends JobLauncher {
     private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
       myAction = action;
       myOnDoneCallback = onDoneCallback;
+      clientId = ClientId.getCurrentOrNull();
     }
 
     private void submit() {
