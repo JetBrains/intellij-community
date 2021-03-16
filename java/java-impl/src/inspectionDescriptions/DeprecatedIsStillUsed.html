@@ -5,16 +5,17 @@ Reports deprecated classes, methods and fields which are used in your code nonet
 For example:
 
 <pre>
-<b><font color="#000080">class</font></b> MyCode {
+<code>
+class MyCode {
   @Deprecated
-  // warning: "Deprecated member is still used"
-  <b><font color="#000080">void</font></b> <span style="background-color: yellow;">oldMethod</span>() {}
+  void oldMethod() {}// warning: "Deprecated member is still used"
 
-  <b><font color="#000080">void</font></b> newMethod() {
+  void newMethod() {
     oldMethod(); // forgotten usage
   }
-}
+}</code>
 </pre>
-(Usages from within deprecated places are ignored).
+Usages from within deprecated places are ignored.
+<p><b>NOTE:</b> Due to performance reasons, a non-private member is checked only when it's name rarely occurs in the project.</p>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports used deprecated code, e.g. <code>new Thread().stop();</code>. 
-By default it doesn't report deprecated code when it's impossible or hard to avoid it, e.g.
+Reports usages of deprecated API (classes, fields, and methods), e.g. <code>new Thread().stop();</code>. 
+By default, it doesn't produce a warning if it's impossible or hard to avoid it e.g.,
 the following code won't be reported:
 <pre>
   abstract class A {
