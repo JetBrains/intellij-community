@@ -56,7 +56,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
     super(project);
     myMigrationMap = migrationMap;
     mySearchScope = scope;
-    myPsiMigration = startMigration(project);
+    
   }
 
   @Override
@@ -86,6 +86,12 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected void refreshElements(PsiElement @NotNull [] elements) {
     myPsiMigration = startMigration(myProject);
+  }
+
+  @Override
+  protected void doRun() {
+    myPsiMigration = startMigration(myProject);
+    super.doRun();
   }
 
   @Override
