@@ -2,66 +2,46 @@
  * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
+package org.jetbrains.kotlin.idea.highlighter
 
-package org.jetbrains.kotlin.idea.highlighter;
+import org.jetbrains.kotlin.analyzer.AnalysisResult
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.instance
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS.analyzeFiles
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
+import org.jetbrains.kotlin.js.config.JsConfig
+import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
+import org.jetbrains.kotlin.psi.KtFile
+import java.io.File
+import java.lang.reflect.Field
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.analyzer.AnalysisResult;
-import org.jetbrains.kotlin.config.CommonConfigurationKeys;
-import org.jetbrains.kotlin.config.CommonConfigurationKeysKt;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
-import org.jetbrains.kotlin.config.LanguageVersionSettings;
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts;
-import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS;
-import org.jetbrains.kotlin.js.config.JSConfigurationKeys;
-import org.jetbrains.kotlin.js.config.JsConfig;
-import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs;
-import org.jetbrains.kotlin.psi.KtFile;
-
-import java.io.File;
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import static org.jetbrains.kotlin.idea.test.TestUtilsKt.IDEA_TEST_DATA_DIR;
-
-public abstract class AbstractDiagnosticMessageJsTest extends AbstractDiagnosticMessageTest {
-    @Override
-    protected AnalysisResult analyze(Collection<KtFile> files, CompilerConfiguration configuration) {
-        return TopDownAnalyzerFacadeForJS.analyzeFiles(files, getConfig(configuration));
+abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest() {
+    override fun analyze(files: Collection<KtFile>, configuration: CompilerConfiguration): AnalysisResult {
+        return analyzeFiles(files, JsConfig(project, configuration))
     }
 
-    @NotNull
-    @Override
-    public File getTestDataDirectory() {
-        return new File(IDEA_TEST_DATA_DIR, "diagnosticMessage/js");
+    override val testDataDirectory: File
+        get() = File(IDEA_TEST_DATA_DIR, "diagnosticMessage/js")
+
+    override fun getPlatformSpecificDiagnosticField(diagnosticName: String): Field? {
+        return getFieldOrNull(ErrorsJs::class.java, diagnosticName)
     }
 
-    @Nullable
-    @Override
-    protected Field getPlatformSpecificDiagnosticField(@NotNull String diagnosticName) {
-        return getFieldOrNull(ErrorsJs.class, diagnosticName);
+    override fun compilerConfiguration(languageVersionSettings: LanguageVersionSettings): CompilerConfiguration {
+        return CompilerConfiguration().apply {
+            put(CommonConfigurationKeys.MODULE_NAME, myFixture.module.name)
+            put(JSConfigurationKeys.LIBRARIES, jsStdlib())
+            put(CommonConfigurationKeys.DISABLE_INLINE, true)
+            this.languageVersionSettings = languageVersionSettings
+        }
     }
 
-    @Override
-    protected CompilerConfiguration compilerConfiguration(LanguageVersionSettings languageVersionSettings) {
-        CompilerConfiguration configuration = new CompilerConfiguration();
-        configuration.put(CommonConfigurationKeys.MODULE_NAME, myFixture.getModule().getName());
-        configuration.put(JSConfigurationKeys.LIBRARIES, jsStdlib());
-        configuration.put(CommonConfigurationKeys.DISABLE_INLINE, true);
-        CommonConfigurationKeysKt.setLanguageVersionSettings(configuration, languageVersionSettings);
-        return configuration;
-    }
-
-    protected List<String> jsStdlib() {
-        File stdlibPath = KotlinArtifacts.getInstance().getKotlinStdlibJs();
-        return Collections.singletonList(stdlibPath.getAbsolutePath());
-    }
-
-    @NotNull
-    private JsConfig getConfig(CompilerConfiguration configuration) {
-        return new JsConfig(getProject(), configuration);
+    private fun jsStdlib(): List<String> {
+        val stdlibPath = instance.kotlinStdlibJs
+        return listOf(stdlibPath.absolutePath)
     }
 }
