@@ -610,6 +610,9 @@ public final class CaptureAgent {
     addCapture("scala/concurrent/impl/CallbackRunnable", CONSTRUCTOR, THIS_KEY_PROVIDER);
     addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
 
+    addCapture("scala/concurrent/impl/Promise$Transformation", CONSTRUCTOR, THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/Promise$Transformation", "run", THIS_KEY_PROVIDER);
+
     // akka-scala
     addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
     addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
