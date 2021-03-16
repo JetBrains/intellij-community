@@ -1147,7 +1147,7 @@
                        ide.updated.by.snap;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;
                        plugins.update.available;external.components.available;no.updates.available"/>
     <notificationGroup id="Plugin Update Results" displayType="BALLOON"
-                       bundle="messages.IdeBundle" key="notification.group.plugin.update.results"
+                       bundle="messages.IdeBundle" key="notification.group.plugin.updates"
                        notificationIds="plugins.updated.without.restart;plugins.updated.after.restart;"/>
     <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
