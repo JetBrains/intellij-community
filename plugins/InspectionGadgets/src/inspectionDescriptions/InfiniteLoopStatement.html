@@ -1,11 +1,25 @@
 <html>
 <body>
-Reports <b>for</b>, <b>while</b>,
-or <b>do</b> statements which
+Reports <code>for</code>, <code>while</code>,
+or <code>do</code> statements which
 can only exit by throwing an exception. While such statements may be correct, they
 are often a symptom of coding errors.
+<p>Example:</p>
+<pre>
+  for (;;) {
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
+Use the checkbox below to ignore the infinite loop statements inside <code>Thread.run</code>.
+It may be useful for the daemon threads.
+<p>Example:</p>
+<pre>
+  new Thread(() -> {
+    while (true) {
+    }
+  }).start();
+</pre>
+<p>
 </body>
 </html>

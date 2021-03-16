@@ -34,7 +34,7 @@ import javax.swing.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class InfiniteLoopStatementInspection extends BaseInspection {
-  boolean myIgnoreInThreadTopLevel = true;
+  public boolean myIgnoreInThreadTopLevel = true;
 
   @Nullable
   @Override
