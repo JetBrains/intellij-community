@@ -72,10 +72,18 @@ class GitDefineRemoteDialog(
     scope.launch(uiDispatcher + CoroutineName("Define Remote - checking url")) {
       setLoading(true)
       try {
-        checkUrlAccess()
+        urlAccessError = checkUrlAccess()
       }
       finally {
         setLoading(false)
+      }
+
+      if (urlAccessError == null) {
+        super.doOKAction()
+      }
+      else {
+        IdeFocusManager.getGlobalInstance().requestFocus(urlField, true)
+        startTrackingValidation()
       }
     }
   }
@@ -115,21 +123,14 @@ class GitDefineRemoteDialog(
       }
     })
 
-  private suspend fun checkUrlAccess() {
+  private suspend fun checkUrlAccess(): ValidationInfo? {
     val url = remoteUrl
     val result = lsRemote(url)
 
-    if (result.success()) {
-      urlAccessError = null
-      super.doOKAction()
-    }
-    else {
-      LOG.warn("Invalid remote. Name: $remoteName, URL: $url, error: ${result.errorOutputAsJoinedString}")
+    if (result.success()) return null
 
-      urlAccessError = ValidationInfo(result.errorOutputAsHtmlString, urlField).withOKEnabled()
-      IdeFocusManager.getGlobalInstance().requestFocus(urlField, true)
-      startTrackingValidation()
-    }
+    LOG.warn("Invalid remote. Name: $remoteName, URL: $url, error: ${result.errorOutputAsJoinedString}")
+    return ValidationInfo(result.errorOutputAsHtmlString, urlField).withOKEnabled()
   }
 
   private suspend fun lsRemote(url: String): GitCommandResult =
