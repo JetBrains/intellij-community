@@ -119,7 +119,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           .filter { it.containingFile != null }
           .filterNot { it is PsiFileSystemItem }
           .filterNot { it.name == null || it.name!!.startsWith('_') }
-          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches(it.name!!) }
+          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$packageName.${it.name}") }
           .mapNotNull {
             val qualifiedNameToSuggest = "$qualifier.${it.name}"
             if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
