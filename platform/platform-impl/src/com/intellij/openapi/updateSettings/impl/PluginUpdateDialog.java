@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -195,17 +197,25 @@ public class PluginUpdateDialog extends DialogWrapper {
           ApplicationManager.getApplication().invokeLater(() -> {
             PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
             if (result.getPluginsInstalled().size() > 0) {
-              if (result.getRestartRequired()) {
-                if (WelcomeFrame.getInstance() == null) {
-                  PluginManagerMain.notifyPluginsUpdated(null);
+              if (!result.getRestartRequired()) {
+                String message;
+                if (result.getPluginsInstalled().size() == 1) {
+                  IdeaPluginDescriptor plugin = result.getPluginsInstalled().get(0);
+                  message = IdeBundle.message("notification.content.updated.plugin.to.version", plugin.getName(), plugin.getVersion());
                 }
                 else {
-                  PluginManagerConfigurable.shutdownOrRestartApp();
+                  String names = result.getPluginsInstalled().stream().map(PluginDescriptor::getName).collect(Collectors.joining(", "));
+                  message = IdeBundle.message("notification.content.updated.plugins", names);
                 }
+                UpdateChecker.getNotificationGroupForUpdateResults()
+                  .createNotification(message, NotificationType.INFORMATION, "plugins.updated.without.restart")
+                  .notify(myProject);
+              }
+              else if (WelcomeFrame.getInstance() == null) {
+                PluginManagerMain.notifyPluginsUpdated(null);
               }
               else {
-                String message = PluginUpdateInfoDialog.notificationText(result);
-                UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.INFORMATION).notify(myProject);
+                PluginManagerConfigurable.shutdownOrRestartApp();
               }
             }
           });
