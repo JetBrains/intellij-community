@@ -19,7 +19,8 @@ import java.nio.file.Path
 import javax.swing.JComponent
 
 data class RuntimeChooserCustomItem(
-  val version: String,
+  override val displayName: String?,
+  override val version: String?,
   override val homeDir: String,
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation
 
@@ -69,8 +70,8 @@ object RuntimeChooserCustom {
           allowRunProcesses = false,
           computeHomePath = { sdk.homePath },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
-            override fun onSdkResolved(versionString: String, sdkHome: Path) {
-              val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
+            override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(displayName, versionString, sdkHome.toString())
               invokeLater {
                 model.addExistingSdkItem(newItem)
               }
@@ -93,8 +94,8 @@ object RuntimeChooserCustom {
           allowRunProcesses = false,
           computeHomePath = { homePath },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
-            override fun onSdkResolved(versionString: String, sdkHome: Path) {
-              val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
+            override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(displayName, versionString, sdkHome.toString())
               invokeLater(ModalityState.any()) {
                 model.addExistingSdkItem(newItem)
               }
