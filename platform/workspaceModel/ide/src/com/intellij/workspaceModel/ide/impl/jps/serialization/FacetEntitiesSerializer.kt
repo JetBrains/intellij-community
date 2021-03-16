@@ -38,7 +38,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
     val res = loadFacetEntities(facetManagerState.facets, builder, moduleEntity, null, orderOfFacets)
-    if (orderOfFacets.size > 1) {
+    if (orderOfFacets.size > 1 && !externalStorage) {
       val entity = moduleEntity.facetsOrderEntity
       if (entity != null) {
         builder.modifyEntity(ModifiableFacetsOrderEntity::class.java, entity) {

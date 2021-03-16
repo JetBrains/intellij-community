@@ -492,6 +492,14 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `check project model saved correctly at internal storage`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
