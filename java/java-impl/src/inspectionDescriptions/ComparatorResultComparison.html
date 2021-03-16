@@ -1,9 +1,26 @@
 <html>
 <body>
-This inspection warns when result of <b>Comparator.compare</b> or <b>Comparable.compareTo</b> is compared with
-  specific non-zero constant (like <b>if(a.compareTo(b) == -1)</b>). By contract,
-  these methods can return any positive number (not just 1) or any negative number (not just -1), so comparing against
-  particular numbers is a bad practice.
+This inspection warns when result of <code>Comparator.compare</code> or <code>Comparable.compareTo</code> is compared with
+  specific non-zero constant. By contract, these methods can return any positive number (not just 1) or any negative number (not just -1), 
+  so comparing against particular numbers is a bad practice. Some widely used comparison methods (e.g. <code>String.compareTo</code>)
+  actually return values outside of [-1..1] range, so such a comparison may cause incorrect program behavior.
+<p>Example:</p>
+<pre>
+  void validate(String s1, String s2) {
+    // Comparing to 1 is incorrect
+    if (s1.compareTo(s2) == 1) {
+      throw new IllegalArgumentException("Incorrect order");
+    }
+  }
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  void validate(String s1, String s2) {
+    if (s1.compareTo(s2) > 0) {
+      throw new IllegalArgumentException("Incorrect order");
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>

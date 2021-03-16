@@ -17,7 +17,31 @@ Integer square(@Nullable Integer input) {
     return input == null ? null : input * input;
 }</code></pre>
 <p>
-  Use the inspection options to fine-tune annotation processing policy and adjust the list of situations that should be checked.
+  The inspection behavior may be controlled by a number of annotations, such as 
+  <a href="https://www.jetbrains.com/help/idea/nullable-and-notnull-annotations.html">nullability</a> annotations,
+  <code><a href="https://www.jetbrains.com/help/idea/contract-annotations.html">@Contract</a></code> annotation, 
+  <code>@Range</code> annotation and so on.
 </p>
+<!-- tooltip end -->
+<p>Use the first checkbox to warn when a nullable value is passed as an argument to a method with non-annotated parameter;
+stored into non-annotated field or returned from a non-annotated method. In this case, inspection will suggest to propagate
+the <code>@Nullable</code> annotation. You can also configure nullability annotations using the 'Configure Annotations' button.
+</p>
+<p>Use the second checkbox to assume that non-annotated members can be null, so must not be used in non-null context.</p>
+<p>Use the third checkbox to report method parameters that cannot be null (e. g. immediately dereferenced in the method body)
+  but there are call sites where <code>null</code> literal is passed.</p>
+<p>Use the fourth checkbox to report methods that annotated as <code>@Nullable</code> but always return non-null value.
+  In this case, it's suggested to change the annotation to <code>@NotNull</code>.</p>
+<p>Use the fifth checkbox to avoid reporting assertions that were statically proven to be always true. This also includes 
+  conditions like <code>if (alwaysFalseCondition) throw new IllegalArgumentException();</code>.</p>
+<p>Use the sixth checkbox to control how the inspection treats <code>assert</code> statements. By default, checkbox is unchecked
+which means that the assertions are assumed to be executed (-ea mode). If checkbox is checked, the assertions will be completely ignored
+(-da mode).</p>
+<p>Use the seventh checkbox to add warnings on reading variables that contain some constant values 
+  like <code>true</code>, <code>false</code>, or <code>null</code>.</p>
+<p>Use the eighth checkbox to suppress all the warnings where the problem may happen only on some code path. If this checkbox is checked,
+  warnings like 'exception is possible' will not be reported, only warnings like 'exception will definitely occur'. This mode
+  may greatly reduce a number of false-positives, especially if the code is not consistently annotated with nullability and contract 
+  annotations, so it could be useful to find the most important problems in legacy code bases.</p>
 </body>
 </html>

@@ -234,18 +234,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         message("inspection.data.flow.nullable.quickfix.option"),
         SUGGEST_NULLABLE_ANNOTATIONS, box -> SUGGEST_NULLABLE_ANNOTATIONS = box.isSelected());
 
-      JCheckBox dontReportTrueAsserts = createCheckBoxWithHTML(
-        message("inspection.data.flow.true.asserts.option"),
-        DONT_REPORT_TRUE_ASSERT_STATEMENTS, box -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = box.isSelected());
-
-      JCheckBox ignoreAssertions = createCheckBoxWithHTML(
-        message("inspection.data.flow.ignore.assert.statements"),
-        IGNORE_ASSERT_STATEMENTS, box -> IGNORE_ASSERT_STATEMENTS = box.isSelected());
-
-      JCheckBox reportConstantReferences = createCheckBoxWithHTML(
-        message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"),
-        REPORT_CONSTANT_REFERENCE_VALUES, box -> REPORT_CONSTANT_REFERENCE_VALUES = box.isSelected());
-
       JCheckBox treatUnknownMembersAsNullable = createCheckBoxWithHTML(
         message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable"),
         TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, box -> TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = box.isSelected());
@@ -257,6 +245,18 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       JCheckBox reportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
         message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value"),
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
+
+      JCheckBox dontReportTrueAsserts = createCheckBoxWithHTML(
+        message("inspection.data.flow.true.asserts.option"),
+        DONT_REPORT_TRUE_ASSERT_STATEMENTS, box -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = box.isSelected());
+
+      JCheckBox ignoreAssertions = createCheckBoxWithHTML(
+        message("inspection.data.flow.ignore.assert.statements"),
+        IGNORE_ASSERT_STATEMENTS, box -> IGNORE_ASSERT_STATEMENTS = box.isSelected());
+
+      JCheckBox reportConstantReferences = createCheckBoxWithHTML(
+        message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"),
+        REPORT_CONSTANT_REFERENCE_VALUES, box -> REPORT_CONSTANT_REFERENCE_VALUES = box.isSelected());
 
       JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
         message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths"),
