@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.openapi.actionSystem.*
@@ -48,7 +49,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   companion object {
     private fun createPresentation(button: StripeButton) =
       Presentation(button.text).apply {
-        icon = button.icon
+        icon = button.icon ?: AllIcons.Toolbar.Unknown
         scaleIcon()
         isEnabledAndVisible = true
       }
@@ -114,7 +115,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
 
   private class SquareAnActionButton(val project: Project, val button: StripeButton) : ToggleActionButton(button.text, null), DumbAware {
     override fun isSelected(e: AnActionEvent): Boolean {
-      e.presentation.icon = button.toolWindow.icon!!
+      e.presentation.icon = button.toolWindow.icon ?: AllIcons.Toolbar.Unknown
       e.presentation.scaleIcon()
       return button.toolWindow.isVisible
     }

@@ -597,7 +597,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     if (!isSquareStripeUI()) return;
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
-    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null) return;
+    if (!toolWindow.isAvailable()) return;
     toolWindow.setOrderOnLargeStripe(-1);
 
     ToolWindowAnchor anchor = toolWindow.getLargeStripeAnchor();
@@ -623,7 +623,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     windowInfo.setLargeStripeAnchor(anchor);
 
-    if (!toolWindow.isAvailable() || toolWindow.getIcon() == null || !toolWindow.isVisibleOnLargeStripe()) return;
+    if (!toolWindow.isAvailable() || !toolWindow.isVisibleOnLargeStripe()) return;
 
     if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
       myLeftToolbar.addStripeButton(project, anchor, toolWindow);
