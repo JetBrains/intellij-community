@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
@@ -101,7 +102,6 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
   private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
-  private final UiInspector myInspector;
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
@@ -131,7 +131,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
       }
     }, AWTEvent.MOUSE_EVENT_MASK);
-    myInspector = new UiInspector(null);
+    if (Boolean.getBoolean("idea.ui.debug.mode") || Boolean.getBoolean("idea.ui.inspector")) {
+      ApplicationManager.getApplication().invokeLater(() -> new UiInspector(null));
+    }
   }
 
   private void updateMouseShortcuts() {
@@ -156,7 +158,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     closeAllInspectorWindows();
 
     if (event instanceof MouseEvent && event.getComponent() != null) {
-      myInspector.processMouseEvent(project, (MouseEvent)event);
+      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
       return;
     }
     if (component == null) {
@@ -164,7 +166,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     assert component != null;
-    myInspector.showInspector(project, component);
+    new UiInspector(project).showInspector(project, component);
   }
 
   private static void closeAllInspectorWindows() {
