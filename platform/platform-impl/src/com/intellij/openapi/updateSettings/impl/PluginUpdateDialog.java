@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.SettingsEntryPointAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerMain;
@@ -11,8 +10,6 @@ import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -21,8 +18,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -30,7 +25,6 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -40,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -85,7 +77,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), e -> {
       close(CANCEL_EXIT_CODE);
-      ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.getPluginDescriptor()));
+      UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, component -> component.getPluginDescriptor()));
     });
 
     myPluginModel = new MyPluginModel(project) {
@@ -297,63 +289,5 @@ public class PluginUpdateDialog extends DialogWrapper {
     splitter.setSecondComponent(myDetailsPage);
 
     return splitter;
-  }
-
-  private static Set<String> myIgnoredPluginsWithVersions;
-
-  @NotNull
-  private static File getDisabledUpdateFile() {
-    return new File(PathManager.getConfigPath(), "plugin_disabled_updates.txt");
-  }
-
-  @NotNull
-  private static Set<String> getIgnoredPlugins() {
-    if (myIgnoredPluginsWithVersions == null) {
-      myIgnoredPluginsWithVersions = new HashSet<>();
-
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        try {
-          File file = getDisabledUpdateFile();
-          if (file.isFile()) {
-            myIgnoredPluginsWithVersions.addAll(FileUtil.loadLines(file));
-          }
-        }
-        catch (IOException e) {
-          Logger.getInstance(UpdateChecker.class).error(e);
-        }
-      }
-    }
-    return myIgnoredPluginsWithVersions;
-  }
-
-  static void ignorePlugins(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
-    Set<String> ignoredPlugins = getIgnoredPlugins();
-
-    for (IdeaPluginDescriptor descriptor : descriptors) {
-      ignoredPlugins.add(getIdVersionValue(descriptor));
-    }
-
-    try {
-      File file = getDisabledUpdateFile();
-      FileUtil.writeToFile(file, StringUtil.join(ignoredPlugins, LineSeparator.getSystemLineSeparator().getSeparatorString()));
-    }
-    catch (IOException e) {
-      Logger.getInstance(UpdateChecker.class).error(e);
-    }
-
-    SettingsEntryPointAction.removePluginsUpdate(descriptors);
-  }
-
-  public static boolean isIgnored(@NotNull IdeaPluginDescriptor descriptor) {
-    Set<String> plugins = getIgnoredPlugins();
-    if (plugins.isEmpty()) {
-      return false;
-    }
-    return plugins.contains(getIdVersionValue(descriptor));
-  }
-
-  @NotNull
-  private static String getIdVersionValue(@NotNull IdeaPluginDescriptor descriptor) {
-    return descriptor.getPluginId().getIdString() + "+" + descriptor.getVersion();
   }
 }

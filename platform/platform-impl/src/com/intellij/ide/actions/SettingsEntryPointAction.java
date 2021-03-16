@@ -206,7 +206,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         List<PluginDownloader> downloaders = new ArrayList<>();
         try {
           for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!PluginUpdateDialog.isIgnored(descriptor)) {
+            if (!UpdateChecker.isIgnored(descriptor)) {
               downloaders.add(PluginDownloader.createDownloader(descriptor));
             }
           }
