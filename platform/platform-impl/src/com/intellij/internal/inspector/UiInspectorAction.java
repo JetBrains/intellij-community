@@ -101,6 +101,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   private static final String RENDERER_BOUNDS = "clicked renderer";
   private static final int MAX_DEEPNESS_TO_DISCOVER_FIELD_NAME = 8;
   private final List<MouseShortcut> myMouseShortcuts = new ArrayList<>();
+  private final UiInspector myInspector;
 
   public UiInspectorAction() {
     setEnabledInModalContext(true);
@@ -130,6 +131,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
       }
     }, AWTEvent.MOUSE_EVENT_MASK);
+    myInspector = new UiInspector(null);
   }
 
   private void updateMouseShortcuts() {
@@ -154,7 +156,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     closeAllInspectorWindows();
 
     if (event instanceof MouseEvent && event.getComponent() != null) {
-      new UiInspector(project).processMouseEvent(project, (MouseEvent)event);
+      myInspector.processMouseEvent(project, (MouseEvent)event);
       return;
     }
     if (component == null) {
@@ -162,7 +164,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     assert component != null;
-    new UiInspector(project).showInspector(project, component);
+    myInspector.showInspector(project, component);
   }
 
   private static void closeAllInspectorWindows() {
