@@ -7,9 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
@@ -32,7 +36,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -130,6 +137,15 @@ public final class VfsRootAccess {
         }
         for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
           allowed.add(VfsUtilCore.urlToPath(url));
+        }
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();
+          if (moduleSdk != null) {
+            String homePath = moduleSdk.getHomePath();
+            if (homePath != null) {
+              allowed.add(homePath);
+            }
+          }
         }
         for (String url : getAllRootUrls(project)) {
           allowed.add(StringUtil.trimEnd(VfsUtilCore.urlToPath(url), JarFileSystem.JAR_SEPARATOR));
