@@ -237,7 +237,17 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
 
     val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
 
-    baseBranch = currentRepo.branches.findRemoteBranch("${currentRemote.remote.name}/${repositoryDataService.defaultBranchName}")
+    val branches = currentRepo.branches
+    val defaultBranchName = repositoryDataService.defaultBranchName
+    if (defaultBranchName != null) {
+      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/$defaultBranchName")
+    }
+    else {
+      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/master")
+      if (baseBranch == null) {
+        baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/main")
+      }
+    }
 
     val repos = repositoriesManager.knownRepositories
     val baseIsFork = repositoryDataService.isFork

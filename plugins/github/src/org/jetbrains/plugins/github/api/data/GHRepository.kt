@@ -11,11 +11,11 @@ class GHRepository(id: String,
                    val mergeCommitAllowed: Boolean,
                    val squashMergeAllowed: Boolean,
                    val rebaseMergeAllowed: Boolean,
-                   @Suppress("MemberVisibilityCanBePrivate") val defaultBranchRef: GHGitRefName,
+                   @Suppress("MemberVisibilityCanBePrivate") val defaultBranchRef: GHGitRefName?,
                    val isFork: Boolean)
   : GHNode(id) {
   val path: GHRepositoryPath
-  val defaultBranch = defaultBranchRef.name
+  val defaultBranch = defaultBranchRef?.name
 
   init {
     val split = nameWithOwner.split('/')
