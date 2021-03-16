@@ -3,14 +3,52 @@
 Reports any variable declarations which can be moved to a smaller scope. Especially
 useful for <i>Pascal style</i> declarations at the start of a method, but variables with too broad
 a scope are also often left over after refactorings.
+<p>Example of <code>sb</code> movement:</p>
+<pre>
+  StringBuilder sb = new StringBuilder();
+  System.out.println();
+  sb.append(1);
+</pre>
+<p>After quick-fix is applied, the result will be:</p>
+<pre>
+  System.out.println();
+  StringBuilder sb = new StringBuilder();
+  sb.append(1);
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to only report variables that can be moved inside deeper code blocks.
+For example, when the checkbox is checked, the movement will be suggested for <code>sb</code> variable but not in the example above:
+</p>
+<pre>
+  StringBuilder sb = new StringBuilder(a);
+  if (flag) {
+    sb.append(1);
+  }
+</pre>
 <p>
 Use the second checkbox below to report variables which are initialized
 with a new expression. This makes the inspection potentially unsafe in cases where the
 constructor has non-local side-effects.
-<p>
+For example, when the checkbox is checked, the movement will be suggested for <code>foo</code> variable:
+</p>
+<pre>
+  class Foo {
+    static List&lt;Foo&gt; fooList = new ArrayList&lt;&gt;();
+    String bar;
 
+    Foo(String bar) {
+        this.bar = bar;
+        fooList.add(this);
+    }
+
+    public static void main(String[] args) {
+      Foo foo = new Foo("bar"); // the movement is possible even though is unsafe
+      System.out.println(fooList.size());
+      System.out.println(foo.bar);
+    }
+  }
+</pre>
+<p>
 </body>
 </html>
