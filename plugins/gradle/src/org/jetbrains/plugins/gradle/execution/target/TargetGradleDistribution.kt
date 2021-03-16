@@ -8,7 +8,7 @@ import org.gradle.tooling.internal.consumer.Distribution
 import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import java.io.File
 
-internal class TargetGradleDistribution(val gradleHomePath: String?, distribution: Distribution) : Distribution by distribution {
+internal class TargetGradleDistribution(distribution: Distribution, val gradleHomePath: String? = null) : Distribution by distribution {
   override fun getToolingImplementationClasspath(progressLoggerFactory: ProgressLoggerFactory?,
                                                  progressListener: InternalBuildProgressListener?,
                                                  userHomeDir: File?,

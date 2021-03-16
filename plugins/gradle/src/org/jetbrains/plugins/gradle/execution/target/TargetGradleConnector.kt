@@ -39,22 +39,22 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
   }
 
   override fun useInstallation(gradleHome: File?): GradleConnector {
-    distribution = TargetGradleDistribution(gradleHome?.path, distributionFactory.getDistribution(gradleHome))
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleHome), gradleHome?.path)
     return this
   }
 
   override fun useGradleVersion(gradleVersion: String?): GradleConnector {
-    distribution = TargetGradleDistribution(null, distributionFactory.getDistribution(gradleVersion))
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleVersion))
     return this
   }
 
   override fun useDistribution(gradleDistribution: URI?): GradleConnector {
-    distribution = TargetGradleDistribution(null, distributionFactory.getDistribution(gradleDistribution))
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleDistribution))
     return this
   }
 
   fun useClasspathDistribution(): GradleConnector {
-    distribution = TargetGradleDistribution(null, distributionFactory.classpathDistribution)
+    distribution = TargetGradleDistribution(distributionFactory.classpathDistribution)
     return this
   }
 
@@ -106,13 +106,11 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
 
   @Throws(GradleConnectionException::class)
   override fun connect(): ProjectConnection {
-    //LOGGER.debug("Connecting from tooling API consumer version {}", GradleVersion.current().version)
     val connectionParameters: ConnectionParameters = connectionParamsBuilder.build()
     checkNotNull(connectionParameters.projectDir) { "A project directory must be specified before creating a connection." }
     if (distribution == null) {
       val searchUpwards = if (connectionParameters.isSearchUpwards != null) connectionParameters.isSearchUpwards else true
-      distribution = TargetGradleDistribution(null,
-                                              distributionFactory.getDefaultDistribution(connectionParameters.projectDir, searchUpwards))
+      distribution = TargetGradleDistribution(distributionFactory.getDefaultDistribution(connectionParameters.projectDir, searchUpwards))
     }
     synchronized(connections) {
       if (stopped) {
