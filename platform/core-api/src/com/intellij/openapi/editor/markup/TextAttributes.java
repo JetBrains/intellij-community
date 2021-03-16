@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
@@ -240,8 +241,7 @@ public class TextAttributes implements Cloneable {
     if(!(obj instanceof TextAttributes)) {
       return false;
     }
-    // myAttrs are interned, see com.intellij.openapi.editor.markup.AttributesFlyweight.create()
-    return myAttrs == ((TextAttributes)obj).myAttrs;
+    return Objects.equals(myAttrs, ((TextAttributes)obj).myAttrs);
   }
 
   @Override
