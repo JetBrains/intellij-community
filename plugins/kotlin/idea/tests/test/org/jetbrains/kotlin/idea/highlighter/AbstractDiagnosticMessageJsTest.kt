@@ -20,8 +20,15 @@ import java.io.File
 import java.lang.reflect.Field
 
 abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest() {
-    override fun analyze(files: Collection<KtFile>, configuration: CompilerConfiguration): AnalysisResult {
-        return analyzeFiles(files, JsConfig(project, configuration))
+    override fun analyze(file: KtFile, languageVersionSettings: LanguageVersionSettings): AnalysisResult {
+        val configuration = CompilerConfiguration().apply {
+            put(CommonConfigurationKeys.MODULE_NAME, myFixture.module.name)
+            put(JSConfigurationKeys.LIBRARIES, jsStdlib())
+            put(CommonConfigurationKeys.DISABLE_INLINE, true)
+            this.languageVersionSettings = languageVersionSettings
+        }
+
+        return analyzeFiles(listOf(file), JsConfig(project, configuration))
     }
 
     override val testDataDirectory: File
@@ -29,15 +36,6 @@ abstract class AbstractDiagnosticMessageJsTest : AbstractDiagnosticMessageTest()
 
     override fun getPlatformSpecificDiagnosticField(diagnosticName: String): Field? {
         return getFieldOrNull(ErrorsJs::class.java, diagnosticName)
-    }
-
-    override fun compilerConfiguration(languageVersionSettings: LanguageVersionSettings): CompilerConfiguration {
-        return CompilerConfiguration().apply {
-            put(CommonConfigurationKeys.MODULE_NAME, myFixture.module.name)
-            put(JSConfigurationKeys.LIBRARIES, jsStdlib())
-            put(CommonConfigurationKeys.DISABLE_INLINE, true)
-            this.languageVersionSettings = languageVersionSettings
-        }
     }
 
     private fun jsStdlib(): List<String> {
