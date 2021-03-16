@@ -11,7 +11,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowInitialView
 import java.util.function.Supplier
 
-class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.create.action"),
+class GHPRCreatePullRequestAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.create.show.form.action"),
                                                     Supplier { null },
                                                     AllIcons.General.Add) {
 
