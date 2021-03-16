@@ -3,7 +3,7 @@ interface I0 {
     fun x() {}
 }
 
-interface I : I0() {
+interface I : I0 {
     fun a()
     val b: Int
         get() = 1
