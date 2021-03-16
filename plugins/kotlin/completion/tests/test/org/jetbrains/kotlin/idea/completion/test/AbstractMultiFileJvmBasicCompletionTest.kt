@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15,13 +15,19 @@ abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCas
     protected fun doTest(testPath: String) {
         configureByFile(getTestName(false) + ".kt", "")
         val shouldFail = testPath.contains("NoSpecifiedType")
-        AstAccessControl.testWithControlledAccessToAst(shouldFail, file.virtualFile, project, testRootDisposable, {
-            testCompletion(file.text, JvmPlatforms.unspecifiedJvmPlatform, { completionType, invocationCount ->
-                setType(completionType)
-                complete(invocationCount)
-                myItems
-            }, CompletionType.BASIC, 0)
-        })
+        AstAccessControl.testWithControlledAccessToAst(shouldFail, file.virtualFile, project, testRootDisposable) {
+            testCompletion(
+                fileText = file.text,
+                platform = JvmPlatforms.unspecifiedJvmPlatform,
+                complete = { completionType, invocationCount ->
+                    setType(completionType)
+                    complete(invocationCount)
+                    myItems
+                },
+                defaultCompletionType = CompletionType.BASIC,
+                defaultInvocationCount = 0,
+            )
+        }
     }
 
     override fun getTestDataDirectory() = File(KotlinTestUtils.getTestsRoot(this::class.java), getTestName(false))

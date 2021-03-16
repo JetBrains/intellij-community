@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,14 +16,20 @@ abstract class AbstractMultiFileSmartCompletionTest : KotlinCompletionTestCase()
     }
 
     protected fun doTest(unused: String) {
-        configureByFile(getTestName(false) + ".kt", "")
-        AstAccessControl.testWithControlledAccessToAst(false, file.virtualFile, project, testRootDisposable, {
-            testCompletion(file.text, JvmPlatforms.unspecifiedJvmPlatform, { completionType, invocationCount ->
-                setType(completionType)
-                complete(invocationCount)
-                myItems
-            }, CompletionType.SMART, 1)
-        })
+        configureByFile(getTestName(false) + ".kt")
+        AstAccessControl.testWithControlledAccessToAst(false, file.virtualFile, project, testRootDisposable) {
+            testCompletion(
+                fileText = file.text,
+                platform = JvmPlatforms.unspecifiedJvmPlatform,
+                complete = { completionType, invocationCount ->
+                    setType(completionType)
+                    complete(invocationCount)
+                    myItems
+                },
+                defaultCompletionType = CompletionType.SMART,
+                defaultInvocationCount = 1,
+            )
+        }
     }
 
     override fun getTestDataDirectory() = COMPLETION_TEST_DATA_BASE.resolve("smartMultiFile").resolve(getTestName(false))
