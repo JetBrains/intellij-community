@@ -128,7 +128,7 @@ object StrategyUtils {
     getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
 
   /**
-   * Get all siblings of [element] of same type and text domain accepted by [checkSibling]
+   * Get all siblings of [element] that are accepted by [checkSibling]
    * which are no further than one line
    *
    * @param element element whose siblings are to be found
