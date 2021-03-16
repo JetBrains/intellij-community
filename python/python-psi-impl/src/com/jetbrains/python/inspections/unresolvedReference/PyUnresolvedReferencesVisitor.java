@@ -41,10 +41,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.PyInspectionsUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
@@ -644,7 +641,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
           if (element == null) {
             if (importElement.getImportedQName() != null) {
               //Mark import as unused even if it can't be resolved
-              if (PyUnresolvedReferencesVisitor.areAllImportsUnused(importStatement, unusedImports)) {
+              if (areAllImportsUnused(importStatement, unusedImports)) {
                 result.add(importStatement);
               }
               else {
@@ -941,7 +938,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   LocalQuickFix getCreateFunctionQuickFix(PyReferenceExpression expr) {
-    PyCallExpression callExpression = PsiTreeUtil.getParentOfType(expr, PyCallExpression.class);
+    PyCallExpression callExpression = PyCallExpressionNavigator.getPyCallExpressionByCallee(expr);
     if (callExpression != null && (!(callExpression.getCallee() instanceof PyQualifiedExpression) ||
                                    ((PyQualifiedExpression)callExpression.getCallee()).getQualifier() == null)) {
       return new UnresolvedRefCreateFunctionQuickFix(callExpression, expr);

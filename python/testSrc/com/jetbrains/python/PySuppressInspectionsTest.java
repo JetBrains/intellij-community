@@ -62,8 +62,8 @@ public class PySuppressInspectionsTest extends PyTestCase {
     myFixture.configureByFile("inspections/suppress/suppressForStatement.py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     final List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Suppress for a statement");
-    // Create function, Rename reference, Ignore an unresolved reference, Mark all unresolved attributes as ignored
-    assertEquals(4, intentions.size());
+    // Rename reference, Ignore an unresolved reference, Mark all unresolved attributes as ignored
+    assertEquals(3, intentions.size());
     final IntentionAction suppressAction = intentions.get(0);
     myFixture.launchAction(suppressAction);
     myFixture.checkResultByFile("inspections/suppress/suppressForStatement.after.py");
