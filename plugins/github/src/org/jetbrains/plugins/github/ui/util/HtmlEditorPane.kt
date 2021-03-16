@@ -16,7 +16,6 @@ import javax.swing.text.ParagraphView
 import javax.swing.text.View
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.ImageView
-import javax.swing.text.html.StyleSheet
 
 internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
   constructor(@NlsSafe body: String) : this() {
@@ -32,7 +31,7 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
         return MyScalingImageView(elem)
       }
       if (elem.name == "blockquote") {
-        return GitHubQuoteView(elem)
+        return GHQuoteView(elem)
       }
       if (view is ParagraphView) {
         return GHParagraphView(elem)
@@ -41,24 +40,24 @@ internal class HtmlEditorPane() : BaseHtmlEditorPane(GithubIcons::class.java) {
     }
   }
 
-  private class GitHubQuoteView(element: Element) : BlockView(element, Y_AXIS) {
+  private class GHQuoteView(element: Element) : BlockView(element, Y_AXIS) {
 
-    override fun setPropertiesFromAttributes() {
-      super.setPropertiesFromAttributes()
-      setInsets(topInset, 0, bottomInset, rightInset)
-    }
-
-    override fun getStyleSheet(): StyleSheet = super.getStyleSheet().apply {
+    init {
       val borderWidth = JBUI.scale(2)
       val borderColor = ColorUtil.toHex(DarculaUIUtil.getOutlineColor(true, false))
       val padding = JBUI.scale(10)
       //language=CSS
-      addRule("""
+      styleSheet.addRule("""
         html body blockquote p {
           border-left: ${borderWidth}px solid ${borderColor};
           padding-left: ${padding}px;
         }
       """.trimIndent())
+    }
+
+    override fun setPropertiesFromAttributes() {
+      super.setPropertiesFromAttributes()
+      setInsets(topInset, 0, bottomInset, rightInset)
     }
   }
 
