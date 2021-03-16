@@ -256,7 +256,7 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, ToolWindowAnchor.RIGHT));
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
       // fire content removed events, so subscribers could cleanup caches
@@ -266,7 +266,6 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
         toolWindow.remove();
       }
     });
-    toolWindow.setIcon(MavenIcons.ToolWindowMaven);
     final ContentFactory contentFactory = ApplicationManager.getApplication().getService(ContentFactory.class);
     final Content content = contentFactory.createContent(panel, "", false);
     contentManager.addContent(content);
