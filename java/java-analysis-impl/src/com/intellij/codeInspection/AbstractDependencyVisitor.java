@@ -334,7 +334,18 @@ public abstract class AbstractDependencyVisitor extends ClassVisitor {
 
   private void addHandle(Handle h) {
     addName(h.getOwner());
-    addMethodDesc(h.getDesc());
+    int tag = h.getTag();
+    String desc = h.getDesc();
+    if (tag == Opcodes.H_INVOKEVIRTUAL ||
+        tag == Opcodes.H_INVOKESTATIC || 
+        tag == Opcodes.H_INVOKESPECIAL ||
+        tag == Opcodes.H_NEWINVOKESPECIAL || 
+        tag == Opcodes.H_INVOKEINTERFACE) {
+      addMethodDesc(desc);
+    }
+    else {
+      addDesc(desc);
+    }
   }
 
   private void addMethodDesc(String desc) {
