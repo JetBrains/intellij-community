@@ -1,11 +1,21 @@
 <html>
 <body>
 Reports pointless or pointlessly
-complicated boolean expressions. Such expressions include <b>and</b>ing with <b>true</b>,
-<b>or</b>ing with <b>false</b>,
-equality comparison with a boolean literal, or negation of a boolean literal. Such expressions may be the result of automated refactorings
-not completely followed through to completion, and in any case are unlikely to be what the developer
-intended to do.
+complicated boolean expressions. Such expressions include <code>&&</code>-ing with <code>true</code>,
+<code>||</code>-ing with <code>false</code>,
+equality comparison with a boolean literal, or negation of a boolean literal. Such expressions can be simplified.
+<p>Example:
+<pre><code>
+  <b>boolean</b> a = !(x && <b>false</b>);
+  <b>boolean</b> b = <b>false</b> || x;
+  <b>boolean</b> c = x != <b>true</b>;
+</code></pre>
+<p>After the quick fix is applied the result looks like:
+<pre><code>
+  <b>boolean</b> a = <b>true</b>;
+  <b>boolean</b> b = x;
+  <b>boolean</b> c = !x;
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to ignore named constants when determining if an expression is pointless.

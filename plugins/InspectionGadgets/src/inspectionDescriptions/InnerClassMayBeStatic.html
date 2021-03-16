@@ -1,12 +1,34 @@
 <html>
 <body>
-Reports any inner classes which may safely be made <b>static</b>.
-An inner class may be <b>static</b> if it doesn't reference its enclosing instance.
+Reports any inner classes which may safely be made <code>static</code>.
+An inner class may be <code>static</code> if it doesn't reference its enclosing instance.
 <p>
-A <b>static</b> inner class does not keep an implicit reference to its enclosing instance.
+A <code>static</code> inner class does not keep an implicit reference to its enclosing instance.
 This prevents a common cause of memory leaks and uses less memory per instance of the class.
-<!-- tooltip end -->
-<p>
+<p>Example:
+<pre><code>
+  <b>public class</b> Outer {
+    <b>class</b> Inner { // not static
+      <b>public void</b> foo() {
+        bar("x");
+      }
 
+      <b>private void</b> bar(String string) {}
+    }
+  }
+</code></pre>
+<p>After the quick fix is applied the result looks like:
+<pre><code>
+  <b>public class</b> Outer {
+    <b>static class</b> Inner {
+      <b>public void</b> foo() {
+        bar("x");
+      }
+
+      <b>private void</b> bar(String string) {}
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

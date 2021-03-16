@@ -1,13 +1,21 @@
 <html>
 <body>
-Reports any calls to <b>Math.random()</b> which are immediately
-cast to <b>int</b>. Casting a <b>double</b> between <b>0.0</b> (inclusive) and
-<b>1.0</b> (exclusive) will always round down to zero. A <b>Math.random()</b> value
-should first be multiplied with some factor before casting it to an <b>int</b> to
+Reports any calls to <code>Math.random()</code> which are immediately
+cast to <code>int</code>. Casting a <code>double</code> between <code>0.0</code> (inclusive) and
+<code>1.0</code> (exclusive) will always round down to zero. A <code>Math.random()</code> value
+should first be multiplied with some factor before casting it to an <code>int</code> to
 get a value between zero (inclusive) and the multiplication factor (exclusive).
-Another possible solution would be to use the <b>nextInt()</b> method of
-<b>java.util.Random</b>.
-<!-- tooltip end -->
+Another possible solution would be to use the <code>nextInt()</code> method of
+<code>java.util.Random</code>.
+<p>Example:
+<pre><code>
+  <b>int</b> r = (<b>int</b>)Math.random() * 10;
+</code></pre>
+<p>After the quick fix is applied the result looks like:
+<pre><code>
+  <b>int</b> r = (<b>int</b>)(Math.random() * 10);
+</code></pre>
+  <!-- tooltip end -->
 <p>
 </body>
 </html>

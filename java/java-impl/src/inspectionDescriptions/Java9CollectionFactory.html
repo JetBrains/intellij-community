@@ -1,18 +1,39 @@
 <html>
 <body>
-This inspection helps to convert unmodifiable collections created before Java 9 to new collection factory methods
-like <code>List.of</code> or <code>Set.of</code>. Also since Java 10 the conversion to <code>List.copyOf</code>, etc. could be suggested.
+Reports <code>java.util.Collections</code> unmodifiable collection calls,
+that can be converted to newer collection factory methods.
+These can be replaced with e.g. <code>List.of()</code> or <code>Set.of()</code> introduced in Java 9,
+or <code>List.copyOf()</code> introduced in Java 10.
+
+<p>Not that, in contrast to <code>java.util.Collections</code> methods, the Java 9 collection factory methods
+<ul>
+  <li>do not accept <code>null</code> values
+  <li>require unique set elements and map keys
+  <li>do not accept <code>null</code> arguments to query methods like <code>List.contains()</code> or <code>Map.get()</code> of the collections returned.
+</ul>
+When these cases are violated, exceptions are thrown.
+This can change the semantics of the code after migration.
+<p>Example:
+<pre><code>
+  List&lt;Integer> even = Collections.unmodifiableList(
+    Arrays.asList(2, 4, 6, 8, 10, 2));
+  List&lt;Integer> evenCopy = Collections.unmodifiableList(
+    new ArrayList<>(list1));
+</code></pre>
+<p>After the quick fix is applied the result looks like:
+<pre><code>
+  List&lt;Integer> even = List.of(2, 4, 6, 8, 10, 2);
+  List&lt;Integer> evenCopy = List.copyOf(list);
+</code></pre>
+<p>This inspection only reports if the configured language level is 9 or higher.
+
 <!-- tooltip end -->
-<p>Note that Java 9 collection factory methods do not accept null values. Also, set elements and map keys are required to be different.
-It's not always possible to statically check whether original elements are different and not null. Using the checkbox you may enforce
-the inspection to warn only if original elements are compile-time constants.</p>
 <p>
-  Also it should be noted that some query methods like <code>Collection.contains()</code> or <code>Map.get</code>
-  don't tolerate nulls as well. E.g., <code>Collection.contains()</code> 
-  throws a NullPointerException instead of returning false. 
-  Thus, even if the collection is initialized with non-null values only, the semantics of the code may change after migration.
-</p>
-<p>This inspection is available since Java 9 only.</p>
-<small>New in 2017.2</small>
+Use the first checkbox below to only report if the supplied arguments are compile-time constants.
+This reduces the chance of changes in behaviour,
+because it's not always possible to statically check whether original elements are unique and not <code>null</code>.
+<p>
+Use the second checkbox to suggest a <code>Map.ofEntries()</code> replacement for unmodifiable maps with more than 10 entries.
+<p><small>New in 2017.2</small>
 </body>
 </html>

@@ -1,8 +1,16 @@
 <html>
 <body>
-Reports method references, like <code>MyClass::myMethod</code> and <code>myObject::myMethod</code>.
-<p> The quick fix for the inspection replaces the method reference with an equivalent lambda expression that invokes the method.
-<p>For example, the method reference <code>System.out::println</code> is replaced with
-<code>s&nbsp;->&nbsp;System.out.println(s)</code>
+Reports method references, like <code>MyClass::myMethod</code> and <code>myObject::myMethod</code>,
+to allow them to be replaced with an equivalent lambda expression.
+Lambda expressions can be easier to modify than method references.
+By default this inspection does not highlight in the editor, but only provides a quick fix.
+<p>Example:
+<pre><code>
+  System.out::println
+</code></pre>
+<p>After the quick fix is applied the result looks like:
+<pre><code>
+  s -> System.out.println(s)
+</code></pre>
 </body>
 </html>
