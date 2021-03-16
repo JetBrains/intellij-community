@@ -88,11 +88,9 @@ class RuntimeChooserDialog(
   }
 
   override fun createActions(): Array<Action> {
-    return super.createActions() + object : DialogWrapperExitAction(
+    return super.createActions() + DialogWrapperExitAction(
       LangBundle.message("dialog.button.choose.ide.runtime.useDefault"),
-      USE_DEFAULT_RUNTIME_CODE) {
-
-    }
+      USE_DEFAULT_RUNTIME_CODE)
   }
 
   fun showDialogAndGetResult() : RuntimeChooserDialogResult {
@@ -120,8 +118,7 @@ class RuntimeChooserDialog(
   }
 
   override fun createTitlePane(): JComponent {
-    return object : BorderLayoutPanel() {
-      init {
+    return BorderLayoutPanel().apply {
         border = JBUI.Borders.merge(JBUI.Borders.empty(10), JBUI.Borders.customLineBottom(JBColor.border()), true)
         background = JBUI.CurrentTheme.Notification.BACKGROUND
         foreground = JBUI.CurrentTheme.Notification.FOREGROUND
@@ -135,7 +132,6 @@ class RuntimeChooserDialog(
         })
 
         withPreferredWidth(400)
-      }
     }
   }
 
