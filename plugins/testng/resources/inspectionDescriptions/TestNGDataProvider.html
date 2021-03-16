@@ -1,3 +1,24 @@
 <html><body>
 This inspection checks that data provider method exists and is accessible.
+<!-- tooltip end -->
+<p>Example: </p>
+<pre>
+public class InstanceDataProviderFromForeignClass {
+  // method data() doesn't exist in class A
+  @Test(dataProvider = "data", dataProviderClass = A.class)
+  public void test() {
+  }
+}
+class A { }
+</pre>
+<p>After the fix:</p>
+<pre>
+//the needed data() method is created in class A
+class A {
+  @DataProvider
+  public Object[][] data() {
+    return new Object[][]{};
+  }
+}
+</pre>
 </body></html>
