@@ -3,14 +3,15 @@ package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Consumer
+import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase.IDEA_EXT_PLUGIN_VERSION
 import java.io.File
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
-  @Suppress("unused")
-  fun withGradleIdeaExtPluginIfCan(version: String) = apply {
+  fun withGradleIdeaExtPluginIfCan() = apply {
     val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)
     if (localDirWithJar == null) {
-      withGradleIdeaExtPlugin(version)
+      withGradleIdeaExtPlugin()
       return@apply
     }
     if (!localDirWithJar.exists()) throw RuntimeException("Directory $localDirWithJar not found")
@@ -22,7 +23,6 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
     withLocalGradleIdeaExtPlugin(jarFile)
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
     withBuildScriptMavenCentral()
     addBuildScriptDependency("classpath files('${FileUtil.toSystemIndependentName(jarFile.absolutePath)}')")
@@ -31,13 +31,13 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
     applyPlugin("'org.jetbrains.gradle.plugin.idea-ext'")
   }
 
-  fun withGradleIdeaExtPlugin(version: String) = apply {
-    addPlugin("id 'org.jetbrains.gradle.plugin.idea-ext' version '$version'")
+  fun withGradleIdeaExtPlugin() = apply {
+    addPlugin("id 'org.jetbrains.gradle.plugin.idea-ext' version '$IDEA_EXT_PLUGIN_VERSION'")
   }
 
   fun withTask(name: String, type: String? = null, configure: GroovyBuilder.() -> Unit = {}) = apply {
     addPostfix("""
-      tasks.create("$name"${type?.let{", $it"} ?: ""}) {
+      tasks.create("$name"${type?.let { ", $it" } ?: ""}) {
       ${GroovyBuilder.generate("  ", configure)}
       }
     """.trimIndent())
@@ -76,15 +76,26 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
     applyPlugin("'kotlin'")
   }
 
-  fun withGroovyPlugin(version: String) = apply {
+  fun withGroovyPlugin() = apply {
     applyPlugin("'groovy'")
     withMavenCentral()
-    addDependency("compile 'org.codehaus.groovy:groovy-all:$version'")
+    implementation("'org.codehaus.groovy:groovy-all:3.0.5'")
   }
 
-  fun withJUnit(version: String) = apply {
+  fun withJUnit() = withJUnit5()
+
+  fun withJUnit4() = apply {
     withMavenCentral()
-    addDependency("testCompile 'junit:junit:$version'")
+    testImplementation("'junit:junit:4.12'")
+  }
+
+  fun withJUnit5() = apply {
+    withMavenCentral()
+    testImplementation("'org.junit.jupiter:junit-jupiter-api:5.7.0'")
+    testRuntimeOnly("'org.junit.jupiter:junit-jupiter-engine:1.7.0'")
+    withTaskConfiguration("test") {
+      call("useJUnitPlatform")
+    }
   }
 
   fun version(version: String) = apply {
@@ -93,6 +104,18 @@ class GradleBuildScriptBuilderEx : GradleBuildScriptBuilder() {
 
   fun group(group: String) = apply {
     addPrefix("group = '$group'")
+  }
+
+  fun implementation(dependency: String) = apply {
+    addDependency("implementation $dependency")
+  }
+
+  fun testImplementation(dependency: String) = apply {
+    addDependency("testImplementation $dependency")
+  }
+
+  fun testRuntimeOnly(dependency: String) = apply {
+    addDependency("testRuntimeOnly $dependency")
   }
 }
 

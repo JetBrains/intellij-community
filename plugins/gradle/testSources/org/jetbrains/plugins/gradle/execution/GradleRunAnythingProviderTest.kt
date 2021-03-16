@@ -21,7 +21,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createTestJavaClass("ClassG")
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
     importProject(buildScript.generate())
 
     val wcCompletions = arrayOf(

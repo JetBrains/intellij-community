@@ -15,7 +15,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   fun `test simple tests finding`() {
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
     importProject(buildScript.generate())
     assertTestTasks(createProjectSubFile("src/test/java/package/TestCase.java", "class TestCase"),
                     listOf(":test"))
@@ -26,7 +26,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   fun `test intellij tests finding`() {
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPrefix("""
         sourceSets {
           foo.java.srcDirs = ["foo-src", "foo-other-src"]
@@ -57,7 +57,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   fun `test intellij tests finding new interface`() {
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPrefix("""
         sourceSets {
           foo.java.srcDirs = ["foo-src", "foo-other-src"]

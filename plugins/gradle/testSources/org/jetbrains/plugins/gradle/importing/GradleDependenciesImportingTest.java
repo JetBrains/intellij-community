@@ -1724,7 +1724,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSourcesJavadocAttachmentFromGradleCache() throws Exception {
     importProject(new GradleBuildScriptBuilderEx()
                     .withJavaPlugin()
-                    .withJUnit("4.12") // download classes and sources - the default import settings
+                    .withJUnit4() // download classes and sources - the default import settings
                     .generate());
     assertModules("project", "project.main", "project.test");
 
@@ -1737,7 +1737,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(new GradleBuildScriptBuilderEx()
                     .withJavaPlugin()
                     .withIdeaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .addPrefix("idea.module {\n" +
                                "  downloadJavadoc = true\n" +
                                "  downloadSources = false\n" + // should be already available in Gradle cache

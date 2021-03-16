@@ -19,7 +19,7 @@ class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
     importProject(GradleBuildScriptBuilderEx()
                     .withJavaPlugin()
                     .withIdeaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .addPrefix("idea.module.downloadSources = false")
                     .generate())
 

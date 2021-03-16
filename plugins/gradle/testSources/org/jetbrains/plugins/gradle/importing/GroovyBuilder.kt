@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
+import java.util.*
+
 class GroovyBuilder(private val indent: String = "") {
 
-  private val builder = StringBuilder()
+  private val builder = StringJoiner("\n")
 
   fun line(text: String) = apply {
-    builder.appendln(indent + text)
+    builder.add(indent + text)
+  }
+
+  fun call(name: String) = apply {
+    line("$name()")
   }
 
   fun call(name: String, value: Any?) = apply {

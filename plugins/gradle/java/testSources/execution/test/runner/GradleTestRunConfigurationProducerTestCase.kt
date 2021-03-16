@@ -148,8 +148,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
       .withIdeaPlugin()
-      .withJUnit("4.12")
-      .withGroovyPlugin("2.4.14")
+      .withJUnit4()
+      .withGroovyPlugin()
       .addPrefix("""
         idea.module {
           testSourceDirs += file('automation')
@@ -179,8 +179,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       """.trimIndent())
     val moduleBuildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
-      .withGroovyPlugin("2.4.14")
+      .withJUnit4()
+      .withGroovyPlugin()
       .addDependency("testCompile project(path: ':', configuration: 'testArtifacts')")
     createSettingsFile("""
       rootProject.name = 'project'

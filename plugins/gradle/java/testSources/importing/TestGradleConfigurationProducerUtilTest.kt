@@ -57,7 +57,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
     """.trimIndent())
     val moduleBuildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addPostfix("""
         task myTestsJar(type: Jar, dependsOn: testClasses) {
             baseName = "test-${'$'}{project.archivesBaseName}"
@@ -74,7 +74,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
       """.trimIndent())
     val depModuleBuildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .addDependency("compile project(':module')")
       .addDependency("testCompile project(path: ':module', configuration: 'testArtifacts')")
     createProjectSubFile("module/build.gradle", moduleBuildScript.generate())

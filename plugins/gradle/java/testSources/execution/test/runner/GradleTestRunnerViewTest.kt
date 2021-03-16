@@ -69,7 +69,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
 
     val buildScript = GradleBuildScriptBuilderEx()
       .withJavaPlugin()
-      .withJUnit("4.12")
+      .withJUnit4()
       .withTask("additionalTest", "Test") {
         property("testClassesDirs", "sourceSets.test.output.classesDirs")
         property("classpath", "sourceSets.test.runtimeClasspath")
@@ -114,7 +114,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     val scriptOutputTextWOEol = "text w/o eol"
     importProject(GradleBuildScriptBuilderEx()
                     .withJavaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .addBuildScriptPrefix("print(\"${escapeJava(scriptOutputText)}\")")
                     .addPostfix("print(\"${escapeJava(scriptOutputTextWOEol)}\")")
                     .generate())
@@ -202,7 +202,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
 
     importProject(GradleBuildScriptBuilderEx()
                     .withJavaPlugin()
-                    .withJUnit("4.12")
+                    .withJUnit4()
                     .generate())
 
     val testRunnerTree = runTasksAndGetTestRunnerTree(listOf("clean", "test"))

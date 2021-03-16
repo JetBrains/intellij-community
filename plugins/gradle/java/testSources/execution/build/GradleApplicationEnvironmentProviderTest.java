@@ -54,7 +54,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
       new GradleBuildScriptBuilderEx()
         .withJavaPlugin()
         .withIdeaPlugin()
-        .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+        .withGradleIdeaExtPlugin()
         .addImport("org.jetbrains.gradle.ext.*")
         .addPostfix("idea {\n" +
                     "  project.settings {\n" +
