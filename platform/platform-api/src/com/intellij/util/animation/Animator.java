@@ -124,7 +124,7 @@ public final class Animator implements Disposable {
     final var duration = animations.isEmpty() ? 0 : to - from;
 
     if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled() || duration == 0) {
-      myService.execute(() -> {
+      myService.schedule(() -> {
         myRunning.incrementAndGet();
         for (Animation animation : animations) {
           try {
@@ -137,18 +137,18 @@ public final class Animator implements Disposable {
             Logger.getInstance(Animation.class).error(t);
           }
         }
-      });
+      }, delay, TimeUnit.MILLISECONDS);
       return;
     }
 
     myService.schedule(new Runnable() {
       final long rid = myRunning.incrementAndGet();
       @Nullable FrameCounter frameCounter;
-      @NotNull List<Animation> scheduledAnimations = new ArrayList<>();
+      @NotNull LinkedHashSet<Animation> scheduledAnimations = new LinkedHashSet<>();
 
       private void prepareAnimations() {
         frameCounter = create(myType, myPeriod, duration, delay);
-        scheduledAnimations = new ArrayList<>(animations);
+        scheduledAnimations = new LinkedHashSet<>(animations);
         for (Animation animation : scheduledAnimations) {
           animation.fireEvent(Animation.Phase.SCHEDULED);
         }
@@ -182,7 +182,7 @@ public final class Animator implements Disposable {
             expired.add(animation);
           }
         }
-        scheduledAnimations.removeAll(expired);
+        expired.forEach(scheduledAnimations::remove);
         boolean isProceed = currentFrame < totalFrames || myCyclic;
         for (Animation animation : isProceed ? expired : scheduledAnimations) {
           animation.fireEvent(Animation.Phase.EXPIRED);

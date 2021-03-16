@@ -242,9 +242,7 @@ class AnimationPanelTestAction : DumbAwareAction("Show Animation Panel") {
           content.repaint()
         }
       )
-      val fillers = Animator(disposable).apply {
-        ignorePowerSaveMode()
-      }
+      val fillers = Animator(disposable)
 
       addToLeft(AnimationSettings { options ->
         fillers.period = options.period
