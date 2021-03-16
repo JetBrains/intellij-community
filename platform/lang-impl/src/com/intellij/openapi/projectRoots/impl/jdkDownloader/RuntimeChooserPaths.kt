@@ -41,6 +41,7 @@ class RuntimeChooserPaths {
     }
 
     val home = RuntimeChooserJreValidator.testNewJdkUnderProgress(
+      allowRunProcesses = true,
       computeHomePath = { sdkHome?.toAbsolutePath()?.toString() },
       callback = object : RuntimeChooserJreValidatorCallback<Path?> {
         override fun onSdkResolved(versionString: String, sdkHome: Path) = sdkHome

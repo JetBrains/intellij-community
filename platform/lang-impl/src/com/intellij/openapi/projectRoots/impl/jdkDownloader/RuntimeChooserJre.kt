@@ -58,6 +58,7 @@ object RuntimeChooserJreValidator {
   }.getOrDefault(false)
 
   fun <R> testNewJdkUnderProgress(
+    allowRunProcesses: Boolean,
     computeHomePath: () -> String?,
     callback: RuntimeChooserJreValidatorCallback<R>,
   ): R {
@@ -67,7 +68,7 @@ object RuntimeChooserJreValidator {
                                        LangBundle.message(LangBundle.message("dialog.message.choose.ide.runtime.no.file.part"))))
 
     if (SystemInfo.isMac && homeDir.endsWith("Contents/Home")) {
-      return testNewJdkUnderProgress({ homeDir.parent?.parent?.toString() }, callback)
+      return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.parent?.toString() }, callback)
     }
 
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
