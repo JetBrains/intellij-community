@@ -335,7 +335,7 @@ public final class ListUtil {
     @Override public void set(DefaultListModel<Object> model, int index, Object item) { model.set(index, item);}
     @Override public void remove(DefaultListModel<Object> model, int index) { model.remove(index);}
     @Override public void removeAll(DefaultListModel<Object> model) { model.removeAllElements();}
-    @Override public void addAll(DefaultListModel<Object> model, List<?> item) { model.addElement(item);}
+    @Override public void addAll(DefaultListModel<Object> model, List<?> items) { model.addAll(items);}
   };
 
   private static final ListModelExtension COLLECTION_MODEL = new ListModelExtension<Object, CollectionListModel<Object>>() {
