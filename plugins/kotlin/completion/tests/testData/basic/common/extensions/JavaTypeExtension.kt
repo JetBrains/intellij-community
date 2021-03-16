@@ -4,7 +4,7 @@ fun <T> Iterable<T>.first() : T? {
 }
 
 fun main(args : Array<String>) {
-    val test = HashSet<Int>() // aliased in JVM to java.util.HashSet
+    val test = ArrayList<Int>() // aliased in JVM to java.util.ArrayList
     test.<caret>
 }
 

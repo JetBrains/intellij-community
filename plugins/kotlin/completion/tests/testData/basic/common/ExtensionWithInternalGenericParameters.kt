@@ -1,12 +1,12 @@
 // FIR_COMPARISON
-import java.util.HashSet
+import java.util.ArrayList
 
 open class Base
 
-fun <T: Base> Set<List<T>>.extensionInternal() = 12
+fun <T: Base> List<List<T>>.extensionInternal() = 12
 
 fun some() {
-    HashSet<List<Base>>().ex<caret>
+    ArrayList<List<Base>>().ex<caret>
 }
 
 // EXIST: extensionInternal
