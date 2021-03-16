@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +36,8 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     try {
       long startNano = System.nanoTime();
       Pair<GeneralCommandLine, List<String>> result = doFetchDistributionsFromWslCli();
+      if (result == null) return Collections.emptyList();
+
       LOG.info("Fetched WSL distributions: " + result.second +
                " (\"" + result.first.getCommandLineString() + "\" done in " + TimeoutUtil.getDurationMillis(startNano) + " ms)");
       return result.second;
@@ -45,8 +48,15 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     }
   }
 
-  private static @NotNull Pair<GeneralCommandLine, List<String>> doFetchDistributionsFromWslCli() throws IOException {
-    GeneralCommandLine commandLine = createCommandLine();
+  private static @Nullable Pair<GeneralCommandLine, List<String>> doFetchDistributionsFromWslCli() throws IOException {
+    Path wslExe = WSLDistribution.findWslExe();
+    if (wslExe == null) {
+      LOG.info("Cannot parse WSL distributions: No wsl.exe found in %PATH%");
+      return null;
+    }
+
+    GeneralCommandLine commandLine = new GeneralCommandLine(wslExe.toString(), "--list", "--quiet").withCharset(StandardCharsets.UTF_16LE);
+
     ProcessOutput output;
     try {
       output = ExecUtil.execAndGetOutput(commandLine, 10_000);
@@ -67,14 +77,6 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       return !INTERNAL_DISTRIBUTIONS.contains(distribution);
     });
     return Pair.create(commandLine, msIds);
-  }
-
-  private static @NotNull GeneralCommandLine createCommandLine() throws IOException {
-    Path wslExe = WSLDistribution.findWslExe();
-    if (wslExe == null) {
-      throw new IOException("No wsl.exe found in %PATH%");
-    }
-    return new GeneralCommandLine(wslExe.toString(), "--list", "--quiet").withCharset(StandardCharsets.UTF_16LE);
   }
 
   private static void checkEdtAndReadAction() {
