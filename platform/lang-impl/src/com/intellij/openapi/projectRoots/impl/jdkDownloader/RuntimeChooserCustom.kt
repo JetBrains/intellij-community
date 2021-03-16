@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -65,6 +66,7 @@ object RuntimeChooserCustom {
     object : Task.Modal(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), false) {
       override fun run(indicator: ProgressIndicator) {
         RuntimeChooserJreValidator.testNewJdkUnderProgress(
+          allowRunProcesses = false,
           computeHomePath = { sdk.homePath },
           callback = object : RuntimeChooserJreValidatorCallback<Unit> {
             override fun onSdkResolved(versionString: String, sdkHome: Path) {
