@@ -48,25 +48,38 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class PluginUpdateDialog extends DialogWrapper {
-  private final Collection<? extends PluginDownloader> myDownloaders;
+  private final Collection<PluginDownloader> myDownloaders;
+  private final boolean myPlatformUpdate;
 
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup = new PluginsGroup("");
   private final PluginDetailsPageComponent myDetailsPage;
   private final JLabel myTotalLabel = new JLabel();
-
   private final ActionLink myIgnoreAction;
 
-  private Runnable myFinishCallback;
+  private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<? extends PluginDownloader> updatedPlugins,
+                            @NotNull Collection<PluginDownloader> updatedPlugins,
                             @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
-    super(true);
+    this(project, updatedPlugins, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
+  }
+
+  PluginUpdateDialog(@NotNull Collection<PluginDownloader> updatedPlugins) {
+    this(null, updatedPlugins, null, true);
+    setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+  }
+
+  private PluginUpdateDialog(@Nullable Project project,
+                             Collection<PluginDownloader> updatedPlugins,
+                             @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins,
+                             boolean platformUpdate) {
+    super(true);
 
     myDownloaders = updatedPlugins;
+    myPlatformUpdate = platformUpdate;
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), e -> {
       close(CANCEL_EXIT_CODE);
@@ -154,6 +167,8 @@ public class PluginUpdateDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
+
+    if (myPlatformUpdate) return;
 
     List<PluginDownloader> toDownloads = new ArrayList<>();
     int index = 0;
