@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -28,6 +28,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.util.findElementByCommentPrefix
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import java.io.File
 import java.util.*
 import kotlin.test.assertEquals
@@ -159,7 +161,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             val method = Util.getContainingMethod(context) ?: throw AssertionError("No containing method found")
 
             val applyToSuper = InTextDirectivesUtils.isDirectiveDefined(file.getText(), "// APPLY_TO_SUPER")
-            val methodToSearchFor = if (applyToSuper) method.findDeepestSuperMethods()[0] else method
+            val methodToSearchFor = if (applyToSuper) method.findDeepestSuperMethods().firstIsInstance<KtLightMethod>() else method
 
             val (initializer, occurrences) =
                 if (expr == null) {
@@ -345,7 +347,11 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             }
 
             try {
-                checkExtract(ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi), checkAdditionalAfterdata, action)
+                checkExtract(
+                    ExtractTestFiles(mainFile.path, fixture.configureByFile(mainFileName), extraFilesToPsi),
+                    checkAdditionalAfterdata,
+                    action,
+                )
             } finally {
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
 
