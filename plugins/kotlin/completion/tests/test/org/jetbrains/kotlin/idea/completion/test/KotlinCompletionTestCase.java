@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.completion.test;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaCompletionTestCase;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this);
-        CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[]{"excludedPackage", "somePackage.ExcludedClass"};
+        CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = new String[] {"excludedPackage", "somePackage.ExcludedClass"};
     }
 
     @Override
@@ -52,11 +53,18 @@ abstract public class KotlinCompletionTestCase extends JavaCompletionTestCase {
     }
 
     @Override
-    protected final @NotNull String getTestDataPath() {
+    protected final @NotNull
+    String getTestDataPath() {
         return KotlinTestUtils.toSlashEndingDirPath(getTestDataDirectory().getAbsolutePath());
     }
 
-    protected @NotNull File getTestDataDirectory() {
+    protected @NotNull
+    File getTestDataDirectory() {
         return new File(getTestsRoot(getClass()));
+    }
+
+    @Override
+    protected Sdk getTestProjectJdk() {
+        return null;
     }
 }
