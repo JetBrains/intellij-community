@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
 import com.intellij.util.indexing.impl.forward.*
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings
-import com.intellij.util.io.IOUtil
 import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
 import org.jetbrains.annotations.ApiStatus
@@ -97,7 +97,7 @@ object DefaultIndexStorageLayout {
     }
 
     override fun clearIndexData() {
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getIndexRootDir(extension.name))
+      deleteIndexDirectory(extension)
     }
   }
 
@@ -108,8 +108,8 @@ object DefaultIndexStorageLayout {
     }
 
     private fun deleteIndexData() {
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getPersistentIndexRootDir(extension.name))
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getIndexRootDir(extension.name))
+      deleteIndexDirectory(extension)
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(extension.name).toFile())
     }
 
     @Throws(IOException::class)
@@ -158,7 +158,11 @@ object DefaultIndexStorageLayout {
     }
 
     override fun clearIndexData() {
-      IOUtil.deleteAllFilesStartingWith(IndexInfrastructure.getIndexRootDir(extension.name))
+      deleteIndexDirectory(extension)
     }
+  }
+
+  private fun deleteIndexDirectory(extension: FileBasedIndexExtension<*, *>) {
+    FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(extension.name).toFile())
   }
 }
