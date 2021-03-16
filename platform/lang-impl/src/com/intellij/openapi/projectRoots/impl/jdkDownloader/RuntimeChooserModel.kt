@@ -72,12 +72,13 @@ class RuntimeChooserModel {
       .map { RuntimeChooserDownloadableItem(it) }
 
     newList += defaultDownloadableSdks
-    newList += RuntimeChooserAdvancedSectionSeparator
 
     if (RuntimeChooserCustom.isActionAvailable) {
       if (customJdks.isNotEmpty()) {
         newList += RuntimeChooserCustomSelectedSectionSeparator
         newList += customJdks
+      } else {
+        newList += RuntimeChooserAdvancedSectionSeparator
       }
       newList += RuntimeChooserAddCustomItem
     }
