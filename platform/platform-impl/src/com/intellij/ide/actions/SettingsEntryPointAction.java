@@ -319,7 +319,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     @Override
     public @Nls @NotNull String getDisplayName() {
-      return IdeBundle.message("settings.entry.point.tooltip");
+      return IdeBundle.message("settings.entry.point.widget.name");
     }
 
     @Override
