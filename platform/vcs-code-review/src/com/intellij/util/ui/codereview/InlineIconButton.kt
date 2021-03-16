@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.codereview
 
 import com.intellij.ide.HelpTooltip
@@ -12,9 +12,7 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import java.awt.*
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.plaf.ComponentUI
@@ -36,6 +34,7 @@ class InlineIconButton(val icon: Icon,
 
     private var buttonBehavior: BaseButtonBehavior? = null
     private var tooltipConnector: UiNotifyConnector? = null
+    private var spaceKeyListener: KeyListener? = null
 
     override fun paint(g: Graphics, c: JComponent) {
       c as InlineIconButton
@@ -86,6 +85,16 @@ class InlineIconButton(val icon: Icon,
           }
         }
       }
+      spaceKeyListener = object : KeyAdapter() {
+        override fun keyReleased(e: KeyEvent) {
+          if (c.isEnabled && !e.isConsumed && e.modifiers == 0 && e.keyCode == KeyEvent.VK_SPACE) {
+            c.actionListener?.actionPerformed(ActionEvent(e, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
+            e.consume()
+            return
+          }
+        }
+      }
+      c.addKeyListener(spaceKeyListener)
 
       tooltipConnector = UiNotifyConnector(c, object : Activatable {
         override fun showNotify() {
@@ -112,6 +121,10 @@ class InlineIconButton(val icon: Icon,
         Disposer.dispose(it)
       }
       tooltipConnector = null
+      spaceKeyListener?.let {
+        c.removeKeyListener(it)
+      }
+      spaceKeyListener = null
       buttonBehavior = null
       HelpTooltip.dispose(c)
     }
