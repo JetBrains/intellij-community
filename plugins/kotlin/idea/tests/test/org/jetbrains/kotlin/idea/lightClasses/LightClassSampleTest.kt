@@ -27,17 +27,19 @@ class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
         // KT27243
         myFixture.configureByText(
             "a.kt", """
-interface A {
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")
-    fun foo()
-} """.trimIndent()
+                interface A {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")
+                    fun foo()
+                }
+            """.trimMargin()
         )
 
         myFixture.configureByText(
-            "b.kt", """ 
-class B : A { 
-    override fun foo() {} 
-}""".trimIndent()
+            "b.kt", """
+                class B : A { 
+                    override fun foo() {} 
+                }
+            """.trimIndent()
         )
 
         doTestAndCheck("B", "foo", 1)
@@ -47,17 +49,19 @@ class B : A {
         // KT33561
         myFixture.configureByText(
             "foo.kt", """
-class Foo {
-    @JvmSynthetic
-    inline fun foo(crossinline getter: () -> String) = foo(getter())
-
-    fun foo(getter: String) = println(getter)
-} """.trimIndent()
+                class Foo {
+                    @JvmSynthetic
+                    inline fun foo(crossinline getter: () -> String) = foo(getter())
+                
+                    fun foo(getter: String) = println(getter)
+                }
+            """.trimIndent()
         )
 
         doTestAndCheck("Foo", "foo", 1)
     }
 
+    @Suppress("SameParameterValue")
     private fun doTestAndCheck(className: String, methodName: String, methods: Int) {
         withLightClasses {
             val theClass: PsiClass = myFixture.javaFacade.findClass(className)
@@ -74,7 +78,7 @@ class Foo {
     }
 
 
-    fun withLightClasses(block: () -> Any) {
+    private fun withLightClasses(block: () -> Any) {
         val registryValue = Registry.get("kotlin.use.ultra.light.classes")
         val initialValue = registryValue.asBoolean()
         registryValue.setValue(false)
