@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.util.matches
 import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.kotlin.util.parseKotlinVersionRequirement
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
-import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.runners.Parameterized
 import java.io.File
@@ -60,22 +60,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     private val orgGradleNativePropertyKey: String = "org.gradle.native"
     private var initialOrgGradleNativePropertyValue: String? = null
 
-    private val mavenLocalRepositoryFolder = File(System.getProperty("user.home")).resolve(".m2/repository").absolutePath
-
-    private val kotlinGradlePluginLocal
-        get() =
-            File(mavenLocalRepositoryFolder).resolve(
-                "org/jetbrains/kotlin/kotlin-gradle-plugin/$masterGradlePluginVersion"
-            )
-
-    private val isMasterVersion get() = pluginVersion.contains(masterGradlePluginVersion)
-
     override fun setUp() {
-        if (isMasterVersion)
-            Assume.assumeTrue(
-                "Master version of Kotlin Gradle Plugin is not found in local maven repo",
-                kotlinGradlePluginLocal.exists()
-            )
+        if (pluginVersion == masterKotlinPluginVersion) {
+            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        }
         super.setUp()
         initialOrgGradleNativePropertyValue = System.getProperty(orgGradleNativePropertyKey, "false")
         System.setProperty("org.gradle.native", "false")
@@ -92,7 +80,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterGradlePluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.5.255-SNAPSHOT"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.5.255-SNAPSHOT"
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
@@ -105,7 +93,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("6.7.1", "1.4.0"),
                 arrayOf("6.8.2", "1.4.31"),
                 arrayOf("6.8.2", "1.5.0-M1"),
-                arrayOf("6.8.2", masterGradlePluginVersion)
+                arrayOf("6.8.2", masterKotlinPluginVersion)
             )
         }
     }
@@ -163,4 +151,12 @@ fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(vers
 
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
+}
+
+private fun localKotlinGradlePluginExists(): Boolean {
+    val localKotlinGradlePlugin = File(System.getProperty("user.home"))
+        .resolve(".m2/repository")
+        .resolve("org/jetbrains/kotlin/kotlin-gradle-plugin/${MultiplePluginVersionGradleImportingTestCase.masterKotlinPluginVersion}")
+
+    return localKotlinGradlePlugin.exists()
 }
