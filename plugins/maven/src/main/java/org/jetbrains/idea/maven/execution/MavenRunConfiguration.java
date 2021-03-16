@@ -379,7 +379,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       try {
         JavaParameters parameters = getJavaParameters();
 
-        WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters);
+        WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
         if (config == null || config.getDistribution() == null) {
           return null;
         }
