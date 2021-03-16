@@ -833,7 +833,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private boolean isDisposed() {
-    return myProject.isDisposed() || myEditor == null;
+    return myProject.isDisposed() || myEditor == null || myEditor.isDisposed();
   }
 
   protected void doClear() {
