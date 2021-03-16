@@ -68,7 +68,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final int MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING =
     SystemProperties.getIntProperty("intellij.indexing.minimum.number.of.files.to.run.concurrent.indexing", 100);
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
-  private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("CONTENT_SCANNED");
+  private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("INDEX_UPDATE_IN_PROGRESS");
   private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
   private static final Object ourLastRunningTaskLock = new Object();
 
