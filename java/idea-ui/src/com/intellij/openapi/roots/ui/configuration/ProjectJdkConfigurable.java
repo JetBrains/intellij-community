@@ -98,7 +98,9 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myFreeze) return;
-          myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
+          if (myCbProjectJdk != null) {
+            myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
+          }
           clearCaches();
         }
       });
