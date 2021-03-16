@@ -20,7 +20,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.evaluateString
 import org.jetbrains.uast.toUElementOfType
