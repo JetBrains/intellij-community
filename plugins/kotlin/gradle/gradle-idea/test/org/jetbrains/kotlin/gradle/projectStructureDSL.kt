@@ -91,6 +91,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
     private val expectedSourceRoots = HashSet<String>()
     private val expectedExternalSystemTestTasks = ArrayList<ExternalSystemTestRunTask>()
     private val assertions = mutableListOf<(ModuleInfo) -> Unit>()
+    private var mustHaveSdk: Boolean = true
 
     private val sourceFolderByPath by lazy {
         rootModel.contentEntries.asSequence()
@@ -283,6 +284,10 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Output path", pathInProject, actualPathInProject)
     }
 
+    fun noSdk() {
+        mustHaveSdk = false
+    }
+
     fun assertExhaustiveModuleDependencyList() {
         assertions += {
             val expectedModuleDependencies = expectedDependencies.filterIsInstance<ModuleOrderEntry>()
@@ -344,7 +349,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
     fun run(body: ModuleInfo.() -> Unit = {}) {
         body()
         assertions.forEach { it.invoke(this) }
-        if (rootModel.sdk == null) {
+        if (mustHaveSdk && rootModel.sdk == null) {
             report("No SDK defined")
         }
     }
