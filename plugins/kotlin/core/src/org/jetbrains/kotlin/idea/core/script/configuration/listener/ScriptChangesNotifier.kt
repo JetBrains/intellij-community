@@ -25,15 +25,13 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 internal class ScriptChangesNotifier(
     private val project: Project
 ) {
-    private val scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
-    private val scriptChangesListenerDelay = 1400
+    private val scriptsQueue: Alarm
+    private val scriptChangesListenerDelayMillis = 1400
 
     init {
-        listenForChangesInScripts()
-    }
-
-    private fun listenForChangesInScripts() {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
+        scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
+
         project.messageBus.connect(parentDisposable).subscribe(
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
             object : FileEditorManagerListener {
@@ -75,7 +73,7 @@ internal class ScriptChangesNotifier(
                         scriptsQueue.cancelAllRequests()
                         scriptsQueue.addRequest(
                             { getListener(project, file)?.documentChanged(file) },
-                            scriptChangesListenerDelay,
+                            scriptChangesListenerDelayMillis,
                             true,
                         )
                     }
@@ -83,6 +81,9 @@ internal class ScriptChangesNotifier(
             },
             parentDisposable
         )
+
+        // Init project scripting idea EP listeners
+        LISTENER.getExtensions(project)
     }
 
     private val defaultListener = DefaultScriptChangeListener(project)
