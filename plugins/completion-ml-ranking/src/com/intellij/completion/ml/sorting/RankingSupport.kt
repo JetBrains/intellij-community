@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
@@ -70,7 +71,6 @@ object RankingSupport {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) return enabledInTests
 
-    val properties = PropertiesComponent.getInstance()
     val settings = CompletionMLRankingSettings.getInstance()
     val experimentStatus = ExperimentStatus.getInstance()
     val experimentInfo = experimentStatus.forLanguage(language)
@@ -79,12 +79,21 @@ object RankingSupport {
     }
 
     val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    if (shouldSort && provider.isEnabledByDefault && !properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
-      properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
-      MLEnabledNotification().notify(null)
+    if (shouldSort && provider.isEnabledByDefault) {
+      showNotificationAboutMLOnce()
     }
 
     return shouldSort
+  }
+
+  private fun showNotificationAboutMLOnce() {
+    if (PlatformUtils.isWebStorm() || PlatformUtils.isGoIde()) {
+      val properties = PropertiesComponent.getInstance()
+      if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
+        properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
+        MLEnabledNotification().notify(null)
+      }
+    }
   }
 
   @TestOnly
