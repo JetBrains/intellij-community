@@ -107,18 +107,20 @@ object RuntimeChooserJreValidator {
     val jdkVersion = info.version?.toString()
                      ?: return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", homeDir))
 
-    try {
-      val cmd = GeneralCommandLine(binJava.toString(), "-version")
-      val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
-      if (exitCode != 0) {
-        LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
+    if (allowRunProcesses) {
+      try {
+        val cmd = GeneralCommandLine(binJava.toString(), "-version")
+        val exitCode = CapturingProcessHandler(cmd).runProcess(30_000).exitCode
+        if (exitCode != 0) {
+          LOG.warn("Failed to run JDK for boot runtime: ${homeDir}. Exit code is ${exitCode} for $binJava.")
+          return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
+        }
+      }
+      catch (t: Throwable) {
+        if (t is ControlFlowException) throw t
+        LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
         return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
       }
-    }
-    catch (t: Throwable) {
-      if (t is ControlFlowException) throw t
-      LOG.warn("Failed to run JDK for boot runtime: $homeDir. ${t.message}", t)
-      return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }
 
     val versionString = listOfNotNull(info.displayName, jdkVersion).joinToString(" ")
