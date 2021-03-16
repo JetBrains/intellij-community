@@ -28,7 +28,11 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.branch.BranchData
+import com.intellij.vcs.branch.BranchPresentation
+import com.intellij.vcs.branch.LinkedBranchDataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -92,6 +96,11 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         else -> null
       }
 
+      toolTipText =
+        if (branchInfo != null && branchInfo.isLocal)
+          BranchPresentation.getTooltip(getBranchesTooltipData(branchInfo.branchName, getSelectedRepositories(descriptor)))
+        else null
+
       append(value.getTextRepresentation(), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
 
       val repositoryGrouping = branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
@@ -101,6 +110,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     }
 
     override fun calcFocusedState() = super.calcFocusedState() || searchField?.textEditor?.hasFocus() ?: false
+
+    private fun getBranchesTooltipData(branchName: String, repositories: Collection<GitRepository>): List<BranchData> {
+      return repositories.map { repo ->
+        val trackedBranchName = repo.branches.findLocalBranch(branchName)?.findTrackedBranch(repo)?.name
+        val presentableRootName = VcsImplUtil.getShortVcsRootName(repo.project, repo.root)
+
+        LinkedBranchDataImpl(presentableRootName, branchName, trackedBranchName)
+      }
+    }
   }
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
@@ -151,6 +169,19 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       }
       .mapNotNull { with(it.getNodeDescriptor()) { RemoteInfo(displayName!!, parent?.repository) } }
       .toSet()
+  }
+
+  fun getSelectedRepositories(descriptor: BranchNodeDescriptor): List<GitRepository> {
+    var parent = descriptor.parent
+
+    while (parent != null) {
+      val repository = parent.repository
+      if (repository != null) return listOf(repository)
+
+      parent = parent.parent
+    }
+
+    return descriptor.branchInfo?.repositories ?: emptyList()
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo): Set<GitRepository> {
