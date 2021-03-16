@@ -15,9 +15,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
-import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
@@ -124,7 +122,9 @@ class RuntimeChooserDialog(
   override fun createTitlePane(): JComponent {
     return object : BorderLayoutPanel() {
       init {
-        border = JBUI.Borders.merge(JBUI.Borders.empty(10), IdeBorderFactory.createBorder(JBColor.border(), SideBorder.BOTTOM), true)
+        border = JBUI.Borders.merge(JBUI.Borders.empty(10), JBUI.Borders.customLineBottom(JBColor.border()), true)
+        background = JBUI.CurrentTheme.Notification.BACKGROUND
+        foreground = JBUI.CurrentTheme.Notification.FOREGROUND
 
         addToCenter(JBLabel().apply {
           icon = AllIcons.General.Warning
@@ -136,9 +136,6 @@ class RuntimeChooserDialog(
 
         withPreferredWidth(400)
       }
-
-      override fun getBackground() = JBUI.CurrentTheme.Notification.BACKGROUND
-      override fun getForeground() = JBUI.CurrentTheme.Notification.FOREGROUND
     }
   }
 
