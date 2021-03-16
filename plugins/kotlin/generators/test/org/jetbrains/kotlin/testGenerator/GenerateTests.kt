@@ -181,6 +181,8 @@ fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
 }
 
 private fun assembleWorkspace(): TWorkspace = workspace {
+    val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
+
     testGroup("jvm-debugger/test") {
         testClass<AbstractKotlinSteppingTest> {
             model("stepping/stepIntoAndSmartStepInto", pattern = KT_WITHOUT_DOTS, testMethodName = "doStepIntoTest", testClassName = "StepInto")
@@ -303,18 +305,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinHighlightVisitorTest> {
-            model("checker", isRecursive = false)
-            model("checker/regression")
-            model("checker/recovery")
-            model("checker/rendering")
-            model("checker/scripts", pattern = KTS)
-            model("checker/duplicateJvmSignature")
-            model("checker/infos", testMethodName = "doTestWithInfos")
-            model("checker/diagnosticsMessage")
+            model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/recovery", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/rendering", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/scripts", pattern = KTS.withPrecondition(excludedFirPrecondition))
+            model("checker/duplicateJvmSignature", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/infos", testMethodName = "doTestWithInfos", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/diagnosticsMessage", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
         testClass<AbstractKotlinHighlightWolfPassTest> {
-            model("checker/wolf", isRecursive = false)
+            model("checker/wolf", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
         testClass<AbstractJavaAgainstKotlinSourceCheckerTest> {
@@ -1104,12 +1106,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractFirKotlinHighlightingPassTest> {
-            model("checker", isRecursive = false)
-            model("checker/regression")
-            model("checker/recovery")
-            model("checker/rendering")
-            model("checker/infos")
-            model("checker/diagnosticsMessage")
+            model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/recovery", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/rendering", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/infos", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("checker/diagnosticsMessage", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
 
         testClass<AbstractHighLevelQuickFixTest> {

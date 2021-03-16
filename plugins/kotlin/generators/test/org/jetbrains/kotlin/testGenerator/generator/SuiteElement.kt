@@ -60,9 +60,8 @@ class SuiteElement private constructor(
                     }
                 }
 
-                val match = model.pattern.matchEntire(file.name) ?: continue
-                assert(match.groupValues.size >= 2) { "Invalid pattern, test method name group should be defined" }
-                val methodNameBase = getTestMethodNameBase(match.groupValues[1])
+                val match = model.matcher(file.name) ?: continue
+                val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
                 methods += TestCaseMethod(
                     methodNameBase,
