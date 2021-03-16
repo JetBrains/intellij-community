@@ -54,6 +54,8 @@ class MavenSyncConsole(private val myProject: Project) {
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
   private val shownIssues = HashSet<String>()
 
+  private val myPostponed = ArrayList<() -> Unit>()
+
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
@@ -90,6 +92,9 @@ class MavenSyncConsole(private val myProject: Project) {
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
+
+    myPostponed.forEach(this::doIfImportInProcess)
+    myPostponed.clear();
   }
 
   @Synchronized
@@ -110,8 +115,8 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
 
-  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
-    if (!newIssue(issue.title + issue.description)) return;
+  fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcessOrPostpone {
+    if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone;
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
     hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR;
   }
@@ -395,6 +400,15 @@ class MavenSyncConsole(private val myProject: Project) {
   private inline fun doIfImportInProcess(action: () -> Unit) {
     if (!started || finished) return
     action.invoke()
+  }
+
+  private fun doIfImportInProcessOrPostpone(action: () -> Unit) {
+    if (!started || finished) {
+      myPostponed.add(action)
+    }
+    else {
+      action.invoke()
+    }
   }
 
 

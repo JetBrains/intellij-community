@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.wsl
 
-import com.intellij.execution.CommandLineUtil
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
+import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.rmi.RemoteServer
@@ -13,12 +15,15 @@ import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.pom.Navigatable
+import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQuickFix
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.WslMavenDistribution
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getPropertiesFromMavenOpts
 
 class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
@@ -70,7 +75,32 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val wslParams = createJavaParameters()
     val request = myEnvFactory.createRequest()
     val languageRuntime = JavaLanguageRuntimeConfiguration()
-    languageRuntime.homePath = "/usr"
+
+    val jdkHomePath = myJdk.homePath
+    if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution) {
+      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
+        override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
+        override val description: String = SyncBundle.message(
+          "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
+          "maven.sync.wsl.jdk.fix") + "</a>"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null;
+      }, MessageEvent.Kind.WARNING);
+    }
+
+    val wslPath = jdkHomePath?.let(myWslDistribution::getWslPath)
+    if (wslPath == null) {
+      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
+        override val title: String = SyncBundle.message("maven.sync.wsl.jdk.revert.usr")
+        override val description: String = SyncBundle.message(
+          "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
+          "maven.sync.wsl.jdk.fix") + "</a>"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null;
+      }, MessageEvent.Kind.WARNING);
+    }
+
+    languageRuntime.homePath = wslPath ?: "/usr"
     myEnvFactory.targetConfiguration.addLanguageRuntime(languageRuntime)
     val setup = JdkCommandLineSetup(request, myEnvFactory.targetConfiguration)
     setup.setupCommandLine(wslParams)
