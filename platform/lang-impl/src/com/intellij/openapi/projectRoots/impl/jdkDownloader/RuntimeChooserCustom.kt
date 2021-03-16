@@ -85,4 +85,24 @@ object RuntimeChooserCustom {
       }
     }.queue()
   }
+
+  fun importDetectedItem(homePath: String, model: RuntimeChooserModel) {
+    object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        RuntimeChooserJreValidator.testNewJdkUnderProgress(
+          allowRunProcesses = false,
+          computeHomePath = { homePath },
+          callback = object : RuntimeChooserJreValidatorCallback<Unit> {
+            override fun onSdkResolved(versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
+              invokeLater(ModalityState.any()) {
+                model.addExistingSdkItem(newItem)
+              }
+            }
+
+            override fun onError(message: String) { }
+          })
+      }
+    }.queue()
+  }
 }

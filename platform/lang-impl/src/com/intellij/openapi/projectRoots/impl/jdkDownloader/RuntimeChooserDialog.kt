@@ -4,13 +4,15 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IdeBorderFactory
@@ -18,13 +20,14 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.Color
+import java.awt.datatransfer.DataFlavor
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
@@ -50,6 +53,36 @@ class RuntimeChooserDialog(
     title = LangBundle.message("dialog.title.choose.ide.runtime")
     setResizable(false)
     init()
+    initClipboardListener()
+  }
+
+  private fun initClipboardListener() {
+    val knownPaths = mutableSetOf<String>()
+
+    val clipboardUpdateAction = {
+      val newPath = runCatching {
+        CopyPasteManager.getInstance().contents?.getTransferData(DataFlavor.stringFlavor) as? String
+      }.getOrNull()
+
+      if (newPath != null && newPath.isNotBlank() && knownPaths.add(newPath)) {
+        RuntimeChooserCustom.importDetectedItem(newPath.trim(), model)
+      }
+    }
+
+    val windowListener = object: WindowAdapter() {
+      override fun windowActivated(e: WindowEvent?) {
+        invokeLater(ModalityState.any()) {
+          clipboardUpdateAction()
+        }
+      }
+    }
+
+    window?.let { window ->
+      window.addWindowListener(windowListener)
+      Disposer.register(disposable) { window.removeWindowListener(windowListener) }
+    }
+
+    clipboardUpdateAction()
   }
 
   override fun getData(dataId: String): Any? {
