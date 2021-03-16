@@ -646,10 +646,16 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
-    for (FileTypeIdentifiableByVirtualFile type : mySpecialFileTypes) {
-      if (type.isMyFileType(file)) {
-        log("getByFile(" + file.getName() + "): Special file type: " + type.getName());
-        return type;
+    for (FileTypeIdentifiableByVirtualFile specialType : mySpecialFileTypes) {
+      if (specialType.isMyFileType(file)) {
+        log("getByFile(" + file.getName() + "): Special file type: " + specialType.getName());
+        boolean willBeRedetectedAnyway = mightBeReplacedByDetectedFileType(specialType) && FileTypeDetectionService.isDetectable(file);
+        if (willBeRedetectedAnyway) {
+          LOG.error("File type '"+specialType +"' is inconsistent. " +
+                    "File '"+ file.getPresentableUrl()+ "' was recognized by "+specialType+" but this fact will be promptly ignored and file will be re-detected immediately from its content. " +
+                    "To avoid that, "+specialType+" should be either not PlainTextLike or not readonly");
+        }
+        return specialType;
       }
     }
 

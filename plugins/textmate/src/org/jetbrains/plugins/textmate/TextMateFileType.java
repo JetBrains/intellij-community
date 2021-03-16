@@ -39,15 +39,10 @@ public final class TextMateFileType extends LanguageFileType implements PlainTex
     return "";
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return true;
   }
 
   @Override
