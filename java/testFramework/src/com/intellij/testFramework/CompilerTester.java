@@ -73,7 +73,16 @@ public final class CompilerTester {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 
-  public CompilerTester(@NotNull Project project, @NotNull List<? extends Module> modules, @Nullable Disposable disposable) throws Exception {
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable) throws Exception {
+    this(project, modules, disposable, true);
+  }
+
+  public CompilerTester(@NotNull Project project,
+                        @NotNull List<? extends Module> modules,
+                        @Nullable Disposable disposable,
+                        boolean overrideJdkAndOutput) throws Exception {
     myProject = project;
     myModules = modules;
     myMainOutput = new TempDirTestFixtureImpl();
@@ -89,15 +98,17 @@ public final class CompilerTester {
     }
 
     CompilerTestUtil.enableExternalCompiler();
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
-      if (!myModules.isEmpty()) {
-        JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
-        for (Module module : myModules) {
-          ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+    if (overrideJdkAndOutput) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+        Objects.requireNonNull(CompilerProjectExtension.getInstance(getProject())).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
+        if (!myModules.isEmpty()) {
+          JavaAwareProjectJdkTableImpl projectJdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
+          for (Module module : myModules) {
+            ModuleRootModificationUtil.setModuleSdk(module, projectJdkTable.getInternalJdk());
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   public void tearDown() {

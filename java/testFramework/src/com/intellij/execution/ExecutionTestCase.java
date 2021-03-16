@@ -57,24 +57,40 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       ourOutputRoot = getTempDir().newPath();
     }
 
-    myModuleOutputDir = ourOutputRoot.resolve(PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
     EdtTestUtil.runInEdtAndWait(() -> super.setUp());
+    myModuleOutputDir = getModuleOutputDir();
     if (!Files.exists(myModuleOutputDir)) {
       Files.createDirectories(myModuleOutputDir);
-      VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ourOutputRoot);
-      assertNotNull(ourOutputRoot.toString(), vDir);
+      if (FileUtil.isAncestor(ourOutputRoot.toFile(), myModuleOutputDir.toFile(), false)) {
+        VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ourOutputRoot);
+        assertNotNull(ourOutputRoot.toString(), vDir);
+      }
 
-      // JDK added by compilerTester is used after compilation, so, we don't dispose compilerTester after rebuild
-      CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()), getTestRootDisposable());
-      List<CompilerMessage> messages = compilerTester.rebuild();
-      for (CompilerMessage message : messages) {
-        if (message.getCategory() == CompilerMessageCategory.ERROR) {
-          FileUtil.delete(myModuleOutputDir);
-          fail("Compilation failed: " + message + " " + message.getVirtualFile());
-        }
+      compileProject();
+    }
+  }
+
+  protected void compileProject() throws Exception {
+    // JDK added by compilerTester is used after compilation, so, we don't dispose compilerTester after rebuild
+    CompilerTester compilerTester = new CompilerTester(myProject, Arrays.asList(ModuleManager.getInstance(myProject).getModules()),
+                                                       getTestRootDisposable(), overrideCompileJdkAndOutput());
+    List<CompilerMessage> messages = compilerTester.rebuild();
+    for (CompilerMessage message : messages) {
+      if (message.getCategory() == CompilerMessageCategory.ERROR) {
+        FileUtil.delete(myModuleOutputDir);
+        fail("Compilation failed: " + message + " " + message.getVirtualFile());
       }
     }
+  }
+
+  @NotNull
+  protected Path getModuleOutputDir() {
+    return ourOutputRoot.resolve(PathUtil.getFileName(getTestAppPath()));
+  }
+
+  protected boolean overrideCompileJdkAndOutput() {
+    return true;
   }
 
   @Override
@@ -91,7 +107,9 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
       PsiTestUtil.addContentRoot(myModule, moduleDir);
       PsiTestUtil.addSourceRoot(myModule, srcDir);
       IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8);
-      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(myModuleOutputDir.toString()), false);
+
+      Path outputDir = getModuleOutputDir();
+      PsiTestUtil.setCompilerOutputPath(myModule, VfsUtilCore.pathToUrl(outputDir.toString()), false);
     });
   }
 
@@ -153,7 +171,7 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
   }
 
   protected String getAppOutputPath() {
-    return myModuleOutputDir.toString();
+    return getModuleOutputDir().toString();
   }
 
   public void waitProcess(@NotNull final ProcessHandler processHandler) {
