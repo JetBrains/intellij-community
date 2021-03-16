@@ -57,6 +57,10 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myEditor = editor;
   }
 
+  protected Document getDocument() {
+    return myEditor.getDocument();
+  }
+
   @Override
   public void setColorScheme(@NotNull EditorColorsScheme scheme) {
     setAttributes(scheme.getAttributes(myKey));
@@ -117,7 +121,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       @NotNull
       @Override
       public Document getDocument() {
-        return myEditor.getDocument();
+        return EmptyEditorHighlighter.this.getDocument();
       }
 
       @Override

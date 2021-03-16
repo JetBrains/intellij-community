@@ -79,9 +79,6 @@ public interface EditorEx extends Editor {
   @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
-  @NotNull
-  EditorHighlighter getHighlighter();
-
   JComponent getPermanentHeaderComponent();
 
   /**
@@ -90,8 +87,6 @@ public interface EditorEx extends Editor {
   void setViewer(boolean isViewer);
 
   void setPermanentHeaderComponent(JComponent component);
-
-  void setHighlighter(@NotNull EditorHighlighter highlighter);
 
   void setColorsScheme(@NotNull EditorColorsScheme scheme);
 
