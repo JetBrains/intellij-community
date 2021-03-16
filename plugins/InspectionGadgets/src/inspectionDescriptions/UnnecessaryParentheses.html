@@ -3,17 +3,26 @@
 Reports on any instance of unnecessary parentheses. Parentheses
 are considered unnecessary if the evaluation order of an expression remains
 unchanged if the parentheses are removed.
+<p>Example:</p>
+<pre>
+  int n = 3 + (9 * 8);
+</pre>
+<p>After quick-fix is applied, the result will be:</p>
+<pre>
+  int n = 3 + 9 * 8;
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to ignore parentheses which help to clarify a binary
 expression. Parentheses are clarifying if the expression parenthesized is an
-<b>instanceof</b> expression part of a larger
+<code>instanceof</code> expression part of a larger
 expression or has a different operator than the parent expression.
 <p>
 Use the second checkbox below to ignore any parentheses around the condition
 of conditional expressions. Some coding standards specify that all such conditions
 must be surrounded by parentheses.
 <p>
-
+Use the third checkbox below to ignore parentheses around a single lambda parameter within a lambda expression.
+<p>
 </body>
 </html>
