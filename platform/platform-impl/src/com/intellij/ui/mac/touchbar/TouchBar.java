@@ -171,7 +171,6 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
     TBItem item = myItems.findItem(uid);
     if (item == null) {
-      LOG.error("can't find TBItem with uid '" + uid + "'");
       return ID.NIL;
     }
 
