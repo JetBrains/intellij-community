@@ -69,14 +69,17 @@ class GradleTaskManagerTest: UsefulTestCase() {
       """.trimMargin())
 
     val oldMessage = "this should be executed for gradle 3.0"
-    val oldVer = VersionSpecificInitScript("""println('$oldMessage')""",
-                                           { v -> v == GradleVersion.version("3.0")})
+    val oldVer = VersionSpecificInitScript("""println('$oldMessage')""") { v ->
+      v == GradleVersion.version("3.0")
+    }
     val intervalMessage = "this should be executed for gradle between 4 and 6"
-    val intervalVer = VersionSpecificInitScript("println('$intervalMessage')",
-                                                { v -> v > GradleVersion.version("4.0") && v <= GradleVersion.version("6.0")})
+    val intervalVer = VersionSpecificInitScript("println('$intervalMessage')") { v ->
+      v > GradleVersion.version("4.0") && v <= GradleVersion.version("6.0")
+    }
     val newerVerMessage = "this should be executed for gradle 4.8 and newer"
-    val newerVer = VersionSpecificInitScript("println('$newerVerMessage')",
-                                             { v -> v >= GradleVersion.version("4.8") })
+    val newerVer = VersionSpecificInitScript("println('$newerVerMessage')") { v ->
+      v >= GradleVersion.version("4.8")
+    }
 
     val initScripts = listOf(oldVer, intervalVer, newerVer)
     gradleExecSettings.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScripts)
