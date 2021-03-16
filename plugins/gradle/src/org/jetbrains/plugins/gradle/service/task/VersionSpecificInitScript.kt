@@ -3,6 +3,6 @@ package org.jetbrains.plugins.gradle.service.task
 
 import org.gradle.util.GradleVersion
 
-data class VersionSpecificInitScript(val script: String, val isApplicable: (GradleVersion) -> Boolean, val filePrefix: String? = null) {
+data class VersionSpecificInitScript(val script: String, val filePrefix: String? = null, val isApplicable: (GradleVersion) -> Boolean) {
   fun isApplicableTo(ver: GradleVersion) = isApplicable(ver)
 }

@@ -97,7 +97,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                                                                          "        Property<File> getOutputFile()\n" +
                                                                                          "    }\n" +
                                                                                          "\n" +
-                                                                                         "    List<Task> tasks = []\n" +
+                                                                                         "    Set<Task> tasks = new HashSet<Task>()\n" +
                                                                                          "\n" +
                                                                                          "    void registerTask(Task t) {\n" +
                                                                                          "        tasks.add(t)\n" +
@@ -244,13 +244,11 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
         VersionSpecificInitScript simple =
           new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath),
-                                        (v) -> v.compareTo(v68) < 0,
-                                        "ijpathcollect");
+                                        "ijpathcollect", (v) -> v.compareTo(v68) < 0);
 
         VersionSpecificInitScript services =
           new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath),
-                                        (v) -> v.compareTo(v68) >= 0,
-                                        "ijpathcollect");
+                                        "ijpathcollect", (v) -> v.compareTo(v68) >= 0);
 
         userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, Arrays.asList(simple, services));
       }
