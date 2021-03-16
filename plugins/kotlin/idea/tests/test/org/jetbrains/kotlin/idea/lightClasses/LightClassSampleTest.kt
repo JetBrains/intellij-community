@@ -28,7 +28,7 @@ class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(
             "a.kt", """
                 interface A {
-                    @Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")
+                    @Deprecated(level = DeprecationLevel.ERROR, message = "nothing")
                     fun foo()
                 }
             """.trimMargin()
@@ -42,7 +42,7 @@ class LightClassSampleTest : KotlinLightCodeInsightFixtureTestCase() {
             """.trimIndent()
         )
 
-        doTestAndCheck("B", "foo", 1)
+        doTestAndCheck("B", "foo", 0)
     }
 
     fun testJvmSynthetic() {
