@@ -27,6 +27,7 @@ import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.math.max
 import kotlin.properties.Delegates
 
 internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetadataModel,
@@ -84,6 +85,10 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetad
     }
     panel.validate()
     panel.repaint()
+  }
+
+  val preferredLabelWidth = label.getFontMetrics(label.font)?.let {
+    max(it.stringWidth(emptyText), it.stringWidth(notEmptyText))
   }
 
   init {

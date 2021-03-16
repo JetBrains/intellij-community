@@ -114,7 +114,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
   companion object {
     private fun addListPanel(panel: JPanel, handle: LabeledListPanelHandle<*>) {
-      panel.add(handle.label, CC().alignY("top"))
+      panel.add(handle.label, CC().alignY("top").width(":${handle.preferredLabelWidth}:"))
       panel.add(handle.panel, CC().minWidth("0").growX().pushX().wrap())
     }
   }
