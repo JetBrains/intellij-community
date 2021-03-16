@@ -1183,7 +1183,7 @@ public final class ExternalSystemUtil {
     if (!app.isDispatchThread()) {
       assert !((ApplicationEx)app).holdsReadLock();
     }
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file.toPath());
   }
 
   @Nullable
