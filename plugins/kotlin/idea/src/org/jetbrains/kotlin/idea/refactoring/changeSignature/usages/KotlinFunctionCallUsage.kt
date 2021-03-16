@@ -21,11 +21,13 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.RemoveEmptyParenthesesFromLambdaCallIntention
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -359,8 +361,10 @@ class KotlinFunctionCallUsage(
         }.toList()
 
         val lastParameterIndex = newParameters.lastIndex
+        val canMixArguments = element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         var firstNamedIndex = newArgumentInfos.firstOrNull {
-            it.parameter.isNewParameter && it.parameter.defaultValue != null ||
+            !canMixArguments && it.wasNamed ||
+                    it.parameter.isNewParameter && it.parameter.defaultValue != null ||
                     it.resolvedArgument is VarargValueArgument && it.parameterIndex < lastParameterIndex
         }?.parameterIndex
 

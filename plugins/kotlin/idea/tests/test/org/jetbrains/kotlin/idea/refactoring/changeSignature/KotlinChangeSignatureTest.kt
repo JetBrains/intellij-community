@@ -40,10 +40,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -338,8 +335,10 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun doTestWithDescriptorModification(modificator: KotlinMutableMethodDescriptor.() -> Unit) {
-        configureFiles()
+    private fun doTestWithDescriptorModification(configureFiles: Boolean = true, modificator: KotlinMutableMethodDescriptor.() -> Unit) {
+        if (configureFiles) {
+            configureFiles()
+        }
 
         val context = createChangeSignatureContext()
         val callableDescriptor = context.callableDescriptor
@@ -522,6 +521,15 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun testAddNewMiddleParameter() = doTestWithDescriptorModification {
         addNewIntParameterWithValue(false, 2)
+    }
+
+    fun testAddNewMiddleParameterKotlin13() {
+        configureFiles()
+        withCustomCompilerOptions("// LANGUAGE_VERSION: 1.3", project, module) {
+            doTestWithDescriptorModification(configureFiles = false) {
+                addNewIntParameterWithValue(false, 2)
+            }
+        }
     }
 
     fun testAddParameterToInvokeFunction() = doTestWithDescriptorModification {
