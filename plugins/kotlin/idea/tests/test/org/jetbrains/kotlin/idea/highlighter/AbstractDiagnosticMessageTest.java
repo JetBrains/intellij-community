@@ -86,7 +86,6 @@ public abstract class AbstractDiagnosticMessageTest extends KotlinLightCodeInsig
     }
 
     public void doTest(String filePath) throws Exception {
-
         File file = new File(filePath);
         String fileName = file.getName();
 
@@ -133,7 +132,7 @@ public abstract class AbstractDiagnosticMessageTest extends KotlinLightCodeInsig
         }
     }
 
-    private Map<LanguageFeature, LanguageFeature.State> parseLanguageFeatures(String fileText) {
+    private static Map<LanguageFeature, LanguageFeature.State> parseLanguageFeatures(String fileText) {
         List<String> directives = InTextDirectivesUtils.findListWithPrefixes(fileText, "// !LANGUAGE:");
         Map<LanguageFeature, LanguageFeature.State> result = new HashMap<>();
         for (String directive : directives) {

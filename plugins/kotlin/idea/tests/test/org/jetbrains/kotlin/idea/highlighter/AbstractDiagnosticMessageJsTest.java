@@ -28,6 +28,7 @@ import java.util.List;
 import static org.jetbrains.kotlin.idea.test.TestUtilsKt.IDEA_TEST_DATA_DIR;
 
 public abstract class AbstractDiagnosticMessageJsTest extends AbstractDiagnosticMessageTest {
+    @Override
     protected AnalysisResult analyze(Collection<KtFile> files, CompilerConfiguration configuration) {
         return TopDownAnalyzerFacadeForJS.analyzeFiles(files, getConfig(configuration));
     }
@@ -44,6 +45,7 @@ public abstract class AbstractDiagnosticMessageJsTest extends AbstractDiagnostic
         return getFieldOrNull(ErrorsJs.class, diagnosticName);
     }
 
+    @Override
     protected CompilerConfiguration compilerConfiguration(LanguageVersionSettings languageVersionSettings) {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, myFixture.getModule().getName());
