@@ -80,6 +80,11 @@ public abstract class SdkListItem {
     }
 
     abstract boolean hasSameSdk(@NotNull Sdk value);
+
+    @Override
+    public String toString() {
+      return sdk.getName();
+    }
   }
 
   public static final class ProjectSdkItem extends SdkListItem {
@@ -152,6 +157,11 @@ public abstract class SdkListItem {
     @Contract(pure = true)
     @NotNull ActionItem withGroup(@NotNull GroupItem group) {
       return new ActionItem(role, action, group);
+    }
+
+    @Override
+    public String toString() {
+      return action.getListItemText();
     }
   }
 
