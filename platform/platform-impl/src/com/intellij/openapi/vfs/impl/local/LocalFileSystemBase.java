@@ -25,6 +25,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -33,7 +34,10 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Dmitry Avdeev
@@ -181,6 +185,20 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
+    Stream<VirtualFile> iterator = StreamEx.of(files.iterator()).map(f -> refreshAndFindFileByIoFile(f));
+    refreshFiles(iterator, async, recursive, onFinish);
+  }
+
+  @Override
+  public void refreshNioFiles(@NotNull Iterable<? extends Path> files,
+                              boolean async,
+                              boolean recursive,
+                              @Nullable Runnable onFinish) {
+    Stream<VirtualFile> iterator = StreamEx.of(files.iterator()).map(f -> refreshAndFindFileByNioFile(f));
+    refreshFiles(iterator, async, recursive, onFinish);
+  }
+
+  private static void refreshFiles(@NotNull Stream<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     Application app = ApplicationManager.getApplication();
@@ -188,22 +206,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
 
     try {
-      List<VirtualFile> filesToRefresh = new ArrayList<>();
-
-      for (File file : files) {
-        VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
-        if (virtualFile != null) {
-          filesToRefresh.add(virtualFile);
-        }
-      }
-
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, filesToRefresh);
+      RefreshQueue.getInstance().refresh(async, recursive, onFinish, files.filter(f -> f != null).collect(Collectors.toList()));
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
     }
   }
-
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {

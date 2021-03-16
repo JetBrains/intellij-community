@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LocalTimeCounter.currentTime
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
 
@@ -144,8 +145,8 @@ class ProjectSettingsTracker(
       settingsProvider.invalidate()
       settingsProvider.supply({ settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
-        val settingsFiles = settingsPaths.map { File(it) }
-        localFileSystem.refreshIoFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
+        val settingsFiles = settingsPaths.map { Path.of(it) }
+        localFileSystem.refreshNioFiles(settingsFiles, projectTracker.isAsyncChangesProcessing, false) {
           callback(settingsPaths)
         }
       }, parentDisposable)
