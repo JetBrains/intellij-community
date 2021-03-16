@@ -1,6 +1,5 @@
-// "Replace with 'addA(d(createDummy, dummyParam1, initDummy), dummyParam)'" "true"
+// "Replace with 'addA(d(createDummy, dummyParam1, initDummy = initDummy), dummyParam)'" "true"
 // WITH_RUNTIME
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 typealias NewDummyRef<V> = (Any) -> V
 
@@ -11,7 +10,7 @@ inline fun <A : Any> Any.d(
     initDummy: A.() -> Unit = {}
 ) = createDummy(this).also(initDummy).also { dummyParam1 + dummyParam2 }
 
-@Deprecated("Use d instead", ReplaceWith("addA(d(createDummy, dummyParam1, initDummy), dummyParam)"))
+@Deprecated("Use d instead", ReplaceWith("addA(d(createDummy, dummyParam1, initDummy = initDummy), dummyParam)"))
 inline fun <A : Any> MutableList<A>.addA(
     createDummy: NewDummyRef<A>,
     dummyParam1: Int = 0,

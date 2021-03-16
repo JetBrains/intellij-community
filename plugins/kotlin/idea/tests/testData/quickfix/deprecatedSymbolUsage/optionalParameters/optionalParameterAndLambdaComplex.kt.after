@@ -1,6 +1,5 @@
-// "Replace with 'addA(d(createDummy, dummyParam1, initDummy), dummyParam)'" "true"
+// "Replace with 'addA(d(createDummy, dummyParam1, initDummy = initDummy), dummyParam)'" "true"
 // WITH_RUNTIME
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
 
 typealias NewDummyRef<V> = (Any) -> V
 
@@ -11,7 +10,7 @@ inline fun <A : Any> Any.d(
     initDummy: A.() -> Unit = {}
 ) = createDummy(this).also(initDummy).also { dummyParam1 + dummyParam2 }
 
-@Deprecated("Use d instead", ReplaceWith("addA(d(createDummy, dummyParam1, initDummy), dummyParam)"))
+@Deprecated("Use d instead", ReplaceWith("addA(d(createDummy, dummyParam1, initDummy = initDummy), dummyParam)"))
 inline fun <A : Any> MutableList<A>.addA(
     createDummy: NewDummyRef<A>,
     dummyParam1: Int = 0,
@@ -35,7 +34,7 @@ fun createHi(any: Any) = "Hi $any"
 
 val unDeprecateMe = mutableListOf("Hello").apply {
     // Run the quick fix from the IDE and watch it produce broken code.
-    addA(d(::createHi, 1, fun String.() {
+    addA(d(::createHi, 1, initDummy = fun String.() {
         // Run the quick fix from the IDE and watch it produce broken code.
         println("Yo")
     }), Unit)
