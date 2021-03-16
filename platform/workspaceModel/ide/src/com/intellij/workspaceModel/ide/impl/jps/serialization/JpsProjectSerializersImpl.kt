@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
@@ -219,7 +220,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
-    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
+    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
