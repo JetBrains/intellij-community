@@ -64,7 +64,9 @@ public class CertificateWarningDialog extends DialogWrapper {
                             .toString());
     myMessagePane.setBackground(UIUtil.getPanelBackground());
     setOKButtonText(CommonBundle.message("button.accept"));
+    myOKAction.putValue(DEFAULT_ACTION, null);
     setCancelButtonText(IdeBundle.message("button.reject"));
+    myCancelAction.putValue(DEFAULT_ACTION, true);
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
     Messages.installHyperlinkSupport(myNoticePane);
