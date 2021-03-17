@@ -39,7 +39,7 @@ public class TextAttributes implements Cloneable {
 
   public static final TextAttributes ERASE_MARKER = new TextAttributes();
 
-  @SuppressWarnings({"NullableProblems", "NotNullFieldNotInitialized"})
+  @SuppressWarnings("NotNullFieldNotInitialized")
   @NotNull
   private AttributesFlyweight myAttrs;
 
@@ -95,19 +95,8 @@ public class TextAttributes implements Cloneable {
                             Color errorStripeColor,
                             EffectType effectType,
                             @JdkConstants.FontStyle int fontType) {
-    setAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, Collections.emptyMap(), fontType);
-  }
-
-  @ApiStatus.Experimental
-  public void setAttributes(Color foregroundColor,
-                            Color backgroundColor,
-                            Color effectColor,
-                            Color errorStripeColor,
-                            EffectType effectType,
-                            @NotNull Map<EffectType, Color> additionalEffects,
-                            @JdkConstants.FontStyle int fontType) {
     myAttrs = AttributesFlyweight
-      .create(foregroundColor, backgroundColor, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+      .create(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
   }
 
   public boolean isEmpty(){
@@ -169,7 +158,7 @@ public class TextAttributes implements Cloneable {
    * @param effectsMap map of effect types and colors to use.
    */
   @ApiStatus.Experimental
-  public void setAdditionalEffects(@NotNull Map<EffectType, Color> effectsMap) {
+  public void setAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> effectsMap) {
     myAttrs = myAttrs.withAdditionalEffects(effectsMap);
   }
 
@@ -180,22 +169,10 @@ public class TextAttributes implements Cloneable {
    */
   @ApiStatus.Experimental
   public void withAdditionalEffect(@NotNull EffectType effectType, @NotNull Color color) {
-    withAdditionalEffects(Collections.singletonMap(effectType, color));
-  }
-
-  /**
-   * Appends additional effects to paint with specific colors. New effects may supersede old ones
-   * @see TextAttributes#setAdditionalEffects(Map)
-   * @see TextAttributesEffectsBuilder
-   */
-  @ApiStatus.Experimental
-  public void withAdditionalEffects(@NotNull Map<EffectType, Color> effectsMap) {
-    if (effectsMap.isEmpty()) {
-      return;
-    }
-    TextAttributesEffectsBuilder effectsBuilder = TextAttributesEffectsBuilder.create(this);
-    effectsMap.forEach(effectsBuilder::coverWith);
-    effectsBuilder.applyTo(this);
+    TextAttributesEffectsBuilder
+      .create(this)
+      .coverWith(effectType, color)
+      .applyTo(this);
   }
 
   @Nullable
