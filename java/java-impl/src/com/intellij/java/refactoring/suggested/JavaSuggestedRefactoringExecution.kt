@@ -12,8 +12,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.util.CanonicalTypes
 
 class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoringSupport) :
-  SuggestedRefactoringExecution(refactoringSupport)
-{
+  SuggestedRefactoringExecution(refactoringSupport) {
   override fun prepareChangeSignature(data: SuggestedChangeSignatureData): Any? {
     val method = data.declaration as PsiMethod
     return extractTypes(method, method.containingFile)
@@ -74,7 +73,8 @@ class JavaSuggestedRefactoringExecution(refactoringSupport: SuggestedRefactoring
         when (val default = newParameterValues[newParameterValueIndex++]) {
           is NewParameterValue.Expression -> info.defaultValue = default.expression.text
           is NewParameterValue.AnyVariable -> info.isUseAnySingleVariable = true
-          is NewParameterValue.None -> {}
+          is NewParameterValue.None -> {
+          }
         }
       }
 

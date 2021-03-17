@@ -13,8 +13,7 @@ internal class JavaSignaturePresentationBuilder(
   signature: Signature,
   otherSignature: Signature,
   isOldSignature: Boolean
-) : SignaturePresentationBuilder(signature, otherSignature, isOldSignature)
-{
+) : SignaturePresentationBuilder(signature, otherSignature, isOldSignature) {
   private val addedOrRemovedEffect = if (isOldSignature) Effect.Removed else Effect.Added
 
   override fun buildPresentation() {
