@@ -333,5 +333,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public void updateSettingsTracker() {
     CodeStyleSettings settings = getCurrentSettings();
     settings.getModificationTracker().incModificationCount();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Updated code style settings modification tracker to " + settings.getModificationTracker().getModificationCount());
+    }
   }
 }

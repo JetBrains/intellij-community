@@ -365,6 +365,10 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("reinitDocumentIndentOptions, file " + file.getName());
+    }
+
     CodeStyle.updateDocumentIndentOptions(project, document);
   }
 

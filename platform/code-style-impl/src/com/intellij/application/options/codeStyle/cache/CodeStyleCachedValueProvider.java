@@ -118,6 +118,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private final             Project                   myProject;
     private                   CancellablePromise<Void>  myPromise;
     private final             List<Runnable>            myScheduledRunnables = new ArrayList<>();
+    private                   long                      myOldTrackerSetting;
 
     private AsyncComputation(@NotNull Project project) {
       myProject = project;
@@ -189,9 +190,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         }
         @SuppressWarnings("deprecation")
         CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
+        myOldTrackerSetting = currSettings.getModificationTracker().getModificationCount();
         if (currSettings != mySettingsManager.getTemporarySettings()) {
           TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
           modifiableSettings.applyIndentOptionsFromProviders(file);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Created TransientCodeStyleSettings for " + file.getName() + ", tab size " + modifiableSettings.getIndentOptionsByFile(file).TAB_SIZE);
+          }
+
           for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
             if (modifier.modifySettings(modifiableSettings, file)) {
               LOG.debug("Modifier: " + modifier.getClass().getName());
@@ -215,6 +221,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     @Nullable
     public CodeStyleSettings getCurrResult() {
       if (myIsActive.compareAndSet(false, true)) {
+        if (LOG.isDebugEnabled()) {
+          PsiFile psiFile = myFileRef.get();
+          if (psiFile != null) {
+            LOG.debug("Computation initiated for " + psiFile.getName());
+          } else {
+            LOG.debug("Computation initiated for expired PSI file");
+          }
+        }
         start();
       }
       return myCurrResult;
@@ -227,9 +241,25 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     void reset() {
       myScheduledRunnables.clear();
       myIsActive.set(false);
+      if (LOG.isDebugEnabled()) {
+        PsiFile psiFile = myFileRef.get();
+        if (psiFile != null) {
+          LOG.debug("Computation reset for " + psiFile.getName());
+        } else {
+          LOG.debug("Computation reset for expired PSI file");
+        }
+      }
     }
 
     private void notifyCachedValueComputed() {
+      @SuppressWarnings("deprecation")
+      CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
+      long newTrackerSetting = currSettings.getModificationTracker().getModificationCount();
+      if (myOldTrackerSetting < newTrackerSetting) {
+        start();
+        return;
+      }
+
       for (Runnable runnable : myScheduledRunnables) {
         runnable.run();
       }
