@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.awt.Color;
@@ -22,7 +23,7 @@ public final class ValueElementReaderTest extends LightPlatformTestCase {
 
   private <T> T read(Class<T> type, String attribute, Option option) throws Exception {
     myReader.setAttribute(attribute);
-    return myReader.read(type, option == null ? null : Option.element(option));
+    return myReader.read(type, option == null ? null : JDOMUtil.load(option.toString()));
   }
 
   public void testString() throws Exception {
