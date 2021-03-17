@@ -101,7 +101,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -520,15 +521,7 @@ public final class BuildManager implements Disposable {
             final UUID sessionId = future.getRequestID();
             final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
             if (channel != null) {
-              Project project = findProjectByProjectPath(entry.getKey());
-              Function<String, String> pathMapper = Function.identity();
-              if (project != null) {
-                WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
-                if (wslDistribution != null) {
-                  pathMapper = (path) -> getWslPathFromInternedPath(path, wslDistribution);
-                }
-              }
-              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(pathMapper);
+              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(wslPathMapper(entry.getKey()));
               final CmdlineRemoteProto.Message.ControllerMessage message = CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                 CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
               ).setFsEvent(event).build();
@@ -544,16 +537,35 @@ public final class BuildManager implements Disposable {
   }
 
   @Nullable
-  private static Project findProjectByProjectPath(String projectPath) {
-    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), (project) -> getProjectPath(project).equals(projectPath));
+  private static Project findProjectByProjectPath(@NotNull String projectPath) {
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), (project) -> projectPath.equals(getProjectPath(project)));
   }
 
-  // interned paths collapse repeated slashes so \\wsl$ ends up /wsl$
-  private static String getWslPathFromInternedPath(String path, WSLDistribution distribution) {
-    if (path.startsWith("/wsl$")) {
-      return distribution.getWslPath("/" + path);
-    }
-    return path;
+  @NotNull
+  private static Function<String, String> wslPathMapper(@Nullable WSLDistribution distr) {
+    return distr == null?
+      Function.identity() :
+      // interned paths collapse repeated slashes so \\wsl$ ends up /wsl$
+      path -> path.startsWith("/wsl$")? distr.getWslPath("/" + path) : path;
+  }
+
+  private static Function<String, String> wslPathMapper(@NotNull String projectPath) {
+    return new Function<>() {
+      private Function<String, String> myImpl;
+
+      @Override
+      public String apply(String path) {
+        if (myImpl != null) {
+          return myImpl.apply(path);
+        }
+        if (path.startsWith("/wsl$")) {
+          Project project = findProjectByProjectPath(projectPath);
+          myImpl = wslPathMapper(project != null ? findWSLDistributionForBuild(project) : null);
+          return myImpl.apply(path);
+        }
+        return path;
+      }
+    };
   }
 
   public static void forceModelLoading(CompileContext context) {
@@ -885,8 +897,7 @@ public final class BuildManager implements Disposable {
                      new HashSet<>(convertToStringPaths(data.myDeleted)));
           }
           needRescan = data.getAndResetRescanFlag();
-          currentFSChanges = needRescan ? null : data.createNextEvent(
-            wslDistribution != null ? (path) -> getWslPathFromInternedPath(path, wslDistribution) : Function.identity());
+          currentFSChanges = needRescan ? null : data.createNextEvent(wslPathMapper(wslDistribution));
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
           }
