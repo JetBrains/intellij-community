@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -41,10 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -93,7 +92,9 @@ public class HighlightInfo implements Segment {
   private volatile byte myFlags;
 
   final int navigationShift;
-  JComponent fileLevelComponent;
+
+  private Map<FileEditor, JComponent> fileLevelComponents;
+
   @Nullable("null means it the same as highlighter")
   RangeMarker fixMarker;
   @Nullable
@@ -157,6 +158,21 @@ public class HighlightInfo implements Segment {
 
   void setFromInjection(boolean fromInjection) {
     setFlag(FROM_INJECTION_MASK, fromInjection);
+  }
+
+  void addFileLeverComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
+    if (fileLevelComponents == null) {
+      fileLevelComponents = new HashMap<>();
+    }
+    fileLevelComponents.put(fileEditor, component);
+  }
+
+  void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
+    fileLevelComponents.remove(fileEditor);
+  }
+
+  JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
+    return fileLevelComponents.get(fileEditor);
   }
 
   @Nullable

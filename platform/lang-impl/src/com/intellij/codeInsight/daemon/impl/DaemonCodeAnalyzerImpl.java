@@ -57,6 +57,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -173,7 +174,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     assertMyProject(file.getProject());
     assertMyProject(project);
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
-    return Arrays.stream(myFileEditorManager.getEditors(vFile))
+    return Arrays.stream(myFileEditorManager.getAllEditors(vFile))
       .map(fileEditor -> fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS))
       .filter(Objects::nonNull)
       .flatMap(Collection::stream)
@@ -188,7 +189,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile) {
     assertMyProject(psiFile.getProject());
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
-    for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
+    for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       cleanFileLevelHighlights(fileEditor, group);
     }
   }
@@ -206,7 +207,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     List<HighlightInfo> infosToRemove = new ArrayList<>(infos.size());
     for (HighlightInfo info : infos) {
       if (info.getGroup() == group || group == ANY_GROUP) {
-        myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
+        JComponent component = info.getFileLevelComponent(fileEditor);
+        if (component != null) {
+          myFileEditorManager.removeTopComponent(fileEditor, component);
+          info.removeFileLeverComponent(fileEditor);
+        }
         infosToRemove.add(info);
       }
     }
@@ -219,7 +224,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull PsiFile psiFile) {
     assertMyProject(psiFile.getProject());
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
-    for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
+    for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                 info.getGutterIconRenderer(), info.quickFixActionRanges,
@@ -230,7 +235,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           fileLevelInfos = new ArrayList<>();
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
         }
-        info.fileLevelComponent = component;
+        info.addFileLeverComponent(fileEditor, component);
         info.setGroup(group);
         fileLevelInfos.add(info);
       }
