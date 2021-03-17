@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Set;
 
 public abstract class ProductivityFeaturesRegistry {
@@ -12,6 +13,10 @@ public abstract class ProductivityFeaturesRegistry {
   public abstract Set<String> getFeatureIds();
 
   public abstract FeatureDescriptor getFeatureDescriptor(@NotNull String id);
+
+  public abstract @Nullable FeatureDescriptor getFeatureDescriptorByLogEvent(@NotNull String groupId,
+                                                                             @NotNull String eventId,
+                                                                             @NotNull Map<String, Object> eventData);
 
   public abstract GroupDescriptor getGroupDescriptor(@NotNull String id);
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.MultiMap
@@ -9,7 +11,12 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class EventLogNotificationProxy(private val writer: StatisticsEventLogWriter,
                                 private val recorderId: String) : StatisticsEventLogWriter {
+  private val featureRegistry = ProductivityFeaturesRegistry.getInstance()
+
   override fun log(logEvent: LogEvent) {
+    featureRegistry?.getFeatureDescriptorByLogEvent(logEvent.group.id, logEvent.event.id, logEvent.event.data)?.let { feature ->
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(feature.id)
+    }
     EventLogNotificationService.notifySubscribers(logEvent, recorderId)
     writer.log(logEvent)
   }

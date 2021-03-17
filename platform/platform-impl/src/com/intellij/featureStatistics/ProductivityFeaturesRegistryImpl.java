@@ -9,6 +9,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.FileNotFoundException;
@@ -18,6 +19,7 @@ import java.util.*;
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
   private final Map<String, FeatureDescriptor> myFeatures = new HashMap<>();
+  private final Map<String, Map<String, List<LogEventDetector>>> myLogEventDetectors = new HashMap<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
 
@@ -105,6 +107,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
             featureDescriptor.copyStatistics(featureLoadedStatistics);
           }
           myFeatures.put(featureDescriptor.getId(), featureDescriptor);
+          addLogEventDetectors(featureDescriptor);
         }
       }
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
@@ -135,6 +138,15 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
+  private void addLogEventDetectors(FeatureDescriptor featureDescriptor) {
+    var featureDetectors = featureDescriptor.getLogEventDetectors();
+    for (LogEventDetector detector : featureDetectors) {
+      var event2detectors = myLogEventDetectors.computeIfAbsent(detector.groupId(), s -> new HashMap<>());
+      var detectors = event2detectors.computeIfAbsent(detector.eventId(), s -> new ArrayList<>());
+      detectors.add(detector);
+    }
+  }
+
   private void readGroup(Element groupElement) {
     GroupDescriptor groupDescriptor = new GroupDescriptor();
     groupDescriptor.readExternal(groupElement);
@@ -145,11 +157,11 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
     for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
-      FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor);
-      featureDescriptor.readExternal(featureElement);
+      FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, featureElement);
       if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
         myFeatures.put(featureDescriptor.getId(), featureDescriptor);
       }
+      addLogEventDetectors(featureDescriptor);
     }
   }
 
@@ -171,6 +183,24 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       return new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
     }
     return myFeatures.get(id);
+  }
+
+  @Override
+  public @Nullable FeatureDescriptor getFeatureDescriptorByLogEvent(@NotNull String groupId,
+                                                                    @NotNull String eventId,
+                                                                    @NotNull Map<String, Object> eventData) {
+    lazyLoadFromPluginsFeaturesProviders();
+    var event2detectors = myLogEventDetectors.get(groupId);
+    if (event2detectors != null) {
+      var detectors = event2detectors.get(eventId);
+      if (detectors != null) {
+        var detector = detectors.stream().filter(d -> d.succeed(eventData)).findFirst();
+        if (detector.isPresent()) {
+          return getFeatureDescriptorEx(detector.get().featureId());
+        }
+      }
+    }
+    return null;
   }
 
   @Override
