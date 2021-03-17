@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE
-import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -83,5 +82,5 @@ class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
 
     override fun defaultCompletionType(): CompletionType = CompletionType.BASIC
     override fun getPlatform(): TargetPlatform = JvmPlatforms.unspecifiedJvmPlatform
-    override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
+    override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_11
 }
