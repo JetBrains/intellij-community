@@ -81,7 +81,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       return true;
     }
     PsiClass baseClass = psiClass.getSuperClass();
-    if (baseClass == null) {
+    if (baseClass == null || baseClass == psiClass) {
       return true;
     }
     PsiMethod[] constructors = baseClass.getConstructors();
