@@ -57,6 +57,10 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
     return panel
   }
 
+  override fun typeOrFactorySelected(userObject: Any) {
+    drawPressAddButtonMessage(userObject as ConfigurationType);
+  }
+
   override fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
     for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(true)) {
       val typeNode = DefaultMutableTreeNode(type)

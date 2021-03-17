@@ -217,11 +217,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else if (userObject is String) {
           showFolderField(node, userObject)
         }
-        else if (userObject is ConfigurationFactory) {
-          showTemplateConfigurable(userObject)
-        }
-        else if (userObject is ConfigurationType) {
-           drawPressAddButtonMessage(userObject)
+        else if (userObject is ConfigurationFactory || userObject is ConfigurationType) {
+          typeOrFactorySelected(userObject);
         }
       }
       updateDialog()
@@ -234,6 +231,18 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val shortcut = KeymapUtil.getShortcutsText(toolbarAddAction.shortcutSet.shortcuts)
     if (shortcut.isNotEmpty()) tree.emptyText.appendText(" $shortcut")
     (tree.model as DefaultTreeModel).reload()
+  }
+
+  protected open fun typeOrFactorySelected(userObject: Any) {
+    if (userObject is ConfigurationType && userObject.configurationFactories.size == 1) {
+      showTemplateConfigurable(userObject.configurationFactories.first())
+    }
+    else if (userObject is ConfigurationFactory) {
+      showTemplateConfigurable(userObject)
+    }
+    else {
+      updateRightPanel(null)
+    }
   }
 
   protected open fun addRunConfigurationsToModel(model: DefaultMutableTreeNode) {
@@ -323,9 +332,13 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return userObject
   }
 
-  fun updateRightPanel(configurable: Configurable) {
+  fun updateRightPanel(configurable: Configurable?) {
     rightPanel.removeAll()
     selectedConfigurable = configurable
+    if (configurable == null) {
+      rightPanel.repaint()
+      return
+    }
 
     val configurableComponent = if (!project.isDefault && DumbService.getInstance(project).isDumb && !mayBeEditedInDumbMode(configurable)) {
       JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"))
@@ -405,7 +418,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
   }
 
-  private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
+  protected fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val panel = JPanel(BorderLayout())
     if (!(configurationType is UnknownConfigurationType)) {
       createTipPanelAboutAddingNewRunConfiguration(configurationType)?.let {
