@@ -8,9 +8,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ui.JBDimension;
@@ -73,10 +73,12 @@ public class CertificateWarningDialog extends DialogWrapper {
     String path = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(manager.getCacertsPath()));
     @NlsSafe String password = manager.getPassword();
 
-    myNoticePane.setText(
-      new HtmlBuilder().append(IdeBundle.message("label.certificate.will.be.saved",
-                                        new HtmlBuilder().append(path).wrapWith("code").toString(),
-                                        new HtmlBuilder().append(password).wrapWith("code").toString())).toString());
+    myNoticePane.setText(new HtmlBuilder()
+                           .appendRaw(IdeBundle.message("label.certificate.will.be.saved",
+                                                        HtmlChunk.text(path).wrapWith("code"),
+                                                        HtmlChunk.text(password).wrapWith("code")))
+                           .wrapWithHtmlBody()
+                           .toString());
     myCertificateInfoPanel.add(new CertificateInfoPanel(certificate), BorderLayout.CENTER);
     setResizable(false);
     init();
