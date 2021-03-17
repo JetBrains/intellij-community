@@ -48,8 +48,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
                                                     private val virtualFileManager: VirtualFileUrlManager,
-                                                    private val internalModuleListSerializer: JpsModuleListSerializer? = null,
-                                                    private val externalModuleListSerializer: JpsModuleListSerializer? = null,
+                                                    internal val internalModuleListSerializer: JpsModuleListSerializer? = null,
+                                                    internal val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
   override val mainEntityClass: Class<ModuleEntity>

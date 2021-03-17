@@ -214,7 +214,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity.endAndStart("(wm) Read serializers")
-      loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it) }
+      val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
       WriteAction.runAndWait<RuntimeException> {
@@ -223,7 +223,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
                                     || it is DummyParentEntitySource }, builder.toStorage())
         }
       }
+
       sourcesToSave.clear()
+      sourcesToSave.addAll(sourcesToUpdate)
+
       fileContentReader.clearCache()
       childActivity.end()
     }
