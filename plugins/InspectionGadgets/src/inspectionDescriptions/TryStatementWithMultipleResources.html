@@ -1,18 +1,22 @@
 <html>
 <body>
-Reports <b>try</b> statements with multiple resources.
-<p>The quick fix suggests to split such statements into nested <b>try-with-resources</b> statements.
-<!-- tooltip end -->
-<p>Example of <b>try</b> statement with multiple resources:
-<pre><code>try (FileInputStream in = new FileInputStream("in.txt");
+Reports <code>try</code> statements with multiple resources that can be automatically split into
+multiple try-with-resources statements. This conversion can be useful for further refactoring
+(e. g., extracting the nested <code>try</code> statement into a separate method). 
+<p>Example:</p>
+<pre>
+  try (FileInputStream in = new FileInputStream("in.txt");
      FileOutputStream out = new FileOutputStream("out.txt")) {
-  /*read and write*/
-}</code></pre>
-<p>The example above is transformed into the following:
-<pre><code>try (FileInputStream in = new FileInputStream("in.txt")) {
-  try (FileOutputStream out = new FileOutputStream("out.txt")) {
-    /*read and write*/
+     /*read and write*/
   }
-}</code></pre>
+</pre>
+<p>After the quick-fix is applied the result looks like:</p>
+<pre>
+  try (FileInputStream in = new FileInputStream("in.txt")) {
+    try (FileOutputStream out = new FileOutputStream("out.txt")) {
+      /*read and write*/
+    }
+  }
+</pre>
 </body>
 </html>
