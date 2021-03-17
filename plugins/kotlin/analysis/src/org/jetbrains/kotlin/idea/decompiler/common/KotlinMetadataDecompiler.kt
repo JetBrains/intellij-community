@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiManager
 import com.intellij.psi.compiled.ClassFileDecompilers
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.decompiler.KotlinDecompiledFileViewProvider
 import org.jetbrains.kotlin.idea.decompiler.KtDecompiledFile
@@ -58,6 +59,9 @@ abstract class KotlinMetadataDecompiler<out V : BinaryVersion>(
             }
         }
     }
+
+    @TestOnly
+    fun readFile(file: VirtualFile) = readFileSafely(file)
 
     private fun readFileSafely(file: VirtualFile, content: ByteArray? = null): FileWithMetadata? {
         if (!file.isValid) return null
