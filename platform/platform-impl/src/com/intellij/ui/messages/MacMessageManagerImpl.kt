@@ -372,6 +372,12 @@ private class NativeMacMessageManager : MacMessages() {
     }
   }
 
+  private val ALERT_DEFAULT_CALLBACK = object : Callback {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    fun callback(self: ID, selector: String) {
+    }
+  }
+
   init {
     val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSJavaAlertDelegate")
     if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showAlert:"), SHOW_ALERT, "v*")) {
@@ -385,6 +391,10 @@ private class NativeMacMessageManager : MacMessages() {
     if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("_NSAlertPanel"),
                                                           Foundation.createSelector("_changeJustMain"), ALERT_CHANGE_JUST_MAIN, "v")) {
       throw RuntimeException("Unable to add `_changeJustMain` method to Objective-C _NSAlertPanel class")
+    }
+    if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("_NSAlertContentView"),
+                                                          Foundation.createSelector("deliverJavaMouseEvent:"), ALERT_DEFAULT_CALLBACK, "v*")) {
+      throw RuntimeException("Unable to add `deliverJavaMouseEvent:` method to Objective-C _NSAlertContentView class")
     }
   }
 }
