@@ -22,7 +22,7 @@ import org.testng.annotations.DataProvider;
 
 import java.util.Properties;
 
-public class TestNGDataProviderInspection extends AbstractBaseJavaLocalInspectionTool {
+public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override

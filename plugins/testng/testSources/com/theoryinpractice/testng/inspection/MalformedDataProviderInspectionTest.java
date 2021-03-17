@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class TestNGDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testMissedDataProvider() {
 
     myFixture.testHighlighting(true, false, false, "MissedDataProvider.java");
@@ -44,6 +44,6 @@ public class TestNGDataProviderInspectionTest extends LightJavaCodeInsightFixtur
                        "public @interface Test {  java.lang.String dataProvider() default {};" +
                        " Class dataProviderClass() default {};" +
                        "}");
-    myFixture.enableInspections(new TestNGDataProviderInspection());
+    myFixture.enableInspections(new MalformedDataProviderInspection());
   }
 }
