@@ -35,7 +35,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   private final List<ImportCandidateHolder> myImports; // from where and what to import
   private final String myInitialName;
   private final boolean myUseQualifiedImport;
-  private final Class<? extends PsiReference> myReferenceType;
+  private final @NotNull Class<? extends PsiReference> myReferenceType;
   private boolean myExpended = false;
 
   /**
@@ -99,7 +99,15 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
                         @NotNull PsiFileSystemItem file,
                         @Nullable QualifiedName path,
                         @Nullable String asName) {
-    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
+    addImport(importable, file, null, path, asName);
+  }
+
+  public void addImport(@NotNull PsiNamedElement importable,
+                        @NotNull PsiFileSystemItem file,
+                        @Nullable PyImportElement importElement,
+                        @Nullable QualifiedName path,
+                        @Nullable String asName) {
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, path, asName));
   }
 
   /**
@@ -136,7 +144,8 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
 
   @NotNull
   public ImportFromExistingAction createAction(PsiElement element) {
-    final ImportFromExistingAction action = new ImportFromExistingAction(element, myImports, myInitialName, myUseQualifiedImport, false);
+    final ImportFromExistingAction action =
+      new ImportFromExistingAction(element, myImports, myInitialName, null, myUseQualifiedImport, false);
     action.onDone(() -> myExpended = true);
     return action;
   }
@@ -168,13 +177,15 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
     if (reference == null || isResolved(reference)) return;
     // act
     ImportFromExistingAction action = createAction();
-    action.execute(); // assume that action runs in WriteAction on its own behalf
+    if (action != null) {
+      action.execute(); // assume that action runs in WriteAction on its own behalf
+    }
     myExpended = true;
   }
 
-  @NotNull
+  @Nullable
   protected ImportFromExistingAction createAction() {
-    return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, myUseQualifiedImport, false);
+    return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, null, myUseQualifiedImport, false);
   }
 
   public void sortCandidates() {
@@ -225,7 +236,7 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
       @NotNull
       @Override
       protected ImportFromExistingAction createAction() {
-        return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, myUseQualifiedImport, true);
+        return new ImportFromExistingAction(getStartElement(), myImports, myInitialName, null, myUseQualifiedImport, true);
       }
     };
   }
@@ -233,6 +244,14 @@ public class AutoImportQuickFix extends LocalQuickFixOnPsiElement implements Hig
   @NotNull
   public String getNameToImport() {
     return myInitialName;
+  }
+
+  public @NotNull Class<? extends PsiReference> getReferenceType() {
+    return myReferenceType;
+  }
+
+  public boolean isUseQualifiedImport() {
+    return myUseQualifiedImport;
   }
 
   static boolean isResolved(@NotNull PsiReference reference) {

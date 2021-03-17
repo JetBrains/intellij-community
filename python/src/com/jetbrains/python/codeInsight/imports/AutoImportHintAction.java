@@ -41,9 +41,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPriorityAction {
-  private final AutoImportQuickFix myDelegate;
+  private final @NotNull AutoImportQuickFix myDelegate;
 
-  public AutoImportHintAction(AutoImportQuickFix delegate) {
+  public AutoImportHintAction(@NotNull AutoImportQuickFix delegate) {
     myDelegate = delegate;
   }
 
@@ -121,5 +121,9 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     myDelegate.applyFix(project, descriptor);
+  }
+
+  public @NotNull AutoImportQuickFix getDelegate() {
+    return myDelegate;
   }
 }

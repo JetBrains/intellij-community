@@ -25,11 +25,13 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -392,11 +394,37 @@ public final class AddImportHelper {
                                            @Nullable String asName,
                                            @Nullable ImportPriority priority,
                                            @Nullable PsiElement anchor) {
+    return addImportStatement(file, name, asName, priority, anchor, null);
+  }
+
+  /**
+   * Adds an import statement, if it doesn't exist yet, presumably below all other initial imports in the file.
+   *
+   * @param file         where to operate
+   * @param name         which to import (qualified is OK)
+   * @param asName       optional name for 'as' clause
+   * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
+   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   *                     new import statement will be inserted right after it.
+   * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
+   * @return whether import statement was actually added
+   */
+  public static boolean addImportStatement(@NotNull PsiFile file,
+                                           @NotNull String name,
+                                           @Nullable String asName,
+                                           @Nullable ImportPriority priority,
+                                           @Nullable PsiElement anchor,
+                                           final @Nullable PsiElement insertBefore) {
     if (!(file instanceof PyFile)) {
       return false;
     }
     final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
+    final List<PyImportStatementBase> importsAllowedToReuse = getImportsAllowedToReuse(insertBefore);
     for (PyImportElement existingImport : existingImports) {
+      if (importsAllowedToReuse != null && !importsAllowedToReuse.contains(existingImport.getContainingImportStatement())) {
+        continue;
+      }
+
       final String existingName = Objects.toString(existingImport.getImportedQName(), "");
       if (name.equals(existingName) && Objects.equals(asName, existingImport.getAsName())) {
         return false;
@@ -406,15 +434,28 @@ public final class AddImportHelper {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
-    final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
-    final PsiElement insertParent = importStatement != null && importStatement.getContainingFile() == file ?
-                                    importStatement.getParent() : file;
+    final PsiElement insertParent;
+    if (insertBefore == null || insertBefore.getParent() == null) {
+      final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
+      insertParent = importStatement != null && importStatement.getContainingFile() == file ?
+                     importStatement.getParent() : file;
+    }
+    else {
+      insertParent = insertBefore.getParent();
+    }
     try {
       if (anchor instanceof PyImportStatementBase) {
         insertParent.addAfter(importNodeToInsert, anchor);
       }
       else {
-        insertParent.addBefore(importNodeToInsert, getInsertPosition(insertParent, anchor, importNodeToInsert, priority));
+        final PsiElement position;
+        if (insertBefore == null) {
+          position = getInsertPosition(insertParent, anchor, importNodeToInsert, priority);
+        }
+        else {
+          position = insertBefore;
+        }
+        insertParent.addBefore(importNodeToInsert, position);
       }
     }
     catch (IncorrectOperationException e) {
@@ -441,10 +482,33 @@ public final class AddImportHelper {
                                             @Nullable String asName,
                                             @Nullable ImportPriority priority,
                                             @Nullable PsiElement anchor) {
+    addFromImportStatement(file, from, name, asName, priority, anchor, null);
+  }
+
+  /**
+   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
+   *
+   * @param file         where to operate
+   * @param from         import source (reference after {@code from} keyword)
+   * @param name         imported name (identifier after {@code import} keyword)
+   * @param asName       optional alias (identifier after {@code as} keyword)
+   * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
+   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   *                     new import statement will be inserted right after it.
+   * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
+   * @see #addOrUpdateFromImportStatement
+   */
+  public static void addFromImportStatement(@NotNull PsiFile file,
+                                            @NotNull String from,
+                                            @NotNull String name,
+                                            @Nullable String asName,
+                                            @Nullable ImportPriority priority,
+                                            @Nullable PsiElement anchor,
+                                            @Nullable PsiElement insertBefore) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
     final LanguageLevel languageLevel = LanguageLevel.forElement(file);
     final PyFromImportStatement newImport = generator.createFromImportStatement(languageLevel, from, name, asName);
-    addFromImportStatement(file, newImport, priority, anchor);
+    addFromImportStatement(file, newImport, priority, anchor, insertBefore);
   }
 
   /**
@@ -463,6 +527,27 @@ public final class AddImportHelper {
                                             @NotNull PyFromImportStatement newImport,
                                             @Nullable ImportPriority priority,
                                             @Nullable PsiElement anchor) {
+    addFromImportStatement(file, newImport, priority, anchor, null);
+  }
+
+  /**
+   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
+   *
+   * @param file         where to operate
+   * @param newImport    new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway.
+   *                     You might want to use overloaded version of this method to generate such statement automatically.
+   * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
+   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   *                     new import statement will be inserted right after it.
+   * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
+   * @see #addFromImportStatement(PsiFile, String, String, String, ImportPriority, PsiElement)
+   * @see #addFromImportStatement
+   */
+  public static void addFromImportStatement(@NotNull PsiFile file,
+                                            @NotNull PyFromImportStatement newImport,
+                                            @Nullable ImportPriority priority,
+                                            @Nullable PsiElement anchor,
+                                            @Nullable PsiElement insertBefore) {
     try {
       final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
       final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
@@ -472,7 +557,10 @@ public final class AddImportHelper {
                                     DocStringUtil.getParentDefinitionDocString(injectionHost) == injectionHost;
 
       final PsiElement insertParent;
-      if (parentImport != null && parentImport.getContainingFile() == file) {
+      if (insertBefore != null && insertBefore.getParent() != null) {
+        insertParent = insertBefore.getParent();
+      }
+      else if (parentImport != null && parentImport.getContainingFile() == file) {
         insertParent = parentImport.getParent();
       }
       else if (injectionHost != null && !insideDoctest) {
@@ -494,7 +582,14 @@ public final class AddImportHelper {
         insertParent.addAfter(newImport, anchor);
       }
       else {
-        insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
+        final PsiElement position;
+        if (insertBefore == null) {
+          position = getInsertPosition(insertParent, anchor, newImport, priority);
+        }
+        else {
+          position = insertBefore;
+        }
+        insertParent.addBefore(newImport, position);
       }
     }
     catch (IncorrectOperationException e) {
@@ -523,6 +618,34 @@ public final class AddImportHelper {
                                                        @Nullable String asName,
                                                        @Nullable ImportPriority priority,
                                                        @Nullable PsiElement anchor) {
+    return addOrUpdateFromImportStatement(file, from, name, asName, priority, anchor, null);
+  }
+
+  /**
+   * Adds new {@link PyFromImportStatement} in file or append {@link PyImportElement} to
+   * existing from import statement.
+   *
+   * @param file         module where import will be added
+   * @param from         import source (reference after {@code from} keyword)
+   * @param name         imported name (identifier after {@code import} keyword)
+   * @param asName       optional alias (identifier after {@code as} keyword)
+   * @param priority     optional import priority used to sort imports
+   * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
+   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   *                     new import statement will be inserted right after it.
+   * @param insertBefore import statement should be inserted right before this element. However, if it aims at an insertion statement in
+   *                     a group of inserts, a better insertion point belonging the group may be chosen, and it can be after the specified
+   *                     node. If null, the position will be chosen automatically.
+   * @return whether import was actually added
+   * @see #addFromImportStatement
+   */
+  public static boolean addOrUpdateFromImportStatement(@NotNull PsiFile file,
+                                                       @NotNull String from,
+                                                       @NotNull String name,
+                                                       @Nullable String asName,
+                                                       @Nullable ImportPriority priority,
+                                                       @Nullable PsiElement anchor,
+                                                       final @Nullable PsiElement insertBefore) {
     final PyFile pyFile = (PyFile)file;
     final List<PyFromImportStatement> existingImports = pyFile.getFromImports();
 
@@ -535,8 +658,13 @@ public final class AddImportHelper {
       }
     }
 
+    final List<PyImportStatementBase> importsAllowedToReuse = getImportsAllowedToReuse(insertBefore);
+
     if (!PythonCodeStyleService.getInstance().isOptimizeImportsAlwaysSplitFromImports(file)) {
       for (PyFromImportStatement existingImport : existingImports) {
+        if (importsAllowedToReuse != null && !importsAllowedToReuse.contains(existingImport)) {
+          continue;
+        }
         if (existingImport.isStarImport()) {
           continue;
         }
@@ -571,8 +699,22 @@ public final class AddImportHelper {
       }
     }
 
-    addFromImportStatement(file, from, name, asName, priority, anchor);
+    addFromImportStatement(file, from, name, asName, priority, anchor, insertBefore);
     return true;
+  }
+
+  @Contract("null -> null; !null -> !null")
+  @Nullable
+  private static List<PyImportStatementBase> getImportsAllowedToReuse(@Nullable PsiElement importBlockStart) {
+    if (importBlockStart == null) return null;
+
+    final List<PyImportStatementBase> importsAllowedToReuse = new ArrayList<>();
+    PsiElement candidate = importBlockStart;
+    while (candidate instanceof PyImportStatementBase) {
+      importsAllowedToReuse.add((PyImportStatementBase)candidate);
+      candidate = PyPsiUtils.getNextNonWhitespaceSibling(candidate);
+    }
+    return importsAllowedToReuse;
   }
 
   /**

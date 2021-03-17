@@ -386,13 +386,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
     ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
-    ContainerUtil.addAll(fixes, getPluginQuickFixes(reference));
     ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
 
     if (reference instanceof PySubstitutionChunkReference) {
       return;
     }
 
+    getPluginQuickFixes(fixes, reference);
     registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
@@ -1059,7 +1059,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     return null;
   }
 
-  Iterable<LocalQuickFix> getPluginQuickFixes(PsiReference reference) {
-    return Collections.emptyList();
+  void getPluginQuickFixes(List<LocalQuickFix> fixes, PsiReference reference) {
+    // Nothing.
   }
 }
