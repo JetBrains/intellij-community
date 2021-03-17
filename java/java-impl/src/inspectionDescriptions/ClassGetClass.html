@@ -1,8 +1,21 @@
 <html>
 <body>
-Reports when <b>getClass()</b> method is called on <b>java.lang.Class</b> instance. This is usually a mistake as the result is
-  always equivalent to <b>Class.class</b>. If it's mistake then the <b>getClass()</b> call should be removed and qualifier should be used
-  directly. If the behavior is intended, then it's better to write <b>Class.class</b> explicitly to avoid confusion.
+Reports <code>getClass()</code> method is called on <code>java.lang.Class</code> instance.
+This is usually a mistake as the result is always equivalent to <code>Class.class</code>.
+If it's mistake then remove the <code>getClass()</code> call and use qualifier directly.
+If the behavior is intended, then write <code>Class.class</code> explicitly to avoid confusion.
+<p>Example:</p>
+<pre>
+  void test(Class<?> clazz) {
+    String name = clazz.getClass().getName();
+  }
+</pre>
+<p>After one of possible quick-fix is applied, the result will be:</p>
+<pre>
+  void test(Class<?> clazz) {
+    String name = clazz.getName();
+  }
+</pre>
 <!-- tooltip end -->
 <p><small>New in 2018.2</small></p>
 </body>
