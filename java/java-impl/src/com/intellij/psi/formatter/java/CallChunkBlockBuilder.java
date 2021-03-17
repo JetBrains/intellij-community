@@ -31,6 +31,9 @@ import static com.intellij.psi.formatter.java.AbstractJavaBlock.newJavaBlock;
 
 public class CallChunkBlockBuilder {
 
+  public static final String FRAGMENT_DEBUG_NAME = "chainFragment";
+  public static final String CHAINED_CALL_DEBUG_NAME = "chainedCall";
+
   private final CommonCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
   private final JavaCodeStyleSettings myJavaSettings;
@@ -56,13 +59,28 @@ public class CallChunkBlockBuilder {
       Indent indent = relativeIndentSize > 0 ? Indent.getSpaceIndent(relativeIndentSize) : Indent.getNoneIndent();
       Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, indent, null, strategy, myFormattingMode);
       subBlocks.add(block);
-      subNodes.remove(0);
-      if (!subNodes.isEmpty()) {
-        subBlocks.add(create(subNodes, wrap, null, -1));
+      if (subNodes.size() > 1) {
+        subBlocks.add(
+          createSyntheticBlock(createJavaBlocks(subNodes.subList(1, subNodes.size())), null, null, FRAGMENT_DEBUG_NAME));
       }
-      return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings, Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
+      return createSyntheticBlock(subBlocks, alignment, wrap, CHAINED_CALL_DEBUG_NAME);
     }
-    return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings, myJavaSettings, Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), null);
+    else {
+      return createSyntheticBlock(createJavaBlocks(subNodes), alignment, null, FRAGMENT_DEBUG_NAME);
+    }
+  }
+
+  private Block createSyntheticBlock(@NotNull List<Block> subBlocks,
+                                     @Nullable Alignment alignment,
+                                     @Nullable Wrap wrap,
+                                     @NotNull final String debugName) {
+    return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
+                                  Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap) {
+      @Override
+      public String getDebugName() {
+        return debugName + ": " + SyntheticCodeBlock.class.getSimpleName();
+      }
+    };
   }
 
   @NotNull

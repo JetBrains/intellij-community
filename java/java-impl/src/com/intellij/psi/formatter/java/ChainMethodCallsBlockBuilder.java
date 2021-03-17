@@ -80,6 +80,7 @@ class ChainMethodCallsBlockBuilder {
 
     int commonIndentSize = mySettings.KEEP_BUILDER_METHODS_INDENTS ? getCommonIndentSize(methodCall) : -1;
 
+    CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk) || isComment(currentCallChunk)) {
@@ -95,7 +96,6 @@ class ChainMethodCallsBlockBuilder {
         chainedCallsAlignment = null;
       }
 
-      CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
       blocks.add(builder.create(currentCallChunk.nodes,
                                 isBuilderMethod(currentCallChunk) ? builderMethodWrap : wrap, chainedCallsAlignment,
                                 getRelativeIndentSize(commonIndentSize, currentCallChunk)));
