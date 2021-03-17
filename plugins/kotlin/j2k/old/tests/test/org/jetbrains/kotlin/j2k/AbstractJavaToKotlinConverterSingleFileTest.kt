@@ -18,12 +18,25 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
+import org.jetbrains.kotlin.test.Directives
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import java.io.File
 import java.util.regex.Pattern
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     val testHeaderPattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
+
+    // FIXME: remove after KTIJ-5630
+    private fun doTestWithSlowAssertion(directives: Directives, block: () -> Unit) {
+        val oldValue = FlexibleTypeImpl.RUN_SLOW_ASSERTIONS
+        try {
+            FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = directives["WITHOUT_SLOW_ASSERTIONS"] == null
+            block()
+        } finally {
+            FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = oldValue
+        }
+    }
 
     open fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
@@ -39,45 +52,47 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val settings = ConverterSettings.defaultSettings.copy()
         val directives = KotlinTestUtils.parseDirectives(javaCode)
-        directives["FORCE_NOT_NULL_TYPES"]?.let {
-            settings.forceNotNullTypes = it.toBoolean()
-        }
-        directives["SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT"]?.let {
-            settings.specifyLocalVariableTypeByDefault = it.toBoolean()
-        }
-        directives["SPECIFY_FIELD_TYPE_BY_DEFAULT"]?.let {
-            settings.specifyFieldTypeByDefault = it.toBoolean()
-        }
-        directives["OPEN_BY_DEFAULT"]?.let {
-            settings.openByDefault = it.toBoolean()
-        }
-
-        val rawConverted = WriteCommandAction.runWriteCommandAction(project, Computable {
-            PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-            return@Computable when (prefix) {
-                "expression" -> expressionToKotlin(javaCode, settings, project)
-                "statement" -> statementToKotlin(javaCode, settings, project)
-                "method" -> methodToKotlin(javaCode, settings, project)
-                "class" -> fileToKotlin(javaCode, settings, project)
-                "file" -> fileToKotlin(javaCode, settings, project)
-                else -> throw IllegalStateException(
-                    "Specify what is it: file, class, method, statement or expression using the first line of test data file"
-                )
+        doTestWithSlowAssertion(directives) {
+            directives["FORCE_NOT_NULL_TYPES"]?.let {
+                settings.forceNotNullTypes = it.toBoolean()
             }
-        })
+            directives["SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT"]?.let {
+                settings.specifyLocalVariableTypeByDefault = it.toBoolean()
+            }
+            directives["SPECIFY_FIELD_TYPE_BY_DEFAULT"]?.let {
+                settings.specifyFieldTypeByDefault = it.toBoolean()
+            }
+            directives["OPEN_BY_DEFAULT"]?.let {
+                settings.openByDefault = it.toBoolean()
+            }
 
-        val reformatInFun = prefix in setOf("element", "expression", "statement")
+            val rawConverted = WriteCommandAction.runWriteCommandAction(project, Computable {
+                PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+                return@Computable when (prefix) {
+                    "expression" -> expressionToKotlin(javaCode, settings, project)
+                    "statement" -> statementToKotlin(javaCode, settings, project)
+                    "method" -> methodToKotlin(javaCode, settings, project)
+                    "class" -> fileToKotlin(javaCode, settings, project)
+                    "file" -> fileToKotlin(javaCode, settings, project)
+                    else -> throw IllegalStateException(
+                        "Specify what is it: file, class, method, statement or expression using the first line of test data file"
+                    )
+                }
+            })
 
-        var actual = reformat(rawConverted, project, reformatInFun)
+            val reformatInFun = prefix in setOf("element", "expression", "statement")
 
-        if (prefix == "file") {
-            actual = createKotlinFile(actual)
-                .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET_ERROR))
+            var actual = reformat(rawConverted, project, reformatInFun)
+
+            if (prefix == "file") {
+                actual = createKotlinFile(actual)
+                    .dumpTextWithErrors(setOf(element = ErrorsJvm.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET_ERROR))
+            }
+
+
+            val expectedFile = provideExpectedFile(javaPath)
+            compareResults(expectedFile, actual)
         }
-
-
-        val expectedFile = provideExpectedFile(javaPath)
-        compareResults(expectedFile, actual)
     }
 
     open fun provideExpectedFile(javaPath: String): File {

@@ -1,3 +1,4 @@
+// !WITHOUT_SLOW_ASSERTIONS: true
 import java.util.*;
 
 class A {
