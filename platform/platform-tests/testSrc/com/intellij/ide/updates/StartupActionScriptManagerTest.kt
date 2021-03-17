@@ -6,13 +6,15 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.io.ObjectOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -120,5 +122,21 @@ class StartupActionScriptManagerTest {
         "unzip[/unzip/src,/unzip/dst,ImportSettingsFilenameFilter[f1,f2]]",
         "delete[/delete/src]")
     }
+  }
+
+  @Test fun `write error resilience`() {
+    StartupActionScriptManager.addActionCommands(listOf(
+      StartupActionScriptManager.DeleteCommand(Path.of("file-1")),
+      StartupActionScriptManager.DeleteCommand(Path.of("file-2")),
+      StartupActionScriptManager.DeleteCommand(Path.of("file-3"))))
+
+    val badCommands = listOf(
+      StartupActionScriptManager.DeleteCommand(Path.of("file-4")),
+      object : StartupActionScriptManager.ActionCommand { override fun execute(): Unit = throw UnsupportedOperationException() },
+      StartupActionScriptManager.DeleteCommand(Path.of("file-5")))
+    assertThatCode { StartupActionScriptManager.addActionCommands(badCommands) }.isInstanceOf(IOException::class.java)
+
+    assertThat(scriptFile).exists()
+    assertThat(StartupActionScriptManager.loadActionScript(scriptFile)).hasSize(3)
   }
 }

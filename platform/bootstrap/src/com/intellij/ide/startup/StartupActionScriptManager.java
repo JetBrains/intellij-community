@@ -2,7 +2,6 @@
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.ApiStatus;
@@ -60,23 +59,24 @@ public final class StartupActionScriptManager {
       for (ActionCommand command : commands) {
         command.execute();
       }
-      return;
     }
-
-    List<ActionCommand> script;
-    Path actionScriptFile = getActionScriptFile();
-    try {
-      List<ActionCommand> savedScript = loadActionScript(actionScriptFile);
-      script = new ArrayList<>(savedScript.size() + commands.size());
+    else {
+      Path scriptFile = getActionScriptFile();
+      List<ActionCommand> savedScript = loadActionScript(scriptFile);
+      List<ActionCommand> script = new ArrayList<>(savedScript.size() + commands.size());
       script.addAll(savedScript);
       script.addAll(commands);
+      try {
+        saveActionScript(script, scriptFile);
+      }
+      catch (Throwable t) {
+        try {
+          saveActionScript(savedScript, scriptFile);
+        }
+        catch (Throwable tt) { t.addSuppressed(tt); }
+        throw t;
+      }
     }
-    catch (ObjectStreamException e) {
-      Logger.getInstance(StartupActionScriptManager.class).warn(e);
-      script = new ArrayList<>(commands);
-    }
-
-    saveActionScript(script, actionScriptFile);
   }
 
   private static Path getActionScriptFile() {
@@ -104,15 +104,17 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
-    if (commands == null) {
-      Files.deleteIfExists(scriptFile);
+  public static void saveActionScript(@NotNull List<ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
+    Files.createDirectories(scriptFile.getParent());
+    try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
+      oos.writeObject(commands.toArray(new ActionCommand[0]));
     }
-    else {
-      Files.createDirectories(scriptFile.getParent());
-      try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
-        oos.writeObject(commands.toArray(new ActionCommand[0]));
+    catch (Throwable t) {
+      try {
+        Files.deleteIfExists(scriptFile);
       }
+      catch (IOException e) { t.addSuppressed(e); }
+      throw t;
     }
   }
 
