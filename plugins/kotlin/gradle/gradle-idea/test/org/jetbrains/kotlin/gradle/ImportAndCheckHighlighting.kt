@@ -35,6 +35,12 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
         importAndCheckHighlighting()
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.20+")
+    fun testCommonizeDummyCInterop() {
+        importAndCheckHighlighting()
+    }
+
     private fun importAndCheckHighlighting(testLineMarkers: Boolean = true, checkWarnings: Boolean = true) {
         val files = configureByFiles()
         importProject()
