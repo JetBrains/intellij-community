@@ -26,6 +26,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AnnotationDoesNotLoseImport")
+    public void testAnnotationDoesNotLoseImport() throws Exception {
+        runTest("testData/multiFile/AnnotationDoesNotLoseImport/");
+    }
+
     @TestMetadata("AnnotationWithArrayParameter")
     public void testAnnotationWithArrayParameter() throws Exception {
         runTest("testData/multiFile/AnnotationWithArrayParameter/");
