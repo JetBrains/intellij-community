@@ -1,8 +1,15 @@
 <html>
 <body>
-Reports any type parameters and wildcard type arguments explicitly declared to extend <b>java.lang.Object</b>.
+Reports any type parameters and wildcard type arguments explicitly declared to extend <code>java.lang.Object</code>. Such extension is useless as <code>java.lang.Object</code> is supertype of all classes.
+<p><b>Example:</b></p>
+<pre>
+  class ClassA&lt;T extends Object&gt; {}    //reported
+  class ClassB&lt;T extends @A Object&gt; {} //depends on setting
+</pre>
 <!-- tooltip end -->
 <p>
+  Use the checkbox below to disable inspection in cases of <code>java.lang.Object</code> is annotated.
+</p>
 
 </body>
 </html>

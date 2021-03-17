@@ -1,6 +1,20 @@
 <html>
 <body>
-The inspection warns about use of automatic modules in the "requires" directive.
+Reports usage of automatic modules in the <code>requires</code> directive.
 Corresponds to <code>-Xlint:requires-automatic</code> and <code>-Xlint:requires-transitive-automatic</code> Javac options.
+The first warning increases awareness of when automatic modules are used. The second helps make the author of an explicit module
+aware that they're putting the users of that module at risk by
+establishing implied readability to an automatic module.
+<p><b>Example:</b></p>
+<pre>
+  //module-info.java
+  module org.printer {
+    requires transitive drivers.corp.org; // reported in case 'drivers.corp.org' is an automatic module
+  }
+</pre>
+<!-- tooltip end -->
+<p>
+  Use the checkbox below to warn only on transitive dependencies
+</p>
 </body>
 </html>

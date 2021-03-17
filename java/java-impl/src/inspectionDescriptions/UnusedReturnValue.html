@@ -2,5 +2,23 @@
 <body>
 Reports methods whose return values are never used when called.
 The return type of such methods can be made <code>void</code>.
+<p><b>Example:</b></p>
+<pre>
+  protected String myToUpperCase(String s) { // reported if visibility setting is 'Protected' or higher
+    return s.toUpperCase();
+  }
+
+  public String setStr(String str) {  // simple setter, reporting depends on setting
+    myStr = str;
+    return this;
+  }
+
+  void test() {
+    setStr("value");          // return value is unused
+    myToUpperCase("result");  // return value is unused
+  }
+</pre>
+<!-- tooltip end -->
+<p>Use the checkbox below to ignore unused return values from simple setter calls and visibility setting to control methods to be reported.
 </body>
 </html>

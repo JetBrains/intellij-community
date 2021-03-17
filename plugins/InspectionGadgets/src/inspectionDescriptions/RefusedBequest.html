@@ -1,16 +1,39 @@
 <html>
 <body>
 Reports any methods which override a concrete method,
-but which do not call that method as <b>super</b>. This is also known as a <i>refused bequest</i> and such methods
+but which do not call that method as <code>super</code>. This is also known as a <i>refused bequest</i> and such methods
 may represent a failure of abstraction which can lead to hard-to-trace bugs. Default methods and methods overridden
-from <b>java.lang.Object</b>, except for <b>clone()</b>, are not reported by this inspection.
-A <b>clone()</b> method is expected to call its super, which will automatically return an object of the correct type.
-<!-- tooltip end -->
-<p>
-Use the first checkbox below to only warn when the super method is annotated by an annotation specified in the table below.
-<p>
-Use the second checkbox below to ignore super methods when they are empty or only throw an exception.
-<p>
+from <code>java.lang.Object</code>, except for <code>clone()</code>, are not reported by this inspection.
+A <code>clone()</code> method is expected to call its super, which will automatically return an object of the correct type.
+<p><b>Examples:</b></p>
+<ul>
+  <li><pre>
+  class A {
+    @Override
+    public Object clone() { // reported, because it does not call 'super.clone()'
+      return new A();
+    }
+  }
+  </pre> </li>
+  <li><pre>
+  interface I {
+    default void foo() {}
+  }
 
+  class A implements I {
+    // warning on method when 'Ignore 'default' super methods' and 'Ignore annotated' options are disabled
+    @Override
+    public void foo(){}
+  }
+  </pre></li>
+</ul>
+<!-- tooltip end -->
+<p>Use the checkboxes below to ignore the following cases:</p>
+<ul>
+  <li>super method is annotated by an annotation specified in the table</li>
+  <li>super method is empty or only throws an exception</li>
+  <li>super method is default method</li>
+</ul>
+<p>
 </body>
 </html>
