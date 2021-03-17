@@ -4,19 +4,13 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
-import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -25,7 +19,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,24 +35,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private boolean myShowPopup = true;
-
-  public SettingsEntryPointAction() {
-    initPluginsListeners();
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -93,50 +79,29 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    if (myPlatformUpdateInfo != null) {
-      group.add(new DumbAwareAction(IdeBundle.message("settings.entry.point.update.ide.action",
-                                                      ApplicationNamesInfo.getInstance().getFullProductName(),
-                                                      requireNonNull(myPlatformUpdateInfo.getNewBuild()).getVersion()),
-                                    null, AllIcons.Ide.Notification.IdeUpdate) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          boolean updateStarted = new UpdateInfoDialog(
-            e.getProject(), requireNonNull(myPlatformUpdateInfo.getUpdatedChannel()), myPlatformUpdateInfo.getNewBuild(),
-            myPlatformUpdateInfo.getPatches(), true, myUpdatedPlugins, myIncompatiblePlugins
-          ).showAndGet();
-          if (updateStarted) {
-            newPlatformUpdate(null, null, null);
+    List<ActionProvider> providers = new ArrayList<>(ActionProvider.EP_NAME.getExtensionList());
+    ContainerUtil.sort(providers, Comparator.comparingInt(ActionProvider::getOrder));
+
+    for (ActionProvider provider : providers) {
+      Collection<AnAction> actions = provider.getUpdateActions(context);
+      if (!actions.isEmpty()) {
+        for (AnAction action : actions) {
+          Presentation presentation = action.getTemplatePresentation();
+          if (presentation.getClientProperty(ActionProvider.ICON_KEY) == IconState.ApplicationUpdate) {
+            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
           }
-        }
-      });
-    }
-    // todo[AL/RS] separate action for plugins compatible with both old and new builds
-    else if (myUpdatedPlugins != null) {
-      int size = myUpdatedPlugins.size();
-
-      String name = size == 1
-                    ? IdeBundle.message("settings.entry.point.update.plugin.action", myUpdatedPlugins.iterator().next().getPluginName())
-                    : IdeBundle.message("settings.entry.point.update.plugins.action", size);
-      group.add(new DumbAwareAction(name, null, AllIcons.Ide.Notification.PluginUpdate) {
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          e.getPresentation().setEnabled(myEnableUpdateAction);
-        }
-
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          PluginUpdateDialog dialog = new PluginUpdateDialog(e.getProject(), myUpdatedPlugins, myCustomRepositoryPlugins);
-          dialog.setFinishCallback(() -> setEnableUpdateAction(true));
-          setEnableUpdateAction(false);
-
-          if (!dialog.showAndGet()) {
-            setEnableUpdateAction(true);
+          else {
+            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
           }
+          group.add(action);
         }
-      });
+        group.addSeparator();
+      }
     }
 
-    group.addSeparator();
+    if (group.getChildrenCount() == 0) {
+      resetActionIcon();
+    }
 
     for (AnAction child : getTemplateActions()) {
       if (child instanceof Separator) {
@@ -174,88 +139,16 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }, -1);
   }
 
-  private static PluginUpdatesService myUpdatesService;
-  private static PluginStateListener myPluginStateListener;
-
-  private static void initPluginsListeners() {
-    if (myUpdatesService == null) {
-      myUpdatesService = PluginUpdatesService.connectWithUpdates(descriptors -> {
-        if (ContainerUtil.isEmpty(descriptors)) {
-          newPluginUpdates(null, null);
-          return;
-        }
-        if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
-          return;
-        }
-        List<PluginDownloader> downloaders = new ArrayList<>();
-        try {
-          for (IdeaPluginDescriptor descriptor : descriptors) {
-            if (!UpdateChecker.isIgnored(descriptor)) {
-              downloaders.add(PluginDownloader.createDownloader(descriptor));
-            }
-          }
-        }
-        catch (IOException e) {
-          PluginManagerCore.getLogger().error(e);
-        }
-        newPluginUpdates(downloaders.isEmpty() ? null : downloaders, null);
-      });
-    }
-    if (myPluginStateListener == null) {
-      PluginStateManager.addStateListener(myPluginStateListener = new PluginStateListener() {
-        @Override
-        public void install(@NotNull IdeaPluginDescriptor descriptor) {
-          removePluginsUpdate(Collections.singleton(descriptor));
-        }
-      });
-    }
-  }
-
-  private static @Nullable CheckForUpdateResult myPlatformUpdateInfo;
-  private static @Nullable Collection<IdeaPluginDescriptor> myIncompatiblePlugins;
   private static boolean myShowPlatformUpdateIcon;
-
-  private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
-  private static @Nullable Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
   private static boolean myShowPluginsUpdateIcon;
-  private static boolean myEnableUpdateAction = true;
 
-  private static void setEnableUpdateAction(boolean value) {
-    myEnableUpdateAction = value;
-  }
-
-  public static void newPlatformUpdate(@Nullable CheckForUpdateResult platformUpdateInfo,
-                                       @Nullable List<PluginDownloader> updatedPlugins,
-                                       @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
-    myPlatformUpdateInfo = platformUpdateInfo;
-    myUpdatedPlugins = updatedPlugins;
-    myIncompatiblePlugins = incompatiblePlugins;
-    myShowPlatformUpdateIcon = platformUpdateInfo != null;
-    updateAction();
-  }
-
-  public static void newPluginUpdates(@Nullable Collection<PluginDownloader> updatedPlugins,
-                                      @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
-    myUpdatedPlugins = updatedPlugins;
-    myCustomRepositoryPlugins = customRepositoryPlugins;
-    myShowPluginsUpdateIcon = updatedPlugins != null;
-    updateAction();
-  }
-
-  public static void removePluginsUpdate(@NotNull Collection<IdeaPluginDescriptor> descriptors) {
-    if (myUpdatedPlugins != null) {
-      List<PluginDownloader> updatedPlugins =
-        ContainerUtil.filter(myUpdatedPlugins, downloader -> {
-          PluginId pluginId = downloader.getId();
-          return ContainerUtil.find(descriptors, descriptor -> descriptor.getPluginId().equals(pluginId)) == null;
-        });
-      if (myUpdatedPlugins.size() != updatedPlugins.size()) {
-        newPluginUpdates(updatedPlugins.isEmpty() ? null : updatedPlugins, myCustomRepositoryPlugins);
-      }
+  public static void updateState(IconState state) {
+    if (state == IconState.ApplicationUpdate) {
+      myShowPlatformUpdateIcon = true;
     }
-  }
-
-  private static void updateAction() {
+    else if (state == IconState.ApplicationComponentUpdate) {
+      myShowPluginsUpdateIcon = true;
+    }
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
@@ -351,10 +244,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     private StatusBar myStatusBar;
     private boolean myShowPopup = true;
 
-    private MyStatusBarWidget() {
-      ApplicationManager.getApplication().invokeLater(() -> initPluginsListeners(), ModalityState.any());
-    }
-
     @Override
     public @NotNull String ID() {
       return WIDGET_ID;
@@ -407,5 +296,21 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     @Override
     public void dispose() { }
+  }
+
+  public enum IconState {
+    Current, ApplicationUpdate, ApplicationComponentUpdate
+  }
+
+  public interface ActionProvider {
+    ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
+
+    String ICON_KEY = "Update_Type_Icon_Key";
+
+    @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
+
+    default int getOrder() {
+      return 0;
+    }
   }
 }
