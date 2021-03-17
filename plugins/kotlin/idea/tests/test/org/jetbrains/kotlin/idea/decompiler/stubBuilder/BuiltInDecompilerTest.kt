@@ -37,6 +37,9 @@ abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTest
 
 @RunWith(JUnit38ClassRunner::class)
 class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
+    override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
+
     override fun configureAndBuildFileStub(packageFqName: String): PsiFileStub<*> {
         val dirInRuntime = findDir(packageFqName, project)
         val kotlinBuiltInsVirtualFile = dirInRuntime.children.single { it.extension == BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION }
