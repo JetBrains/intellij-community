@@ -22,6 +22,7 @@ public final class StartupActionScriptManager {
 
   private StartupActionScriptManager() { }
 
+  @ApiStatus.Internal
   public static synchronized void executeActionScript() throws IOException {
     Path scriptFile = getActionScriptFile();
     List<ActionCommand> commands = null;
@@ -39,6 +40,7 @@ public final class StartupActionScriptManager {
     }
   }
 
+  @ApiStatus.Internal
   public static void executeActionScriptCommands(@NotNull List<? extends ActionCommand> commands,
                                                  @NotNull Path oldTarget,
                                                  @NotNull Path newTarget) throws IOException {
@@ -83,6 +85,7 @@ public final class StartupActionScriptManager {
     return Path.of(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
+  @ApiStatus.Internal
   public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
     try (ObjectInput ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
       Object data = ois.readObject();
@@ -104,6 +107,7 @@ public final class StartupActionScriptManager {
     }
   }
 
+  @ApiStatus.Internal
   public static void saveActionScript(@NotNull List<ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
     Files.createDirectories(scriptFile.getParent());
     try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
@@ -118,7 +122,7 @@ public final class StartupActionScriptManager {
     }
   }
 
-  private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
+  private static @Nullable ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
       Path destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
       if (destination != null) {

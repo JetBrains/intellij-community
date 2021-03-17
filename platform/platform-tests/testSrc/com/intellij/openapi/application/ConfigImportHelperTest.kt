@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
 import com.intellij.diagnostic.VMOptions
@@ -236,8 +236,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .version("1.1")
       .buildJar(tempPath)
 
-    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
+    val commands = listOf(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -266,8 +265,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .version("1.1")
       .buildJar(tempPath)
 
-    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
+    val commands = listOf(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -299,8 +297,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .version("1.1")
       .buildZip(tempPath)
 
-    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
+    val commands = listOf(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
