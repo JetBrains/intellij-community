@@ -96,9 +96,8 @@ public class GradleExecutionHelperTest {
       Arrays.asList("-X:foo", "-Foo", "bar=003", "-Foo", "baz=002", "-Dp=v"));
 
 
-    List<String> jvmArgs = mergeJvmArgs(null,
-                                        Arrays.asList("-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED"),
-                                        Arrays.asList("-Xmx512", "--add-opens", "java.base/java.lang=ALL-UNNAMED"));
+    List<String> jvmArgs = mergeBuildJvmArguments(Arrays.asList("-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED"),
+                                                  Arrays.asList("-Xmx512", "--add-opens", "java.base/java.lang=ALL-UNNAMED"));
     assertDoesntContain(jvmArgs, "-Xmx256", "--add-opens", "java.base/java.util=ALL-UNNAMED", "java.base/java.lang=ALL-UNNAMED");
     assertContainsElements(jvmArgs, "-Xmx512");
   }

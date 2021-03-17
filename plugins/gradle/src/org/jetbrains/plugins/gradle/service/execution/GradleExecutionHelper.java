@@ -29,7 +29,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -326,7 +325,7 @@ public class GradleExecutionHelper {
         List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
                                          ? ContainerUtil.emptyList()
                                          : buildEnvironment.getJava().getJvmArguments();
-        merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
+        merged = mergeBuildJvmArguments(buildJvmArguments, jvmArgs);
       }
       else {
         merged = jvmArgs;
@@ -450,18 +449,16 @@ public class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
-    File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-    LOG.debug("Gradle home: " + gradleUserHomeDir);
-    JvmOptions jvmOptions = new JvmOptions(null);
+  @ApiStatus.Internal
+  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
+    JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(mergedJvmArgs);
     return jvmOptions.getAllJvmArgs();
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
+  @ApiStatus.Internal
+  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     MultiMap<String, String> argumentsMap = MultiMap.createLinkedSet();
     String lastKey = null;
     for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
