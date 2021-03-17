@@ -60,9 +60,8 @@ private class MessageInfo(val title: String,
                           val doNotAskDialogOption: DoNotAskOption?) {
   val message = MacMessageHelper.stripHtmlMessage(message)
 
-  val window: Window
-  val visibleWindow: Window
-  val nativeWindow: ID
+  val window: Window?
+  val nativeWindow: ID?
   var alertWindow: ID? = null
 
   var mainHandler = {}
@@ -79,22 +78,30 @@ private class MessageInfo(val title: String,
       popupWindow = SwingUtilities.getWindowAncestor(popup.content)
     }
     if (popupWindow == null) {
-      this.window = window ?: JBMacMessages.getForemostWindow()
+      val visibleWindow = getVisibleWindow(window ?: JBMacMessages.getForemostWindow())
+      if (visibleWindow != null && visibleWindow.parent == null && visibleWindow.ownedWindows.all { !it.isVisible }) {
+        this.window = visibleWindow
+        this.nativeWindow = MacUtil.getWindowFromJavaWindow(visibleWindow)
+      }
+      else {
+        this.window = null
+        this.nativeWindow = null
+      }
     }
     else {
-      this.window = popupWindow
+      this.window = null
+      this.nativeWindow = null
     }
-    this.visibleWindow = getVisibleWindow(this.window)
-    this.nativeWindow = MacUtil.getWindowFromJavaWindow(this.visibleWindow)
   }
 }
 
-private fun getVisibleWindow(window: Window): Window {
+private fun getVisibleWindow(window: Window): Window? {
   if (!window.isVisible) {
     val parent = window.parent
     if (parent is Window) {
       return getVisibleWindow(parent)
     }
+    return null
   }
   return window
 }
@@ -276,24 +283,18 @@ private class NativeMacMessageManager : MacMessages() {
     }
   }
 
-  private fun ourParentIsTopLevelWindowWithoutChildren(info: MessageInfo): Boolean {
-    val window = info.visibleWindow
-    return window.parent == null && window.ownedWindows.all { it == info.dialog || !it.isVisible }
-  }
-
   private val SHOW_ALERT = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
       val index = Foundation.invoke(params, "intValue").toInt()
       val info = getInfo(index)
       val ownerWindow = getActualWindow(info.nativeWindow)
-      val runModal = ownerWindow == null || !ourParentIsTopLevelWindowWithoutChildren(info)  /* prevent z-order issues with other children of our parent */
 
       val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
       val alertWindow = Foundation.invoke(alert, "window")
       info.alertWindow = alertWindow
 
-      if (!runModal) {
+      if (ownerWindow != null) {
         info.dialog.setHandler(alertWindow.toLong())
       }
 
@@ -335,7 +336,7 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alertWindow, "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
       }
 
-      if (runModal) {
+      if (ownerWindow == null) {
         setResult(alert, Foundation.invoke(alert, "runModal"), index)
       }
       else {
@@ -399,8 +400,8 @@ private class NativeMacMessageManager : MacMessages() {
   }
 }
 
-private fun getActualWindow(window: ID): ID? {
-  if (!Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
+private fun getActualWindow(window: ID?): ID? {
+  if (window == null || !Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
     return null
   }
   return window
@@ -414,7 +415,7 @@ private fun enableEscapeToCloseTheMessage(alert: ID) {
   }
 }
 
-private class MyDialog(parent: Window, private val runnable: () -> Unit) : JDialog(parent, ModalityType.APPLICATION_MODAL) {
+private class MyDialog(parent: Window?, private val runnable: () -> Unit) : JDialog(parent, ModalityType.APPLICATION_MODAL) {
   private var myPlatformWindow: Any? = null
 
   init {
