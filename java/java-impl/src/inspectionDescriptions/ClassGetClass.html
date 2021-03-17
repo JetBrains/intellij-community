@@ -2,8 +2,8 @@
 <body>
 Reports <code>getClass()</code> method is called on <code>java.lang.Class</code> instance.
 This is usually a mistake as the result is always equivalent to <code>Class.class</code>.
-If it's mistake then remove the <code>getClass()</code> call and use qualifier directly.
-If the behavior is intended, then write <code>Class.class</code> explicitly to avoid confusion.
+If it's mistake then it's better to remove the <code>getClass()</code> call and to use qualifier directly.
+If the behavior is intended, then it's better to write <code>Class.class</code> explicitly to avoid confusion.
 <p>Example:</p>
 <pre>
   void test(Class<?> clazz) {
