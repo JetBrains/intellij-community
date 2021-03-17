@@ -1,4 +1,4 @@
-// "Convert 'record' to 'class'" "true"
+// "Convert record to class" "true"
 import java.lang.annotation.*;
 
 @Target({ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD, ElementType.TYPE_USE})

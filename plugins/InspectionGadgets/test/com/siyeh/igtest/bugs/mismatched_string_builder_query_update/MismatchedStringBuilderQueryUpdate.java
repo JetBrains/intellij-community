@@ -17,7 +17,7 @@ public class MismatchedStringBuilderQueryUpdate {
     b.append("");
     System.out.println("" + b + "");
 
-    final StringBuilder <warning descr="Contents of 'StringBuilder' 'c' are updated, but never queried">c</warning> = new StringBuilder();
+    final StringBuilder <warning descr="Contents of 'StringBuilder c' are updated, but never queried">c</warning> = new StringBuilder();
     c.append(' ');
   }
 
@@ -47,7 +47,7 @@ public class MismatchedStringBuilderQueryUpdate {
   }
 
   static String testUselessQuery(java.util.List<String> list) {
-    StringBuilder <warning descr="Contents of 'StringBuilder' 'sb' are updated, but never queried">sb</warning> = new StringBuilder();
+    StringBuilder <warning descr="Contents of 'StringBuilder sb' are updated, but never queried">sb</warning> = new StringBuilder();
     for (String s : list) {
       if (s != null) {
         if (sb.length() > 0) {
@@ -62,7 +62,7 @@ public class MismatchedStringBuilderQueryUpdate {
   }
 
   static String testUselessQueryTernary(java.util.List<String> list) {
-    StringBuilder <warning descr="Contents of 'StringBuilder' 'sb' are updated, but never queried">sb</warning> = new StringBuilder();
+    StringBuilder <warning descr="Contents of 'StringBuilder sb' are updated, but never queried">sb</warning> = new StringBuilder();
     for (String s : list) {
       if (s != null) {
         if(sb.length() > 0) {
@@ -98,7 +98,7 @@ public class MismatchedStringBuilderQueryUpdate {
     sb2.append("Hello, ").append(name != null ? name : "world");
     foo2(sb2::append); // StringBuilder can leak, because it's returned from function
 
-    final StringBuilder <warning descr="Contents of 'StringBuilder' 'sb3' are updated, but never queried">sb3</warning> = new StringBuilder();
+    final StringBuilder <warning descr="Contents of 'StringBuilder sb3' are updated, but never queried">sb3</warning> = new StringBuilder();
     sb3.append("Hello, ").append(name != null ? name : "world");
     foo3(sb3::append); // StringBuilder cannot leak
   }

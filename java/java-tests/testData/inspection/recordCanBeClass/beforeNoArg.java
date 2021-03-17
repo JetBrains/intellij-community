@@ -1,2 +1,2 @@
-// "Convert 'record' to 'class'" "true"
+// "Convert record to class" "true"
 record R() {<caret>}

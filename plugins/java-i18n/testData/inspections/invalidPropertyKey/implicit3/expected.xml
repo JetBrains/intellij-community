@@ -8,6 +8,6 @@
   <problem>
     <file>Test.java</file>
     <line>30</line>
-    <description>'String' literal 'foo.bar' doesn't appear to be a valid property key</description>
+    <description>'foo.bar' doesn't appear to be a valid property key</description>
   </problem>
 </problems>

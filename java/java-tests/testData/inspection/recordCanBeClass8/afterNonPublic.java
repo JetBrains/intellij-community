@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-// "Convert 'record' to 'class'" "true"
+// "Convert record to class" "true"
 final class Point {
     private final double x;
     private final double y;
