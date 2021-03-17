@@ -26,8 +26,9 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
     override fun setUp() {
         super.setUp()
 
-        disposable = Disposable {}
-        locator = MyRootsLocator()
+        val newDisposable = Disposer.newDisposable()
+        locator = MyRootsLocator(newDisposable)
+        disposable = newDisposable
     }
 
     override fun tearDown() {
@@ -37,7 +38,7 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
         )
     }
 
-    private inner class MyRootsLocator : GradleBuildRootsLocator(MockProjectEx(disposable)) {
+    private inner class MyRootsLocator(disposable: Disposable) : GradleBuildRootsLocator(MockProjectEx(disposable)) {
         override fun getScriptFirstSeenTs(path: String): Long = scripts[path]?.introductionTs ?: 0
         override fun getScriptInfo(localPath: String): GradleScriptInfo? = scripts[localPath]?.info
         fun accessRoots() = roots
