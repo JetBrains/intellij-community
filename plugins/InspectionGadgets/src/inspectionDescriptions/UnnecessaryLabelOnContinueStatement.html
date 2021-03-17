@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports <b>continue</b> statements with unnecessary
+Reports <code>continue</code> statements with unnecessary
 labels.
+<p>Example: </p>
+<pre>
+        LABEL:
+        while (a > b) {
+            System.out.println("Hello");
+            continue LABEL;
+        }
+</pre>
 <!-- tooltip end -->
 <p>
 
