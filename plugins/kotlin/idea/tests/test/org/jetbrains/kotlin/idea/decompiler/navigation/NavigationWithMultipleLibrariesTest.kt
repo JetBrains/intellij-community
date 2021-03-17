@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
+import org.jetbrains.kotlin.idea.core.util.toVirtualFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.NavigationChecker.Companion.checkAnnotatedCode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
@@ -110,12 +111,12 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
         val moduleB = module("m2", srcPath)
         val moduleC = module("m3", srcPath)
 
-        val sources = listOf(File(getTestDataDirectory(), "libSrc"))
-        val sharedJar = KotlinCompilerStandalone(sources).compile()
+        val libSrc = File(getTestDataDirectory(), "libSrc")
+        val sharedJar = KotlinCompilerStandalone(listOf(libSrc)).compile()
 
         val jarRoot = sharedJar.jarRoot
         moduleA.addDependency(projectLibrary("libA", jarRoot))
-        moduleB.addDependency(projectLibrary("libB", jarRoot, jarRoot.findChild("src")!!))
+        moduleB.addDependency(projectLibrary("libB", jarRoot, libSrc.toVirtualFile()))
         moduleC.addDependency(projectLibrary("libC", jarRoot))
 
         val expectedFile = File(getTestDataDirectory(), "expected.sources")
