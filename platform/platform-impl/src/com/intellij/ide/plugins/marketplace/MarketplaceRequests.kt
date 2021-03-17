@@ -168,7 +168,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val pluginXmlIdsFile = Paths.get(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     try {
       if (Files.size(pluginXmlIdsFile) > 0) {
-        Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
+        return Files.newBufferedReader(pluginXmlIdsFile).use(::parseXmlIds)
       }
     }
     catch (ignore: IOException) {
@@ -419,7 +419,9 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<Set<PluginId>>() {})
+  private fun parseXmlIds(reader: Reader) = objectMapper.readValue(
+    reader, object : TypeReference<Set<String>>() {}
+  ).map { PluginId.getId(it) }.toSet()
 
   private fun parseJsonPluginMeta(reader: Reader) = objectMapper.readValue(reader, IntellijUpdateMetadata::class.java)
 }
