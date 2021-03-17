@@ -520,7 +520,15 @@ public final class BuildManager implements Disposable {
             final UUID sessionId = future.getRequestID();
             final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
             if (channel != null) {
-              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent();
+              Project project = findProjectByProjectPath(entry.getKey());
+              Function<String, String> pathMapper = Function.identity();
+              if (project != null) {
+                WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
+                if (wslDistribution != null) {
+                  pathMapper = (path) -> getWslPathFromInternedPath(path, wslDistribution);
+                }
+              }
+              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(pathMapper);
               final CmdlineRemoteProto.Message.ControllerMessage message = CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                 CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
               ).setFsEvent(event).build();
@@ -533,6 +541,19 @@ public final class BuildManager implements Disposable {
         }
       }
     });
+  }
+
+  @Nullable
+  private static Project findProjectByProjectPath(String projectPath) {
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), (project) -> getProjectPath(project).equals(projectPath));
+  }
+
+  // interned paths collapse repeated slashes so \\wsl$ ends up /wsl$
+  private static String getWslPathFromInternedPath(String path, WSLDistribution distribution) {
+    if (path.startsWith("/wsl$")) {
+      return distribution.getWslPath("/" + path);
+    }
+    return path;
   }
 
   public static void forceModelLoading(CompileContext context) {
@@ -864,7 +885,8 @@ public final class BuildManager implements Disposable {
                      new HashSet<>(convertToStringPaths(data.myDeleted)));
           }
           needRescan = data.getAndResetRescanFlag();
-          currentFSChanges = needRescan ? null : data.createNextEvent();
+          currentFSChanges = needRescan ? null : data.createNextEvent(
+            wslDistribution != null ? (path) -> getWslPathFromInternedPath(path, wslDistribution) : Function.identity());
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
           }
@@ -1994,18 +2016,18 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent() {
+    CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent(Function<String, String> pathMapper) {
       final CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builder =
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
       builder.setOrdinal(++myNextEventOrdinal);
 
       for (InternedPath path : myChanged) {
-        builder.addChangedPaths(path.getValue());
+        builder.addChangedPaths(pathMapper.apply(path.getValue()));
       }
       myChanged.clear();
 
       for (InternedPath path : myDeleted) {
-        builder.addDeletedPaths(path.getValue());
+        builder.addDeletedPaths(pathMapper.apply(path.getValue()));
       }
       myDeleted.clear();
 
