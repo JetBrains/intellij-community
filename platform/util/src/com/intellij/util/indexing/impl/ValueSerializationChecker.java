@@ -9,6 +9,7 @@ import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -19,17 +20,27 @@ class ValueSerializationChecker<Value, Input> {
 
   private final @NotNull DataExternalizer<Value> myValueExternalizer;
   private final @NotNull IndexId<?, Value> myIndexId;
+  private final @NotNull ValueSerializationProblemReporter myProblemReporter;
 
-  ValueSerializationChecker(@NotNull IndexExtension<?, Value, ?> extension) {
+  ValueSerializationChecker(@NotNull IndexExtension<?, Value, ?> extension,
+                            @NotNull ValueSerializationProblemReporter reporter) {
     myValueExternalizer = extension.getValueExternalizer();
     myIndexId = extension.getName();
+    myProblemReporter = reporter;
   }
 
-  void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<?, Value> data, @NotNull Input input) {
+  void checkValueSerialization(@NotNull Map<?, Value> data, @NotNull Input input) {
+    Exception problem = getValueSerializationProblem(data, input);
+    if (problem != null) {
+      myProblemReporter.reportProblem(problem);
+    }
+  }
+
+  private @Nullable Exception getValueSerializationProblem(@NotNull Map<?, Value> data, @NotNull Input input) {
     for (Map.Entry<?, Value> e : data.entrySet()) {
       final Value value = e.getValue();
       if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
-        LOG.error("Index " + myIndexId + " violates equals / hashCode contract for Value parameter");
+        return new Exception("Index " + myIndexId + " violates equals / hashCode contract for Value parameter");
       }
 
       try {
@@ -48,8 +59,11 @@ class ValueSerializationChecker<Value, Input> {
         }
       }
       catch (IOException ex) {
-        LOG.error(ex);
+        return ex;
       }
     }
+    return null;
   }
+
+  static final ValueSerializationProblemReporter DEFAULT_SERIALIZATION_PROBLEM_REPORTER = ex -> LOG.error(ex);
 }

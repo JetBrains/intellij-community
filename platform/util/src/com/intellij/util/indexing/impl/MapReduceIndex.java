@@ -111,7 +111,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
+    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+  }
+
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return ValueSerializationChecker.DEFAULT_SERIALIZATION_PROBLEM_REPORTER;
   }
 
   protected void clearAndDispose() {
@@ -305,7 +309,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     Map<Key, Value> data = mapByIndexer(inputId,  content);
     if (myValueSerializationChecker != null) {
-      myValueSerializationChecker.checkValuesHaveProperEqualsAndHashCode(data, content);
+      myValueSerializationChecker.checkValueSerialization(data, content);
     }
     checkCanceled();
     return new InputData<>(data);

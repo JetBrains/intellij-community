@@ -2,10 +2,12 @@
 
 package com.intellij.util.indexing.impl.storage;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
@@ -364,6 +366,19 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                          @NotNull InputDataDiffBuilder<Key, Value> diffBuilder) {
     // TODO to be removed
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected @NotNull ValueSerializationProblemReporter getSerializationProblemReporter() {
+    return problem -> {
+      PluginId pluginId = ((ID<?, ?>)myIndexId).getPluginId();
+      if (pluginId != null) {
+        LOG.error(new PluginException(problem, pluginId));
+      }
+      else {
+        LOG.error(problem);
+      }
+    };
   }
 
   @Override
