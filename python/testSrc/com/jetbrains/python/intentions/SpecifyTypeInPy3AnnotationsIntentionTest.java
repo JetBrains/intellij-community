@@ -34,7 +34,7 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
   // PY-31369
   public void testTypeCommentedParameterNoIntention() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation")));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 
   // PY-31369
