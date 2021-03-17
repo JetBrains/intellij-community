@@ -26,7 +26,7 @@ internal class KotlinOutputChecker(
     outputPath: String,
     private val useIrBackend: Boolean,
     private val expectedOutputFile: File,
-) : OutputChecker(appPath, outputPath) {
+) : OutputChecker({ appPath }, { outputPath }) {
     companion object {
         @JvmStatic
         private val LOG = Logger.getInstance(KotlinOutputChecker::class.java)
