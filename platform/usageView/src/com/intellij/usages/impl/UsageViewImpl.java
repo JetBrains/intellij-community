@@ -49,7 +49,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -1850,21 +1849,22 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  private JBIterable<TreeNode> selectedNodes() {
+  private List<TreeNode> selectedNodes() {
     EDT.assertIsEdt();
-    return JBIterable.of(myTree.getSelectionPaths()).map(TreePath::getLastPathComponent).filter(TreeNode.class);
+    TreePath[] selectionPaths = myTree.getSelectionPaths();
+    return selectionPaths == null ? Collections.emptyList() : ContainerUtil.mapNotNull(selectionPaths, p-> ObjectUtils.tryCast(p.getLastPathComponent(), TreeNode.class));
   }
 
   @Override
   @NotNull
   public Set<Usage> getSelectedUsages() {
     EDT.assertIsEdt();
-    return allUsagesRecursive(selectedNodes()).toSet();
+    return new HashSet<>(allUsagesRecursive(selectedNodes()));
   }
 
-  private static @NotNull JBIterable<@NotNull Usage> allUsagesRecursive(@NotNull JBIterable<TreeNode> selection) {
+  private static @NotNull List<@NotNull Usage> allUsagesRecursive(@NotNull List<? extends TreeNode> selection) {
     return TreeUtil.treeNodeTraverser(null).withRoots(selection).traverse()
-      .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null);
+      .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() : null).toList();
   }
 
   @Override
@@ -1939,9 +1939,7 @@ public class UsageViewImpl implements UsageViewEx {
         @Nullable
         @Override
         public Collection<String> getTextLinesToCopy() {
-          List<String> lines = selectedNodes()
-            .filterMap(o -> o instanceof Node ? ((Node)o).getText(UsageViewImpl.this) : null)
-            .toList();
+          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getText(UsageViewImpl.this) : null);
           return lines.isEmpty() ? null : lines;
         }
       };
@@ -2015,37 +2013,40 @@ public class UsageViewImpl implements UsageViewEx {
         return myTextFileExporter;
       }
       else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return selectedNodes().filterMap(TreeUtil::getUserObject).filter(Navigatable.class).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+        return ContainerUtil.mapNotNull(selectedNodes(), n-> ObjectUtils.tryCast(TreeUtil.getUserObject(n), Navigatable.class)).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
       }
       else if (USAGES_KEY.is(dataId)) {
-        return allUsagesRecursive(selectedNodes()).unique().toArray(Usage.EMPTY_ARRAY);
+        return getSelectedUsages().toArray(Usage.EMPTY_ARRAY);
       }
       else if (USAGE_TARGETS_KEY.is(dataId)) {
-        return selectedNodes().filterMap(o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null).toArray(UsageTarget.EMPTY_ARRAY);
+        return ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null).toArray(UsageTarget.EMPTY_ARRAY);
       }
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return TreeUtil.treeNodeTraverser(null).withRoots(selectedNodes())
           .traverse()
           .filterMap(o -> o instanceof UsageNode ? ((UsageNode)o).getUsage() :
                           o instanceof UsageTargetNode ? ((UsageTargetNode)o).getTarget() : null)
-          .flatMap(o -> o instanceof UsageInFile ? JBIterable.of(((UsageInFile)o).getFile()) :
-                        o instanceof UsageInFiles ? JBIterable.of(((UsageInFiles)o).getFiles()) :
-                        o instanceof UsageTarget ? JBIterable.of(((UsageTarget)o).getFiles()) : JBIterable.empty())
+          .flatMap(o -> o instanceof UsageInFile ? Collections.singletonList(((UsageInFile)o).getFile()) :
+                        o instanceof UsageInFiles ? Arrays.asList(((UsageInFiles)o).getFiles()) :
+                        o instanceof UsageTarget ? Arrays.asList(ObjectUtils.notNull(((UsageTarget)o).getFiles(), VirtualFile.EMPTY_ARRAY)) :
+                        Collections.emptyList())
           .filter(VirtualFile::isValid)
           .unique()
           .toArray(VirtualFile.EMPTY_ARRAY);
       }
       else {
         DataProvider selectedProvider = ObjectUtils.tryCast(TreeUtil.getUserObject(getSelectedNode()), DataProvider.class);
-        JBIterable<TreeNode> selection = selectedNodes();
         if (PlatformDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-          return JBIterable.<DataProvider>of(o -> getSlowData(o, selection))
-            .append(selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider));
+          Set<Usage> selectedUsages = getSelectedUsages();
+          Iterable<DataProvider> slowProviders = selectedProvider == null ? null : PlatformDataKeys.SLOW_DATA_PROVIDERS.getData(selectedProvider);
+          slowProviders = ObjectUtils.notNull(slowProviders, Collections.emptyList());
+          slowProviders = ContainerUtil.concat(Collections.singletonList(id -> getSlowData(id, selectedUsages)), slowProviders);
+          return slowProviders;
         }
-        if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && selection.isEmpty()) {
+        if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId) && selectedNodes().isEmpty()) {
           return PsiElement.EMPTY_ARRAY;
         }
-        else if (selectedProvider != null) {
+        if (selectedProvider != null) {
           return selectedProvider.getData(dataId);
         }
       }
@@ -2053,13 +2054,9 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  @Nullable
-  private static Object getSlowData(@NotNull String dataId, @NotNull JBIterable<TreeNode> selectedNodes) {
+  private static Object getSlowData(@NotNull String dataId, @NotNull Collection<? extends Usage> selectedUsages) {
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return allUsagesRecursive(selectedNodes)
-        .filter(PsiElementUsage.class)
-        .unique()
-        .filterMap(PsiElementUsage::getElement)
+      return ContainerUtil.mapNotNull(selectedUsages, u -> u instanceof PsiElementUsage ? ((PsiElementUsage)u).getElement() : null)
         .toArray(PsiElement.EMPTY_ARRAY);
     }
     return null;
@@ -2182,11 +2179,10 @@ public class UsageViewImpl implements UsageViewEx {
       if (myCannotMakeString != null && myChangesDetected) {
         String title = UsageViewBundle.message("changes.detected.error.title");
         if (canPerformReRun()) {
-          String[] options = {UsageViewBundle.message("action.description.rerun"), UsageViewBundle.message("button.text.continue"),
-            UsageViewBundle.message("usage.view.cancel.button")};
           String message = myCannotMakeString + "\n\n" + UsageViewBundle.message("dialog.rerun.search");
-          int answer =
-            Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
+          int answer = Messages.showYesNoCancelDialog(myProject, message, title, UsageViewBundle.message("action.description.rerun"),
+                                                      UsageViewBundle.message("button.text.continue"),
+                                                      UsageViewBundle.message("usage.view.cancel.button"), Messages.getErrorIcon());
           if (answer == Messages.YES) {
             refreshUsages();
             return;
