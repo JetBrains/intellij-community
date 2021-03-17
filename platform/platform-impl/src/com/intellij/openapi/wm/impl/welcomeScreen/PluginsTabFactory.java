@@ -69,27 +69,31 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
 
     @Override
     protected JComponent buildComponent() {
-      PluginManagerConfigurable configurable = new PluginManagerConfigurable();
-      BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
-        .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
-      configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
-      pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
-        @Override
-        public void ancestorRemoved(AncestorEvent event) {
-          if (!configurable.isModified()) {
-            return;
-          }
-          try {
-            configurable.apply();
-            WelcomeScreenEventCollector.logPluginsModified();
-            InstalledPluginsState.getInstance().runShutdownCallback();
-          }
-          catch (ConfigurationException exception) {
-            Logger.getInstance(PluginsTabFactory.class).error(exception);
-          }
-        }
-      });
-      return pluginsPanel;
+      return createPluginsPanel(new PluginManagerConfigurable());
     }
+  }
+
+  @NotNull
+  public static JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
+    BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
+      .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+    configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
+    pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {
+        if (!configurable.isModified()) {
+          return;
+        }
+        try {
+          configurable.apply();
+          WelcomeScreenEventCollector.logPluginsModified();
+          InstalledPluginsState.getInstance().runShutdownCallback();
+        }
+        catch (ConfigurationException exception) {
+          Logger.getInstance(PluginsTabFactory.class).error(exception);
+        }
+      }
+    });
+    return pluginsPanel;
   }
 }
