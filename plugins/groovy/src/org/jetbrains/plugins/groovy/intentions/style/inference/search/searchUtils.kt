@@ -145,7 +145,7 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
         is GrAssignmentExpression -> arrayOf(expressionWithArguments.rValue)
         else -> return false
       }
-      if (arguments.any { argument -> collisionFinder.apply { argument.accept(this) }.foundCollision }) {
+      if (arguments.any { argument -> collisionFinder.apply { argument?.accept(this) }.foundCollision }) {
         // there should be provided some connection between method return type and its argument,
         // but currently this option is absent
         return true
