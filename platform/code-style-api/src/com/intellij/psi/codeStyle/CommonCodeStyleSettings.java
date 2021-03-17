@@ -1190,10 +1190,4 @@ public class CommonCodeStyleSettings {
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
   }
-
-  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
-    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-    return CodeStyle.getLanguageSettings(psiFile, language);
-  }
 }

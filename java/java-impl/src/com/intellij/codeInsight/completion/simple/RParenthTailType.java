@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.lookup.CommaTailType;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -55,7 +55,7 @@ public abstract class RParenthTailType extends TailType {
   @Override
   public int processTail(final Editor editor, int tailOffset) {
     return addRParenth(editor, tailOffset,
-                       isSpaceWithinParentheses(CommonCodeStyleSettings.getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
+                       isSpaceWithinParentheses(CodeStyle.getLocalLanguageSettings(editor, tailOffset), editor, tailOffset));
   }
 
   public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {
