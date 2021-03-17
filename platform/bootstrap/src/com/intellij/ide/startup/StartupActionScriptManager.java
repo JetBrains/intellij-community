@@ -120,9 +120,9 @@ public final class StartupActionScriptManager {
 
   private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
-      Path destination = mapPath(((CopyCommand)command)._destination(), oldTarget, newTarget);
+      Path destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(Paths.get(((CopyCommand)command)._source()), destination);
+        return new CopyCommand(Paths.get(((CopyCommand)command).mySource), destination);
       }
     }
     else if (command instanceof UnzipCommand) {
@@ -164,8 +164,6 @@ public final class StartupActionScriptManager {
 
     private final String mySource;
     private final String myDestination;
-    @SuppressWarnings("FieldMayBeStatic") private final String source = null;
-    @SuppressWarnings("FieldMayBeStatic") private final String destination = null;
 
     public CopyCommand(@NotNull Path source, @NotNull Path destination) {
       mySource = source.toAbsolutePath().toString();
@@ -180,21 +178,11 @@ public final class StartupActionScriptManager {
       myDestination = destination.getAbsolutePath();
     }
 
-    @SuppressWarnings("ConstantConditions")
-    private String _source() {
-      return mySource != null ? mySource : source;
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private String _destination() {
-      return myDestination != null ? myDestination : destination;
-    }
-
     @Override
     public void execute() throws IOException {
-      Path source = Path.of(_source()), destination = Path.of(_destination());
+      Path source = Path.of(mySource), destination = Path.of(myDestination);
       if (!Files.isRegularFile(source)) {
-        throw new IOException("Source file missing: " + source);
+        throw new IOException("Source file missing: " + mySource);
       }
       Files.createDirectories(destination.getParent());
       Files.copy(source, destination);
@@ -202,11 +190,11 @@ public final class StartupActionScriptManager {
 
     @Override
     public String toString() {
-      return "copy[" + _source() + ',' + _destination() + ']';
+      return "copy[" + mySource + ',' + myDestination + ']';
     }
 
     public String getSource() {
-      return _source();
+      return mySource;
     }
   }
 
