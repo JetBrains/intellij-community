@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -57,8 +57,8 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
     private fun doTest(packageFqName: String) {
         val dir = findDir(packageFqName, project)
         val groupedByExtension = dir.children.groupBy { it.extension }
-        val classFiles = groupedByExtension[JavaClassFileType.INSTANCE.defaultExtension]!!.map { it.nameWithoutExtension }
-        val builtInsFile = groupedByExtension[BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION]!!.single()
+        val classFiles = groupedByExtension.getValue(JavaClassFileType.INSTANCE.defaultExtension).map { it.nameWithoutExtension }
+        val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
 
         val builtInFileStub = builtInsDecompiler.stubBuilder.buildFileStub(FileContentImpl.createByFile(builtInsFile))!!
 
@@ -81,13 +81,13 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         Assert.assertTrue("Too few classes encountered in package $packageFqName: $classesEncountered", classesEncountered.size >= 5)
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_NO_SOURCES
 }
 
 internal fun findDir(packageFqName: String, project: Project): VirtualFile {
     val classNameIndex = KotlinFullClassNameIndex.getInstance()
     val randomClassInPackage = classNameIndex.getAllKeys(project).first {
-        it.startsWith(packageFqName + ".") && "." !in it.substringAfter(packageFqName + ".")
+        it.startsWith("$packageFqName.") && "." !in it.substringAfter("$packageFqName.")
     }
     val classes = classNameIndex.get(randomClassInPackage, project, GlobalSearchScope.allScope(project))
     val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $randomClassInPackage (package name $packageFqName)")
