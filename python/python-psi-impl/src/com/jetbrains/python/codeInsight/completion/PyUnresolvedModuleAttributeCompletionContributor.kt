@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
@@ -26,6 +27,7 @@ import com.jetbrains.python.psi.search.PySearchUtilBase
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher
+import com.jetbrains.python.psi.types.PyModuleType
 
 class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor() {
 
@@ -113,9 +115,29 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
         val packageName = if (packageNameForAlias != null) QualifiedName.fromDottedString(packageNameForAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
-        PyModuleNameIndex.find(packageName.lastComponent!!, project, true).asSequence()
-          .filter { QualifiedNameFinder.findShortestImportableQName(it) == packageName }
-          .flatMap { it.iterateNames().asSequence() }
+
+        val availableModules = PyModuleNameIndex.findByQualifiedName(packageName, project,
+                                                                     PySearchUtilBase.defaultSuggestionScope(parameters.originalFile))
+          .asSequence()
+
+        if (packageNameForAlias == null) {
+          availableModules.filter { PyUtil.isPackage(it) }
+            .flatMap { PyModuleType.getSubModuleVariants(it.containingDirectory, it, null) }
+            .filterNot { it.lookupString.startsWith('_') }
+            .mapNotNull {
+              val qualifiedNameToSuggest = "$qualifier.${it.lookupString}"
+              if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
+                object : LookupElementDecorator<LookupElement>(it) {
+                  override fun getLookupString(): String = qualifiedNameToSuggest
+                  override fun getAllLookupStrings(): MutableSet<String> = mutableSetOf(lookupString)
+                }
+              }
+              else null
+            }
+            .forEach { resultMatchingCompleteReference.addElement(it) }
+        }
+
+        availableModules.flatMap { it.iterateNames() }
           .filter { it.containingFile != null }
           .filterNot { it is PsiFileSystemItem }
           .filterNot { it.name == null || it.name!!.startsWith('_') }

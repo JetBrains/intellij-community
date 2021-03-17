@@ -99,6 +99,21 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
+  //PY-47247
+  public void testNoImportForSubpackages() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47247
+  public void testNoImportForSubmodules() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47247
+  public void testShouldNotSuggestSubmodulesForAliases() {
+    doTestBasicCompletion();
+  }
+
   private void doTestBasicCompletion() {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(testName, "");
