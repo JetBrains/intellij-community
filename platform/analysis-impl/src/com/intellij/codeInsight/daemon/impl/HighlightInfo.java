@@ -93,7 +93,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  private Map<FileEditor, JComponent> fileLevelComponents;
+  private @Nullable Map<FileEditor, JComponent> fileLevelComponents;
 
   @Nullable("null means it the same as highlighter")
   RangeMarker fixMarker;
@@ -168,11 +168,13 @@ public class HighlightInfo implements Segment {
   }
 
   void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
-    fileLevelComponents.remove(fileEditor);
+    if (fileLevelComponents != null) {
+      fileLevelComponents.remove(fileEditor);
+    }
   }
 
-  JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
-    return fileLevelComponents.get(fileEditor);
+  @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
+    return fileLevelComponents != null ? fileLevelComponents.get(fileEditor) : null;
   }
 
   @Nullable
