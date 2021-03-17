@@ -331,8 +331,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): List<Any> {
       return treeModelData
         .rawNodesStream()
-        .filter { node: ChangesBrowserNode<*>? -> isIncludable(node!!) }
-        .map { node: ChangesBrowserNode<*> -> node.userObject }
+        .filter { node -> isIncludable(node) }
+        .map { node -> node.userObject }
         .collect(Collectors.toList())
     }
 
