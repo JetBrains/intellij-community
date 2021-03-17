@@ -121,6 +121,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.dsl.GdslMemberContributor" order="last"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.PrePostParametersContributor"/>
+
 
     <closureMissingMethodContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.PluginXmlClosureMemberContributor"/>
 

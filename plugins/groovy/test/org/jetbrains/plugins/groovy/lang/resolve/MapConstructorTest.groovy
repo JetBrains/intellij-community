@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import groovy.transform.CompileStatic
@@ -77,6 +77,16 @@ class Rr extends NN {
 @CompileStatic
 static void main(String[] args) {
     new Rr(actionType: "a", referrerCode: 10, referrerUrl: true)
+}
+"""
+  }
+
+  @Test
+  void 'constructor parameter in pre and post'() {
+    doTest """
+@CompileStatic
+@MapConstructor(pre = {args}, post = {args})
+class MyClass {
 }
 """
   }
