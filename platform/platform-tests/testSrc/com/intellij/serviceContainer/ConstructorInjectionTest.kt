@@ -3,6 +3,8 @@ package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.testFramework.PlatformTestUtil
+import org.junit.Assert
 import org.junit.Test
 
 class ConstructorInjectionTest {
@@ -23,6 +25,17 @@ class ConstructorInjectionTest {
   fun `resolve light service`() {
     val componentManager = TestComponentManager()
     componentManager.instantiateClassWithConstructorInjection(BarServiceClient::class.java, BarServiceClient::class.java.name, pluginDescriptor.pluginId)
+  }
+
+  @Test
+  fun `light service getService() performance`() {
+    val componentManager = TestComponentManager()
+    Assert.assertNotNull(componentManager.getService(BarService::class.java))
+    PlatformTestUtil.startPerformanceTest("getService() must be fast for cached service", 1000) {
+      for (i in 0..30_000_000) {
+        Assert.assertNotNull(componentManager.getService(BarService::class.java))
+      }
+    }.assertTiming()
   }
 
   @Test

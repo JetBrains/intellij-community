@@ -53,7 +53,7 @@ internal class ConstructorParameterResolver {
     }
 
     if (ComponentManagerImpl.isLightService(expectedType)) {
-      return componentManager.getLightService(expectedType, true)
+      return componentManager.getOrCreateLightService(expectedType)
     }
 
     val adapter = findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId)

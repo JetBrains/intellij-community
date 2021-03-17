@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -10,11 +10,13 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-internal val testPluginDescriptor = DefaultPluginDescriptor("test")
+val testPluginDescriptor = DefaultPluginDescriptor("test")
 
-internal class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : ComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
+@TestOnly
+class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : ComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
   init {
     registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
   }

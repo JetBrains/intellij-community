@@ -71,8 +71,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     fun isLightService(serviceClass: Class<*>): Boolean {
       // to avoid potentially expensive isAnnotationPresent call, first we check isInterface
       return !serviceClass.isInterface
-          &&  Modifier.isFinal(serviceClass.modifiers)
-          && serviceClass.isAnnotationPresent(Service::class.java)
+             && serviceClass.isAnnotationPresent(Service::class.java)
     }
 
     @ApiStatus.Internal
@@ -471,20 +470,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       LOG.error("$interfaceClass it is a service, use getService instead of getComponent")
     }
 
-    @Suppress("UNCHECKED_CAST")
-    return when (adapter) {
-      is BaseComponentAdapter -> {
-        if (parent != null && adapter.componentManager !== this) {
-          LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
-        }
-
-        val indicator = ProgressManager.getGlobalProgressIndicator()
-        if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-          adapter.throwAlreadyDisposedError(this, indicator)
-        }
-        adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
+    return if (adapter is BaseComponentAdapter) {
+      if (parent != null && adapter.componentManager !== this) {
+        LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
       }
-      else -> adapter.getComponentInstance(picoContainer) as T
+
+      val indicator = ProgressManager.getGlobalProgressIndicator()
+      if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        adapter.throwAlreadyDisposedError(this, indicator)
+      }
+      adapter.getInstance(adapter.componentManager, interfaceClass, true, indicator)
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      adapter.getComponentInstance(picoContainer) as T
     }
   }
 
@@ -493,19 +492,34 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>) = doGetService(serviceClass, false)
 
   private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val lightServices = lightServices
-    if (lightServices != null && isLightService(serviceClass)) {
-      return getLightService(serviceClass, createIfNeeded)
+    // fast path optimization: lookup light service in the cache
+    val lightServiceMap: MutableMap<Class<*>, Any>? = lightServices
+    @Suppress("UNCHECKED_CAST")
+    val cachedLightService = lightServiceMap?.get(serviceClass) as T?
+    if (cachedLightService != null) return cachedLightService
+
+    // fast path optimization: lookup regular service in the cache
+    val key = serviceClass.name
+    val serviceAdapter: ServiceComponentAdapter? = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
+    if (serviceAdapter != null) {
+      val initializedInstance = serviceAdapter.getInitializedInstance()
+      @Suppress("UNCHECKED_CAST")
+      if (initializedInstance != null) return initializedInstance as T?
     }
 
-    val key = serviceClass.name
-    val adapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
-    val indicator = ProgressManager.getGlobalProgressIndicator()
-    if (adapter != null) {
-      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
-        adapter.throwAlreadyDisposedError(this, indicator)
+    if (lightServiceMap != null && isLightService(serviceClass)) {
+      if (!createIfNeeded) {
+        return null
       }
-      return adapter.getInstance(this, serviceClass, createIfNeeded, indicator)
+      return getOrCreateLightService(serviceClass)
+    }
+
+    val indicator = ProgressManager.getGlobalProgressIndicator()
+    if (serviceAdapter != null) {
+      if (createIfNeeded && containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        serviceAdapter.throwAlreadyDisposedError(this, indicator)
+      }
+      return serviceAdapter.getInstance(this, serviceClass, createIfNeeded, indicator)
     }
 
     checkCanceledIfNotInClassInit()
@@ -538,24 +552,50 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     return result
   }
 
-  private fun throwContainerIsAlreadyDisposed(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) {
+  private fun throwContainerIsAlreadyDisposed(interfaceClass: Class<*>, indicator: @Nullable ProgressIndicator?) : Nothing {
     val error = AlreadyDisposedException("Cannot create ${interfaceClass.name} because container is already disposed: ${toString()}")
     if (indicator == null) {
       throw error
     }
-    else {
-      throw ProcessCanceledException(error)
-    }
+    throw ProcessCanceledException(error)
   }
 
-  internal fun <T : Any> getLightService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
-    val lightServices = lightServices!!
+  internal fun <T : Any> getOrCreateLightService(serviceClass: Class<T>): T {
+    val lightServices: MutableMap<Class<*>, Any> = lightServices!!
     @Suppress("UNCHECKED_CAST")
     val result = lightServices.get(serviceClass) as T?
-    if (result != null || !createIfNeeded) {
+    if (result != null) {
       return result
     }
 
+    throwIfAlreadyDisposed(serviceClass)
+
+    synchronized(serviceClass) {
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+
+      @Suppress("UNCHECKED_CAST")
+      val cached = lightServices.get(serviceClass) as T?
+      if (cached != null) {
+        return cached
+      }
+      val service = if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+        createLightService(serviceClass)
+      }
+      else {
+        ProgressManager.getInstance().computeInNonCancelableSection<T, RuntimeException> {
+          createLightService(serviceClass)
+        }
+      }
+
+      val prevValue = lightServices.put(serviceClass, service)
+      if (prevValue != null) {
+        LOG.error("Light service ${serviceClass.name} is already created (existingInstance=$prevValue)")
+      }
+      return service
+    }
+  }
+
+  private fun <T : Any> throwIfAlreadyDisposed(serviceClass: Class<T>) {
     if (isDisposed) {
       val error = AlreadyDisposedException(
         "Cannot create light service ${serviceClass.name} because container is already disposed (container=$this)")
@@ -576,14 +616,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
           throw error
         }
-        else {
-          throw ProcessCanceledException(error)
-        }
+        throw ProcessCanceledException(error)
       }
-    }
-
-    synchronized(serviceClass) {
-      return getOrCreateLightService(serviceClass, lightServices)
     }
   }
 
@@ -597,31 +631,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
     }
     return result
-  }
-
-  private fun <T : Any> getOrCreateLightService(serviceClass: Class<T>, cache: ConcurrentMap<Class<*>, Any>): T {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-
-    @Suppress("UNCHECKED_CAST")
-    var result = cache.get(serviceClass) as T?
-    if (result != null) {
-      return result
-    }
-
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
-      result = createLightService(serviceClass)
-    }
-    else {
-      ProgressManager.getInstance().executeNonCancelableSection {
-        result = createLightService(serviceClass)
-      }
-    }
-
-    val prevValue = cache.put(serviceClass, result)
-    if (prevValue != null) {
-      LOG.error("Light service ${serviceClass.name} is already created (existingInstance=$prevValue)")
-    }
-    return result!!
   }
 
   @Synchronized
@@ -770,10 +779,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
         constructor.isAccessible = true
         @Suppress("UNCHECKED_CAST")
-        return when (constructor.parameterCount) {
-          1 -> constructor.newInstance(getActualContainerInstance())
-          else -> constructor.newInstance()
-        } as T
+        return if (constructor.parameterCount == 1) {
+          constructor.newInstance(getActualContainerInstance()) as T
+        }
+        else {
+          constructor.newInstance() as T
+        }
       }
     }
     catch (e: Throwable) {
