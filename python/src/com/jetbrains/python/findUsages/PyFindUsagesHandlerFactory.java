@@ -41,8 +41,11 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
     return PyPsiFindUsagesHandlerFactory.super.canFindUsages(element);
   }
 
-  private static FindUsagesHandler proxy(final FindUsagesHandlerBase base) {
-    if (base instanceof FindUsagesHandler) {
+  private static @Nullable FindUsagesHandler proxy(@Nullable final FindUsagesHandlerBase base) {
+    if (base == null) {
+      return null;
+    }
+    else if (base instanceof FindUsagesHandler) {
       return (FindUsagesHandler)base;
     }
     else if (base instanceof PyFindUsagesHandler) {
