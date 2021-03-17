@@ -6,18 +6,13 @@
 package org.jetbrains.uast.test.kotlin
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl
 import com.intellij.psi.util.PropertyUtil
-import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.registerServiceInstance
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.UExpression
@@ -99,24 +94,11 @@ class MockPsiReferenceContributor : PsiReferenceContributor() {
 }
 
 fun registerReferenceContributor(disposable: Disposable, clazz: Class<out PsiReferenceContributor>) {
-    ExtensionTestUtil.maskExtensions(
-        PsiReferenceContributor.EP_NAME,
-        listOf(PsiReferenceContributorEP().apply {
+    PsiReferenceContributor.EP_NAME.point.registerExtension(
+        PsiReferenceContributorEP().apply {
             implementationClass = clazz.name
             pluginDescriptor = DefaultPluginDescriptor("kotlin-uast-test")
-        }),
+        },
         disposable,
     )
-
-    val application = ApplicationManager.getApplication()
-
-    //we need a fresh ReferenceProvidersRegistry after updating ReferenceContributors
-    val oldReferenceProviderRegistry = application.picoContainer
-        .getComponentInstance(ReferenceProvidersRegistry::class.java) as ReferenceProvidersRegistry
-
-    application.registerServiceInstance(ReferenceProvidersRegistry::class.java, ReferenceProvidersRegistryImpl())
-
-    Disposer.register(disposable, Disposable {
-        application.registerServiceInstance(ReferenceProvidersRegistry::class.java, oldReferenceProviderRegistry)
-    })
 }
