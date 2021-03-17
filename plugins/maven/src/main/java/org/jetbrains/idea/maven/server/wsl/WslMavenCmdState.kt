@@ -15,6 +15,7 @@ import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenImportingSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -76,8 +77,10 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val request = myEnvFactory.createRequest()
     val languageRuntime = JavaLanguageRuntimeConfiguration()
 
-    val jdkHomePath = myJdk.homePath
-    if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution) {
+    var jdkHomePath = myJdk.homePath
+    val projectJdkHomePath = ProjectRootManager.getInstance(myProject).projectSdk?.let { it.homePath }
+    if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
+        projectJdkHomePath) != myWslDistribution) {
       MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
         override val title: String = SyncBundle.message("maven.sync.wsl.jdk")
         override val description: String = SyncBundle.message(
@@ -85,7 +88,19 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
           "maven.sync.wsl.jdk.fix") + "</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
         override fun getNavigatable(project: Project): Navigatable? = null;
-      }, MessageEvent.Kind.WARNING);
+      }, MessageEvent.Kind.WARNING)
+    }
+    else if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
+        projectJdkHomePath) == myWslDistribution) {
+      jdkHomePath = projectJdkHomePath
+      MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
+        override val title: String = SyncBundle.message("maven.sync.wsl.jdk.set.to.project")
+        override val description: String = SyncBundle.message(
+          "maven.sync.wsl.jdk.set.to.project") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
+          "maven.sync.wsl.jdk.fix") + "</a>"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null;
+      }, MessageEvent.Kind.INFO)
     }
 
     val wslPath = jdkHomePath?.let(myWslDistribution::getWslPath)
