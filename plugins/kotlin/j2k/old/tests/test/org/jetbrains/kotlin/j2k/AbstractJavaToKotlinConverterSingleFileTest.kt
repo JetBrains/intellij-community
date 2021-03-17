@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -45,8 +45,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
         val (prefix, javaCode) = if (matcher.find()) {
             Pair(matcher.group().trim().substring(2), matcher.replaceFirst(""))
-        }
-        else {
+        } else {
             Pair("file", fileContents)
         }
 
@@ -130,10 +129,10 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     private fun methodToKotlin(text: String, settings: ConverterSettings, project: Project): String {
         val result = fileToKotlin("final class C {$text}", settings, project)
         return result
-                .substringBeforeLast("}")
-                .replace("internal class C {", "\n")
-                .replace("internal object C {", "\n")
-                .trimIndent().trim()
+            .substringBeforeLast("}")
+            .replace("internal class C {", "\n")
+            .replace("internal object C {", "\n")
+            .trimIndent().trim()
     }
 
     private fun statementToKotlin(text: String, settings: ConverterSettings, project: Project): String {
@@ -141,18 +140,18 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val result = methodToKotlin("public void main() {\n$funBody\n}", settings, project)
 
         return result
-                .substringBeforeLast("}")
-                .replaceFirst("fun main() {", "\n")
-                .trimIndent().trim()
+            .substringBeforeLast("}")
+            .replaceFirst("fun main() {", "\n")
+            .trimIndent().trim()
     }
 
     private fun expressionToKotlin(code: String, settings: ConverterSettings, project: Project): String {
         val result = statementToKotlin("final Object o =$code}", settings, project)
         return result
-                .replaceFirst("val o: Any? = ", "")
-                .replaceFirst("val o: Any = ", "")
-                .replaceFirst("val o = ", "")
-                .trim()
+            .replaceFirst("val o: Any? = ", "")
+            .replaceFirst("val o: Any = ", "")
+            .replaceFirst("val o = ", "")
+            .trim()
     }
 
     override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor {
