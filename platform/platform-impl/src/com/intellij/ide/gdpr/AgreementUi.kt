@@ -22,7 +22,7 @@ import javax.swing.border.CompoundBorder
 import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
 
-class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean) {
+class AgreementUi private constructor(val htmlText: String) {
 
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
@@ -100,14 +100,12 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
       override fun doCancelAction() {
         super.doCancelAction()
-        if (exitOnCancel) {
-          val application = ApplicationManager.getApplication()
-          if (application == null) {
-            exitProcess(Main.PRIVACY_POLICY_REJECTION)
-          }
-          else {
-            application.exit(true, true, false)
-          }
+        val application = ApplicationManager.getApplication()
+        if (application == null) {
+          exitProcess(Main.PRIVACY_POLICY_REJECTION)
+        }
+        else {
+          application.exit(true, true, false)
         }
       }
     }
@@ -208,11 +206,6 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     return this
   }
 
-  fun setCentralPanelBackground(color: Color?): AgreementUi {
-    viewer!!.background = color
-    return this
-  }
-
   fun pack(): DialogWrapper {
     if (dialog == null) throw IllegalStateException("Dialog hasn't been created.")
     dialog!!.pack()
@@ -222,8 +215,8 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
   }
 
   companion object {
-    fun create(htmlText: String = "", exitOnCancel: Boolean = true): AgreementUi {
-      return AgreementUi(htmlText, exitOnCancel).createDialog()
+    fun create(htmlText: String = ""): AgreementUi {
+      return AgreementUi(htmlText).createDialog()
     }
   }
 
