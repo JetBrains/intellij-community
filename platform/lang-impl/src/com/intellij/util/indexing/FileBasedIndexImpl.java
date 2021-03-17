@@ -44,6 +44,7 @@ import com.intellij.psi.stubs.SerializedStubTree;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -62,7 +63,6 @@ import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderImpl;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.snapshot.SnapshotHashEnumeratorService;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
@@ -75,7 +75,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,9 +211,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }, null);
 
-    myIndexableFilesFilterHolder = SystemProperties.getBooleanProperty("use.incremental.filter", false)
-                                   ? new ProjectIndexableFilesFilterHolderImpl(this)
-                                   : new IncrementalProjectIndexableFilesFilterHolder();
+    myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
   }
 
   void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
@@ -639,13 +636,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     if (file instanceof VirtualFileSystemEntry && file.isValid() ) {
       cleanProcessingFlag(file);
     }
-    ProjectIndexableFilesFilterHolder holder = getIndexableFilesFilterHolder();
-    if (holder instanceof IncrementalProjectIndexableFilesFilterHolder) {
-      boolean isValid =
-        file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile().isValid() : file.isValid();
-      if (!isValid) {
-        ((IncrementalProjectIndexableFilesFilterHolder)holder).removeFile(fileId);
-      }
+    boolean isValid =
+      file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).getOriginalFile().isValid() : file.isValid();
+    if (!isValid) {
+      getIndexableFilesFilterHolder().removeFile(fileId);
     }
   }
 
@@ -822,9 +816,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateStarted(Project project) {
-    if (myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
-      ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).dropMemorySnapshot(project);
-    }
+    myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
     incrementFilesModCount();
@@ -853,6 +845,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void filesUpdateFinished(@NotNull Project project) {
+    myIndexableFilesFilterHolder.entireProjectUpdateFinished(project);
     incrementFilesModCount();
     fireUpdateFinished(project);
   }
@@ -1036,7 +1029,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (!isTooLarge(vFile, (long)contentText.length())) {
           // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
           WeakReference<Pair<FileContentImpl, Long>> previousContentAndStampRef = document.getUserData(ourFileContentKey);
-          Pair<FileContentImpl, Long> previousContentAndStamp = com.intellij.reference.SoftReference.dereference(previousContentAndStampRef);
+          Pair<FileContentImpl, Long> previousContentAndStamp = SoftReference.dereference(previousContentAndStampRef);
           final FileContentImpl newFc;
           if (previousContentAndStamp != null && currentDocStamp == previousContentAndStamp.getSecond()) {
             newFc = previousContentAndStamp.getFirst();
@@ -1468,16 +1461,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
 
-    if (currentFC != null &&
-        file != null &&
-        myIndexableFilesFilterHolder instanceof IncrementalProjectIndexableFilesFilterHolder) {
-      ((IncrementalProjectIndexableFilesFilterHolder)myIndexableFilesFilterHolder).addFileId(inputId,
-                                                                                             new Function0<>() {
-                                                                                               @Override
-                                                                                               public Set<? extends Project> invoke() {
-                                                                                                 return getContainingProjects(file);
-                                                                                               }
-                                                                                             });
+    if (currentFC != null && file != null) {
+      myIndexableFilesFilterHolder.addFileId(inputId, () -> getContainingProjects(file));
     }
 
     if (currentFC instanceof FileContentImpl && FileBasedIndex.ourSnapshotMappingsEnabled) {

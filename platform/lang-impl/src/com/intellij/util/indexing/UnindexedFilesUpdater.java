@@ -75,14 +75,12 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
   private final boolean myStartSuspended;
-  private final boolean myRunExtensionsForFilesMarkedAsIndexed;
   private final PushedFilePropertiesUpdater myPusher;
 
-  public UnindexedFilesUpdater(@NotNull Project project, boolean startSuspended, boolean runExtensionsForFilesMarkedAsIndexed) {
+  public UnindexedFilesUpdater(@NotNull Project project, boolean startSuspended) {
     super(project);
     myProject = project;
     myStartSuspended = startSuspended;
-    myRunExtensionsForFilesMarkedAsIndexed = runExtensionsForFilesMarkedAsIndexed;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProject.putUserData(CONTENT_SCANNED, null);
 
@@ -109,7 +107,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
     // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
     // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, !isProjectContentFullyScanned(project));
+    this(project, false);
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -329,7 +327,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     }
     List<IndexableFileScanner.ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
-    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex, myRunExtensionsForFilesMarkedAsIndexed);
+    UnindexedFilesFinder unindexedFileFinder = new UnindexedFilesFinder(project, myIndex);
 
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles = new IdentityHashMap<>();
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
@@ -459,8 +457,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       throw e;
     }
     finally {
-      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       myIndex.filesUpdateFinished(myProject);
+      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, false);
       projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
       projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
       IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);

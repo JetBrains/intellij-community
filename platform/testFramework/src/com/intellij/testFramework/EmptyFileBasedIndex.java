@@ -12,7 +12,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +151,7 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
+  public IdFilter projectIndexableFiles(@Nullable Project project) {
     return null;
   }
 
