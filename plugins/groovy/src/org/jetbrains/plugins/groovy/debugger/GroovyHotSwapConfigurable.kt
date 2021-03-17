@@ -16,7 +16,7 @@ class GroovyHotSwapConfigurable(
   helpTopic = "reference.idesettings.debugger.groovy"
 ) {
 
-  override fun createPanel(): DialogPanel = panel {
+  override fun createPanel(): DialogPanel = panel(LCFlags.noVisualPadding) {
     row {
       checkBox(CheckboxDescriptor(
         name = GroovyBundle.message("configurable.hotswap.checkbox"),

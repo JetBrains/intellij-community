@@ -115,13 +115,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {
     val lc = createLayoutConstraints()
     lc.gridGapY = gapToBoundSize(spacing.verticalGap, false)
-    if (layoutConstraints.isEmpty()) {
-      lc.fillX()
-      // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
-    }
-    else {
-      lc.apply(layoutConstraints)
-    }
 
     /**
      * On macOS input fields (text fields, checkboxes, buttons and so on) have focus ring that drawn outside of component border.
@@ -139,6 +132,14 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
 
     // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
     lc.hideMode = 2
+
+    if (layoutConstraints.isEmpty()) {
+      lc.fillX()
+      // not fillY because it leads to enormously large cells - we use cc `push` in addition to cc `grow` as a more robust and easy solution
+    }
+    else {
+      lc.apply(layoutConstraints)
+    }
 
     val rowConstraints = AC()
     (container as JComponent).putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
@@ -308,7 +309,7 @@ private fun LC.apply(flags: Array<out LCFlags>): LC {
       LCFlags.fill -> fill()
       LCFlags.fillX -> isFillX = true
       LCFlags.fillY -> isFillY = true
-
+      LCFlags.noVisualPadding -> isVisualPadding = false
       LCFlags.debug -> debug()
     }
   }
