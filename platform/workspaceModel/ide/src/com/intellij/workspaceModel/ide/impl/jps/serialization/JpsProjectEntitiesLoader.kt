@@ -41,7 +41,7 @@ object JpsProjectEntitiesLoader {
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager)
-    data.loadAll(reader, builder, errorReporter)
+    data.loadAll(reader, builder, errorReporter, null)
     return data
   }
 

@@ -49,8 +49,10 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.apache.log4j.Logger
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
@@ -551,6 +553,36 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `incorrect modules setup`() {
+    suppressLogs {
+      loadProjectAndCheckResults("incorrectModulesSetupDifferentIml") { project ->
+        val modules = ModuleManager.getInstance(project).modules
+        assertEquals(1, modules.size)
+      }
+    }
+  }
+
+  @Test
+  fun `incorrect modules setup same iml`() {
+      loadProjectAndCheckResults("incorrectModulesSetupSameIml") { project ->
+        val modules = ModuleManager.getInstance(project).modules
+        assertEquals(1, modules.size)
+      }
+  }
+
+  @Test
+  fun `incorrect modules setup with facet`() {
+    suppressLogs {
+      loadProjectAndCheckResults("incorrectModulesSetupWithFacet") { project ->
+        val modules = ModuleManager.getInstance(project).modules
+        assertEquals(1, modules.size)
+        val facets = FacetManager.getInstance(modules.single()).allFacets
+        assertEquals(1, facets.size)
+      }
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
@@ -666,4 +698,22 @@ class ExternalSystemStorageTest {
   }
 
   private fun isFolderWithoutFiles(root: File): Boolean = root.walk().none { it.isFile }
+
+  private inline fun suppressLogs(action: () -> Unit) {
+    val oldInstance = LoggedErrorProcessor.getInstance()
+    try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
+          if (message?.contains("Trying to load multiple modules with the same name.") == true) return
+          super.processError(message, t, details, logger)
+        }
+      })
+
+      action()
+
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(oldInstance)
+    }
+  }
 }

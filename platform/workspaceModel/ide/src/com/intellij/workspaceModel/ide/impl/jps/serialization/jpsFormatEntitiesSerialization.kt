@@ -4,10 +4,14 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -108,7 +112,7 @@ interface JpsProjectSerializers {
     }
   }
 
-  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter)
+  fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,
