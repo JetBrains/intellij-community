@@ -343,7 +343,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
 
     private fun isUnderKind(node: ChangesBrowserNode<*>, nodeKind: NodeKind): Boolean {
-      val nodePath = node.path?.takeIf { it.isNotEmpty() } ?: return false
+      val nodePath = node.path ?: return false
       return (nodePath.find { it is MyKindNode } as? MyKindNode)?.kind == nodeKind
     }
 
