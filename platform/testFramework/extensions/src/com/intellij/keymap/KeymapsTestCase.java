@@ -18,7 +18,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
     { "F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "alt ENTER",                "ShowIntentionActions", "Console.TableResult.EditValue"},
-    { "F5",                       "Graph.ApplyCurrentLayout", "CopyElement"},
+    { "F5",                       "Graph.RouteEdges", "CopyElement"},
     { "F7",                       "NextDiff", "StepInto"},
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
@@ -208,7 +208,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F7",                       "CompileDirty", "NextDiff"},
     { "ctrl P",                   "FileChooser.TogglePathShowing", "Print"},
     { "ctrl F10",                 "RunToCursor", "UpdateRunningApplication"},
-    { "F5",                       "Graph.ApplyCurrentLayout", "Resume"},
+    { "F5",                       "Graph.RouteEdges", "Resume"},
     { "ctrl F1",                  "ExternalJavaDoc", "ShowErrorDescription"},
     { "shift alt CLOSE_BRACKET",  "EditorCodeBlockEnd", "EmmetNextEditPoint"},
     { "shift alt OPEN_BRACKET",   "EditorCodeBlockStart", "EmmetPreviousEditPoint"},
@@ -261,7 +261,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("Eclipse", new String[][] {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue"},
-    { "F5",                       "Graph.ApplyCurrentLayout", "StepInto"},
+    { "F5",                       "Graph.RouteEdges", "StepInto"},
     { "alt DOWN",                 "ShowContent", "MoveStatementDown", "ShowSearchHistory"},
     { "alt HOME",                 "ViewNavigationBar", "ShowNavBar"},
     { "ctrl 1",                   "DuplicatesForm.SendToLeft", "FileChooser.GotoHome", "ShowIntentionActions"},
@@ -300,7 +300,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     });
     put("NetBeans 6.5", new String[][] {
     { "F4",                       "RunToCursor", "EditSource"},
-    { "F5",                       "Debugger.ResumeThread", "Resume", "Graph.ApplyCurrentLayout"},
+    { "F5",                       "Debugger.ResumeThread", "Resume", "Graph.RouteEdges"},
     { "alt DOWN",                 "GotoNextElementUnderCaretUsage", "ShowContent", "ShowSearchHistory"},
     { "control 1",                "ActivateProjectToolWindow", "DuplicatesForm.SendToLeft"},
     { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
@@ -335,7 +335,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta BACK_SPACE",          "EditorDeleteToWordStart", "$Delete"},
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "F3",                       "GotoDeclaration", "EditSource"},
-    { "F5",                       "StepInto", "Graph.ApplyCurrentLayout"},
+    { "F5",                       "StepInto", "Graph.RouteEdges"},
     { "alt DOWN",                 "MoveStatementDown", "MethodOverloadSwitchDown", "ShowSearchHistory"},
     { "alt UP",                   "MoveStatementUp", "MethodOverloadSwitchUp"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
