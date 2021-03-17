@@ -43,7 +43,7 @@ public enum LanguageLevel {
   
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 17);
 
-  public static final LanguageLevel HIGHEST = JDK_15;
+  public static final LanguageLevel HIGHEST = JDK_16;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final Supplier<@Nls String> myPresentableText;

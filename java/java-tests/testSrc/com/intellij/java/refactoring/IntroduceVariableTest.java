@@ -17,6 +17,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -152,8 +153,8 @@ public class IntroduceVariableTest extends LightJavaCodeInsightTestCase {
   public void testNonPatternDeclarationJava15Preview() { doTest("temp", true, false, false, JAVA_LANG_STRING);}
 
   public void testTernaryBothBranches() { doTest("temp", true, false, false, "int"); }
-  public void testIfConditionAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
-  public void testReturnAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
+  public void testIfConditionAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
+  public void testReturnAndChain() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> doTest("temp", true, false, false, JAVA_LANG_STRING)); }
   public void testReturnOrChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnOrAndChain() { doTest("temp", true, false, false, JAVA_LANG_STRING); }
   public void testReturnTernary() { doTest("temp", true, false, false, JAVA_LANG_STRING); }

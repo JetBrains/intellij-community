@@ -24,7 +24,7 @@ public enum LanguageLevel {
   JDK_16(16), JDK_16_PREVIEW(16),
   JDK_X(17);
 
-  public static final LanguageLevel HIGHEST = JDK_15;
+  public static final LanguageLevel HIGHEST = JDK_16;
 
   private final JavaVersion myVersion;
 
