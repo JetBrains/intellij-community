@@ -53,6 +53,13 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         )
     }
 
+    private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrBeAbstract::class,
+            AddModifierFix.addAbstractModifier,
+        )
+    }
+
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ChangeTypeQuickFix.changeFunctionReturnTypeOnOverride)
         registerApplicator(ChangeTypeQuickFix.changePropertyReturnTypeOnOverride)
@@ -73,6 +80,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         modifiers,
+        propertyInitialization,
         overrides,
         mutability,
         expressions,
