@@ -3,7 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.TrustedProjectSettings;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -34,7 +34,6 @@ import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,6 +175,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       DirectoryProjectGenerator<T> generator = settings.getProjectGenerator();
       T actualSettings = projectGeneratorPeer.getSettings();
       Project project = doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
+      if (project != null) {
+        TrustedProjects.setTrusted(project, true);
+      }
     }
   }
 
@@ -218,15 +220,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
 
-    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false)
-      .withBeforeOpenCallback((project) -> {
-        // set project trusted state directly to avoid notification
-        var service = project.getService(TrustedProjectSettings.class);
-        if (service != null) {
-          service.setTrustedState(ThreeState.YES);
-        }
-        return true;
-      });
+    OpenProjectTask options = OpenProjectTask.newProjectFromWizardAndRunConfigurators(projectToClose, /* isRefreshVfsNeeded = */ false);
     Project project = ProjectManagerEx.getInstanceEx().openProject(location, options);
     if (project != null && generator != null) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
