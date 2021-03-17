@@ -81,7 +81,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       return true;
     }
     PsiClass baseClass = psiClass.getSuperClass();
-    if (baseClass == null || baseClass == psiClass) {
+    if (baseClass == null || psiClass.getManager().areElementsEquivalent(psiClass, baseClass)) {
       return true;
     }
     PsiMethod[] constructors = baseClass.getConstructors();
@@ -218,7 +218,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       final PsiModifierList modifierList = psiField.getModifierList();
       if (null != modifierList) {
         final boolean isFinal = isFieldFinal(psiField, modifierList, classAnnotatedWithValue);
-        final boolean isNonNull = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, ArrayUtil.toStringArray(LombokUtils.NONNULL_ANNOTATIONS));
+        final boolean isNonNull =
+          PsiAnnotationSearchUtil.isAnnotatedWith(psiField, ArrayUtil.toStringArray(LombokUtils.NONNULL_ANNOTATIONS));
         // accept initialized final or nonnull fields
         if ((isFinal || isNonNull) && !psiField.hasInitializer()) {
           result.add(psiField);
