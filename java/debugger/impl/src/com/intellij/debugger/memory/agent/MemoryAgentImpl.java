@@ -237,8 +237,10 @@ class MemoryAgentImpl implements MemoryAgent {
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        myProgressIndicator.setText(progressPoint.getMessage());
-        myProgressIndicator.setFraction(progressPoint.getFraction());
+        if (myProgressIndicator != null) {
+          myProgressIndicator.setText(progressPoint.getMessage());
+          myProgressIndicator.setFraction(progressPoint.getFraction());
+        }
       });
 
       if (progressPoint.isFinished()) {
