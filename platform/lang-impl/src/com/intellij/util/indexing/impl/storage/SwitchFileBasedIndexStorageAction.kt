@@ -69,6 +69,7 @@ private class IndexStorageDescriptorPopupContext(private val project: Project,
     return model
   }
 
+  @Suppress("HardCodedStringLiteral")
   override fun getRenderer(): ListCellRenderer<IndexStorageDescriptor> {
     return SimpleListCellRenderer.create { label, value, _ -> label.text = value.presentableName }
   }
