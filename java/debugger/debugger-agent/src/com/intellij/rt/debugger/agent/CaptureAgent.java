@@ -617,7 +617,9 @@ public final class CaptureAgent {
     addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
     addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
     addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/ActorRef", "$bang", FIRST_PARAM);
     addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
+    addInsert("akka/actor/Actor", "aroundReceive", param(1));
 
     // JavaFX
     addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
