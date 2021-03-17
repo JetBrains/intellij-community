@@ -53,9 +53,13 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   }
 
   fun assertInjectedContent(vararg expectedInjectFileTexts: String) {
-    UsefulTestCase.assertSameElements("injected content expected",
+    assertInjectedContent("injected content expected", expectedInjectFileTexts.toList())
+  }
+
+  fun assertInjectedContent(message: String, expectedFilesTexts: List<String>) {
+    UsefulTestCase.assertSameElements(message,
                                       getAllInjections().mapTo(HashSet()) { it.second }.map { it.text },
-                                      expectedInjectFileTexts.toList())
+                                      expectedFilesTexts)
   }
 
   fun assertInjected(vararg expectedInjections: InjectionAssertionData) {
