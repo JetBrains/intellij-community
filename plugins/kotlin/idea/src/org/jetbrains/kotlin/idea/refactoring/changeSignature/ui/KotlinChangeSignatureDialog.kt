@@ -110,7 +110,11 @@ class KotlinChangeSignatureDialog(
 
                 val parameterName = getPresentationName(item)
                 val typeText = item.typeCodeFragment.text
-                val defaultValue = if (!item.parameter.defaultValueAsDefaultParameter) item.defaultValueCodeFragment.text else ""
+                val defaultValue = if (item.isReceiverIn(parametersTableModel) || !item.parameter.defaultValueAsDefaultParameter)
+                    item.defaultValueCodeFragment.text
+                else
+                    ""
+
                 val separator = StringUtil.repeatSymbol(' ', getParamNamesMaxLength() - parameterName.length + 1)
                 val text = "$valOrVar$parameterName:$separator$typeText" + if (StringUtil.isNotEmpty(defaultValue)) {
                     KotlinBundle.message("text.default.value", defaultValue)
@@ -128,9 +132,12 @@ class KotlinChangeSignatureDialog(
         override fun getRowEditor(item: ParameterTableModelItemBase<KotlinParameterInfo>): JBTableRowEditor = object : JBTableRowEditor() {
             private val components = ArrayList<JComponent>()
             private val nameEditor = EditorTextField(item.parameter.name, project, fileType)
+            private val defaultParameterCheckbox = JCheckBox()
 
-            private fun updateNameEditor() {
-                nameEditor.isEnabled = item.parameter != parametersTableModel.receiver
+            private fun notifyReceiverListeners() {
+                val isNotReceiver = !item.isReceiverIn(parametersTableModel)
+                nameEditor.isEnabled = isNotReceiver
+                defaultParameterCheckbox.isEnabled = isNotReceiver
             }
 
             private fun isDefaultColumnEnabled() = item.parameter.isNewParameter && item.parameter != myMethod.receiver
@@ -152,20 +159,20 @@ class KotlinChangeSignatureDialog(
                     } else if (KotlinCallableParameterTableModel.isNameColumn(columnInfo)) {
                         editor = nameEditor
                         component = editor
-                        updateNameEditor()
+                        notifyReceiverListeners()
                     } else if (KotlinCallableParameterTableModel.isDefaultValueColumn(columnInfo) && isDefaultColumnEnabled()) {
                         val document = PsiDocumentManager.getInstance(project).getDocument(item.defaultValueCodeFragment)
                         editor = EditorTextField(document, project, fileType)
                         component = editor
                     } else if (KotlinCallableParameterTableModel.isDefaultParameterColumn(columnInfo) && isDefaultColumnEnabled()) {
-                        val checkBox = JCheckBox()
-                        checkBox.isSelected = item.parameter.defaultValue != null
-                        checkBox.addItemListener {
+                        defaultParameterCheckbox.isSelected = item.parameter.defaultValue != null
+                        defaultParameterCheckbox.addItemListener {
                             parametersTableModel.setValueAtWithoutUpdate(it.stateChange == ItemEvent.SELECTED, row, columnFinal)
                             updateSignature()
                         }
-                        component = checkBox
+                        component = defaultParameterCheckbox
                         editor = null
+                        notifyReceiverListeners()
                     } else if (KotlinPrimaryConstructorParameterTableModel.isValVarColumn(columnInfo)) {
                         val comboBox = ComboBox(KotlinValVar.values())
                         comboBox.selectedItem = item.parameter.valOrVar
@@ -182,7 +189,7 @@ class KotlinChangeSignatureDialog(
                             val newReceiver = if (it.stateChange == ItemEvent.SELECTED) item.parameter else null
                             (parametersTableModel as KotlinFunctionParameterTableModel).receiver = newReceiver
                             updateSignature()
-                            updateNameEditor()
+                            notifyReceiverListeners()
                         }
                         component = checkBox
                         editor = null
@@ -406,6 +413,9 @@ class KotlinChangeSignatureDialog(
         ?: super.getSelectedIdx()
 
     companion object {
+        private fun ParameterTableModelItemBase<KotlinParameterInfo>.isReceiverIn(model: KotlinCallableParameterTableModel): Boolean =
+            parameter == model.receiver
+
         /**
          * @return OK -> true, Cancel -> false
          */
@@ -475,6 +485,9 @@ class KotlinChangeSignatureDialog(
         ): KotlinChangeInfo {
             val parameters = parametersModel.items.map { parameter ->
                 val parameterInfo = parameter.parameter
+                if (!forPreview && parameter.isReceiverIn(parametersModel)) {
+                    parameterInfo.defaultValueAsDefaultParameter = false
+                }
 
                 parameterInfo.currentTypeInfo = parameter.typeCodeFragment.getTypeInfo(false, forPreview)
 
