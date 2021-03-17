@@ -212,6 +212,10 @@ private class NativeMacMessageManager : MacMessages() {
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
     val index = addInfoWithId(info)
 
+    if (index != 0) {
+      LOG.info("=== MacAlert: show alert during show another alert ===", Throwable())
+    }
+
     info.mainHandler = {
       Foundation.invoke(Foundation.invoke(info.nativeWindow, "delegate"), "activateWindowMenuBar")
       info.dialog.orderAboveSiblings()
