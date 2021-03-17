@@ -58,6 +58,10 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
         boolean [] hasHashCode = {false};
         processClass(aClass, hasEquals, hasHashCode, myEquals, myHashCode);
         if (hasEquals[0] != hasHashCode[0]) {
+          if (hasHashCode[0] && aClass.isRecord()) {
+            // Probably better distributed hashCode is implemented for a record class where default equals works fine
+            return;
+          }
           PsiIdentifier identifier = aClass.getNameIdentifier();
           holder.registerProblem(identifier != null ? identifier : aClass,
                                  hasEquals[0]
