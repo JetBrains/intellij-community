@@ -9,6 +9,6 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 
 abstract class AbstractXCoroutinesStackTraceTest : KotlinDescriptorTestCaseWithStackFrames() {
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
-        printStackFrame(files, preferences)
+        printStackTrace()
     }
 }

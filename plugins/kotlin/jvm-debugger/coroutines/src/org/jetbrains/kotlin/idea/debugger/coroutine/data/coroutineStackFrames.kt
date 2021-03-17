@@ -11,7 +11,7 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
 import org.jetbrains.kotlin.idea.debugger.safeLocation
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 
@@ -55,7 +55,7 @@ open class CoroutineStackFrame(
     private val spilledVariables: List<JavaValue>? = null,
     private val includeFrameVariables: Boolean = true,
     location: Location? = frame.safeLocation(),
-) : KotlinStackFrame(CoroutineStackFrameProxyImpl(location, spilledVariables ?: emptyList(), frame)) {
+) : KotlinStackFrame(safeCoroutineStackFrameProxy(location, spilledVariables, frame)) {
 
     init {
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)

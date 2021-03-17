@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -75,6 +76,10 @@ fun StackFrameProxy.safeLocation(): Location? {
 
 fun StackFrameProxy.safeStackFrame(): StackFrame? {
     return wrapEvaluateException { this.stackFrame }
+}
+
+fun StackFrameProxyImpl.safeThreadProxy(): ThreadReferenceProxyImpl? {
+    return wrapEvaluateException { this.threadProxy() }
 }
 
 fun Location.safeSourceName(): String? {

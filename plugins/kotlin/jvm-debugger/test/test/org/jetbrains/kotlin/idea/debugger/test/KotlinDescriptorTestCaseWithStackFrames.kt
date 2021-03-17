@@ -6,20 +6,23 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.debugger.engine.AsyncStackTraceProvider
+import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.util.concurrency.Semaphore
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
-import org.jetbrains.kotlin.idea.debugger.invokeInSuspendManagerThread
-import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
+import org.jetbrains.kotlin.idea.debugger.test.util.iterator
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -27,78 +30,103 @@ import java.io.StringWriter
 abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCaseWithStepping() {
     private companion object {
         val ASYNC_STACKTRACE_EP_NAME = AsyncStackTraceProvider.EP.name
-        val INDENT_FRAME = 1
-        val INDENT_VARIABLES = 2
+        const val INDENT_FRAME = 1
+        const val INDENT_VARIABLES = 2
     }
 
-    val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
+    private val agentList = mutableListOf<JpsMavenRepositoryLibraryDescriptor>()
 
-    protected fun out(frame: XStackFrame) {
+    private fun out(frame: XStackFrame) {
         out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
         outVariables(frame)
     }
 
     private fun outVariables(stackFrame: XStackFrame) {
-        val variables = XDebuggerTestUtil.collectChildrenWithError(stackFrame)
-        val sorted = mutableListOf<String>()
-        sorted.addAll(variables.first.mapNotNull { if (it is XNamedValue) it.name else null })
-        sorted.sort()
-        val varString = sorted.joinToString()
-        out(INDENT_VARIABLES, "($varString)")
+        val variables = stackFrame.iterator().asSequence()
+            .filterIsInstance<XNamedValue>()
+            .map { it.name }
+            .sorted()
+            .toList()
+        out(INDENT_VARIABLES, "(${variables.joinToString()})")
     }
 
-    protected fun out(text: String) {
+    private fun out(text: String) {
         println(text, ProcessOutputTypes.SYSTEM)
     }
 
-    protected fun out(indent: Int, text: String) {
+    private fun out(indent: Int, text: String) {
         println("\t".repeat(indent) + text, ProcessOutputTypes.SYSTEM)
         println(text)
     }
 
-    protected fun Throwable.stackTraceAsString(): String {
+    private fun Throwable.stackTraceAsString(): String {
         val writer = StringWriter()
         printStackTrace(PrintWriter(writer))
         return writer.toString()
     }
 
-    fun printStackFrame(files: TestFiles, preferences: DebuggerPreferences) {
-        val asyncStackTraceProvider = getAsyncStackTraceProvider()
+    private fun printStackFrame(frame: XStackFrame?) {
+        if (frame == null) {
+            return
+        } else if (frame is XDebuggerFramesList.ItemWithSeparatorAbove &&
+                   frame.hasSeparatorAbove()) {
+            out(0, frame.captionAboveOf)
+        }
 
+        out(frame)
+    }
+
+    private fun printStackFrameItems(stackFrames: List<StackFrameItem>) {
+        for (frameItem in stackFrames) {
+            printStackFrame(frameItem.createFrame(debugProcess))
+        }
+    }
+
+    private fun AsyncStackTraceProvider.getAsyncStackTraceInSuspendContextCommand(suspendContext: SuspendContextImpl, frame: JavaStackFrame): List<StackFrameItem>? {
+        val semaphore = Semaphore(1)
+        var stackFrames: List<StackFrameItem>? = null
+        suspendContext.debugProcess.managerThread.schedule(object : SuspendContextCommandImpl(suspendContext) {
+            override fun contextAction(suspendContext: SuspendContextImpl) {
+                stackFrames = getAsyncStackTrace(frame, suspendContext)
+                semaphore.up()
+            }
+
+            override fun commandCancelled() = semaphore.up()
+        })
+        semaphore.waitFor(com.intellij.xdebugger.XDebuggerTestUtil.TIMEOUT_MS.toLong())
+        return stackFrames
+    }
+
+    private fun printStackTrace(asyncStackTraceProvider: AsyncStackTraceProvider?, suspendContext: SuspendContextImpl, executionStack: JavaExecutionStack) {
+        out("Thread stack trace:")
+        for (frame in XDebuggerTestUtil.collectFrames(executionStack)) {
+            if (frame !is JavaStackFrame) {
+                continue
+            }
+
+            out(frame)
+            if (frame is CoroutinePreflightFrame) {
+                val key = frame.coroutineInfoData.key
+                out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
+            }
+
+            val stackFrameItems = asyncStackTraceProvider?.getAsyncStackTraceInSuspendContextCommand(suspendContext, frame)
+            if (stackFrameItems != null) {
+                printStackFrameItems(stackFrameItems)
+                return
+            }
+        }
+    }
+
+    fun printStackTrace() {
+        val asyncStackTraceProvider = getAsyncStackTraceProvider()
         doWhenXSessionPausedThenResume {
             printContext(debugProcess.debuggerContext)
-            val suspendContext = debuggerSession.xDebugSession?.getSuspendContext()
-            var executionStack = suspendContext?.getActiveExecutionStack()
-            if (executionStack != null) {
+            val suspendContext = debuggerSession.xDebugSession?.suspendContext as? SuspendContextImpl
+            val executionStack = suspendContext?.activeExecutionStack
+            if (suspendContext != null && executionStack != null) {
                 try {
-                    out("Thread stack trace:")
-                    val stackFrames: List<XStackFrame> = XDebuggerTestUtil.collectFrames(executionStack)
-                    val suspendContextImpl = suspendContext as SuspendContextImpl
-                    for (frame in stackFrames) {
-                        if (frame is JavaStackFrame) {
-                            out(frame)
-                            if (frame is CoroutinePreflightFrame) {
-                                val key = frame.coroutineInfoData.key
-                                out(0, "CoroutineInfo: ${key.id} ${key.name} ${key.state}")
-                            }
-                            val stackFrames = suspendContext.invokeInSuspendManagerThread(debugProcess) {
-                                asyncStackTraceProvider?.getAsyncStackTrace(frame, suspendContextImpl)
-                            }
-                            if (stackFrames != null) {
-                                for (frameItem in stackFrames) {
-                                    val frame: XStackFrame? =
-                                        frameItem.createFrame(debugProcess)
-                                    if (frame is XDebuggerFramesList.ItemWithSeparatorAbove && frame.hasSeparatorAbove())
-                                        out(0, frame.captionAboveOf)
-
-                                    frame?.let {
-                                        out(frame)
-                                    }
-                                }
-                                return@doWhenXSessionPausedThenResume
-                            }
-                        }
-                    }
+                    printStackTrace(asyncStackTraceProvider, suspendContext, executionStack)
                 } catch (e: Throwable) {
                     val stackTrace = e.stackTraceAsString()
                     System.err.println("Exception occurred on calculating async stack traces: $stackTrace")
@@ -110,8 +138,8 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
         }
     }
 
-    protected fun getAsyncStackTraceProvider(): CoroutineAsyncStackTraceProvider? {
-        val area = Extensions.getArea(null)
+    private fun getAsyncStackTraceProvider(): CoroutineAsyncStackTraceProvider? {
+        val area = ApplicationManager.getApplication().extensionArea
         if (!area.hasExtensionPoint(ASYNC_STACKTRACE_EP_NAME)) {
             System.err.println("${ASYNC_STACKTRACE_EP_NAME} extension point is not found (probably old IDE version)")
             return null

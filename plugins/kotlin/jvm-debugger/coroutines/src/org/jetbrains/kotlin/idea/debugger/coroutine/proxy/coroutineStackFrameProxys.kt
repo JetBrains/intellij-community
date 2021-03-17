@@ -9,22 +9,31 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
+import com.sun.jdi.StackFrame
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
+import org.jetbrains.kotlin.idea.debugger.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.safeThreadProxy
 import org.jetbrains.kotlin.idea.debugger.wrapEvaluateException
 
-class SkipCoroutineStackFrameProxyImpl(frame: StackFrameProxyImpl) :
-    StackFrameProxyImpl(frame.threadProxy(), frame.stackFrame, frame.indexFromBottom)
+class SkipCoroutineStackFrameProxyImpl(
+    threadProxy: ThreadReferenceProxyImpl,
+    stackFrame: StackFrame,
+    indexFromBottom: Int
+) : StackFrameProxyImpl(threadProxy, stackFrame, indexFromBottom)
 
 class CoroutineStackFrameProxyImpl(
     private val location: Location?,
     val spilledVariables: List<JavaValue>,
-    frame: StackFrameProxyImpl
-) : StackFrameProxyImpl(frame.threadProxy(), frame.stackFrame, frame.indexFromBottom) {
+    threadProxy: ThreadReferenceProxyImpl,
+    stackFrame: StackFrame,
+    indexFromBottom: Int
+) : StackFrameProxyImpl(threadProxy, stackFrame, indexFromBottom) {
     val continuation = wrapEvaluateException { super.thisObject() }
-    private val coroutineScope = extractCoroutineScope()
+    private val coroutineScope by lazy { extractCoroutineScope() }
 
     fun updateSpilledVariableValue(name: String, value: Value?) {
         val descriptor = spilledVariables.find { it.name == name }?.descriptor as? ContinuationVariableValueDescriptorImpl ?: return
@@ -49,4 +58,26 @@ class CoroutineStackFrameProxyImpl(
         val evaluationContext = EvaluationContextImpl(suspendContext, this)
         return CoroutineScopeExtractor.extractCoroutineScope(continuation, evaluationContext)
     }
+}
+
+fun safeSkipCoroutineStackFrameProxy(frameProxy: StackFrameProxyImpl): StackFrameProxyImpl {
+    val threadProxy = frameProxy.safeThreadProxy() ?: return frameProxy
+    val stackFrame = frameProxy.safeStackFrame() ?: return frameProxy
+    return SkipCoroutineStackFrameProxyImpl(threadProxy, stackFrame, frameProxy.indexFromBottom)
+}
+
+fun safeCoroutineStackFrameProxy(
+    location: Location?,
+    spilledVariables: List<JavaValue>?,
+    frameProxy: StackFrameProxyImpl
+): StackFrameProxyImpl {
+    val threadProxy = frameProxy.safeThreadProxy() ?: return frameProxy
+    val stackFrame = frameProxy.safeStackFrame() ?: return frameProxy
+    return CoroutineStackFrameProxyImpl(
+        location,
+        spilledVariables ?: emptyList(),
+        threadProxy,
+        stackFrame,
+        frameProxy.indexFromBottom
+    )
 }

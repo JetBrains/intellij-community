@@ -1,31 +1,23 @@
 package twoDumps
 
-suspend fun main() {
-    foo()
-    sequence<Int> {
-        foo()
-        yield(666)
-    }.toList()
-}
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.3.8)-javaagent
+
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 suspend fun foo() {
-    val f = 239
-    bar()
+    //Breakpoint!
+    println("")
 }
 
 suspend fun bar() {
-    var r = 1337
     //Breakpoint!
-    r += 42
+    println("")
 }
 
-suspend fun SequenceScope<Int>.foo() {
-    val k = 228
-    bar()
-}
-
-suspend fun SequenceScope<Int>.bar() {
-    var r = 1337
-    //Breakpoint!
-    r += 42
+fun main() = runBlocking<Unit> {
+    foo()
+    runBlocking {
+        bar()
+    }
 }

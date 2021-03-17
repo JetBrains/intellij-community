@@ -12,12 +12,11 @@ import com.intellij.xdebugger.frame.XNamedValue
 import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ContinuationHolder
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeSkipCoroutineStackFrameProxy
 import java.lang.Integer.min
 
 
 class CoroutineFrameBuilder {
-
     companion object {
         val log by logger
         private const val PRE_FETCH_FRAME_COUNT = 5
@@ -112,7 +111,7 @@ class CoroutineFrameBuilder {
         ): RunningCoroutineStackFrameItem? {
             val location = frame.location() ?: return null
             return if (!location.safeCoroutineExitPointLineNumber())
-                RunningCoroutineStackFrameItem(SkipCoroutineStackFrameProxyImpl(frame), location)
+                RunningCoroutineStackFrameItem(safeSkipCoroutineStackFrameProxy(frame), location)
             else
                 null
         }

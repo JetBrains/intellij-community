@@ -84,24 +84,6 @@ fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) ->
     return result
 }
 
-fun <T : Any> SuspendContextImpl.invokeInSuspendManagerThread(debugProcessImpl: DebugProcessImpl, f: (SuspendContextImpl) -> T?): T? {
-    var result: T? = null
-    val command: SuspendContextCommandImpl = object : SuspendContextCommandImpl(this) {
-        override fun contextAction(suspendContext: SuspendContextImpl) {
-            result = runReadAction { f(suspendContext) }
-        }
-    }
-
-    when {
-        DebuggerManagerThreadImpl.isManagerThread() ->
-            debugProcessImpl.managerThread.invoke(command)
-        else ->
-            debugProcessImpl.managerThread.invokeAndWait(command)
-    }
-
-    return result
-}
-
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     val className = ClassNameCalculator.getClassNameCompat(elementAt) ?: return 0
     return className.substringAfterLast("$").toInt()

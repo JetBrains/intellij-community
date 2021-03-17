@@ -5,69 +5,43 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import com.intellij.execution.configurations.JavaParameters
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.jarRepository.JarRepositoryManager
-import com.intellij.jarRepository.RemoteRepositoryDescription
-import org.jetbrains.idea.maven.aether.ArtifactKind
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.KotlinBaseTest
 
-abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStepping() {
+abstract class AbstractCoroutineDumpTest : KotlinDescriptorTestCaseWithStackFrames() {
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
-        doOnBreakpoint {
-            val infoCache = CoroutineDebugProbesProxy(this).dumpCoroutines()
-            try {
-                if (infoCache.isOk())
-                    try {
-                        val states = infoCache.cache
-                        print(stringDump(states), ProcessOutputTypes.SYSTEM)
-                    } catch (ignored: Throwable) {
-                    }
-                else
-                    throw AssertionError("Dump failed")
-            } finally {
-                resume(this)
-            }
-        }
-
-        doOnBreakpoint {
-            val infoCache = CoroutineDebugProbesProxy(this).dumpCoroutines()
-            try {
-                if (infoCache.isOk())
-                    try {
-                        val states = infoCache.cache
-                        print(stringDump(states), ProcessOutputTypes.SYSTEM)
-                    } catch (ignored: Throwable) {
-                    }
-                else
-                    throw AssertionError("Dump failed")
-            } finally {
-                resume(this)
+        for (i in 0..countBreakpointsNumber(files.wholeFile)) {
+            doOnBreakpoint {
+                try {
+                    printCoroutinesDump()
+                } finally {
+                    resume(this)
+                }
             }
         }
     }
+
+    private fun SuspendContextImpl.printCoroutinesDump() {
+        val infoCache = CoroutineDebugProbesProxy(this).dumpCoroutines()
+        if (!infoCache.isOk()) {
+            throw AssertionError("Dump failed")
+        }
+
+        val states = infoCache.cache
+        print(stringDump(states), ProcessOutputTypes.SYSTEM)
+    }
+
+    private fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
+        InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
 
     private fun stringDump(infoData: List<CoroutineInfoData>) = buildString {
         infoData.forEach {
             appendLine("\"${it.key.name}#${it.key.id}\", state: ${it.key.state}")
         }
-    }
-
-    override fun createJavaParameters(mainClass: String?): JavaParameters {
-        val description = JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.3.8")
-        val debugJar = JarRepositoryManager.loadDependenciesSync(
-            project, description, setOf(ArtifactKind.ARTIFACT),
-            RemoteRepositoryDescription.DEFAULT_REPOSITORIES, null
-        ) ?: throw AssertionError("Debug Dependency is not found")
-        val params = super.createJavaParameters(mainClass)
-        for (jar in debugJar) {
-            params.classPath.add(jar.file.presentableUrl)
-            if (jar.file.name.contains("kotlinx-coroutines-core"))
-                params.vmParametersList.add("-javaagent:${jar.file.presentableUrl}")
-        }
-        return params
     }
 }
