@@ -40,7 +40,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Future
 import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
@@ -231,7 +230,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
 
       val res = ConcurrencyUtil.invokeAll(tasks, service)
-      val squashedBuilder = squash(res)
+      val builders = res.map { it.get() }
+      val squashedBuilder = squash(builders)
       builder.addDiff(squashedBuilder)
     }
     finally {
@@ -258,21 +258,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
   }
 
-  // This fancy logic allows to reduce the time spared by addDiff. This can be removed if addDiff won't do toStorage at the start of the method
-  private fun squash(builders: List<Future<WorkspaceEntityStorageBuilder>>): WorkspaceEntityStorageBuilder {
-    var result = builders.map { it.get() }
+  private fun squash(builders: List<WorkspaceEntityStorageBuilder>): WorkspaceEntityStorageBuilder {
+    if (builders.isEmpty()) return WorkspaceEntityStorageBuilder.create()
 
-    // Apply diffs by pairs
-    // E.g: [diff1, diff2, diff3, diff4, diff5] -> [diff1+2, diff3+4, diff5] -> [diff1+2+3+4, diff5] -> [diff1+2+3+4+5]
-    while (result.size > 1) {
-      result = result.chunked(2) { list ->
-        val res = list.first()
-        if (list.size == 2) res.addDiff(list.last())
-        res
-      }
-    }
-
-    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
+    return builders.reduce { acc, builder -> acc.addDiff(builder); acc }
   }
 
   @TestOnly
