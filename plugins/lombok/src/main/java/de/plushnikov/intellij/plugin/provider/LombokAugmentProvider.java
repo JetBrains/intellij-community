@@ -107,8 +107,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   @NotNull
   private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
     final List<Psi> result = new ArrayList<>();
-    final Collection<Processor> lombokProcessors = LombokProcessorProvider.getInstance(psiClass.getProject()).getLombokProcessors(type);
-    for (Processor processor : lombokProcessors) {
+    for (Processor processor : LombokProcessorManager.getProcessors(type)) {
       if (processor.notNameHintIsEqualToSupportedAnnotation(nameHint)) {
         final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
         for (Object psiElement : generatedElements) {

@@ -134,7 +134,7 @@
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
     <!--    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
 
-    <projectService serviceImplementation="de.plushnikov.intellij.plugin.provider.LombokProcessorProvider"/>
+    <projectService serviceImplementation="de.plushnikov.intellij.plugin.activity.LombokPluginDisposable"/>
     <!-- END of lombok Processors-->
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>

@@ -15,7 +15,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.Version;
-import de.plushnikov.intellij.plugin.provider.LombokProcessorProvider;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,6 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(BuildManagerListener.TOPIC, new LombokBuildManagerListener());
 
-    LombokProcessorProvider lombokProcessorProvider = LombokProcessorProvider.getInstance(project);
     ReadAction.nonBlocking(() -> {
       if (project.isDisposed()) return null;
 
@@ -55,11 +53,11 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
         }
       }
       return null;
-    }).expireWith(lombokProcessorProvider)
+    }).expireWith(LombokPluginDisposable.getInstance(project))
       .finishOnUiThread(ModalityState.NON_MODAL, notification -> {
         if (notification != null) {
           Notifications.Bus.notify(notification, project);
-          Disposer.register(lombokProcessorProvider, notification::expire);
+          Disposer.register(LombokPluginDisposable.getInstance(project), notification::expire);
         }
       }).submit(AppExecutorUtil.getAppExecutorService());
   }
