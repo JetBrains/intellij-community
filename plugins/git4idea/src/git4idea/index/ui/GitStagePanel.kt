@@ -326,9 +326,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       return isInclusionEnabled() && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
     }
 
-    override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean {
-      return isInclusionEnabled() && node is RepositoryChangesBrowserNode && isUnderKind(node, NodeKind.STAGED)
-    }
+    override fun isInclusionVisible(node: ChangesBrowserNode<*>): Boolean = isInclusionEnabled(node)
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): MutableList<Any> {
       return treeModelData
