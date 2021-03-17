@@ -1,3 +1,5 @@
+// WITH_RUNTIME
+
 var nonNullable: C = C()
 
 class C {

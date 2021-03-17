@@ -1,3 +1,5 @@
+// WITH_RUNTIME
+
 var nonNullable: Boolean = true
 
 var nullableX: Boolean? = null

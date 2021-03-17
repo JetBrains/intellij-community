@@ -1,3 +1,5 @@
+// WITH_RUNTIME
+
 fun foo(filter: (String) -> Boolean) {}
 
 fun doFilter(s: String): Boolean = true

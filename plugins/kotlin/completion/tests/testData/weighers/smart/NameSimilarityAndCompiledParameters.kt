@@ -1,3 +1,5 @@
+// RUNTIME_WITH_FULL_JDK
+
 val xId = ""
 val xP = ""
 val xP1 = ""
