@@ -624,7 +624,8 @@ public final class DebugUtil {
     Throwable trace = new Throwable();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ourErrorLogger.error("PSI invalidated outside transaction", trace);
-    } else {
+    }
+    else {
       ourErrorLogger.info("PSI invalidated outside transaction", trace);
     }
     return trace;

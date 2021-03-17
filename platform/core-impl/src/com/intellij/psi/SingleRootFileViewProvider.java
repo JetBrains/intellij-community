@@ -17,6 +17,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +32,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance(SingleRootFileViewProvider.class);
-  @SuppressWarnings("unused")
   private volatile PsiFile myPsiFile;
   private static final AtomicReferenceFieldUpdater<SingleRootFileViewProvider, PsiFile>
     myPsiFileUpdater = AtomicReferenceFieldUpdater.newUpdater(SingleRootFileViewProvider.class, PsiFile.class, "myPsiFile");
@@ -95,35 +95,34 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (target != getBaseLanguage()) {
       return null;
     }
-    PsiFile psiFile = myPsiFile;
-    if (psiFile == null) {
-      psiFile = createFile();
-      if (psiFile == null) {
-        psiFile = PsiUtilCore.NULL_PSI_FILE;
+    PsiFile file = myPsiFile;
+    if (file == null) {
+      file = createFile();
+      if (file == null) {
+        file = PsiUtilCore.NULL_PSI_FILE;
       }
-      boolean set = myPsiFileUpdater.compareAndSet(this, null, psiFile);
-      if (!set && psiFile != PsiUtilCore.NULL_PSI_FILE) {
+      boolean set = myPsiFileUpdater.compareAndSet(this, null, file);
+      if (!set && file != PsiUtilCore.NULL_PSI_FILE) {
         PsiFile alreadyCreated = myPsiFile;
-        if (alreadyCreated == psiFile) {
-          LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
+        if (alreadyCreated == file) {
+          LOG.error(this + ".createFile() must create new file instance but got the same: " + file);
         }
-        if (psiFile instanceof PsiFileEx) {
-          PsiFile finalPsiFile = psiFile;
+        if (file instanceof PsiFileEx) {
+          PsiFile finalPsiFile = file;
           DebugUtil.performPsiModification("invalidating throw-away copy", () ->
             ((PsiFileEx)finalPsiFile).markInvalidated()
           );
         }
-        psiFile = alreadyCreated;
+        file = alreadyCreated;
       }
     }
-    return psiFile == PsiUtilCore.NULL_PSI_FILE ? null : psiFile;
+    return ObjectUtils.nullizeIfDefaultValue(file, PsiUtilCore.NULL_PSI_FILE);
   }
 
   @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
-    PsiFile file = myPsiFile;
-    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
+    return ObjectUtils.nullizeIfDefaultValue(myPsiFile, PsiUtilCore.NULL_PSI_FILE);
   }
 
   @NotNull

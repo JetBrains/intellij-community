@@ -213,8 +213,9 @@ public final class FileManagerImpl implements FileManager {
 
     if (viewProvider instanceof AbstractFileViewProvider && viewProvider.getUserData(IN_COMA) != null) {
       Map<VirtualFile, FileViewProvider> tempMap = myTempProviders.get();
-      if (tempMap.containsKey(file)) {
-        return tempMap.get(file);
+      FileViewProvider temp = tempMap.get(file);
+      if (temp != null) {
+        return temp;
       }
 
       if (!evaluateValidity((AbstractFileViewProvider)viewProvider)) {
