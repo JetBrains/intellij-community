@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.FixingLayoutMatcher
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
+import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
@@ -63,6 +64,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     isHorizontalAutoScrollingEnabled = false
     installDoubleClickHandler()
     SmartExpander.installOn(this)
+    TreeHoverListener.DEFAULT.addTo(this)
     initDnD()
   }
 
