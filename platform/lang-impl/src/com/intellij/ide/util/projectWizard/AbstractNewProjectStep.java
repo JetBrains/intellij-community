@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -25,9 +25,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.welcomeScreen.ActionsWithPanelProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.*;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
@@ -175,13 +175,9 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       DirectoryProjectGenerator<T> generator = settings.getProjectGenerator();
       T actualSettings = projectGeneratorPeer.getSettings();
       Project project = doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
-      if (project != null && shouldTrustCreatedProject()) {
+      if (project != null) {
         TrustedProjects.setTrusted(project, true);
       }
-    }
-
-    public boolean shouldTrustCreatedProject() {
-      return false;
     }
   }
 
