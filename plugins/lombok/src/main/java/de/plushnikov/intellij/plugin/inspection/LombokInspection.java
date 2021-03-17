@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
@@ -23,7 +22,7 @@ public class LombokInspection extends LombokJavaInspectionBase {
   private final ValProcessor valProcessor;
 
   public LombokInspection() {
-    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
+    valProcessor = new ValProcessor();
   }
 
   @NotNull

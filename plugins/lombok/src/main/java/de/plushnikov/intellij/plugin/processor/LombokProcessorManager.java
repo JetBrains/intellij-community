@@ -97,12 +97,10 @@ public final class LombokProcessorManager {
 
   @NotNull
   public static Collection<ModifierProcessor> getLombokModifierProcessors() {
-    Application application = ApplicationManager.getApplication();
-    return Arrays.asList(
-      application.getService(FieldDefaultsModifierProcessor.class),
-      application.getService(UtilityClassModifierProcessor.class),
-      application.getService(ValModifierProcessor.class),
-      application.getService(ValueModifierProcessor.class));
+    return Arrays.asList(new FieldDefaultsModifierProcessor(),
+                         new UtilityClassModifierProcessor(),
+                         new ValModifierProcessor(),
+                         new ValueModifierProcessor());
   }
 
   @NotNull

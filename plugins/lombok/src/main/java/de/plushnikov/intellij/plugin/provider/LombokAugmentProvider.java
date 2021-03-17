@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.provider;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -32,7 +31,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     log.debug("LombokAugmentProvider created");
 
     modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
-    valProcessor = ApplicationManager.getApplication().getService(ValProcessor.class);
+    valProcessor = new ValProcessor();
   }
 
   @NotNull

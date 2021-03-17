@@ -54,17 +54,6 @@
       serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler"/>
 
     <!-- Start of lombok Processors-->
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.ValProcessor"/>
-
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.ValueModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.ValModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.UtilityClassModifierProcessor"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.modifier.FieldDefaultsModifierProcessor"/>
-
     <applicationService
       serviceImplementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
     <applicationService
