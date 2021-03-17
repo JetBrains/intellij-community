@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
@@ -30,6 +29,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -50,6 +50,8 @@ public abstract class ResourceInspection extends BaseInspection {
   public boolean anyMethodMayClose = true;
 
   public boolean ignoreResourcesWithClose = true;
+
+  private static final CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close");
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -109,8 +111,14 @@ public abstract class ResourceInspection extends BaseInspection {
       return !(boundVariable instanceof PsiResourceVariable) &&
              !isSafelyClosed(boundVariable, expression) &&
              !isResourceFactoryClosed(expression) &&
-             !isResourceEscaping(boundVariable, expression);
+             !isResourceEscaping(boundVariable, expression) &&
+             !isSafelyClosedResource(expression);
     }
+  }
+
+  @Contract(pure = true)
+  protected boolean isSafelyClosedResource(@NotNull PsiExpression expression) {
+    return CLOSE.test(ExpressionUtils.getCallForQualifier(expression));
   }
 
   @Contract(pure = true)
@@ -614,6 +622,14 @@ public abstract class ResourceInspection extends BaseInspection {
     public void visitResourceVariable(PsiResourceVariable variable) {
       super.visitResourceVariable(variable);
       if (ExpressionUtils.isReferenceTo(variable.getInitializer(), boundVariable)) {
+        escaped = true;
+      }
+    }
+
+    @Override
+    public void visitResourceExpression(PsiResourceExpression expression) {
+      super.visitResourceExpression(expression);
+      if (ExpressionUtils.isReferenceTo(expression.getExpression(), boundVariable)) {
         escaped = true;
       }
     }
