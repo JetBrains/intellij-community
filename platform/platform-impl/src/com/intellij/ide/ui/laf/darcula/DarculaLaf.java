@@ -99,7 +99,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected static void log(Exception e) {
-    LOG.error(e.getMessage());
+    LOG.error(e);
   }
 
   @NotNull
