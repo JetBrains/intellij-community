@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NonNls;
 public final class GradleEnvironment {
 
   @NonNls public static final boolean DEBUG_GRADLE_HOME_PROCESSING = Boolean.getBoolean("gradle.debug.home.processing");
-  @NonNls public static final boolean ADJUST_USER_DIR = Boolean.getBoolean("gradle.adjust.userdir");
 
   public static final class Headless {
     @NonNls public static final String GRADLE_DISTRIBUTION_TYPE = System.getProperty("idea.gradle.distributionType");
