@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -33,7 +32,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     val dialog = MyDialog(e.project)
     if (dialog.showAndGet()) {
       try {
-        UpdateChecker.testPlatformUpdate(AnAction.getEventProject(e), dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
+        UpdateChecker.testPlatformUpdate(e.project, dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
       }
       catch (ex: Exception) {
         Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
@@ -47,11 +46,12 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     private var forceUpdate = false
 
     init {
+      @Suppress("DialogTitleCapitalization")
       title = "Updates.xml <channel> Text"
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       textArea = JTextArea(40, 100)
       UIUtil.addUndoRedoActions(textArea)
       textArea.wrapStyleWord = true

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,18 +11,19 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Represents an ID of a plugin. A full descriptor of the plugin may be obtained via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
+ * Represents an ID of a plugin. A full descriptor of the plugin may be obtained
+ * via {@link com.intellij.ide.plugins.PluginManagerCore#getPlugin(PluginId)} method.
  */
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
   private static final Map<String, PluginId> ourRegisteredIds = CollectionFactory.createSmallMemoryFootprintMap();
 
-  public static synchronized @NotNull PluginId getId(@NotNull @NonNls String idString) {
+  public static synchronized @NotNull PluginId getId(@NotNull String idString) {
     return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
   }
 
-  public static synchronized @Nullable PluginId findId(@NonNls String @NotNull ... idStrings) {
+  public static synchronized @Nullable PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
       PluginId pluginId = ourRegisteredIds.get(idString);
       if (pluginId != null) {
@@ -33,9 +33,7 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
-  /**
-   * @deprecated Use {@link #getRegisteredIdList}.
-   */
+  /** @deprecated Use {@link #getRegisteredIdList} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static synchronized @NotNull Map<String, PluginId> getRegisteredIds() {
@@ -48,11 +46,11 @@ public final class PluginId implements Comparable<PluginId> {
 
   private final String myIdString;
 
-  private PluginId(@NotNull @NonNls String idString) {
+  private PluginId(@NotNull String idString) {
     myIdString = idString;
   }
 
-  public @NotNull @NonNls String getIdString() {
+  public @NotNull String getIdString() {
     return myIdString;
   }
 

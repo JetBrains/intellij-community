@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,8 +108,7 @@ public final class PluginInstaller {
   }
 
   private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager
-      .addActionCommands(Collections.singletonList(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath())));
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath()));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
@@ -143,18 +141,6 @@ public final class PluginInstaller {
       }
     }
     return uninstalledWithoutRestart;
-  }
-
-  /**
-   * @deprecated Use {@link #installAfterRestart(Path, boolean, Path, IdeaPluginDescriptor)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void installAfterRestart(@NotNull File sourceFile,
-                                         boolean deleteSourceFile,
-                                         @Nullable File existingPlugin,
-                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
-
   }
 
   public static void installAfterRestart(@NotNull Path sourceFile,

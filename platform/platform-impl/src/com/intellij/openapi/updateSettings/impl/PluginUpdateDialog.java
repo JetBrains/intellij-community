@@ -56,7 +56,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   public PluginUpdateDialog(@Nullable Project project,
                             @NotNull Collection<PluginDownloader> updatedPlugins,
-                            @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
+                            @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     this(project, updatedPlugins, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
@@ -68,7 +68,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
   private PluginUpdateDialog(@Nullable Project project,
                              Collection<PluginDownloader> updatedPlugins,
-                             @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins,
+                             @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
@@ -87,17 +87,15 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
 
       @Override
-      @NotNull
-      protected Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
-        return customRepositoryPlugins == null ? super.getCustomRepoPlugins() : Collections.unmodifiableCollection(customRepositoryPlugins);
+      protected @NotNull Collection<IdeaPluginDescriptor> getCustomRepoPlugins() {
+        return customRepositoryPlugins != null ? customRepositoryPlugins : super.getCustomRepoPlugins();
       }
     };
 
     myPluginModel.setTopController(Configurable.TopComponentController.EMPTY);
     myPluginModel.setPluginUpdatesService(new PluginUpdatesService() {
       @Override
-      public void finishUpdate() {
-      }
+      public void finishUpdate() { }
     });
 
     //noinspection unchecked
@@ -240,9 +238,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     return "plugin.update.dialog";
   }
 
-  @NotNull
   @Override
-  protected DialogStyle getStyle() {
+  protected @NotNull DialogStyle getStyle() {
     return DialogStyle.COMPACT;
   }
 
@@ -251,8 +248,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     return "#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog";
   }
 
-  @NotNull
-  private ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor updateDescriptor) {
+  private @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor updateDescriptor) {
     //noinspection unchecked
     ListPluginComponent component = new ListPluginComponent(myPluginModel, updateDescriptor, LinkListener.NULL, true);
     component.setOnlyUpdateMode();
@@ -260,9 +256,8 @@ public class PluginUpdateDialog extends DialogWrapper {
     return component;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     OnePixelSplitter splitter = new OnePixelSplitter(false, 0.45f) {
       @Override
       protected Divider createDivider() {

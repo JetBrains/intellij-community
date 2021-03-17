@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +40,7 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static synchronized void executeActionScript(@NotNull Path scriptFile, @NotNull Path oldTarget, @NotNull Path newTarget) throws IOException {
-    executeActionScriptCommands(loadActionScript(scriptFile), oldTarget, newTarget);
-  }
-
-  public static void executeActionScriptCommands(List<? extends ActionCommand> commands,
+  public static void executeActionScriptCommands(@NotNull List<? extends ActionCommand> commands,
                                                  @NotNull Path oldTarget,
                                                  @NotNull Path newTarget) throws IOException {
     for (ActionCommand command : commands) {
@@ -56,8 +51,8 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static synchronized void addActionCommand(ActionCommand command) throws IOException {
-    addActionCommands(Collections.singletonList(command));
+  public static synchronized void addActionCommand(@NotNull ActionCommand command) throws IOException {
+    addActionCommands(List.of(command));
   }
 
   public static synchronized void addActionCommands(@NotNull List<? extends ActionCommand> commands) throws IOException {
@@ -84,7 +79,7 @@ public final class StartupActionScriptManager {
     saveActionScript(script, actionScriptFile);
   }
 
-  private static @NotNull Path getActionScriptFile() {
+  private static Path getActionScriptFile() {
     return Path.of(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
@@ -109,15 +104,14 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile)
-    throws IOException {
+  public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile) throws IOException {
     if (commands == null) {
       Files.deleteIfExists(scriptFile);
     }
     else {
       Files.createDirectories(scriptFile.getParent());
       try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
-        oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
+        oos.writeObject(commands.toArray(new ActionCommand[0]));
       }
     }
   }
@@ -133,7 +127,7 @@ public final class StartupActionScriptManager {
       UnzipCommand unzipCommand = (UnzipCommand)command;
       Path destination = mapPath(unzipCommand.myDestination, oldTarget, newTarget);
       if (destination != null) {
-        return new UnzipCommand(Paths.get(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
+        return new UnzipCommand(Path.of(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
       }
     }
     else if (command instanceof DeleteCommand) {
@@ -160,7 +154,6 @@ public final class StartupActionScriptManager {
   }
 
   public interface ActionCommand {
-    ActionCommand[] EMPTY_ARRAY = new ActionCommand[0];
     void execute() throws IOException;
   }
 
@@ -175,9 +168,7 @@ public final class StartupActionScriptManager {
       this.destination = destination.toAbsolutePath().toString();
     }
 
-    /**
-     * @deprecated Use {@link #CopyCommand(Path, Path)}
-     */
+    /** @deprecated Use {@link #CopyCommand(Path, Path)} */
     @Deprecated
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public CopyCommand(@NotNull File source, @NotNull File destination) {
@@ -187,16 +178,17 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      Path destination = Paths.get(this.destination);
-      Path destDir = destination.getParent();
-      Files.createDirectories(destDir);
-      Files.copy(Paths.get(source), destination);
+      Path source = Path.of(this.source), destination = Path.of(this.destination);
+      if (!Files.isRegularFile(source)) {
+        throw new IOException("Source file missing: " + this.source);
+      }
+      Files.createDirectories(destination.getParent());
+      Files.copy(source, destination);
     }
 
     @Override
-    @NonNls
     public String toString() {
-      return "copy[" + source + "," + destination + "]";
+      return "copy[" + source + ',' + destination + "]";
     }
 
     public String getSource() {
@@ -215,9 +207,7 @@ public final class StartupActionScriptManager {
       this(source, destination, null);
     }
 
-    /**
-     * @deprecated Use {@link #UnzipCommand(Path, Path)}
-     */
+    /** @deprecated Use {@link #UnzipCommand(Path, Path)} */
     @Deprecated
     public UnzipCommand(@NotNull File source, @NotNull File destination) {
       this(source.toPath(), destination.toPath());
@@ -231,21 +221,17 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      Path source = Paths.get(mySource);
-      Path destination = Paths.get(myDestination);
-
+      Path source = Path.of(mySource), destination = Path.of(myDestination);
       if (!Files.isRegularFile(source)) {
-        throw new IOException("Source file missing: " + source);
+        throw new IOException("Source file missing: " + mySource);
       }
-
       Files.createDirectories(destination);
       new Decompressor.Zip(source).filter(myFilenameFilter).extract(destination);
     }
 
     @Override
-    @NonNls
     public String toString() {
-      return "unzip[" + mySource + "," + myDestination + "]";
+      return "unzip[" + mySource + ',' + myDestination + "]";
     }
 
     public String getSource() {
@@ -262,9 +248,7 @@ public final class StartupActionScriptManager {
       mySource = source.toAbsolutePath().toString();
     }
 
-    /**
-     * @deprecated Use {@link #DeleteCommand(Path)}
-     */
+    /** @deprecated Use {@link #DeleteCommand(Path)} */
     @Deprecated
     public DeleteCommand(@NotNull File source) {
       mySource = source.getAbsolutePath();
@@ -272,13 +256,11 @@ public final class StartupActionScriptManager {
 
     @Override
     public void execute() throws IOException {
-      // source here it is directory - Files.deleteIfExists must be not used here
-      // todo use NioFiles (see IDEA-CR-69550)
+      // source may be a directory - Files.deleteIfExists must be not used here (todo use NioFiles, see IDEA-CR-69550)
       FileUtilRt.delete(new File(mySource));
     }
 
     @Override
-    @NonNls
     public String toString() {
       return "delete[" + mySource + "]";
     }

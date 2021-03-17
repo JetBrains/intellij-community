@@ -24,13 +24,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +39,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -65,7 +64,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
                           @Nullable UpdateChain patches,
                           boolean enableLink,
                           @Nullable Collection<PluginDownloader> updatedPlugins,
-                          @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+                          @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(project, enableLink);
     myProject = project;
     myUpdatedChannel = channel;
@@ -78,8 +77,8 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     myWhatsNewAction = null;
     init();
     if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
-      String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
-      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
+      String names = incompatiblePlugins.stream().map(IdeaPluginDescriptor::getName).collect(Collectors.joining("<br/>"));
+      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), names));
     }
     IdeUpdateUsageTriggerCollector.triggerUpdateDialog(myPatches, ApplicationManager.getApplication().isRestartCapable());
   }
@@ -106,7 +105,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     setTitle("[TEST] " + getTitle());
   }
 
-  private static @Nullable Pair<String, Boolean> getLicensingInfo(UpdateChannel channel, BuildInfo build) {
+  private static @Nullable Pair<@NlsContexts.Label String, Boolean> getLicensingInfo(UpdateChannel channel, BuildInfo build) {
     LicensingFacade la = LicensingFacade.getInstance();
     if (la == null) return null;
 
@@ -283,12 +282,12 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static void showPatchInstructions(String[] command) {
-    String product = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-'));
+    String product = ApplicationNamesInfo.getInstance().getFullProductName().replace(' ', '-').toLowerCase(Locale.ENGLISH);
     String version = ApplicationInfo.getInstance().getFullVersion();
     File file = new File(SystemProperties.getUserHome(), product + "-" + version + "-patch." + (SystemInfo.isWindows ? "cmd" : "sh"));
     try {
-      String cmdLine = StringUtil.join(CommandLineUtil.toCommandLine(Arrays.asList(command)), " ");
-      @NonNls String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") + cmdLine;
+      String cmdLine = String.join(" ", CommandLineUtil.toCommandLine(Arrays.asList(command)));
+      String text = (SystemInfo.isWindows ? "@echo off\n\n" : "#!/bin/sh\n\n") + cmdLine;
       FileUtil.writeToFile(file, text);
       FileUtil.setExecutable(file);
     }

@@ -36,7 +36,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,11 +212,11 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static @Nullable CheckForUpdateResult myPlatformUpdateInfo;
-  private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
+  private static @Nullable Collection<IdeaPluginDescriptor> myIncompatiblePlugins;
   private static boolean myShowPlatformUpdateIcon;
 
   private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
-  private static @Nullable Collection<? extends IdeaPluginDescriptor> myCustomRepositoryPlugins;
+  private static @Nullable Collection<IdeaPluginDescriptor> myCustomRepositoryPlugins;
   private static boolean myShowPluginsUpdateIcon;
   private static boolean myEnableUpdateAction = true;
 
@@ -227,7 +226,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   public static void newPlatformUpdate(@Nullable CheckForUpdateResult platformUpdateInfo,
                                        @Nullable List<PluginDownloader> updatedPlugins,
-                                       @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+                                       @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     myPlatformUpdateInfo = platformUpdateInfo;
     myUpdatedPlugins = updatedPlugins;
     myIncompatiblePlugins = incompatiblePlugins;
@@ -236,14 +235,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   public static void newPluginUpdates(@Nullable Collection<PluginDownloader> updatedPlugins,
-                                      @Nullable Collection<? extends IdeaPluginDescriptor> customRepositoryPlugins) {
+                                      @Nullable Collection<IdeaPluginDescriptor> customRepositoryPlugins) {
     myUpdatedPlugins = updatedPlugins;
     myCustomRepositoryPlugins = customRepositoryPlugins;
     myShowPluginsUpdateIcon = updatedPlugins != null;
     updateAction();
   }
 
-  public static void removePluginsUpdate(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
+  public static void removePluginsUpdate(@NotNull Collection<IdeaPluginDescriptor> descriptors) {
     if (myUpdatedPlugins != null) {
       List<PluginDownloader> updatedPlugins =
         ContainerUtil.filter(myUpdatedPlugins, downloader -> {
@@ -313,7 +312,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   public static class StatusBarManager implements StatusBarWidgetFactory {
     @Override
-    public @NonNls @NotNull String getId() {
+    public @NotNull String getId() {
       return WIDGET_ID;
     }
 
@@ -357,7 +356,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public @NonNls @NotNull String ID() {
+    public @NotNull String ID() {
       return WIDGET_ID;
     }
 
@@ -407,7 +406,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     }
 
     @Override
-    public void dispose() {
-    }
+    public void dispose() { }
   }
 }

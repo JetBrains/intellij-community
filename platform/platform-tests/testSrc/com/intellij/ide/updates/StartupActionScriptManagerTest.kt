@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -19,17 +19,14 @@ import org.junit.Test
 import java.io.File
 import java.io.ObjectOutputStream
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class StartupActionScriptManagerTest {
-  @Rule
-  @JvmField
-  val tempDir = TempDirectory()
+  @Rule @JvmField val tempDir = TempDirectory()
 
   private lateinit var scriptFile: Path
 
   @Before fun setUp() {
-    scriptFile = Paths.get(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE)
+    scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE)
     scriptFile.parent.createDirectories()
   }
 
@@ -53,7 +50,7 @@ class StartupActionScriptManagerTest {
     assertThat(scriptFile).exists()
   }
 
-  @Test fun `executing "copy" command`() {
+  @Test fun `executing 'copy' command`() {
     val source = tempDir.newFile("source.txt").toPath()
     val destination = File(tempDir.root, "destination.txt").toPath()
     assertTrue(source.exists())
@@ -65,7 +62,7 @@ class StartupActionScriptManagerTest {
     assertFalse(scriptFile.exists())
   }
 
-  @Test fun `executing "unzip" command`() {
+  @Test fun `executing 'unzip' command`() {
     val source = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "").toPath()
     val destination = tempDir.newDirectory("dir").toPath()
     val unpacked = destination.resolve("zip/file.txt")
@@ -78,7 +75,7 @@ class StartupActionScriptManagerTest {
     assertFalse(scriptFile.exists())
   }
 
-  @Test fun `executing "delete" command`() {
+  @Test fun `executing 'delete' command`() {
     val tempFile = tempDir.newFile("temp.txt").toPath()
     assertTrue(tempFile.exists())
     StartupActionScriptManager.addActionCommands(listOf(StartupActionScriptManager.DeleteCommand(tempFile)))
@@ -103,7 +100,8 @@ class StartupActionScriptManagerTest {
       StartupActionScriptManager.CopyCommand(copySource, copyDestinationInOld),
       StartupActionScriptManager.UnzipCommand(unzipSource, oldTarget),
       StartupActionScriptManager.DeleteCommand(deleteInOld)))
-    StartupActionScriptManager.executeActionScript(scriptFile, oldTarget, newTarget)
+    val commands = StartupActionScriptManager.loadActionScript(scriptFile)
+    StartupActionScriptManager.executeActionScriptCommands(commands, oldTarget, newTarget)
 
     assertFalse(copyDestinationInOld.exists())
     assertTrue(copyDestinationInNew.exists())
