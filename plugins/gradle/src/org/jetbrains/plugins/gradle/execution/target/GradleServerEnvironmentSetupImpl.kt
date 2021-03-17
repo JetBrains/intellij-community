@@ -10,7 +10,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -49,6 +48,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
+                                                private val classpathInferer: GradleServerClasspathInferer,
                                                 private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider) : GradleServerEnvironmentSetup, UserDataHolderBase() {
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
@@ -295,27 +295,27 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   }
 
   private fun initJavaParameters() {
-    val classPath = javaParameters.classPath
     // kotlin-stdlib-jdk8
-    classPath.add(PathManager.getJarPathForClass(KotlinVersion::class.java))
+    classpathInferer.add(KotlinVersion::class.java)
     // gradle-api jar
-    classPath.add(PathManager.getJarPathForClass(Gradle::class.java))
+    classpathInferer.add(Gradle::class.java)
     // gradle-api-impldep jar
-    classPath.add(PathManager.getJarPathForClass(org.gradle.internal.impldep.com.google.common.base.Function::class.java))
+    classpathInferer.add(org.gradle.internal.impldep.com.google.common.base.Function::class.java)
     // gradle-wrapper jar
-    classPath.add(PathManager.getJarPathForClass(WrapperExecutor::class.java))
+    classpathInferer.add(WrapperExecutor::class.java)
     // logging jars
-    classPath.add(PathManager.getJarPathForClass(LoggerFactory::class.java))
-    classPath.add(PathManager.getJarPathForClass(Log4jLoggerFactory::class.java))
-    classPath.add(PathManager.getJarPathForClass(org.apache.log4j.Level::class.java))
+    classpathInferer.add(LoggerFactory::class.java)
+    classpathInferer.add(Log4jLoggerFactory::class.java)
+    classpathInferer.add(org.apache.log4j.Level::class.java)
     // gradle tooling proxy module
-    classPath.add(PathManager.getJarPathForClass(Main::class.java))
+    classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes
-    classPath.add(PathManager.getJarPathForClass(
-      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java))
+    classpathInferer.add(
+      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java)
     // intellij.platform.externalSystem.rt
-    classPath.add(PathManager.getJarPathForClass(ExternalSystemSourceType::class.java))
+    classpathInferer.add(ExternalSystemSourceType::class.java)
 
+    javaParameters.classPath.addAll(classpathInferer.getClasspath())
     javaParameters.mainClass = Main::class.java.name
     if (log.isDebugEnabled) {
       javaParameters.programParametersList.add("--debug")

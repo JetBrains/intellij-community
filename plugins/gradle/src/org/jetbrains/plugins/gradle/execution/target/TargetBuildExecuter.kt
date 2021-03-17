@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
+import org.gradle.tooling.BuildAction
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.events.ProgressListener
@@ -11,6 +12,7 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?>(private val connection: TargetProjectConnection) :
   AbstractLongRunningOperation<T>(connection.parameters) {
   abstract val targetBuildParametersBuilder: TargetBuildParameters.Builder
+  protected open val buildActions: List<BuildAction<*>> = emptyList()
 
   override fun addProgressListener(listener: ProgressListener?, vararg operationTypes: OperationType?): T {
     targetBuildParametersBuilder.withSubscriptions(operationTypes.asIterable().filterNotNull())
@@ -33,6 +35,10 @@ internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>,
     if (gradleHomePath != null) {
       targetBuildParametersBuilder.useInstallation(gradleHomePath)
     }
-    GradleServerRunner(connection, consumerOperationParameters).run(targetBuildParametersBuilder, handler)
+    val classPathAssembler = GradleServerClasspathInferer()
+    for (buildAction in buildActions) {
+      classPathAssembler.add(buildAction)
+    }
+    GradleServerRunner(connection, consumerOperationParameters).run(classPathAssembler, targetBuildParametersBuilder, handler)
   }
 }

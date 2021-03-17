@@ -40,11 +40,13 @@ import java.util.concurrent.Future
 internal class GradleServerRunner(private val connection: TargetProjectConnection,
                                   private val consumerOperationParameters: ConsumerOperationParameters) {
 
-  fun run(targetBuildParametersBuilder: TargetBuildParameters.Builder, resultHandler: ResultHandler<Any?>) {
+  fun run(classpathInferer: GradleServerClasspathInferer,
+          targetBuildParametersBuilder: TargetBuildParameters.Builder,
+          resultHandler: ResultHandler<Any?>) {
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = MyTargetProgressIndicator(connection.taskId, connection.taskListener)
     val environmentConfigurationProvider = connection.environmentConfigurationProvider
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, environmentConfigurationProvider)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler)
