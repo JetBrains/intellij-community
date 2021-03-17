@@ -23,7 +23,7 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
   protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<>();
     final DataContext dataContext = event.getDataContext();
-    final Project project = event.getData(CommonDataKeys.PROJECT);
+    final Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     final EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     final EditorWindow[] windows;
