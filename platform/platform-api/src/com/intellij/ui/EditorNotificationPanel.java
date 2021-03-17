@@ -37,6 +37,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -106,14 +107,23 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, myGearLabel);
     setBorder(JBUI.Borders.empty(0, 10));
+    setOpaque(true);
 
     mySchemeSupplier = schemeSupplier;
-    if (mySchemeSupplier != GLOBAL_SCHEME_SUPPLIER) {
-      myLabel.setForeground(new JBColor(() -> mySchemeSupplier.get().getDefaultForeground()));
-    }
+    myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
+  }
 
-    setBackground(ObjectUtils.notNull(myBackgroundColor,
-                  new JBColor(() -> ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()))));
+  @Override
+  public void updateUI() {
+    setUI(new BasicPanelUI() {
+      @Override protected void installDefaults(JPanel p) {}
+    });
+  }
+
+  @Override
+  public Color getBackground() {
+    return ObjectUtils.notNull(myBackgroundColor,
+             ObjectUtils.notNull(mySchemeSupplier.get().getColor(myBackgroundColorKey), UIUtil.getToolTipBackground()));
   }
 
   public void setProject(Project project) {
