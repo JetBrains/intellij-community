@@ -153,14 +153,9 @@ public class DataManagerImpl extends DataManager {
     return null;
   }
 
-  private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
-    Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
-    if (invalidData != null) {
+  private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
+    if (!DataValidators.isDataValid(data, dataId, source)) {
       return null;
-      /*
-      LOG.assertTrue(false, "Data isn't valid. " + dataId + "=" + invalidData + " Provided by: " + dataSource.getClass().getName() + " (" +
-                            dataSource.toString() + ")");
-      */
     }
     return data;
   }

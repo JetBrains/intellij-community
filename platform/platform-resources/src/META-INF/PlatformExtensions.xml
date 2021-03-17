@@ -254,6 +254,9 @@
 
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+
+    <dataValidators implementation="com.intellij.ide.impl.PlatformDataValidators"/>
+
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
 
     <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
