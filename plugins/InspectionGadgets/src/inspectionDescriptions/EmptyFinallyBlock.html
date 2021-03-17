@@ -1,11 +1,26 @@
 <html>
 <body>
-Reports empty <b>finally</b> blocks. Empty <b>finally</b> blocks
-usually indicate coding errors.
-<!-- tooltip end -->
-<p>
-At present, this inspection is disabled in JSP files.
-<p>
+Reports empty <code>finally</code> blocks. Empty <code>finally</code> blocks
+usually indicate coding errors or could be left over after refactoring the code and can be removed.
+<p>This inspection does not report in JSP files.
+<p>Example:
+<pre>
+  try {
+    Files.readString(Paths.get("in.txt"));
+  } catch (IOException e) {
+    throw new RuntimeException(e);
+  } finally {
 
+  }
+</pre>
+<p>After the quick fix is applied the result looks like:
+<pre>
+  try {
+    Files.readString(Paths.get("in.txt"));
+  } catch (IOException e) {
+    throw new RuntimeException(e);
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>
