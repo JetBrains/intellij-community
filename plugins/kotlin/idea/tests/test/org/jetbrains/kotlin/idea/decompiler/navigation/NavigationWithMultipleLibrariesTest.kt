@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.caches.project.LibrarySourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
-import org.jetbrains.kotlin.idea.core.util.toVirtualFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.NavigationChecker.Companion.checkAnnotatedCode
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
@@ -47,7 +46,7 @@ class NavigationWithMultipleCustomLibrariesTest : AbstractNavigationToSourceOrDe
 
     override fun createProjectLib(libraryName: String, withSources: Boolean): Library {
         val sources = listOf(File(getTestDataDirectory(), "libSrc"))
-        val libraryJar = KotlinCompilerStandalone(sources).compile()
+        val libraryJar = KotlinCompilerStandalone(sources, jarWithSources = true).compile()
 
         val jarRoot = libraryJar.jarRoot
         return projectLibrary(libraryName, jarRoot, jarRoot.findChild("src").takeIf { withSources })
@@ -112,11 +111,11 @@ class NavigationToSingleJarInMultipleLibrariesTest : AbstractNavigationWithMulti
         val moduleC = module("m3", srcPath)
 
         val libSrc = File(getTestDataDirectory(), "libSrc")
-        val sharedJar = KotlinCompilerStandalone(listOf(libSrc)).compile()
+        val sharedJar = KotlinCompilerStandalone(listOf(libSrc), jarWithSources = true).compile()
 
         val jarRoot = sharedJar.jarRoot
         moduleA.addDependency(projectLibrary("libA", jarRoot))
-        moduleB.addDependency(projectLibrary("libB", jarRoot, libSrc.toVirtualFile()))
+        moduleB.addDependency(projectLibrary("libB", jarRoot, jarRoot.findChild("src")))
         moduleC.addDependency(projectLibrary("libC", jarRoot))
 
         val expectedFile = File(getTestDataDirectory(), "expected.sources")
@@ -140,12 +139,12 @@ abstract class AbstractNavigationWithMultipleLibrariesTest : JavaModuleTestCase(
 
 private fun checkLibraryName(referenceTarget: PsiElement, expectedName: String) {
     val navigationFile = referenceTarget.navigationElement.containingFile ?: return
-    val libraryInfo = navigationFile.getNullableModuleInfo()
-    val libraryName = when (libraryInfo) {
+    val libraryName = when (val libraryInfo = navigationFile.getNullableModuleInfo()) {
         is LibraryInfo -> libraryInfo.library.name
         is LibrarySourceInfo -> libraryInfo.library.name
         else -> error("Couldn't get library name")
     }
+
     Assert.assertEquals("Referenced code from unrelated library: ${referenceTarget.text}", expectedName, libraryName)
 }
 

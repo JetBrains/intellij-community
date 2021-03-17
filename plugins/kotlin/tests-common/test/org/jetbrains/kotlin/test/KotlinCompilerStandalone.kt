@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
     private val options: List<String> = emptyList(),
     classpath: List<File> = emptyList(),
     includeKotlinStdlib: Boolean = true,
-    private val compileKotlinSourcesBeforeJava: Boolean = true
+    private val compileKotlinSourcesBeforeJava: Boolean = true,
+    private val jarWithSources: Boolean = false,
 ) {
     sealed class Platform {
         class JavaScript(val moduleName: String, val packageName: String) : Platform() {
@@ -119,6 +120,14 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
         fun compileKotlin() {
             if (ktFiles.isNotEmpty()) {
                 val targetForKotlin = KotlinTestUtils.tmpDirForReusableFolder("compile-kt")
+                if (jarWithSources) {
+                    // simple implementation
+                    val src = File(targetForKotlin, "src")
+                    for (file in ktFiles) {
+                        file.copyTo(File(src, file.name))
+                    }
+                }
+
                 when (platform) {
                     is Jvm -> compileKotlin(ktFiles, javaFiles.isNotEmpty(), targetForKotlin)
                     is JavaScript -> {
