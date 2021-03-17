@@ -24,7 +24,9 @@ final class IdeHeartbeatEventReporter implements Disposable {
   private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
-  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
+  @Nullable
+  private final ScheduledExecutorService myExecutor;
+  @Nullable
   private final ScheduledFuture<?> myThread;
 
   private volatile long myPreviousLoggedUIResponse = 0;
@@ -53,10 +55,18 @@ final class IdeHeartbeatEventReporter implements Disposable {
         }
       });
 
-    myThread = myExecutor.scheduleWithFixedDelay(
-      IdeHeartbeatEventReporter::recordHeartbeat,
-      UI_RESPONSE_LOGGING_INTERVAL_MS, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
-    );
+    boolean isEap = ApplicationManager.getApplication().isEAP();
+    if (isEap) {
+      myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
+      myThread = myExecutor.scheduleWithFixedDelay(
+        IdeHeartbeatEventReporter::recordHeartbeat,
+        0, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
+      );
+    }
+    else {
+      myExecutor = null;
+      myThread = null;
+    }
   }
 
   private static void recordHeartbeat() {
@@ -76,11 +86,13 @@ final class IdeHeartbeatEventReporter implements Disposable {
     if (myThread != null) {
       myThread.cancel(true);
     }
-    myExecutor.shutdownNow();
+    if (myExecutor != null) {
+      myExecutor.shutdownNow();
+    }
   }
 
   public static final class UILatencyLogger extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("performance", 59);
+    private static final EventLogGroup GROUP = new EventLogGroup("performance", 60);
 
     private static final EventId2<Integer, Integer> HEARTBEAT = GROUP.registerEvent(
       "heartbeat", EventFields.Int("system_cpu_load"), EventFields.Int("swap_load"));
