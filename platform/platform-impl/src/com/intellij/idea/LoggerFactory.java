@@ -96,7 +96,7 @@ public final class LoggerFactory implements Logger.Factory {
       @Override
       public void rollOver() {
         super.rollOver();
-        MutedLogger.dropCaches();
+        MutedErrorLogger.dropCaches();
       }
     };
     ideaLog.setEncoding(StandardCharsets.UTF_8.name());

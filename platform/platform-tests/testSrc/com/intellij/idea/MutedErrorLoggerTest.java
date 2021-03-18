@@ -4,15 +4,21 @@ package com.intellij.idea;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-public class MutedErrorLoggerTest extends TestCase {
+import static org.junit.Assert.*;
 
+public class MutedErrorLoggerTest extends BareTestFixtureTestCase {
   private static final Integer FREQUENCY = 5;
   private static final String HASH_PATTERN = ".* '-?\\d+'";
 
@@ -21,17 +27,22 @@ public class MutedErrorLoggerTest extends TestCase {
     return HASH_PATTERN + ".* " + frequency + " .*";
   }
 
-  @Override
-  protected void setUp() throws Exception {
+  @BeforeClass
+  public static void setFrequency() {
     System.setProperty("ide.muted.error.logger.frequency", FREQUENCY.toString());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterClass
+  public static void resetFrequency() {
     System.clearProperty("ide.muted.error.logger.frequency");
-    MutedLogger.dropCaches();
   }
 
+  @After
+  public void dropCaches() {
+    MutedErrorLogger.dropCaches();
+  }
+
+  @Test
   public void testDoesNotLogExceptionTwice() {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
@@ -50,6 +61,7 @@ public class MutedErrorLoggerTest extends TestCase {
     assertEquals("Second error doesn't contain throwable: " + secondError, t, secondError.second);
   }
 
+  @Test
   public void testLogsRecurringExceptionHash() {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
@@ -73,6 +85,7 @@ public class MutedErrorLoggerTest extends TestCase {
     assertNull("Third error contains throwable: " + thirdError, thirdError.second);
   }
 
+  @Test
   public void testLogsResultsOnDropCaches() throws InterruptedException {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
@@ -80,12 +93,10 @@ public class MutedErrorLoggerTest extends TestCase {
 
     logger.error(t);
     logger.error(t);
-    MutedLogger.dropCaches();
+    MutedErrorLogger.dropCaches();
 
-    long timestamp = System.currentTimeMillis();
-    while (errors.size() != 3 && System.currentTimeMillis() - timestamp < 1000) {
-      // cache maintenance is performed on pooled thread
-    }
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
+    while (errors.size() != 3 && System.nanoTime() < deadline) TimeUnit.MILLISECONDS.sleep(1);  // cache maintenance is performed on pooled thread
 
     assertEquals("Too many errors posted: " + errors, 3, errors.size());
 
