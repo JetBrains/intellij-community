@@ -2,11 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -15,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction {
+public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction implements IntentionActionWithFixAllOption {
   @NotNull
   private final PsiSwitchLabeledRuleStatement myRuleStatement;
 
@@ -65,6 +67,12 @@ public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction {
       oldBody = myRuleStatement.getBody().copy();
       myRuleStatement.getBody().delete();
     }
+    for (PsiElement lastChild = myRuleStatement.getLastChild(); lastChild != null; lastChild = lastChild.getPrevSibling()) {
+      if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
+        lastChild.delete();
+        break;
+      }
+    } 
     PsiSwitchLabeledRuleStatement newRule = (PsiSwitchLabeledRuleStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
         myRuleStatement.getText() + "{}", myRuleStatement);
     PsiCodeBlock block = ((PsiBlockStatement)Objects.requireNonNull(newRule.getBody())).getCodeBlock();
