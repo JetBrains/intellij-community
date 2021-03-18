@@ -88,7 +88,7 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
   private fun getFileList(event: AnActionEvent) =
     Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
 
-  private fun getErrorIndex(list: JList<Switcher.FileInfo>): Int? {
+  private fun getErrorIndex(list: JList<SwitcherVirtualFile>): Int? {
     val model = list.model ?: return null
     val size = model.size
     if (size <= 0) return null

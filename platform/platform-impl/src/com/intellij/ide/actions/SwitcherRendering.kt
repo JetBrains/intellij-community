@@ -5,20 +5,30 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.colors.EditorFontType.PLAIN
+import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowEventSource
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.problems.WolfTheProblemSolver
+import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.CellRendererPanel
+import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.paint.EffectPainter.LINE_UNDERSCORE
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
@@ -98,6 +108,44 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
     component.icon = MnemonicIcon(window.icon, mnemonic, selected)
     component.append(mainText)
   }
+}
+
+
+internal class SwitcherVirtualFile(
+  val project: Project,
+  val file: VirtualFile,
+  val window: EditorWindow?
+) : SwitcherListItem, BackgroundSupplier {
+
+  constructor(info: Switcher.FileInfo) : this(info.myProject, info.first, info.second) {
+    mainText = info.nameForRendering
+  }
+
+  private val icon by lazy { IconUtil.getIcon(file, ICON_FLAG_READ_STATUS, project) }
+
+  val isProblemFile
+    get() = WolfTheProblemSolver.getInstance(project)?.isProblemFile(file) == true
+
+  override var mainText: String = ""
+
+  override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
+  }
+
+  override fun close(switcher: Switcher.SwitcherPanel) {
+  }
+
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.icon = RenderingUtil.getIcon(icon, selected)
+    val foreground = FileStatusManager.getInstance(project).getStatus(file).color
+    val effectColor = if (isProblemFile) JBColor.red else null
+    val style = when (effectColor) {
+      null -> SimpleTextAttributes.STYLE_PLAIN
+      else -> SimpleTextAttributes.STYLE_PLAIN or SimpleTextAttributes.STYLE_WAVED
+    }
+    component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
+  }
+
+  override fun getElementBackground(row: Int) = getFileBackgroundColor(project, file)
 }
 
 
