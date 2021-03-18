@@ -16,9 +16,11 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -308,8 +310,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @NotNull
-  private List<Pair<PsiElement, Instruction>> getPrevInstructions(@Nullable PyElement condition) {
-    final List<Pair<PsiElement, Instruction>> result = ContainerUtil.newArrayList(Pair.create(condition, myBuilder.prevInstruction));
+  private List<Pair<PsiElement, Instruction>> getBranchingPoints(@Nullable PyExpression condition) {
+    final List<Pair<PsiElement, Instruction>> result = new ArrayList<>();
+
+    if (!isConjunctionOrDisjunction(condition)) {
+      // make previous instruction to be considered as a negative branching point
+      result.add(Pair.create(condition, myBuilder.prevInstruction));
+    }
+
     myBuilder.processPending((pendingScope, instruction) -> {
       if (pendingScope != null && PsiTreeUtil.isAncestor(condition, pendingScope, false)) {
         result.add(Pair.create(pendingScope, instruction));
@@ -350,7 +358,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
 
     PyExpression lastCondition = null; // last visited condition
-    List<Pair<PsiElement, Instruction>> lastBranchingPoints = Collections.emptyList(); // outcoming edges from the last visited condition
+    List<Pair<PsiElement, Instruction>> lastBranchingPoints = Collections.emptyList(); // outcoming negative edges from the last condition
     final List<Boolean> conditionResults = new ArrayList<>(); // visited conditions results
 
     final PyIfPart firstIfPart = node.getIfPart();
@@ -426,16 +434,28 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       condition.accept(assertionEvaluator);
     }
 
-    final List<Pair<PsiElement, Instruction>> branchingPoints = getPrevInstructions(condition);
-    if (conditionResult != Boolean.FALSE) {
-      // edges to the statement list under `if` would be created below if condition were not evaluated to `False`
-      branchingPoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    final List<Pair<PsiElement, Instruction>> branchingPoints = getBranchingPoints(condition);
+    if (conditionResult == Boolean.FALSE) {
+      myBuilder.flowAbrupted();
     }
-    myBuilder.prevInstruction = null;
+    else if (isConjunctionOrDisjunction(condition)) {
+      // to make edges between positive sub-conditions inside and the statement below
+      final var shortCircuitPositivePoints = selectShortCircuitPositivePoints(branchingPoints);
+
+      branchingPoints.removeAll(shortCircuitPositivePoints);
+      shortCircuitPositivePoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
+    }
 
     visitPyIfPartStatements(part, assertionEvaluator, node);
 
     return new Triple<>(condition, branchingPoints, conditionResult);
+  }
+
+  private static @NotNull List<Pair<PsiElement, Instruction>> selectShortCircuitPositivePoints(@NotNull List<Pair<PsiElement, Instruction>> branchingPoints) {
+    return ContainerUtil.filter(
+      branchingPoints,
+      it -> it.getSecond() instanceof ConditionalInstruction && ((ConditionalInstruction)it.getSecond()).getResult()
+    );
   }
 
   private void visitPyIfPartStatements(@NotNull PyIfPart part,
@@ -463,28 +483,60 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
-    final PyElementType operator = node.getOperator();
-    if (operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD) {
+    if (isConjunctionOrDisjunction(node)) {
+      final boolean conjunction = node.getOperator() == PyTokenTypes.AND_KEYWORD;
+
       myBuilder.startNode(node);
-      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(operator == PyTokenTypes.AND_KEYWORD);
+      final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator(conjunction);
 
       final PyExpression left = node.getLeftExpression();
       if (left != null) {
-        left.accept(this);
-        left.accept(assertionEvaluator);
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+        visitConjunctOrDisjunct(node, left, null, assertionEvaluator, conjunction);
       }
 
       final PyExpression right = node.getRightExpression();
       if (right != null) {
-        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
-        right.accept(this);
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+        visitConjunctOrDisjunct(node, right, assertionEvaluator, null, true);
       }
     }
     else {
       super.visitPyBinaryExpression(node);
     }
+  }
+
+  private static boolean isConjunctionOrDisjunction(@Nullable PyExpression node) {
+    if (node instanceof PyBinaryExpression) {
+      final var operator = ((PyBinaryExpression)node).getOperator();
+      return operator == PyTokenTypes.AND_KEYWORD || operator == PyTokenTypes.OR_KEYWORD;
+    }
+
+    return false;
+  }
+
+  private void visitConjunctOrDisjunct(@NotNull PyBinaryExpression node,
+                                       @NotNull PyExpression subExpression,
+                                       @Nullable PyTypeAssertionEvaluator previousAssertionEvaluator,
+                                       @Nullable PyTypeAssertionEvaluator assertionEvaluator,
+                                       boolean conditionResultToContinue) {
+    if (previousAssertionEvaluator != null) {
+      InstructionBuilder.addAssertInstructions(myBuilder, previousAssertionEvaluator);
+    }
+
+    subExpression.accept(this);
+
+    if (assertionEvaluator != null) {
+      subExpression.accept(assertionEvaluator);
+    }
+
+    final var branchingPoint = myBuilder.prevInstruction;
+
+    final var outside = new ConditionalInstructionImpl(myBuilder, null, subExpression, !conditionResultToContinue);
+    myBuilder.addNode(outside);
+    myBuilder.addPendingEdge(node, outside);
+
+    myBuilder.prevInstruction = branchingPoint;
+    final var toTheNext = new ConditionalInstructionImpl(myBuilder, null, subExpression, conditionResultToContinue);
+    myBuilder.addNode(toTheNext);
   }
 
   @Override
