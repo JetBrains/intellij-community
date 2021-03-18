@@ -39,7 +39,10 @@ import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleIdeResolveTest
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.codeMetaInfo.models.*
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.CodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.DiagnosticCodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
+import org.jetbrains.kotlin.idea.codeMetaInfo.models.getCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration
@@ -127,8 +130,12 @@ class CodeMetaInfoTestCase(
 
         //to initialize caches
         if (!DumbService.isDumb(myProject)) {
-            CacheManager.SERVICE.getInstance(myProject)
-                .getFilesWithWord("XXX", UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(myProject), true)
+            CacheManager.getInstance(myProject).getFilesWithWord(
+                "XXX",
+                UsageSearchContext.IN_COMMENTS,
+                GlobalSearchScope.allScope(myProject),
+                true,
+            )
         }
 
         for (configuration in codeMetaInfoTypes) {
