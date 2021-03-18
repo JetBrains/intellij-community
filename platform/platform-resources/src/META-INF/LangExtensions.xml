@@ -1025,6 +1025,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.BookmarkUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.BookmarkCounterCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.searcheverywhere.statistics.ManuallyOpenedFileLogUsageCollector" />
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="2"/>
