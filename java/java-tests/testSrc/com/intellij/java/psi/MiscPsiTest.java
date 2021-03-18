@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -387,7 +386,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = file.getViewProvider().getDocument();
       document.insertString(0, " ");
-      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).doCommitWithoutReparse(document);
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
     });
 
     assertEquals(" class Foo {}", file.getText());
