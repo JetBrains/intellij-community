@@ -229,6 +229,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "EditorRightWithSelection"},
     { "ctrl N",                   "FileChooser.NewFolder", "NewElement"},
     { "ctrl F5",                  "Run", "RunClass"},
+    { "shift F5",                 "Graph.ApplyCurrentLayout", "Stop"},
     { "ctrl alt W",               "ActivateWebToolWindow", "Vcs.UpdateProject"},
     { "shift alt ENTER",          "JupyterDebugAction", "ToggleFullScreen"},
     { "ctrl ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLineBefore", "NotebookRunCellAction", "PyExecuteCellAction", "ViewSource", "org.jetbrains.r.actions.RunSelection", "Terminal.SmartCommandExecution.Run", "SplitChooser.Duplicate"},
