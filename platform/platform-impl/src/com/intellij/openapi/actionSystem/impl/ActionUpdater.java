@@ -286,15 +286,15 @@ final class ActionUpdater {
       });
     });
 
+    Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
     if (myToolbarAction) {
-      cancelAndRestartOnUserActivity(promise);
+      cancelAndRestartOnUserActivity(promise, disposableParent);
     }
     else if (myContextMenuAction) {
       cancelAllUpdates();
     }
     ourPromises.add(promise);
 
-    Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
     ourExecutor.execute(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
       while (promise.getState() == Promise.State.PENDING) {
         try {
@@ -348,8 +348,10 @@ final class ActionUpdater {
     }
   }
 
-  private static void cancelAndRestartOnUserActivity(@NotNull CancellablePromise<?> promise) {
+  private static void cancelAndRestartOnUserActivity(@NotNull CancellablePromise<?> promise,
+                                                     @NotNull Disposable disposableParent) {
     Disposable disposable = Disposer.newDisposable("Action Update");
+    Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPostprocessor(e -> {
       if (e instanceof ComponentEvent && !(e instanceof PaintEvent) && (e.getID() & AWTEvent.MOUSE_MOTION_EVENT_MASK) == 0) {
         promise.cancel();
