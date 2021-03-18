@@ -101,7 +101,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "\n" +
                  "dependencies {\n" +
                  "    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'\n" +
-                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:1.7.0'\n" +
+                 "    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'\n" +
                  "}\n" +
                  "\n" +
                  "test {\n" +
