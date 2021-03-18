@@ -1,5 +1,30 @@
 <html>
 <body>
-Inspection detects TestNG data providers with equal names.
+Reports about TestNG data providers with equal names as <code>org.testng.TestNGException</code> is occurred.
+<p>Example of duplicated data providers:</p>
+<pre>
+  public class DuplicatedDataProviders {
+    @DataProvider
+    public Object[][] intTestData() { // duplicate 1
+      return new Integer[][]{
+        new Integer[]{1, 1},
+      };
+    }
+
+    @DataProvider(name = "intTestData")
+    public Object[][] someTestData() { // duplicate 2
+      return new Integer[][]{
+        new Integer[]{1, 1},
+      };
+    }
+
+    @Test(dataProvider = "intTestData")
+    public void testIsOK(Integer key, Integer value) {
+      assertEquals(key, value);
+    }
+  }
+</pre>
+<!-- tooltip end -->
+<p>
 </body>
 </html>
