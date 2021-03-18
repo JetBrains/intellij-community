@@ -182,14 +182,25 @@ object UpdateChecker {
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  private fun loadUpdatesData(): UpdatesInfo? {
-    var url = Urls.newFromEncoded(updateUrl)
-    if (url.scheme != URLUtil.FILE_PROTOCOL) {
-      url = UpdateRequestParameters.amendUpdateRequest(url)
+  fun loadProductData(): Product? =
+    productDataLock.withLock {
+      val cached = SoftReference.dereference(productDataCache)
+      if (cached != null) return@withLock cached.getOrThrow()
+
+      val result = runCatching {
+        var url = Urls.newFromEncoded(updateUrl)
+        if (url.scheme != URLUtil.FILE_PROTOCOL) {
+          url = UpdateRequestParameters.amendUpdateRequest(url)
+        }
+        if (LOG.isDebugEnabled) LOG.debug("loading ${url}")
+        val updates = HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+        updates[ApplicationInfo.getInstance().build.productCode]
+      }
+
+      productDataCache = SoftReference(result)
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
+      return@withLock result.getOrThrow()
     }
-    if (LOG.isDebugEnabled) LOG.debug("load update xml (UPDATE_URL='${url}')")
-    return HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
-  }
 
   private fun clearProductDataCache() {
     if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
