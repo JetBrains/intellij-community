@@ -196,7 +196,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     else {
       filteredList.stream()
         .filter(childField -> !existingByKey.containsKey(childField.getName()))
-        .forEach(childField -> registerBasicKeyCompletion(metaType, childField, result, insertedScalar, needsSequenceItemMark));
+        .forEach(childField -> {
+          var lookups = ContainerUtil.filter(childField.getKeyLookups(metaType, insertedScalar), l -> {
+            return !existingByKey.containsKey(l.getLookupString());
+          });
+
+          registerBasicKeyCompletion(result, lookups, new YamlKeyInsertHandlerImpl(needsSequenceItemMark, childField));
+        });
     }
   }
 
@@ -205,17 +211,11 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  protected void registerBasicKeyCompletion(@NotNull YamlMetaType ownerClass,
-                                            @NotNull Field toBeInserted,
-                                            @NotNull CompletionResultSet result,
-                                            @NotNull PsiElement insertedScalar,
-                                            boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(ownerClass, insertedScalar);
+  protected void registerBasicKeyCompletion(@NotNull CompletionResultSet result,
+                                            @NotNull List<LookupElementBuilder> lookups,
+                                            @NotNull InsertHandler<LookupElement> insertHandler) {
     if (!lookups.isEmpty()) {
-      InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
-      lookups.stream()
-        .map(l -> l.withInsertHandler(keyInsertHandler))
-        .forEach(result::addElement);
+      lookups.stream().map(l -> l.withInsertHandler(insertHandler)).forEach(result::addElement);
     }
   }
 
