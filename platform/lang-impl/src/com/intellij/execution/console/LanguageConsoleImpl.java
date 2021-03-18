@@ -20,8 +20,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -178,17 +176,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
             () -> IdeFocusManager.getGlobalInstance().requestFocus(myConsoleExecutionEditor.getEditor().getContentComponent(), true)
           );
           myConsoleExecutionEditor.getEditor().processKeyTyped(event);
-        }
-      }
-    });
-
-    myHistoryViewer.addEditorMouseListener(new EditorMouseListener() {
-      @Override
-      public void mouseClicked(@NotNull EditorMouseEvent event) {
-        if (isConsoleEditorEnabled()) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
-            () -> IdeFocusManager.getGlobalInstance().requestFocus(myConsoleExecutionEditor.getEditor().getContentComponent(), true)
-          );
         }
       }
     });
