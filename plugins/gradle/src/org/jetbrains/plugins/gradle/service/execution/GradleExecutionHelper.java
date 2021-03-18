@@ -549,7 +549,7 @@ public class GradleExecutionHelper {
     try {
       File initScriptFile = writeToFileGradleInitScript(
         "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
-      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+      executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
     }
     catch (IOException e) {
       LOG.warn("Can't generate IJ gradle init script", e);
