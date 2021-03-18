@@ -692,6 +692,7 @@
     <statistics.counterUsagesCollector groupId="ide.self.update" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
+    <statistics.counterUsagesCollector groupId="file" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
     <statistics.counterUsagesCollector groupId="inspection.widget" version="2"/>
