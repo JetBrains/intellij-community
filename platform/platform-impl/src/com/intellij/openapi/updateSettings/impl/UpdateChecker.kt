@@ -14,7 +14,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
-import com.intellij.openapi.diagnostic.LogUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -223,7 +222,7 @@ object UpdateChecker {
     if (url.scheme != URLUtil.FILE_PROTOCOL) {
       url = UpdateRequestParameters.amendUpdateRequest(url)
     }
-    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", url)
+    if (LOG.isDebugEnabled) LOG.debug("load update xml (UPDATE_URL='${url}')")
     return HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
   }
 

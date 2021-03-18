@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Forceable;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.CollectionFactory;
@@ -27,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 final class StubSerializerEnumerator implements Flushable, Closeable {
   private static final Logger LOG = Logger.getInstance(StubSerializerEnumerator.class);
@@ -72,10 +73,8 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     if (idValue == null) {
       String name = serializer.getExternalId();
       idValue = myNameToId.getInt(name);
-      assert idValue > 0 : "No ID found for serializer " + LogUtil.objectAndClass(serializer) +
-                           ", external id:" + name +
-                           (serializer instanceof IElementType
-                            ? ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
+      assert idValue > 0 : "No ID found for serializer " + objectInfo(serializer) + ", external id:" + name +
+                           (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() : "");
       mySerializerToId.put(serializer, idValue);
     }
     return idValue;

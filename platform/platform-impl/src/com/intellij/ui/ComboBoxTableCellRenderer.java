@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ListWithSelection;
@@ -14,6 +13,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Collections;
 import java.util.EnumSet;
+
+import static com.intellij.util.ObjectUtils.objectInfo;
 
 public final class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
   public static final TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
@@ -56,7 +57,7 @@ public final class ComboBoxTableCellRenderer extends JPanel implements TableCell
     }
     else {
       if (value != null) {
-        LOG.error("value " + LogUtil.objectAndClass(value) + ", at " + row + ":" + column + ", in " + table.getModel());
+        LOG.error("value " + objectInfo(value) + ", at " + row + ":" + column + ", in " + table.getModel());
       }
       myCombo.removeAllItems();
       myCombo.setSelectedIndex(-1);

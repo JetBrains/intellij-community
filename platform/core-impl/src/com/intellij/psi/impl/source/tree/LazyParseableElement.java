@@ -1,27 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Getter;
@@ -39,6 +20,11 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.util.ObjectUtils.objectInfo;
+
+/**
+ * @author max
+ */
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance(LazyParseableElement.class);
   private static final StaticGetter<CharSequence> NO_TEXT = new StaticGetter<>(null);
@@ -211,7 +197,8 @@ public class LazyParseableElement extends CompositeElement {
       child = child.getTreeNext();
     }
     if (length != text.length()) {
-      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
+      LOG.error("Text mismatch in " + objectInfo(getElementType()),
+                PluginException.createByClass("Text mismatch", null, getElementType().getClass()),
                 new Attachment("code.txt", text.toString()));
     }
   }
