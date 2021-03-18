@@ -320,35 +320,37 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
       try {
         StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
+        StorageLockContext storageLockContext = new StorageLockContext(true);
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !Files.exists(commitsStorage);
-        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null,
+        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, storageLockContext,
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
         StorageId messagesStorageId = new StorageId(projectName, INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
         messages = new PersistentHashMap<>(messagesStorageId.getStorageFile(MESSAGES), EnumeratorIntegerDescriptor.INSTANCE,
-                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, messagesStorageId.getVersion());
+                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, messagesStorageId.getVersion(),
+                                           storageLockContext);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
-        trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
-        users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, storage, roots, fatalErrorHandler, this);
+        trigrams = new VcsLogMessagesTrigramIndex(storageId, storageLockContext, fatalErrorHandler, this);
+        users = new VcsLogUserIndex(storageId, storageLockContext, userRegistry, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, storage, roots, storageLockContext, fatalErrorHandler, this);
 
         Path parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
-                                          new IntListDataExternalizer(), Page.PAGE_SIZE, storageId.getVersion());
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(parents::close));
 
         Path committersStorage = storageId.getStorageFile(COMMITTERS);
         committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
-                                             Page.PAGE_SIZE, storageId.getVersion());
+                                             Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(committers::close));
 
         Path timestampsStorage = storageId.getStorageFile(TIMESTAMPS);
         timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
-                                             Page.PAGE_SIZE, storageId.getVersion());
+                                             Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(timestamps::close));
       }
       catch (Throwable t) {
