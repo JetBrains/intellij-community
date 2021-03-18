@@ -3,7 +3,6 @@ package com.intellij.util.ref;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -30,19 +29,15 @@ public final class GCUtil {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
-    ObjectUtils.reachabilityFence(ref.get());
 
     System.gc();
 
     StringBuilder log = new StringBuilder();
-    if (!allocateTonsOfMemory(log, EmptyRunnable.getInstance(), () -> ref.isEnqueued())) {
+    if (!allocateTonsOfMemory(log, EmptyRunnable.getInstance(), () -> ref.isEnqueued() || ref.get() == null)) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up. Log:\n" + log);
     }
 
-    // using ref is important as to loop to finish with several iterations: long runs of the method (~80 run of PsiModificationTrackerTest)
-    // discovered 'ref' being collected and loop iterated 100 times taking a lot of time
-    ObjectUtils.reachabilityFence(ref.get());
 
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }

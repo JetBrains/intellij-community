@@ -45,7 +45,7 @@ public final class ObjectUtils {
    * In Java 11 compatible modules use {@link java.lang.ref.Reference#reachabilityFence(Object)} instead.
    */
   @ReviseWhenPortedToJDK("9")
-  public static void reachabilityFence(@SuppressWarnings("unused") Object o) {}
+  public static void reachabilityFence(@SuppressWarnings("unused") @NotNull Object o) {}
 
   private static final class Sentinel {
     private final String myName;
