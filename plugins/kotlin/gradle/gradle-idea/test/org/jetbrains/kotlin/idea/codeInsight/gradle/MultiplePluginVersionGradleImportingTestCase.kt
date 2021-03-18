@@ -53,15 +53,17 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     @JvmField
     @Parameterized.Parameter(1)
-    var pluginVersion: String = ""
+    var kotlinPluginParameter: String = ""
 
-    val kotlinPluginVersion: KotlinVersion get() = parseKotlinVersion(pluginVersion)
+    val kotlinPluginVersion: KotlinVersion get() = parseKotlinVersion(kotlinPluginVersionString)
+
+    open val kotlinPluginVersionString: String get() = if (kotlinPluginParameter == "master") masterKotlinPluginVersion else kotlinPluginParameter
 
     private val orgGradleNativePropertyKey: String = "org.gradle.native"
     private var initialOrgGradleNativePropertyValue: String? = null
 
     override fun setUp() {
-        if (pluginVersion == masterKotlinPluginVersion) {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion) {
             assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
@@ -93,7 +95,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("6.7.1", "1.4.0"),
                 arrayOf("6.8.2", "1.4.31"),
                 arrayOf("6.8.2", "1.5.0-M1"),
-                arrayOf("6.8.2", masterKotlinPluginVersion)
+                arrayOf("6.8.2", "master")
             )
         }
     }
@@ -119,7 +121,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
         val unitedProperties = HashMap(properties ?: emptyMap())
-        unitedProperties["kotlin_plugin_version"] = pluginVersion
+        unitedProperties["kotlin_plugin_version"] = kotlinPluginVersionString
 
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
         unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
