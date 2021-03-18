@@ -8,7 +8,7 @@ class B {
 
 public class Main {
     void user() {
-                .method(new B());
+        .method(new B());
     }
 
 }
