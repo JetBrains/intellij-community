@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.searcheverywhere.statistics.ManuallyOpenedFileLogUsageCollector;
 import com.intellij.ide.util.gotoByName.FileTypeRef;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -101,6 +102,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     if (selected instanceof PsiFile) {
       VirtualFile file = ((PsiFile)selected).getVirtualFile();
       if (file != null && myProject != null) {
+        ManuallyOpenedFileLogUsageCollector.Companion.logFileManuallyOpen(file, myProject);
         Pair<Integer, Integer> pos = getLineAndColumn(searchText);
         OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
         descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
