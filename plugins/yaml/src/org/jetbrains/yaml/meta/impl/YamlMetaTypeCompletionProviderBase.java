@@ -88,7 +88,6 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       }
       if (combinedText.charAt(positionOffset - 1) == ':') {
         trace("Completion rejected: misplaced just after key position : " + YamlDebugUtil.getDebugInfo(params.getPosition()));
-        return;
       }
     }
 
