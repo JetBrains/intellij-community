@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.kotlin.idea.test.AstAccessControl
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import java.io.File
@@ -15,9 +16,11 @@ abstract class AbstractJavaAgainstKotlinBinariesCheckerTest : AbstractJavaAgains
         val ktFile = File(path)
         val javaFile = File(ktFile.parentFile, ktFile.nameWithoutExtension + ".java")
 
-        val extraOptions = InTextDirectivesUtils.findListWithPrefixes(configFileText ?: "", "// KOTLINC_EXTRA_OPTS")
+        val compilerArguments = InTextDirectivesUtils.findListWithPrefixes(
+            configFileText ?: "", CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
+        )
 
-        val libraryJar = KotlinCompilerStandalone(listOf(ktFile), options = extraOptions).compile()
+        val libraryJar = KotlinCompilerStandalone(listOf(ktFile), options = compilerArguments).compile()
         val jarUrl = "jar://" + FileUtilRt.toSystemIndependentName(libraryJar.absolutePath) + "!/"
         ModuleRootModificationUtil.addModuleLibrary(module, jarUrl)
 
