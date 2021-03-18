@@ -37,6 +37,7 @@ import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -1222,6 +1223,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public boolean hasVisibleAction(@NotNull AnAction action) {
     return myVisibleActions.contains(action);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable JComponent getTargetComponent() {
+    return myTargetComponent;
   }
 
   @Override
