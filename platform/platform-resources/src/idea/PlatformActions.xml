@@ -1409,6 +1409,7 @@
     </group>
 
     <action class="com.intellij.diagnostic.ResetWindowsDefenderNotification" id="ResetWindowsDefenderNotification"/>
+    <action class="com.intellij.diagnostic.FixWSLFirewallAction" id="FixWSLFirewall"/>
 
     <group id="SettingsEntryPointGroup">
       <reference id="RunAnything"/>
