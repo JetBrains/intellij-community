@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.BaseInclusionModel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.repo.GitRepository
@@ -55,7 +56,7 @@ class GitStageRootInclusionModel(private val project: Project,
   }
 
   override fun removeInclusion(items: Collection<Any>) {
-    includedRoots.removeAll(items.asRoots())
+    VcsUtil.removeAllFromSet(includedRoots, items.asRoots())
     fireInclusionChanged()
   }
 
