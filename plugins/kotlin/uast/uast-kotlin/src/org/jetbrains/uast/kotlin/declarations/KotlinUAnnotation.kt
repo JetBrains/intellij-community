@@ -11,12 +11,14 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -37,7 +39,14 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
 
     protected abstract fun annotationUseSiteTarget(): AnnotationUseSiteTarget?
 
-    private val resolvedCall: ResolvedCall<*>? get () = sourcePsi.getResolvedCall(sourcePsi.analyze())
+    private val resolvedCall: ResolvedCall<*>?
+        get() {
+            val annotationEntry = sourcePsi.getParentOfType<KtAnnotationEntry>(false) ?: return null
+            val bindingContext = sourcePsi.analyze()
+            val annotationDescriptor = bindingContext[BindingContext.ANNOTATION, annotationEntry] ?: return null
+            ForceResolveUtil.forceResolveAllContents(annotationDescriptor)
+            return sourcePsi.getResolvedCall(bindingContext)
+        }
 
     override val qualifiedName: String? by lz {
         computeClassDescriptor().takeUnless(ErrorUtils::isError)
