@@ -67,7 +67,7 @@
     </group>
     <group id="Git.Log.Branches.Grouping.Settings" icon="AllIcons.Actions.GroupBy"
            class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupingSettingsGroup">
-      <separator key="group.Git.Log.Branches.Grouping.Separator.text"/>
+      <separator key="group.Git.Log.Branches.Grouping.Settings.text"/>
       <action id="Git.Log.Branches.GroupBy.Directory"
               icon="AllIcons.Actions.GroupByPackage"
               class="git4idea.ui.branch.dashboard.BranchesDashboardActions$GroupBranchByDirectoryAction"/>

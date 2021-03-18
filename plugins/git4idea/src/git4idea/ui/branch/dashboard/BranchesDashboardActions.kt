@@ -465,7 +465,7 @@ internal object BranchesDashboardActions {
       super.update(e)
 
       val groupByDirectory: Supplier<String> = DvcsBundle.messagePointer("action.text.branch.group.by.directory")
-      val groupingSeparator: () -> String = messagePointer("group.Git.Log.Branches.Grouping.Separator.text")
+      val groupingSeparator: () -> String = messagePointer("group.Git.Log.Branches.Grouping.Settings.text")
 
       e.presentation.text =
         if (GroupBranchByRepositoryAction.isEnabledAndVisible(e)) groupByDirectory.get() //NON-NLS
