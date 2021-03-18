@@ -78,6 +78,7 @@ public class SimpleDuplicatesFinder {
     for (final PsiElement patternComponent : myPattern) {
       patternComponent.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override public void visitElement(@NotNull PsiElement element) {
+          super.visitElement(element);
           if (element.getUserData(PARAMETER) != null) {
             element.putUserData(PARAMETER, null);
           }
