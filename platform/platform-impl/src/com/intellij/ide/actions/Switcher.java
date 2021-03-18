@@ -17,8 +17,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.*;
@@ -28,31 +26,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
 
@@ -272,42 +262,6 @@ public final class Switcher extends BaseSwitcherAction {
                                                         toolWindows.getModel().getSize(), recent);
       CollectionListModel<SwitcherVirtualFile> filesModel = new CollectionListModel<>(wrap(filesToShow));
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
-
-        {
-          myPanel.setBackground(UIUtil.getListBackground());
-        }
-
-        @NotNull
-        @Override
-        public Component getListCellRendererComponent(@NotNull JList<? extends FileInfo> list,
-                                                      FileInfo value, int index, boolean selected, boolean hasFocus) {
-          Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
-          myPanel.removeAll();
-          myPanel.add(c, BorderLayout.CENTER);
-
-          // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
-          myPanel.getAccessibleContext().setAccessibleName(c.getAccessibleContext().getAccessibleName());
-          VirtualFile file = value.first;
-          String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
-          String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
-          myPanel.getAccessibleContext().setAccessibleDescription(location);
-          // update background of hovered list item
-          if (!selected && index == ListHoverListener.getHoveredIndex(list)) {
-            setBackground(JBUI.CurrentTheme.List.Hover.background(true));
-          }
-          return myPanel;
-        }
-
-        @Override
-        protected void customizeCellRenderer(@NotNull JList<? extends FileInfo> list,
-                                             FileInfo value, int index, boolean selected, boolean hasFocus) {
-          setPaintFocusBorder(false);
-          super.customizeCellRenderer(list, value, index, selected, hasFocus);
-        }
-      };
-
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private @NlsSafe String getTitle2Text(@Nullable String fullText) {
           int labelWidth = pathLabel.getWidth();
@@ -334,9 +288,7 @@ public final class Switcher extends BaseSwitcherAction {
         private void updatePathLabel() {
           List<SwitcherVirtualFile> values = files.getSelectedValuesList();
           if (values != null && values.size() == 1) {
-            VirtualFile file = values.get(0).getFile();
-            String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
-            pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(presentableUrl)));
+            pathLabel.setText(getTitle2Text(values.get(0).getStatusText()));
           }
           else {
             pathLabel.setText(" ");
@@ -996,44 +948,6 @@ public final class Switcher extends BaseSwitcherAction {
     }
   }
 
-  private static class VirtualFilesRenderer extends ColoredListCellRenderer<FileInfo> {
-    private final SwitcherPanel mySwitcherPanel;
-    boolean open;
-
-    VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
-      mySwitcherPanel = switcherPanel;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends FileInfo> list,
-                                         FileInfo value, int index, boolean selected, boolean hasFocus) {
-      Project project = mySwitcherPanel.project;
-      VirtualFile virtualFile = value.getFirst();
-      String renderedName = value.getNameForRendering();
-      setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, project));
-
-      FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-      open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
-
-      boolean hasProblem = value.isProblemFile();
-      TextAttributes attributes =
-        new TextAttributes(fileStatus.getColor(), null, hasProblem ? JBColor.red : null, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
-      append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
-
-      // calc color the same way editor tabs do this, i.e. including EPs
-      Color color = EditorTabPresentationUtil.getFileBackgroundColor(project, virtualFile);
-
-      if (!selected && color != null) {
-        setBackground(color);
-      }
-      SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
-
-      if (Registry.is("show.last.visited.timestamps")) {
-        IdeDocumentHistoryImpl.appendTimestamp(project, this, virtualFile);
-      }
-    }
-  }
-
   static class FileInfo extends Pair<VirtualFile, EditorWindow> {
     final Project myProject;
     private String myNameForRendering;
@@ -1041,11 +955,6 @@ public final class Switcher extends BaseSwitcherAction {
     FileInfo(VirtualFile first, EditorWindow second, Project project) {
       super(first, second);
       myProject = project;
-    }
-
-    boolean isProblemFile() {
-      WolfTheProblemSolver solver = WolfTheProblemSolver.getInstance(myProject);
-      return solver != null && solver.isProblemFile(first);
     }
 
     @NlsSafe String getNameForRendering() {

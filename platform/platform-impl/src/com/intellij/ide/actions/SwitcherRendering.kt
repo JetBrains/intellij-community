@@ -11,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,6 +44,7 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 internal interface SwitcherListItem {
   val mainText: String
+  val statusText: String? get() = null
   val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
 
@@ -128,6 +130,9 @@ internal class SwitcherVirtualFile(
 
   override var mainText: String = ""
 
+  override val statusText: String?
+    get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
+
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
   }
 
@@ -159,13 +164,13 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     add(BorderLayout.EAST, extra)
   }
 
-  override fun getListCellRendererComponent(list: JList<out SwitcherListItem>, value: SwitcherListItem?, index: Int,
+  override fun getListCellRendererComponent(list: JList<out SwitcherListItem>, value: SwitcherListItem, index: Int,
                                             selected: Boolean, focused: Boolean): Component {
     main.clear()
     extra.clear()
 
     val border = JBUI.Borders.empty(0, 10)
-    panel.border = when (!selected && value?.separatorAbove == true) {
+    panel.border = when (!selected && value.separatorAbove) {
       true -> JBUI.Borders.compound(border, JBUI.Borders.customLine(SEPARATOR, 1, 0, 0, 0))
       else -> border
     }
@@ -173,11 +178,11 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
       main.foreground = it
       extra.foreground = it
     }
-    value?.let {
-      it.prepareMainRenderer(main, selected)
-      it.prepareExtraRenderer(extra, selected)
-      applySpeedSearchHighlighting(switcher, main, false, selected)
-    }
+    value.prepareMainRenderer(main, selected)
+    value.prepareExtraRenderer(extra, selected)
+    applySpeedSearchHighlighting(switcher, main, false, selected)
+    panel.accessibleContext.accessibleName = value.mainText
+    panel.accessibleContext.accessibleDescription = value.statusText
     return panel
   }
 
