@@ -67,7 +67,7 @@ public class ExceptionInfoCache {
 
   @NotNull ClassResolveInfo resolveClass(String className) {
     ClassResolveInfo cached = myCache.get(className);
-    if (cached != null) {
+    if (cached != null && cached.isValid()) {
       return cached;
     }
 
@@ -113,6 +113,11 @@ public class ExceptionInfoCache {
         myExceptionClasses = exceptionClasses;
       }
       return myExceptionClasses;
+    }
+    
+    boolean isValid() {
+      return ContainerUtil.and(myClasses.values(), PsiElement::isValid) && 
+             (myExceptionClasses == null || ContainerUtil.and(myExceptionClasses, PsiElement::isValid));
     }
 
     @NotNull
