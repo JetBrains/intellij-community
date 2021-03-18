@@ -30,7 +30,8 @@ public final class RunConfigurationUsageTriggerCollector {
   public static final String GROUP = "run.configuration.exec";
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
-  private static final StringEventField TARGET = EventFields.StringValidatedByCustomRule("target", "run_target");
+  private static final StringEventField TARGET =
+    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
 
   @NotNull
   public static IdeActivity trigger(@NotNull Project project,
@@ -81,10 +82,11 @@ public final class RunConfigurationUsageTriggerCollector {
   }
 
   public static class RunTargetValidator extends CustomValidationRule {
+    public static final String RULE_ID = "run_target";
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
-      return "run_target".equals(ruleId);
+      return RULE_ID.equals(ruleId);
     }
 
     @NotNull

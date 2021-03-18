@@ -42,7 +42,8 @@ public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesColl
   private static final BooleanEventField ACTIVATE_BEFORE_RUN_FIELD = EventFields.Boolean("activate_before_run");
   private static final BooleanEventField TEMPORARY_FIELD = EventFields.Boolean("temporary");
   private static final BooleanEventField PARALLEL_FIELD = EventFields.Boolean("parallel");
-  private static final StringEventField TARGET_FIELD = EventFields.StringValidatedByCustomRule("target", "run_target");
+  private static final StringEventField TARGET_FIELD =
+    EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP.getId(), CONFIGURED_IN_PROJECT);
   private static final VarargEventId CONFIGURED_IN_PROJECT_EVENT =
     GROUP.registerVarargEvent(CONFIGURED_IN_PROJECT, COUNT_FIELD, ID_FIELD, FACTORY_FIELD, SHARED_FIELD, EDIT_BEFORE_RUN_FIELD,
