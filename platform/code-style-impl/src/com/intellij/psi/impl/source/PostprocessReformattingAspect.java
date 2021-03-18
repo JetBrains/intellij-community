@@ -3,6 +3,9 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
+import com.intellij.formatting.service.ExternalFormatProcessorAdapter;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -32,13 +35,11 @@ import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.ExternalFormatProcessor;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
@@ -786,8 +787,9 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
       final FormatTextRanges textRanges = myRanges.ensureNonEmpty();
       textRanges.setExtendToContext(true);
-      if (ExternalFormatProcessor.useExternalFormatter(file)) {
-        CodeStyleManagerImpl.formatRanges(file, myRanges);
+      FormattingService formattingService = FormattingServiceUtil.findService(file);
+      if (formattingService instanceof ExternalFormatProcessorAdapter) {
+        ((ExternalFormatProcessorAdapter)formattingService).formatCollectedRanges(file, myRanges);
       }
       else {
         final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
