@@ -16,7 +16,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenImportingTestCase
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -29,13 +28,13 @@ import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
-import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
-import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
+import org.jetbrains.kotlin.idea.formatter.*
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.test.resetCodeStyle
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -59,6 +58,11 @@ class KotlinMavenImporterTest : KotlinMavenImportingTestCase() {
         repositoryPath = File(myDir, "repo").path
         createStdProjectFolders()
     }
+
+    override fun tearDown() = runAll(
+        ThrowableRunnable { resetCodeStyle(myProject) },
+        ThrowableRunnable { super.tearDown() },
+    )
 
     fun testSimpleKotlinProject() {
         importProject(

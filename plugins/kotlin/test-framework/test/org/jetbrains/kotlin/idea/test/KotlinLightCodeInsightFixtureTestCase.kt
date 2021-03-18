@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
@@ -384,6 +385,15 @@ fun enableKotlinOfficialCodeStyle(project: Project) {
 
 fun disableKotlinOfficialCodeStyle(project: Project) {
     CodeStyle.dropTemporarySettings(project)
+}
+
+fun resetCodeStyle(project: Project) {
+    val provider = KotlinLanguageCodeStyleSettingsProvider()
+    CodeStyle.getSettings(project).apply {
+        removeCommonSettings(provider)
+        removeCustomSettings(provider)
+        clearCodeStyleSettings()
+    }
 }
 
 fun runAll(
