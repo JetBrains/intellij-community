@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
@@ -188,6 +189,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   protected void doOKAction() {
     FUCounterUsageLogger.getInstance().logEvent(myProject, "debugger.evaluate.usage", "evaluate",
                                                 new FeatureUsageData().addData("mode", myMode.name()));
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("debugger.evaluate.expression");
     evaluate();
   }
 
