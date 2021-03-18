@@ -53,14 +53,15 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
       linkProjects(basePath, project)
     }
-
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     val notificationListener = StateNotificationListener()
-    progressManager.addNotificationListener(notificationListener)
-
-    importProjects(project)
-
-    notificationListener.waitForImportEnd()
+    try {
+      progressManager.addNotificationListener(notificationListener)
+      importProjects(project)
+      notificationListener.waitForImportEnd()
+    } finally {
+      progressManager.removeNotificationListener(notificationListener)
+    }
   }
 
   private fun linkProjects(basePath: String, project: Project) {
