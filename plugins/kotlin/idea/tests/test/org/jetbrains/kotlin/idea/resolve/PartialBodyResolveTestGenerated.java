@@ -356,11 +356,6 @@ public class PartialBodyResolveTestGenerated extends AbstractPartialBodyResolveT
         runTest("testData/resolve/partialBodyResolve/Simple.kt");
     }
 
-    @TestMetadata("SmartCastInTheSameStatement.kt")
-    public void testSmartCastInTheSameStatement() throws Exception {
-        runTest("testData/resolve/partialBodyResolve/SmartCastInTheSameStatement.kt");
-    }
-
     @TestMetadata("SmartCastOfThis1.kt")
     public void testSmartCastOfThis1() throws Exception {
         runTest("testData/resolve/partialBodyResolve/SmartCastOfThis1.kt");
