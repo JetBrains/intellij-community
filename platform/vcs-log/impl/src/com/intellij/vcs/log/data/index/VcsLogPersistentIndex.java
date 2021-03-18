@@ -327,10 +327,9 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        Path messagesStorage = new StorageId(projectName, INDEX, logId,
-                                             VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
-        messages = new PersistentHashMap<>(messagesStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE,
-                                           Page.PAGE_SIZE);
+        StorageId messagesStorageId = new StorageId(projectName, INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
+        messages = new PersistentHashMap<>(messagesStorageId.getStorageFile(MESSAGES), EnumeratorIntegerDescriptor.INSTANCE,
+                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, messagesStorageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
