@@ -163,10 +163,9 @@ class FindInFilesLesson(override val existedFile: String)
       val replaceButtonText = FindBundle.message("find.replace.command")
       text(LessonsBundle.message("find.in.files.confirm.replace", strong(replaceButtonText)))
       stateCheck { editor.document.charsSequence.contains("orange") }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !insideConfirmation()
       }
-      restoreByUi(delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         dialog(title = "Replace All") {
           button(replaceButtonText).click()
