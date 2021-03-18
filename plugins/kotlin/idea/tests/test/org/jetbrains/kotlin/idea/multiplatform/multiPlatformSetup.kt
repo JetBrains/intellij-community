@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -198,22 +198,9 @@ private fun AbstractMultiModuleTest.createModuleWithRoots(
     val module = createModule(moduleId.ideaModuleName())
     for ((_, isTestRoot, moduleRoot) in infos) {
         addRoot(module, moduleRoot, isTestRoot)
-
-        if (moduleId.platform.isJs() && isTestRoot) {
-            setupJsTestOutput(module)
-        }
     }
+
     return module
-}
-
-// test line markers for JS do not work without additional setup
-private fun setupJsTestOutput(module: Module) {
-    ModuleRootModificationUtil.updateModel(module) {
-        with(it.getModuleExtension(CompilerModuleExtension::class.java)!!) {
-            inheritCompilerOutputPath(false)
-            setCompilerOutputPathForTests("js_out")
-        }
-    }
 }
 
 private fun AbstractMultiModuleTest.createModule(name: String): Module {
