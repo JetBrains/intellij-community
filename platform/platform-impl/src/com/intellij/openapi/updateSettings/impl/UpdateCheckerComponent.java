@@ -3,7 +3,6 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -13,8 +12,6 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,19 +25,15 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -237,17 +230,14 @@ final class UpdateCheckerComponent {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         Collection<PluginId> plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
-        if (plugins.isEmpty()) {
-          return;
-        }
+        if (plugins.isEmpty()) return;
 
-        Set<String> list = getUpdatedPlugins();
+        Set<String> idStrings = getUpdatedPlugins();
         for (PluginId plugin : plugins) {
-          list.add(plugin.getIdString());
+          idStrings.add(plugin.getIdString());
         }
-
         try {
-          Files.write(getUpdatedPluginsFile(), list);
+          Files.write(getUpdatedPluginsFile(), idStrings);
         }
         catch (IOException e) {
           LOG.warn(e);
@@ -255,50 +245,34 @@ final class UpdateCheckerComponent {
       }
     });
 
-    Set<String> list = getUpdatedPlugins();
-    if (list.isEmpty()) {
-      return;
-    }
-
-    List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
-    for (String id : list) {
+    List<HtmlChunk.Element> links = new ArrayList<>();
+    for (String id : getUpdatedPlugins()) {
       PluginId pluginId = PluginId.findId(id);
       if (pluginId != null) {
         IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
         if (descriptor != null) {
-          descriptors.add(descriptor);
+          links.add(HtmlChunk.link(id, descriptor.getName()));
         }
       }
     }
-    if (descriptors.isEmpty()) {
-      return;
-    }
+    if (links.isEmpty()) return;
 
     String title = IdeBundle.message("update.installed.notification.title");
-    String message = new HtmlBuilder()
-      .appendWithSeparators(HtmlChunk.text(", "),
-                            ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
-      .wrapWith("html").toString();
-
+    String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
+    NotificationListener listener = (__, e) -> showPluginConfigurable(e, project);  // benign leak - notifications are disposed on close
     UpdateChecker.getNotificationGroupForUpdateResults()
-      .createNotification(title,
-                          message,
-                          NotificationType.INFORMATION,
-                          (__, event) -> {
-                            String id = event.getDescription();
-                            PluginId pluginId = id != null ? PluginId.findId(id) : null;
-
-                            if (pluginId != null) {
-                              PluginManagerConfigurable.showPluginConfigurable(findProject(event), List.of(pluginId));
-                            }
-                          }, "plugins.updated.after.restart").notify(project);
+      .createNotification(title, text, NotificationType.INFORMATION, listener, "plugins.updated.after.restart")
+      .notify(project);
   }
 
-  private static @Nullable Project findProject(@NotNull HyperlinkEvent event) {
-    InputEvent inputEvent = event.getInputEvent();
-    JComponent component = inputEvent != null ? (JComponent)inputEvent.getComponent() : null;
-    DataProvider provider = component != null ? DataManager.getDataProvider(component) : null;
-    return provider != null ? CommonDataKeys.PROJECT.getData(provider) : null;
+  private static void showPluginConfigurable(HyperlinkEvent event, Project project) {
+    String id = event.getDescription();
+    if (id != null) {
+      PluginId pluginId = PluginId.findId(id);
+      if (pluginId != null) {
+        PluginManagerConfigurable.showPluginConfigurable(project, List.of(pluginId));
+      }
+    }
   }
 
   private static Set<String> getUpdatedPlugins() {
@@ -317,6 +291,6 @@ final class UpdateCheckerComponent {
   }
 
   private static Path getUpdatedPluginsFile() {
-    return Paths.get(PathManager.getConfigPath(), ".updated_plugins_list");
+    return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 }
