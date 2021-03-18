@@ -397,6 +397,7 @@ public final class HighlightManagerImpl extends HighlightManager {
 
 
   private final Key<Map<RangeHighlighter, HighlightFlags>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
+  public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
 
   private static class HighlightFlags {
     @NotNull
