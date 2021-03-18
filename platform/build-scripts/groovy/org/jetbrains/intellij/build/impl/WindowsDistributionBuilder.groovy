@@ -104,10 +104,12 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
       }
       catch (NoSuchFileException ignore) {
+/* Android Studio: suppress error in code added by commit 8272ffe8
         buildContext.messages.error(
           "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
           "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
           "If DLL was relocated to another place, please correct the path in this code.")
+Android Studio: suppress error in code added by commit 8272ffe8 */
       }
     }
 
