@@ -2151,13 +2151,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         else {
           ActionGroup actionGroup = info.renderer.getPopupMenuActions();
           if (actionGroup != null) {
+            e.consume();
             if (checkDumbAware(actionGroup)) {
               actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent().show(this, e.getX(), e.getY());
             }
             else {
               notifyNotDumbAware();
             }
-            e.consume();
           }
         }
       }
