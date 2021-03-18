@@ -87,7 +87,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     show(true)
   }
 
-  fun show(restoreBounds: Boolean) {
+  fun createContents() {
     val frame = getFrame()
     if (frame is JFrame) {
       frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
@@ -162,11 +162,6 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
     }
 
-    val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
-    if (restoreBounds) {
-      loadFrameState(state)
-    }
-
     if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
       val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
@@ -175,6 +170,18 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
     focusWatcher = FocusWatcher()
     focusWatcher!!.install(component!!)
+  }
+
+  fun show(restoreBounds: Boolean) {
+    createContents()
+
+    val frame = getFrame()
+
+    val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
+    if (restoreBounds) {
+      loadFrameState(state)
+    }
+
     frame.isVisible = true
   }
 
