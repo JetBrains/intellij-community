@@ -579,6 +579,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return null;
     }
 
+    private void fitToScreen(Rectangle rect) {
+      if (myDialogWrapper == null) return; // this can be invoked from super constructor before this field is assigned
+      final DialogWrapper wrapper = myDialogWrapper.get();
+      if (wrapper != null) wrapper.fitToScreen(rect);
+    }
+
     @Override
     public void setSize(int width, int height) {
       _setSizeForLocation(width, height, null);
@@ -587,7 +593,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private void _setSizeForLocation(int width, int height, @Nullable Point initial) {
       Point location = initial != null ? initial : getLocation();
       Rectangle rect = new Rectangle(location.x, location.y, width, height);
-      ScreenUtil.fitToScreen(rect);
+      fitToScreen(rect);
       if (initial != null || location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y);
       }
@@ -598,13 +604,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void setBounds(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
-      ScreenUtil.fitToScreen(rect);
+      fitToScreen(rect);
       super.setBounds(rect.x, rect.y, rect.width, rect.height);
     }
 
     @Override
     public void setBounds(Rectangle r) {
-      ScreenUtil.fitToScreen(r);
+      fitToScreen(r);
       super.setBounds(r);
     }
 
@@ -679,7 +685,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       if (isAutoAdjustable) {
         final Rectangle bounds = getBounds();
-        ScreenUtil.fitToScreen(bounds);
+        fitToScreen(bounds);
         setBounds(bounds);
       }
 
