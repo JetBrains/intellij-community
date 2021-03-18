@@ -89,6 +89,10 @@ public abstract class Logger {
     return ourFactory.getLoggerInstance("#" + cl.getName());
   }
 
+  public static @NotNull String typeAndMessage(@NotNull Throwable t) {
+    return t.getClass().getName() + ": " + t.getMessage();
+  }
+
   public abstract boolean isDebugEnabled();
 
   public abstract void debug(String message);
@@ -121,6 +125,24 @@ public abstract class Logger {
       }
       debug(text.toString());
     }
+  }
+
+  public final void infoWithDebug(@NotNull Throwable t) {
+    infoWithDebug(typeAndMessage(t), t);
+  }
+
+  public final void infoWithDebug(@NotNull String message, @NotNull Throwable t) {
+    info(message);
+    debug(t);
+  }
+
+  public final void warnWithDebug(@NotNull Throwable t) {
+    warnWithDebug(typeAndMessage(t), t);
+  }
+
+  public final void warnWithDebug(@NotNull String message, @NotNull Throwable t) {
+    warn(message);
+    debug(t);
   }
 
   public boolean isTraceEnabled() {
