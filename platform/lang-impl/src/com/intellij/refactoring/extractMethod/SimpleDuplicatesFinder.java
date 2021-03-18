@@ -22,14 +22,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.AbstractVariableData;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User : ktisha
@@ -150,8 +146,7 @@ public class SimpleDuplicatesFinder {
     final PsiElement candidateParent = candidate.getParent();
     if (patternParent == null || candidateParent == null) return false;
     if (pattern.getUserData(PARAMETER) != null && patternParent.getClass() == candidateParent.getClass()) {
-      match.changeParameter(pattern.getText(), candidate.getText());
-      return true;
+      return changeParameter(pattern.getText(), candidate.getText(), match);
     }
     if (children1.length != children2.length) return false;
 
@@ -163,8 +158,7 @@ public class SimpleDuplicatesFinder {
 
     if (children1.length == 0) {
       if (pattern.getUserData(PARAMETER) != null && patternParent.getClass() == candidateParent.getClass()) {
-        match.changeParameter(pattern.getText(), candidate.getText());
-        return true;
+        return changeParameter(pattern.getText(), candidate.getText(), match);
       }
       if (myOutputVariables.contains(pattern.getText())) {
         match.changeOutput(candidate.getText());
@@ -175,6 +169,14 @@ public class SimpleDuplicatesFinder {
       }
     }
 
+    return true;
+  }
+
+  private static boolean changeParameter(@NotNull String from, @NotNull String to, @NotNull SimpleMatch match) {
+    if (match.getChangedParameters().containsKey(from) && !match.getChangedParameters().get(from).equals(to)) {
+      return false;
+    }
+    match.changeParameter(from, to);
     return true;
   }
 
