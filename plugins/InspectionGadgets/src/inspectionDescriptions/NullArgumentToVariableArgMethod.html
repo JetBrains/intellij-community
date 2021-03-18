@@ -1,9 +1,15 @@
 <html>
 <body>
-Reports any calls to a variable arity method where the call has a single argument
-in the variable arity parameter position, which is either a <b>null</b> or an array of a subtype of the variable arity parameter.
+Reports any calls to a method with varargs where the call has a single argument
+in the vararg parameter position, which is either a <code>null</code> or an array of a subtype of the vararg parameter.
 Such an argument may be confusing as it is unclear if a varargs or non-varargs call is desired.
-For example <code>System.out.printf("%s", null)</code>.
+For example:
+<p>Example:</p>
+<pre>
+  String[] ss = new String[]{"foo", "bar"};
+  System.out.printf("%s", ss);
+</pre>
+<p>In this example only first element from array will be printed.</p>
 <!-- tooltip end -->
 <p>
 
