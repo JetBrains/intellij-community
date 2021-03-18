@@ -177,7 +177,7 @@ final class UpdateCheckerComponent {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (url == null) return;
 
-    Product product = UpdateChecker.getProductData().first;
+    Product product = loadProductData();
     if (product == null) return;
 
     int lastRelease = 0;
@@ -209,7 +209,7 @@ final class UpdateCheckerComponent {
     if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP || previous == null || current.equals(previous)) return;
 
     String blogPost = null;
-    Product product = UpdateChecker.getProductData().first;
+    Product product = loadProductData();
     if (product != null) {
       blogPost = product.getChannels().stream()
         .flatMap(channel -> channel.getBuilds().stream())
@@ -223,6 +223,15 @@ final class UpdateCheckerComponent {
     UpdateChecker.getNotificationGroup()
       .createNotification(title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap")
       .notify(project);
+  }
+
+  private static @Nullable Product loadProductData() {
+    try {
+      return UpdateChecker.loadProductData();
+    }
+    catch (Exception ignored) {
+      return null;
+    }
   }
 
   private static void showUpdatedPluginsNotification(Project project) {

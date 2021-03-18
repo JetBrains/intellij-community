@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.Pair.pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.reference.SoftReference
@@ -45,6 +44,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
+import kotlin.Result
 import kotlin.concurrent.withLock
 
 /**
@@ -63,7 +63,7 @@ object UpdateChecker {
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
 
   private val productDataLock = ReentrantLock()
-  private var productDataCache: SoftReference<Product>? = null
+  private var productDataCache: SoftReference<Result<Product?>>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
@@ -132,33 +132,24 @@ object UpdateChecker {
   private fun doUpdateAndShowResult(project: Project?,
                                     showSettingsLink: Boolean,
                                     showDialog: Boolean,
-                                    showNotification: Boolean,
+                                    reportNoUpdates: Boolean,
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
-    // check platform update
-
     indicator?.text = IdeBundle.message("updates.checking.platform")
-
-    val result = checkPlatformUpdate(updateSettings)
-    if (result.state == UpdateStrategy.State.CONNECTION_ERROR) {
-      val e = result.error
-      if (e != null) LOG.debug(e)
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e?.message ?: "internal error"))
+    val platformUpdates = checkForPlatformUpdates(updateSettings)
+    if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR) {
+      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message ?: "internal error"))
       callback?.setRejected()
       return
     }
 
-    // check plugins update (with regard to potential platform update)
-
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-
-    val buildNumber: BuildNumber? = result.newBuild?.apiVersion
-
-    val checkPluginsUpdateResult: CheckPluginsUpdateResult
+    val buildNumber: BuildNumber? = platformUpdates.newBuild?.apiVersion
+    val pluginUpdates: CheckPluginsUpdateResult
     val externalUpdates: Collection<ExternalUpdate>?
     try {
-      checkPluginsUpdateResult = checkPluginsUpdate(indicator, buildNumber)
+      pluginUpdates = checkPluginsUpdate(indicator, buildNumber)
       externalUpdates = checkExternalUpdates(showDialog, updateSettings, indicator)
     }
     catch (e: IOException) {
@@ -167,55 +158,29 @@ object UpdateChecker {
       return
     }
 
-    // show result
-
     UpdateSettings.getInstance().saveLastCheckedInfo()
-
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, checkPluginsUpdateResult, externalUpdates, showSettingsLink, showDialog, showNotification)
+      showUpdateResult(project, platformUpdates, pluginUpdates, externalUpdates, showSettingsLink, showDialog, reportNoUpdates)
       callback?.setDone()
     }
   }
 
-  private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    val (product, error) = getProductData()
-    return when {
-      product != null && settings.isPlatformUpdateEnabled -> {
-        UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
-      }
-      error is JDOMException -> {
-        // corrupted content, don't bother telling user
-        LOG.info(error)
-        CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-      }
-      error != null -> {
-        LOG.info(error)
-        CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, error)
-      }
-      else -> CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
+  private fun checkForPlatformUpdates(settings: UpdateSettings): CheckForUpdateResult =
+    try {
+      val product = loadProductData()
+      if (product != null) UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
+      else CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
-  }
+    catch (e: JDOMException) {
+      LOG.infoWithDebug(e)
+      CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)  // corrupted content, don't bother telling user
+    }
+    catch (e: Exception) {
+      LOG.infoWithDebug(e)
+      CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
+    }
 
   @JvmStatic
-  fun getProductData(): Pair<Product?, Exception?> {
-    productDataLock.withLock {
-      val cached = SoftReference.dereference(productDataCache)
-      if (cached != null) return pair(cached, null)
-
-      try {
-        val product = loadUpdatesData()?.get(ApplicationInfo.getInstance().build.productCode)
-        if (product != null) {
-          productDataCache = SoftReference(product)
-          AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
-        }
-        return pair(product, null)
-      }
-      catch (e: Exception) {
-        return pair(null, e)
-      }
-    }
-  }
-
   @Throws(IOException::class, JDOMException::class)
   private fun loadUpdatesData(): UpdatesInfo? {
     var url = Urls.newFromEncoded(updateUrl)
