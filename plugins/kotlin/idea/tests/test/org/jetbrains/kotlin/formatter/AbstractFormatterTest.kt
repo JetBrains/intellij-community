@@ -102,9 +102,12 @@ abstract class AbstractFormatterTest : LightIdeaTestCase() {
 
     @JvmOverloads
     fun doTest(expectedFileNameWithExtension: String, inverted: Boolean = false, callSite: Boolean = false) {
-        val testFileName = expectedFileNameWithExtension.substring(0, expectedFileNameWithExtension.indexOf("."))
-        val testFileExtension = expectedFileNameWithExtension.substring(expectedFileNameWithExtension.lastIndexOf("."))
-        val originalFileText = FileUtil.loadFile(File(testFileName + testFileExtension), true)
+        val file = File(expectedFileNameWithExtension)
+        val fileName = file.name
+        val testFileName = fileName.substring(0, fileName.indexOf("."))
+        val testFileExtension = ".${file.extension}"
+        val originalFile = File(file.parent, testFileName + testFileExtension)
+        val originalFileText = FileUtil.loadFile(originalFile, true)
 
         configureCodeStyleAndRun(project) {
             val codeStyleSettings = CodeStyle.getSettings(project)
@@ -127,7 +130,7 @@ abstract class AbstractFormatterTest : LightIdeaTestCase() {
             }
 
             customSettings.ALLOW_TRAILING_COMMA_ON_CALL_SITE = callSite
-            doTextTest(originalFileText, File(expectedFileNameWithExtension), testFileExtension)
+            doTextTest(originalFileText, file, testFileExtension)
         }
     }
 }

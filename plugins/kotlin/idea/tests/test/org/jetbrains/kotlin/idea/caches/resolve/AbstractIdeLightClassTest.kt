@@ -49,11 +49,11 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
         forceUsingOldLightClassesForTest()
         val fileName = fileName()
         val extraFilePath = when {
-            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra" + fileExtension)
+            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra$fileExtension")
             else -> error("Invalid test data extension")
         }
 
-        val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
+        val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
 
         val lazinessMode = lazinessModeByFileText()
         myFixture.configureByFiles(*testFiles.toTypedArray())
