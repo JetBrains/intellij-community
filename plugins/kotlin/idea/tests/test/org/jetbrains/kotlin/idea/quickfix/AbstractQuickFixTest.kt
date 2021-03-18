@@ -218,12 +218,16 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 stubComparisonFailure = null
             }
 
-            myFixture.checkResultByFile(File(fileName).name + ".after")
+            myFixture.checkResultByFile(getAfterFileName(fileName))
 
             stubComparisonFailure?.let { throw it }
         } else {
             assertNull("Action with text ${actionHint.expectedText} is present, but should not", intention)
         }
+    }
+
+    protected open fun getAfterFileName(beforeFileName: String): String {
+        return File(beforeFileName).name + ".after"
     }
 
     @Throws(ClassNotFoundException::class)
