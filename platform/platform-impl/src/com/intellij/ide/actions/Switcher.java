@@ -248,7 +248,7 @@ public final class Switcher extends BaseSwitcherAction {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
-      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getTextAtLeft, mySpeedSearch));
+      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getMainText, mySpeedSearch));
       toolWindows.setVisibleRowCount(toolWindows.getModel().getSize());
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
@@ -623,7 +623,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private static boolean addSmartShortcut(SwitcherToolWindow window, Map<String, SwitcherToolWindow> keymap) {
-      String title = window.getTextAtLeft();
+      String title = window.getMainText();
       if (StringUtil.isEmpty(title))
         return false;
       for (int i = 0; i < title.length(); i++) {
@@ -916,7 +916,7 @@ public final class Switcher extends BaseSwitcherAction {
       @Override
       protected String getElementText(Object element) {
         if (element instanceof SwitcherListItem) {
-          return ((SwitcherListItem)element).getTextAtLeft();
+          return ((SwitcherListItem)element).getMainText();
         }
         else if (element instanceof FileInfo) {
           return ((FileInfo)element).getNameForRendering();

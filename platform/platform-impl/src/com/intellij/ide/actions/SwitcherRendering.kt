@@ -32,27 +32,33 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 
 internal interface SwitcherListItem {
+  val mainText: String
+  val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
 
-  val textAtLeft: String
-  val textAtRight: String? get() = null
-
-  fun getIconAtLeft(selected: Boolean): Icon? = null
-  fun getIconAtRight(selected: Boolean): Icon? = null
-
-  fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) = Unit
+  fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode)
   fun close(switcher: Switcher.SwitcherPanel) = Unit
+
+  fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean)
+  fun prepareExtraRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    shortcutText?.let {
+      component.append(it, when (selected) {
+        true -> SimpleTextAttributes.REGULAR_ATTRIBUTES
+        else -> SimpleTextAttributes.SHORTCUT_ATTRIBUTES
+      })
+    }
+  }
 }
 
 
 internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : SwitcherListItem {
   override val separatorAbove = true
-  override val textAtLeft: String
+  override val mainText: String
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.locations.changed.locations")
       else -> message("recent.locations.popup.title")
     }!!
-  override val textAtRight: String?
+  override val shortcutText: String?
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> null
       else -> shortcutText(RecentLocationsAction.RECENT_LOCATIONS_ACTION_ID)
@@ -61,6 +67,10 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
     RecentLocationsAction.showPopup(switcher.project, switcher.isOnlyEditedFilesShown)
   }
+
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.append(mainText)
+  }
 }
 
 
@@ -68,9 +78,8 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   private val actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.id)
   var mnemonic: String? = null
 
-  override val textAtLeft = window.stripeTitle
-  override val textAtRight = if (shortcut) shortcutText(actionId) else null
-  override fun getIconAtLeft(selected: Boolean): Icon = MnemonicIcon(window.icon, mnemonic, selected)
+  override val mainText = window.stripeTitle
+  override val shortcutText = if (shortcut) shortcutText(actionId) else null
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
     val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
@@ -84,43 +93,43 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
     val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
     manager?.hideToolWindow(window.id, false, false, ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
   }
+
+  override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
+    component.icon = MnemonicIcon(window.icon, mnemonic, selected)
+    component.append(mainText)
+  }
 }
 
 
 internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : ListCellRenderer<SwitcherListItem> {
   private val SEPARATOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
-  private val SHORTCUT = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Tooltip.shortcutForeground())
-  private val left = SimpleColoredComponent().apply { isOpaque = false }
-  private val right = SimpleColoredComponent().apply { isOpaque = false }
+  private val main = SimpleColoredComponent().apply { isOpaque = false }
+  private val extra = SimpleColoredComponent().apply { isOpaque = false }
   private val panel = CellRendererPanel().apply {
     layout = BorderLayout()
-    add(BorderLayout.WEST, left)
-    add(BorderLayout.EAST, right)
+    add(BorderLayout.WEST, main)
+    add(BorderLayout.EAST, extra)
   }
 
   override fun getListCellRendererComponent(list: JList<out SwitcherListItem>, value: SwitcherListItem?, index: Int,
                                             selected: Boolean, focused: Boolean): Component {
-    left.clear()
-    right.clear()
+    main.clear()
+    extra.clear()
 
     val border = JBUI.Borders.empty(0, 10)
     panel.border = when (!selected && value?.separatorAbove == true) {
       true -> JBUI.Borders.compound(border, JBUI.Borders.customLine(SEPARATOR, 1, 0, 0, 0))
       else -> border
     }
-    val item = value ?: return panel
     RenderingUtil.getForeground(list, selected).let {
-      left.foreground = it
-      right.foreground = it
+      main.foreground = it
+      extra.foreground = it
     }
-
-    left.icon = item.getIconAtLeft(selected)
-    right.icon = item.getIconAtRight(selected)
-
-    left.append(item.textAtLeft)
-    applySpeedSearchHighlighting(switcher, left, false, selected)
-    item.textAtRight?.let { right.append(it, SHORTCUT) }
-
+    value?.let {
+      it.prepareMainRenderer(main, selected)
+      it.prepareExtraRenderer(extra, selected)
+      applySpeedSearchHighlighting(switcher, main, false, selected)
+    }
     return panel
   }
 
@@ -131,7 +140,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
       .mapNotNull { manager.getToolWindow(it) }
       .filter { it.isAvailable && it.isShowStripeButton }
       .map { SwitcherToolWindow(it, switcher.pinned) }
-      .sortedWith(Comparator { window1, window2 -> naturalCompare(window1.textAtLeft, window2.textAtLeft) })
+      .sortedWith(Comparator { window1, window2 -> naturalCompare(window1.mainText, window2.mainText) })
 
     // TODO: assign mnemonics
 
