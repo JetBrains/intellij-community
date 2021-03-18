@@ -27,9 +27,9 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
-  private static final Method GET_TYPO_FAMILY_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getTypographicFamilyName");
-  private static final Method GET_TYPO_SUBFAMILY_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getTypographicSubfamilyName");
-  private static final Method GET_WEIGHT_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getWeight");
+  private static final Method GET_TYPO_FAMILY_METHOD = getFont2DMethod("getTypographicFamilyName");
+  private static final Method GET_TYPO_SUBFAMILY_METHOD = getFont2DMethod("getTypographicSubfamilyName");
+  private static final Method GET_WEIGHT_METHOD = getFont2DMethod("getWeight");
 
   private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
@@ -185,6 +185,18 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       }
     }
     return super.migrateFontSettingImpl(family);
+  }
+
+  private static Method getFont2DMethod(String methodName) {
+    try {
+      return ReflectionUtil.getDeclaredMethod(Font2D.class, methodName);
+    }
+    catch (Throwable e) {
+      if (VERBOSE_LOGGING) {
+        LOG.warn(e);
+      }
+      return null;
+    }
   }
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
