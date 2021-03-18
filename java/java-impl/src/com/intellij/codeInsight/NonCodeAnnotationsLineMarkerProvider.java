@@ -16,12 +16,11 @@ import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -159,23 +158,6 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
       }
 
       return null;
-    }
-
-    // 211-only fix as the needed method is not yet in EditorUtil
-    private static class EditorUtil {
-      @NotNull
-      public static DataContext getEditorDataContext(@NotNull Editor editor) {
-        DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
-        if (CommonDataKeys.PROJECT.getData(context) == editor.getProject()) {
-          return context;
-        }
-        return dataId -> {
-          if (CommonDataKeys.PROJECT.is(dataId)) {
-            return editor.getProject();
-          }
-          return context.getData(dataId);
-        };
-      }
     }
 
     private static @NotNull List<AnAction> getMethodActions(PsiFile file, Project project, Editor editor) {
