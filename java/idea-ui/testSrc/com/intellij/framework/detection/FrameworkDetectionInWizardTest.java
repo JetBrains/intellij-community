@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertNotEquals;
+
 public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
 
   public void testDetectFacet() {
@@ -43,10 +45,10 @@ public class FrameworkDetectionInWizardTest extends FrameworkDetectionTestCase {
     doDetect();
     final List<MockFacet> facets = new ArrayList<>(getFacets());
     assertEquals(2, facets.size());
-    assertFalse(facets.get(0).getName().equals(facets.get(1).getName()));
+    assertNotEquals(facets.get(0).getName(), facets.get(1).getName());
 
-    final Facet subFacet = assertOneElement(FacetManager.getInstance(myModule).getFacetsByType(MockSubFacetType.ID));
-    final Facet parentFacet = subFacet.getUnderlyingFacet();
+    final Facet<?> subFacet = assertOneElement(FacetManager.getInstance(myModule).getFacetsByType(MockSubFacetType.ID));
+    final Facet<?> parentFacet = subFacet.getUnderlyingFacet();
     assertNotNull(parentFacet);
     assertTrue(facets.contains(parentFacet));
 

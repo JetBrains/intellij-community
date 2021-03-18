@@ -137,7 +137,7 @@ public class IndentTest extends LightIdeaTestCase {
         CodeStyleManager.getInstance(getProject()).reformat(file);
       }
       catch (IncorrectOperationException e) {
-        assertTrue(false);
+        throw new AssertionError(e);
       }
     }), null, null);
 
@@ -150,7 +150,7 @@ public class IndentTest extends LightIdeaTestCase {
     assertEquals(textAfter, fileText);
   }
 
-  private String loadFile(String name) throws Exception {
+  private static String loadFile(String name) throws Exception {
     String fullName = BASE_PATH + File.separatorChar + name;
     String text = FileUtil.loadFile(new File(fullName));
     text = StringUtil.convertLineSeparators(text);

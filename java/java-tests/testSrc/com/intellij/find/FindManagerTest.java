@@ -832,7 +832,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(8, findResult.getStartOffset());
 
     findResult = myFindManager.findString(text, findResult.getStartOffset() + 1, findModel, file);
-    assertTrue(!findResult.isStringFound());
+    assertFalse(findResult.isStringFound());
 
     createFile(myModule, "A.java", text);
     List<UsageInfo> usagesInProject = findInProject(findModel);
@@ -932,15 +932,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testCreateFileMaskCondition() {
     Condition<CharSequence> condition = FindInProjectUtil.createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
-    assertTrue(!condition.value("Bar.javac"));
-    assertTrue(!condition.value("Foo.java"));
-    assertTrue(!condition.value("Foo.jav"));
-    assertTrue(!condition.value("Foo.min.js"));
+    assertFalse(condition.value("Bar.javac"));
+    assertFalse(condition.value("Foo.java"));
+    assertFalse(condition.value("Foo.jav"));
+    assertFalse(condition.value("Foo.min.js"));
     assertTrue(condition.value("Foo.js"));
 
     condition = FindInProjectUtil.createFileMaskCondition("!Foo.java");
     assertTrue(condition.value("Bar.java"));
-    assertTrue(!condition.value("Foo.java"));
+    assertFalse(condition.value("Foo.java"));
     assertTrue(condition.value("Foo.js"));
     assertTrue(condition.value("makefile"));
   }
@@ -954,7 +954,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setRegularExpressions(true);
 
     FindResult findResult = myFindManager.findString(text, 0, findModel, null);
-    assertTrue(!findResult.isStringFound());
+    assertFalse(findResult.isStringFound());
   }
 
   public void testRegExpSOEWhenMatch2() {
@@ -979,7 +979,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setRegularExpressions(true);
 
     findResult = myFindManager.findString(text, 0, findModel, null);
-    assertTrue(!findResult.isStringFound()); // SOE, no match
+    assertFalse(findResult.isStringFound()); // SOE, no match
   }
 
   public void testFindRegexpThatMatchesWholeFile() throws Exception {
