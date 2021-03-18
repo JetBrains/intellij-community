@@ -144,7 +144,10 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     return paths.asSequence()
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
-      .filter { it.getNodeDescriptor().type == NodeType.GROUP_NODE && it.getNodeDescriptor().parent?.type == NodeType.REMOTE_ROOT }
+      .filter {
+        it.getNodeDescriptor().type == NodeType.GROUP_NODE &&
+        (it.getNodeDescriptor().parent?.type == NodeType.REMOTE_ROOT || it.getNodeDescriptor().parent?.repository != null)
+      }
       .mapNotNull { it.getNodeDescriptor().displayName }
       .toSet()
   }
