@@ -7,8 +7,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -29,6 +29,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,7 +43,6 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   public static final int NEXT_STEP_AREA_WIDTH = 20;
@@ -407,15 +407,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     valuesSelected(selectedValues);
 
-    AtomicBoolean insideOnChosen = new AtomicBoolean(true);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (insideOnChosen.get()) {
-        LOG.error("Showing dialogs from popup onChosen can result in focus issues. Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
-      }
-    }, ModalityState.any());
-
-    final PopupStep nextStep;
-    try {
+    PopupStep<?> nextStep;
+    try (AccessToken ignore = PopupImplUtil.prohibitDialogsInside(listStep)) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
@@ -425,9 +418,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       else {
         nextStep = listStep.onChosen(selectedValues[0], handleFinalChoices);
       }
-    }
-    finally {
-      insideOnChosen.set(false);
     }
     return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValues[0] : null, e);
   }
