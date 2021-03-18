@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -468,27 +469,7 @@ public interface Editor extends UserDataHolder {
 
   @NotNull
   default EditorHighlighter getHighlighter() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Document document = getDocument();
-    EditorHighlighter highlighter = new EmptyEditorHighlighter(new TextAttributes()) {
-      @Override
-      protected Document getDocument() {
-        return document;
-      }
-
-      @Override
-      public void setAttributes(TextAttributes attributes) {
-      }
-
-      @Override
-      public void setColorScheme(@NotNull EditorColorsScheme scheme) {
-      }
-    };
-    highlighter.setText(document.getImmutableCharSequence());
-    return highlighter;
-  }
-
-  default void setHighlighter(@NotNull EditorHighlighter highlighter) {
+    return EditorCoreUtil.createEmptyHighlighter(getProject(), getDocument());
   }
 
   /**

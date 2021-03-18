@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,10 +55,6 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public void setEditor(@NotNull HighlighterClient editor) {
     LOG.assertTrue(myEditor == null, "Highlighters cannot be reused with different editors");
     myEditor = editor;
-  }
-
-  protected Document getDocument() {
-    return myEditor.getDocument();
   }
 
   @Override
@@ -121,7 +117,7 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       @NotNull
       @Override
       public Document getDocument() {
-        return EmptyEditorHighlighter.this.getDocument();
+        return myEditor.getDocument();
       }
 
       @Override
