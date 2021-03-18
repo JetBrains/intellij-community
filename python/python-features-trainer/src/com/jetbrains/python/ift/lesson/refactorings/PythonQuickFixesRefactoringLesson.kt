@@ -60,13 +60,12 @@ class PythonQuickFixesRefactoringLesson
       setSample(previous.sample)
     }
 
-    val quickFixItemText = PyBundle.message("QFIX.change.signature.of", "")
     lateinit var showQuickFixesTaskId: TaskContext.TaskId
     task("ShowIntentionActions") {
       showQuickFixesTaskId = taskId
       text(PythonLessonsBundle.message("python.quick.fix.refactoring.invoke.intentions", action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(quickFixItemText)
+        item.toString().contains("foo(")
       }
       proposeRestore {
         checkExpectedStateOfEditor(previous.sample)
@@ -90,7 +89,7 @@ class PythonQuickFixesRefactoringLesson
       restoreByUi(delayMillis = defaultRestoreDelay)
       test(waitEditorToBeReady = false) {
         ideFrame {
-          jListContains(quickFixItemText).clickItem(Pattern.compile(".*$quickFixItemText.*"))
+          jListContains("foo(").clickItem(Pattern.compile(""".*foo\(.*"""))
         }
       }
     }
