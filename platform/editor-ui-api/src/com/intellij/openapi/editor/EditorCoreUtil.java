@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -106,7 +105,6 @@ public final class EditorCoreUtil {
   }
 
   public static EditorHighlighter createEmptyHighlighter(@NotNull Project project, @NotNull Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     EditorHighlighter highlighter = new EmptyEditorHighlighter(new TextAttributes()) {
       @Override
       public @NotNull HighlighterIterator createIterator(int startOffset) {
