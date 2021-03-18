@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -91,8 +91,14 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass())) return StreamEx.empty();
 
     final PsiReferenceList throwsList = method.getThrowsList();
-    final StreamEx<ThrowRefType> redundantInThrowsList = StreamEx.zip(throwsList.getReferenceElements(),
-                                                                      throwsList.getReferencedTypes(),
+
+    final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+
+    if (referenceElements.length != referencedTypes.length) return StreamEx.empty();
+
+    final StreamEx<ThrowRefType> redundantInThrowsList = StreamEx.zip(referenceElements,
+                                                                      referencedTypes,
                                                                       ThrowRefType::new);
 
     return redundantInThrowsList
