@@ -74,7 +74,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileContentChangeEvent) {
         beforeContentsChange((VFileContentChangeEvent)e);
@@ -86,7 +86,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent e : events) {
       if (e instanceof VFileCreateEvent ||
           e instanceof VFileMoveEvent ||

@@ -137,7 +137,7 @@ public final class VFSTestFrameworkListenerImpl implements Disposable, VFSTestFr
 
   public static class Listener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent) {
           continue;

@@ -102,7 +102,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       VirtualFileManager.VFS_CHANGES,
       new BulkFileListener() {
         @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileContentChangeEvent && entry.equals(event.getFile())) {
               updated.set(true);
@@ -368,7 +368,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         // jars must be invalidated immediately after deleting the local root
         assertFalse(a.isValid());
         assertFalse(jarRoot.isValid());

@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
 
 class RCInArbitraryFileListener : AsyncFileListener {
-  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+  override fun prepareChange(events: List<VFileEvent>): @org.jetbrains.annotations.Nullable com.intellij.openapi.vfs.AsyncFileListener.ChangeApplier? {
     val deletedRCFilePaths = mutableSetOf<String>()
     val updatedRCFilePaths = mutableSetOf<String>()
 

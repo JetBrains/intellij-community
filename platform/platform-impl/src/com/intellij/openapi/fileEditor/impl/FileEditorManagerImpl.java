@@ -1789,7 +1789,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   private final class MyVirtualFileListener implements BulkFileListener {
     @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
+    public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (event instanceof VFileDeleteEvent) {
           beforeFileDeletion((VFileDeleteEvent)event);
@@ -1798,7 +1798,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (event instanceof VFilePropertyChangeEvent) {
           propertyChanged((VFilePropertyChangeEvent)event);

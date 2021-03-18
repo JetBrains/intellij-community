@@ -89,7 +89,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     // which files in .hg were changed
     boolean branchHeadsChanged = false;
     boolean branchFileChanged = false;

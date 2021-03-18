@@ -692,7 +692,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Nullable
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       List<VFileEvent> beforeEvents = new ArrayList<>();
       List<VFileEvent> afterEvents = new ArrayList<>();
       for (VFileEvent event : events) {

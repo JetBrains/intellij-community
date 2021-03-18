@@ -254,7 +254,7 @@ public final class DaemonListeners implements Disposable {
     connection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         boolean isDaemonShouldBeStopped = false;
         for (VFileEvent event : events) {
           if (event instanceof VFilePropertyChangeEvent) {

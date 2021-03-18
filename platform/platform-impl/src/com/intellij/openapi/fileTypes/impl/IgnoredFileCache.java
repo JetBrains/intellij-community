@@ -27,14 +27,14 @@ final class IgnoredFileCache {
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect();
     connect.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
         myVfsEventNesting++;
         clearCacheForChangedFiles(events);
       }
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         clearCacheForChangedFiles(events);
         myVfsEventNesting--;
       }

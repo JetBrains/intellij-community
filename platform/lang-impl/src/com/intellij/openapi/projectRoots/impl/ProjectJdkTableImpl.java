@@ -54,7 +54,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (!events.isEmpty()) {
           final Set<Sdk> affected = new SmartHashSet<>();
           for (VFileEvent event : events) {

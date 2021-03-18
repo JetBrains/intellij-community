@@ -36,7 +36,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   DocumentReferenceManagerImpl() {
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<VirtualFile> deletedFiles = new NotNullList<>();
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {

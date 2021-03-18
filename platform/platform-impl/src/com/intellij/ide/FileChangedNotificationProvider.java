@@ -55,7 +55,7 @@ public final class FileChangedNotificationProvider extends EditorNotifications.P
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
           return;
         }

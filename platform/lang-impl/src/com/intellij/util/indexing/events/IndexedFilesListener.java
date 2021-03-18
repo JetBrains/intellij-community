@@ -109,7 +109,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
 
   @Override
   @NotNull
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     VfsEventsMerger tempMerger = new VfsEventsMerger();
     for (VFileEvent event : events) {
       if (event instanceof VFileContentChangeEvent) {

@@ -46,7 +46,7 @@ final class WatchRootsManager {
     myFileWatcher = fileWatcher;
     ApplicationManager.getApplication().getMessageBus().connect(parent).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         synchronized (myLock) {
           if (myWatcherRequiresUpdate) {
             updateFileWatcher();

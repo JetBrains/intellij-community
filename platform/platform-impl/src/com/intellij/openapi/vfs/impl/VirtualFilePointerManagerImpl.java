@@ -84,7 +84,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   static final class MyAsyncFileListener implements AsyncFileListener {
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       return ((VirtualFilePointerManagerImpl)getInstance()).prepareChange(events);
     }
   }
@@ -611,14 +611,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     if (myCollectedEvents == null) {
       myCollectedEvents = collectEvents(events);
     }
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     after(events.size());
   }
 

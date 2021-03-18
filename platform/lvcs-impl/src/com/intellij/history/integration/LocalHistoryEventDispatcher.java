@@ -240,13 +240,13 @@ class LocalHistoryEventDispatcher {
 
   public static class LocalHistoryBulkFileListener implements BulkFileListener {
     @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
+    public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
       if (dispatcher != null) dispatcher.handleBeforeEvents(events);
     }
 
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
       if (dispatcher != null) dispatcher.handleAfterEvents(events);
     }

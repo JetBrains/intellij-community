@@ -112,7 +112,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<DomEvent> domEvents = new ArrayList<>();
         for (VFileEvent event : events) {
           if (shouldFireDomEvents(event)) {

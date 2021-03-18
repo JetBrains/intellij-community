@@ -23,7 +23,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull final List<? extends VFileEvent> events) {
+  public void before(final @NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
         fireBefore(myAdapted, event);
@@ -32,7 +32,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull final List<? extends VFileEvent> events) {
+  public void after(final @NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       if (myFileSystem == null || myFileSystem == event.getFileSystem()) {
         fireAfter(myAdapted, event);

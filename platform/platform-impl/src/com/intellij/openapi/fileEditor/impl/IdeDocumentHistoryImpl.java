@@ -106,7 +106,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     });
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
             removeInvalidFilesFromStacks();

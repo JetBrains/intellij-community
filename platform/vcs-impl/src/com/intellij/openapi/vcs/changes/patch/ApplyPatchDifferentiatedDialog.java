@@ -254,7 +254,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     if (myCanChangePatchFile) {
       BulkFileListener listener = new BulkFileListener() {
         @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileContentChangeEvent) {
               syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());

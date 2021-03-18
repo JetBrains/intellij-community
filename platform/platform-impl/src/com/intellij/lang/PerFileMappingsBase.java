@@ -337,7 +337,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       WeakReference<MyUndoableAction> lastAction;
 
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) return;
         Project project = CommandProcessor.getInstance().getCurrentCommandProject();
         if (project == null || !project.isOpen()) return;
@@ -350,7 +350,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       }
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         MyUndoableAction action = SoftReference.dereference(lastAction);
         lastAction = null;
         if (action != null) {

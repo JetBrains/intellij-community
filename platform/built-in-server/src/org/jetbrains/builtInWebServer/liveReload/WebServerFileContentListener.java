@@ -20,7 +20,7 @@ class WebServerFileContentListener implements AsyncFileListener {
 
   @Nullable
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     boolean hasRelatedFileChanged = false;
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();

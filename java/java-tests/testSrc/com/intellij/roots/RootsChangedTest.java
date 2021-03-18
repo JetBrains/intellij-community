@@ -499,7 +499,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     BulkFileListener rogueListenerWhichStupidlyGetChildrenRightAway = new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (event instanceof VFileCreateEvent && file != null) {

@@ -77,7 +77,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     });
     project.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
             for (VirtualFile file : getOpenFiles()) {

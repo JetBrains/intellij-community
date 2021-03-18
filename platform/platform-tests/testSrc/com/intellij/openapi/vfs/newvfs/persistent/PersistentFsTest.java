@@ -247,7 +247,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
       connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
         @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
           for (VFileEvent event : events) {
             if (event instanceof VFileDeleteEvent) {
               process(((VFileDeleteEvent)event).getFile());
@@ -365,12 +365,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     try {
       connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
         @Override
-        public void before(@NotNull List<? extends VFileEvent> events) {
+        public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
           log("Before:", events);
         }
 
         @Override
-        public void after(@NotNull List<? extends VFileEvent> events) {
+        public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
           log("After:", events);
         }
 
@@ -840,7 +840,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         events.addAll(e);
       }
     });
@@ -864,7 +864,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         events.addAll(e);
       }
     });
@@ -893,7 +893,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     List<VFileEvent> events = new ArrayList<>();
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> e) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
           if (evFile.getParent().equals(vDir)) {

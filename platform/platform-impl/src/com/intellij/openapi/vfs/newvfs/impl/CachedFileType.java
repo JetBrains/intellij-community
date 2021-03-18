@@ -52,7 +52,7 @@ public final class CachedFileType {
 
   static final class ReparseListener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
           clearCache();

@@ -66,7 +66,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (VFileEvent e : events) {
       VirtualFile changedFile = e.getFile();

@@ -289,7 +289,7 @@ public final class BuildManager implements Disposable {
     connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE) {
           synchronized (myUnprocessedEvents) {
             myUnprocessedEvents.addAll(events);

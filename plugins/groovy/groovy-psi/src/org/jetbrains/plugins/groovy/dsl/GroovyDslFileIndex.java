@@ -425,7 +425,7 @@ public final class GroovyDslFileIndex {
 
   public static class MyFileListener implements BulkFileListener {
     @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent && !event.isFromRefresh()) {
           VirtualFile file = event.getFile();

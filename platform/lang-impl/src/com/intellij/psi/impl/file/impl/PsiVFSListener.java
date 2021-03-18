@@ -121,7 +121,7 @@ public final class PsiVFSListener implements BulkFileListener {
 
     Topics.subscribe(VirtualFileManager.VFS_CHANGES, null, new BulkFileListener() {
       @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         for (Project project : ProjectUtil.getOpenProjects()) {
           if (!project.isDisposed()) {
             project.getService(PsiVFSListener.class).before(events);
@@ -130,7 +130,7 @@ public final class PsiVFSListener implements BulkFileListener {
       }
 
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         Project[] projects = ProjectUtil.getOpenProjects();
         // let PushedFilePropertiesUpdater process all pending vfs events and update file properties before we issue PSI events
         for (Project project : projects) {
@@ -690,7 +690,7 @@ public final class PsiVFSListener implements BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     myReportedUnloadedPsiChange = false;
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent) {
@@ -706,7 +706,7 @@ public final class PsiVFSListener implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     groupAndFire(events);
     myReportedUnloadedPsiChange = false;
   }

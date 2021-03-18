@@ -109,7 +109,7 @@ public class WindowsCaseSensitivityTest extends BareTestFixtureTestCase {
     Semaphore eventFound = new Semaphore(1);
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener(){
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         VFileEvent changeEvent = ContainerUtil.find(events, event -> event instanceof VFilePropertyChangeEvent
                  && ((VFilePropertyChangeEvent)event).getPropertyName() == VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY
                  && dir.equals(event.getFile())

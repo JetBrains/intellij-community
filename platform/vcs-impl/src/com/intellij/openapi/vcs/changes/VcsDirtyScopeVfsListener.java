@@ -109,7 +109,7 @@ public class VcsDirtyScopeVfsListener implements AsyncFileListener, Disposable {
 
   @Nullable
   @Override
-  public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     if (myForbid || !myVcsManager.hasActiveVcss()) return null;
     final FilesAndDirs dirtyFilesAndDirs = new FilesAndDirs();
     // collect files and directories - sources of events

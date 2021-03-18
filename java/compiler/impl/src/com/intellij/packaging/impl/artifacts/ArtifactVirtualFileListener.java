@@ -53,7 +53,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       if (event instanceof VFileMoveEvent) {
         filePathChanged(((VFileMoveEvent)event).getOldPath(), event.getPath());

@@ -575,7 +575,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     private final FileDocumentManagerImpl myFileDocumentManager = (FileDocumentManagerImpl)getInstance();
 
     @Override
-    public ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+    public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       List<VirtualFile> toRecompute = new ArrayList<>();
       Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
       List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);

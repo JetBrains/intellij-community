@@ -78,7 +78,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     MessageBusConnection busConnection = module.getProject().getMessageBus().connect(module);
     busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
         if (paths.isEmpty()) {
           return;
         }

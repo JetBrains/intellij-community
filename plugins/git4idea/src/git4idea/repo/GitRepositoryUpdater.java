@@ -52,7 +52,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
   }
 
   @Override
-  public void filesChanged(@NotNull List<? extends VFileEvent> events) {
+  public void filesChanged(@NotNull List<? extends @NotNull VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;
