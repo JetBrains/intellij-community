@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -264,7 +265,8 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
           if (contentManager != null) {
             Content content = contentManager.getSelectedContent();
             if (content != null) {
-              DataContext dataContext = DataManager.getInstance().getDataContext(content.getComponent());
+              DataContext dataContext = ActionUpdateEdtExecutor.computeOnEdt(
+                () -> DataManager.getInstance().getDataContext(content.getComponent()));
               QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
               if (provider != null) {
                 List<AnAction> providerActions = provider.getActions(true);
