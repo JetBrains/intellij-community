@@ -340,6 +340,11 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alertWindow, "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
       }
 
+      if (info.defaultOptionIndex <= 0 && info.buttons.size == 3 && info.buttons[1] != "Cancel") {
+        val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", 1)
+        Foundation.invoke(button, "setKeyEquivalent:", Foundation.nsString(" "))
+      }
+
       if (ownerWindow == null) {
         setResult(alert, Foundation.invoke(alert, "runModal"), index)
       }
