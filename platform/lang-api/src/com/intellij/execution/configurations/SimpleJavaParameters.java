@@ -116,7 +116,9 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseDynamicVMOptions;
   }
 
-  /** Allows passing system properties via a temporary file in order to avoid "too long command line" problem. */
+  /**
+   * Allows passing system properties via a temporary file in order to avoid "too long command line" problem.
+   */
   public void setUseDynamicVMOptions(boolean useDynamicVMOptions) {
     myUseDynamicVMOptions = useDynamicVMOptions;
   }
@@ -125,7 +127,9 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseDynamicParameters;
   }
 
-  /** Allows passing program parameters via a temporary file in order to avoid "too long command line" problem. */
+  /**
+   * Allows passing program parameters via a temporary file in order to avoid "too long command line" problem.
+   */
   public void setUseDynamicParameters(boolean useDynamicParameters) {
     myUseDynamicParameters = useDynamicParameters;
   }
@@ -185,6 +189,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   @ApiStatus.Experimental
+  @NotNull
   public JavaTargetDependentParameters getTargetDependentParameters() {
     return myTargetDependentParameters;
   }

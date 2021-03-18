@@ -79,7 +79,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
    */
   private fun requestUploadIntoTarget(volumeDescriptor: VolumeDescriptor,
                                       uploadPathString: String,
-                                      uploadPathIsFile: Boolean? = null): TargetValue<String> {
+                                      uploadPathIsFile: Boolean? = null,
+                                      afterUploadResolved: (String) -> Unit = {}): TargetValue<String> {
 
     val uploadPath = Paths.get(FileUtil.toSystemDependentName(uploadPathString))
     val isDir = uploadPathIsFile?.not() ?: uploadPath.isDirectory()
@@ -101,6 +102,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         val resolvedTargetPath = volume.resolveTargetPath(relativePath)
         uploads.add(Upload(volume, relativePath))
         result.resolve(resolvedTargetPath)
+        afterUploadResolved(resolvedTargetPath)
       }
       catch (t: Throwable) {
         LOG.warn(t)
@@ -114,7 +116,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   @Suppress("SameParameterValue")
   private fun requestDownloadFromTarget(downloadPathString: String,
-                                        downloadPathIsFile: Boolean? = null): TargetValue<String> {
+                                        downloadPathIsFile: Boolean? = null,
+                                        afterDownloadResolved: (String) -> Unit = {}): TargetValue<String> {
     val downloadPath = Paths.get(FileUtil.toSystemDependentName(downloadPathString))
     val isDir = downloadPathIsFile?.not() ?: downloadPath.isDirectory()
     val localRootPath =
@@ -135,6 +138,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         val relativePath = if (isDir) "." else downloadPath.fileName.toString()
         val resolvedTargetPath = volume.resolveTargetPath(relativePath)
         result.resolve(resolvedTargetPath)
+        afterDownloadResolved(resolvedTargetPath)
       }
       catch (t: Throwable) {
         LOG.warn(t)
@@ -532,13 +536,23 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     vmParameters.list.forEach {
       appendVmParameter(it)
     }
-    javaParameters.targetDependentParameters.asTargetParameters().forEach {
+    val targetDependentParameters = javaParameters.targetDependentParameters
+    targetDependentParameters.asTargetParameters().forEach {
       val value = it.apply(request)
       value.resolvePaths(
-        uploadPathsResolver = { path -> requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path, true) },
-        downloadPathsResolver = { path -> requestDownloadFromTarget(path, true) }
+        uploadPathsResolver = { path ->
+          path.beforeUploadOrDownloadResolved(path.localPath)
+          requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path.localPath, true) { path.afterUploadOrDownloadResolved(it) }
+        },
+        downloadPathsResolver = { path ->
+          path.beforeUploadOrDownloadResolved(path.localPath)
+          requestDownloadFromTarget(path.localPath, true) { path.afterUploadOrDownloadResolved(it) }
+        }
       )
       commandLine.addParameter(value.parameter)
+    }
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, _) ->
+      targetDependentParameters.setTargetEnvironment(environment)
     }
   }
 

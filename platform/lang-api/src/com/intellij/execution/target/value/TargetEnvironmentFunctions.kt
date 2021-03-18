@@ -7,8 +7,12 @@ import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import java.io.IOException
+import java.nio.file.Path
 import java.util.function.Function
+import kotlin.io.path.name
 
 /**
  * The function that is expected to be resolved with provided
@@ -95,6 +99,15 @@ fun TargetEnvironment.LocalPortBinding.getTargetEnvironmentValue(): TargetEnviro
     return@TargetEnvironmentFunction targetEnvironment.localPortBindings[localPortBinding]
                                      ?: throw IllegalStateException("Local port binding \"$localPortBinding\" cannot be found")
   }
+
+@Throws(IOException::class)
+fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: ProgressIndicator) {
+  val localFileDir = localPath.parent
+  val downloadVolumes = downloadVolumes.values
+  val downloadVolume = downloadVolumes.find { it.localRoot == localFileDir }
+                       ?: error("Volume with local root $localFileDir not found")
+  downloadVolume.download(localPath.name, progressIndicator)
+}
 
 private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>,
                                                        private val separator: CharSequence) : TargetEnvironmentFunction<String> {

@@ -211,7 +211,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                                        String sessionDataFilePath,
                                                        String @Nullable [] patterns,
                                                        String[] excludePatterns) {
-    HashSet<String> uploadPaths = ContainerUtil.newHashSet(sessionDataFilePath, agentPath);
+    HashSet<String> uploadPaths = ContainerUtil.newHashSet(agentPath);
     HashSet<String> downloadPaths = ContainerUtil.newHashSet(sessionDataFilePath);
     var builder = new JavaTargetParameter.Builder(uploadPaths, downloadPaths);
     return doCreateCoverageArgument(builder, patterns, excludePatterns, sessionDataFilePath, agentPath);
