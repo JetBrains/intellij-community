@@ -1176,7 +1176,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("stdlibUsages", pattern = """^(.+)\.0\.kt$""".toRegex())
         }
     }
-    */
 
     testGroup("scripting-support") {
         testClass<AbstractScratchRunActionTest> {
@@ -1516,10 +1515,32 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
-        testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
+    testGroup("plugins/parcelize/parcelize-ide/tests", "plugins/parcelize/parcelize-ide/testData") {
+        testClass<AbstractParcelizeQuickFixTest> {
+            model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
         }
+
+        testClass<AbstractParcelizeCheckerTest> {
+            model("checker", extension = "kt")
+        }
+    }
+
+        testGroup(
+            "plugins/kotlin-serialization/kotlin-serialization-ide/test",
+            "plugins/kotlin-serialization/kotlin-serialization-ide/testData"
+        ) {
+            testClass<AbstractSerializationPluginIdeDiagnosticTest> {
+                model("diagnostics")
+            }
+            testClass<AbstractSerializationQuickFixTest> {
+                model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
+            }
+        }
+
+        testGroup("idea/performanceTests/test", "idea/tests/testData") {
+            testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
+                model("copyPaste/conversion", testMethod = "doPerfTest", pattern = """^([^.]+)\.java$""")
+            }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
