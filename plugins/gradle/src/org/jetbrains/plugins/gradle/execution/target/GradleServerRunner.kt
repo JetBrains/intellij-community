@@ -314,5 +314,5 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 }
 
 private fun Logger.traceIfNotEmpty(text: @NlsSafe String?) {
-  text.nullize(true)?.also { trace { it } }
+  text.nullize(true)?.also { trace { it.trimEnd() } }
 }

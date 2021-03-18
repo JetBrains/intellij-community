@@ -57,7 +57,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   lateinit var projectUploadRoot: TargetEnvironment.UploadRoot
 
   private val uploader = Uploader()
-  private val localPathsToMap = mutableListOf<String>()
+  private val localPathsToMap = LinkedHashSet<String>()
 
   fun prepareEnvironment(targetBuildParametersBuilder: TargetBuildParameters.Builder,
                          consumerOperationParameters: ConsumerOperationParameters,
@@ -261,10 +261,9 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         }
         else if (!file.name.startsWith("ijmapper")) {
           val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
-          val regex = Regex("mapPath\\(['|\"](.{2,})['|\"][)]")
+          val regex = Regex("mapPath\\(['|\"](.{2,}?)['|\"][)]")
           val matches = regex.findAll(fileContent)
-          val elements = matches.map { it.groupValues[1] }
-          localPathsToMap.addAll(elements)
+          matches.mapTo(localPathsToMap) { it.groupValues[1] }
         }
       }
       else {

@@ -243,7 +243,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     }
 
     if (!initScripts.isEmpty()) {
-      GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
       writeAndAppendScript(effectiveSettings, StringUtil.join(initScripts, System.lineSeparator()), "ijresolvers");
     }
 
@@ -264,6 +263,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       catch (IllegalArgumentException e) {
         LOG.error("Failed to parse gradle version value [" + gradleVersion + "]", e);
       }
+    }
+
+    if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
+      GradleExecutionHelper.attachTargetPathMapperInitScript(effectiveSettings);
     }
   }
 
