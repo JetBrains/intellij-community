@@ -68,11 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
-  private static final int TIMEOUT = 30000;
-
-  private PsiDocumentManagerImpl getPsiDocumentManager() {
-    return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
-  }
+  private static final int TIMEOUT_MS = 30_000;
 
   @Override
   protected void tearDown() throws Exception {
@@ -85,6 +81,10 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  private PsiDocumentManagerImpl getPsiDocumentManager() {
+    return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
   }
 
   public void testGetCachedPsiFile_NoFile() {
@@ -319,7 +319,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   private static void waitAndPump(Semaphore semaphore) {
-    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
+    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS);
     while (!t.timedOut()) {
       if (semaphore.waitFor(1)) return;
       UIUtil.dispatchAllInvocationEvents();
@@ -355,7 +355,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     waitForCommits();
     assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
 
-    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT, TimeUnit.MILLISECONDS);
+    TestTimeOut t = TestTimeOut.setTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS);
     while (!alienDocManager.isCommitted(alienDocument) && !t.timedOut()) {
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -795,24 +795,6 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
     assertTrue(calledPerformWhenAllCommitted[0]);
-  }
-
-  public void testCommitWithoutReparseLeavesPsiConsistentWithText() {
-    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "", 0, true);
-    Document document = file.getViewProvider().getDocument();
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.setText("a");
-      getPsiDocumentManager().doCommitWithoutReparse(document);
-    });
-
-    assertFalse(getPsiDocumentManager().hasUncommitedDocuments());
-    assertEquals("a", file.getText());
-
-    WriteCommandAction.runWriteCommandAction(myProject, () -> {
-      document.setText("b");
-      getPsiDocumentManager().commitAllDocuments();
-    });
-    assertEquals("b", file.getText());
   }
 
   public void testNonPhysicalDocumentCommitsDoNotInterruptBackgroundTasks() {
