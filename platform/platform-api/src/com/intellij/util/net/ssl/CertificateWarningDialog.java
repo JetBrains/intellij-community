@@ -82,7 +82,7 @@ public class CertificateWarningDialog extends DialogWrapper {
                            .wrapWithHtmlBody()
                            .toString());
     myCertificateInfoPanel.add(new CertificateInfoPanel(certificate), BorderLayout.CENTER);
-    setResizable(false);
+    setResizable(true);
     init();
     LOG.debug("Preferred size: " + getPreferredSize());
   }
