@@ -119,10 +119,6 @@ internal class SwitcherVirtualFile(
   val window: EditorWindow?
 ) : SwitcherListItem, BackgroundSupplier {
 
-  constructor(info: Switcher.FileInfo) : this(info.myProject, info.first, info.second) {
-    mainText = info.nameForRendering
-  }
-
   private val icon by lazy { IconUtil.getIcon(file, ICON_FLAG_READ_STATUS, project) }
 
   val isProblemFile

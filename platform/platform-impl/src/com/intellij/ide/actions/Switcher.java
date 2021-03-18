@@ -112,21 +112,14 @@ public final class Switcher extends BaseSwitcherAction {
         return this.project;
       }
       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) {
-        List list = getSelectedList().getSelectedValuesList();
-        Object o = ContainerUtil.getOnlyItem(list);
-        return o instanceof FileInfo ? ((FileInfo)o).first : null;
+        if (files.isSelectionEmpty()) return null;
+        SwitcherVirtualFile item = ContainerUtil.getOnlyItem(files.getSelectedValuesList());
+        return item == null ? null : item.getFile();
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        final List list = getSelectedList().getSelectedValuesList();
-        if (!list.isEmpty()) {
-          final List<VirtualFile> vFiles = new ArrayList<>();
-          for (Object o : list) {
-            if (o instanceof FileInfo) {
-              vFiles.add(((FileInfo)o).first);
-            }
-          }
-          return vFiles.isEmpty() ? null : vFiles.toArray(VirtualFile.EMPTY_ARRAY);
-        }
+        if (files.isSelectionEmpty()) return null;
+        VirtualFile[] array = ContainerUtil.map2Array(files.getSelectedValuesList(), VirtualFile.class, SwitcherVirtualFile::getFile);
+        return array.length > 0 ? array : null;
       }
       return null;
     }
@@ -413,7 +406,11 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     static @NotNull List<SwitcherVirtualFile> wrap(@NotNull List<FileInfo> list) {
-      return ContainerUtil.map(list, SwitcherVirtualFile::new);
+      return ContainerUtil.map(list, info -> {
+        SwitcherVirtualFile svf = new SwitcherVirtualFile(info.myProject, info.first, info.second);
+        svf.setMainText(info.getNameForRendering());
+        return svf;
+      });
     }
 
     @NotNull
@@ -617,21 +614,16 @@ public final class Switcher extends BaseSwitcherAction {
         Object value = selectedList.getModel().getElementAt(selectedIndex);
         if (value instanceof SwitcherVirtualFile) {
           SwitcherVirtualFile svf = (SwitcherVirtualFile)value;
-          value = new FileInfo(svf.getFile(), svf.getWindow(), svf.getProject());
-        }
-        if (value instanceof FileInfo) {
-          final FileInfo info = (FileInfo)value;
-          final VirtualFile virtualFile = info.first;
+          VirtualFile virtualFile = svf.getFile();
           final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-          final JList<?> jList = getSelectedList();
-          final EditorWindow wnd = findAppropriateWindow(info);
+          EditorWindow wnd = findAppropriateWindow(svf.getWindow());
           if (wnd == null) {
             editorManager.closeFile(virtualFile, false, false);
           }
           else {
             editorManager.closeFile(virtualFile, wnd, false);
           }
-          ListUtil.removeItem(jList.getModel(), selectedIndex);
+          ListUtil.removeItem(files.getModel(), selectedIndex);
           if (recent) {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
@@ -744,19 +736,15 @@ public final class Switcher extends BaseSwitcherAction {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery);
       }
-      else if (values.get(0) instanceof SwitcherListItem) {
-        SwitcherListItem item = (SwitcherListItem)values.get(0);
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> item.navigate(this, mode), ModalityState.current());
-      }
-      else {
+      else if (values.get(0) instanceof SwitcherVirtualFile) {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
           EditorWindow splitWindow = null;
           for (Object value : values) {
-            if (value instanceof FileInfo) {
-              final FileInfo info = (FileInfo)value;
+            if (value instanceof SwitcherVirtualFile) {
+              SwitcherVirtualFile item = (SwitcherVirtualFile)value;
 
-              VirtualFile file = info.first;
+              VirtualFile file = item.getFile();
               if (mode == RIGHT_SPLIT) {
                 if (splitWindow == null) {
                   splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null, true);
@@ -768,8 +756,8 @@ public final class Switcher extends BaseSwitcherAction {
               if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);
               }
-              else if (info.second != null) {
-                EditorWindow wnd = findAppropriateWindow(info);
+              else if (item.getWindow() != null) {
+                EditorWindow wnd = findAppropriateWindow(item.getWindow());
                 if (wnd != null) {
                   manager.openFileImpl2(wnd, file, true);
                   manager.addSelectionRecord(file, wnd);
@@ -790,6 +778,10 @@ public final class Switcher extends BaseSwitcherAction {
             }
           }
         }, ModalityState.current());
+      }
+      else if (values.get(0) instanceof SwitcherListItem) {
+        SwitcherListItem item = (SwitcherListItem)values.get(0);
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> item.navigate(this, mode), ModalityState.current());
       }
     }
 
@@ -836,14 +828,13 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    @Nullable
-    private static EditorWindow findAppropriateWindow(@NotNull FileInfo info) {
-      if (info.second == null) return null;
+    private static @Nullable EditorWindow findAppropriateWindow(@Nullable EditorWindow window) {
+      if (window == null) return null;
       if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
-        return info.second.getOwner().getCurrentWindow();
+        return window.getOwner().getCurrentWindow();
       }
-      final EditorWindow[] windows = info.second.getOwner().getWindows();
-      return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
+      final EditorWindow[] windows = window.getOwner().getWindows();
+      return ArrayUtil.contains(window, windows) ? window : windows.length > 0 ? windows[0] : null;
     }
 
     private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
@@ -874,19 +865,14 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       @Override
-      protected String getElementText(Object element) {
-        if (element instanceof SwitcherListItem) {
-          return ((SwitcherListItem)element).getMainText();
-        }
-        else if (element instanceof FileInfo) {
-          return ((FileInfo)element).getNameForRendering();
-        }
-        return "";
+      protected @NotNull String getElementText(Object element) {
+        SwitcherListItem item = element instanceof SwitcherListItem ? (SwitcherListItem)element : null;
+        return item == null ? "" : item.getMainText();
       }
 
       @Override
       protected void selectElement(final Object element, String selectedText) {
-        if (element instanceof FileInfo || element instanceof SwitcherVirtualFile) {
+        if (element instanceof SwitcherVirtualFile) {
           if (!myComponent.toolWindows.isSelectionEmpty()) myComponent.toolWindows.clearSelection();
           myComponent.files.clearSelection();
           myComponent.files.setSelectedValue(element, true);
@@ -917,7 +903,7 @@ public final class Switcher extends BaseSwitcherAction {
         for (int i = 0; i < model.getSize(); i++) {
           T element = model.getElementAt(i);
           String text = getElementText(element);
-          if (text == null) continue;
+          if (text.isEmpty()) continue;
           int degree = getComparator().matchingDegree(pattern, text);
           if (foundElement == null || foundDegree < degree) {
             foundElement = element;
