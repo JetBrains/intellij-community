@@ -189,16 +189,25 @@ class RuntimeChooserDialog(
           .component
 
         val updateLocation = {
-          (jdkCombobox.selectedItem as? RuntimeChooserDownloadableItem)?.let { item ->
-            jdkInstallDirSelector.text = model.getDefaultInstallPathFor(item.item)
-            jdkInstallDirSelector.isEditable = true
-            jdkInstallDirSelector.setButtonEnabled(true)
-          }
-
-          (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
-            jdkInstallDirSelector.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
-            jdkInstallDirSelector.isEditable = false
-            jdkInstallDirSelector.setButtonEnabled(false)
+          when(val item = jdkCombobox.selectedItem){
+            is RuntimeChooserDownloadableItem -> {
+              jdkInstallDirSelector.text = model.getDefaultInstallPathFor(item.item)
+              jdkInstallDirSelector.setButtonEnabled(true)
+              jdkInstallDirSelector.isEditable = true
+              jdkInstallDirSelector.isEnabled = true
+            }
+            is RuntimeChooserItemWithFixedLocation -> {
+              jdkInstallDirSelector.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
+              jdkInstallDirSelector.setButtonEnabled(false)
+              jdkInstallDirSelector.isEditable = false
+              jdkInstallDirSelector.isEnabled = false
+            }
+            else -> {
+              jdkInstallDirSelector.text = ""
+              jdkInstallDirSelector.setButtonEnabled(false)
+              jdkInstallDirSelector.isEditable = false
+              jdkInstallDirSelector.isEnabled = false
+            }
           }
         }
         updateLocation()
