@@ -446,7 +446,7 @@
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.MenuSaveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
-          <synonym text="restart"/>
+          <synonym text="Restart"/>
         </action>
         <separator/>
         <group id="ExportImportGroup" popup="true">
