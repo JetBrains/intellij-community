@@ -214,6 +214,7 @@ public final class HighlightManagerImpl extends HighlightManager {
         if (scrollMarkColor != null) {
           highlighter.setErrorStripeMarkColor(scrollMarkColor);
         }
+        highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
       });
   }
 
