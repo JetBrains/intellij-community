@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.perf.UltraLightChecker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractUltraLightClassSanityTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -18,11 +19,12 @@ abstract class AbstractUltraLightClassSanityTest : KotlinLightCodeInsightFixture
 
     fun doTest(testDataPath: String) {
         val ioFile = File(testDataPath)
-        if (ioFile.name == "AllOpenAnnotatedClasses.kt") {
-            return //tests allopen compiler plugin that we don't have in this test
+        val sourceText = ioFile.readText()
+
+        if (InTextDirectivesUtils.isDirectiveDefined(sourceText, "SKIP_SANITY_TEST")) {
+            return
         }
 
-        val sourceText = ioFile.readText()
         val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
 
         UltraLightChecker.checkForReleaseCoroutine(sourceText, module)
