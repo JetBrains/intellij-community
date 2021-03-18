@@ -10,14 +10,16 @@ class GroovyBuilder {
     code.addAll(builder.code)
   }
 
-  fun line(line: String) = apply {
-    code.add { "    ".repeat(it) + line }
+  fun code(vararg text: String) = apply {
+    for (line in text) {
+      code.add { INDENT.repeat(it) + line }
+    }
   }
 
   fun call(name: String, vararg arguments: Any?, configure: (GroovyBuilder.() -> Unit)? = null) = apply {
     when {
-      arguments.size == 1 && configure == null -> line("$name ${arguments.first()}")
-      configure == null -> line("$name(${arguments.joinToString()})")
+      arguments.size == 1 && configure == null -> code("$name ${arguments.first()}")
+      configure == null -> code("$name(${arguments.joinToString()})")
       arguments.isEmpty() -> block(name, configure)
       else -> block("$name(${arguments.joinToString()})", configure)
     }
@@ -32,12 +34,12 @@ class GroovyBuilder {
 
   fun block(name: String, configure: GroovyBuilder.() -> Unit) = block(name, builder(configure))
   fun block(name: String, builder: GroovyBuilder) = apply {
-    line("$name {")
+    code("$name {")
     code.add { builder.generate(it + 1) }
-    line("}")
+    code("}")
   }
 
-  fun property(name: String, value: Any?) = line("$name = $value")
+  fun property(name: String, value: Any?) = code("$name = $value")
   fun propertyIfNotNull(name: String, value: Any?) = apply {
     if (value != null) {
       property(name, value)
@@ -47,6 +49,8 @@ class GroovyBuilder {
   fun generate(indent: Int = 0) = code.joinToString("\n") { it(indent) }
 
   companion object {
+    private const val INDENT = "    "
+
     private fun builder(configure: GroovyBuilder.() -> Unit) = GroovyBuilder().apply(configure)
 
     fun groovy(configure: GroovyBuilder.() -> Unit) = builder(configure).generate()

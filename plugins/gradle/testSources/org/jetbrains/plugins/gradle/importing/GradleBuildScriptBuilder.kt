@@ -33,7 +33,7 @@ class GradleBuildScriptBuilder {
    * dependencies { ... }
    * ...
    */
-  fun addImport(import: String) = apply(imports) { line("import $import") }
+  fun addImport(import: String) = apply(imports) { code("import $import") }
 
   /**
    * buildscript {
@@ -44,7 +44,7 @@ class GradleBuildScriptBuilder {
    *   ...
    * }
    */
-  fun addBuildScriptPrefix(prefix: String) = withBuildScriptPrefix { line(prefix) }
+  fun addBuildScriptPrefix(vararg prefix: String) = withBuildScriptPrefix { code(*prefix) }
   fun withBuildScriptPrefix(configure: GroovyBuilder.() -> Unit) = apply(buildScriptPrefixes, configure)
 
   /**
@@ -55,7 +55,7 @@ class GradleBuildScriptBuilder {
    *   }
    * }
    */
-  fun addBuildScriptDependency(dependency: String) = withBuildScriptDependency { line(dependency) }
+  fun addBuildScriptDependency(dependency: String) = withBuildScriptDependency { code(dependency) }
   fun withBuildScriptDependency(configure: GroovyBuilder.() -> Unit) = apply(buildScriptDependencies, configure)
 
   /**
@@ -66,7 +66,7 @@ class GradleBuildScriptBuilder {
    *   }
    * }
    */
-  fun addBuildScriptRepository(repository: String) = withBuildScriptRepository { line(repository) }
+  fun addBuildScriptRepository(repository: String) = withBuildScriptRepository { code(repository) }
   fun withBuildScriptRepository(configure: GroovyBuilder.() -> Unit) = apply(buildScriptRepositories, configure)
 
   /**
@@ -78,7 +78,7 @@ class GradleBuildScriptBuilder {
    *   [postfix]
    * }
    */
-  fun addBuildScriptPostfix(postfix: String) = withBuildScriptPostfix { line(postfix) }
+  fun addBuildScriptPostfix(vararg postfix: String) = withBuildScriptPostfix { code(*postfix) }
   fun withBuildScriptPostfix(configure: GroovyBuilder.() -> Unit) = apply(buildScriptPostfixes, configure)
 
   /**
@@ -87,7 +87,7 @@ class GradleBuildScriptBuilder {
    *   [plugin]
    * }
    */
-  fun addPlugin(plugin: String) = apply(plugins) { line(plugin) }
+  fun addPlugin(plugin: String) = apply(plugins) { code(plugin) }
 
   /**
    * apply plugin: [plugin]
@@ -102,7 +102,7 @@ class GradleBuildScriptBuilder {
    * dependencies { ... }
    * ...
    */
-  fun addPrefix(vararg prefix: String) = withPrefix { prefix.forEach { line(it) } }
+  fun addPrefix(vararg prefix: String) = withPrefix { code(*prefix) }
   fun withPrefix(configure: GroovyBuilder.() -> Unit) = apply(prefixes, configure)
   fun withPrefix(configure: Consumer<GroovyBuilder>) = withPrefix(configure::consume)
 
@@ -112,7 +112,7 @@ class GradleBuildScriptBuilder {
    *   [dependency]
    * }
    */
-  fun addDependency(dependency: String) = apply(dependencies) { line(dependency) }
+  fun addDependency(dependency: String) = apply(dependencies) { code(dependency) }
 
   /**
    * repositories {
@@ -120,7 +120,7 @@ class GradleBuildScriptBuilder {
    *   [repository]
    * }
    */
-  fun addRepository(repository: String) = withRepository { line(repository) }
+  fun addRepository(repository: String) = withRepository { code(repository) }
   fun withRepository(configure: GroovyBuilder.() -> Unit) = apply(repositories, configure)
 
   /**
@@ -131,7 +131,7 @@ class GradleBuildScriptBuilder {
    * ...
    * [postfix]
    */
-  fun addPostfix(vararg postfix: String) = withPostfix { postfix.forEach { line(it) } }
+  fun addPostfix(vararg postfix: String) = withPostfix { code(*postfix) }
   fun withPostfix(configure: GroovyBuilder.() -> Unit) = apply(postfixes, configure)
 
 

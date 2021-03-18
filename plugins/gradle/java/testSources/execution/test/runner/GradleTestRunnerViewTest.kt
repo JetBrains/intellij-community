@@ -73,7 +73,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
       .withTask("additionalTest", "Test") {
         property("testClassesDirs", "sourceSets.test.output.classesDirs")
         property("classpath", "sourceSets.test.runtimeClasspath")
-        line("jvmArgs += \"-Dprop='integ test error'\"")
+        code("jvmArgs += \"-Dprop='integ test error'\"")
       }
 
     importProject(buildScript.generate())
