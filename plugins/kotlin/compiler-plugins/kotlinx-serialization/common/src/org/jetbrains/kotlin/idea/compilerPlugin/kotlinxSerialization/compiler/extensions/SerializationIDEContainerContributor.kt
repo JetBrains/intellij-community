@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.compiler.diagnostic.SerializationPluginIDEDeclarationChecker
+import org.jetbrains.kotlinx.serialization.compiler.diagnostic.JsonFormatRedundantDiagnostic
 
 class SerializationIDEContainerContributor : StorageComponentContainerContributor {
     override fun registerModuleComponents(
@@ -16,5 +17,6 @@ class SerializationIDEContainerContributor : StorageComponentContainerContributo
         moduleDescriptor: ModuleDescriptor
     ) {
         container.useInstance(SerializationPluginIDEDeclarationChecker())
+        container.useInstance(JsonFormatRedundantDiagnostic())
     }
 }

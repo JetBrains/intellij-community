@@ -167,6 +167,11 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractProjectTemplateBuild
 import org.jetbrains.kotlin.tools.projectWizard.cli.AbstractYamlBuildFileGenerationTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractProjectTemplateNewWizardProjectImportTest
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProjectImportTest
+import org.jetbrains.kotlinx.serialization.AbstractSerializationIrBytecodeListingTest
+import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeListingTest
+import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginDiagnosticTest
+import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
+import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
