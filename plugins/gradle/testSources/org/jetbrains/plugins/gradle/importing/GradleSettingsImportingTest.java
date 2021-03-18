@@ -116,7 +116,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPluginIfCan()
         .addPostfix(
           "import org.jetbrains.gradle.ext.*",
@@ -260,7 +260,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
       .withGradleIdeaExtPluginIfCan()
       .addPostfix(
         "import org.jetbrains.gradle.ext.*",
@@ -413,7 +413,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testImportEncodingSettings() throws IOException {
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
           .addPostfix("idea {")
@@ -439,7 +439,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
           .addPostfix("idea {")
@@ -476,7 +476,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("../sub-project/src/main/java/Main.java");
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withJavaPlugin()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
@@ -506,7 +506,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withJavaPlugin()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
@@ -558,7 +558,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
 
   @Test
   public void testSavePackagePrefixAfterReOpenProject() throws IOException {
-    @Language("Groovy") String buildScript = new GradleBuildScriptBuilderEx().withJavaPlugin().generate();
+    @Language("Groovy") String buildScript = new GradleBuildScriptBuilder().withJavaPlugin().generate();
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(buildScript);
     Application application = ApplicationManager.getApplication();
@@ -585,7 +585,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withJavaPlugin()
           .addPostfix("sourceSets {")
           .addPostfix("  main.java.srcDirs += 'java'")
@@ -596,7 +596,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     }
     {
       importProject(
-        new GradleBuildScriptBuilderEx()
+        new GradleBuildScriptBuilder()
           .withJavaPlugin()
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
@@ -627,7 +627,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testPostponedImportPackagePrefix() throws Exception {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .withKotlinPlugin("1.3.50")
@@ -661,7 +661,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("src/main/java/Main.java", "");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .withKotlinPlugin("1.3.50")
@@ -682,7 +682,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
     createProjectSubFile("src/test/java/Main.java", "");
     createProjectSubFile("../subproject/src/test/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .addPostfix("sourceSets {")
@@ -706,7 +706,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .addPostfix("idea {")
@@ -724,7 +724,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   public void testChangeImportPackagePrefix() throws IOException {
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .addPostfix("idea {")
@@ -737,7 +737,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .addPostfix("idea {")
@@ -755,7 +755,7 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
   @Test
   public void testModuleTypesImport() throws Exception {
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withGradleIdeaExtPluginIfCan()
         .withJavaPlugin()
         .addPostfix(

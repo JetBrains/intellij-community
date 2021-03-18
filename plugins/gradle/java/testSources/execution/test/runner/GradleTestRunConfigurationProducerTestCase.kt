@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
@@ -145,7 +145,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test3() {}
       }
     """.trimIndent())
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = GradleBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
       .withJUnit4()
@@ -177,7 +177,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
           testArtifacts  myTestsJar
         }
       """.trimIndent())
-    val moduleBuildScript = GradleBuildScriptBuilderEx()
+    val moduleBuildScript = GradleBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
       .withGroovyPlugin()

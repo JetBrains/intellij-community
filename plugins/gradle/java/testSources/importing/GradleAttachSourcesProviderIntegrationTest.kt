@@ -16,7 +16,7 @@ import org.junit.Test
 class GradleAttachSourcesProviderIntegrationTest : GradleImportingTestCase() {
   @Test
   fun `test download sources dynamic task`() {
-    importProject(GradleBuildScriptBuilderEx()
+    importProject(GradleBuildScriptBuilder()
                     .withJavaPlugin()
                     .withIdeaPlugin()
                     .withJUnit4()

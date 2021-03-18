@@ -131,6 +131,6 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
   fun createGradleSubProject() {
     createProjectSubFile("settings.gradle", GroovyBuilder().property("rootProject.name", "'project'").generate())
-    createProjectSubFile("build.gradle", GradleBuildScriptBuilderEx().withJavaPlugin().generate())
+    createProjectSubFile("build.gradle", GradleBuildScriptBuilder().withJavaPlugin().generate())
   }
 }

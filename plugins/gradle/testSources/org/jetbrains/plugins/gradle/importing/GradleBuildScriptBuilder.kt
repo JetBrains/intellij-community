@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import java.io.File
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-open class GradleBuildScriptBuilder {
+class GradleBuildScriptBuilder {
 
   private val imports = GroovyBuilder()
   private val buildScriptPrefixes = GroovyBuilder()

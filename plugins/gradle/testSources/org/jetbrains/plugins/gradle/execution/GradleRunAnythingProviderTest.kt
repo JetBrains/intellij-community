@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
 import org.junit.Test
 
@@ -19,7 +19,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createTestJavaClass("ClassE")
     createTestJavaClass("ClassF")
     createTestJavaClass("ClassG")
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = GradleBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
     importProject(buildScript.generate())
@@ -72,11 +72,11 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test single project`() {
-    importProject(GradleBuildScriptBuilderEx().generate())
+    importProject(GradleBuildScriptBuilder().generate())
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
     }
-    importProject(GradleBuildScriptBuilderEx().withTask("my-task").generate())
+    importProject(GradleBuildScriptBuilder().withTask("my-task").generate())
     withVariantsFor("") {
       assertCollection(it, getGradleOptions(), getCommonTasks(), getCommonTasks(":"))
       assertCollection(it, "my-task", ":my-task")
@@ -96,10 +96,10 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
 
   @Test
   fun `test multi-module project`() {
-    createProjectSubFile("build.gradle", GradleBuildScriptBuilderEx().withTask("taskP").generate())
-    createProjectSubFile("module/build.gradle", GradleBuildScriptBuilderEx().withTask("taskM").generate())
-    createProjectSubFile("composite/build.gradle", GradleBuildScriptBuilderEx().withTask("taskC").generate())
-    createProjectSubFile("composite/module/build.gradle", GradleBuildScriptBuilderEx().withTask("taskCM").generate())
+    createProjectSubFile("build.gradle", GradleBuildScriptBuilder().withTask("taskP").generate())
+    createProjectSubFile("module/build.gradle", GradleBuildScriptBuilder().withTask("taskM").generate())
+    createProjectSubFile("composite/build.gradle", GradleBuildScriptBuilder().withTask("taskC").generate())
+    createProjectSubFile("composite/module/build.gradle", GradleBuildScriptBuilder().withTask("taskCM").generate())
     createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").withModule("module").withBuild("composite").generate())
     createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").withModule("module").generate())
     importProject()

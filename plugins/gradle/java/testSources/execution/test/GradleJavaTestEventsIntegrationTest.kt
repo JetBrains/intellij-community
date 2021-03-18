@@ -11,9 +11,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.jetbrains.plugins.gradle.GradleManager
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.withMavenCentral
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -89,7 +88,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                          """.trimIndent())
 
     importProject(
-      GradleBuildScriptBuilderEx()
+      GradleBuildScriptBuilder()
         .withMavenCentral()
         .applyPlugin("'java'")
         .addPostfix("dependencies {",

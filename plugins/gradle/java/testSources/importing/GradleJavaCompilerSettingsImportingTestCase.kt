@@ -38,7 +38,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     testSourceCompatibilityEnablePreview: Boolean = false,
     testTargetCompatibility: String? = null
   ): VirtualFile {
-    val buildScript = GradleBuildScriptBuilderEx()
+    val buildScript = GradleBuildScriptBuilder()
       .withJavaPlugin()
       .withPrefix {
         propertyIfNotNull("sourceCompatibility", projectSourceCompatibility)

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.util.Consumer;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilderEx;
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.importing.GroovyBuilder;
 import org.junit.Test;
 
@@ -39,7 +39,7 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
       "    }\n" +
       "}\n");
     importProject(
-      new GradleBuildScriptBuilderEx()
+      new GradleBuildScriptBuilder()
         .withJavaPlugin()
         .withPrefix((Consumer<GroovyBuilder>)it -> it
           .property("sourceCompatibility", 7)
