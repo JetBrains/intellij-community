@@ -37,6 +37,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -421,6 +422,14 @@ public final class MavenServerManager implements Disposable {
       path = new File(".").getPath();
     }
     String finalPath = path;
+    if (MavenWslUtil.tryGetWslDistributionForPath(path) != null) {
+      return new MavenIndexerWrapper(null, project) {
+        @Override
+        protected @NotNull MavenServerIndexer create() throws RemoteException {
+          return new DummyIndexer();
+        }
+      };
+    }
     return new MavenIndexerWrapper(null, project) {
       @NotNull
       @Override
