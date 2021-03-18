@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
@@ -1642,6 +1643,15 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
     myUserBounds.setLocation(x, y);
     myUserLocationSet = true;
     myPeer.setLocation(x, y);
+  }
+
+  /**
+   * Called to fit window bounds of dialog to a screen
+   * @param rect the suggested window bounds. This rect should be modified to change resulting bounds.
+   */
+  @ApiStatus.Internal
+  public void fitToScreen(Rectangle rect) {
+    ScreenUtil.fitToScreen(rect);
   }
 
   @SuppressWarnings("unused")
