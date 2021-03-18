@@ -1180,7 +1180,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("stdlibUsages", pattern = """^(.+)\.0\.kt$""".toRegex())
         }
     }
-    */
 
     testGroup("scripting-support") {
         testClass<AbstractScratchRunActionTest> {
@@ -1454,6 +1453,25 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("findUsages/kotlin", pattern = """^(.+)\.0\.kt$""".toRegex(), testPerClass = true)
             model("findUsages/java", pattern = """^(.+)\.0\.java$""".toRegex(), testPerClass = true)
             model("findUsages/propertyFiles", pattern = """^(.+)\.0\.properties$""".toRegex(), testPerClass = true)
+        }
+    }
+
+    testGroup("plugins/parcelize/parcelize-ide/tests", "plugins/parcelize/parcelize-ide/testData") {
+        testClass<AbstractParcelizeQuickFixTest> {
+            model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$".toRegex(), filenameStartsLowerCase = true)
+        }
+
+        testClass<AbstractParcelizeCheckerTest> {
+            model("checker", extension = "kt")
+        }
+    }
+
+    testGroup("plugins/kotlin-serialization/kotlin-serialization-ide/test") {
+        testClass<AbstractSerializationPluginIdeDiagnosticTest> {
+            model("diagnostics")
+        }
+        testClass<AbstractSerializationQuickFixTest> {
+            model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$".toRegex(), filenameStartsLowerCase = true)
         }
     }
 
