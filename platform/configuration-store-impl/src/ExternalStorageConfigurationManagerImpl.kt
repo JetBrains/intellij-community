@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -37,18 +38,24 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
 
   private fun updateEntitySource() {
     val value = state.enabled
-    if (!project.isDefault && WorkspaceModel.isEnabled) {
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-          entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
-            val source = entity.entitySource
-            if (source is JpsImportedEntitySource) {
-              updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
-            }
+    if (project.isDefault || !WorkspaceModel.isEnabled) return
+    val runnable = Runnable {
+      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
+        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+          val source = entity.entitySource
+          if (source is JpsImportedEntitySource) {
+            updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
           }
         }
       }
+    }
+    val app = ApplicationManager.getApplication()
+    if (!app.isDispatchThread && app.isReadAccessAllowed) {
+      app.invokeLater { app.runWriteAction(runnable) }
+    }
+    else {
+      WriteAction.runAndWait<RuntimeException> { runnable.run() }
     }
   }
 }
