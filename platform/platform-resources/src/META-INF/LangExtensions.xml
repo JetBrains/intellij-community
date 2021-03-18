@@ -735,7 +735,6 @@
     <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectConfigurator" order="first"
                                   id="PlatformProjectConfigurator"/>
 
-    <fileIconProvider implementation="com.intellij.openapi.updateSettings.impl.WhatsNewFileIconProvider"/>
     <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
     <iconProvider implementation="com.intellij.ide.NativeIconProvider" id="native"/>
     <iconProvider implementation="com.intellij.psi.impl.file.SourceRootIconProvider$DirectoryProvider" id="directory" order="last"/>
