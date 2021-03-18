@@ -354,6 +354,12 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-39262
+  public void testAssignmentExpressionInsideAndInIf() {
+    doTestByText("if undefined1 and (r := undefined2()):\n" +
+                 "    print(r)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

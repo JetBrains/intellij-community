@@ -23,21 +23,29 @@
 22(23) element: PyBinaryExpression
 23(24) element: PyBinaryExpression
 24(25,26) READ ACCESS: collapse
-25(26,27) element: PyLambdaExpression
-26(27) element: PyLambdaExpression
-27(28) WRITE ACCESS: processFunc
-28(29) element: PyPrintStatement
-29(30) element: PyListCompExpression
-30(31) element: PyReferenceExpression: methodList
-31(32,42) READ ACCESS: methodList
-32(33) element: PyTargetExpression: method
-33(34) WRITE ACCESS: method
-34(35) element: PyBinaryExpression
-35(36) READ ACCESS: method
-36(37) READ ACCESS: spacing
-37(38) READ ACCESS: processFunc
-38(39) READ ACCESS: str
-39(40) READ ACCESS: getattr
-40(41) READ ACCESS: object
-41(32,42) READ ACCESS: method
-42() element: null
+25(32) element: null. Condition: collapse:false
+26(27) element: null. Condition: collapse:true
+27(28,29) element: PyLambdaExpression
+28(32) element: null. Condition: (lambda s: " ".join(s.split())):false
+29(30,31) element: null. Condition: (lambda s: " ".join(s.split())):true
+30(35) element: null. Condition: collapse and (lambda s: " ".join(s.split())):true
+31(32) element: null. Condition: collapse and (lambda s: " ".join(s.split())):false
+32(33,34) element: PyLambdaExpression
+33(35) element: null. Condition: (lambda s: s):false
+34(35) element: null. Condition: (lambda s: s):true
+35(36) WRITE ACCESS: processFunc
+36(37) element: PyPrintStatement
+37(38) element: PyListCompExpression
+38(39) element: PyReferenceExpression: methodList
+39(40,50) READ ACCESS: methodList
+40(41) element: PyTargetExpression: method
+41(42) WRITE ACCESS: method
+42(43) element: PyBinaryExpression
+43(44) READ ACCESS: method
+44(45) READ ACCESS: spacing
+45(46) READ ACCESS: processFunc
+46(47) READ ACCESS: str
+47(48) READ ACCESS: getattr
+48(49) READ ACCESS: object
+49(40,50) READ ACCESS: method
+50() element: null
