@@ -1,0 +1,16 @@
+Index: community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java	(revision 2ec0ef15de0ba93e381c1a44d072504abf5bc27e)
++++ community/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.java	(date 1616082873181)
+@@ -382,7 +382,7 @@
+       return (boolean)MethodHandles.publicLookup().findVirtual(aClass, "hasLoadedClass", HAS_LOADED_CLASS_METHOD_TYPE)
+         .invoke(loader, className);
+     }
+-    catch (NoSuchMethodError | IllegalAccessError | IllegalAccessException ignore) {
++    catch (NoSuchMethodError | IllegalAccessError | IllegalAccessException | NoSuchMethodException ignore) {
+     }
+     catch (Throwable e) {
+       getLogger().error(e);

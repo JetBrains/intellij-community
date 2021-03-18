@@ -237,6 +237,30 @@
             <arg value="apply"/>
             <arg value="${patchJps}"/>
         </exec>
+
+        <property name="patchPluginManagerCore"
+                  value="${basedir}/patches/PluginManagerCore.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchPluginManagerCore}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchPluginManagerCore}"/>
+        </exec>
+
+        <property name="patchJBUIScale"
+                  value="${basedir}/patches/JBUIScale.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchJBUIScale}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchJBUIScale}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
