@@ -223,9 +223,9 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   public void setTitle(final String title) {
   }
 
-  // TODO: WTF?! VOID?!!!
   @Override
-  public void isResizable() {
+  public boolean isResizable() {
+    throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
   }
 
   @Override

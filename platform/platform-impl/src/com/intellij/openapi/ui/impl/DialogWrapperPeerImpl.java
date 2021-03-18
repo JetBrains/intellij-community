@@ -347,8 +347,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  public void isResizable() {
-    myDialog.isResizable();
+  public boolean isResizable() {
+    return myDialog.isResizable();
   }
 
   @Override

@@ -1602,8 +1602,8 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
   /**
    * @see JDialog#isResizable
    */
-  public void isResizable() {
-    myPeer.isResizable();
+  public boolean isResizable() {
+    return myPeer.isResizable();
   }
 
   /**
