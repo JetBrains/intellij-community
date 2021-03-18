@@ -310,13 +310,11 @@ class MarketplaceRequests : PluginInfoProvider {
           return@connect Files.newBufferedReader(file).use(parser)
         }
         catch (e: HttpRequests.HttpStatusException) {
-          LOG.warn("Cannot load data from ${url} (statusCode=${e.statusCode})")
-          LOG.debug(e)
+          LOG.warnWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
           throw e
         }
         catch (e: Exception) {
-          LOG.warn("Error reading Marketplace file: ${e.message} (file=${file} URL=${url})")
-          LOG.debug(e)
+          LOG.warnWithDebug("Error reading Marketplace file: ${e} (file=${file} URL=${url})", e)
           if (file != null && LOG.isDebugEnabled) {
             LOG.debug("File content:\n${runCatching { Files.readString(file) }.getOrElse { IoErrorText.message(e) }}")
           }

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
-  public void debug(@NonNls String message) {
+  public void debug(String message) {
     myLogger.debug(message);
   }
 
@@ -29,7 +28,7 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
-  public void debug(@NonNls String message, @Nullable Throwable t) {
+  public void debug(String message, @Nullable Throwable t) {
     myLogger.debug(message, t);
   }
 
@@ -49,23 +48,23 @@ public class Log4jBasedLogger extends Logger {
   }
 
   @Override
-  public void info(@NonNls String message) {
+  public void info(String message) {
     myLogger.info(message);
   }
 
   @Override
-  public void info(@NonNls String message, @Nullable Throwable t) {
+  public void info(String message, @Nullable Throwable t) {
     myLogger.info(message, t);
   }
 
   @Override
-  public void warn(@NonNls String message, @Nullable Throwable t) {
+  public void warn(String message, @Nullable Throwable t) {
     myLogger.warn(message, t);
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String @NotNull ... details) {
-    @NonNls String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
     myLogger.error(fullMessage, t);
   }
 

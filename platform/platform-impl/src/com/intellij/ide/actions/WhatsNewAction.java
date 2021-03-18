@@ -33,6 +33,16 @@ import java.util.Map;
 
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
+  public void update(@NotNull AnActionEvent e) {
+    boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
+    e.getPresentation().setEnabledAndVisible(available);
+    if (available) {
+      e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+      e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+    }
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     String whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
@@ -43,16 +53,6 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
     else {
       openWhatsNewFile(project, whatsNewUrl, null);
-    }
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    boolean available = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl() != null;
-    e.getPresentation().setEnabledAndVisible(available);
-    if (available) {
-      e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
-      e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 

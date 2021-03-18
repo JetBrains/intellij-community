@@ -88,7 +88,8 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun getNotificationGroup(): NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
+  fun getNotificationGroup(): NotificationGroup =
+    NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   @JvmStatic
   fun getNotificationGroupForUpdateResults(): NotificationGroup =
@@ -108,18 +109,16 @@ object UpdateChecker {
 
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
-   * (the latter action may pass customized update settings).
+   * (the latter action passes customized update settings and forces results presentation in a dialog).
    */
   @JvmStatic
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
     val settings = customSettings ?: UpdateSettings.getInstance()
-    val fromSettings = customSettings != null
-
+    val modal = customSettings != null
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings, fromSettings, true, settings, indicator, null)
-
-      override fun isConditionalModal(): Boolean = fromSettings
-      override fun shouldStartInBackground(): Boolean = !fromSettings
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !modal, modal, true, settings, indicator, null)
+      override fun isConditionalModal(): Boolean = modal
+      override fun shouldStartInBackground(): Boolean = !modal
     })
   }
 
@@ -268,7 +267,7 @@ object UpdateChecker {
             // collect latest plugins from custom repos
             val storedDescriptor = latestCustomPluginsAsMap[id]
             if (storedDescriptor == null || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0) {
-              latestCustomPluginsAsMap.put(id, descriptor)
+              latestCustomPluginsAsMap[id] = descriptor
             }
           }
         }
