@@ -27,16 +27,12 @@ class FloatingToolbarComponentImpl(
   private val actionToolbar: ActionToolbar
   private val visibilityController: VisibilityController
 
-  @Deprecated("see FloatingToolbarComponent#update")
-  override fun update() = actionToolbar.updateActionsImmediately()
-
   override fun scheduleShow() = invokeLater {
-    actionToolbar.updateActionsImmediately()
+    (actionToolbar as ActionToolbarImpl).updateActionsImmediately(true)
     visibilityController.scheduleShow()
   }
 
   override fun scheduleHide() = invokeLater {
-    actionToolbar.updateActionsImmediately()
     visibilityController.scheduleHide()
   }
 
