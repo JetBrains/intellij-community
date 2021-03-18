@@ -5,10 +5,10 @@ import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DelegatingLogger extends Logger {
-  @SuppressWarnings("NonConstantLogger") protected final Logger myDelegate;
+public abstract class DelegatingLogger<T extends Logger> extends Logger {
+  protected final T myDelegate;
 
-  protected DelegatingLogger(@NotNull Logger delegate) {
+  protected DelegatingLogger(@NotNull T delegate) {
     myDelegate = delegate;
   }
 

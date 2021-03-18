@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class MutedErrorLogger extends DelegatingLogger {
+public final class MutedErrorLogger extends DelegatingLogger<Logger> {
   private static final int EXPIRATION = Integer.getInteger("ide.muted.error.logger.expiration", 5);
   private static final int FREQUENCY = Integer.getInteger("ide.muted.error.logger.frequency", 10);
 
