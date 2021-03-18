@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.junit.runners.Parameterized
 
@@ -17,7 +18,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
 
   fun createGradleSettingsFile(vararg moduleNames: String) {
     createSettingsFile(
-      GroovyBuilder.generate {
+      groovy {
         property("rootProject.name", "'project'")
         for (moduleName in moduleNames) {
           call("include", "'$moduleName'")
