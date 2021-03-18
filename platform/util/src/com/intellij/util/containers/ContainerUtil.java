@@ -294,7 +294,7 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> iterable) {
     Iterator<? extends T> iterator = iterable.iterator();
-    HashSet<T> set = new HashSet<T>();
+    HashSet<T> set = new HashSet<>();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
@@ -654,6 +654,13 @@ public final class ContainerUtil {
     return res;
   }
 
+  /**
+   * Process both sorted lists in order defined by {@param comparator}, call {@param processor} for each element in merged list result.
+   * When equal elements occurred, then if {@param mergeEqualItems} then output only the elemen from the {@param list1} and ignore the second,
+   * else output them both in unspecified order.
+   * {@param processor} is invoked for each (output element, is the element from {@param list1}) pair.
+   * Both {@param list1} and {@param list2} must be sorted according to {@param comparator}
+   */
   public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
                                                    @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
