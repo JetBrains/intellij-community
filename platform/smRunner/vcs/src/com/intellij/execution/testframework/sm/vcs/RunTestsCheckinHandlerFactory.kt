@@ -32,6 +32,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -138,7 +139,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val executionResult = environment.state?.execute(executor, runner) ?: return
     val handler = executionResult.processHandler ?: return
     val executionConsole = executionResult.executionConsole ?: return
-    val resultsForm = executionConsole?.component as? SMTestRunnerResultsForm ?: return
+    val resultsForm = executionConsole.component as? SMTestRunnerResultsForm ?: return
 
     suspendCoroutine<Any?> { continuation ->
       resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
@@ -164,6 +165,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       while (getHistoryFile(resultsForm.historyFileName).second == null) {
         delay(timeMillis = 500)
       }
+      DumbService.getInstance(project).waitForSmartMode()
     }
   }
 
