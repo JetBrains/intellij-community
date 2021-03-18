@@ -523,9 +523,9 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         addNewIntParameterWithValue(false, 2)
     }
 
-    fun testAddNewMiddleParameterKotlin13() {
+    fun testAddNewMiddleParameterKotlinWithoutMixedArgument() {
         configureFiles()
-        withCustomCompilerOptions("// LANGUAGE_VERSION: 1.3", project, module) {
+        withCustomCompilerOptions("// COMPILER_ARGUMENTS: -XXLanguage:-MixedNamedArgumentsInTheirOwnPosition", project, module) {
             doTestWithDescriptorModification(configureFiles = false) {
                 addNewIntParameterWithValue(false, 2)
             }
