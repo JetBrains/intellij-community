@@ -1,8 +1,8 @@
 <html>
 <body>
 Reports <a href="https://www.c2.com/cgi/wiki?DoubleBraceInitialization">Double Brace Initialization</a>.
-Double brace initialization can cause memory leaks when used from a non-<code>static</code> context,
-because the anonymous <code>class</code> created will maintain a reference to the surrounding object.
+Double brace initialization can cause memory leaks when used from a non-static context,
+because the anonymous class created will maintain a reference to the surrounding object.
 It has worse performance than regular initialization because of the additional class loading required.
 It can cause <code>equals()</code> comparisons to fail, if the <code>equals()</code> method does not accept subclasses as parameter
 (see link above).
