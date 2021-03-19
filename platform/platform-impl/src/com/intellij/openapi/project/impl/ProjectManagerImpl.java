@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -363,6 +363,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       fireProjectClosing(project);
 
       app.runWriteAction(() -> {
+        removeFromOpened(project);
+
         if (project instanceof ProjectExImpl) {
           // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
           ((ProjectExImpl)project).disposeEarlyDisposable();
@@ -370,8 +372,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
             ((ProjectExImpl)project).startDispose();
           }
         }
-
-        removeFromOpened(project);
 
         fireProjectClosed(project);
 
