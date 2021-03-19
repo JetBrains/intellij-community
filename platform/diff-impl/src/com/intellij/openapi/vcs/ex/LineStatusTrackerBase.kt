@@ -106,7 +106,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   @RequiresEdt
   fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (isReleased) return
+    if (isReleased || !isInitialized) return
 
     isInitialized = false
     updateHighlighters()
