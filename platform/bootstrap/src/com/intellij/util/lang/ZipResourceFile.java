@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.Murmur3_32Hash;
 import com.intellij.util.zip.ImmutableZipEntry;
 import com.intellij.util.zip.ImmutableZipFile;
@@ -11,10 +12,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -135,7 +133,7 @@ public final class ZipResourceFile implements ResourceFile {
     if (entry == null) {
       return null;
     }
-    return new ZipFileResource(jarLoader.url, entry, zipFile);
+    return new ZipFileResource(jarLoader, entry, zipFile);
   }
 
   private static final class ZipFileResource implements Resource {
@@ -143,11 +141,13 @@ public final class ZipResourceFile implements ResourceFile {
     private URL url;
     private final ImmutableZipEntry entry;
     private final ImmutableZipFile file;
+    private @Nullable("if mimicJarUrlConnection equals to false") final Path path;
 
-    private ZipFileResource(@NotNull URL baseUrl, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
-      this.baseUrl = baseUrl;
+    private ZipFileResource(@NotNull JarLoader jarLoader, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
+      this.baseUrl = jarLoader.url;
       this.entry = entry;
       this.file = file;
+      this.path = jarLoader.configuration.mimicJarUrlConnection ? jarLoader.path : null;
     }
 
     @Override
@@ -159,8 +159,9 @@ public final class ZipResourceFile implements ResourceFile {
     public @NotNull URL getURL() {
       URL result = url;
       if (result == null) {
+        URLStreamHandler handler = path == null ? new MyUrlStreamHandler(entry, file) : new MyJarUrlStreamHandler(entry, file, path);
         try {
-          result = new URL(baseUrl, entry.getName(), new MyURLStreamHandler(entry, file));
+          result = new URL(baseUrl, entry.getName(), handler);
         }
         catch (MalformedURLException e) {
           throw new RuntimeException(e);
@@ -181,27 +182,46 @@ public final class ZipResourceFile implements ResourceFile {
     }
   }
 
-  private static final class MyURLStreamHandler extends URLStreamHandler {
+  private static final class MyUrlStreamHandler extends URLStreamHandler {
     private @NotNull final ImmutableZipEntry entry;
     private @NotNull final ImmutableZipFile file;
 
-    private MyURLStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
+    private MyUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
       this.entry = entry;
       this.file = file;
     }
 
     @Override
-    protected URLConnection openConnection(URL url) {
-      return new MyURLConnection(url, entry, file);
+    protected URLConnection openConnection(URL url) throws MalformedURLException {
+      return new MyUrlConnection(url, entry, file);
     }
   }
 
-  private static final class MyURLConnection extends URLConnection {
+  private static final class MyJarUrlStreamHandler extends URLStreamHandler {
+    private @NotNull final ImmutableZipEntry entry;
+    private @NotNull final ImmutableZipFile file;
+    private @NotNull final Path path;
+
+    private MyJarUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file, @NotNull Path path) {
+      this.entry = entry;
+      this.file = file;
+      this.path = path;
+    }
+
+    @Override
+    protected URLConnection openConnection(URL url) throws MalformedURLException {
+      return new MyJarUrlConnection(url, entry, file, path);
+    }
+  }
+
+  private static final class MyUrlConnection extends URLConnection {
     private final ImmutableZipEntry entry;
     private final ImmutableZipFile file;
     private byte[] data;
 
-    MyURLConnection(@NotNull URL url, @NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
+    MyUrlConnection(@NotNull URL url,
+                    @NotNull ImmutableZipEntry entry,
+                    @NotNull ImmutableZipFile file) {
       super(url);
       this.entry = entry;
       this.file = file;
@@ -233,6 +253,57 @@ public final class ZipResourceFile implements ResourceFile {
     @Override
     public int getContentLength() {
       return entry.getUncompressedSize();
+    }
+  }
+
+  private static final class MyJarUrlConnection extends JarURLConnection {
+    private final ImmutableZipEntry entry;
+    private final ImmutableZipFile file;
+    private final Path path;
+    private byte[] data;
+
+    MyJarUrlConnection(@NotNull URL url,
+                    @NotNull ImmutableZipEntry entry,
+                    @NotNull ImmutableZipFile file,
+                    @NotNull Path path) throws MalformedURLException {
+      super(url);
+      this.entry = entry;
+      this.file = file;
+      this.path = path;
+    }
+
+    private byte[] getData() throws IOException {
+      byte[] result = data;
+      if (result == null) {
+        result = entry.getData(file);
+        data = result;
+      }
+      return result;
+    }
+
+    @Override
+    public void connect() throws IOException {
+    }
+
+    @Override
+    public Object getContent() throws IOException {
+      return getData();
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException {
+      return entry.getInputStream(file);
+    }
+
+    @Override
+    public int getContentLength() {
+      return entry.getUncompressedSize();
+    }
+
+    @Override
+    public JarFile getJarFile() throws IOException {
+      Logger.getInstance(ZipResourceFile.class).warn("Do not use URL connection as JarURLConnection");
+      return new JarFile(path.toFile());
     }
   }
 }
