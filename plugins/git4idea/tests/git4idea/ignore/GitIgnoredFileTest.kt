@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveComponentManager
@@ -94,6 +94,24 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
          # Default ignored files
          /$SHELF/
          /${workspaceFile.fileName}
+     """)
+  }
+
+  fun `test generation default gitignore content in config dir`() {
+    val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
+
+    GitIgnoreInStoreDirGenerator(project).run()
+
+    assertGitignoreValid(gitIgnore,
+                         """
+        # Default ignored files
+        /shelf/
+        /workspace.xml
+        # Datasource local storage ignored files
+        /dataSources/
+        /dataSources.local.xml
+        # Editor-based HTTP Client requests
+        /httpRequests/
      """)
   }
 
