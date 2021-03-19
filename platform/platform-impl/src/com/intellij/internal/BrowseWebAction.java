@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.jcef.JBCefApp;
 import org.jetbrains.annotations.NotNull;
 
-public class BrowseWebAction extends AnAction implements DumbAware {
+final class BrowseWebAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(e.getProject() != null && JBCefApp.isSupported());
