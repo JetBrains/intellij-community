@@ -21,11 +21,9 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,7 +61,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
-  private final AtomicReference<Pair<VirtualFile, WidgetState>> myUpdateInfoRef = new AtomicReference<>();
+  private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
   private VirtualFile myLastUpdatedFile;
   private WidgetState mySchemaWidgetState;
@@ -133,14 +131,11 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   public void update(@Nullable Runnable finishUpdate) {
-    myUpdateInfoRef.getAndSet(null);
+    mySuppressInfoRef.set(null);
     super.update(finishUpdate);
   }
 
-  private static WidgetStatus getWidgetStatus(@NotNull Project project, @Nullable VirtualFile file) {
-    if (file == null) {
-      return WidgetStatus.DISABLED;
-    }
+  private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {
     List<JsonSchemaEnabler> enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensionList();
     if (!ContainerUtil.exists(enablers, e -> e.isEnabledForFile(file, project) && e.shouldShowSwitcherWidget(file))) {
       return WidgetStatus.DISABLED;
@@ -157,18 +152,24 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
-    Pair<VirtualFile, WidgetState> updateInfo = myUpdateInfoRef.getAndSet(null);
+    Pair<VirtualFile, Boolean> suppressInfo = mySuppressInfoRef.getAndSet(null);
     WidgetState schemaWidgetState = mySchemaWidgetState;
     mySchemaWidgetState = null;
     VirtualFile lastUpdatedFile = myLastUpdatedFile;
     myLastUpdatedFile = file;
+    if (myCurrentProgress != null && !myCurrentProgress.isCanceled()) {
+      myCurrentProgress.cancel();
+    }
 
+    if (file == null) {
+      return WidgetState.HIDDEN;
+    }
     WidgetStatus status = getWidgetStatus(myProject, file);
     if (status == WidgetStatus.DISABLED) {
       return WidgetState.HIDDEN;
     }
 
-    @SuppressWarnings("ConstantConditions") FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
     Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
     boolean isJsonFile = language instanceof JsonLanguage;
 
@@ -177,12 +178,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     if (status == WidgetStatus.MAYBE_SUPPRESSED) {
-      if (updateInfo == null || !Comparing.equal(updateInfo.first, file)) {
-        if (myCurrentProgress != null) {
-          myCurrentProgress.cancel();
-        }
+      if (suppressInfo == null || !Comparing.equal(suppressInfo.first, file)) {
         myCurrentProgress = new EmptyProgressIndicator();
-        scheduleSuppressCheck(file, isJsonFile, myCurrentProgress);
+        scheduleSuppressCheck(file, myCurrentProgress);
 
         // show 'loading' only when switching between files and previous state was not hidden, otherwise the widget will "jump"
         if (!Comparing.equal(lastUpdatedFile, file) && schemaWidgetState != null && schemaWidgetState != WidgetState.HIDDEN) {
@@ -196,9 +194,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
           return WidgetState.NO_CHANGE;
         }
       }
-      else {
-        mySchemaWidgetState = updateInfo.second;
-        return updateInfo.second;
+      else if (Boolean.TRUE == suppressInfo.second) {
+        return WidgetState.HIDDEN;
       }
     }
 
@@ -292,24 +289,21 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                              true);
   }
 
-  private void scheduleSuppressCheck(@NotNull VirtualFile file, boolean isJsonFile, @NotNull ProgressIndicator globalProgress) {
+  private void scheduleSuppressCheck(@NotNull VirtualFile file, @NotNull ProgressIndicator globalProgress) {
     Runnable update = () -> {
-      WidgetState state;
       if (DumbService.getInstance(myProject).isDumb()) {
-        state = getDumbModeState(isJsonFile);
-      }
-      else if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.suppressSwitcherWidget(file, myProject))) {
-        state = WidgetState.HIDDEN;
+        // Suppress check should be rescheduled when dumb mode ends.
+        mySuppressInfoRef.set(null);
       }
       else {
-        state = doGetWidgetState(file, isJsonFile);
+        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        mySuppressInfoRef.set(Pair.create(file, suppress));
       }
-      myUpdateInfoRef.getAndSet(Pair.create(file, state));
       super.update(null);
     };
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // give tests a chance to change the model state before the task is run
+      // Give tests a chance to check the widget state before the task is run (see EditorBasedStatusBarPopup#updateInTests())
       ApplicationManager.getApplication().invokeLater(update);
     }
     else {
