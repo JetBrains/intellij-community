@@ -121,7 +121,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
       ProgressManager.checkCanceled()
       val name = fileOrDir.name
       if (RegexUtil.matchAnyPart(parts, name)) {
-        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(project, name, projectScope) }) {
+        for (file in runReadAction { FilenameIndex.getVirtualFilesByName(name, projectScope) }) {
           if (file.isValid && RegexUtil.matchAllParts(parts, file.path)) {
             files.add(file)
           }

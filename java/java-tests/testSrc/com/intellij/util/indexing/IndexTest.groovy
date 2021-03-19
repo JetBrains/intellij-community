@@ -57,11 +57,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.psi.impl.source.JavaFileElementType
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.impl.source.PsiJavaFileImpl
+import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
 import com.intellij.psi.stubs.*
 import com.intellij.psi.util.CachedValue
@@ -1184,9 +1180,9 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     VirtualFile src = main.parent
 
     def scope = GlobalSearchScope.allScope(getProject())
-    assertEquals(foo, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "a.java", scope)))
-    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "main", scope)))
-    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName(getProject(), "src", scope)))
+    assertEquals(foo, assertOneElement(FilenameIndex.getVirtualFilesByName("a.java", scope)))
+    assertEquals(main, assertOneElement(FilenameIndex.getVirtualFilesByName( "main", scope)))
+    assertEquals(src, assertOneElement(FilenameIndex.getVirtualFilesByName( "src", scope)))
 
     // content-less indexes has been passed
     // now all directories are indexed

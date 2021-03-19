@@ -170,7 +170,7 @@ final class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
   @NotNull
   private static Collection<VirtualFile> getFilesByNameFromIndex(@NotNull String fileName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     ThrowableComputable<Collection<VirtualFile>, RuntimeException> query =
-      () -> FilenameIndex.getVirtualFilesByName(project, fileName, scope);
+      () -> FilenameIndex.getVirtualFilesByName(fileName, scope);
     if (DumbService.isDumb(project)) {
       return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(query);
     }

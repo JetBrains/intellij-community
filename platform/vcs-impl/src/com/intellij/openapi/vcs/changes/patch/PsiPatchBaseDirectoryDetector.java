@@ -35,6 +35,6 @@ public class PsiPatchBaseDirectoryDetector extends PatchBaseDirectoryDetector {
 
   @Override
   public Collection<VirtualFile> findFiles(final String fileName) {
-    return FilenameIndex.getVirtualFilesByName(myProject, fileName, GlobalSearchScope.projectScope(myProject));
+    return FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.projectScope(myProject));
   }
 }

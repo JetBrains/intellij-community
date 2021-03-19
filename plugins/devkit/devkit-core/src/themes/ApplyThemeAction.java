@@ -125,7 +125,7 @@ public class ApplyThemeAction extends DumbAwareAction {
   private static String findAbsoluteFilePathByRelativePath(Module module, String relativePath, String defaultResult) {
     String filename = new File(relativePath).getName();
     GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
-    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(module.getProject(), filename, moduleScope);
+    Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(filename, moduleScope);
     for (VirtualFile file : filesByName) {
       String path = file.getPath();
       if (path.endsWith(relativePath) || path.endsWith(relativePath.replaceAll("/", "\\"))) {

@@ -61,7 +61,7 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   private fun getAllAvailableVersionClasses(): Collection<VirtualFile> =
-    FilenameIndex.getVirtualFilesByName(project, "MultiReleaseClass.class", scope)
+    FilenameIndex.getVirtualFilesByName("MultiReleaseClass.class", scope)
 
   private fun assertUnversioned(elements: List<PsiElement?>) {
     assertThat(elements).hasSize(1)

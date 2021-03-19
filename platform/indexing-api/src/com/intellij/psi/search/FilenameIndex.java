@@ -44,8 +44,17 @@ public final class FilenameIndex {
     FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 
+  /**
+   * Use {@link FilenameIndex#getVirtualFilesByName(String, GlobalSearchScope)}
+   */
+  @Deprecated
   @NotNull
   public static Collection<VirtualFile> getVirtualFilesByName(final Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+    return getVirtualFilesByName(name, scope);
+  }
+
+  @NotNull
+  public static Collection<VirtualFile> getVirtualFilesByName(@NotNull String name, @NotNull GlobalSearchScope scope) {
     return getVirtualFilesByName(name, scope, null);
   }
 

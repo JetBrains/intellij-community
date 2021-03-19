@@ -554,7 +554,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (Boolean.TRUE == ideaPlugin.getImplementationDetail().getValue()) return;
 
     Collection<VirtualFile> pluginIconFiles =
-      FilenameIndex.getVirtualFilesByName(module.getProject(), PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
+      FilenameIndex.getVirtualFilesByName(PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
     if (pluginIconFiles.isEmpty()) {
       holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
                            DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
