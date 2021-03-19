@@ -26,12 +26,6 @@ enum class LCFlags {
    */
   fill, fillX, fillY,
 
-  /**
-   * This option allows to toggle default state (true) for layout constraints that we use to better alignment on macOS
-   * where (text fields, checkboxes, buttons and so on) have focus ring that drawn outside of component border.
-   * In case ones mixes several panels with complex layout inside visual padding may cause truncated focus rings.
-   */
-  noVisualPadding,
   debug
 }
 
