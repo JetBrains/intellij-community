@@ -18,22 +18,27 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 
-class EclipseProjectsDetector {
+abstract class EclipseProjectsDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectsDetector.class);
 
+  protected abstract void collectProjectPaths(List<String> projects) throws IOException;
+
   public static void detectProjects(Runnable callback) {
-    Callable<List<String>> collector;
+    EclipseProjectsDetector detector;
     if (SystemInfo.isMac) {
-      collector = new MacEclipseProjectsCollector();
+      detector = new MacEclipseProjectsDetector();
+    }
+    else if (SystemInfo.isWindows) {
+      detector = new WinEclipseProjectsDetector();
     }
     else {
       return;
     }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        List<String> projects = collector.call();
+        List<String> projects = new ArrayList<>();
+        detector.collectProjectPaths(projects);
         if (projects.isEmpty()) return;
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         ProjectGroup group = new ProjectGroup("Eclipse Projects");
@@ -45,17 +50,6 @@ class EclipseProjectsDetector {
         LOG.error(e);
       }
     });
-  }
-}
-
-class MacEclipseProjectsCollector implements Callable<List<String>> {
-  @Override
-  public List<String> call() throws IOException {
-    String path = "/Applications/Eclipse.app/Contents/Eclipse/configuration/.settings/org.eclipse.ui.ide.prefs";
-    List<String> projects = new ArrayList<>();
-    collectProjects(projects, Path.of(path));
-    collectProjects(projects, Path.of(System.getProperty("user.home"), path));
-    return projects;
   }
 
   static void collectProjects(List<String> projects, Path path) throws IOException {
@@ -89,4 +83,26 @@ class MacEclipseProjectsCollector implements Callable<List<String>> {
     }
     return projects;
   }
+
+  private static class MacEclipseProjectsDetector extends EclipseProjectsDetector {
+    @Override
+    public void collectProjectPaths(List<String> projects) throws IOException {
+      String path = "/Applications/Eclipse.app/Contents/Eclipse/configuration/.settings/org.eclipse.ui.ide.prefs";
+      collectProjects(projects, Path.of(path));
+      collectProjects(projects, Path.of(System.getProperty("user.home"), path));
+    }
+  }
+
+  private static class WinEclipseProjectsDetector extends EclipseProjectsDetector {
+    @Override
+    public void collectProjectPaths(List<String> projects) throws IOException {
+      String[] folders = Path.of(System.getProperty("user.home"), "eclipse").toFile().list();
+      if (folders != null) {
+        for (String folder : folders) {
+          collectProjects(projects, Path.of(folder));
+        }
+      }
+    }
+  }
 }
+

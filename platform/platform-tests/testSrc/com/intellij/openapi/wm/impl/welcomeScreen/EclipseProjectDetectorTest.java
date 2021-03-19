@@ -8,7 +8,7 @@ import java.io.IOException;
 public class EclipseProjectDetectorTest extends TestCase {
 
   public void testWorkspaces() throws IOException {
-    String[] workspaces = MacEclipseProjectsCollector.getWorkspaces(
+    String[] workspaces = EclipseProjectsDetector.getWorkspaces(
       "RECENT_WORKSPACES=~/eclipse-workspace/multiproject-workspace\\n~/eclipse-workspace/spring-crud-app\\n~/eclipse-workspace\n" +
       "RECENT_WORKSPACES_PROTOCOL=3\n" +
       "SHOW_RECENT_WORKSPACES=true\n" +
