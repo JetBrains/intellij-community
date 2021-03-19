@@ -5,15 +5,17 @@ Reports method references mapped to the <code>Comparator</code> interface which 
 Some method references like <code>Integer::max</code> can be mapped to the <code>Comparator</code> interface.
 However using them as <code>Comparator</code> is meaningless and the result might be unpredictable.
 </p>
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
+  ArrayList&lt;Integer&gt; ints = foo();
   ints.sort(Math::min);
 </pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
+  ArrayList&lt;Integer&gt; ints = foo();
   ints.sort(Comparator.reverseOrder());
 </pre>
+<!-- tooltip end -->
 <p><small>New in 2016.3</small></p>
 </body>
 </html>

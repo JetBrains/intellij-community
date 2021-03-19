@@ -3,15 +3,19 @@
 Reports cases where the static <code>Integer.compare()</code> method or similar methods can be used
 instead of more verbose or less efficient constructs.
 If <code>x</code> and <code>y</code> are already boxed integers, then <code>x.compareTo(y)</code> is suggested.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
-  int z = x > y ? 1 : x < y ? -1 : 0;
+  public int compare(int x, int y) {
+    return x > y ? 1 : x < y ? -1 : 0;
+  }
 </pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
-  int z = Integer.compare(x, y);
+  public int compare(int x, int y) {
+    return Integer.compare(x, y);
+  }
 </pre>
+<!-- tooltip end -->
 <p>
   <code>Double.compare</code> and <code>Float.compare</code> methods appeared in Java 1.4, methods for other primitive types
   are available since Java 1.7.

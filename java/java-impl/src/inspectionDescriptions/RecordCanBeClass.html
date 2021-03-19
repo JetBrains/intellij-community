@@ -1,6 +1,6 @@
 <html>
 <body>
-Suggests to replace a record by an ordinary <code>class</code>.
+Suggests to replace a record by an ordinary class.
 This inspection makes it possible to move a Java record to a codebase using an earlier Java version.
 <p>
   Note that the resulting class is not completely equivalent to the original record:
@@ -20,7 +20,7 @@ This inspection makes it possible to move a Java record to a codebase using an e
 <pre>
   record Point(int x, int y) {}
 </pre>
-<p>This record will be converted to:</p>
+<p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
   final class Point {
     private final int x;
@@ -57,7 +57,7 @@ This inspection makes it possible to move a Java record to a codebase using an e
     }
   }
 </pre>
-<p>This inspection only applies from language level 15 preview.</p>
+<p>This inspection only reports if the language level of the project or module is 15 preview or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

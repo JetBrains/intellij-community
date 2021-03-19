@@ -3,7 +3,6 @@
 Reports cases where a <code>Comparator</code> is defined as a lambda expression which could be expressed using
 methods like <code>Comparator.comparing()</code>.
 This inspection also reports chain comparisons which can be replaced by <code>Comparator.thenComparing()</code>.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
   myList.sort((person1, person2) -> person1.getName().compareTo(person2.getName()));
@@ -23,6 +22,7 @@ This inspection also reports chain comparisons which can be replaced by <code>Co
                          .thenComparing(Person::second)
                          .thenComparingInt(Person::third));
 </pre>
+<!-- tooltip end -->
 <p><small>New in 2016.3</small></p>
 </body>
 </html>

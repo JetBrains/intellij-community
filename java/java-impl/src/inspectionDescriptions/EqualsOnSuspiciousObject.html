@@ -3,13 +3,13 @@
 Reports when <code>equals()</code> is called on specific classes like <code>StringBuilder</code> or <code>StringBuffer</code>.
 The <code>equals()</code> method is not overridden in these classes, so may return <code>false</code> even when the contents of two objects are the same.
 If reference equality is intended, it's better to use <code>==</code> to avoid confusion.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
   public void test(StringBuilder sb1, StringBuilder sb2) {
     boolean result = sb1.equals(sb2); // Suspicious
   }
 </pre>
+<!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>
 </html>

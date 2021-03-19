@@ -2,11 +2,10 @@
 <body>
 Reports all methods with variable arity which can be annotated as <code>@SafeVarargs</code>.
 <code>@SafeVarargs</code> annotation suppresses unchecked warnings about parameterized array creation at call sites.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
   public class Foo&lt;T&gt; {
-    private List&lt;T&gt; list = new ArrayList<>();
+    private List&lt;T&gt; list = new ArrayList&lt;&gt;();
 
     public final void safeVarargs(T... elements) {
       Collections.addAll(list, elements);
@@ -15,8 +14,8 @@ Reports all methods with variable arity which can be annotated as <code>@SafeVar
 </pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
-  public class Foo&ltT&gt {
-    private List&ltT&gt list = new ArrayList<>();
+  public class Foo&lt;T&gt; {
+    private List&lt;T&gt; list = new ArrayList&lt;&gt;();
 
     @SafeVarargs
     public final void safeVarargs(T... elements) {
@@ -27,5 +26,6 @@ Reports all methods with variable arity which can be annotated as <code>@SafeVar
 <p>
   This annotation is not supported under Java 1.6 or earlier JVMs.
 </p>
+<!-- tooltip end -->
 </body>
 </html>

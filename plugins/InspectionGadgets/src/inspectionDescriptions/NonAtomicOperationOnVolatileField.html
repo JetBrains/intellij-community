@@ -6,7 +6,6 @@ the value is used to update the field. It is possible for the value of the
 field to change between the read and the write, possibly invalidating the operation.
 The non-atomic operation can be avoided by surrounding it with a <code>synchronized</code> block or
 by making use of one of the classes from the <code>java.util.concurrent.atomic</code> package.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
   private volatile int v = 1;
@@ -15,5 +14,6 @@ by making use of one of the classes from the <code>java.util.concurrent.atomic</
     v = 2 * this.v;
   }
 </pre>
+<!-- tooltip end -->
 </body>
 </html>

@@ -2,21 +2,19 @@
 <body>
 Reports method calls to parameterized collections, where actual argument type does not
 correspond to the collection's elements type.
-<!-- tooltip end -->
-<p>For example if you have the following code:</p>
+<p>Example:</p>
 <pre>
   List&lt;Integer&gt; list = getListOfElements();
-  list.remove("");
+  list.remove(""); // remove is highlighted
 </pre>
-<p>
-  the call to <code>remove()</code> will be highlighted.
+<!-- tooltip end -->
 <p>
   The option '<b>Report suspicious but possibly correct method calls</b>' makes it possible to ignore
   potentially correct code, like this:
 </p>
 <pre>
   Number number = new Integer(0);
-  list.remove(number));
+  list.remove(number);
 </pre>
 </body>
 </html>

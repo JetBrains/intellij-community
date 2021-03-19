@@ -4,10 +4,10 @@ Reports calls to <code>divide()</code> or <code>setScale()</code> without a roun
 Such calls can lead to an <code>ArithmeticException</code> when the exact value cannot be represented in the result
 (e.g. because it has a non-terminating decimal expansion).
 Specifying a rounding mode prevents the <code>ArithmeticException</code>.
-<!-- tooltip end -->
 <p>Example:</p>
 <pre>
   BigDecimal.valueOf(1).divide(BigDecimal.valueOf(3));
 </pre>
+<!-- tooltip end -->
 </body>
 </html>
