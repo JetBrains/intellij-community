@@ -385,7 +385,7 @@ public final class BuildManager implements Disposable {
       ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
         .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(getLocalBuildSystemDirectory())), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
-      if (Registry.is("compiler.build.data.clean.unused.wsl")) {
+      if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
         WslDistributionManager.getInstance().getInstalledDistributions().forEach(distribution -> {
           Path wslBuildSystemDirectory = getWslBuildSystemDirectory(distribution);
           if (wslBuildSystemDirectory != null) {
