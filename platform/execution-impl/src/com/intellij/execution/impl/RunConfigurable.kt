@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.configurations.ConfigurationTypeUtil.isEditableInDumbMode
 import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursively
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -929,6 +930,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     configuration.name = createUniqueName(typeNode, suggestName(configuration), CONFIGURATION, TEMPORARY_CONFIGURATION)
     (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
+    RunConfigurationOptionUsagesCollector.logAddNew(project, factory.type.id)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -1013,7 +1015,9 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
           continue
 
         if (node.userObject is SingleConfigurationConfigurable<*>) {
-          (node.userObject as SingleConfigurationConfigurable<*>).disposeUIResources()
+          val configurable = node.userObject as SingleConfigurationConfigurable<*>
+          RunConfigurationOptionUsagesCollector.logRemove(project, configurable.configuration.type.id)
+          configurable.disposeUIResources()
         }
 
         nodeIndexToSelect = parent.getIndex(node)
