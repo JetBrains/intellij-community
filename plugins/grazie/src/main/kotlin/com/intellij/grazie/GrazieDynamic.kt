@@ -69,11 +69,14 @@ internal object GrazieDynamic : DynamicPluginListener {
     }
 
   fun loadLang(lang: Lang): Language? {
-    lang.remote.langsClasses.forEach { className ->
+    for (className in lang.remote.langsClasses) {
       try {
         Languages.getOrAddLanguageByClassName("org.languagetool.language.$className")
-      } catch (e: RuntimeException) {
-        if (e.cause !is ClassNotFoundException) throw e
+      }
+      catch (e: RuntimeException) {
+        if (e.cause !is ClassNotFoundException) {
+          throw e
+        }
       }
     }
     return Languages.get().find { it::class.java.simpleName == lang.className }
