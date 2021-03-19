@@ -40,6 +40,7 @@ import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import training.util.findLanguageByID
 import training.util.isLearningProject
+import training.util.learningToolWindow
 import java.io.IOException
 
 internal object OpenLessonActivities {
@@ -294,7 +295,7 @@ internal object OpenLessonActivities {
   }
 
   private fun showLearnPanel(project: Project) {
-    ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.show()
+    learningToolWindow(project)?.show()
   }
 
   @RequiresEdt

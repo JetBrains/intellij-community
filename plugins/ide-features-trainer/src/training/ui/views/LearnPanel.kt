@@ -192,6 +192,10 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     }
   }
 
+  fun focusCurrentMessage() {
+    scrollToMessage(lessonMessagePane.getCurrentMessageRectangle())
+  }
+
   private fun scrollToMessage(needToShow: Rectangle?) {
     if (needToShow == null) return
 
