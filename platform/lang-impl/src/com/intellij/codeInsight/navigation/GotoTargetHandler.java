@@ -11,6 +11,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -140,10 +141,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         if (value instanceof AdditionalAction) {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-        PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
-        return SlowOperations.allowSlowOperations(
-          () -> renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        );
+        PsiElementListCellRenderer<?> renderer = getRenderer(value, gotoData);
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+          return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
       }
     }).
       setItemsChosenCallback(selectedElements -> {

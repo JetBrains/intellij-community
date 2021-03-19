@@ -11,13 +11,19 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public final class SlowOperations {
-
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
+
+  public static final String ACTION_UPDATE = "action.update";
+  public static final String ACTION_PERFORM = "action.perform";
+  public static final String RENDERING = "rendering";
+  public static final String GENERIC = "generic";
+
   private static final Set<String> ourReportedTraces = new HashSet<>();
   private static final String[] misbehavingFrames = {
     "org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler",
@@ -26,9 +32,8 @@ public final class SlowOperations {
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
   private static final boolean ourAlwaysAllow = System.getenv("TEAMCITY_VERSION") != null ||
-                                                ApplicationManager.getApplication().isUnitTestMode() ||
-                                                !ApplicationManager.getApplication().isInternal();
-  private static long ourAllowanceCount;
+                                                ApplicationManager.getApplication().isUnitTestMode();
+  private static Frame ourStack;
 
   private SlowOperations() {}
 
@@ -55,9 +60,14 @@ public final class SlowOperations {
     }
     Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() ||
-        ourAllowanceCount > 0 ||
-        application.isWriteAccessAllowed()) {
+        application.isWriteAccessAllowed() ||
+        ourStack == null && !Registry.is("ide.slow.operations.assertion.other")) {
       return;
+    }
+    for (Frame frame = ourStack; frame != null; frame = frame.parent) {
+      if (!Registry.is("ide.slow.operations.assertion." + frame.activity, true)) {
+        return;
+      }
     }
     String stackTrace = ExceptionUtil.currentStackTrace();
     if (ContainerUtil.or(misbehavingFrames, stackTrace::contains) || !ourReportedTraces.add(stackTrace)) {
@@ -67,30 +77,45 @@ public final class SlowOperations {
   }
 
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try (AccessToken ignore = allowSlowOperations("generic")) {
+    try (AccessToken ignore = allowSlowOperations(GENERIC)) {
       return computable.compute();
     }
   }
 
   public static <E extends Throwable> void allowSlowOperations(@NotNull ThrowableRunnable<E> runnable) throws E {
-    try (AccessToken ignore = allowSlowOperations("generic")) {
+    try (AccessToken ignore = allowSlowOperations(GENERIC)) {
       runnable.run();
     }
   }
 
-  /** @noinspection unused*/
   @NotNull
   public static AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
     if (ourAlwaysAllow || !EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
-    ourAllowanceCount++;
+    Frame prev = ourStack;
+    ourStack = new Frame(activityName, prev);
     return new AccessToken() {
       @Override
       public void finish() {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourAllowanceCount--;
+        ourStack = prev;
       }
     };
+  }
+
+  private static class Frame {
+    final String activity;
+    final Frame parent;
+
+    Frame(@NotNull String activity, @Nullable Frame parent) {
+      this.activity = activity;
+      this.parent = parent;
+    }
+
+    @Override
+    public String toString() {
+      return activity;
+    }
   }
 }

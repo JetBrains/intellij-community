@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -168,11 +169,9 @@ public final class ActionUtil {
         beforeActionPerformed
         ? () -> action.beforeActionPerformedUpdate(e)
         : () -> action.update(e);
-      if (!beforeActionPerformed && Registry.is("actionSystem.update.actions.async")) {
+      boolean isLikeUpdate = !beforeActionPerformed && Registry.is("actionSystem.update.actions.async");
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(isLikeUpdate ? SlowOperations.ACTION_UPDATE : SlowOperations.ACTION_PERFORM)) {
         runnable.run();
-      }
-      else {
-        SlowOperations.allowSlowOperations(runnable);
       }
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, !allowed && presentation.isEnabled());
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, !allowed && presentation.isVisible());
@@ -276,7 +275,9 @@ public final class ActionUtil {
 
   public static void performActionDumbAware(AnAction action, AnActionEvent e) {
     try {
-      SlowOperations.allowSlowOperations(() -> action.actionPerformed(e));
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        action.actionPerformed(e);
+      }
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
