@@ -314,7 +314,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     final PluginId id = actionToPluginId.get(actionManager.getId(rootAction));
     if (id != null) {
       final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
-      if (plugin != null && !plugin.getName().equals("IDEA CORE")) {
+      if (plugin != null && !plugin.getName().equals(PluginManagerCore.SPECIAL_IDEA_PLUGIN_ID.getIdString())) {
         return PathUtil.getFileName(plugin.getPluginPath().toString());
       }
     }

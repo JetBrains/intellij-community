@@ -74,7 +74,7 @@ public final class PluginManagerCore {
 
   private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
 
-  private static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
+  public static final PluginId SPECIAL_IDEA_PLUGIN_ID = PluginId.getId("IDEA CORE");
 
   static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
