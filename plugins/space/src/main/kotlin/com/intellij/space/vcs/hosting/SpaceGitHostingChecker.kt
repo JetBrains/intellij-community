@@ -14,27 +14,35 @@ internal class SpaceGitHostingChecker {
     private const val SPACE_HOSTING_RESPONSE_CONTENT = "JetBrains Space - VCS hosting"
   }
 
-  private val httpClient: HttpClient = HttpClient()
-
   suspend fun check(remotes: Set<GitRemote>): Boolean {
-    for (remote in remotes) {
-      try {
-        val url = remote.firstUrl ?: continue
-        val hosting = GitHostingUrlUtil.getUriFromRemoteUrl(url) ?: continue
-        val port = hosting.port.takeIf { it != -1 } ?: URLProtocol.HTTPS.defaultPort
-        val urlToCheck = URLBuilder(protocol = URLProtocol.HTTPS, host = hosting.host, port = port).build()
-        val isSpaceRepo = httpClient.get<String>(urlToCheck).contains(SPACE_HOSTING_RESPONSE_CONTENT)
-        if (isSpaceRepo) {
-          return true
+    try {
+      HttpClient().use { httpClient ->
+        for (remote in remotes) {
+          try {
+            val url = remote.firstUrl ?: continue
+            val hosting = GitHostingUrlUtil.getUriFromRemoteUrl(url) ?: continue
+            val port = hosting.port.takeIf { it != -1 } ?: URLProtocol.HTTPS.defaultPort
+            val urlToCheck = URLBuilder(protocol = URLProtocol.HTTPS, host = hosting.host, port = port).build()
+            val isSpaceRepo = httpClient.get<String>(urlToCheck).contains(SPACE_HOSTING_RESPONSE_CONTENT)
+            if (isSpaceRepo) {
+              return true
+            }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (th: Throwable) {
+            // continue checking
+          }
         }
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (th: Throwable) {
-        // continue checking
+        return false
       }
     }
-    return false
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (th: Throwable) {
+      return false
+    }
   }
 }
