@@ -58,7 +58,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static boolean isAvailable() {
-    return Boolean.getBoolean("whats.new.notification");
+    return ApplicationInfoEx.getInstanceEx().isWhatsNewEmbeddable() || Boolean.getBoolean("whats.new.notification");
   }
 
   @Contract("_, null, null -> fail")
