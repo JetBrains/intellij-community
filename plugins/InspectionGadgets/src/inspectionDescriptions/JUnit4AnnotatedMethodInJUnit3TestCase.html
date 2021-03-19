@@ -11,14 +11,14 @@ confusing and can lead to problems running the tests.
       public void wouldBeIgnored() {}
   
       @Test   //name starts from "test"
-      @Ignore //thus would be executed despite of @Ignore annotation
+      @Ignore //thus would be executed despite @Ignore annotation
       public void testWouldBeExecuted() {}
   }
 </pre>
 <p><b>Provided fixes:</b></p>
 <ul>
   <li>
-    Remove <code>@Ignore</code> annotation and rename the test method so the name doesn't start with "name" 
+    Remove <code>@Ignore</code> annotation and rename the test method, so the name doesn't start with "test" 
   </li>
   <li>
     Convert JUnit 3 test class to JUnit 4

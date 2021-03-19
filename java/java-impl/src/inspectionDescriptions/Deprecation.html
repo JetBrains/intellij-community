@@ -4,11 +4,11 @@ Reports usages of deprecated API (classes, fields, and methods), e.g. <code>new 
 By default, it doesn't produce a warning if it's impossible or hard to avoid it e.g.,
 the following code won't be reported:
 <pre>
-  abstract class A {
+  abstract class A { //library code
      @Deprecated
      abstract void m();
   }
-  class B extends A {
+  class B extends A { //project code
      @Override
      void m() {
         //doSmth;

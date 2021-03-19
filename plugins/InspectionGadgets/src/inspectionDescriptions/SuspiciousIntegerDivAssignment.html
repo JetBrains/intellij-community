@@ -15,8 +15,13 @@ So, it should be replaced with:
 </pre>
 <!-- tooltip end -->
 <p>
-    Use the checkbox below to disable inspection in cases of suspicious but possibly exact divisions
-</p>
+    Use the checkbox below to disable inspection in cases of suspicious but possibly exact divisions e.g., if dividend can't be calculated statically 
+<pre><code>
+  void calc(int d) {
+     int x = 18;
+     x *= d/2;
+  }
+</code></pre>
 
 <p>
   <small>New in 2019.2</small>
