@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.analysis.analyzeInContext
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScopes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import javax.inject.Inject
 
 class CodeFragmentAnalyzer(
@@ -55,7 +58,8 @@ class CodeFragmentAnalyzer(
 
         when (val contentElement = codeFragment.getContentElement()) {
             is KtExpression -> {
-                contentElement.analyzeInContext(scope, trace = bindingTrace, dataFlowInfo = dataFlowInfo)
+                val expectedType = codeFragment.getUserData(EXPECTED_TYPE_KEY) ?: TypeUtils.NO_EXPECTED_TYPE
+                contentElement.analyzeInContext(scope, trace = bindingTrace, dataFlowInfo = dataFlowInfo, expectedType = expectedType)
                 analyzeControlFlow(resolveSession, contentElement, bindingTrace)
             }
 
@@ -209,5 +213,9 @@ class CodeFragmentAnalyzer(
 
     private fun createEmptyScope(moduleDescriptor: ModuleDescriptor): LexicalScope {
         return LexicalScope.Base(ImportingScope.Empty, moduleDescriptor)
+    }
+
+    companion object {
+        val EXPECTED_TYPE_KEY = Key<KotlinType>("EXPECTED_TYPE")
     }
 }

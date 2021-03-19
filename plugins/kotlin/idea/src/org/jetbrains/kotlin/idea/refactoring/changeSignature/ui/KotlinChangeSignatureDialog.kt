@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.ui
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.resolve.CodeFragmentAnalyzer
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -489,9 +491,17 @@ class KotlinChangeSignatureDialog(
                     parameterInfo.defaultValueAsDefaultParameter = false
                 }
 
-                parameterInfo.currentTypeInfo = parameter.typeCodeFragment.getTypeInfo(false, forPreview)
+                val kotlinTypeInfo = parameter.typeCodeFragment.getTypeInfo(false, forPreview)
+                val newKotlinType = kotlinTypeInfo.type
+                val oldKotlinType = parameterInfo.currentTypeInfo.type
+                parameterInfo.currentTypeInfo = kotlinTypeInfo
 
                 val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
+                if (newKotlinType != oldKotlinType && codeFragment.getContentElement() != null) {
+                    codeFragment.putUserData(CodeFragmentAnalyzer.EXPECTED_TYPE_KEY, kotlinTypeInfo.type)
+                    DaemonCodeAnalyzer.getInstance(codeFragment.project).restart(codeFragment)
+                }
+
                 if (!forPreview) AddFullQualifierIntention.addQualifiersRecursively(codeFragment)
 
                 val oldDefaultValue = parameterInfo.defaultValueForCall
