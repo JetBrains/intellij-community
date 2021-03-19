@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadataUtil
@@ -55,7 +56,11 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
 
         val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
 
-        val lazinessMode = lazinessModeByFileText()
+        val text = testDataFile().readText()
+        if (InTextDirectivesUtils.isDirectiveDefined(text, "// IGNORE_BROKEN_LC:")) {
+            return
+        }
+        val lazinessMode = lazinessModeByFileText(text)
         myFixture.configureByFiles(*testFiles.toTypedArray())
         if ((myFixture.file as? KtFile)?.isScript() == true) {
             ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
@@ -79,8 +84,8 @@ abstract class AbstractIdeLightClassTest : KotlinLightCodeInsightFixtureTestCase
             })
     }
 
-    private fun lazinessModeByFileText(): LightClassLazinessChecker.Mode {
-        return testDataFile().readText().run {
+    private fun lazinessModeByFileText(text: String): LightClassLazinessChecker.Mode {
+        return text.run {
             val argument = substringAfter("LAZINESS:", "").substringBefore(" ")
             LightClassLazinessChecker.Mode.values().firstOrNull { it.name == argument } ?: LightClassLazinessChecker.Mode.AllChecks
         }
