@@ -48,6 +48,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -394,9 +395,27 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       label = (JLabel)myAdComponent;
     }
 
+    Dimension prefSize = label.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
+    boolean keepSize = BasicHTML.isHTMLString(s);
+
     label.setVisible(StringUtil.isNotEmpty(s));
-    label.setText(wrapToSize(s));
+    label.setText(keepSize ? s : wrapToSize(s));
     label.setHorizontalAlignment(alignment);
+
+    Dimension newPrefSize = label.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
+    int delta = newPrefSize.height - prefSize.height;
+
+    // Resize popup to match new advertiser size.
+    if (myPopup != null && !isBusy() && delta != 0 && !keepSize) {
+      Window popupWindow = getContentWindow(myContent);
+      if (popupWindow != null) {
+        Dimension size = popupWindow.getSize();
+        size.height += delta;
+        myContent.setPreferredSize(size);
+        popupWindow.pack();
+        updateMaskAndAlpha(popupWindow);
+      }
+    }
   }
 
   protected void setFooterComponent(JComponent c) {
@@ -407,23 +426,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myContent.add(c, BorderLayout.SOUTH);
     pack(false, true);
     myAdComponent = c;
-
-    Dimension prefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
-
-    Dimension newPrefSize = myAdComponent.isVisible() ? myAdComponent.getPreferredSize() : JBUI.emptySize();
-    int delta = newPrefSize.height - prefSize.height;
-
-    // Resize popup to match new advertiser size.
-    if (myPopup != null && !isBusy() && delta != 0) {
-      Window popupWindow = getContentWindow(myContent);
-      if (popupWindow != null) {
-        Dimension size = popupWindow.getSize();
-        size.height += delta;
-        myContent.setPreferredSize(size);
-        popupWindow.pack();
-        updateMaskAndAlpha(popupWindow);
-      }
-    }
   }
 
   @NotNull
