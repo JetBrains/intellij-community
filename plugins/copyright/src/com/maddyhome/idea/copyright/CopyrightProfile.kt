@@ -13,7 +13,7 @@ import org.jdom.Element
 
 @JvmField
 val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
-  "Copyright (c) \$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
+  "Copyright (c) \$originalComment.match(\"Copyright \\(c\\) (\\d+)\", 1, \"-\")\$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
   "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
   "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
   "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +

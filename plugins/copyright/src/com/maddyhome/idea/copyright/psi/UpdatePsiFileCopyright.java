@@ -353,7 +353,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
               }
               break;
             case CommentAction.ACTION_REPLACE:
-              if (allowReplacement) doc.replaceString(start, end, getCommentText("", ""));
+              if (allowReplacement) {
+                String oldComment = doc.getText(new TextRange(start, end));
+                doc.replaceString(start, end, getCommentText("", "", oldComment));
+              }
               break;
             case CommentAction.ACTION_DELETE:
               if (allowReplacement) doc.deleteString(start, end);
