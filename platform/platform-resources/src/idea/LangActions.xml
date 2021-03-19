@@ -695,8 +695,12 @@
       <group id="AddBom.Group">
         <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
         <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom"/>
-        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RemoveBom"/>
       </group>
+    </group>
+
+    <group id="EncodingPanelActions">
+      <reference ref="RemoveBom"/>
+      <reference ref="AddBom"/>
     </group>
 
     <group id="NavbarPopupMenu">
