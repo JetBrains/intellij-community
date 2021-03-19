@@ -30,7 +30,7 @@ CoroutineInfo: 1 coroutine RUNNING
 		()
 	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunWithInnerKt (continuation)
 		(mainTestVal)
-Coroutine creation stack trace
+Coroutine Creation Stack Trace
 	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
 		()
 	CreationCoroutineStackFrame startCoroutineCancellable:!LINE_NUMBER!, CancellableKt (kotlinx.coroutines.intrinsics)
