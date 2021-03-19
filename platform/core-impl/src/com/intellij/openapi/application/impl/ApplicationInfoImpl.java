@@ -80,7 +80,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPluginsDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
-  private boolean myWhatsNewEmbeddable;
+  private int myWhatsNewEligibility;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
   private boolean myEAP;
@@ -154,6 +154,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final @NonNls String ATTRIBUTE_HAS_HELP = "has-help";
   private static final @NonNls String ATTRIBUTE_HAS_CONTEXT_HELP = "has-context-help";
   @SuppressWarnings("SpellCheckingInspection") private static final @NonNls String ELEMENT_WHATS_NEW = "whatsnew";
+  private static final @NonNls String ATTRIBUTE_ELIGIBILITY = "eligibility";
+  private static final @NonNls String ATTRIBUTE_ELIGIBILITY_EMBED = "embed";
+  private static final @NonNls String ATTRIBUTE_ELIGIBILITY_AUTO = "auto";
   private static final @NonNls String ELEMENT_KEYMAP = "keymap";
   private static final @NonNls String ATTRIBUTE_WINDOWS_URL = "win";
   private static final @NonNls String ATTRIBUTE_MAC_URL = "mac";
@@ -342,7 +345,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element whatsNewElement = getChild(element, ELEMENT_WHATS_NEW);
     if (whatsNewElement != null) {
       myWhatsNewUrl = whatsNewElement.getAttributeValue(ATTRIBUTE_URL);
-      myWhatsNewEmbeddable = Boolean.parseBoolean(whatsNewElement.getAttributeValue("embeddable"));
+      String eligibility = whatsNewElement.getAttributeValue(ATTRIBUTE_ELIGIBILITY);
+      if (ATTRIBUTE_ELIGIBILITY_EMBED.equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_EMBED;
+      else if (ATTRIBUTE_ELIGIBILITY_AUTO.equals(eligibility)) myWhatsNewEligibility = WHATS_NEW_AUTO;
     }
 
     readPluginInfo(getChild(element, ELEMENT_PLUGINS));
@@ -750,8 +755,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public boolean isWhatsNewEmbeddable() {
-    return myWhatsNewEmbeddable;
+  public boolean isWhatsNewEligibleFor(int role) {
+    return myWhatsNewEligibility >= role;
   }
 
   @Override
