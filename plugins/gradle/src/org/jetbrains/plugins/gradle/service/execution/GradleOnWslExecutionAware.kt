@@ -41,8 +41,8 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     val homePath = sdkInfo.homePath ?: return
     val jdkWslDistribution = WslPath.getDistributionByWindowsUncPath(homePath)
     if (wslDistribution.id != jdkWslDistribution?.id) {
-      val isProjectResolveProjectTask = task is ExternalSystemResolveProjectTask
-      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, wslDistribution, homePath, isProjectResolveProjectTask))
+      val isResolveProjectTask = task is ExternalSystemResolveProjectTask
+      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, wslDistribution, homePath, isResolveProjectTask))
     }
   }
 
@@ -95,14 +95,14 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   class IncorrectGradleJdkIssue(projectPath: String,
                                 distribution: WSLDistribution,
                                 jdkHomePath: String,
-                                isProjectResolveProjectTask: Boolean) : BuildIssue {
+                                isResolveProjectTask: Boolean) : BuildIssue {
     override val title: String = message("gradle.incorrect.jvm.issue.title")
     override val description: String
     override val quickFixes: List<BuildIssueQuickFix>
     override fun getNavigatable(project: Project): Navigatable? = null
 
     init {
-      val gradleSettingsFix = GradleSettingsQuickFix(projectPath, isProjectResolveProjectTask,
+      val gradleSettingsFix = GradleSettingsQuickFix(projectPath, isResolveProjectTask,
                                                      { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
                                                      message("gradle.settings.text.jvm.path"))
       quickFixes = listOf(gradleSettingsFix)
