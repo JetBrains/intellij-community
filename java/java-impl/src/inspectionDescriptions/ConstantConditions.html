@@ -39,7 +39,7 @@ which means that the assertions are assumed to be executed (-ea mode). If checkb
 (-da mode).</p>
 <p>Use the seventh checkbox to add warnings on reading variables that contain some constant values 
   like <code>true</code>, <code>false</code>, or <code>null</code>.</p>
-<p>Use the eighth checkbox to suppress all the warnings where the problem may happen only on some code path. If this checkbox is checked,
+<p>Use the eighth checkbox to control whether to report the problems that may happen only on some code path. If this checkbox is unchecked,
   warnings like 'exception is possible' will not be reported, only warnings like 'exception will definitely occur'. This mode
   may greatly reduce a number of false-positives, especially if the code is not consistently annotated with nullability and contract 
   annotations, so it could be useful to find the most important problems in legacy code bases.</p>

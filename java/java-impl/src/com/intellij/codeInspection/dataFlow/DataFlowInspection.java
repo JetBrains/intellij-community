@@ -277,15 +277,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       gc.weighty = 1;
       gc.insets.left = 0;
       gc.gridy++;
-      add(dontReportTrueAsserts, gc);
-
-      gc.gridy++;
-      add(ignoreAssertions, gc);
-
-      gc.gridy++;
-      add(reportConstantReferences, gc);
-
-      gc.gridy++;
       add(treatUnknownMembersAsNullable, gc);
 
       gc.gridy++;
@@ -293,6 +284,15 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(reportNullableMethodsReturningNotNull, gc);
+
+      gc.gridy++;
+      add(dontReportTrueAsserts, gc);
+
+      gc.gridy++;
+      add(ignoreAssertions, gc);
+
+      gc.gridy++;
+      add(reportConstantReferences, gc);
 
       gc.gridy++;
       add(reportUnsoundWarnings, gc);

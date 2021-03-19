@@ -2,7 +2,6 @@
 <body>
 Reports multiple equivalent occurrences of the same expression within a method (or constructor, or class initializer)
 if the result of the expression can be reused.
-<!-- tooltip end -->
 <p>
   The expression is reported if it's free of side effects and its result is always the same (in terms of <code>Object.equals()</code>).
   The examples of such expressions are <code>a + b</code>, <code>Math.max(a, b)</code>, <code>a.equals(b)</code>,
@@ -15,6 +14,7 @@ if the result of the expression can be reused.
   <code>Comparable.compareTo()</code>, and <code>Comparator.compare()</code> are OK as well because they normally don't have
   any observable side effects.
 </p>
+<!-- tooltip end -->
 <p>
   Use the option below to specify the minimal expression complexity threshold. Specifying bigger numbers will remove reports on
   short expressions.
