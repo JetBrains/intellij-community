@@ -274,6 +274,7 @@ class MoveConflictChecker(
             .fold(baseScope as SearchScope) { scope, jdkEntry -> scope and !JdkScope(project, jdkEntry) }
     }
 
+    @OptIn(ExperimentalMultiplatform::class)
     fun checkModuleConflictsInDeclarations(
         internalUsages: MutableSet<UsageInfo>,
         conflicts: MultiMap<PsiElement, String>
@@ -296,6 +297,15 @@ class MoveConflictChecker(
             }
 
             val newTargetDescriptors = dummyFile.resolveImportReference(fqName)
+
+            if (
+                newTargetDescriptors.any { descriptor ->
+                    descriptor is MemberDescriptor && descriptor.isExpect &&
+                            descriptor.annotations.any { OptionalExpectation::class.qualifiedName!! == it.fqName?.asString() }
+                }
+            ) {
+                return false
+            }
 
             if (importableDescriptor is TypeAliasDescriptor
                 && newTargetDescriptors.any {
