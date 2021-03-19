@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -95,10 +96,14 @@ class InlineCallableUsagesSearcher(val project: Project, val searchScope: Global
         return if (shouldAnalyze) usage else null
     }
 
-    private fun checkIfInline(declaration: KtDeclaration): Boolean {
-        val bindingContext = runReadAction {
-            declaration.analyze(BodyResolveMode.PARTIAL)
-        }
+    private fun checkIfInline(declaration: KtDeclaration) =
+        ReadAction.nonBlocking<Boolean> {
+            ProgressManager.checkCanceled()
+            checkIfInlineInReadAction(declaration)
+        }.executeSynchronously()
+
+    private fun checkIfInlineInReadAction(declaration: KtDeclaration): Boolean {
+        val bindingContext = declaration.analyze(BodyResolveMode.PARTIAL)
         val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) ?: return false
         return when (descriptor) {
             is FunctionDescriptor -> InlineUtil.isInline(descriptor)
