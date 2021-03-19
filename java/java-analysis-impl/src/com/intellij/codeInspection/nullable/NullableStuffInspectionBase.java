@@ -7,6 +7,7 @@ import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -257,9 +258,11 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           PsiTypeElement[] typeArguments = getReferenceTypeArguments(reference);
           if (typeParameters.length > 0 && typeParameters.length == typeArguments.length && !(typeArguments[0].getType() instanceof PsiDiamondType)) {
             for (int i = 0; i < typeParameters.length; i++) {
+              PsiTypeElement typeArgument = typeArguments[i];
               if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
-                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullability.NOT_NULL) {
-                reportProblem(holder, typeArguments[i], "non.null.type.argument.is.expected");
+                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArgument.getType()) != Nullability.NOT_NULL) {
+                AddTypeAnnotationFix fix = new AddTypeAnnotationFix(manager.getDefaultNotNull(), manager.getNullables());
+                reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
               }
             }
           }
