@@ -3,15 +3,19 @@ package com.intellij.formatting.service;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
+import com.intellij.formatting.FormattingRangesInfo;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import com.intellij.util.SlowOperations;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 public final class CoreFormattingService implements FormattingService {
   private final static Logger LOG =Logger.getInstance(CoreFormattingService.class);
@@ -21,4 +25,39 @@ public final class CoreFormattingService implements FormattingService {
     return true;
   }
 
+  @Override
+  public PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) {
+    ASTNode treeElement = element.getNode();
+    PsiFile file = element.getContainingFile();
+    final PsiElement formatted =
+      new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
+        .processElement(treeElement).getPsi();
+    if (!canChangeWhiteSpacesOnly) {
+      return CoreCodeStyleUtil.postProcessElement(file, formatted);
+    }
+    return formatted;
+  }
+
+  @Override
+  public PsiElement formatElement(@NotNull PsiElement element,
+                                  @NotNull TextRange range,
+                                  boolean canChangeWhiteSpacesOnly) {
+    ASTNode treeElement = element.getNode();
+    PsiFile file = element.getContainingFile();
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
+    final PsiElement formatted = codeFormatter.processRange(treeElement, range.getStartOffset(), range.getEndOffset()).getPsi();
+    return canChangeWhiteSpacesOnly ? formatted : CoreCodeStyleUtil.postProcessElement(file, formatted);
+  }
+
+  @Override
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo) {
+    List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
+    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
+    codeFormatter.processText(file, (FormatTextRanges)rangesInfo, true);
+    CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
+  }
+
+  private static CodeStyleSettings getSettings(@NotNull PsiFile file) {
+    return CodeStyle.getSettings(file);
+  }
 }

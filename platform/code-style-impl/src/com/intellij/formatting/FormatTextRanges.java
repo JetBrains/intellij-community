@@ -61,12 +61,12 @@ public class FormatTextRanges implements FormattingRangesInfo {
 
   @Override
   public boolean isWhitespaceReadOnly(final @NotNull TextRange range) {
-    return myRanges.stream().allMatch(formatTextRange -> formatTextRange.isWhitespaceReadOnly(range));
+    return ContainerUtil.and(myRanges, formatTextRange -> formatTextRange.isWhitespaceReadOnly(range));
   }
   
   @Override
   public boolean isReadOnly(@NotNull TextRange range) {
-    return myRanges.stream().allMatch(formatTextRange -> formatTextRange.isReadOnly(range));
+    return ContainerUtil.and(myRanges, formatTextRange -> formatTextRange.isReadOnly(range));
   }
 
   @Override
@@ -105,7 +105,8 @@ public class FormatTextRanges implements FormattingRangesInfo {
     return myRanges.size() == 1 && file.getTextRange().equals(myRanges.get(0).getTextRange());
   }
 
-  public List<TextRange> getTextRanges() {
+  @Override
+  public @NotNull List<TextRange> getTextRanges() {
     List<TextRange> ranges = ContainerUtil.map(myRanges, FormatTextRange::getTextRange);
     ranges.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
     return ranges;

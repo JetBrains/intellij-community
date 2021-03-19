@@ -5,6 +5,7 @@ import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.formatting.*;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -71,23 +72,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return element;
     }
 
-    ASTNode treeElement = element.getNode();
     final PsiFile file = element.getContainingFile();
 
     if (file == null)
       return element;
 
-    if (ExternalFormatProcessor.useExternalFormatter(file)) {
-      return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
-    }
-
-    final PsiElement formatted =
-      new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
-        .processElement(treeElement).getPsi();
-    if (!canChangeWhiteSpacesOnly) {
-      return CoreCodeStyleUtil.postProcessElement(file, formatted);
-    }
-    return formatted;
+    return FormattingServiceUtil.findService(file).formatElement(element, canChangeWhiteSpacesOnly);
   }
 
   @Override
@@ -171,7 +161,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       removeEndingWhiteSpaceFromEachRange(file, ranges);
     }
 
-    CoreCodeStyleUtil.formatRanges(file, ranges);
+    FormattingServiceUtil.findService(file).formatRanges(file, ranges);
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
@@ -215,15 +205,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return element;
     }
 
-    ASTNode treeElement = element.getNode();
-    final PsiFile file = element.getContainingFile();
-    if (ExternalFormatProcessor.useExternalFormatter(file)) {
-      return ExternalFormatProcessor.formatElement(element, TextRange.create(startOffset, endOffset), canChangeWhiteSpacesOnly);
-    }
-
-    final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
-    final PsiElement formatted = codeFormatter.processRange(treeElement, startOffset, endOffset).getPsi();
-    return canChangeWhiteSpacesOnly ? formatted : CoreCodeStyleUtil.postProcessElement(file, formatted);
+    return FormattingServiceUtil.findService(element.getContainingFile())
+      .formatElement(element,TextRange.create(startOffset, endOffset), canChangeWhiteSpacesOnly);
   }
 
 
