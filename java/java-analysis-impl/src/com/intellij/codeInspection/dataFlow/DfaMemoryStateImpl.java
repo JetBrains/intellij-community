@@ -1327,15 +1327,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   protected void flushVariable(@NotNull DfaVariableValue variable, boolean shouldMarkFlushed) {
-    EqClass eqClass = variable.getDependentVariables().isEmpty() ? null : getEqClass(variable);
+    DfaVariableValue canonical = canonicalize(variable);
+    EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
     DfaVariableValue newCanonical =
-      eqClass == null ? null : StreamEx.of(eqClass.iterator()).without(variable).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)
-        .filter(candidate -> !candidate.dependsOn(variable))
+      eqClass == null ? null : StreamEx.of(eqClass.iterator()).without(canonical).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)
+        .filter(candidate -> !candidate.dependsOn(canonical))
         .orElse(null);
-    myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, variable, newCanonical));
+    myStack.replaceAll(value -> handleStackValueOnVariableFlush(value, canonical, newCanonical));
 
-    doFlush(variable, shouldMarkFlushed);
-    flushDependencies(variable);
+    doFlush(canonical, shouldMarkFlushed);
+    flushDependencies(canonical);
     myCachedHash = null;
   }
 
