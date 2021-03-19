@@ -6,17 +6,18 @@ import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class FeatureDescriptor {
   @NotNull private String myId;
   @NotNull private String myDisplayName;
-  private String myGroupId;
-  private String myTipFileName;
+  @Nullable private String myGroupId;
+  @Nullable private String myTipFileName;
+  @Nullable private Set<String> myDependencies;
   private int myDaysBeforeFirstShowUp;
   private int myDaysBetweenSuccessiveShowUps;
-  private Set<String> myDependencies;
   private int myMinUsageCount;
   private boolean myNeedToBeShownInGuide = true;
   private final List<LogEventDetector> myLogEventDetectors = new ArrayList<>();
@@ -45,19 +46,19 @@ public class FeatureDescriptor {
     readExternal(featureElement);
   }
 
-  FeatureDescriptor(@NonNls @NotNull String id, @NonNls String tipFileName, @NotNull String displayName) {
+  FeatureDescriptor(@NonNls @NotNull String id, @NonNls @Nullable String tipFileName, @NotNull String displayName) {
     myId = id;
     myTipFileName = tipFileName;
     myDisplayName = displayName;
   }
 
   public FeatureDescriptor(@NonNls @NotNull String id,
-                           @NonNls String groupId,
-                           @NonNls String tipFileName,
+                           @NonNls @Nullable String groupId,
+                           @NonNls @Nullable String tipFileName,
                            @NotNull String displayName,
                            int daysBeforeFirstShowUp,
                            int daysBetweenSuccessiveShowUps,
-                           Set<String> dependencies,
+                           @Nullable Set<String> dependencies,
                            int minUsageCount,
                            ProductivityFeaturesProvider provider) {
     myId = id;
@@ -107,11 +108,11 @@ public class FeatureDescriptor {
     return myId;
   }
 
-  public String getGroupId() {
+  public @Nullable String getGroupId() {
     return myGroupId;
   }
 
-  public String getTipFileName() {
+  public @Nullable String getTipFileName() {
     return myTipFileName;
   }
 
@@ -125,7 +126,7 @@ public class FeatureDescriptor {
   }
 
   public boolean isNeedToBeShownInGuide() {
-    return myNeedToBeShownInGuide && myTipFileName != null;
+    return myNeedToBeShownInGuide;
   }
 
   public int getUsageCount() {

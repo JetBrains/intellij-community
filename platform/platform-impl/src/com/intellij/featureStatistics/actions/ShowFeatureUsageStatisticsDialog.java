@@ -209,7 +209,11 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
   private static String getGroupName(@NotNull FeatureDescriptor featureDescriptor) {
     final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(featureDescriptor.getGroupId());
-    return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
+    final String groupId = featureDescriptor.getGroupId();
+    if (registry != null && groupId != null) {
+      final GroupDescriptor groupDescriptor = registry.getGroupDescriptor(groupId);
+      return groupDescriptor != null ? groupDescriptor.getDisplayName() : "";
+    }
+    return "";
   }
 }

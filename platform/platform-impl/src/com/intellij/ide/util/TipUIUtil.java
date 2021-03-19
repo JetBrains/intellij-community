@@ -82,6 +82,11 @@ public final class TipUIUtil {
     }
 
     String tipFileName = feature.getTipFileName();
+    if (tipFileName == null) {
+      LOG.warn("No Tip of the day for feature " + feature.getId());
+      return null;
+    }
+
     TipAndTrickBean tip = TipAndTrickBean.findByFileName("neue-" + tipFileName);
     if (tip == null && StringUtil.isNotEmpty(tipFileName)) {
       tip = TipAndTrickBean.findByFileName(tipFileName);
@@ -103,7 +108,7 @@ public final class TipUIUtil {
   }
 
   private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
-    if (tip == null) return "";
+    if (tip == null) return IdeBundle.message("no.tip.of.the.day");
     try {
       StringBuilder text = new StringBuilder();
       String cssText;
