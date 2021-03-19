@@ -44,6 +44,7 @@ public final class ClassPath {
 
   private final List<Path> files;
   private final @Nullable ResourceFileFactory resourceFileFactory;
+  final boolean mimicJarUrlConnection;
   private final List<Loader> loaders = new ArrayList<>();
 
   private volatile boolean allUrlsWereProcessed;
@@ -94,7 +95,8 @@ public final class ClassPath {
             @NotNull Set<Path> filesWithProtectionDomain,
             @NotNull UrlClassLoader.Builder configuration,
             @Nullable ResourceFileFactory resourceFileFactory,
-            @NotNull ClassPath.ClassDataConsumer classDataConsumer) {
+            @NotNull ClassPath.ClassDataConsumer classDataConsumer,
+            boolean mimicJarUrlConnection) {
     lockJars = configuration.lockJars;
     useCache = configuration.useCache;
     preloadJarContents = configuration.preloadJarContents;
@@ -103,6 +105,7 @@ public final class ClassPath {
     isClassPathIndexEnabled = configuration.isClassPathIndexEnabled;
     errorOnMissingJar = configuration.errorOnMissingJar;
     this.filesWithProtectionDomain = filesWithProtectionDomain;
+    this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.classDataConsumer = recordLoadingTime ? new MeasuringClassDataConsumer(classDataConsumer) : classDataConsumer;
 
