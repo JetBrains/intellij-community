@@ -12,7 +12,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
@@ -42,6 +45,7 @@ import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -243,6 +247,17 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       public void beforeRunTasksChanged() {
         scheduleStructureRequest(() -> myStructure.updateGoals());
       }
+    });
+
+    ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
+      MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+      MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
+    });
+
+    StartupManager.getInstance(myProject).runAfterOpened(() -> {
+      DumbService.getInstance(myProject).runWhenSmart(() -> {
+        MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+      });
     });
   }
 
