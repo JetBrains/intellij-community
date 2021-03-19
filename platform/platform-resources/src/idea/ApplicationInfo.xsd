@@ -33,7 +33,7 @@
         <xs:element type="urlType" name="support" minOccurs="0"/>
         <xs:element type="urlType" name="youtrack" minOccurs="0"/>
         <xs:element type="urlType" name="feedback" minOccurs="0"/>
-        <xs:element type="embeddableUrlType" name="whatsnew" minOccurs="0"/>
+        <xs:element type="whatsNewUrlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
@@ -469,10 +469,28 @@
   <xs:complexType name="urlType">
     <xs:attribute type="xs:string" name="url" use="required"/>
   </xs:complexType>
-  <xs:complexType name="embeddableUrlType">
-    <xs:attribute type="xs:string" name="url" use="required"/>
-    <xs:attribute type="xs:boolean" name="embeddable" default="false"/>
+  <xs:complexType name="whatsNewUrlType">
+    <xs:attribute type="xs:anyURI" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>An URL for the "Help | What's New" action. See also 'eligibility' attribute.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="whatsNewEligibilityType" name="eligibility">
+      <xs:annotation>
+        <xs:documentation>
+          Set to 'embed' to show the URL in the built-in (CEF) browser (the page must be optimized accordingly).
+          Set to 'auto' to automatically show the URL in an editor tab after a major upgrade (implies 'embed').
+          When missing, the URL will be opened in an external browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
+  <xs:simpleType name="whatsNewEligibilityType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="embed"/>
+      <xs:enumeration value="auto"/>
+    </xs:restriction>
+  </xs:simpleType>
   <xs:complexType name="pluginsType">
     <xs:attribute type="xs:anyURI" name="url"/>
     <xs:attribute type="xs:string" name="list-url"/>

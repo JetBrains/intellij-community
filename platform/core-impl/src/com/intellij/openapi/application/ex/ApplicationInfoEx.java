@@ -99,7 +99,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract String getWebHelpUrl();
 
   public abstract String getWhatsNewUrl();
-  public abstract boolean isWhatsNewEmbeddable();
+
+  public static final int WHATS_NEW_EMBED = 1;
+  public static final int WHATS_NEW_AUTO = 2;
+  public abstract boolean isWhatsNewEligibleFor(int role);
 
   public abstract String getWinKeymapUrl();
 
