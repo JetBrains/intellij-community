@@ -42,6 +42,11 @@ public class PluginUpdatesService {
       public void install(@NotNull IdeaPluginDescriptor descriptor) {
         finishUpdate(descriptor);
       }
+
+      @Override
+      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
+        install(descriptor);
+      }
     });
   }
 
