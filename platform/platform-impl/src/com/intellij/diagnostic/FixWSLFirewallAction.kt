@@ -25,7 +25,7 @@ class FixWSLFirewallAction : DumbAwareAction() {
     val starter = Restarter.getIdeStarter()
 
     val powershellCommand =
-      """Get-NetFirewallApplicationFilter -Program ${starter} | Get-NetFirewallRule | Where-Object Profile -eq "Public" | Get-NetFirewallPortFilter | Where-Object Protocol -eq "TCP" | Get-NetFirewallRule | Set-NetFirewallRule -Action Allow"""
+      """Get-NetFirewallApplicationFilter -Program "${starter}" | Get-NetFirewallRule | Where-Object Profile -eq "Public" | Get-NetFirewallPortFilter | Where-Object Protocol -eq "TCP" | Get-NetFirewallRule | Set-NetFirewallRule -Action Allow"""
 
     val output = try {
       ProgressManager.getInstance().run(object : Task.WithResult<ProcessOutput, Exception>(e.project, ActionsBundle.actionText("FixWSLFirewall"), false) {
