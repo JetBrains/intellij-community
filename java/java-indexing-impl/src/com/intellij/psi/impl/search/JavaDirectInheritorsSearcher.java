@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
+  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> processor) {
     if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
       return true;
     }
@@ -51,7 +51,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       return AllClassesSearch.search(actualScope, project).allowParallelProcessing().forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (shortCircuitCandidate(psiClass)) return true;
-        return consumer.process(psiClass);
+        return processor.process(psiClass);
       });
     }
 
@@ -74,7 +74,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       if (subClass instanceof PsiAnonymousClass) {
         // we reached anonymous classes tail, process them all and exit
         if (!parameters.includeAnonymous()) {
-          return flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, i);
+          return flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, i, processor);
         }
       }
       if (!isInScope(scope, subClass)) {
@@ -91,30 +91,32 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
         }
         boolean fromSameJar = Comparing.equal(currentJarFile, baseClassJarFile);
         if (fromSameJar) {
-          if (!consumer.process(subClass)) return false;
+          if (!processor.process(subClass)) return false;
           sameJarClassFound = true;
         }
       }
       else {
         currentFQN = fqn;
         // the end of the same-FQN group. Process only same-jar classes in subClasses[groupStart..i-1] group or the whole group if there were none.
-        if (!flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, i)) return false;
+        if (!flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, i, processor)) return false;
         groupStart = i;
         sameJarClassFound = false;
       }
     }
 
-    return flushCurrentGroup(consumer, cache, isOutOfScope, sameJarClassFound, groupStart, cache.length);
+    return flushCurrentGroup(cache, isOutOfScope, sameJarClassFound, groupStart, cache.length, processor);
   }
 
-  private static boolean flushCurrentGroup(Processor<? super PsiClass> consumer,
-                                           PsiClass[] cache, boolean[] isOutOfScope,
+  private static boolean flushCurrentGroup(PsiClass @NotNull [] cache,
+                                           boolean @NotNull [] isOutOfScope,
                                            boolean sameJarClassFound,
-                                           int groupStart, int afterGroup) {
+                                           int groupStart,
+                                           int afterGroup,
+                                           @NotNull Processor<? super PsiClass> processor) {
     if (!sameJarClassFound) {
       for (int g = groupStart; g < afterGroup; g++) {
         ProgressManager.checkCanceled();
-        if (!isOutOfScope[g] && !consumer.process(cache[g])) {
+        if (!isOutOfScope[g] && !processor.process(cache[g])) {
           return false;
         }
       }
@@ -146,7 +148,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   // The list starts with non-anonymous classes, ends with anonymous sub classes
   // Classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
-  private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+  private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project,
+                                                                     @NotNull PsiClass baseClass,
+                                                                     @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
     if (cache != null) {
@@ -165,7 +169,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return cache;
   }
 
-  private static <T> void processConcurrentlyIfTooMany(@NotNull Collection<T> collection, @NotNull Processor<? super T> processor) {
+  private static <T> void processConcurrentlyIfTooMany(@NotNull Collection<? extends T> collection, @NotNull Processor<? super T> processor) {
     int size = collection.size();
     if (size == 0) {
       return;
@@ -205,8 +209,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
        referenceList -> {
          ProgressManager.checkCanceled();
          dumbService.runReadActionInSmartMode(() -> {
-           final PsiClass candidate = (PsiClass)referenceList.getParent();
-           if (checker.checkInheritance(candidate)) {
+           PsiElement parent = referenceList.getParent();
+           PsiClass candidate;
+           if (parent instanceof PsiClass && checker.checkInheritance(candidate = (PsiClass)parent)) {
              String fqn = candidate.getQualifiedName();
 
              synchronized (classesWithFqn) {
@@ -226,7 +231,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                  classesWithFqn.put(fqn, list);
                }
                else {
-                 @SuppressWarnings("unchecked")
+                 //noinspection unchecked
                  List<PsiClass> list = (List<PsiClass>)value;
                  list.add(candidate);
                }
@@ -244,7 +249,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
           result.add((PsiClass)value);
         }
         else {
-          @SuppressWarnings("unchecked")
+          //noinspection unchecked
           List<PsiClass> list = (List<PsiClass>)value;
           result.addAll(list);
         }
