@@ -3380,6 +3380,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/literalExpression/octal.java");
         }
 
+        @TestMetadata("stringEscaping.java")
+        public void testStringEscaping() throws Exception {
+            runTest("testData/newJ2k/literalExpression/stringEscaping.java");
+        }
+
         @TestMetadata("stringOctalChars.java")
         public void testStringOctalChars() throws Exception {
             runTest("testData/newJ2k/literalExpression/stringOctalChars.java");
