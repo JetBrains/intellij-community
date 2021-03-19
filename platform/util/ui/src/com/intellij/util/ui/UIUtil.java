@@ -3423,6 +3423,27 @@ public final class UIUtil {
     }
   }
 
+  public static void runWhenHidden(@NotNull Component component, @NotNull Runnable runnable) {
+    component.addHierarchyListener(runWhenHidden(runnable));
+  }
+
+  private static @NotNull HierarchyListener runWhenHidden(@NotNull Runnable runnable) {
+    return new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if (!BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
+          return;
+        }
+        Component component = e.getComponent();
+        if (component.isDisplayable()) {
+          return;
+        }
+        component.removeHierarchyListener(this);
+        runnable.run();
+      }
+    };
+  }
+
   public static Font getLabelFont() {
     return StartupUiUtil.getLabelFont();
   }

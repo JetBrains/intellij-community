@@ -62,7 +62,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -73,8 +76,6 @@ import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -84,6 +85,7 @@ import java.util.stream.Collectors;
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationHint;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
+import static com.intellij.util.ui.UIUtil.runWhenHidden;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
@@ -1114,28 +1116,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static ShowUsagesActionState getState(@NotNull Project project) {
     return project.getService(ShowUsagesActionState.class);
-  }
-
-  private static void runWhenHidden(@NotNull Component c, @NotNull Runnable r) {
-    c.addHierarchyListener(runWhenHidden(r));
-  }
-
-  @NotNull
-  private static HierarchyListener runWhenHidden(@NotNull Runnable r) {
-    return new HierarchyListener() {
-      @Override
-      public void hierarchyChanged(HierarchyEvent e) {
-        if (!BitUtil.isSet(e.getChangeFlags(), HierarchyEvent.DISPLAYABILITY_CHANGED)) {
-          return;
-        }
-        Component component = e.getComponent();
-        if (component.isDisplayable()) {
-          return;
-        }
-        r.run();
-        component.removeHierarchyListener(this);
-      }
-    };
   }
 
   /**
