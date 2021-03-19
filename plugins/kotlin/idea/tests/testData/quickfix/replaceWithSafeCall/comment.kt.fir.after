@@ -1,8 +1,8 @@
 // "Replace with safe (?.) call" "true"
-// WITH_STDLIB
+// WITH_RUNTIME
 fun foo(a: String?) {
     val b = a // comment1
         // comment2
-        ?.length
+        ?.length ?: <caret>
 }
 /* FIR_COMPARISON */
