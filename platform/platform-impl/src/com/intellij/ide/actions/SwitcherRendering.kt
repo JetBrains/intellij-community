@@ -143,7 +143,7 @@ internal class SwitcherVirtualFile(
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
     component.icon = RenderingUtil.getIcon(icon, selected)
-    val foreground = FileStatusManager.getInstance(project).getStatus(file).color
+    val foreground = if (selected) null else FileStatusManager.getInstance(project).getStatus(file).color
     val effectColor = if (isProblemFile) JBColor.red else null
     val style = when (effectColor) {
       null -> SimpleTextAttributes.STYLE_PLAIN
