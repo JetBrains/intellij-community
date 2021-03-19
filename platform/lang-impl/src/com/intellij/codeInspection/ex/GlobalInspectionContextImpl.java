@@ -28,9 +28,12 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -226,10 +229,22 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
     if (!(myView == null ? newView : myView).hasProblems()) {
       int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
-      NOTIFICATION_GROUP.createNotification(InspectionsBundle.message(scope.isIncludeTestSource() ? "inspection.no.problems.message"
-                                                                                                  : "inspection.no.problems.no.tests.message",
-                                                                      totalFiles,
-                                                                      scope.getShortenName()), MessageType.INFO).notify(getProject());
+      final var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
+                                                                                 totalFiles,
+                                                                                 scope.getShortenName()), MessageType.INFO);
+
+      if (!scope.isIncludeTestSource())
+        notification.addAction(new NotificationAction(InspectionsBundle.message("inspection.no.problems.repeat.with.tests")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e,
+                                      @NotNull Notification notification) {
+            notification.expire();
+            scope.setIncludeTestSource(true);
+            doInspections(scope);
+          }
+        });
+
+      notification.notify(getProject());
       close(true);
       if (newView != null) {
         Disposer.dispose(newView);
@@ -936,8 +951,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                           @Nullable Runnable postRunnable) {
     if (problems.getFiles().isEmpty()) {
       if (commandName != null) {
-        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message(scope.isIncludeTestSource() ? "inspection.no.problems.message"
-                                                                                                    : "inspection.no.problems.no.tests.message",
+        NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
                                                                         scope.getFileCount(),
                                                                         scope.getDisplayName()), MessageType.INFO).notify(getProject());
       }
