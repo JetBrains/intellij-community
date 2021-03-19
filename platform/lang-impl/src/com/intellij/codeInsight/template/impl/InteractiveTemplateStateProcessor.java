@@ -27,7 +27,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,12 +52,12 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
   @Override
   public TextRange insertNewLineIndentMarker(PsiFile file, Document document, int offset) {
-    return CodeStyleManagerImpl.insertNewLineIndentMarker(file, document, offset);
+    return CoreCodeStyleUtil.insertNewLineIndentMarker(file, document, offset);
   }
 
   @Override
   public PsiElement findWhiteSpaceNode(PsiFile file, int offset) {
-    return CodeStyleManagerImpl.findWhiteSpaceNode(file, offset);
+    return CoreCodeStyleUtil.findWhiteSpaceNode(file, offset);
   }
 
   @Override

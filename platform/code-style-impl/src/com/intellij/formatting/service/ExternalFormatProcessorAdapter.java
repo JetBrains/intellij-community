@@ -4,7 +4,7 @@ package com.intellij.formatting.service;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +19,6 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   public void formatCollectedRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
-    CodeStyleManagerImpl.formatRanges(file, ranges);
+    CoreCodeStyleUtil.formatRanges(file, ranges);
   }
 }
