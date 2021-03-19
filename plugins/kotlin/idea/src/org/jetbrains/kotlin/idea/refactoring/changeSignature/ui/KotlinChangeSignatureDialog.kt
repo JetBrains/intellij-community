@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent
 import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.refactoring.validateElement
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
@@ -329,6 +330,8 @@ class KotlinChangeSignatureDialog(
         super.updateSignatureAlarmFired()
         validateButtons()
     }
+
+    override fun createSignaturePreviewComponent(): KotlinSignatureComponent = KotlinSignatureComponent(calculateSignature(), project)
 
     override fun validateAndCommitData(): String? {
         if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite &&
