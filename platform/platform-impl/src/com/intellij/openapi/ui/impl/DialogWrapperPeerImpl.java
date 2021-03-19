@@ -2,7 +2,6 @@
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
@@ -580,11 +579,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return null;
     }
 
-    private void fitToScreen(Rectangle rect) {
-      final DialogWrapper wrapper = myDialogWrapper.get();
-      if(wrapper != null) wrapper.fitToScreen(rect);
-    }
-
     @Override
     public void setSize(int width, int height) {
       _setSizeForLocation(width, height, null);
@@ -593,7 +587,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private void _setSizeForLocation(int width, int height, @Nullable Point initial) {
       Point location = initial != null ? initial : getLocation();
       Rectangle rect = new Rectangle(location.x, location.y, width, height);
-      fitToScreen(rect);
+      ScreenUtil.fitToScreen(rect);
       if (initial != null || location.x != rect.x || location.y != rect.y) {
         setLocation(rect.x, rect.y);
       }
@@ -604,13 +598,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public void setBounds(int x, int y, int width, int height) {
       Rectangle rect = new Rectangle(x, y, width, height);
-      fitToScreen(rect);
+      ScreenUtil.fitToScreen(rect);
       super.setBounds(rect.x, rect.y, rect.width, rect.height);
     }
 
     @Override
     public void setBounds(Rectangle r) {
-      fitToScreen(r);
+      ScreenUtil.fitToScreen(r);
       super.setBounds(r);
     }
 
@@ -685,7 +679,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       if (isAutoAdjustable) {
         final Rectangle bounds = getBounds();
-        fitToScreen(bounds);
+        ScreenUtil.fitToScreen(bounds);
         setBounds(bounds);
       }
 
