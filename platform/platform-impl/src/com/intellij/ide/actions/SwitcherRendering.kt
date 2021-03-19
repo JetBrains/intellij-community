@@ -70,6 +70,11 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
       true -> message("recent.locations.changed.locations")
       else -> message("recent.locations.popup.title")
     }!!
+  override val statusText: String
+    get() = when (switcher.isOnlyEditedFilesShown) {
+      true -> message("recent.files.accessible.open.recently.edited.locations")
+      else -> message("recent.files.accessible.open.recently.viewed.locations")
+    }!!
   override val shortcutText: String?
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> null
@@ -91,6 +96,7 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   var mnemonic: String? = null
 
   override val mainText = window.stripeTitle
+  override val statusText = message("recent.files.accessible.show.tool.window", mainText)
   override val shortcutText = if (shortcut) shortcutText(actionId) else null
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
@@ -178,7 +184,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     value.prepareExtraRenderer(extra, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
     panel.accessibleContext.accessibleName = value.mainText
-    panel.accessibleContext.accessibleDescription = value.statusText
+    panel.accessibleContext.accessibleDescription = value.statusText ?: ""
     return panel
   }
 
