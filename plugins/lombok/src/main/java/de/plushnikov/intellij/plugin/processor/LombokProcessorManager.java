@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
-public class LombokProcessorManager {
+public final class LombokProcessorManager {
   @NotNull
   public static Collection<Processor> getLombokProcessors() {
     return Arrays.asList(

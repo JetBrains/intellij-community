@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -71,7 +71,9 @@ public class JavaValuePresentation extends XValueExtendedPresentation implements
               int i = 0;
               final List<String> vals = new ArrayList<>(max);
               while (i < values.size()) {
-                vals.add(StringUtil.first(values.get(i).toString(), 15, true));
+                Value v = values.get(i);
+                String text = v != null ? v.toString() : "null";
+                vals.add(StringUtil.first(text, 15, true));
                 i++;
               }
               String more = "";

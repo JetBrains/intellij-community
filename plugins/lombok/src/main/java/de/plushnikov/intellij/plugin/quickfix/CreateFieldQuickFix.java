@@ -5,11 +5,13 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,8 +39,9 @@ public class CreateFieldQuickFix extends LocalQuickFixOnPsiElement implements In
 
   @Override
   @NotNull
+  @IntentionName
   public String getText() {
-    return String.format("Create new field '%s'", myName);
+    return LombokBundle.message("intention.name.create.new.field.s", myName);
   }
 
   @Override

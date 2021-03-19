@@ -8,7 +8,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class BuilderHandler {
+public final class BuilderHandler {
 
   public static boolean isDefaultBuilderValue(@NotNull PsiElement highlightedElement) {
     PsiField field = PsiTreeUtil.getParentOfType(highlightedElement, PsiField.class);

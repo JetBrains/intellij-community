@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -34,10 +34,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
@@ -58,6 +55,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.*;
+import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
+
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(LocalInspectionsPass.class);
   public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
@@ -65,6 +65,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final TextRange myPriorityRange;
   private final boolean myIgnoreSuppressed;
   private final ConcurrentMap<PsiFile, List<InspectionResult>> result = new ConcurrentHashMap<>();
+  private final InspectListener myInspectTopicPublisher;
   private volatile List<HighlightInfo> myInfos = Collections.emptyList();
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
@@ -99,6 +100,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     assert myProfileWrapper != null;
     mySeverityRegistrar = myProfileWrapper.getProfileManager().getSeverityRegistrar();
     myInspectInjectedPsi = inspectInjectedPsi;
+    myInspectTopicPublisher = myProject.getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
 
     // initial guess
     setProgressLimit(300 * 2);
@@ -194,7 +196,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionEngine.filterToolsApplicableByLanguage(toolWrappers, InspectionEngine.calcElementDialectIds(inside, outside)),
       iManager, isOnTheFly, progress, inside, session);
     Set<PsiFile> alreadyVisitedInjected = inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers, Collections.emptySet());
-    visitRestElementsAndCleanup(progress, outside, session, init);
+    visitRestElementsAndCleanup(progress, outside, session, init, isOnTheFly);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers, alreadyVisitedInjected);
     ProgressManager.checkCanceled();
 
@@ -264,7 +266,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile file = session.getFile();
     Processor<LocalInspectionToolWrapper> processor = toolWrapper ->
       AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(file, () -> {
-        runToolOnElements(toolWrapper, iManager, isOnTheFly, indicator, elements, session, init);
+        if (elements.isEmpty() || isOnTheFly) {
+          runToolOnElements(toolWrapper, iManager, isOnTheFly, indicator, elements, session, init);
+        } else {
+          reportWhenInspectionFinished(
+            myInspectTopicPublisher,
+            toolWrapper,
+            LOCAL_PRIORITY,
+            () -> {
+              runToolOnElements(toolWrapper, iManager, false, indicator, elements, session, init);
+            });
+        }
+
         return true;
       }));
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(wrappers, indicator, processor)) {
@@ -313,12 +326,24 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private void visitRestElementsAndCleanup(final @NotNull ProgressIndicator indicator,
                                            final @NotNull List<? extends PsiElement> elements,
                                            final @NotNull LocalInspectionToolSession session,
-                                           @NotNull List<? extends InspectionContext> init) {
+                                           @NotNull List<? extends InspectionContext> init,
+                                           final boolean isOnTheFly) {
+
     Processor<InspectionContext> processor =
       context -> {
         ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+        if (isOnTheFly) {
+          AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+        } else {
+          reportWhenInspectionFinished(
+            myInspectTopicPublisher,
+            context.tool,
+            LOCAL,
+            () -> {
+              AstLoadingFilter.disallowTreeLoading(() -> InspectionEngine.acceptElements(elements, context.visitor));
+            });
+        }
         advanceProgress(1);
         context.tool.getTool().inspectionFinished(session, context.holder);
 

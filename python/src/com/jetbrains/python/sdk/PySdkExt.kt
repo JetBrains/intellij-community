@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -71,10 +72,15 @@ fun findAllPythonSdks(baseDir: Path?): List<Sdk> {
 }
 
 fun findBaseSdks(existingSdks: List<Sdk>, module: Module?, context: UserDataHolder): List<Sdk> {
-  val existing = filterSystemWideSdks(existingSdks).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+  val existing = filterSystemWideSdks(existingSdks)
+    .sortedWith(PreferredSdkComparator.INSTANCE)
+    .filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
+
   val detected = detectSystemWideSdks(module, existingSdks, context).filterNot { PythonSdkUtil.isBaseConda(it.homePath) }
   return existing + detected
 }
+
+fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
 
 fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
@@ -101,22 +107,36 @@ fun resetSystemWideSdksDetectors() {
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
+fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
+  return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
+}
+
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module,
                        !PyCondaSdkCustomizer.instance.disableEnvsSorting)
 
-fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
-  return existingSdks
-    .asSequence()
-    .filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
-    .sortedByDescending { it.homePath }
-    .firstOrNull()
+fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
+  return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
 }
 
-fun findDetectedAssociatedEnvironment(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): PyDetectedSdk? {
-  detectVirtualEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-  detectCondaEnvs(module, existingSdks, context).firstOrNull { it.isAssociatedWithModule(module) }?.let { return it }
-  return null
+fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> {
+  val virtualEnvs = detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
+  val condaEnvs = detectCondaEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
+  return virtualEnvs + condaEnvs
+}
+
+fun chooseEnvironmentToSuggest(module: Module, environments: List<PyDetectedSdk>, trustedState: ThreeState): Pair<PyDetectedSdk, Boolean>? {
+  return if (trustedState == ThreeState.YES) {
+    environments.firstOrNull()?.let { it to false }
+  }
+  else {
+    val (detectedInnerEnvs, detectedOuterEnvs) = environments.partition { it.isLocatedInsideModule(module) }
+
+    when {
+      detectedInnerEnvs.isEmpty() || trustedState == ThreeState.NO -> detectedOuterEnvs.firstOrNull()?.let { it to false }
+      else -> detectedInnerEnvs.firstOrNull()?.let { it to true }
+    }
+  }
 }
 
 fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,

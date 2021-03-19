@@ -1,26 +1,43 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.importing
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.ProjectUtil.*
+import com.intellij.ide.impl.setTrusted
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmOpeningUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.apache.commons.lang.StringUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Experimental
 abstract class AbstractOpenProjectProvider : OpenProjectProvider {
-  protected open val systemId: ProjectSystemId? = null
+
+  protected open val systemId: ProjectSystemId by lazy {
+    /**
+     * Tries to resolve external system id
+     * Note: Implemented approach is super heuristics.
+     * Please, override [systemId] to avoid discrepancy with real id.
+     */
+    val readableName = StringUtils.splitByCharacterTypeCamelCase(javaClass.simpleName).first()
+    val manager = ExternalSystemManager.EP_NAME.findFirstSafe {
+      StringUtils.equalsIgnoreCase(StringUtils.splitByCharacterTypeCamelCase(it.javaClass.simpleName).first(), readableName)
+    }
+    manager?.systemId ?: ProjectSystemId(readableName.toUpperCase())
+  }
 
   protected abstract fun isProjectFile(file: VirtualFile): Boolean
 
@@ -38,22 +55,29 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     }
     val nioPath = projectDirectory.toNioPath()
     val isValidIdeaProject = isValidProjectPath(nioPath)
+
+    val untrustedProjectChoice = confirmOpeningUntrustedProject(projectFile, systemId)
+    if (untrustedProjectChoice == OpenUntrustedProjectChoice.CANCEL) return null
+
     val options = OpenProjectTask(
       isNewProject = !isValidIdeaProject,
       forceOpenInNewFrame = forceOpenInNewFrame,
       projectToClose = projectToClose,
       runConfigurators = false,
       beforeOpen = { project ->
+        project.setTrusted(untrustedProjectChoice == OpenUntrustedProjectChoice.IMPORT)
+
         if (isValidIdeaProject) {
-          systemId?.let { UnlinkedProjectNotificationAware.enableNotifications(project, it) }
-          return@OpenProjectTask true
+          UnlinkedProjectNotificationAware.enableNotifications(project, systemId)
         }
-        project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
-        ApplicationManager.getApplication().invokeAndWait {
-          linkAndRefreshProject(nioPath, project)
+        else {
+          project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, true)
+          ApplicationManager.getApplication().invokeAndWait {
+            linkAndRefreshProject(nioPath, project)
+          }
+          updateLastProjectLocation(nioPath)
         }
-        updateLastProjectLocation(nioPath)
-        return@OpenProjectTask true
+        true
       }
     )
     return ProjectManagerEx.getInstanceEx().openProject(nioPath, options)
@@ -70,7 +94,7 @@ abstract class AbstractOpenProjectProvider : OpenProjectProvider {
     val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
     if (projectFile == null) {
       val shortPath = FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(projectFilePath), false)
-      throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId?.readableName, shortPath))
+      throw IllegalArgumentException(ExternalSystemBundle.message("error.project.does.not.exist", systemId.readableName, shortPath))
     }
     linkToExistingProject(projectFile, project)
   }

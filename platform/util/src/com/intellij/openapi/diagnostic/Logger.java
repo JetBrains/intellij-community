@@ -46,8 +46,7 @@ public abstract class Logger {
         return;
       }
 
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+      logFactoryChanged(factory);
     }
 
     try {
@@ -64,11 +63,18 @@ public abstract class Logger {
 
   public static void setFactory(@NotNull Factory factory) {
     if (isInitialized()) {
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+      logFactoryChanged(factory.getClass());
     }
 
     ourFactory = factory;
+  }
+
+  private static void logFactoryChanged(@NotNull Class<? extends Factory> factory) {
+    //noinspection UseOfSystemOutOrSystemErr
+    System.out.println("Changing log factory from " +
+                       ourFactory.getClass().getCanonicalName() +
+                       " to " + factory.getCanonicalName() + "\n" +
+                       ExceptionUtil.getThrowableText(new Throwable()));
   }
 
   public static Factory getFactory() {

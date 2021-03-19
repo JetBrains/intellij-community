@@ -7,7 +7,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokConfigUtil {
+public final class LombokConfigUtil {
 
   private static final LombokConfigProperty[] EMPTY_LOMBOK_CONFIG_PROPERTIES = new LombokConfigProperty[0];
   private static final LombokConfigCleaner[] EMPTY_LOMBOK_CONFIG_CLEANERS = new LombokConfigCleaner[0];

@@ -482,4 +482,25 @@ class ExternalEntityMappingTest {
     assertEquals(1, mapping.getDataByEntity(fooEntity))
     assertEquals(2, mapping.getDataByEntity(barEntity))
   }
+
+  @Test
+  fun `ignore added mapping for removed entity`() {
+    val commonBuilder = WorkspaceEntityStorageBuilder.create()
+
+    val diff1 = WorkspaceEntityStorageBuilder.create()
+    val foo1 = diff1.addSampleEntity("foo1")
+    diff1.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo1, 1)
+    commonBuilder.addDiff(diff1)
+
+    val diff2 = WorkspaceEntityStorageBuilder.create()
+    val foo2 = diff2.addSampleEntity("foo2")
+    diff2.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo2, 2)
+    diff2.removeEntity(foo2)
+    commonBuilder.addDiff(diff2)
+
+    val storage = commonBuilder.toStorage()
+    val entity = storage.singleSampleEntity()
+    assertEquals("foo1", entity.stringProperty)
+    assertEquals(1, storage.getExternalMapping<Int>(INDEX_ID).getDataByEntity(entity))
+  }
 }

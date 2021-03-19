@@ -13,7 +13,7 @@ public class ReplaceExplicitTypeWithVarIntentionAction extends AbstractReplaceEx
   }
 
   @Override
-  protected boolean isAvailableOnDeclarationCustom(PsiDeclarationStatement declarationStatement, PsiLocalVariable localVariable) {
+  protected boolean isAvailableOnDeclarationCustom(@NotNull PsiDeclarationStatement declarationStatement, @NotNull PsiLocalVariable localVariable) {
     return isNotFinal(localVariable);
   }
 

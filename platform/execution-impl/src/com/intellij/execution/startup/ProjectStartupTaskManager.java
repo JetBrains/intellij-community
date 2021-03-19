@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.ExecutionBundle;
@@ -15,7 +15,7 @@ import java.util.*;
 
 @Service
 final class ProjectStartupTaskManager {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Project Startup Tasks Messages");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Project Startup Tasks Messages");
   public static final String PREFIX = "Project Startup Tasks: ";
 
   private final Project myProject;

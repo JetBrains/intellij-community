@@ -93,7 +93,11 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                    },
                                    configuration -> RepeatCount.N.equals(configuration.getRepeatMode()));
     fragments.add(countFragment);
-    repeat.addSettingsEditorListener(editor -> countFragment.setSelected(RepeatCount.N.equals(repeat.getSelectedVariant())));
+    repeat.addSettingsEditorListener(editor -> {
+      boolean repeatN = RepeatCount.N.equals(repeat.getSelectedVariant());
+      if (repeatN) repeat.component().setVisible(false);
+      countFragment.setSelected(repeatN);
+    });
     repeat.setToggleListener(s -> {
       if (RepeatCount.N.equals(s)) {
         IdeFocusManager.getInstance(getProject()).requestFocus(countFragment.getEditorComponent(), false);

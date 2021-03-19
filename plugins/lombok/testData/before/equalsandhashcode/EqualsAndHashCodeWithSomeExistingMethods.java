@@ -1,7 +1,6 @@
 //CONF: lombok.addGeneratedAnnotation = false
 
-import lombok.AccessLevel;
-import lombok.Data;
+import lombok.*;
 
 import static lombok.AccessLevel.NONE;
 
@@ -10,7 +9,7 @@ import static lombok.AccessLevel.NONE;
 @Setter(NONE)
 class EqualsAndHashCodeWithSomeExistingMethods {
 	int x;
-	
+
 	public int hashCode() {
 		return 42;
 	}
@@ -21,7 +20,7 @@ class EqualsAndHashCodeWithSomeExistingMethods {
 @Setter(NONE)
 class EqualsAndHashCodeWithSomeExistingMethods2 {
 	int x;
-	
+
 	protected boolean canEqual(Object other) {
 		return false;
 	}
@@ -32,11 +31,11 @@ class EqualsAndHashCodeWithSomeExistingMethods2 {
 @Setter(NONE)
 class EqualsAndHashCodeWithAllExistingMethods {
 	int x;
-	
+
 	public int hashCode() {
 		return 42;
 	}
-	
+
 	public boolean equals(Object other) {
 		return false;
 	}

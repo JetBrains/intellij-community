@@ -178,15 +178,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * Extracts path from the given URL. Path is a substring from "://" till the end of URL. If there is no "://" URL
-   * itself is returned.
-   *
-   * @param url the URL
-   * @return path
+   * @see URLUtil#extractPath(String)
    */
   public static @NotNull String extractPath(@NotNull String url) {
-    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    return index >= 0 ? url.substring(index + URLUtil.SCHEME_SEPARATOR.length()) : url;
+    return URLUtil.extractPath(url);
   }
 
   public abstract void addVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);

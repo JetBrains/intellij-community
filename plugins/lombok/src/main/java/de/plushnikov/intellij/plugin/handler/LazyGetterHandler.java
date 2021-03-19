@@ -8,7 +8,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class LazyGetterHandler {
+public final class LazyGetterHandler {
 
   public static boolean isLazyGetterHandled(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {

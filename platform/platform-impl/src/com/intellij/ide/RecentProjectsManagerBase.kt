@@ -433,6 +433,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
+  override fun suggestNewProjectLocation(): String {
+    return ProjectUtil.getBaseDir()
+  }
+
   // open for rider
   protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
     if (!System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||

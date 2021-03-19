@@ -3,14 +3,13 @@ package de.plushnikov.intellij.plugin.processor;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,15 +142,17 @@ public class ValProcessor extends AbstractProcessor {
     if (isVal || isVar) {
       final PsiExpression initializer = psiLocalVariable.getInitializer();
       if (initializer == null) {
-        holder.registerProblem(psiLocalVariable, "'" + ann + "' on a local variable requires an initializer expression", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiLocalVariable,
+                               LombokBundle.message("inspection.message.on.local.variable.requires.initializer.expression", ann), ProblemHighlightType.ERROR);
       } else if (initializer instanceof PsiArrayInitializerExpression) {
-        holder.registerProblem(psiLocalVariable, "'" + ann + "' is not compatible with array initializer expressions. Use the full form (new int[] { ... } instead of just { ... })", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiLocalVariable,
+                               LombokBundle.message("inspection.message.not.compatible.with.array.initializer.expressions", ann), ProblemHighlightType.ERROR);
       } else if (initializer instanceof PsiLambdaExpression) {
-        holder.registerProblem(psiLocalVariable, "'" + ann + "' is not allowed with lambda expressions.", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiLocalVariable, LombokBundle.message("inspection.message.not.allowed.with.lambda.expressions", ann), ProblemHighlightType.ERROR);
       } else if (isVal) {
         final PsiElement typeParentParent = psiLocalVariable.getParent();
         if (typeParentParent instanceof PsiDeclarationStatement && typeParentParent.getParent() instanceof PsiForStatement) {
-          holder.registerProblem(psiLocalVariable, "'" + ann + "' is not allowed in old-style for loops", ProblemHighlightType.ERROR);
+          holder.registerProblem(psiLocalVariable, LombokBundle.message("inspection.message.not.allowed.in.old.style.for.loops", ann), ProblemHighlightType.ERROR);
         }
       }
     }
@@ -167,9 +168,10 @@ public class ValProcessor extends AbstractProcessor {
       boolean isForeachStatement = scope instanceof PsiForeachStatement;
       boolean isForStatement = scope instanceof PsiForStatement;
       if (isVal && !isForeachStatement) {
-        holder.registerProblem(psiParameter, "'val' works only on local variables and on foreach loops", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiParameter, LombokBundle.message("inspection.message.val.works.only.on.local.variables"), ProblemHighlightType.ERROR);
       } else if (isVar && !(isForeachStatement || isForStatement)) {
-        holder.registerProblem(psiParameter, "'var' works only on local variables and on for/foreach loops", ProblemHighlightType.ERROR);
+        holder.registerProblem(psiParameter,
+                               LombokBundle.message("inspection.message.var.works.only.on.local.variables.on.for.foreach.loops"), ProblemHighlightType.ERROR);
       }
     }
   }

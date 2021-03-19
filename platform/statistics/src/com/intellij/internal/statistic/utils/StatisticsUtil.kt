@@ -24,8 +24,8 @@ object StatisticsUtil {
   private const val mega = kilo * kilo
 
   @JvmStatic
-  fun getProjectId(project: Project): String {
-    return EventLogConfiguration.anonymize(project.getProjectCacheFileName())
+  fun getProjectId(project: Project, recorderId: String): String {
+    return EventLogConfiguration.getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
   }
 
   /**

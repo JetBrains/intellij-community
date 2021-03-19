@@ -18,12 +18,12 @@ package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
 
-import javax.rmi.PortableRemoteObject;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-final class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
+final class RemoteBreakpointImpl extends UnicastRemoteObject implements RemoteBreakpoint {
   private final Breakpoint myBreakpoint;
 
   private RemoteBreakpointImpl(Breakpoint breakpoint) throws RemoteException {
@@ -31,50 +31,62 @@ final class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteB
     myBreakpoint = breakpoint;
   }
 
+  @Override
   public String getUri() throws RemoteException {
     return myBreakpoint.getUri();
   }
 
+  @Override
   public int getLine() throws RemoteException {
     return myBreakpoint.getLine();
   }
 
+  @Override
   public boolean isEnabled() throws RemoteException {
     return myBreakpoint.isEnabled();
   }
 
+  @Override
   public String getCondition() {
     return myBreakpoint.getCondition();
   }
 
+  @Override
   public String getLogMessage() {
     return myBreakpoint.getLogMessage();
   }
 
+  @Override
   public void setCondition(String expr) {
     myBreakpoint.setCondition(expr);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myBreakpoint.setEnabled(enabled);
   }
 
+  @Override
   public void setLogMessage(String expr) {
     myBreakpoint.setLogMessage(expr);
   }
 
+  @Override
   public String getTraceMessage() throws RemoteException {
     return myBreakpoint.getTraceMessage();
   }
 
+  @Override
   public void setTraceMessage(String expr) throws RemoteException {
     myBreakpoint.setTraceMessage(expr);
   }
 
+  @Override
   public boolean isSuspend() {
     return myBreakpoint.isSuspend();
   }
 
+  @Override
   public void setSuspend(boolean suspend) {
     myBreakpoint.setSuspend(suspend);
   }

@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
+import com.intellij.ide.impl.getExplicitTrustedStateOrByHostAndLocation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -19,7 +20,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,12 +47,6 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     private fun getDefaultProjectSdk(): Sdk? {
       return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
     }
-
-    private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
-      filterSystemWideSdks(existingSdks).sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
-
-    private fun findDetectedSystemWideSdk(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder) =
-      detectSystemWideSdks(module, existingSdks, context).firstOrNull()
 
     private fun <T> guardIndicator(indicator: ProgressIndicator, computable: () -> T): T {
       return ProgressManager.getInstance().runProcess(computable, SensitiveProgressWrapper(indicator))
@@ -88,6 +82,8 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
                            module: Module,
                            extension: PyProjectSdkConfigurationExtension?,
                            indicator: ProgressIndicator) {
+    // please keep this method in sync with com.jetbrains.python.inspections.PyInterpreterInspection.Visitor.getSuitableSdkFix
+
     indicator.isIndeterminate = true
 
     val context = UserDataHolderBase()
@@ -97,7 +93,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.previous.interpreter")
     LOGGER.debug("Looking for the previously used interpreter")
-    guardIndicator(indicator) { findExistingAssociatedSdk(module, existingSdks) }?.let {
+    guardIndicator(indicator) { mostPreferred(filterAssociatedSdks(module, existingSdks)) }?.let {
       LOGGER.debug { "The previously used interpreter: $it" }
       setReadyToUseSdk(project, module, it)
       return
@@ -107,9 +103,21 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.related.venv")
     LOGGER.debug("Looking for a virtual environment related to the project")
-    guardIndicator(indicator) { findDetectedAssociatedEnvironment(module, existingSdks, context) }?.let {
-      LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+    guardIndicator(indicator) {
+      val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
+      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getExplicitTrustedStateOrByHostAndLocation())
+    }?.let {
+      val detectedAssociatedEnv = it.first
+
+      if (it.second) {
+          // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+          LOGGER.info("Inner virtual environment has not been configured since project is not trusted")
+          runInEdt { module.excludeInnerVirtualEnv(detectedAssociatedEnv) }
+          return
+      }
+
+      LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
+      val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       runInEdt {
@@ -145,12 +153,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
       indicator.text = PyBundle.message("looking.for.shared.conda.environment")
-      guardIndicator(indicator) {
-        existingSdks
-          .asSequence()
-          .filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
-          .firstOrNull()
-      }?.let {
+      guardIndicator(indicator) { mostPreferred(filterSharedCondaEnvs(module, existingSdks)) }?.let {
         setReadyToUseSdk(project, module, it)
         return
       }
@@ -179,7 +182,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.previous.system.interpreter")
     LOGGER.debug("Looking for the previously used system-wide interpreter")
-    guardIndicator(indicator) { findExistingSystemWideSdk(existingSdks) }?.let {
+    guardIndicator(indicator) { mostPreferred(filterSystemWideSdks(existingSdks)) }?.let {
       LOGGER.debug { "Previously used system-wide interpreter: $it" }
       setReadyToUseSdk(project, module, it)
       return
@@ -189,7 +192,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.system.interpreter")
     LOGGER.debug("Looking for a system-wide interpreter")
-    guardIndicator(indicator) { findDetectedSystemWideSdk(module, existingSdks, context) }?.let {
+    guardIndicator(indicator) { detectSystemWideSdks(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected system-wide interpreter: $it" }
       runInEdt {
         SdkConfigurationUtil.createAndAddSDK(it.homePath!!, PythonSdkType.getInstance())?.apply {

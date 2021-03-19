@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -12,8 +13,10 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Inspect and validate @FieldNameConstants lombok annotation on a field
@@ -37,6 +40,16 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField) {
+    if (null == nameHint) {
+      return true;
+    }
+    final String generatedElementName = calcFieldConstantName(psiField, psiAnnotation, psiClass);
+    return Objects.equals(nameHint, generatedElementName);
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     return LombokProcessorUtil.isLevelVisible(psiAnnotation) && checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, builder);
   }
@@ -44,7 +57,7 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   public boolean checkIfFieldNameIsValidAndWarn(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final boolean isValid = isValidFieldNameConstant(psiAnnotation, psiField);
     if (!isValid) {
-      builder.addWarning("Not generating constant for this field: The name of the constant would be equal to the name of this field.");
+      builder.addWarning(LombokBundle.message("inspection.message.not.generating.constant"));
     }
     return isValid;
   }
@@ -91,8 +104,8 @@ public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
 
   @NotNull
   private String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
-    String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix");
-    String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix");
+    String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix", CONFIG_DEFAULT);
+    String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix", CONFIG_DEFAULT);
 
     final ConfigDiscovery configDiscovery = ConfigDiscovery.getInstance();
     if (CONFIG_DEFAULT.equals(prefix)) {

@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
-import java.io.IOException;
-
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
@@ -12,69 +10,71 @@ public class LoggerTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/log";
   }
 
-  public void testFieldIsStatic$LogTest() throws IOException {
+  public void testFieldIsStatic$LogTest() {
     doTest();
   }
 
-  public void testFieldIsStatic$Log4jTest() throws IOException {
+  public void testFieldIsStatic$Log4jTest() {
     doTest();
   }
 
-  public void testFieldIsStatic$Log4j2Test() throws IOException {
+  public void testFieldIsStatic$Log4j2Test() {
     doTest();
   }
 
-  public void testFieldIsStatic$CommonsLogTest() throws IOException {
+  public void testFieldIsStatic$CommonsLogTest() {
     doTest();
   }
 
-  public void testFieldIsStatic$Slf4jTest() throws IOException {
+  public void testFieldIsStatic$Slf4jTest() {
     doTest();
   }
 
-  public void testFieldIsStatic$XSlf4jTest() throws IOException {
+  public void testFieldIsStatic$XSlf4jTest() {
     doTest();
   }
 
-  public void testFieldIsStatic$JBossLogTest() throws IOException {
+  public void testFieldIsStatic$JBossLogTest() {
     doTest();
   }
 
-
-  public void testFieldName$LogTest() throws IOException {
+  public void testFieldIsStatic$Slf4jWithReqConstructor() {
     doTest();
   }
 
-  public void testFieldName$Log4jTest() throws IOException {
+  public void testFieldName$LogTest() {
     doTest();
   }
 
-  public void testFieldName$Log4j2Test() throws IOException {
+  public void testFieldName$Log4jTest() {
     doTest();
   }
 
-  public void testFieldName$CommonsLogTest() throws IOException {
+  public void testFieldName$Log4j2Test() {
     doTest();
   }
 
-  public void testFieldName$Slf4jTest() throws IOException {
+  public void testFieldName$CommonsLogTest() {
     doTest();
   }
 
-  public void testFieldName$XSlf4jTest() throws IOException {
+  public void testFieldName$Slf4jTest() {
     doTest();
   }
 
-  public void testFieldName$JBossLogTest() throws IOException {
+  public void testFieldName$XSlf4jTest() {
     doTest();
   }
 
-
-  public void testCustomSimple$CustomLogTest() throws IOException {
+  public void testFieldName$JBossLogTest() {
     doTest();
   }
 
-  public void testCustomComplex$CustomLogTest() throws IOException {
+  public void testCustomSimple$CustomLogTest() {
+    doTest();
+  }
+
+  public void testCustomComplex$CustomLogTest() {
     doTest();
   }
 }

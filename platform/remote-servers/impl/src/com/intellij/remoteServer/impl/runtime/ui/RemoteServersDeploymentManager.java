@@ -72,8 +72,11 @@ public final class RemoteServersDeploymentManager {
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
           updateServerContent(myServerToContent.get(server), connection);
           if (connection.getStatus() == ConnectionStatus.CONNECTED) {
-            myConnectionsToExpand.add(connection);
-            pollDeployments(connection);
+            // connectionStatusChanged is also called for errors, don't initiate polling once again, IDEA-259400
+            if (connection.getStatusText() == connection.getStatus().getPresentableText()) { // effectively, checks for no error
+              myConnectionsToExpand.add(connection);
+              pollDeployments(connection);
+            }
           }
           else {
             myConnectionsToExpand.remove(connection);

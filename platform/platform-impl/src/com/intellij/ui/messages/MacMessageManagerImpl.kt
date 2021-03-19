@@ -254,7 +254,7 @@ private class NativeMacMessageManager : MacMessages() {
 
 private fun getActualWindow(window: ID): ID? {
   if (!Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
-    val parent = Foundation.invoke(window, "parent")
+    val parent = Foundation.invoke(window, "parentWindow")
     if (ID.NIL.equals(parent)) {
       return null
     }

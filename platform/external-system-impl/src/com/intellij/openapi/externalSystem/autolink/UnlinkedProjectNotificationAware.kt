@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.CommonBundle
@@ -50,9 +50,9 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
       }
     }, notificationDisposable)
 
-    notification.addAction(NotificationAction.createSimpleExpiring(unlinkedProjectAware.getNotificationText()) {
+    notification.addAction(NotificationAction.createSimple(unlinkedProjectAware.getNotificationText()) {
       notification.expire()
-      unlinkedProjectAware.linkAndLoadProject(project, externalProjectPath)
+      unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
     })
     notification.addAction(NotificationAction.createSimple(message("unlinked.project.notification.skip.action")) {
       notification.expire()

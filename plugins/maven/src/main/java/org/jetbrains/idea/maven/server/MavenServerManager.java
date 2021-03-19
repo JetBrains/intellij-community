@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.impl.TrustChangeNotifier;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
@@ -72,7 +74,7 @@ public final class MavenServerManager implements Disposable {
   }
 
   public MavenServerManager() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
@@ -82,6 +84,16 @@ public final class MavenServerManager implements Disposable {
             shutdown(true);
           }
         });
+      }
+    });
+
+    connection.subscribe(TrustChangeNotifier.TOPIC, new TrustChangeNotifier() {
+      @Override
+      public void projectTrusted(@NotNull Project project) {
+        MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+        if (manager.isMavenizedProject()) {
+          MavenUtil.restartMavenConnectors(project);
+        }
       }
     });
   }
@@ -95,7 +107,7 @@ public final class MavenServerManager implements Disposable {
       if (connector == null) {
         return registerNewConnector(project, settings, jdk);
       }
-      if (!compatibleParameters(connector, jdk, settings)) {
+      if (!compatibleParameters(project, connector, jdk, settings)) {
         connector.shutdown(false);
         return registerNewConnector(project, settings, jdk);
       }
@@ -105,9 +117,20 @@ public final class MavenServerManager implements Disposable {
 
   private MavenServerConnector registerNewConnector(Project project, MavenWorkspaceSettings settings, Sdk jdk) {
     Integer debugPort = getDebugPort(project);
-    MavenServerConnector connector = new MavenServerConnector(project, this, settings, jdk, debugPort);
+    MavenServerConnector connector;
+    if (MavenUtil.isProjectTrustedEnoughToImport(project, false)) {
+      MavenLog.LOG.info("Creating new maven connector for " + project + " in");
+      connector = new MavenServerConnectorImpl(project, this, settings, jdk, debugPort);
+
+      myServerConnectors.put(project, connector);
+      return connector;
+    }
+    else {
+      MavenLog.LOG.warn("Project " + project + " not trusted enough. Will not start maven for it");
+      connector =
+        new DummyMavenServerConnector(project, this, jdk, "", MavenServerManager.resolveEmbeddedMavenHome());
+    }
     Disposer.register(MavenDisposable.getInstance(project), connector);
-    myServerConnectors.put(project, connector);
     return connector;
   }
 
@@ -134,15 +157,19 @@ public final class MavenServerManager implements Disposable {
       Sdk jdk = MavenUtil.getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK);
       MavenProjectsManager.getInstance(project).getSyncConsole().addWarning(SyncBundle.message("importing.jdk.changed"),
                                                                             SyncBundle.message("importing.jdk.changed.description",jdkForImporterName, jdk.getName())
-                                                                            );
+      );
       return jdk;
     }
   }
 
-  private static boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
+  private static boolean compatibleParameters(@NotNull Project project,
+                                              MavenServerConnector connector,
+                                              Sdk jdk,
+                                              MavenWorkspaceSettings settings) {
     if (!StringUtil.equals(connector.getJdk().getName(), jdk.getName())) {
       return false;
     }
+
     return connector.isSettingsStillValid(settings);
   }
 

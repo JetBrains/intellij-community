@@ -4,6 +4,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -18,6 +20,8 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -122,14 +126,52 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   }
 
   private fun registerListener() {
+    fun isParentOfStorageFiles(dir: VirtualFile): Boolean {
+      if (dir.name == Project.DIRECTORY_STORE_FOLDER) return true
+      val grandParent = dir.parent
+      return grandParent != null && grandParent.name == Project.DIRECTORY_STORE_FOLDER
+    }
+
+    fun isStorageFile(file: VirtualFile): Boolean {
+      val fileName = file.name
+      if ((FileUtilRt.extensionEquals(fileName, ModuleFileType.DEFAULT_EXTENSION)
+           || FileUtilRt.extensionEquals(fileName, ProjectFileType.DEFAULT_EXTENSION)) && !file.isDirectory) return true
+      val parent = file.parent
+      return parent != null && isParentOfStorageFiles(parent)
+    }
+
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
-        val toProcess = events.asSequence().filter { isFireStorageFileChangedEvent(it) }
-        val addedUrls = toProcess.filterIsInstance<VFileCreateEvent>().filterNot { it.isEmptyDirectory }.mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
-        val removedUrls = toProcess.filterIsInstance<VFileDeleteEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
-        val changedUrls = toProcess.filterIsInstance<VFileContentChangeEvent>().mapTo(ArrayList()) { JpsPathUtil.pathToUrl(it.path) }
+        val addedUrls = ArrayList<String>()
+        val removedUrls = ArrayList<String>()
+        val changedUrls = ArrayList<String>()
+        //JPS model is loaded from *.iml files, files in .idea directory (modules.xml), files from directories in .idea (libraries) and *.ipr file
+        // so we can ignore all other events to speed up processing
+        for (event in events) {
+          if (isFireStorageFileChangedEvent(event)) {
+            when (event) {
+              is VFileCreateEvent -> {
+                val fileName = event.childName
+                if (FileUtilRt.extensionEquals(fileName, ModuleFileType.DEFAULT_EXTENSION) && !event.isDirectory
+                    || isParentOfStorageFiles(event.parent) && !event.isEmptyDirectory) {
+                  addedUrls.add(JpsPathUtil.pathToUrl(event.path))
+                }
+              }
+              is VFileDeleteEvent -> {
+                if (isStorageFile(event.file)) {
+                  removedUrls.add(JpsPathUtil.pathToUrl(event.path))
+                }
+              }
+              is VFileContentChangeEvent -> {
+                if (isStorageFile(event.file)) {
+                  changedUrls.add(JpsPathUtil.pathToUrl(event.path))
+                }
+              }
+            }
+          }
+        }
         if (addedUrls.isNotEmpty() || removedUrls.isNotEmpty() || changedUrls.isNotEmpty()) {
           val change = JpsConfigurationFilesChange(addedUrls, removedUrls, changedUrls)
           incomingChanges.add(change)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -112,7 +112,8 @@ public class ArrayRenderer extends NodeRendererImpl{
         CompletableFuture<String> asyncLabel = DebuggerUtilsAsync.length(arrValue)
           .thenCompose(length -> {
             if (length > 0) {
-              int shownLength = Math.min(length, isString ? 5 : 10);
+              int shownLength = Math.min(length, Registry.intValue(
+                isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
               return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
                 CompletableFuture[] futures = StreamEx.of(values).map(ArrayRenderer::getElementAsString).toArray(CompletableFuture[]::new);
                 return CompletableFuture.allOf(futures).thenApply(__ -> {

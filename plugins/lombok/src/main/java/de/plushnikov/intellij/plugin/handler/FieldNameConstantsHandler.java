@@ -9,7 +9,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldNameConstantsHandler {
+public final class FieldNameConstantsHandler {
 
   public static boolean isFiledNameConstants(@NotNull PsiElement element) {
     @Nullable PsiReferenceExpression psiReferenceExpression = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);

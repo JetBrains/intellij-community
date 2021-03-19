@@ -81,11 +81,21 @@ public class JBCefClient implements JBCefDisposable {
     myCefClient = client;
     Disposer.register(JBCefApp.getInstance().getDisposable(), this);
 
+    Runnable createPool = () -> {
+      if (myJSQueryPool != null) {
+        LOG.warn("JSQueryPool has already been created, this request will be ignored");
+        return;
+      }
+      myJSQueryPool = JSQueryPool.create(this);
+    };
     addPropertyChangeListener(JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, evt -> {
       if (evt.getNewValue() != null) {
-        myJSQueryPool = JSQueryPool.create(this);
+        createPool.run();
       }
     });
+    if (JS_QUERY_SLOT_POOL_DEF_SIZE > 0) {
+      createPool.run();
+    }
   }
 
   @NotNull

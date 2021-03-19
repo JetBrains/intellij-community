@@ -197,9 +197,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
         }
       }
 
-      if (selectedValue != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myOnItemSelected.accept(selectedValue));
-      }
+      ApplicationManager.getApplication().invokeLater(() -> myOnItemSelected.accept(selectedValue));
 
       return FINAL_CHOICE;
     }

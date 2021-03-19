@@ -219,11 +219,10 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
-      String deviceId = EventLogConfiguration.INSTANCE.getDeviceId();
       final String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
       final TestDataCollectorDebugLogger logger = new TestDataCollectorDebugLogger();
       final LogEventRecordRequest request = LogEventRecordRequest.Companion.create(
-        log, "FUS", productCode, deviceId, filter, true, logger
+        log, "FUS", productCode, "test.device.id", filter, true, logger
       );
 
       if (request == null) {

@@ -64,7 +64,7 @@ public class DfEphemeralReferenceType implements DfReferenceType {
              constraint == TypeConstraints.TOP ? DfTypes.NOT_NULL_OBJECT :
              new DfEphemeralReferenceType(constraint);
     }
-    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).getNotValues() : Set.of();
+    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).myNotValues : Set.of();
     return new DfGenericObjectType(notValues, constraint, ((DfReferenceType)other).getNullability(),
                                    Mutability.UNKNOWN, null, DfTypes.BOTTOM, false);
   }

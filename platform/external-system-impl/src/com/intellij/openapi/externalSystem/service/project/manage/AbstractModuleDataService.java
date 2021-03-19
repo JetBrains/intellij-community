@@ -102,7 +102,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         }
         String productionModuleId = node.getData().getProductionModuleId();
         modelsProvider.setTestModuleProperties(module, productionModuleId);
-        setModuleOptions(module, node, modelsProvider);
+        setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
 
@@ -186,7 +186,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       .filter(module -> !ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module))
       .forEach(module -> {
         ExternalSystemModulePropertyManager.getInstance(module)
-          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT), modelsProvider);
+          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT));
       });
 
   }
@@ -418,11 +418,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
-  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode, IdeModifiableModelsProvider modelsProvider) {
+  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
     ExternalSystemModulePropertyManager.getInstance(module)
-      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT), modelsProvider);
+      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
   }
 
   @Override

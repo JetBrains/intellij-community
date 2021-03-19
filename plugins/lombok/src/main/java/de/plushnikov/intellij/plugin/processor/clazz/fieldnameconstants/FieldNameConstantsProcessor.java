@@ -35,7 +35,8 @@ public class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProce
       if (existingClass.isEmpty()) {
         LombokLightClassBuilder innerClassOrEnum = FieldNameConstantsHandler.createInnerClassOrEnum(typeName, psiClass, psiAnnotation);
         if (innerClassOrEnum != null) {
-          FieldNameConstantsHandler.createFields(innerClassOrEnum, psiFields).forEach(innerClassOrEnum::withField);
+          innerClassOrEnum.withFieldSupplier(() -> FieldNameConstantsHandler.createFields(innerClassOrEnum, psiFields));
+
           target.add(innerClassOrEnum);
         }
       }

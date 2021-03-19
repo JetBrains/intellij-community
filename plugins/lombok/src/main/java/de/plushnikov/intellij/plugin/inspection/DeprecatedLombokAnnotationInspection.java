@@ -1,11 +1,15 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.util.PsiTreeUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
+import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,16 +17,15 @@ import java.util.Objects;
 /**
  * @author Plushnikov Michail
  */
-public class DeprecatedLombokAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
+public class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBase {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokElementVisitor(holder);
   }
 
   private static class LombokElementVisitor extends JavaElementVisitor {
-
     private final ProblemsHolder holder;
 
     LombokElementVisitor(ProblemsHolder holder) {
@@ -31,9 +34,9 @@ public class DeprecatedLombokAnnotationInspection extends AbstractBaseJavaLocalI
 
     @Override
     public void visitAnnotation(final PsiAnnotation annotation) {
-      checkFor("lombok.experimental.Builder", "lombok.Builder", annotation);
-      checkFor("lombok.experimental.Value", "lombok.Value", annotation);
-      checkFor("lombok.experimental.Wither", "lombok.With", annotation);
+      checkFor("lombok.experimental.Builder", LombokClassNames.BUILDER, annotation);
+      checkFor("lombok.experimental.Value", LombokClassNames.VALUE, annotation);
+      checkFor("lombok.experimental.Wither", LombokClassNames.WITH, annotation);
     }
 
     private void checkFor(String deprecatedAnnotationFQN, String newAnnotationFQN, PsiAnnotation psiAnnotation) {
@@ -43,16 +46,16 @@ public class DeprecatedLombokAnnotationInspection extends AbstractBaseJavaLocalI
         if (null != listOwner) {
 
           holder.registerProblem(psiAnnotation,
-            "Lombok annotation '" + deprecatedAnnotationFQN + "' is deprecated and " +
-              "not supported by lombok-plugin any more. Use '" + newAnnotationFQN + "' instead.",
-            ProblemHighlightType.ERROR,
-            new AddAnnotationFix(newAnnotationFQN,
-              listOwner,
-              psiAnnotation.getParameterList().getAttributes(),
-              deprecatedAnnotationFQN));
+                                 LombokBundle
+                                   .message("inspection.message.lombok.annotation.deprecated.not.supported", deprecatedAnnotationFQN,
+                                            newAnnotationFQN),
+                                 ProblemHighlightType.ERROR,
+                                 new AddAnnotationFix(newAnnotationFQN,
+                                                      listOwner,
+                                                      psiAnnotation.getParameterList().getAttributes(),
+                                                      deprecatedAnnotationFQN));
         }
       }
     }
-
   }
 }

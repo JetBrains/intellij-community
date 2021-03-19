@@ -37,6 +37,16 @@ import static com.intellij.ide.dnd.SmoothAutoScroller.installDropTargetAsNecessa
 
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
                                            ComponentWithFileColors, TreePathBackgroundSupplier {
+  /**
+   * Force the following strategy for selection on the right click:
+   * <ul>
+   *   <li> If set to <b>false</b> or <b>true</b> and the only one path selected - change selection to the path under the mouse hover. </li>
+   *   <li> If set to <b>false</b> and the multiple paths selected - do not change selection. </li>
+   *   <li> If set to <b>true</b> and the multiple paths selected - do not change selection unless selected some path outside the current selection. </li>
+   * </ul>
+   *
+   * Such strategy similar to {@link com.intellij.ui.table.JBTable}
+   */
   @ApiStatus.Internal
   public static final Key<Boolean> AUTO_SELECT_ON_MOUSE_PRESSED = Key.create("allows to select a node automatically on right click");
 
@@ -636,7 +646,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     public void mousePressed(MouseEvent event) {
       setPressed(event, true);
 
-      if (Boolean.FALSE.equals(UIUtil.getClientProperty(event.getSource(), AUTO_SELECT_ON_MOUSE_PRESSED))) return;
+      if (Boolean.FALSE.equals(UIUtil.getClientProperty(event.getSource(), AUTO_SELECT_ON_MOUSE_PRESSED))
+          && getSelectionModel().getSelectionCount() > 1) {
+        return;
+      }
       if (!SwingUtilities.isLeftMouseButton(event) &&
           (SwingUtilities.isRightMouseButton(event) || SwingUtilities.isMiddleMouseButton(event))) {
         TreePath path = getClosestPathForLocation(event.getX(), event.getY());

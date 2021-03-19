@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -16,6 +17,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -46,6 +48,12 @@ public class ToStringProcessor extends AbstractClassProcessor {
   }
 
   @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint == null || nameHint.equals(TO_STRING_METHOD_NAME);
+  }
+
+  @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     final boolean result = validateAnnotationOnRigthType(psiClass, builder);
     if (result) {
@@ -56,8 +64,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final Collection<String> ofProperty = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class);
 
     if (!excludeProperty.isEmpty() && !ofProperty.isEmpty()) {
-      builder.addWarning("exclude and of are mutually exclusive; the 'exclude' parameter will be ignored",
-        PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
+      builder.addWarning(LombokBundle.message("inspection.message.exclude.are.mutually.exclusive.exclude.parameter.will.be.ignored"),
+                         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", null));
     } else {
       validateExcludeParam(psiClass, builder, psiAnnotation, excludeProperty);
     }
@@ -69,7 +77,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("@ToString is only supported on a class or enum type");
+      builder.addError(LombokBundle.message("inspection.message.to.string.only.supported.on.class.or.enum.type"));
       result = false;
     }
     return result;
@@ -77,7 +85,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasToStringMethodDefined(psiClass)) {
-      builder.addWarning("Not generated '%s'(): A method with same name already exists", TO_STRING_METHOD_NAME);
+      builder.addWarning(LombokBundle.message("inspection.message.not.generated.s.method.with.same.name.already.exists"), TO_STRING_METHOD_NAME);
     }
   }
 
@@ -143,8 +151,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
       paramString.append("super=\" + super.toString() + \", ");
     }
 
+    final EqualsAndHashCodeToStringHandler handler = getEqualsAndHashCodeToStringHandler();
     for (MemberInfo memberInfo : memberInfos) {
-
       if (includeFieldNames) {
         paramString.append(memberInfo.getName()).append('=');
       }
@@ -160,7 +168,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
         }
       }
 
-      final String memberAccessor = getEqualsAndHashCodeToStringHandler().getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
+      final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
       paramString.append("this.").append(memberAccessor);
 
       if (classFieldType instanceof PsiArrayType) {

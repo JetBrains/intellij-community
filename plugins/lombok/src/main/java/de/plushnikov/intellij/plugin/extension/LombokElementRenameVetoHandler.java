@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
@@ -12,6 +11,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -48,7 +48,7 @@ public class LombokElementRenameVetoHandler implements RenameHandler {
 
   private void invokeInner(Project project, Editor editor) {
     CommonRefactoringUtil.showErrorHint(project, editor,
-      RefactoringBundle.getCannotRefactorMessage("This element cannot be renamed."),
+      RefactoringBundle.getCannotRefactorMessage(LombokBundle.message("dialog.message.this.element.cannot.be.renamed")),
       RefactoringBundle.message("rename.title"), null);
   }
 }

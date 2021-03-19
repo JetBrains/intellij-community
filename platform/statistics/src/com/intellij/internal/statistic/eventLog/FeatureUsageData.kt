@@ -42,7 +42,9 @@ private val LOG = logger<FeatureUsageData>()
  * </p>
  */
 @ApiStatus.Internal
-class FeatureUsageData {
+class FeatureUsageData(private val recorderId: String) {
+  constructor() : this("FUS")
+
   private var data: MutableMap<String, Any> = HashMap()
 
   init {
@@ -61,7 +63,7 @@ class FeatureUsageData {
   fun addClientId(clientId: String?): FeatureUsageData {
     clientId?.let {
       val permanentClientId = parsePermanentClientId(clientId)
-      data["client_id"] = EventLogConfiguration.anonymize(permanentClientId)
+      data["client_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(permanentClientId)
     }
     return this
   }
@@ -83,7 +85,7 @@ class FeatureUsageData {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = StatisticsUtil.getProjectId(project)
+      data["project"] = StatisticsUtil.getProjectId(project, recorderId)
     }
     return this
   }
@@ -218,18 +220,18 @@ class FeatureUsageData {
 
   @FeatureUsageDataBuilder(additionalDataFields = ["file_path:util#hash"])
   fun addAnonymizedPath(@NonNls path: String?): FeatureUsageData {
-    data["file_path"] = path?.let { EventLogConfiguration.anonymize(path) } ?: "undefined"
+    data["file_path"] = path?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(path) } ?: "undefined"
     return this
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["anonymous_id:util#hash"])
   fun addAnonymizedId(@NonNls id: String): FeatureUsageData {
-    data["anonymous_id"] = EventLogConfiguration.anonymize(id)
+    data["anonymous_id"] = EventLogConfiguration.getOrCreate(recorderId).anonymize(id)
     return this
   }
 
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
-    data[key] = value?.let { EventLogConfiguration.anonymize(value) } ?: "undefined"
+    data[key] = value?.let { EventLogConfiguration.getOrCreate(recorderId).anonymize(value) } ?: "undefined"
     return this
   }
 

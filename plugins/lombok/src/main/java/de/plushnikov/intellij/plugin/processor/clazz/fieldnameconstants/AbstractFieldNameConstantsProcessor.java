@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.psi.*;
+import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
@@ -37,7 +38,7 @@ public abstract class AbstractFieldNameConstantsProcessor extends AbstractClassP
 
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError("'@FieldNameConstants' is only supported on a class or enum");
+      builder.addError(LombokBundle.message("inspection.message.field.name.constants.only.supported.on.class.or.enum"));
       return false;
     }
     return true;

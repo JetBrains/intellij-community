@@ -24,8 +24,9 @@ import com.intellij.workspaceModel.storage.bridgeEntities.getOrCreateExternalSys
 
 class ExternalSystemModulePropertyManagerBridge(private val module: Module) : ExternalSystemModulePropertyManager() {
   private fun findEntity(): ExternalSystemModuleOptionsEntity? {
-    val storage = (module as ModuleBridge).entityStorage.current
-    val moduleEntity = storage.findModuleEntity(module)
+    val modelsProvider = module.getUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY)
+    val storage = if (modelsProvider != null) modelsProvider.actualStorageBuilder else (module as ModuleBridge).entityStorage.current
+    val moduleEntity = storage.findModuleEntity(module as ModuleBridge)
     return moduleEntity?.externalSystemOptions
   }
 
@@ -99,9 +100,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     updateSource()
   }
 
-  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?,
-                                  modelsProvider: IdeModifiableModelsProvider?) {
-    val moduleDiff = getModuleDiff(modelsProvider)
+  override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
+    val moduleDiff = getModuleDiff()
     editEntity(moduleDiff) {
       externalSystem = id.toString()
       linkedProjectId = moduleData.id
@@ -133,8 +133,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
     }
   }
 
-  override fun setExternalModuleType(type: String?, modelsProvider: IdeModifiableModelsProvider?) {
-    editEntity(getModuleDiff(modelsProvider)) {
+  override fun setExternalModuleType(type: String?) {
+    editEntity(getModuleDiff()) {
       externalSystemModuleType = type
     }
   }
@@ -142,6 +142,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   override fun swapStore() {
   }
 
-  private fun getModuleDiff(modelsProvider: IdeModifiableModelsProvider?): WorkspaceEntityStorageDiffBuilder? =
-    if (modelsProvider is IdeModifiableModelsProviderImpl) modelsProvider.actualStorageBuilder else (module as ModuleBridge).diff
+  private fun getModuleDiff(): WorkspaceEntityStorageDiffBuilder? {
+    val modelsProvider = module.getUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY)
+    return if (modelsProvider != null) modelsProvider.actualStorageBuilder else (module as ModuleBridge).diff
+  }
 }

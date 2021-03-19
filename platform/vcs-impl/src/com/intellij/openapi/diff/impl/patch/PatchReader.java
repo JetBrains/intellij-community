@@ -2,7 +2,6 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.google.common.collect.Iterables;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,13 +74,12 @@ public final class PatchReader {
     return getTextPatches();
   }
 
-  @Nullable
-  public CharSequence getBaseRevision(final Project project, final String relativeFilePath) {
+  public @Nullable CharSequence getBaseRevision(@NotNull String relativeFilePath) {
     final Map<String, Map<String, CharSequence>> map = myAdditionalInfoParser.getResultMap();
     if (!map.isEmpty()) {
       final Map<String, CharSequence> inner = map.get(relativeFilePath);
       if (inner != null) {
-        BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class, project);
+        BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
         return inner.get(baseRevisionTextPatchEP.getName());
       }
     }

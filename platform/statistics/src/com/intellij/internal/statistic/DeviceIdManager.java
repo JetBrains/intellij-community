@@ -24,28 +24,49 @@ public final class DeviceIdManager {
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
+  /**
+   * @deprecated Use getOrGenerateId(String) with purpose specific id
+   */
+  @Deprecated
   public static String getOrGenerateId() {
+    return getOrGenerateId("UNDEFINED");
+  }
+
+  public static String getOrGenerateId(@NotNull String recorderId) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     Preferences prefs = getPreferences(appInfo);
 
-    String deviceId = prefs.get(DEVICE_ID_PREFERENCE_KEY, null);
+    String preferenceKey = getPreferenceKey(recorderId);
+    String deviceId = prefs.get(preferenceKey, null);
     if (StringUtil.isEmptyOrSpaces(deviceId)) {
       deviceId = generateId(Calendar.getInstance(Locale.ENGLISH), getOSChar());
-      prefs.put(DEVICE_ID_PREFERENCE_KEY, deviceId);
+      prefs.put(preferenceKey, deviceId);
       LOG.info("Generating new Device ID");
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
-      deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, DEVICE_ID_PREFERENCE_KEY);
+      if (isBaseRecorder(recorderId)) {
+        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, preferenceKey);
+      }
     }
     return deviceId;
   }
 
   @NotNull
-  public static String syncWithSharedFile(@NotNull String fileName,
-                                          @NotNull String installationId,
-                                          @NotNull Preferences prefs,
-                                          @NotNull String prefsKey) {
+  private static String getPreferenceKey(@NotNull String recorderId) {
+    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+  }
+
+  private static boolean isBaseRecorder(@NotNull String recorderId) {
+    return "FUS".equals(recorderId);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  @NotNull
+  private static String syncWithSharedFile(@NotNull String fileName,
+                                           @NotNull String installationId,
+                                           @NotNull Preferences prefs,
+                                           @NotNull String prefsKey) {
     final String appdata = System.getenv("APPDATA");
     if (appdata != null) {
       final File dir = new File(appdata, "JetBrains");

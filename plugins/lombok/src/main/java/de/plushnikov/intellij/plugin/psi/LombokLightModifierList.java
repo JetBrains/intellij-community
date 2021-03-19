@@ -1,10 +1,12 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,10 +16,18 @@ import java.util.*;
  * @author Plushnikov Michail
  */
 public class LombokLightModifierList extends LightModifierList implements SyntheticElement {
-  private static final Set<String> ALL_MODIFIERS = new HashSet<>(Arrays.asList(PsiModifier.MODIFIERS));
+  private static final Set<String> ALL_MODIFIERS = ContainerUtil.set(PsiModifier.MODIFIERS);
 
   private final Map<String, PsiAnnotation> myAnnotations;
   private final Set<String> myImplicitModifiers;
+
+  public LombokLightModifierList(@NotNull PsiManager manager) {
+    this(manager, JavaLanguage.INSTANCE);
+  }
+
+  public LombokLightModifierList(@NotNull PsiManager manager, @NotNull Language language) {
+    this(manager, language, Collections.emptyList());
+  }
 
   public LombokLightModifierList(PsiManager manager, final Language language, Collection<String> implicitModifiers, String... modifiers) {
     super(manager, language, modifiers);
@@ -86,8 +96,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     PsiAnnotation[] result = PsiAnnotation.EMPTY_ARRAY;
     if (!myAnnotations.isEmpty()) {
       Collection<PsiAnnotation> annotations = myAnnotations.values();

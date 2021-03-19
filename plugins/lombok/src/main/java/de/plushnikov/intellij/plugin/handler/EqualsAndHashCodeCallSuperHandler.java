@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EqualsAndHashCodeCallSuperHandler {
+public final class EqualsAndHashCodeCallSuperHandler {
 
   public static boolean isEqualsAndHashCodeCallSuperDefault(@NotNull PsiElement element) {
     PsiNameValuePair psiNameValuePair = PsiTreeUtil.getParentOfType(element, PsiNameValuePair.class);

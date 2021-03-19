@@ -54,9 +54,8 @@ class TestingTasksImpl extends TestingTasks {
       JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
     }
     if (runConfigurations != null) {
-      compilationTasks.
-        compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany { it.requiredArtifacts })
+      compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
+      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany {it.requiredArtifacts})
     }
     else if (options.mainModule != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])
