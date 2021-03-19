@@ -53,9 +53,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Project myProject;
 
   private static class CannotAnalyzeException extends RuntimeException {
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-      return this;
+    private CannotAnalyzeException() {
+      super(null, null, false, false);
     }
   }
 
@@ -1694,18 +1693,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
 
-    addBareCall(call, methodExpression, method);
+    addBareCall(call, methodExpression);
     finishElement(call);
   }
 
   void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
-    addBareCall(expression, reference, null);
-  }
-
-  void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference, @Nullable PsiElement resolved) {
     addConditionalErrorThrow();
-    PsiMethod method = resolved == null ? ObjectUtils.tryCast(reference.resolve(), PsiMethod.class) :
-                       ObjectUtils.tryCast(resolved, PsiMethod.class);
+    PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
     List<? extends MethodContract> contracts =
       method == null ? Collections.emptyList() :
       DfaUtil.addRangeContracts(method, JavaMethodContractUtil.getMethodCallContracts(method, expression));
@@ -2028,16 +2022,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushValueInstruction(DfTypes.typedObject(castExpression.getType(), Nullability.UNKNOWN)));
     }
 
-    if (operand != null && operand.getType() != null) {
-      final PsiTypeElement typeElement = castExpression.getCastType();
-      if (typeElement != null) {
-        PsiType typeElementType = typeElement.getType();
-        if (!(typeElementType instanceof PsiPrimitiveType)) {
-          DfaControlTransferValue transfer =
-            shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ClassCastException"), myTrapStack) : null;
-          addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
-        }
-      }
+    final PsiTypeElement typeElement = castExpression.getCastType();
+    if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
+      DfaControlTransferValue transfer =
+        shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ClassCastException"), myTrapStack) : null;
+      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
     }
     finishElement(castExpression);
   }
