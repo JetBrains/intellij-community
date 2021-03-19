@@ -85,14 +85,15 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
       }
     else null
 
-  private fun prepareJvmForExecution(
+  @ApiStatus.Internal
+  fun prepareJvmForExecution(
     task: ExternalSystemTask,
     externalProjectPath: String,
     taskNotificationListener: ExternalSystemTaskNotificationListener,
     project: Project
-  ) {
+  ): SdkInfo? {
     val settings = use(project) { GradleSettings.getInstance(it) }
-    val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return
+    val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
     val gradleJvm = projectSettings.gradleJvm
 
     val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
@@ -110,6 +111,7 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
       }
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
+    return sdkInfo
   }
 
   private fun <R> use(project: Project, action: (Project) -> R): R {
