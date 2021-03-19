@@ -103,7 +103,8 @@ public class MatchOptions implements JDOMExternalizable {
   }
 
   public void removeUnusedVariables() {
-    variableConstraints.keySet().removeIf(key -> !getUsedVariableNames().contains(key));
+    final Set<String> variables = getUsedVariableNames();
+    variableConstraints.keySet().removeIf(key -> !variables.contains(key));
   }
 
   public MatchVariableConstraint getVariableConstraint(String name) {
