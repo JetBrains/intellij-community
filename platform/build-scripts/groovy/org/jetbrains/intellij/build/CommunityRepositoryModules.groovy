@@ -268,10 +268,6 @@ final class CommunityRepositoryModules {
       bundlingRestrictions.includeInEapOnly = true
     },
     plugin("intellij.jps.cache"),
-    plugin("intellij.space") {
-      withProjectLibrary("space-idea-sdk")
-      withProjectLibrary("jackson-datatype-joda")
-    },
     plugin("intellij.lombok") {
       withModule("intellij.lombok.generated")
     },
