@@ -135,7 +135,6 @@ public final class EditorCoreUtil {
         return document;
       }
     });
-    highlighter.setText(document.getImmutableCharSequence());
     return highlighter;
   }
 
