@@ -114,6 +114,27 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
+  //PY-47253
+  public void testShowOnlyImmediateAttributesForAliases() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47253
+  public void testFuzzyResultsShouldBeAddedToAliasAttributesCompletion() {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject(testName, "");
+    myFixture.configureByFile("main.py");
+    myFixture.completeBasic();
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertEquals(2, variants.size());
+    assertContainsElements(variants, "np.invert", "fileinput.input");
+  }
+
+  //PY-47253
+  public void testAliasAttributesShouldNotBeDuplicated() {
+    doTestBasicCompletion();
+  }
+
   private void doTestBasicCompletion() {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(testName, "");
