@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.LogMessage;
@@ -84,6 +84,10 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    error(true, message, t, details);
+  }
+
+  void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);
@@ -101,7 +105,9 @@ public final class IdeaLogger extends Log4jBasedLogger {
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
     myLogger.error(message + detailString, t);
-    logErrorHeader(t);
+    if (addErrorHeader) {
+      logErrorHeader(t);
+    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {

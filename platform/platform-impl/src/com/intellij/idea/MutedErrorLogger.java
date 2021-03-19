@@ -81,7 +81,12 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
   }
 
   private void log(@NotNull String message) {
-    myDelegate.error(message, (Throwable)null);
+    if (myDelegate instanceof IdeaLogger) {
+      ((IdeaLogger)myDelegate).error(false, message, null);
+    }
+    else {
+      myDelegate.error(message, (Throwable)null);
+    }
   }
 
   @Override
