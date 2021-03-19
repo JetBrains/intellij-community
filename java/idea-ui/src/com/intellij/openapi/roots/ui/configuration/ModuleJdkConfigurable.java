@@ -91,7 +91,9 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     final Project project = getRootModel().getModule().getProject();
 
     myJdkPanel = new JPanel(new GridBagLayout());
-    myCbModuleJdk = new JdkComboBox(project, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(), null, null, jdk -> {
+    myCbModuleJdk = new JdkComboBox(project, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(),
+                                    WslSdkFilter.filterSdkByWsl(project), WslSdkFilter.filterSdkSuggestionByWsl(project),
+                                    null, jdk -> {
       final Sdk projectJdk = myJdksModel.getProjectSdk();
       if (projectJdk == null) {
         final int res =
