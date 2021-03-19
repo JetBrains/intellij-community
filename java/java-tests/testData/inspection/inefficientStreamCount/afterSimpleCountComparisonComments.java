@@ -4,12 +4,12 @@ import java.util.stream.Stream;
 
 class Test {
   boolean isEmpty(Stream<String> stream) {
-      /*b*/
-      /*c*/
       /*d*/
       /*e*/
       /*f*/
       /*g*/
-      return /*a*/stream.findAny().isEmpty()/*h*/;
+      /*h*/
+      /*i*/
+      return /*a*/stream/*b*/./*c*/limit(42).findAny().isEmpty()/*j*/;
   }
 }

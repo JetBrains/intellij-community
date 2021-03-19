@@ -332,6 +332,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       if (countQualifier == null) return;
       String base = countQualifier.getText();
       CommentTracker ct = new CommentTracker();
+      ct.markUnchanged(countQualifier);
       if (isPresent) {
         ct.replaceAndRestoreComments(comparison, base + "." + "findAny().isPresent()");
       } else {
