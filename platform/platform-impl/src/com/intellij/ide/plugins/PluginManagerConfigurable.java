@@ -1726,7 +1726,7 @@ public final class PluginManagerConfigurable
   public Runnable enableSearch(String option) {
     if (myTabHeaderComponent == null) {
       myLaterSearchQuery = option;
-      return null;
+      return () -> {};
     }
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
