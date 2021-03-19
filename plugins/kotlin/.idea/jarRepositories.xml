@@ -52,11 +52,6 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="JetBrainsSpacePublicMaven" />
-      <option name="name" value="JetBrains Space Public Maven" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/space/maven" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="caeb020e-2153-45d1-b752-f56d66968d08" />
       <option name="name" value="caeb020e-2153-45d1-b752-f56d66968d08" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
