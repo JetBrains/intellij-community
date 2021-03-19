@@ -12,12 +12,13 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public final class RemoteConfigurationType extends SimpleConfigurationType {
+public final class RemoteConfigurationType extends SimpleConfigurationType implements DumbAware {
   public RemoteConfigurationType() {
     super("Remote", ExecutionBundle.message("remote.debug.configuration.display.name"), ExecutionBundle.message("remote.debug.configuration.description"),
           NotNullLazyValue.createValue(() -> AllIcons.RunConfigurations.Remote));
