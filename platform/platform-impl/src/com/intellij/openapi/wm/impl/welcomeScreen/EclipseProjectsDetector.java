@@ -6,39 +6,60 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
-abstract class EclipseProjectsDetector {
+class EclipseProjectsDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectsDetector.class);
 
-  protected abstract void collectProjectPaths(List<String> projects) throws IOException;
-
-  public static void detectProjects(Runnable callback) {
-    EclipseProjectsDetector detector;
-    if (SystemInfo.isMac) {
-      detector = new MacEclipseProjectsDetector();
-    }
-    else if (SystemInfo.isWindows) {
-      detector = new WinEclipseProjectsDetector();
-    }
-    else {
+  protected void collectProjectPaths(List<String> projects) throws Exception {
+    Path path = Path.of(System.getProperty("user.home"), ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
+    File file = path.toFile();
+    if (file.exists()) {
+      List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
+      for (String url : workspaceUrls) {
+        projects.addAll(scanForProjects(URI.create(url).getPath()));
+      }
       return;
     }
+    for (String appLocation : getStandardAppLocations()) {
+      collectProjects(projects, Path.of(appLocation));
+    }
+  }
+
+  protected String[] getStandardAppLocations() {
+    if (SystemInfo.isMac) {
+      return new String[] { "/Applications/Eclipse.app/Contents/Eclipse/configuration/.settings/org.eclipse.ui.ide.prefs" };
+    }
+    else if (SystemInfo.isWindows) {
+      File[] folders = Path.of(System.getProperty("user.home"), "eclipse").toFile().listFiles();
+      if (folders != null) {
+        return ContainerUtil.map2Array(folders, String.class, file -> file.getPath());
+      }
+    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public static void detectProjects(Runnable callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         List<String> projects = new ArrayList<>();
-        detector.collectProjectPaths(projects);
+        new EclipseProjectsDetector().collectProjectPaths(projects);
         if (projects.isEmpty()) return;
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         ProjectGroup group = new ProjectGroup("Eclipse Projects");
@@ -84,25 +105,11 @@ abstract class EclipseProjectsDetector {
     return projects;
   }
 
-  private static class MacEclipseProjectsDetector extends EclipseProjectsDetector {
-    @Override
-    public void collectProjectPaths(List<String> projects) throws IOException {
-      String path = "/Applications/Eclipse.app/Contents/Eclipse/configuration/.settings/org.eclipse.ui.ide.prefs";
-      collectProjects(projects, Path.of(path));
-      collectProjects(projects, Path.of(System.getProperty("user.home"), path));
-    }
-  }
-
-  private static class WinEclipseProjectsDetector extends EclipseProjectsDetector {
-    @Override
-    public void collectProjectPaths(List<String> projects) throws IOException {
-      String[] folders = Path.of(System.getProperty("user.home"), "eclipse").toFile().list();
-      if (folders != null) {
-        for (String folder : folders) {
-          collectProjects(projects, Path.of(folder));
-        }
-      }
-    }
+  static List<String> parseOomphLocations(String fileContent) throws Exception {
+    Element root = JDOMUtil.load(fileContent);
+    List<Element> elements = root.getChildren("workspace");
+    return ContainerUtil.map(elements, element1 -> StringUtil
+      .trimEnd(Objects.requireNonNull(Objects.requireNonNull(element1.getChild("key")).getAttributeValue("href")),
+               "/.metadata/.plugins/org.eclipse.oomph.setup/workspace.setup#/"));
   }
 }
-
