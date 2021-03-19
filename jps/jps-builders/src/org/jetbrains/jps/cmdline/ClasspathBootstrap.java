@@ -18,7 +18,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
-import kotlin.Pair;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,10 +90,6 @@ public final class ClasspathBootstrap {
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getResourcePath(JavaProjectBuilder.class));  // QDox lightweight java parser
     cp.add(getResourcePath(Gson.class));  // gson
-
-    cp.add(getResourcePath(Pair.class)); // kotlin-stdlib
-    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
-    cp.add(PathManager.getResourceRoot(ClasspathBootstrap.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
 
     cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
 

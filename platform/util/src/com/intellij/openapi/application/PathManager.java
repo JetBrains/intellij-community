@@ -10,6 +10,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -724,6 +725,9 @@ public final class PathManager {
     if (resourceRoot != null) {
       classPath.add(Paths.get(resourceRoot).toAbsolutePath().toString());
     }
+    classPath.add(getJarPathForClass(Pair.class)); // kotlin-stdlib
+    classPath.add(getResourceRoot(PathManager.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
+    classPath.add(getResourceRoot(PathManager.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
 
     return classPath;
   }
