@@ -255,7 +255,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
             localConfigurations
               .forEach { configuration: RunConfiguration ->
-                target.add(object : AnAction(configuration.name, null, configuration.icon) {
+                target.add(object : AnAction(configuration.icon) {
+                  init {
+                    templatePresentation.setText(configuration.name, false)
+                  }
+
                   override fun actionPerformed(e: AnActionEvent) {
                     val bean = ConfigurationBean()
                     bean.configurationId = type.id
