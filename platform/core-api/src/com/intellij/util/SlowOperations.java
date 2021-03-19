@@ -50,7 +50,7 @@ public final class SlowOperations {
     if (ourAlwaysAllow) {
       return;
     }
-    if (Registry.is("ide.enable.slow.operations.in.edt")) {
+    if (!Registry.is("ide.slow.operations.assertion")) {
       return;
     }
     Application application = ApplicationManager.getApplication();
