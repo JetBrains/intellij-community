@@ -8,14 +8,14 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class VcsFeatureProvider : ElementFeatureProvider {
-  private val executor = ConcurrencyUtil.newSingleThreadExecutor("ML completion. VCS feature calculation")
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ML completion. VCS feature calculation", 1)
 
   override fun getName(): String = "vcs"
 
