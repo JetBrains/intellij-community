@@ -49,7 +49,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     Project project = e.getProject();
     if (project == null || !JBCefApp.isSupported()) {
-      BrowserUtil.browse(whatsNewUrl);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(whatsNewUrl));
     }
     else {
       openWhatsNewFile(project, whatsNewUrl, null);
