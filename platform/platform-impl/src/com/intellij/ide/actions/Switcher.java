@@ -130,7 +130,7 @@ public final class Switcher extends BaseSwitcherAction {
         if (pinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
         final Object source = e.getSource();
         if (source instanceof JList) {
-          JList jList = (JList)source;
+          JList<? extends SwitcherListItem> jList = (JList<? extends SwitcherListItem>)source;
           if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
@@ -279,7 +279,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
 
         private void updatePathLabel() {
-          List<SwitcherVirtualFile> values = files.getSelectedValuesList();
+          List<? extends SwitcherListItem> values = getSelectedList().getSelectedValuesList();
           if (values != null && values.size() == 1) {
             pathLabel.setText(getTitle2Text(values.get(0).getStatusText()));
           }
@@ -298,6 +298,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
       });
 
+      toolWindows.getSelectionModel().addListSelectionListener(filesSelectionListener);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
       files.setCellRenderer(renderer);
@@ -605,15 +606,15 @@ public final class Switcher extends BaseSwitcherAction {
         }
         return;
       }
-      final JBList selectedList = getSelectedList();
+      JList<? extends SwitcherListItem> selectedList = getSelectedList();
       final int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
       int selectedIndex = 0;
       for (int i = selected.length - 1; i >= 0; i--) {
         selectedIndex = selected[i];
-        Object value = selectedList.getModel().getElementAt(selectedIndex);
-        if (value instanceof SwitcherVirtualFile) {
-          SwitcherVirtualFile svf = (SwitcherVirtualFile)value;
+        SwitcherListItem item = selectedList.getModel().getElementAt(selectedIndex);
+        if (item instanceof SwitcherVirtualFile) {
+          SwitcherVirtualFile svf = (SwitcherVirtualFile)item;
           VirtualFile virtualFile = svf.getFile();
           final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
           EditorWindow wnd = findAppropriateWindow(svf.getWindow());
@@ -628,8 +629,7 @@ public final class Switcher extends BaseSwitcherAction {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
         }
-        else if (value instanceof SwitcherListItem) {
-          SwitcherListItem item = (SwitcherListItem)value;
+        else if (item != null) {
           item.close(this);
         }
       }
@@ -669,8 +669,8 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     public void go(boolean forward) {
-      JBList selected = getSelectedList();
-      JList list = selected;
+      JList<? extends SwitcherListItem> selected = getSelectedList();
+      JList<? extends SwitcherListItem> list = selected;
       int index = list.getSelectedIndex();
       if (forward) index++; else index--;
       if ((forward && index >= list.getModel().getSize()) || (!forward && index < 0)) {
@@ -694,12 +694,12 @@ public final class Switcher extends BaseSwitcherAction {
       go(false);
     }
 
-    public JBList<?> getSelectedList() {
+    public JBList<? extends SwitcherListItem> getSelectedList() {
       return getSelectedList(files);
     }
 
     @Nullable
-    JBList getSelectedList(@Nullable JBList preferable) {
+    JBList<? extends SwitcherListItem> getSelectedList(@Nullable JBList<? extends SwitcherListItem> preferable) {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
     }
 
