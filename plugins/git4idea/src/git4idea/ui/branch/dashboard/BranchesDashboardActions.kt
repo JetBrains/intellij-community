@@ -55,11 +55,9 @@ internal object BranchesDashboardActions {
       BranchActionsBuilder(project, tree).build()?.getChildren(e) ?: AnAction.EMPTY_ARRAY
   }
 
-  class MultipleLocalBranchActions(private val containsRemoteBranches: Boolean, private val repository: GitRepository) : ActionGroup(), DumbAware {
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      val commonActions: Array<AnAction> = arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
-      return if (containsRemoteBranches) commonActions + arrayOf<AnAction>(Separator(), EditRemoteAction(repository), RemoveRemoteAction(repository)) else commonActions
-    }
+  class MultipleLocalBranchActions : ActionGroup(), DumbAware {
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      arrayOf(ShowArbitraryBranchesDiffAction(), UpdateSelectedBranchAction(), DeleteBranchAction())
   }
 
   class CurrentBranchActions(project: Project,
@@ -90,12 +88,11 @@ internal object BranchesDashboardActions {
   class RemoteBranchActions(project: Project,
                             repositories: List<GitRepository>,
                             @NonNls branchName: String,
-                            private val currentRepository: GitRepository)
-    : GitBranchPopupActions.RemoteBranchActions(project, repositories, branchName, currentRepository) {
+                            selectedRepository: GitRepository)
+    : GitBranchPopupActions.RemoteBranchActions(project, repositories, branchName, selectedRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(*super.getChildren(e), Separator(), EditRemoteAction(currentRepository), RemoveRemoteAction(currentRepository))
-        .toTypedArray()
+      arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
   }
 
   class GroupActions(private val currentRepository: GitRepository) : ActionGroup(), DumbAware {
@@ -123,7 +120,7 @@ internal object BranchesDashboardActions {
       val guessRepo = DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project),
                                                            GitVcsSettings.getInstance(project).recentRootPath) ?: return null
       if (multipleBranchSelection) {
-        return MultipleLocalBranchActions(selectedBranches.any { !it.isLocal }, guessRepo)
+        return MultipleLocalBranchActions()
       }
 
       val branchInfo = selectedBranches.singleOrNull()
@@ -542,34 +539,22 @@ internal object BranchesDashboardActions {
 
     override fun update(e: AnActionEvent) {
       val project = e.project
-      val remoteNames = getSelectedRemoteNames(e)
-      val enabled = project != null && remoteNames.isNotEmpty() && repository.remotes.any { remoteNames.contains(it.name) }
+      val remoteNames = e.getData(GIT_REMOTES)
+      val enabled =
+        project != null && remoteNames != null && remoteNames.isNotEmpty() && repository.remotes.any { remoteNames.contains(it.name) }
       e.presentation.isEnabled = enabled
       e.presentation.description = description()
       if (enabled) {
-        update(e, project!!, remoteNames)
+        update(e, project!!, remoteNames!!)
       }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
-      val remoteNames = getSelectedRemoteNames(e)
+      val remoteNames = e.getData(GIT_REMOTES)!!
       val remotes = repository.remotes.filterTo(hashSetOf()) { remoteNames.contains(it.name) }
 
       doAction(e, project, remotes)
-    }
-
-    private fun getSelectedRemoteNames(e: AnActionEvent): Set<String> {
-      val remoteNamesFromBranches =
-        e.getData(GIT_BRANCHES)
-          ?.asSequence()
-          ?.filterNot(BranchInfo::isLocal)
-          ?.mapNotNull { it.branchName.split("/").getOrNull(0) }?.toSet()
-      val selectedRemoteNames = e.getData(GIT_REMOTES)
-      return hashSetOf<String>().apply {
-        if (selectedRemoteNames != null) addAll(selectedRemoteNames)
-        if (remoteNamesFromBranches != null) addAll(remoteNamesFromBranches)
-      }
     }
   }
 
