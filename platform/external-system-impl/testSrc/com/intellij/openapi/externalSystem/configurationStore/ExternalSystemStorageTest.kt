@@ -43,6 +43,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
@@ -497,6 +498,14 @@ class ExternalSystemStorageTest {
     WriteAction.runAndWait<RuntimeException> {
       FacetType.EP_NAME.getPoint().registerExtension(MockFacetType(), disposableRule.disposable)
       FacetType.EP_NAME.getPoint().registerExtension(MockSubFacetType(), disposableRule.disposable)
+    }
+  }
+
+  @Test
+  fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
+      JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
     }
   }
 

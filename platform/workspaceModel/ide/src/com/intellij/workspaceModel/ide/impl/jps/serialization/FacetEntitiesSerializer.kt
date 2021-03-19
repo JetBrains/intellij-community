@@ -9,10 +9,7 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -61,7 +58,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
       val configurationXmlTag = facetState.configuration?.let { JDOMUtil.write(it) }
-      val externalSystemId = facetState.externalSystemId
+      val externalSystemId = facetState.externalSystemId ?: facetState.externalSystemIdInInternalStorage
       val source = if (externalSystemId == null) internalSource else JpsImportedEntitySource(internalSource, externalSystemId, externalStorage)
 
       // Check for existing facet
@@ -72,6 +69,12 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
 
       val facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet,
                                                source)
+      if (externalSystemId != null && !externalStorage) {
+        builder.addEntity(ModifiableFacetExternalSystemIdEntity::class.java, source) {
+          facet = facetEntity
+          this.externalSystemId = externalSystemId
+        }
+      }
       res = res && loadFacetEntities(facetState.subFacets, builder, moduleEntity, facetEntity, orderOfFacets)
     }
     return res
@@ -127,6 +130,9 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
       if (externalStorage) {
         externalSystemId = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
       }
+      else {
+        externalSystemIdInInternalStorage = facetEntity.externalSystemId?.externalSystemId
+      }
     }
     facetStates[state.name] = state
     val underlyingFacet = facetEntity.underlyingFacet
@@ -166,3 +172,27 @@ internal class ModifiableFacetsOrderEntity : ModifiableWorkspaceEntityBase<Facet
 
 private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()
 
+/**
+ * This property indicates that external-system-id attribute should be stored in facet configuration to avoid unnecessary modifications
+ */
+@Suppress("unused")
+internal class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemIdEntity>() {
+  lateinit var externalSystemId: String
+
+  override fun createEntity(snapshot: WorkspaceEntityStorage): FacetExternalSystemIdEntity {
+    return FacetExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class FacetExternalSystemIdEntity(
+  val externalSystemId: String
+) : WorkspaceEntityBase() {
+  val facet: FacetEntity by OneToOneChild.NotNull(FacetEntity::class.java, true)
+}
+
+internal class ModifiableFacetExternalSystemIdEntity : ModifiableWorkspaceEntityBase<FacetExternalSystemIdEntity>() {
+  var externalSystemId: String by EntityDataDelegation()
+  var facet: FacetEntity by MutableOneToOneChild.NotNull(FacetExternalSystemIdEntity::class.java, FacetEntity::class.java, true)
+}
+
+private val FacetEntity.externalSystemId get() = referrers(FacetExternalSystemIdEntity::facet).firstOrNull()
