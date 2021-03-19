@@ -12,22 +12,21 @@ import com.intellij.openapi.util.registry.Registry
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
     private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
-    private const val PATH_TO_EXPERIMENT_CONFIG = "/experiment.json"
-    private val GSON by lazy { Gson() }
-    private val LOG = logger<ClientExperimentStatus>()
 
     fun loadExperimentInfo(): ExperimentConfig {
-      try{
+      try {
         if (!ApplicationManager.getApplication().isEAP) {
           return ExperimentConfig.disabledExperiment()
         }
-        val json = ClientExperimentStatus::class.java.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
-        val experimentInfo = GSON.fromJson(json, ExperimentConfig::class.java)
+
+        val experimentInfo = ClientExperimentStatus::class.java.getResourceAsStream("/experiment.json")!!.reader().use {
+          Gson().fromJson(it, ExperimentConfig::class.java)
+        }
         checkExperimentGroups(experimentInfo)
         return experimentInfo
       }
       catch (e: Throwable) {
-        LOG.error("Error on loading ML Completion experiment info", e)
+        logger<ClientExperimentStatus>().error("Error on loading ML Completion experiment info", e)
         return ExperimentConfig.disabledExperiment()
       }
     }
