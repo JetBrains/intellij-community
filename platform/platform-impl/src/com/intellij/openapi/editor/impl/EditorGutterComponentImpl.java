@@ -2132,21 +2132,21 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       if (!addActions.isEmpty()) {
+        e.consume();
         DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(EditorBundle.messagePointer("editor.annotations.action.group.name"));
         for (AnAction addAction : addActions) {
           actionGroup.add(addAction);
         }
         JPopupMenu menu = actionManager.createActionPopupMenu("", actionGroup).getComponent();
         menu.show(this, e.getX(), e.getY());
-        e.consume();
       }
     }
     else {
       if (info != null) {
         AnAction rightButtonAction = info.renderer.getRightButtonClickAction();
         if (rightButtonAction != null) {
-          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
           e.consume();
+          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
         }
         else {
           ActionGroup actionGroup = info.renderer.getPopupMenuActions();
@@ -2167,10 +2167,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
         }
         if (group != null) {
+          e.consume();
           ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
         }
-        e.consume();
       }
     }
   }
