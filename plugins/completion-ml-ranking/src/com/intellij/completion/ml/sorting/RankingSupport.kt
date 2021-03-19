@@ -79,15 +79,13 @@ object RankingSupport {
     }
 
     val shouldSort = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    if (shouldSort && provider.isEnabledByDefault) {
-      showNotificationAboutMLOnce()
-    }
+    showNotificationAboutMLOnce(shouldSort, provider.isEnabledByDefault)
 
     return shouldSort
   }
 
-  private fun showNotificationAboutMLOnce() {
-    if (PlatformUtils.isWebStorm() || PlatformUtils.isGoIde()) {
+  private fun showNotificationAboutMLOnce(shouldSort: Boolean, isEnabledByDefault: Boolean) {
+    if (shouldSort && isEnabledByDefault && (PlatformUtils.isWebStorm() || PlatformUtils.isGoIde())) {
       val properties = PropertiesComponent.getInstance()
       if (!properties.getBoolean(ML_ENABLED_NOTIFICATION_SHOWN_KEY)) {
         properties.setValue(ML_ENABLED_NOTIFICATION_SHOWN_KEY, true)
