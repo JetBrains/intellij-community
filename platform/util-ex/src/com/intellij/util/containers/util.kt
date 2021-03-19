@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,6 +6,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
 import java.util.*
 import java.util.stream.Stream
+import kotlin.collections.ArrayDeque
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -278,3 +279,58 @@ fun <T> Optional<T>.orNull(): T? = orElse(null)
 fun <T> Iterable<T>?.asJBIterable(): JBIterable<T> = JBIterable.from(this)
 
 fun <T> Array<T>?.asJBIterable(): JBIterable<T> = if (this == null) JBIterable.empty() else JBIterable.of(*this)
+
+/**
+ * returns sequence of distinct nodes in breadth-first order.
+ */
+fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> {
+  return Sequence {
+    val initialIterator = initialSequence.iterator()
+    if (!initialIterator.hasNext()) emptySequence<Node>().iterator()
+    else object : Iterator<Node> {
+      private var currentNode: Node? = null
+      private var currentSequenceIterator: Iterator<Node>? = initialIterator
+
+      private val nextSequences = ArrayDeque<Sequence<Node>>()
+      private val visited = mutableSetOf<Node>()
+
+      private fun getNext(): Node? {
+        currentNode?.let { return it }
+
+        while (true) {
+          val iterator = getCurrentSequenceIterator() ?: return null
+
+          while (iterator.hasNext()) {
+            val next = iterator.next()
+            if (visited.add(next)) {
+              currentNode = next
+              return next
+            }
+          }
+
+          currentSequenceIterator = null
+        }
+      }
+
+      private fun getCurrentSequenceIterator(): Iterator<Node>? {
+        currentSequenceIterator?.let { return it }
+
+        val nextIterator = nextSequences.removeFirstOrNull()?.iterator() ?: return null
+        currentSequenceIterator = nextIterator
+
+        return nextIterator
+      }
+
+      override fun hasNext(): Boolean = getNext() != null
+
+      override fun next(): Node {
+        val node = getNext() ?: throw NoSuchElementException()
+
+        nextSequences += children(node)
+        currentNode = null
+
+        return node
+      }
+    }
+  }
+}
