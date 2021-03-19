@@ -1,7 +1,8 @@
 <html>
 <body>
 Warns when calling some method in a loop (e.g. <code>collection.add(x)</code>) could be
-replaced when calling a bulk method (e.g. <code>collection.addAll(listOfX)</code>.
+replaced when calling a bulk method (e.g. <code>collection.addAll(listOfX)</code>. It's
+not only shorter form but in some cases may be more performant as well.
 <p>Example:</p>
 <pre>
   void test(Collection&lt;Integer&gt; numbers) {
