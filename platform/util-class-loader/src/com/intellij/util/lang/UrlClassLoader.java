@@ -533,7 +533,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
     List<Path> files = Collections.emptyList();
-    Set<Path> pathsWithProtectionDomain;
+    @Nullable Set<Path> pathsWithProtectionDomain;
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache;
@@ -648,9 +648,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     public @NotNull UrlClassLoader.Builder autoAssignUrlsWithProtectionDomain() {
-      Set<Path> result = new HashSet<>();
+      Set<Path> result = null;
       for (Path path : files) {
         if (isUrlNeedsProtectionDomain(path)) {
+          if (result == null) {
+            result = new HashSet<>();
+          }
           result.add(path);
         }
       }
