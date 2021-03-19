@@ -104,7 +104,7 @@ final class FileTypeDetectionService implements Disposable {
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
+      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
           ProgressManager.checkCanceled();
           VirtualFile file =
@@ -411,7 +411,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   @Nullable
-  private FileType getFileTypeDetectedFromContent(VirtualFile file) {
+  private FileType getFileTypeDetectedFromContent(@NotNull VirtualFile file) {
     String fileTypeName = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
     return fileTypeName == null ? null : myFileTypeManager.findFileTypeByName(fileTypeName);
   }

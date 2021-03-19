@@ -96,7 +96,7 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
   @Override
   @NonNls
   public String toString() {
-    return (nameId > 0 ? getName() : "?")+"; nameId: "+nameId + "; id: " + id + " (" + (flags == -1 ? "unknown" : super.toString()) + ")" +
+    return "\"" + (nameId > 0 ? getName() : "?")+"\"; nameId: "+nameId + "; id: " + id + " (" + (flags == -1 ? "unknown" : super.toString()) + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 
