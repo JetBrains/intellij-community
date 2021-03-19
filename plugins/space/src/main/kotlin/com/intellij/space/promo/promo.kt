@@ -28,9 +28,9 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JLayeredPane
 
-internal const val SPACE_PROMO_VIDEO_URL: String = "https://www.youtube.com/watch?v=7-UNfbEjcNM"
-internal const val EXPLORE_SPACE_PROMO_URL: String = "https://jetbrains.space"
-internal const val SIGN_UP_SPACE_URL: String = "https://www.jetbrains.com/space/#sign-up"
+internal const val SPACE_PROMO_VIDEO_URL: String = "https://www.jetbrains.com/space/?show-overview=from-ide&switch-to-branch=JS-14525-space-overview-video-qs-parameter"
+internal const val EXPLORE_SPACE_PROMO_URL: String = "https://www.jetbrains.com/space/?fromIDEplugin"
+internal const val SIGN_UP_SPACE_URL: String = "https://www.jetbrains.com/space/?fromIDEplugin#sign-up"
 
 internal const val SPACE_TOOLBAR_PROMO_BANNER_PATH = "/images/spacePromo.png"
 internal const val SPACE_TOOLBAR_PROMO_BANNER_PATH_RETINA = "/images/spacePromo@2x.png"
