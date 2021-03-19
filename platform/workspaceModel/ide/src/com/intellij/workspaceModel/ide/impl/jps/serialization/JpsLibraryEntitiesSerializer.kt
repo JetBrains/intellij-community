@@ -6,11 +6,14 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
+import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -81,6 +84,9 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
 
 internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl, override val internalEntitySource: JpsFileEntitySource,
                                                  protected val libraryTableId: LibraryTableId) : JpsFileEntitiesSerializer<LibraryEntity> {
+  open val isExternalStorage: Boolean
+    get() = false
+
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
@@ -103,7 +109,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
         """.trimMargin())
       }
 
-      loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
+      loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager, isExternalStorage)
     }
   }
 
@@ -117,12 +123,14 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
     mainEntities.sortedBy { it.name }.forEach {
-      componentTag.addContent(saveLibrary(it, getExternalSystemId(it)))
+      componentTag.addContent(saveLibrary(it, getExternalSystemId(it), isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
   }
 
-  protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? = null
+  protected open fun getExternalSystemId(libraryEntity: LibraryEntity): String? {
+    return libraryEntity.externalSystemId?.externalSystemId
+  }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }
@@ -130,7 +138,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 private const val DEFAULT_JAR_DIRECTORY_TYPE = "CLASSES"
 
 internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, builder: WorkspaceEntityStorageBuilder,
-                         source: EntitySource, virtualFileManager: VirtualFileUrlManager): LibraryEntity {
+                         source: EntitySource, virtualFileManager: VirtualFileUrlManager, isExternalStorage: Boolean): LibraryEntity {
   val roots = ArrayList<LibraryRoot>()
   val excludedRoots = ArrayList<VirtualFileUrl>()
   val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(
@@ -172,12 +180,20 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   if (type != null) {
     builder.addLibraryPropertiesEntity(libraryEntity, type, properties)
   }
+  val externalSystemId = libraryElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+  if (externalSystemId != null && !isExternalStorage) {
+    builder.addEntity(ModifiableLibraryExternalSystemIdEntity::class.java, source) {
+      this.externalSystemId = externalSystemId
+      library = libraryEntity
+    }
+  }
+
   return libraryEntity
 }
 
 private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRootTypeId> { LibraryRootTypeId(it) }
 
-internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Element {
+internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?, isExternalStorage: Boolean): Element {
   val libraryTag = Element(LIBRARY_TAG)
   val legacyName = getLegacyLibraryName(library.persistentId())
   if (legacyName != null) {
@@ -192,7 +208,10 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
     }
   }
   if (externalSystemId != null) {
-    libraryTag.setAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE, externalSystemId)
+    val attributeName =
+      if (isExternalStorage) SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE
+      else SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE
+    libraryTag.setAttribute(attributeName, externalSystemId)
   }
   val rootsMap = library.roots.groupByTo(HashMap()) { it.type }
   ROOT_TYPES_TO_WRITE_EMPTY_TAG.forEach {
@@ -272,3 +291,28 @@ internal fun generateUniqueLibraryName(name: String, exists: (String) -> Boolean
     index++
   }
 }
+
+/**
+ * This property indicates that external-system-id attribute should be stored in library configuration file to avoid unnecessary modifications
+ */
+@Suppress("unused")
+internal class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSystemIdEntity>() {
+  lateinit var externalSystemId: String
+
+  override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryExternalSystemIdEntity {
+    return LibraryExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class LibraryExternalSystemIdEntity(
+  val externalSystemId: String
+) : WorkspaceEntityBase() {
+  val library: LibraryEntity by OneToOneChild.NotNull(LibraryEntity::class.java, true)
+}
+
+internal class ModifiableLibraryExternalSystemIdEntity : ModifiableWorkspaceEntityBase<LibraryExternalSystemIdEntity>() {
+  var externalSystemId: String by EntityDataDelegation()
+  var library: LibraryEntity by MutableOneToOneChild.NotNull(LibraryExternalSystemIdEntity::class.java, LibraryEntity::class.java, true)
+}
+
+private val LibraryEntity.externalSystemId get() = referrers(LibraryExternalSystemIdEntity::library).firstOrNull()

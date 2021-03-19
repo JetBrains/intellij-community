@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -117,9 +118,15 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
       artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
       artifactState.setArtifactType(artifact.getArtifactType().getId());
       ProjectModelExternalSource externalSource = artifact.getExternalSource();
-      if (externalSource != null && ProjectUtilCore.isExternalStorageEnabled(myProject)) {
-        //we can add this attribute only if the artifact configuration will be stored separately, otherwise we will get modified files in .idea/artifacts.
-        artifactState.setExternalSystemId(externalSource.getId());
+      if (externalSource != null) {
+        //we can add this attribute only if the artifact configuration will be stored separately or if the attribute was present in artifact configuration file,
+        // otherwise we will get modified files in .idea/artifacts.
+        if (ProjectUtilCore.isExternalStorageEnabled(myProject)) {
+          artifactState.setExternalSystemId(externalSource.getId());
+        }
+        else if (artifact instanceof ArtifactImpl && ((ArtifactImpl)artifact).shouldKeepExternalSystemAttribute()) {
+          artifactState.setExternalSystemIdInInternalStorage(externalSource.getId());
+        }
       }
 
       for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
@@ -218,7 +225,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   ArtifactImpl loadArtifact(ArtifactState state) {
     ArtifactType type = ArtifactType.findById(state.getArtifactType());
-    ProjectModelExternalSource externalSource = findExternalSource(state.getExternalSystemId());
+    ProjectModelExternalSource externalSource = findExternalSource(ObjectUtils.chooseNotNull(state.getExternalSystemId(), state.getExternalSystemIdInInternalStorage()));
     if (type == null) {
       return createInvalidArtifact(state, externalSource, JavaCompilerBundle.message("unknown.artifact.type.0", state.getArtifactType()));
     }
