@@ -28,6 +28,18 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     val useProjectSettingsField = EventFields.Boolean("useProjectSettings")
     val modifyOption = GROUP.registerVarargEvent("modify.run.option", optionId, projectSettingsAvailableField, useProjectSettingsField, ID_FIELD, EventFields.InputEvent)
     val removeOption = GROUP.registerEvent("remove.run.option", optionId, ID_FIELD, EventFields.InputEvent)
+    val addNew = GROUP.registerEvent("add", ID_FIELD)
+    val remove = GROUP.registerEvent("remove", ID_FIELD)
+
+    @JvmStatic
+    fun logAddNew(project: Project?, config: String?) {
+      addNew.log(project, config)
+    }
+
+    @JvmStatic
+    fun logRemove(project: Project?, config: String?) {
+      remove.log(project, config)
+    }
 
     @JvmStatic
     fun logModifyOption(project: Project?, option: String?, config: String?, inputEvent: FusInputEvent?) {
