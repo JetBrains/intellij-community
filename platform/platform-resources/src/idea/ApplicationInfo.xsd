@@ -33,7 +33,7 @@
         <xs:element type="urlType" name="support" minOccurs="0"/>
         <xs:element type="urlType" name="youtrack" minOccurs="0"/>
         <xs:element type="urlType" name="feedback" minOccurs="0"/>
-        <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
+        <xs:element type="embeddableUrlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
@@ -468,6 +468,10 @@
   </xs:complexType>
   <xs:complexType name="urlType">
     <xs:attribute type="xs:string" name="url" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="embeddableUrlType">
+    <xs:attribute type="xs:string" name="url" use="required"/>
+    <xs:attribute type="xs:boolean" name="embeddable" default="false"/>
   </xs:complexType>
   <xs:complexType name="pluginsType">
     <xs:attribute type="xs:anyURI" name="url"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.Activity;
@@ -78,6 +78,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myPluginsDownloadUrl;
   private String myBuiltinPluginsUrl;
   private String myWhatsNewUrl;
+  private boolean myWhatsNewEmbeddable;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
   private boolean myEAP;
@@ -339,6 +340,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     Element whatsNewElement = getChild(element, ELEMENT_WHATS_NEW);
     if (whatsNewElement != null) {
       myWhatsNewUrl = whatsNewElement.getAttributeValue(ATTRIBUTE_URL);
+      myWhatsNewEmbeddable = Boolean.parseBoolean(whatsNewElement.getAttributeValue("embeddable"));
     }
 
     readPluginInfo(getChild(element, ELEMENT_PLUGINS));
@@ -755,6 +757,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getWhatsNewUrl() {
     return myWhatsNewUrl;
+  }
+
+  @Override
+  public boolean isWhatsNewEmbeddable() {
+    return myWhatsNewEmbeddable;
   }
 
   @Override
