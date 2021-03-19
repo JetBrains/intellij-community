@@ -13,7 +13,6 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -33,12 +32,15 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // delegates
 public final class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOGGER = Logger.getLogger(RedundantThrowsDeclarationLocalInspection.class.getName());
+
   @NotNull private final RedundantThrowsDeclarationInspection myGlobalTool;
 
   @TestOnly
@@ -93,15 +95,17 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     final PsiReferenceList throwsList = method.getThrowsList();
 
     final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
     final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
 
-    if (referenceElements.length != referencedTypes.length) return StreamEx.empty();
+    if (referenceElements.length != referencedTypes.length) {
+      LOGGER.warning("Stub-PSI inconsistency detected. The number of elements in the throws list doesn't match the number of types in the throws list:");
+      LOGGER.warning(method.getText());
+    }
 
-    final StreamEx<ThrowRefType> redundantInThrowsList = StreamEx.zip(referenceElements,
-                                                                      referencedTypes,
-                                                                      ThrowRefType::new);
-
-    return redundantInThrowsList
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    return StreamEx.of(referenceElements)
+      .map(ref -> new ThrowRefType(ref, factory.createType(ref)))
       .filter(ThrowRefType::isCheckedException)
       .filter(p -> !p.isRemoteExceptionInRemoteMethod(method));
   }
@@ -244,9 +248,20 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
                                                                    @NotNull final PsiJavaCodeReferenceElement currentRef) {
-        return StreamEx.zip(throwsList.getReferenceElements(), throwsList.getReferencedTypes(), Pair::create)
-          .filter(pair -> pair.getFirst() != currentRef)
-          .map(pair -> pair.getSecond())
+
+        final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
+        final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+
+        if (referenceElements.length != referencedTypes.length) {
+          LOGGER.warning("Stub-PSI inconsistency detected. The number of elements in the throws list doesn't match the number of types in the throws list:");
+          LOGGER.warning(String.valueOf(PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class)));
+        }
+
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(throwsList.getProject());
+        return StreamEx.of(referenceElements)
+          .filter(ref -> ref != currentRef)
+          .map(factory::createType)
           .toList();
       }
     }
