@@ -2,10 +2,7 @@
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.CommonBundle
-import com.intellij.execution.Executor
-import com.intellij.execution.RunManager
-import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.TestStateStorage
+import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -23,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -65,6 +63,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -135,34 +134,50 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
                                          configurationSettings: RunnerAndConfigurationSettings,
                                          problems: ArrayList<FailureDescription>) {
     val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build() ?: return
-    val runner = ProgramRunner.getRunner(executor.id, configurationSettings.configuration) ?: return
-    val executionResult = environment.state?.execute(executor, runner) ?: return
-    val handler = executionResult.processHandler ?: return
-    val executionConsole = executionResult.executionConsole ?: return
-    val resultsForm = executionConsole.component as? SMTestRunnerResultsForm ?: return
-
-    suspendCoroutine<Any?> { continuation ->
-      resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
-        override fun onTestingFinished(sender: TestResultsViewer) {
-          continuation.resume(null)
+    environment.setHeadless()
+    val console = suspendCoroutine<ExecutionConsole?> { continuation ->
+      project.messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+        override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
+          if (environment.executionId == env.executionId) {
+            continuation.resume(null)
+          }
         }
       })
-      if (!handler.isStartNotified) handler.startNotify()
-    }
+      ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) { onProcessStarted(it, continuation) }
+    } ?: return
 
-    val rootNode = resultsForm.testsRootNode
+    val form = console.component as SMTestRunnerResultsForm
+    val rootNode = form.testsRootNode
     if (rootNode.isDefect) {
-      awaitSavingHistory(resultsForm)
-      problems.add (FailureDescription(resultsForm.historyFileName, configurationSettings.name, TestsUIUtil.getTestSummary(rootNode)))
+      awaitSavingHistory(form.historyFileName)
+      problems.add(FailureDescription(form.historyFileName, configurationSettings.name, TestsUIUtil.getTestSummary(rootNode)))
     }
 
-    disposeConsole(executionConsole)
-    return
+    disposeConsole(console)
   }
 
-  private suspend fun awaitSavingHistory(resultsForm: SMTestRunnerResultsForm) {
+  private fun onProcessStarted(descriptor: RunContentDescriptor,
+                               continuation: Continuation<ExecutionConsole?>) {
+    val executionConsole = descriptor.executionConsole
+    val component = executionConsole?.component
+    val resultsForm = if (component is SMTestRunnerResultsForm) {
+      component
+    }
+    else {
+      continuation.resume(null)
+      return
+    }
+
+    resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
+      override fun onTestingFinished(sender: TestResultsViewer) {
+        continuation.resume(executionConsole)
+      }
+    })
+  }
+
+  private suspend fun awaitSavingHistory(historyFileName: String) {
     withTimeout(timeMillis = 600000) {
-      while (getHistoryFile(resultsForm.historyFileName).second == null) {
+      while (getHistoryFile(historyFileName).second == null) {
         delay(timeMillis = 500)
       }
       DumbService.getInstance(project).waitForSmartMode()

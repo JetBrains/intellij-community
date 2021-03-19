@@ -237,7 +237,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               val entry = RunningConfigurationEntry(descriptor, environment.runnerAndConfigurationSettings, executor)
               runningConfigurations.add(entry)
               Disposer.register(descriptor, Disposable { runningConfigurations.remove(entry) })
-              if (!descriptor.isHiddenContent) {
+              if (!descriptor.isHiddenContent && !environment.isHeadless) {
                 RunContentManager.getInstance(project).showRunContent(executor, descriptor, environment.contentToReuse)
               }
               activity?.stageStarted("ui.shown")

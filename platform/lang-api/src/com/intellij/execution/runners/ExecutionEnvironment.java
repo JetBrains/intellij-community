@@ -2,7 +2,10 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -44,6 +47,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @Nullable
   private ProgramRunner.Callback callback;
+  private boolean isHeadless = false;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -253,6 +257,16 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
       return myRunnerAndConfigurationSettings.getName();
     }
     return myRunProfile.getName();
+  }
+
+  @ApiStatus.Experimental
+  public boolean isHeadless() {
+    return isHeadless;
+  }
+
+  @ApiStatus.Experimental
+  public void setHeadless() {
+    isHeadless = true;
   }
 
   void setDataContext(@NotNull DataContext dataContext) {
