@@ -242,14 +242,6 @@ public final class Switcher extends BaseSwitcherAction {
       ListHoverListener.DEFAULT.addTo(toolWindows);
       ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
-      toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(@NotNull ListSelectionEvent e) {
-          if (!toolWindows.isSelectionEmpty() && !files.isSelectionEmpty()) {
-            files.clearSelection();
-          }
-        }
-      });
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
                                                         toolWindows.getModel().getSize(), recent);
@@ -292,11 +284,6 @@ public final class Switcher extends BaseSwitcherAction {
         .createListWithOpenInRightSplitter(createModel(filesModel, SwitcherListItem::getMainText, mySpeedSearch), null, true);
       files.setVisibleRowCount(toolWindows.getModel().getSize());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      files.getSelectionModel().addListSelectionListener(e -> {
-        if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
-          toolWindows.getSelectionModel().clearSelection();
-        }
-      });
 
       toolWindows.getSelectionModel().addListSelectionListener(filesSelectionListener);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
