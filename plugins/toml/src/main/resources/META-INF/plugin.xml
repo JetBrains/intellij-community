@@ -50,5 +50,11 @@
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlAnnotator"/>
         <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
+
+        <localInspection language="TOML"
+                         groupName="TOML"
+                         displayName="Unresolved reference"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.toml.ide.inspections.TomlUnresolvedReferenceInspection"/>
     </extensions>
 </idea-plugin>
