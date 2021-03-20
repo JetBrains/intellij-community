@@ -991,36 +991,24 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("analysisSession/resolveCall")
         }
 
-        testClass<AbstractSymbolsByPsiBuildingTest> {
-            model("symbolsByPsi")
-        }
-
-        testClass<AbstractSymbolsByFqNameBuildingTest> {
-            model("symbolsByFqName", pattern = TXT)
-        }
-
-        testClass<AbstractSymbolByReferenceTest> {
-            model("symbolByReference")
-        }
-
         testClass<AbstractMemberScopeByFqNameTest> {
-            model("memberScopeByFqName", pattern = TXT)
+            model("memberScopeByFqName")
         }
 
         testClass<AbstractFileScopeTest> {
             model("fileScopeTest", pattern = KT)
         }
 
-        testClass<AbstractSymbolFromSourcePointerRestoreTest> {
-            model("symbolPointer", pattern = KT)
+        testClass<AbstractSymbolByPsiTest> {
+            model("symbols/symbolByPsi")
         }
 
-        testClass<AbstractSymbolFromLibraryPointerRestoreTest> {
-            model("resoreSymbolFromLibrary", pattern = TXT)
+        testClass<AbstractSymbolByFqNameTest> {
+            model("symbols/symbolByFqName")
         }
 
-        testClass<AbstractSymbolByReferencePointerRestoreTest> {
-            model("symbolByReference")
+        testClass<AbstractSymbolByReferenceTest> {
+            model("symbols/symbolByReference")
         }
 
         testClass<AbstractMemoryLeakInSymbolsTest> {
