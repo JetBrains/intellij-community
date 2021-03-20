@@ -7,7 +7,7 @@ class AnonymousContainer {
     }
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirFunctionSymbol:
   annotatedType: [] kotlin/Unit

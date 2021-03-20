@@ -1,6 +1,7 @@
-class: kotlin/collections/MutableList
+// class: kotlin/collections/MutableList
 
-// SYMBOLS:
+// RESULT
+/*
 KtFirFunctionSymbol:
   annotatedType: [] kotlin/Boolean
   annotationClassIds: []
@@ -507,3 +508,4 @@ KtFirFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: PUBLIC
+*/

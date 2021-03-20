@@ -1,6 +1,7 @@
 class: kotlin/collections/Iterator
 
-// SYMBOLS:
+// RESULT
+/*
 KtFirNamedClassOrObjectSymbol:
   annotationClassIds: []
   annotations: []
@@ -19,3 +20,4 @@ KtFirNamedClassOrObjectSymbol:
   symbolKind: TOP_LEVEL
   typeParameters: [KtFirTypeParameterSymbol(T)]
   visibility: PUBLIC
+*/

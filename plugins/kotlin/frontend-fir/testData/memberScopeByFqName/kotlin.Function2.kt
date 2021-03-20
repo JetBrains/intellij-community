@@ -1,6 +1,9 @@
-class: kotlin/Function2
+// WITH_RUNTIME
 
-// SYMBOLS:
+// class: kotlin/Function2
+
+// RESULT
+/*
 KtFirFunctionSymbol:
   annotatedType: [] R
   annotationClassIds: []
@@ -84,3 +87,4 @@ KtFirFunctionSymbol:
   typeParameters: []
   valueParameters: []
   visibility: PUBLIC
+*/
