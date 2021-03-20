@@ -1,13 +1,14 @@
-class A {
-}
+// WITH_RUNTIME
 
-// SYMBOLS:
+// class: kotlin/io/FileWalkDirection
+
+// RESULT
 /*
 KtFirNamedClassOrObjectSymbol:
   annotationClassIds: []
   annotations: []
-  classIdIfNonLocal: A
-  classKind: CLASS
+  classIdIfNonLocal: kotlin/io/FileWalkDirection
+  classKind: ENUM_CLASS
   companionObject: null
   isData: false
   isExternal: false
@@ -15,9 +16,9 @@ KtFirNamedClassOrObjectSymbol:
   isInline: false
   isInner: false
   modality: FINAL
-  name: A
-  origin: SOURCE
-  superTypes: [[] kotlin/Any]
+  name: FileWalkDirection
+  origin: LIBRARY
+  superTypes: [[] kotlin/Enum<kotlin/io/FileWalkDirection>]
   symbolKind: TOP_LEVEL
   typeParameters: []
   visibility: PUBLIC

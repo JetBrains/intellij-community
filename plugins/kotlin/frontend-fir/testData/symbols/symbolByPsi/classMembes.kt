@@ -3,7 +3,7 @@ class A {
     fun x() = 10
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirKotlinPropertySymbol:
   annotatedType: [] kotlin/Int

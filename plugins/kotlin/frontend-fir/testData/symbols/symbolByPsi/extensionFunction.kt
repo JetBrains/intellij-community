@@ -1,6 +1,6 @@
 fun String.foo(): Int = 10
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirFunctionSymbol:
   annotatedType: [] kotlin/Int
