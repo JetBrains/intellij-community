@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ui.InspectionNodeInfo;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,8 +18,13 @@ public class InspectionDescriptionDocumentationProvider extends AbstractDocument
     }
 
     InspectionToolWrapper toolWrapper = ((InspectionElement)element).getToolWrapper();
+    String description = toolWrapper.loadDescription();
+    if (description == null) {
+      return null;
+    }
     return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXmlEntities(toolWrapper.getDisplayName()) + DocumentationMarkup.DEFINITION_END +
-           DocumentationMarkup.CONTENT_START + toolWrapper.loadDescription() +
+           DocumentationMarkup.CONTENT_START +
+           InspectionNodeInfo.stripUIRefsFromInspectionDescription(description) +
            DocumentationMarkup.CONTENT_END;
   }
 }
