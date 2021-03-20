@@ -9,7 +9,7 @@ class X {
     }
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirFunctionValueParameterSymbol:
   annotatedType: [] kotlin/String

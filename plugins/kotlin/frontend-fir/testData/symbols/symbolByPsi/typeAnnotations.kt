@@ -15,7 +15,7 @@ class X : @Anno1 I {
     val x: @Anno4 I = this
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirNamedClassOrObjectSymbol:
   annotationClassIds: [kotlin/annotation/Target]

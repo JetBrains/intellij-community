@@ -1,6 +1,9 @@
-callable: kotlin/collections/listOf
+// WITH_RUNTIME
 
-// SYMBOLS:
+// callable: kotlin/collections/listOf
+
+// RESULT
+/*
 KtFirFunctionSymbol:
   annotatedType: [] kotlin/collections/List<T>
   annotationClassIds: []
@@ -63,3 +66,4 @@ KtFirFunctionSymbol:
   typeParameters: [KtFirTypeParameterSymbol(T)]
   valueParameters: [KtFirFunctionValueParameterSymbol(elements)]
   visibility: PUBLIC
+*/

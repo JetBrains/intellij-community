@@ -1,9 +1,16 @@
-fun foo(x: Int) {}
+fun <X> foo(x: X) {}
 
-// SYMBOLS:
+// RESULT
 /*
+KtFirTypeParameterSymbol:
+  isReified: false
+  name: X
+  origin: SOURCE
+  upperBounds: [kotlin/Any?]
+  variance: INVARIANT
+
 KtFirFunctionValueParameterSymbol:
-  annotatedType: [] kotlin/Int
+  annotatedType: [] X
   annotationClassIds: []
   annotations: []
   hasDefaultValue: false
@@ -29,7 +36,7 @@ KtFirFunctionSymbol:
   origin: SOURCE
   receiverType: null
   symbolKind: TOP_LEVEL
-  typeParameters: []
+  typeParameters: [KtFirTypeParameterSymbol(X)]
   valueParameters: [KtFirFunctionValueParameterSymbol(x)]
   visibility: PUBLIC
 */

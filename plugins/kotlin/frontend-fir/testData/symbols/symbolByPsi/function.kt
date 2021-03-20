@@ -1,9 +1,19 @@
-fun foo(): Int = 10
+fun foo(x: Int) {}
 
-// SYMBOLS:
+// RESULT
 /*
-KtFirFunctionSymbol:
+KtFirFunctionValueParameterSymbol:
   annotatedType: [] kotlin/Int
+  annotationClassIds: []
+  annotations: []
+  hasDefaultValue: false
+  isVararg: false
+  name: x
+  origin: SOURCE
+  symbolKind: NON_PROPERTY_PARAMETER
+
+KtFirFunctionSymbol:
+  annotatedType: [] kotlin/Unit
   annotationClassIds: []
   annotations: []
   callableIdIfNonLocal: foo
@@ -20,6 +30,6 @@ KtFirFunctionSymbol:
   receiverType: null
   symbolKind: TOP_LEVEL
   typeParameters: []
-  valueParameters: []
+  valueParameters: [KtFirFunctionValueParameterSymbol(x)]
   visibility: PUBLIC
 */
