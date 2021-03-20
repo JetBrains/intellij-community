@@ -423,6 +423,7 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" filepath="$PROJECT_DIR$/intellij/android/android-kotlin/android-extensions-idea/intellij.android.kotlin.extensions.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" filepath="$PROJECT_DIR$/intellij/android/android-kotlin/android-extensions-idea-common/intellij.android.kotlin.extensions.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" filepath="$PROJECT_DIR$/intellij/android/android-kotlin/idea-android/intellij.android.kotlin.idea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij/android/android-kotlin/idea-android-common/intellij.android.kotlin.idea.common.iml" filepath="$PROJECT_DIR$/intellij/android/android-kotlin/idea-android-common/intellij.android.kotlin.idea.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" filepath="$PROJECT_DIR$/intellij/android/android-kotlin/idea-android/idea-android-output-parser/intellij.android.kotlin.output.parser.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-lang/intellij.android.lang.iml" filepath="$PROJECT_DIR$/intellij/android/android-lang/intellij.android.lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/android/android-lang-databinding/intellij.android.lang-databinding.iml" filepath="$PROJECT_DIR$/intellij/android/android-lang-databinding/intellij.android.lang-databinding.iml" />
@@ -877,6 +878,7 @@
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/kapt/kotlin.compiler-plugins.kapt.iml" filepath="$PROJECT_DIR$/compiler-plugins/kapt/kotlin.compiler-plugins.kapt.iml" />
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/kotlinx-serialization/kotlin.compiler-plugins.kotlinx-serialization.iml" filepath="$PROJECT_DIR$/compiler-plugins/kotlinx-serialization/kotlin.compiler-plugins.kotlinx-serialization.iml" />
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/noarg/kotlin.compiler-plugins.noarg.iml" filepath="$PROJECT_DIR$/compiler-plugins/noarg/kotlin.compiler-plugins.noarg.iml" />
+      <module fileurl="file://$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" filepath="$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" />
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/sam-with-receiver/kotlin.compiler-plugins.sam-with-receiver.iml" filepath="$PROJECT_DIR$/compiler-plugins/sam-with-receiver/kotlin.compiler-plugins.sam-with-receiver.iml" />
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/scripting/kotlin.compiler-plugins.scripting.iml" filepath="$PROJECT_DIR$/compiler-plugins/scripting/kotlin.compiler-plugins.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/compiler-plugins/scripting-ide-services/kotlin.compiler-plugins.scripting-ide-services.iml" filepath="$PROJECT_DIR$/compiler-plugins/scripting-ide-services/kotlin.compiler-plugins.scripting-ide-services.iml" />
@@ -945,7 +947,6 @@
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/parcelize-compiler-plugin/kotlinc-delegator.parcelize-compiler-plugin.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/parcelize-compiler-plugin/kotlinc-delegator.parcelize-compiler-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/sam-with-receiver-compiler-plugin/kotlinc-delegator.sam-with-receiver-compiler-plugin.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/sam-with-receiver-compiler-plugin/kotlinc-delegator.sam-with-receiver-compiler-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlinc-delegator/util.delegator-patcher/util.delegator-patcher.iml" filepath="$PROJECT_DIR$/kotlinc-delegator/util.delegator-patcher/util.delegator-patcher.iml" />
-      <module fileurl="file://$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" filepath="$PROJECT_DIR$/compiler-plugins/parcelize/kotlin.compiler-plugins.parcelize.iml" />
       <module fileurl="file://$PROJECT_DIR$/kotlin.intellij-kotlin.iml" filepath="$PROJECT_DIR$/kotlin.intellij-kotlin.iml" />
     </modules>
   </component>
