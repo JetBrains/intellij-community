@@ -150,6 +150,11 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
   init {
     listActionIds.forEach { fromList.actionMap.put(it, this) }
     toList.addFocusListener(this)
+    toList.addListSelectionListener {
+      if (!fromList.isSelectionEmpty && !toList.isSelectionEmpty) {
+        fromList.selectionModel.clearSelection()
+      }
+    }
   }
 }
 
