@@ -5,8 +5,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.*
-import org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
+import org.jetbrains.kotlin.idea.configuration.KotlinMPPGradleProjectResolver.Companion.modifyDependenciesOnMppModules
 import org.jetbrains.kotlin.idea.configuration.getMppModel
 import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibrariesDependencySubstitutor
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Pair as IntelliJPair
 internal typealias ModuleId = String
 internal typealias ArtifactPath = String
 
-internal data class PopulateModuleDependenciesContext(
+data class KotlinMppPopulateModuleDependenciesContext(
   val resolverCtx: ProjectResolverContext,
   val mppModel: KotlinMPPGradleModel,
   val gradleModule: IdeaModule,
@@ -31,12 +31,12 @@ internal data class PopulateModuleDependenciesContext(
   val processedModuleIds: MutableSet<ModuleId> = mutableSetOf()
 )
 
-internal fun KotlinMPPGradleProjectResolver.Companion.createPopulateModuleDependenciesContext(
+fun createKotlinMppPopulateModuleDependenciesContext(
     gradleModule: IdeaModule,
     ideProject: DataNode<ProjectData>,
     ideModule: DataNode<ModuleData>,
     resolverCtx: ProjectResolverContext
-): PopulateModuleDependenciesContext? {
+): KotlinMppPopulateModuleDependenciesContext? {
     val mppModel = resolverCtx.getMppModel(gradleModule) ?: return null
     mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject, resolverCtx)
 
@@ -45,7 +45,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.createPopulateModuleDepend
     val dependenciesPreprocessor = KotlinNativeLibrariesDependencySubstitutor(mppModel, gradleModule, resolverCtx)
         .plus(DistinctIdKotlinDependenciesPreprocessor)
 
-    return PopulateModuleDependenciesContext(
+    return KotlinMppPopulateModuleDependenciesContext(
         resolverCtx = resolverCtx,
         mppModel = mppModel,
         gradleModule = gradleModule,
@@ -57,11 +57,11 @@ internal fun KotlinMPPGradleProjectResolver.Companion.createPopulateModuleDepend
     )
 }
 
-internal fun PopulateModuleDependenciesContext.getDependencies(module: KotlinModule): List<KotlinDependency> {
+fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinModule): List<KotlinDependency> {
     return dependenciesPreprocessor(module.dependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
 
-internal fun PopulateModuleDependenciesContext.getCompilationsWithDependencies(
+internal fun KotlinMppPopulateModuleDependenciesContext.getCompilationsWithDependencies(
     sourceSet: KotlinSourceSet
 ): List<CompilationWithDependencies> {
     return mppModel.getCompilations(sourceSet).map { compilation -> CompilationWithDependencies(compilation, getDependencies(compilation)) }

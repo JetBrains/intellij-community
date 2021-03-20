@@ -17,7 +17,7 @@ import org.jetbrains.plugins.gradle.model.ExternalDependency
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesBySourceSetVisibilityGraph(
-    context: PopulateModuleDependenciesContext
+    context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
     for (sourceSet in sourceSetVisibilityGraph.nodes()) {
@@ -73,7 +73,7 @@ private fun dependencyPopulationSettings(mppModel: KotlinMPPGradleModel, sourceS
     )
 }
 
-private fun PopulateModuleDependenciesContext.getDependenciesFromVisibleSourceSets(
+private fun KotlinMppPopulateModuleDependenciesContext.getDependenciesFromVisibleSourceSets(
     settings: DependencyPopulationSettings,
     visibleSourceSets: Set<KotlinSourceSet>
 ): Set<KotlinDependency> {
@@ -87,7 +87,7 @@ private fun PopulateModuleDependenciesContext.getDependenciesFromVisibleSourceSe
     }.toSet()
 }
 
-private fun PopulateModuleDependenciesContext.getPropagatedNativeDependencies(
+private fun KotlinMppPopulateModuleDependenciesContext.getPropagatedNativeDependencies(
     settings: DependencyPopulationSettings,
     sourceSet: KotlinSourceSet
 ): Set<KotlinDependency> {
@@ -155,7 +155,7 @@ private fun Iterable<CompilationWithDependencies>.selectFirstAvailableTarget(
 }
 
 
-private fun PopulateModuleDependenciesContext.getPropagatedPlatformDependencies(
+private fun KotlinMppPopulateModuleDependenciesContext.getPropagatedPlatformDependencies(
     sourceSet: KotlinSourceSet
 ): Set<KotlinDependency> {
     if (!mppModel.extraFeatures.isHMPPEnabled) {
@@ -196,7 +196,7 @@ private fun getPropagatedPlatformDependencies(
 
 // TODO: Move this maybe to another semantic part of KotlinMPPGradleProjectResolver?
 private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
-    context: PopulateModuleDependenciesContext,
+    context: KotlinMppPopulateModuleDependenciesContext,
     closedSourceSetGraph: Graph<KotlinSourceSet>,
     sourceSet: KotlinSourceSet
 ) = with(context) {

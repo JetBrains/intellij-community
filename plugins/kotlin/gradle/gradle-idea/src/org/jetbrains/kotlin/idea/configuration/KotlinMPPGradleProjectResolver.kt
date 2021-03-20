@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING
-import org.jetbrains.kotlin.idea.configuration.mpp.createPopulateModuleDependenciesContext
+import org.jetbrains.kotlin.idea.configuration.mpp.createKotlinMppPopulateModuleDependenciesContext
 import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
@@ -591,7 +591,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             ideModule: DataNode<ModuleData>,
             resolverCtx: ProjectResolverContext
         ) {
-            val context = createPopulateModuleDependenciesContext(
+            val context = createKotlinMppPopulateModuleDependenciesContext(
                 gradleModule = gradleModule,
                 ideProject = ideProject,
                 ideModule = ideModule,

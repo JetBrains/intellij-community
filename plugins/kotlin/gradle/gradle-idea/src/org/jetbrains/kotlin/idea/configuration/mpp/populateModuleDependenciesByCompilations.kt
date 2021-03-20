@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 
 
 internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByCompilations(
-    context: PopulateModuleDependenciesContext
+    context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     getCompilations(gradleModule, mppModel, ideModule, resolverCtx)
         .filterNot { (_, compilation) -> delegateToAndroidPlugin(compilation) }

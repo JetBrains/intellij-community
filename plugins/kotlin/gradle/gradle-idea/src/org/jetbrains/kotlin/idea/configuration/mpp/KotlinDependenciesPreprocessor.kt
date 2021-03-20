@@ -2,11 +2,11 @@ package org.jetbrains.kotlin.idea.configuration.mpp
 
 import org.jetbrains.kotlin.gradle.KotlinDependency
 
-internal interface KotlinDependenciesPreprocessor {
+interface KotlinDependenciesPreprocessor {
     operator fun invoke(dependencies: Iterable<KotlinDependency>): List<KotlinDependency>
 }
 
-internal operator fun KotlinDependenciesPreprocessor.plus(
+operator fun KotlinDependenciesPreprocessor.plus(
     other: KotlinDependenciesPreprocessor
 ): KotlinDependenciesPreprocessor {
     return SequentialKotlinDependenciesPreprocessor(this, other)
