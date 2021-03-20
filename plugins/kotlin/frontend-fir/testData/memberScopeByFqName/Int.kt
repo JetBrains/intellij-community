@@ -1,6 +1,10 @@
-class: kotlin/Int
+// WITH_RUNTIME
+// DO_NOT_CHECK_SYMBOL_RESTORE
 
-// SYMBOLS:
+// class: kotlin/Int
+
+// RESULT
+/*
 KtFirFunctionSymbol:
   annotatedType: [] kotlin/Int
   annotationClassIds: []
@@ -1313,3 +1317,4 @@ KtFirConstructorSymbol:
   typeParameters: []
   valueParameters: []
   visibility: PRIVATE
+*/

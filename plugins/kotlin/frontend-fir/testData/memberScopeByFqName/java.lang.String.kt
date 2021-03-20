@@ -1,6 +1,9 @@
-class: java/lang/String
+// DO_NOT_CHECK_SYMBOL_RESTORE
 
-// SYMBOLS:
+// class: java/lang/String
+
+// RESULT
+/*
 KtFirJavaFieldSymbol:
   annotatedType: [] ft<kotlin/CharArray, kotlin/CharArray?>
   callableIdIfNonLocal: java.lang.String.value
@@ -1470,3 +1473,4 @@ KtFirConstructorSymbol:
   typeParameters: []
   valueParameters: [KtFirConstructorValueParameterSymbol(offset), KtFirConstructorValueParameterSymbol(count), KtFirConstructorValueParameterSymbol(value)]
   visibility: UNKNOWN
+*/

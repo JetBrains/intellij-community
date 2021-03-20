@@ -5,7 +5,7 @@ fun yyy() {
     class F {}
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirLocalVariableSymbol:
   annotatedType: [] kotlin/Int

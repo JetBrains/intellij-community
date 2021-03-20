@@ -12,27 +12,40 @@ import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.analyseOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.idea.test.framework.AbstractKtIdeaTest
-import org.jetbrains.kotlin.idea.test.framework.TestFileStructure
-import org.jetbrains.kotlin.idea.test.framework.TestStructureExpectedDataBlock
-import org.jetbrains.kotlin.idea.test.framework.TestStructureRenderer
+import org.jetbrains.kotlin.idea.test.framework.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.test.KotlinTestUtils
 
-abstract class AbstractSymbolPointerRestoreTest : AbstractKtIdeaTest() {
+abstract class AbstractSymbolTest : AbstractKtIdeaTest() {
     abstract fun KtAnalysisSession.collectSymbols(fileStructure: TestFileStructure): List<KtSymbol>
 
+    override val allowedDirectives: List<TestFileDirective<*>> = listOf(DIRECTIVES.DO_NOT_CHECK_SYMBOL_RESTORE)
+
     override fun doTestByFileStructure(fileStructure: TestFileStructure) {
+        val createPointers = !fileStructure.directives.isDirectivePresent(DIRECTIVES.DO_NOT_CHECK_SYMBOL_RESTORE)
         val pointersWithRendered = analyseOnPooledThreadInReadAction(fileStructure.mainKtFile) {
             collectSymbols(fileStructure).map { symbol ->
                 PointerWithRenderedSymbol(
-                    symbol.createPointer(),
+                    if (createPointers) symbol.createPointer() else null,
                     DebugSymbolRenderer.render(symbol)
                 )
             }
         }
 
+        compareResults(fileStructure, pointersWithRendered)
+
+        doOutOfBlockModification(fileStructure.mainKtFile)
+
+        if (createPointers) {
+            restoreSymbolsInOtherReadActionAndCompareResults(fileStructure, pointersWithRendered)
+        }
+    }
+
+    private fun compareResults(
+        fileStructure: TestFileStructure,
+        pointersWithRendered: List<PointerWithRenderedSymbol>
+    ) {
         val actual = TestStructureRenderer.render(
             fileStructure,
             TestStructureExpectedDataBlock(values = pointersWithRendered.map { it.rendered }),
@@ -40,10 +53,6 @@ abstract class AbstractSymbolPointerRestoreTest : AbstractKtIdeaTest() {
         )
 
         KotlinTestUtils.assertEqualsToFile(fileStructure.filePath.toFile(), actual)
-
-        doOutOfBlockModification(fileStructure.mainKtFile)
-
-        restoreSymbolsInOtherReadActionAndCompareResults(fileStructure, pointersWithRendered)
     }
 
     private fun restoreSymbolsInOtherReadActionAndCompareResults(
@@ -52,7 +61,8 @@ abstract class AbstractSymbolPointerRestoreTest : AbstractKtIdeaTest() {
     ) {
         val restored = analyseOnPooledThreadInReadAction(fileStructure.mainKtFile) {
             pointersWithRendered.map { (pointer, expectedRender) ->
-                val restored = pointer.restoreSymbol() ?: error("Symbol $expectedRender was not not restored correctly")
+                val restored = pointer!!.restoreSymbol()
+                    ?: error("Symbol $expectedRender was not not restored")
                 DebugSymbolRenderer.render(restored)
             }
         }
@@ -83,6 +93,10 @@ abstract class AbstractSymbolPointerRestoreTest : AbstractKtIdeaTest() {
     private fun commitDocument(document: Document) {
         PsiDocumentManager.getInstance(project).commitDocument(document)
     }
+
+    private object DIRECTIVES {
+        val DO_NOT_CHECK_SYMBOL_RESTORE = PresenceDirective("// DO_NOT_CHECK_SYMBOL_RESTORE")
+    }
 }
 
-private data class PointerWithRenderedSymbol(val pointer: KtSymbolPointer<*>, val rendered: String)
+private data class PointerWithRenderedSymbol(val pointer: KtSymbolPointer<*>?, val rendered: String)

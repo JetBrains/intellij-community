@@ -1,7 +1,7 @@
 class A<T, R> {
 }
 
-// SYMBOLS:
+// RESULT
 /*
 KtFirTypeParameterSymbol:
   isReified: false
