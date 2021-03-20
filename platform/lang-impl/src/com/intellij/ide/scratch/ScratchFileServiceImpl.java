@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -224,9 +225,11 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
       if (firstCharsIfText == null) return null;
-      FileType byName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-      RootType rootType = byName != UnknownFileType.INSTANCE ? null : findRootType(file);
-      return rootType != null ? PlainTextFileType.INSTANCE : null;
+      return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+        FileType byName = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+        RootType rootType = byName != UnknownFileType.INSTANCE ? null : findRootType(file);
+        return rootType != null ? PlainTextFileType.INSTANCE : null;
+      });
     }
   }
 
