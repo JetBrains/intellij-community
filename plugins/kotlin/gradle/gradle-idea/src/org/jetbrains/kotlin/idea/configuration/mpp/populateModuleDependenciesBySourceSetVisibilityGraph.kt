@@ -22,7 +22,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
     val sourceSetVisibilityGraph = createSourceSetVisibilityGraph(mppModel).transitiveClosure
     for (sourceSet in sourceSetVisibilityGraph.nodes()) {
         populateSourceSetInfos(context, sourceSetVisibilityGraph, sourceSet)
-        if (delegateToAndroidPlugin(sourceSet)) continue
+        if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
 
         val visibleSourceSets = sourceSetVisibilityGraph.successors(sourceSet)
@@ -200,7 +200,7 @@ private fun KotlinMPPGradleProjectResolver.Companion.populateSourceSetInfos(
     closedSourceSetGraph: Graph<KotlinSourceSet>,
     sourceSet: KotlinSourceSet
 ) = with(context) {
-    val isAndroid = delegateToAndroidPlugin(sourceSet)
+    val isAndroid = shouldDelegateToOtherPlugin(sourceSet)
     val fromDataNode = if (isAndroid) ideModule
     else getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx) ?: return
 

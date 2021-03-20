@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.build.events.MessageEvent
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
@@ -44,8 +42,7 @@ import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.configuration.utils.UnsafeTestSourceSetHeuristicApi
-import org.jetbrains.kotlin.idea.configuration.utils.fullName
+import org.jetbrains.kotlin.idea.configuration.utils.*
 import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
@@ -78,11 +75,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModelBuilder::class.java, Unit::class.java)
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModel::class.java)
-
-    override fun getExtraCommandLineArgs(): List<String> = if (!androidPluginPresent)
-        listOf("-Pkotlin.include.android.dependencies=true")
-    else
-        emptyList()
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
@@ -122,7 +114,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
         val moduleOutputsMap = projectDataNode.getUserData(MODULES_OUTPUTS)!!
         val outputDirs = HashSet<String>()
         getCompilations(gradleModule, mppModel, ideModule, resolverCtx)
-            .filterNot { (_, compilation) -> delegateToAndroidPlugin(compilation) }
+            .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
             .forEach { (dataNode, compilation) ->
                 var gradleOutputMap = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS)
                 if (gradleOutputMap == null) {
@@ -205,7 +197,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
 
         private var nativeDebugAdvertised = false
-        private val androidPluginPresent = PluginManagerCore.getPlugin(PluginId.findId("org.jetbrains.android"))?.isEnabled ?: false
 
         private fun ExternalDependency.getDependencyArtifacts(): Collection<File> =
             when (this) {
@@ -323,7 +314,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
             val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
             for (target in mppModel.targets) {
-                if (delegateToAndroidPlugin(target)) continue
+                if (shouldDelegateToOtherPlugin(target)) continue
                 if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
                 val targetData = KotlinTargetData(target.name).also {
                     it.archiveFile = target.jar?.archiveFile
@@ -407,7 +398,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
             val ignoreCommonSourceSets by lazy { externalProject.notImportedCommonSourceSets() }
             for (sourceSet in mppModel.sourceSetsByName.values) {
-                if (delegateToAndroidPlugin(sourceSet)) continue
+                if (shouldDelegateToOtherPlugin(sourceSet)) continue
                 if (sourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.COMMON && ignoreCommonSourceSets) continue
                 val moduleId = getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
                 val existingSourceSetDataNode = sourceSetMap[moduleId]?.first
@@ -534,7 +525,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 .toMap()
             if (resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) == null) return
             processSourceSets(gradleModule, mppModel, ideModule, resolverCtx) { dataNode, sourceSet ->
-                if (dataNode == null || delegateToAndroidPlugin(sourceSet)) return@processSourceSets
+                if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
 
                 createContentRootData(
                     sourceSet.sourceDirs,
@@ -866,14 +857,14 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 ignoreCase = true
             ) ?: false
 
-        internal fun delegateToAndroidPlugin(compilation: KotlinCompilation): Boolean =
-            androidPluginPresent && compilation.platform == KotlinPlatform.ANDROID
+        internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
+            compilation.platform == KotlinPlatform.ANDROID
 
-        internal fun delegateToAndroidPlugin(kotlinTarget: KotlinTarget): Boolean =
-            androidPluginPresent && kotlinTarget.platform == KotlinPlatform.ANDROID
+        internal fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
+            kotlinTarget.platform == KotlinPlatform.ANDROID
 
-        internal fun delegateToAndroidPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
-            androidPluginPresent && kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
+        internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
+            kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
     }
 }
 

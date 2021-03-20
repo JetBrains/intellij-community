@@ -9,7 +9,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     getCompilations(gradleModule, mppModel, ideModule, resolverCtx)
-        .filterNot { (_, compilation) -> delegateToAndroidPlugin(compilation) }
+        .filterNot { (_, compilation) -> shouldDelegateToOtherPlugin(compilation) }
         .filter { (_, compilation) -> processedModuleIds.add(getKotlinModuleId(gradleModule, compilation, resolverCtx)) }
         .forEach { (dataNode, compilation) ->
             buildDependencies(
