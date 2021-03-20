@@ -37,6 +37,7 @@ final class DirectoryPathMatcher {
   private final @NotNull GotoFileModel myModel;
   private final @Nullable List<Pair<VirtualFile, String>> myFiles;
   private final @NotNull Predicate<VirtualFile> myProjectFileFilter;
+  private final @NotNull DirectoryPathMatcherService myService;
 
   final @NotNull String dirPattern;
 
@@ -57,6 +58,8 @@ final class DirectoryPathMatcher {
     else {
       myProjectFileFilter = vFile -> projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId());
     }
+
+    myService = DirectoryPathMatcherService.getInstance(project);
   }
 
   @Nullable
@@ -143,7 +146,7 @@ final class DirectoryPathMatcher {
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return myProjectFileFilter.test(file) && consumer.process(file);
+        return (myService.shouldProcess(file) || myProjectFileFilter.test(file)) && consumer.process(file);
       }
 
       @Nullable
