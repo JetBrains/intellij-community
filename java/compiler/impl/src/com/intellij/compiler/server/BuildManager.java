@@ -26,6 +26,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -717,7 +718,7 @@ public final class BuildManager implements Disposable {
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.MAKE_PROJECT_ON_SAVE) {
+    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
