@@ -360,6 +360,15 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
                  "    print(r)");
   }
 
+  // PY-39262
+  public void testAssignmentExpressionInsideBinaryInWhile() {
+    doTestByText("while undefined1 and (r := undefined2()):\n" +
+                 "    print(r)");
+
+    doTestByText("while undefined1 or (r := undefined2()):\n" +
+                 "    print(<warning descr=\"Name 'r' can be undefined\">r</warning>)");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

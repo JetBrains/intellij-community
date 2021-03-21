@@ -375,7 +375,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.startConditionalNode(part, lastCondition, false);
       }
 
-      final Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> currentPartResults = visitPyIfPart(part, node);
+      final Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> currentPartResults = visitPyConditionalPart(part, node);
       lastCondition = currentPartResults.getFirst();
       lastBranchingPoints = currentPartResults.getSecond();
       conditionResults.add(currentPartResults.getThird());
@@ -423,8 +423,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @NotNull
-  private Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> visitPyIfPart(@NotNull PyIfPart part,
-                                                                                           @NotNull PyIfStatement node) {
+  private Triple<PyExpression, List<Pair<PsiElement, Instruction>>, Boolean> visitPyConditionalPart(@NotNull PyConditionalStatementPart part,
+                                                                                                    @NotNull PyStatement node) {
     final PyExpression condition = part.getCondition();
     final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
     final Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
@@ -446,7 +446,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       shortCircuitPositivePoints.forEach(pair -> myBuilder.addPendingEdge(pair.getFirst(), pair.getSecond()));
     }
 
-    visitPyIfPartStatements(part, assertionEvaluator, node);
+    visitPyConditionalPartStatements(part, assertionEvaluator, node);
 
     return new Triple<>(condition, branchingPoints, conditionResult);
   }
@@ -458,27 +458,29 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     );
   }
 
-  private void visitPyIfPartStatements(@NotNull PyIfPart part,
-                                       @NotNull PyTypeAssertionEvaluator assertionEvaluator,
-                                       @NotNull PyIfStatement node) {
+  private void visitPyConditionalPartStatements(@NotNull PyConditionalStatementPart part,
+                                                @NotNull PyTypeAssertionEvaluator assertionEvaluator,
+                                                @NotNull PyStatement node) {
     final PyStatementList statements = part.getStatementList();
 
     myBuilder.startConditionalNode(statements, part.getCondition(), true);
     InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
     statements.accept(this);
 
-    myBuilder.processPending(
-      (pendingScope, instruction) -> {
-        if (pendingScope != null && PsiTreeUtil.isAncestor(statements, pendingScope, false)) {
-          myBuilder.addPendingEdge(node, instruction);
+    if (!(node instanceof PyLoopStatement)) { // outcoming edges will be looped
+      myBuilder.processPending(
+        (pendingScope, instruction) -> {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(statements, pendingScope, false)) {
+            myBuilder.addPendingEdge(node, instruction);
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
         }
-        else {
-          myBuilder.addPendingEdge(pendingScope, instruction);
-        }
-      }
-    );
+      );
 
-    myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+    }
   }
 
   @Override
@@ -542,29 +544,36 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyWhileStatement(final @NotNull PyWhileStatement node) {
     final Instruction instruction = myBuilder.startNode(node);
-    final PyWhilePart whilePart = node.getWhilePart();
-    final PyExpression condition = whilePart.getCondition();
-    boolean isStaticallyTrue = false;
-    if (condition != null) {
-      condition.accept(this);
-      isStaticallyTrue = loopHasAtLeastOneIteration(node);
-    }
-    final Instruction head = myBuilder.prevInstruction;
-    final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !isStaticallyTrue) {
-      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    }
-    final PyStatementList list = whilePart.getStatementList();
-    myBuilder.startConditionalNode(list, condition, true);
-    list.accept(this);
+
+    final var mainPartResults = visitPyConditionalPart(node.getWhilePart(), node);
+    final var branchingPoints = mainPartResults.getSecond();
+
     // Loop edges
     if (myBuilder.prevInstruction != null) {
       myBuilder.addEdge(myBuilder.prevInstruction, instruction);
     }
     myBuilder.checkPending(instruction);
 
-    if (elsePart != null) {
-      myBuilder.prevInstruction = !isStaticallyTrue ? head : null;
+    final var isStaticallyTrue = mainPartResults.getThird() == Boolean.TRUE;
+    final var elsePart = node.getElsePart();
+
+    if (elsePart == null) {
+      if (!isStaticallyTrue) {
+        for (Pair<PsiElement, Instruction> pair : branchingPoints) {
+          myBuilder.addPendingEdge(node, pair.getSecond());
+        }
+      }
+    }
+    else {
+      final var elsePartInstruction = new ConditionalInstructionImpl(myBuilder, elsePart, mainPartResults.getFirst(), false);
+      myBuilder.prevInstruction = null;
+      myBuilder.addNode(elsePartInstruction);
+
+      if (!isStaticallyTrue) {
+        for (Pair<PsiElement, Instruction> pair : branchingPoints) {
+          myBuilder.addEdge(pair.getSecond(), elsePartInstruction);
+        }
+      }
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
