@@ -1,7 +1,7 @@
 <html>
 <body>
-Reports if trivial lambda expression is used where there's an alternative method which behaves the same way, but accepts a concrete value
-instead of a lambda.
+Reports if a trivial lambda expression is used where there's an alternative method which behaves the same way, but accepts a concrete value
+instead of a lambda. This simplifies the code.
 <p>Example:</p>
 <pre>
   Optional.orElseGet(() -> null)
