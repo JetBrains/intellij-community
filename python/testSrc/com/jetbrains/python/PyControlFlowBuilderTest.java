@@ -308,6 +308,16 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-39262
+  public void testAssignmentExpressionInsideBinaryInWhile() {
+    doTest();
+  }
+
+  // PY-39262
+  public void testAssignmentExpressionInsideBinaryInWhileElse() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
