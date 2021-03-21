@@ -14,7 +14,6 @@ import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -443,9 +442,9 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private boolean breaksExistingComment(int offset, boolean includingAfterLineComment) {
-    if (!(myCommenter instanceof CodeDocumentationAwareCommenter) || !(myEditor instanceof EditorEx) || offset == 0) return false;
+    if (!(myCommenter instanceof CodeDocumentationAwareCommenter) || offset == 0) return false;
     CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
-    HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset - 1);
+    HighlighterIterator it = myEditor.getHighlighter().createIterator(offset - 1);
     IElementType tokenType = it.getTokenType();
     return  (tokenType != null && (it.getEnd() > offset && (tokenType == commenter.getLineCommentTokenType() ||
                                                             tokenType == commenter.getBlockCommentTokenType() ||
@@ -455,14 +454,14 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private boolean canDetectBlockComments() {
-    return myEditor instanceof EditorEx && myCommenter instanceof CodeDocumentationAwareCommenter &&
+    return myCommenter instanceof CodeDocumentationAwareCommenter &&
            ((CodeDocumentationAwareCommenter)myCommenter).getBlockCommentTokenType() != null;
   }
 
   // should be called only if 'canDetectBlockComments' returns 'true'
   private TextRange getBlockCommentAt(int offset) {
     CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
-    HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
+    HighlighterIterator it = myEditor.getHighlighter().createIterator(offset);
     if (it.getTokenType() == commenter.getBlockCommentTokenType()) {
       return new TextRange(it.getStart(), it.getEnd());
     }

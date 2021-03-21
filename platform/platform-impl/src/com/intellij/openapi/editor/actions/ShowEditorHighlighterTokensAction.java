@@ -50,13 +50,13 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
         LogicalPosition logicalPosition = e.getLogicalPosition();
         int offset = e.getOffset();
         for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          String text = highlighter.getUserData(Holder.TOKEN_NAME);
+          String text = highlighter.getUserData(TOKEN_NAME);
           if (!StringUtil.isEmpty(text) && (highlighter.getStartOffset() < offset && highlighter.getEndOffset() > offset ||
                                             !logicalPosition.leansForward && highlighter.getEndOffset() == offset ||
                                             logicalPosition.leansForward && highlighter.getStartOffset() == offset)) {
             int hintOffset = highlighter.getStartOffset();
-            Holder.ourAlarm.cancelAllRequests();
-            Holder.ourAlarm.addRequest(() -> {
+            ourAlarm.cancelAllRequests();
+            ourAlarm.addRequest(() -> {
               LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(text));
               Point point = HintManagerImpl.getHintPosition(hint, editor,
                                                             editor.offsetToLogicalPosition(hintOffset).leanForward(true), HintManager.ABOVE);
@@ -107,7 +107,7 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
       protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         if (editor.getUserData(Holder.LISTENER_ADDED) != null) cleanup(editor);
 
-        HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(0);
+        HighlighterIterator it = editor.getHighlighter().createIterator(0);
         while (!it.atEnd()) {
           RangeHighlighter h = editor.getMarkupModel().addRangeHighlighter(it.getStart(), it.getEnd(),
                                                                            0, Holder.OUR_TEXT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);

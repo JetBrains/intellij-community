@@ -3,7 +3,6 @@ package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.codeInsight.editorActions.BraceMatcherBasedSelectioner;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +25,7 @@ public class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectione
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> superResult = super.select(e, editorText, cursorOffset, editor);
 
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(cursorOffset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(cursorOffset);
     if (CustomFileTypeQuoteHandler.isQuotedToken(iterator.getTokenType())) {
       List<TextRange> result = new ArrayList<>();
       int start = iterator.getStart();

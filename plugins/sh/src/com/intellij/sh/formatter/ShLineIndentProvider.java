@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -97,6 +96,6 @@ public class ShLineIndentProvider implements LineIndentProvider {
   }
 
   private static ShSemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
-    return ShSemanticEditorPosition.createEditorPosition((EditorEx) editor, offset);
+    return ShSemanticEditorPosition.createEditorPosition(editor, offset);
   }
 }

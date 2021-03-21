@@ -14,11 +14,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -88,7 +87,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
     FileType fileType = file.getFileType();
     final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file, editor);
 
-    HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator hiterator = editor.getHighlighter().createIterator(offset);
     boolean wasClosingQuote = quoteHandler != null && quoteHandler.isClosingQuote(hiterator, offset);
 
     myOriginalHandler.execute(originalEditor, caret, dataContext);
@@ -108,7 +107,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
       char c1 = chars.charAt(offset);
       if (c1 != getRightChar((char)c)) return true;
 
-      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
       if (!braceMatcher.isLBraceToken(iterator, chars, fileType) &&
           !braceMatcher.isRBraceToken(iterator, chars, fileType)
@@ -118,7 +117,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
 
       int rparenOffset = BraceMatchingUtil.findRightmostRParen(iterator, iterator.getTokenType(), chars, fileType);
       if (rparenOffset >= 0){
-        iterator = ((EditorEx)editor).getHighlighter().createIterator(rparenOffset);
+        iterator = editor.getHighlighter().createIterator(rparenOffset);
         boolean matched = BraceMatchingUtil.matchBrace(chars, fileType, iterator, false, true);
         if (matched) return true;
       }
@@ -130,7 +129,7 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
       if (c1 != c) return true;
       if (wasClosingQuote) return true;
 
-      HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       if (quoteHandler == null || !quoteHandler.isOpeningQuote(iterator,offset)) return true;
 
       editor.getDocument().deleteString(offset, offset + 1);
@@ -204,11 +203,11 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
       int targetOffset = editor.logicalPositionToOffset(pos);
       int offset = editor.getCaretModel().getOffset();
       editor.getCaretModel().getCurrentCaret().setSelection(targetOffset, offset, false);
-      EditorModificationUtil.deleteSelectedText(editor);
+      EditorModificationUtilEx.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }
     else if (pos.column > logicalPosition.column) {
-      EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));
+      EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));
     }
   }
 

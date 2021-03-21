@@ -8,10 +8,9 @@ import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
@@ -43,7 +42,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
 
-  private final EditorEx myEditor;
+  private final Editor myEditor;
   private final PsiFile  myFile;
 
   private volatile List<TextRange> myRanges = Collections.emptyList();
@@ -53,7 +52,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   public IndentsPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     super(project, editor.getDocument(), false);
-    myEditor = (EditorEx)editor;
+    myEditor = editor;
     myFile = file;
   }
 
@@ -203,7 +202,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   }
 
   private int findCodeConstructStartLine(int startLine) {
-    DocumentEx document = myEditor.getDocument();
+    Document document = myEditor.getDocument();
     CharSequence text = document.getImmutableCharSequence();
     int lineStartOffset = document.getLineStartOffset(startLine);
     int firstNonWsOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");

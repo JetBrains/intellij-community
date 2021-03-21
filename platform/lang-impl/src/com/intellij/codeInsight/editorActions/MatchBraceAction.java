@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -60,7 +59,7 @@ public class MatchBraceAction extends EditorAction {
         return offsetFromBraceMatcher;
       }
 
-      final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      final EditorHighlighter highlighter = editor.getHighlighter();
       int caretOffset = editor.getCaretModel().getOffset();
       HighlighterIterator iterator = highlighter.createIterator(caretOffset);
 

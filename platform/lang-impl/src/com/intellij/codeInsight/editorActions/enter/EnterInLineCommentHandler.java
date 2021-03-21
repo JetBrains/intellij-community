@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
@@ -98,8 +97,8 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
   }
 
   private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
-    if (offset < 1 || !(editor instanceof EditorEx)) return -1;
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    if (offset < 1) return -1;
+    EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     String prefix = commenter.getLineCommentPrefix();
     return iterator.getTokenType() == commenter.getLineCommentTokenType() &&

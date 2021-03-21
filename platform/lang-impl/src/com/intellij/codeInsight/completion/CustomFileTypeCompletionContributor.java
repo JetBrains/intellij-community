@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -73,7 +72,7 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
   }
 
   private static boolean inCommentOrLiteral(CompletionParameters parameters) {
-    HighlighterIterator iterator = ((EditorEx)parameters.getEditor()).getHighlighter().createIterator(parameters.getOffset());
+    HighlighterIterator iterator = parameters.getEditor().getHighlighter().createIterator(parameters.getOffset());
     if (iterator.atEnd()) return false;
 
     IElementType elementType = iterator.getTokenType();

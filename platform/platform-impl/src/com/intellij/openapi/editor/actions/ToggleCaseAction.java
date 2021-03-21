@@ -22,8 +22,6 @@ import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
@@ -76,14 +74,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
 
     private static String toCase(Editor editor, int startOffset, int endOffset, final boolean lower) {
       CharSequence text = editor.getDocument().getImmutableCharSequence();
-      EditorHighlighter highlighter;
-      if (editor instanceof EditorEx) {
-        highlighter = ((EditorEx)editor).getHighlighter();
-      }
-      else {
-        highlighter = new EmptyEditorHighlighter();
-        highlighter.setText(text);
-      }
+      EditorHighlighter highlighter = editor.getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(startOffset);
       StringBuilder builder = new StringBuilder(endOffset - startOffset);
       while (!iterator.atEnd()) {

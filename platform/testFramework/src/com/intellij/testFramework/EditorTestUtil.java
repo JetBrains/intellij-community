@@ -149,7 +149,7 @@ public final class EditorTestUtil {
 
   public static void checkEditorHighlighter(Project project, Editor editor) {
     if (!(editor instanceof EditorImpl)) return;
-    HighlighterIterator editorIterator = ((EditorEx)editor).getHighlighter().createIterator(0);
+    HighlighterIterator editorIterator = editor.getHighlighter().createIterator(0);
 
     EditorHighlighter freshHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(
       project, ((EditorEx)editor).getVirtualFile());
@@ -165,7 +165,7 @@ public final class EditorTestUtil {
         throw new IllegalStateException("Editor highlighter failed to update incrementally:\nFresh:  " +
                                         dumpHighlighter(freshHighlighter) +
                                         "\nEditor: " +
-                                        dumpHighlighter(((EditorImpl)editor).getHighlighter()));
+                                        dumpHighlighter(editor.getHighlighter()));
       }
       editorIterator.advance();
       freshIterator.advance();

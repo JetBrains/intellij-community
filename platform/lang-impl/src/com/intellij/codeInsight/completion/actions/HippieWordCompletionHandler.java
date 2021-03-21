@@ -9,7 +9,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -262,12 +261,12 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         if (fileEditor instanceof TextEditor) {
           Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
           if (anotherEditor != editor) {
-            addWordsForEditor((EditorEx)anotherEditor, matcher, words, afterWords, false);
+            addWordsForEditor(anotherEditor, matcher, words, afterWords, false);
           }
         }
       }
     } else {
-      addWordsForEditor((EditorEx)editor, matcher, words, afterWords, true);
+      addWordsForEditor(editor, matcher, words, afterWords, true);
     }
 
     Set<String> allWords = new HashSet<>();
@@ -299,7 +298,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     boolean processToken(int start, int end);
   }
 
-  private static void addWordsForEditor(final EditorEx editor,
+  private static void addWordsForEditor(final Editor editor,
                                         final CamelHumpMatcher matcher,
                                         final List<? super CompletionVariant> words,
                                         final List<? super CompletionVariant> afterWords, boolean takeCaretsIntoAccount) {
@@ -350,7 +349,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   private static void processWords(Editor editor, int startOffset, TokenProcessor processor) {
     CharSequence chars = editor.getDocument().getCharsSequence();
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(startOffset);
     while (!iterator.atEnd()) {
       int start = iterator.getStart();
       int end = iterator.getEnd();

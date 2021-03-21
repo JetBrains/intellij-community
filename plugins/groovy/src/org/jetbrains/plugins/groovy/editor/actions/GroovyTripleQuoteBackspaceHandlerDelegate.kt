@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.editor.actions
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets
@@ -17,7 +16,6 @@ class GroovyTripleQuoteBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
     myWithinTripleQuoted = false
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE) return
     if (c != '\'' && c != '"') return
-    if (editor !is EditorEx) return
     val offset = editor.caretModel.offset
     val iterator: HighlighterIterator = editor.highlighter.createIterator(offset)
     val tokenType = iterator.tokenType

@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
@@ -97,8 +96,8 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
 
   @Contract("_,null,_->false")
   private static boolean isInStringLiteral(@NotNull Editor editor, @Nullable JavaLikeQuoteHandler quoteHandler, int offset) {
-    if (offset > 0 && quoteHandler != null && editor instanceof EditorEx) {
-      EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    if (offset > 0 && quoteHandler != null) {
+      EditorHighlighter highlighter = editor.getHighlighter();
       HighlighterIterator iterator = highlighter.createIterator(offset - 1);
       final IElementType type = iterator.getTokenType();
       if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(type) || quoteHandler.isInsideLiteral(iterator)) {

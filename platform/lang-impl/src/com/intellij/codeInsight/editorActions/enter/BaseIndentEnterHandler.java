@@ -22,11 +22,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -134,7 +133,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
 
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
     final int previousLineStartOffset = lineNumber > 0 ? document.getLineStartOffset(lineNumber - 1) : lineStartOffset;
-    final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+    final EditorHighlighter highlighter = editor.getHighlighter();
     final HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     final IElementType type = getNonWhitespaceElementType(iterator, lineStartOffset, previousLineStartOffset);
 
@@ -147,12 +146,12 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       final String restString = editorCharSequence.subSequence(caret, document.getLineEndOffset(lineNumber)).toString();
       if (!StringUtil.isEmptyOrSpaces(restString)) {
         final String linePrefix = lineIndent + myLineCommentPrefix;
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + linePrefix);
+        EditorModificationUtilEx.insertStringAtCaret(editor, "\n" + linePrefix);
         editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, linePrefix.length()));
         return Result.Stop;
       }
       else if (iterator.getStart() < lineStartOffset) {
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
+        EditorModificationUtilEx.insertStringAtCaret(editor, "\n" + lineIndent);
         return Result.Stop;
       }
     }
@@ -163,11 +162,11 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     else {
       if (myIndentTokens.contains(type)) {
         final String newIndent = getNewIndent(file, document, lineIndent);
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + newIndent);
+        EditorModificationUtilEx.insertStringAtCaret(editor, "\n" + newIndent);
         return Result.Stop;
       }
 
-      EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
+      EditorModificationUtilEx.insertStringAtCaret(editor, "\n" + lineIndent);
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, calcLogicalLength(editor, lineIndent)));
       return Result.Stop;
     }

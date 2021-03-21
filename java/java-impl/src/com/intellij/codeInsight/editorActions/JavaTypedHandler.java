@@ -29,7 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -158,7 +158,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.CONTINUE;
       }
 
-      HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
       while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
       }
@@ -181,7 +181,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
 
       if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null && !shouldInsertPairedBrace(leaf)) {
-        EditorModificationUtil.insertStringAtCaret(editor, "{");
+        EditorModificationUtilEx.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
       }
@@ -201,7 +201,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char prevChar = doc.getCharsSequence().charAt(offsetBefore - 1);
     if (prevChar != '=' && prevChar != '!') return false;
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore - 1);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore - 1);
     IElementType curToken = it.getTokenType();
     if (curToken != JavaTokenType.EQ && curToken != JavaTokenType.EXCL) return false;
     int lineStart = doc.getLineStartOffset(doc.getLineNumber(offsetBefore));
@@ -265,7 +265,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
    */
   private static boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore);
+    HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore);
     if (it.atEnd()) return false;
     IElementType curToken = it.getTokenType();
     if (UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
@@ -403,7 +403,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   private static boolean mightBeInsideDefaultAnnotationAttribute(@NotNull Editor editor, int offset) {
     if (offset < 0) return false;
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     int parenCount = 0;
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
@@ -432,7 +432,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
 
-    HighlighterIterator hi = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    HighlighterIterator hi = editor.getHighlighter().createIterator(offset);
     if (hi.atEnd() || hi.getTokenType() != JavaTokenType.SEMICOLON) return false;
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
@@ -449,7 +449,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     // Note, this feature may be rewritten using only lexer if needed.
     // In that case accuracy will not be 100%, but good enough.
 
-    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
+    HighlighterIterator it = editor.getHighlighter().createIterator(caretOffset);
     int afterLastParenOffset = -1;
 
     while (!it.atEnd()) {
