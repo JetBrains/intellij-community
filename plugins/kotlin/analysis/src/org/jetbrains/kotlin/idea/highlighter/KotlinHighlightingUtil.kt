@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
@@ -54,11 +53,6 @@ object KotlinHighlightingUtil {
 
         return ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
     }
-
-    fun shouldHighlightErrors(psiElement: PsiElement): Boolean =
-        (psiElement.containingFile as? KtFile)?.let {
-            shouldHighlightErrors(it)
-        } ?: false
 
     fun shouldHighlightErrors(ktFile: KtFile): Boolean {
         if (ktFile.isCompiled) {

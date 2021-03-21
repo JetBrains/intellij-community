@@ -106,6 +106,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
         cleanUpCalculatingAnnotations(highlightInfoByTextRange)
+        if (!KotlinHighlightingUtil.shouldHighlightErrors(file)) return
 
         annotateDuplicateJvmSignature(file, holder, bindingContext.diagnostics)
 
@@ -122,7 +123,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
         // apply quick fixes for all diagnostics grouping by element
         highlightInfoByDiagnostic.keys.groupBy { it.psiElement }.forEach {
-            annotateQuickFixes(file, it.key, it.value, highlightInfoByDiagnostic)
+            annotateQuickFixes(it.key, it.value, highlightInfoByDiagnostic)
         }
     }
 
@@ -162,16 +163,15 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         noFixes: Boolean = false,
         calculatingInProgress: Boolean = false
     ) = annotateDiagnostics(
-        file, element, holder, diagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange,
-        ::shouldSuppressUnusedParameter,
-        noFixes = noFixes, calculatingInProgress = calculatingInProgress
+        element, holder, diagnostics, highlightInfoByDiagnostic, highlightInfoByTextRange, ::shouldSuppressUnusedParameter,
+        noFixes = noFixes,
+        calculatingInProgress = calculatingInProgress
     )
 
     /**
      * [diagnostics] has to belong to the same element
      */
     private fun annotateQuickFixes(
-        file: KtFile,
         element: PsiElement,
         diagnostics: List<Diagnostic>,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>
@@ -180,16 +180,9 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
         assertBelongsToTheSameElement(element, diagnostics)
 
-        val shouldHighlightErrors =
-            KotlinHighlightingUtil.shouldHighlightErrors(
-                if (element.isPhysical) file else element
-            )
-
-        if (shouldHighlightErrors) {
-            ElementAnnotator(element) { param ->
-                shouldSuppressUnusedParameter(param)
-            }.registerDiagnosticsQuickFixes(diagnostics, highlightInfoByDiagnostic)
-        }
+        ElementAnnotator(element) { param ->
+            shouldSuppressUnusedParameter(param)
+        }.registerDiagnosticsQuickFixes(diagnostics, highlightInfoByDiagnostic)
     }
 
     protected open fun shouldSuppressUnusedParameter(parameter: KtParameter): Boolean = false
@@ -216,7 +209,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
             val diagnosticsForElement = diagnostics.forElement(element).toSet()
 
-            annotateDiagnostics(file, element, holder, diagnosticsForElement)
+            annotateDiagnostics(element, holder, diagnosticsForElement)
         }
     }
 
@@ -240,7 +233,6 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
         }
 
         fun annotateDiagnostics(
-            file: KtFile,
             element: PsiElement,
             holder: HighlightInfoHolder,
             diagnostics: Collection<Diagnostic>,
@@ -259,23 +251,14 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 element.putUserData(UNRESOLVED_KEY, if (unresolved) Unit else null)
             }
 
-            val shouldHighlightErrors =
-                KotlinHighlightingUtil.shouldHighlightErrors(
-                    if (element.isPhysical) file else element
-                )
-
-            if (shouldHighlightErrors) {
-                val elementAnnotator = ElementAnnotator(element) { param ->
-                    shouldSuppressUnusedParameter(param)
-                }
-                elementAnnotator.registerDiagnosticsAnnotations(
-                    holder, diagnostics, highlightInfoByDiagnostic,
-                    highlightInfoByTextRange,
-                    noFixes = noFixes, calculatingInProgress = calculatingInProgress
-                )
-            }
+            ElementAnnotator(element) { param ->
+                shouldSuppressUnusedParameter(param)
+            }.registerDiagnosticsAnnotations(
+                holder, diagnostics, highlightInfoByDiagnostic,
+                highlightInfoByTextRange,
+                noFixes = noFixes, calculatingInProgress = calculatingInProgress
+            )
         }
-
     }
 }
 
