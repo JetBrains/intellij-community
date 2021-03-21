@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -109,7 +110,10 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
       public void run() {
         if (!isOtherModalWindowActive()) {
           try {
-            doOpenErrorsDialog(message);
+            // always show IDE errors to the host
+            ClientId.withClientId(ClientId.getLocalId(), () -> {
+              doOpenErrorsDialog(message);
+            });
           }
           finally {
             myOpeningInProgress = false;
