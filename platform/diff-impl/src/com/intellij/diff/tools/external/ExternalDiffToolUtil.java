@@ -22,13 +22,17 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,16 +208,23 @@ public final class ExternalDiffToolUtil {
     execute(settings.getDiffExePath(), settings.getDiffParameters(), patterns);
   }
 
+  @RequiresEdt
   public static void executeMerge(@Nullable Project project,
                                   @NotNull ExternalDiffSettings settings,
                                   @NotNull ThreesideMergeRequest request,
                                   @Nullable JComponent parentComponent) throws IOException, ExecutionException {
-    boolean success = false;
+    request.onAssigned(true);
     try {
-      success = tryExecuteMerge(project, settings, request, parentComponent);
+      boolean success = false;
+      try {
+        success = tryExecuteMerge(project, settings, request, parentComponent);
+      }
+      finally {
+        request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
+      }
     }
     finally {
-      request.applyResult(success ? MergeResult.RESOLVED : MergeResult.CANCEL);
+      request.onAssigned(false);
     }
   }
 

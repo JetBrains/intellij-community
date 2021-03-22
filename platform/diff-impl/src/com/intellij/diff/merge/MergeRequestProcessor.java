@@ -117,6 +117,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     setTitle(request.getTitle());
 
     myRequest = request;
+    onAssigned(myRequest, true);
     myViewer = createViewerFor(request);
     initViewer();
     installCallbackListener(myRequest);
@@ -135,6 +136,7 @@ public abstract class MergeRequestProcessor implements Disposable {
           () -> {
             if (myDisposed) return;
             myRequest = mergeRequest;
+            onAssigned(myRequest, true);
             swapViewer(createViewerFor(mergeRequest));
             installCallbackListener(myRequest);
           },
@@ -323,6 +325,10 @@ public abstract class MergeRequestProcessor implements Disposable {
 
       destroyViewer();
       applyRequestResult(MergeResult.CANCEL);
+
+      if (myRequest != null) {
+        onAssigned(myRequest, false);
+      }
     });
   }
 
@@ -370,6 +376,15 @@ public abstract class MergeRequestProcessor implements Disposable {
       myViewer = newViewer;
       initViewer();
     });
+  }
+
+  private static void onAssigned(@NotNull MergeRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   //
