@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.preview
+package org.intellij.plugins.markdown.preview.jcef
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.ui.scale.TestScaleHelper
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.preview.MarkdownJCEFPreviewTestUtil.collectPageSource
+import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.junit.AfterClass
@@ -65,7 +65,7 @@ class MarkdownContentEscapingTest {
       TestScaleHelper.setRegistryProperty("ide.browser.jcef.testMode.enabled", "true")
     }
 
-    private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH!!, "preview", "escaping")
+    private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH!!, "preview", "jcef", "escaping")
 
     @ClassRule
     @JvmField
