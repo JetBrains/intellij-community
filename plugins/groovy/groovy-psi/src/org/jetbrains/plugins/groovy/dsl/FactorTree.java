@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
@@ -23,7 +22,8 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author peter
  */
-public class FactorTree extends UserDataHolderBase {
+public class FactorTree {
+
   private static final Key<CachedValue<Map>> GDSL_MEMBER_CACHE = Key.create("GDSL_MEMBER_CACHE");
   private static final Key<Boolean> CONTAINS_TYPE = Key.create("CONTAINS_TYPE");
   private final CachedValueProvider<Map> myProvider;
