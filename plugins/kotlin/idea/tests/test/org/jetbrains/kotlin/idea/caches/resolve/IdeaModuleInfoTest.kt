@@ -36,7 +36,9 @@ import org.jetbrains.kotlin.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
+import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
+import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -403,6 +405,36 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
         with(createFileInModule(a, "script.kts").moduleInfo) {
             dependencies().filterIsInstance<SdkInfo>().first { it.sdk == mockJdk9 }
         }
+    }
+
+    fun testTransitiveLibraryDependency() {
+        val a = module("a")
+        val b = module("b")
+
+        val projectLibrary = projectLibraryWithFakeRoot("transitiveForB")
+        a.addDependency(projectLibrary)
+
+        val classRoot = createFileInProject("libraryClass")
+        val l1 = moduleLibrary(
+            module = a,
+            libraryName = "#1",
+            classesRoot = classRoot,
+        )
+        val l2 = moduleLibrary(
+            module = b,
+            libraryName = "#1",
+            classesRoot = classRoot,
+        )
+        Assert.assertEquals("Library infos for the module libraries with equal roots are not equal", l1.classes, l2.classes)
+
+        a.production.assertDependenciesEqual(a.production, projectLibrary.classes, l1.classes)
+        b.production.assertDependenciesEqual(b.production, l2.classes)
+        projectLibrary.classes.assertAdditionalLibraryDependencies(l1.classes)
+
+        Assert.assertTrue(
+            "Missing transitive dependency on the project library",
+            projectLibrary.classes in b.production.dependencies().closure { it.dependencies() }
+        )
     }
 
     private fun createFileInModule(module: Module, fileName: String, inTests: Boolean = false): VirtualFile {

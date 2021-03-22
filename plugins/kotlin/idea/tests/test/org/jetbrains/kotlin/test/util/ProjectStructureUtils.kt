@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.test.util
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -38,6 +39,31 @@ fun HeavyPlatformTestCase.projectLibrary(
             sourcesRoot?.let { addRoot(it, OrderRootType.SOURCES) }
             commit()
         }
+        library
+    }
+}
+
+fun moduleLibrary(
+    module: Module,
+    libraryName: String = "TestLibrary",
+    classesRoot: VirtualFile? = null,
+    sourcesRoot: VirtualFile? = null,
+): LibraryEx {
+    return runWriteAction {
+        val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+        val moduleLibraryTable = modifiableModel.moduleLibraryTable
+        val library = try {
+            moduleLibraryTable.createLibrary(libraryName) as LibraryEx
+        } finally {
+            modifiableModel.commit()
+        }
+
+        with(library.modifiableModel) {
+            classesRoot?.let { addRoot(it, OrderRootType.CLASSES) }
+            sourcesRoot?.let { addRoot(it, OrderRootType.SOURCES) }
+            commit()
+        }
+
         library
     }
 }
