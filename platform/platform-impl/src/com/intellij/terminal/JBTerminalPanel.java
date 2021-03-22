@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
@@ -130,54 +127,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
       return super.getMinimumSize();
     }
     return JBUI.emptySize();
-  }
-
-  @Override
-  protected void handleMouseWheelEvent(@NotNull MouseWheelEvent event, @NotNull JScrollBar scrollBar) {
-    // TODO replace with standard JBScrollPane in 2021.2 and remove this method!
-    if (event.isShiftDown() || event.getUnitsToScroll() == 0) return;
-    if (isNiceScrollingSupported(event)) {
-      MouseWheelEvent e = event;
-      if (Registry.is("idea.true.smooth.scrolling.pixel.perfect", true)) {
-        // Terminal's scrollBar.getModel() operates with lines, not pixel. So we need to covert back to units
-        // according to com.intellij.ui.components.JBScrollBar.getPreciseDelta implementation.
-        e = copyEventWithScaledRotation(event, JBUIScale.scale(10));
-      }
-      boolean handled = ((JBScrollBar)scrollBar).handleMouseWheelEvent(e);
-      if (!handled && LOG.isDebugEnabled()) {
-        LOG.debug("Mouse wheel event not handled");
-      }
-    }
-    else {
-      super.handleMouseWheelEvent(event, scrollBar);
-    }
-  }
-
-  private static boolean isNiceScrollingSupported(@NotNull MouseWheelEvent event) {
-    if (!isSupportedScrollType(event)) return false;
-    UISettings settings = UISettings.getInstanceOrNull();
-    return settings != null && settings.getSmoothScrolling();
-  }
-
-  private static boolean isSupportedScrollType(MouseWheelEvent e) {
-    return e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL || TouchScrollUtil.isUpdate(e);
-  }
-
-  private @NotNull MouseWheelEvent copyEventWithScaledRotation(@NotNull MouseWheelEvent e, int rotationScaleFactor) {
-    return new MouseWheelEvent(this,
-                               e.getID(),
-                               e.getWhen(),
-                               e.getModifiers(),
-                               e.getX(),
-                               e.getY(),
-                               e.getXOnScreen(),
-                               e.getYOnScreen(),
-                               e.getClickCount(),
-                               e.isPopupTrigger(),
-                               e.getScrollType(),
-                               e.getScrollAmount(),
-                               e.getWheelRotation() / rotationScaleFactor,
-                               e.getPreciseWheelRotation() / rotationScaleFactor);
   }
 
   private boolean skipKeyEvent(@NotNull KeyEvent e) {
