@@ -8,8 +8,8 @@ import com.intellij.ide.plugins.PluginStateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.PluginUpdates;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -204,7 +204,10 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      UpdateChecker.CheckPluginsUpdateResult updates = UpdateChecker.checkPluginsUpdate(new EmptyProgressIndicator());
+      PluginUpdates updates = UpdateChecker.findPluginUpdates(null, null);
+      List<IdeaPluginDescriptor> cache = new ArrayList<>();
+      cache.addAll(ContainerUtil.map(updates.getEnabled(), PluginDownloader::getDescriptor));
+      cache.addAll(ContainerUtil.map(updates.getDisabled(), PluginDownloader::getDescriptor));
 
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
@@ -217,12 +220,6 @@ public class PluginUpdatesService {
           }
 
           myPrepared = true;
-          List<IdeaPluginDescriptor> cache = new ArrayList<>();
-          Collection<PluginDownloader> availableUpdates = updates.getAvailableUpdates();
-          if (availableUpdates != null) {
-            cache.addAll(ContainerUtil.map(availableUpdates, (downloader -> downloader.getDescriptor())));
-          }
-          cache.addAll(ContainerUtil.map(updates.getAvailableDisabledUpdates(), (downloader -> downloader.getDescriptor())));
           myCache = cache;
 
           Integer countValue = getCount();
