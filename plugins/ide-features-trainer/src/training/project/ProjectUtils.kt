@@ -126,9 +126,7 @@ object ProjectUtils {
       val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), task)
                     ?: error("Could not create project for ${langSupport.primaryLanguage}")
       PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
-      if (langSupport.isTrusted(project)) {
-        project.setTrusted(true)
-      }
+      project.setTrusted(true)
       postInitCallback(project)
     }
   }
