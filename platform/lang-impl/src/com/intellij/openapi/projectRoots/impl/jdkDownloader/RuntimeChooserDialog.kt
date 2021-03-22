@@ -31,6 +31,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -136,6 +137,7 @@ class RuntimeChooserDialog(
 
         addToCenter(JBLabel().apply {
           icon = AllIcons.General.Warning
+          verticalTextPosition = SwingConstants.TOP
           text = HtmlChunk
             .html()
             .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn"))
