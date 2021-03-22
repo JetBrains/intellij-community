@@ -1,4 +1,3 @@
-// MUTED: "Muted till 1.4.32"
 class Inv<E>
 class Out<out T>
 class OutPair<out Final, out Y>
