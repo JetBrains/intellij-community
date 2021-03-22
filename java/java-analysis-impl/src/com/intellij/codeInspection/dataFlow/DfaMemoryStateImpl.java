@@ -1323,11 +1323,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    flushVariable(variable, false);
+    flushVariable(variable, true, false);
   }
 
-  protected void flushVariable(@NotNull DfaVariableValue variable, boolean shouldMarkFlushed) {
-    DfaVariableValue canonical = canonicalize(variable);
+  @Override
+  public void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize) {
+    flushVariable(variable, canonicalize, false);
+  }
+
+  protected void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean shouldMarkFlushed) {
+    DfaVariableValue canonical = canonicalize ? canonicalize(variable) : variable;
     EqClass eqClass = canonical.getDependentVariables().isEmpty() ? null : getEqClass(canonical);
     DfaVariableValue newCanonical =
       eqClass == null ? null : StreamEx.of(eqClass.iterator()).without(canonical).min(EqClass.CANONICAL_VARIABLE_COMPARATOR)

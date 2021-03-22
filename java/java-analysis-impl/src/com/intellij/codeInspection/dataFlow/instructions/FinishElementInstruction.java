@@ -26,7 +26,7 @@ public class FinishElementInstruction extends Instruction {
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
     if (!myVarsToFlush.isEmpty()) {
       for (DfaVariableValue value : myVarsToFlush) {
-        state.flushVariable(value);
+        state.flushVariable(value, false);
       }
     }
     return nextInstruction(runner, state);
