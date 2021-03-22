@@ -8,6 +8,7 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInf
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileScope;
@@ -67,7 +68,9 @@ import java.util.stream.Collectors;
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
-public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService, ModificationTracker {
+public abstract class CompilerReferenceServiceBase<Reader extends CompilerReferenceReader<?>> implements CompilerReferenceService,
+                                                                                                         ModificationTracker,
+                                                                                                         Disposable {
   private static final Logger LOG = Logger.getInstance(CompilerReferenceServiceBase.class);
 
   private final Set<FileType> myFileTypes;
@@ -98,7 +101,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       return;
     }
 
-    myDirtyScopeHolder.installVFSListener(project);
+    myDirtyScopeHolder.installVFSListener(this);
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       CompilerManager compilerManager = CompilerManager.getInstance(project);
       boolean isUpToDate;
@@ -125,7 +128,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       });
     }
 
-    Disposer.register(project, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
+    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.PROJECT_CLOSED));
   }
 
   @Nullable
@@ -616,6 +619,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       myReadDataLock.unlock();
     }
   }
+
+  @Override
+  public void dispose() { }
 
   @Nullable
   protected <T> T onException(@NotNull Exception e, @NotNull String actionName) {
