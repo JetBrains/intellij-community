@@ -211,8 +211,7 @@ class VariableOrParameterNameWithTypeCompletion(
             }
         }
 
-        // we need space before colon in lookupString otherwise completion list is not closed on typing ':' (see KT-9813)
-        private val lookupString = parameterName + " : " + delegate.lookupString
+        private val lookupString = parameterName + if (shouldInsertType) ": " + delegate.lookupString else ""
 
         override fun getLookupString() = lookupString
         override fun getAllLookupStrings() = setOf(lookupString)
