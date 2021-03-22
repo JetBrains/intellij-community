@@ -367,25 +367,8 @@ public final class HttpRequests {
       return myInputStream;
     }
 
-    @Nullable InputStream getErrorStream() throws IOException {
-      URLConnection connection = getConnection();
-      if (!(connection instanceof HttpURLConnection)) {
-        return null;
-      }
-
-      InputStream errorStream = ((HttpURLConnection)connection).getErrorStream();
-      if (errorStream == null) {
-        return null;
-      }
-
-      return unzipStreamIfNeeded(connection, errorStream);
-    }
-
-    private @NotNull InputStream unzipStreamIfNeeded(@NotNull URLConnection connection, @NotNull InputStream stream) throws IOException {
-      if (myBuilder.myGzip && "gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-        return CountingGZIPInputStream.create(stream);
-      }
-      return stream;
+    private InputStream unzipStreamIfNeeded(URLConnection connection, InputStream stream) throws IOException {
+      return myBuilder.myGzip && "gzip".equalsIgnoreCase(connection.getContentEncoding()) ? CountingGZIPInputStream.create(stream) : stream;
     }
 
     @Override
@@ -664,9 +647,6 @@ public final class HttpRequests {
       InputStream errorStream = connection.getErrorStream();
       if (errorStream != null) {
         errorStream = request.unzipStreamIfNeeded(connection, errorStream);
-      }
-
-      if (errorStream != null) {
         message = HttpUrlConnectionUtil.readString(errorStream, connection);
       }
     }

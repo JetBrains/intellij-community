@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ public class DefaultLogger extends Logger {
   public void debug(Throwable t) { }
 
   @Override
-  public void debug(@NonNls String message, Throwable t) { }
+  public void debug(String message, Throwable t) { }
 
   @Override
   public void info(String message) { }
@@ -41,8 +40,8 @@ public class DefaultLogger extends Logger {
   public void info(String message, Throwable t) { }
 
   @Override
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
-  public void warn(@NonNls String message, @Nullable Throwable t) {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void warn(String message, @Nullable Throwable t) {
     t = checkException(t);
     System.err.println("WARN: " + message);
     if (t != null) t.printStackTrace(System.err);
@@ -57,10 +56,8 @@ public class DefaultLogger extends Logger {
     throw new AssertionError(message, t);
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
-  public static void dumpExceptionsToStderr(String message,
-                                            @Nullable Throwable t,
-                                            String @NotNull ... details) {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void dumpExceptionsToStderr(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (shouldDumpExceptionToStderr()) {
       System.err.println("ERROR: " + message);
       if (t != null) t.printStackTrace(System.err);
@@ -76,7 +73,7 @@ public class DefaultLogger extends Logger {
   @Override
   public void setLevel(@NotNull Level level) { }
 
-  public static @NonNls String attachmentsToString(@Nullable Throwable t) {
+  public static String attachmentsToString(@Nullable Throwable t) {
     if (t != null) {
       List<Attachment> attachments = ExceptionUtil
         .findCauseAndSuppressed(t, ExceptionWithAttachments.class)
