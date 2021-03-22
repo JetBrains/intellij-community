@@ -58,7 +58,8 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
     }
 
     Ext ext = getExtension(virtualFile, flags);
-    Path ioFile = virtualFile.toNioPath();
+    Path ioFile = virtualFile.getFileSystem().getNioPath(virtualFile);
+    if (ioFile == null) return null;
 
     synchronized (myIconCache) {
       Icon icon;
@@ -79,7 +80,7 @@ public final class NativeIconProvider extends IconProvider implements DumbAware 
       }
 
       // we should have no read access here, to avoid deadlock with EDT needed to init component
-      assert !ApplicationManager.getApplication().isReadAccessAllowed();
+      if (ApplicationManager.getApplication().isReadAccessAllowed()) return null;
 
       Icon icon;
       try {
