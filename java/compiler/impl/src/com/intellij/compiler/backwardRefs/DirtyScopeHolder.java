@@ -109,34 +109,20 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
     }
   }
 
-  public void upToDateChecked(boolean isUpToDate) {
-    final Module[] modules = ReadAction.compute(() -> {
-      final Project project = myService.getProject();
-      if (project.isDisposed()) {
-        return null;
-      }
-      return ModuleManager.getInstance(project).getModules();
-    });
-    if (modules == null) return;
+  void upToDateCheckFinished(Module @NotNull [] modules) {
     compilationFinished(() -> {
-      if (!isUpToDate) {
-        ContainerUtil.addAll(myVFSChangedModules, modules);
-      }
+      ContainerUtil.addAll(myVFSChangedModules, modules);
     });
   }
 
-  void compilerActivityFinished() {
-    final List<Module> compiledModules = ReadAction.compute(() -> {
-      final Project project = myService.getProject();
-      if (project.isDisposed()) {
-        return null;
-      }
-      final ModuleManager moduleManager = ModuleManager.getInstance(myService.getProject());
-      return ContainerUtil.map(myCompilationAffectedModules, moduleManager::findModuleByName);
-    });
+  @NotNull Set<String> getCompilationAffectedModules() {
+    return myCompilationAffectedModules;
+  }
+
+  void compilerActivityFinished(List<Module> compiledModules) {
     compilationFinished(() -> {
       if (compiledModules == null) return;
-      myVFSChangedModules.removeAll(compiledModules);
+      compiledModules.forEach(myVFSChangedModules::remove);
     });
   }
 

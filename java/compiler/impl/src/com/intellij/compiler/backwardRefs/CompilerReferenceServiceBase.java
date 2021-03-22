@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,6 +40,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
@@ -406,16 +408,27 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected void openReaderIfNeeded(IndexOpenReason reason) {
+    // do not run read action inside myOpenCloseLock
+    List<Module> compiledModules = null;
+    if (reason == IndexOpenReason.COMPILATION_FINISHED) {
+      compiledModules = ReadAction.nonBlocking(() -> {
+        if (myProject.isDisposed()) {
+          return null;
+        }
+        final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+        return ContainerUtil.map(myDirtyScopeHolder.getCompilationAffectedModules(), moduleManager::findModuleByName);
+      }).executeSynchronously();
+    }
+
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
       try {
-        switch (reason) {
-          case UP_TO_DATE_CACHE:
-            myDirtyScopeHolder.upToDateChecked(true);
-            break;
-          case COMPILATION_FINISHED:
-            myDirtyScopeHolder.compilerActivityFinished();
+        if (reason == IndexOpenReason.COMPILATION_FINISHED) {
+          myDirtyScopeHolder.compilerActivityFinished(compiledModules);
+        }
+        else if (reason == IndexOpenReason.UP_TO_DATE_CACHE) {
+          myDirtyScopeHolder.upToDateCheckFinished(Module.EMPTY_ARRAY);
         }
       }
       catch (RuntimeException e) {
@@ -433,12 +446,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   private void markAsOutdated(boolean decrementBuildCount) {
+    Module[] modules = ReadAction.compute(() -> myProject.isDisposed()
+                                                ? null
+                                                : ModuleManager.getInstance(myProject).getModules());
     myOpenCloseLock.lock();
     try {
       if (decrementBuildCount) {
         --myActiveBuilds;
       }
-      myDirtyScopeHolder.upToDateChecked(false);
+      if (modules == null) return;
+      myDirtyScopeHolder.upToDateCheckFinished(modules);
     } finally {
       myOpenCloseLock.unlock();
     }
