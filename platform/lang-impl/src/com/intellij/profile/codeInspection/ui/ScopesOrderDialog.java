@@ -67,7 +67,7 @@ public class ScopesOrderDialog extends DialogWrapper {
       .disableRemoveAction()
       .disableAddAction()
       .createPanel();
-    final JLabel descr = ComponentPanelBuilder.createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true);
+    final JLabel descr = ComponentPanelBuilder.createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true, 110);
     descr.setBorder(JBUI.Borders.emptyTop(5));
     myPanel = new JPanel();
     myPanel.setLayout(new BorderLayout());
