@@ -65,7 +65,7 @@ class RuntimeChooserPaths {
 
   private fun runWithProgress(action: (indicator: ProgressIndicator, jdkFile: Path) -> /*runtime name*/ @NlsSafe String?) {
     val title = LangBundle.message("progress.title.choose.ide.runtime.set.jdk")
-    object : Task.ConditionalModal(null, title, true, DEAF) {
+    object : Task.Backgroundable(null, title, true, DEAF) {
       override fun run(indicator: ProgressIndicator) {
         var jdkFileShadow: Path? = null
         try {
