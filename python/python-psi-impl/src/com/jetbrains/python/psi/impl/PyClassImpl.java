@@ -64,8 +64,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   public static final PyClass[] EMPTY_ARRAY = new PyClassImpl[0];
 
-  private volatile List<PyTargetExpression> myInstanceAttributes;
-  private volatile List<PyTargetExpression> myFallbackInstanceAttributes;
+  @Nullable private volatile List<PyTargetExpression> myInstanceAttributes;
+  @Nullable private volatile List<PyTargetExpression> myFallbackInstanceAttributes;
 
   private volatile Map<String, Property> myLocalPropertyCache;
 
@@ -1066,12 +1066,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return processor.getResult();
   }
 
+  @NotNull
   @Override
   public List<PyTargetExpression> getInstanceAttributes() {
-    if (myInstanceAttributes == null) {
-      myInstanceAttributes = collectInstanceAttributes(Collections.emptyMap());
+    List<PyTargetExpression> attributes = myInstanceAttributes;
+    if (attributes != null) {
+      return attributes;
     }
-    return myInstanceAttributes;
+    attributes = collectInstanceAttributes(Collections.emptyMap());
+    myInstanceAttributes = attributes;
+    return attributes;
   }
 
   @Nullable
@@ -1094,17 +1098,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
+  @NotNull
   private List<PyTargetExpression> getFallbackInstanceAttributes() {
-    if (myFallbackInstanceAttributes == null) {
-      Map<String, ScopeOwner> scopesToSkip = StreamEx.of(getInstanceAttributes())
-        .filter(e -> e.getName() != null)
-        .mapToEntry(e -> e.getName(), e -> ScopeUtil.getScopeOwner(e))
-        .toMap();
-      myFallbackInstanceAttributes = collectInstanceAttributes(scopesToSkip);
+    List<PyTargetExpression> attributes = myFallbackInstanceAttributes;
+    if (attributes != null) {
+      return attributes;
     }
-    return myFallbackInstanceAttributes;
+    Map<String, ScopeOwner> scopesToSkip = StreamEx.of(getInstanceAttributes())
+      .filter(e -> e.getName() != null)
+      .mapToEntry(e -> e.getName(), e -> ScopeUtil.getScopeOwner(e))
+      .toMap();
+    attributes = collectInstanceAttributes(scopesToSkip);
+    myFallbackInstanceAttributes = attributes;
+    return attributes;
   }
 
+  @NotNull
   private List<PyTargetExpression> collectInstanceAttributes(Map<String, ScopeOwner> scopesToSkip) {
     Map<String, PyTargetExpression> result = new HashMap<>();
     collectAttributesInConstructors(result, scopesToSkip);
