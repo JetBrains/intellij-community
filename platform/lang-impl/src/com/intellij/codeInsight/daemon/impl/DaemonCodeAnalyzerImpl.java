@@ -851,7 +851,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         // we'll restart when the write action finish
         return;
       }
-      if (dca.myPsiDocumentManager.hasUncommitedDocuments()) {
+      if (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments()) {
         // restart when everything committed
         dca.myPsiDocumentManager.performLaterWhenAllCommitted(this);
         return;
