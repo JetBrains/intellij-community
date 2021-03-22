@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.JBColor
@@ -119,7 +120,11 @@ class RuntimeChooserDialog(
 
   override fun createTitlePane(): JComponent {
     return BorderLayoutPanel().apply {
-        border = JBUI.Borders.merge(JBUI.Borders.empty(10), JBUI.Borders.customLineBottom(JBColor.border()), true)
+        val customLine = when {
+          SystemInfo.isWindows -> JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0)
+          else -> JBUI.Borders.customLineBottom(JBColor.border())
+        }
+        border = JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true)
         background = JBUI.CurrentTheme.Notification.BACKGROUND
         foreground = JBUI.CurrentTheme.Notification.FOREGROUND
 
