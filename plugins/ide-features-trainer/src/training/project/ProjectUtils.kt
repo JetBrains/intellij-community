@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.project
 
 import com.intellij.CommonBundle
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.Notification
@@ -117,6 +118,9 @@ object ProjectUtils {
       val project = ProjectUtil.openOrImport(projectDirectoryVirtualFile.toNioPath(), openProjectTask)
                     ?: error("Could not create project for ${langSupport.primaryLanguage}")
       PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
+      if (langSupport.isTrusted(project)) {
+        project.setTrusted(true)
+      }
       postInitCallback(project)
     }
   }

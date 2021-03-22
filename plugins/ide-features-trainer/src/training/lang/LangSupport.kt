@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.lang
 
 import com.intellij.openapi.project.Project
@@ -38,6 +38,12 @@ interface LangSupport {
   fun installAndOpenLearningProject(projectPath: Path, projectToClose: Project?, postInitCallback: (learnProject: Project) -> Unit)
 
   fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter? = null): Boolean
+
+  /**
+   * @return true iff newly created project should be marked as trusted after creation. Otherwise project will have UNSURE status.
+   * @see com.intellij.ide.impl.TrustedProjectSettings
+   */
+  fun isTrusted(project: Project): Boolean = true
 
   /**
    * Implement that method to define SDK lookup depending on a given project.
