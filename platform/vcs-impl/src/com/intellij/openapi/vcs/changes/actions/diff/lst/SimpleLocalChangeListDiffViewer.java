@@ -15,6 +15,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -136,7 +137,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull
     @Override
     public Runnable retryLater() {
-      scheduleRediff();
+      ApplicationManager.getApplication().invokeLater(() -> scheduleRediff());
       throw new ProcessCanceledException();
     }
 
