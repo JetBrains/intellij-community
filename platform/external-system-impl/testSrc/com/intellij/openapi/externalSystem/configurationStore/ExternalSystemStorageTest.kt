@@ -441,7 +441,7 @@ class ExternalSystemStorageTest {
   @Test
   fun `change storeExternally property and save libraries to internal storage`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+    loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     }
   }
@@ -449,12 +449,24 @@ class ExternalSystemStorageTest {
   @Test
   fun `change storeExternally property several times`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+    loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
       runBlocking { project.stateStore.save() }
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
       runBlocking { project.stateStore.save() }
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
+  @Test
+  fun `remove library stored externally`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("librariesInExternalStorage", "singleLibraryInExternalStorage") { project ->
+      val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+      runWriteActionAndWait {
+        libraryTable.removeLibrary(libraryTable.getLibraryByName("spring")!!)
+        libraryTable.removeLibrary(libraryTable.getLibraryByName("kotlin")!!)
+      }
     }
   }
 
