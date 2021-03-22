@@ -3,7 +3,7 @@
 import java.util.Arrays;
 
 class Test {
-  long cnt() {
+  boolean anyMatch() {
     return 0 < Arrays.asList("ds", "e", "fe").stream().filter(s -> s.length() > 1).c<caret>ount();
   }
 }
