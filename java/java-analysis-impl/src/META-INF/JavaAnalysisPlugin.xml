@@ -166,9 +166,6 @@
                       key="unnecessary.module.dependency.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                       level="WARNING"
                       implementationClass="com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="TestOnlyProblems" bundle="messages.JavaAnalysisBundle" key="inspection.test.only.problems.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.testOnly.TestOnlyInspection" />
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" groupKey="group.names.xml" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.xml.DeprecatedClassUsageInspection"
                      key="inspection.deprecated.class.usage.inspection.display.name" bundle="messages.JavaAnalysisBundle"/>
