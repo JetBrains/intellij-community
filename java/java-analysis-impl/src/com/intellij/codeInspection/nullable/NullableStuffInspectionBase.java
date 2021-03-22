@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
@@ -29,6 +26,7 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -259,9 +257,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (typeParameters.length > 0 && typeParameters.length == typeArguments.length && !(typeArguments[0].getType() instanceof PsiDiamondType)) {
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeElement typeArgument = typeArguments[i];
-              if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
+              Project project = element.getProject();
+              if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(project).createType(typeParameters[i])) ==
                   Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArgument.getType()) != Nullability.NOT_NULL) {
-                AddTypeAnnotationFix fix = new AddTypeAnnotationFix(manager.getDefaultNotNull(), manager.getNullables());
+                String annotationToAdd = manager.getDefaultNotNull();
+                PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
+                AddTypeAnnotationFix fix = null;
+                if (annotationClass != null &&
+                    AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
+                  fix = new AddTypeAnnotationFix(annotationToAdd, manager.getNullables());
+                }
                 reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
               }
             }
