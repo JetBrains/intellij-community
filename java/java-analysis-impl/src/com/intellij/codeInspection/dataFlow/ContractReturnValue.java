@@ -76,7 +76,6 @@ public abstract class ContractReturnValue {
    * Otherwise the human-readable error message is returned.
    */
   public final @InspectionMessage String getMethodCompatibilityProblem(PsiMethod method) {
-    //noinspection HardCodedStringLiteral
     return validators().map(fn -> fn.apply(method)).filter(Objects::nonNull).findFirst()
                        .map((JavaAnalysisBundle.message("contract.return.value.validation.prefix", this)+' ')::concat)
                        .orElse(null);
