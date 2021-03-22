@@ -350,7 +350,10 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     });
 
     updateLabel.run();
-    return new FormBuilder().addLabeledComponent(ctxLabel, change).getPanel();
+    return new FormBuilder()
+      .addComponent(ctxLabel)
+      .addComponent(change)
+      .getPanel();
   }
 
   @NotNull
