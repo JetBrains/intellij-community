@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -69,6 +70,11 @@ public final class CommonDataflow {
           newType = newType
             .meet(withSpecialField instanceof DfReferenceType ? ((DfReferenceType)withSpecialField).dropNullability() : withSpecialField);
         }
+      }
+      if (value instanceof DfaWrappedValue) {
+        SpecialField field = ((DfaWrappedValue)value).getSpecialField();
+        DfaVariableValue var = ((DfaWrappedValue)value).getWrappedValue();
+        newType = newType.meet(field.asDfType(memState.getDfType(var)));
       }
       myDfType = myDfType.join(newType);
     }

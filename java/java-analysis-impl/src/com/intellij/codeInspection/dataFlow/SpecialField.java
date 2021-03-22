@@ -97,9 +97,6 @@ public enum SpecialField implements VariableDescriptor {
   COLLECTION_SIZE("size", "special.field.collection.size", false) {
     private final CallMatcher SIZE_METHODS = CallMatcher.anyOf(CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "size").parameterCount(0),
                                                                CallMatcher.instanceCall(JAVA_UTIL_MAP, "size").parameterCount(0));
-    private final CallMatcher MAP_COLLECTIONS = CallMatcher.instanceCall(JAVA_UTIL_MAP, "keySet", "entrySet", "values")
-      .parameterCount(0);
-
     @Override
     boolean isMyQualifierType(PsiType type) {
       PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
@@ -122,19 +119,6 @@ public enum SpecialField implements VariableDescriptor {
         return DfTypes.intValue(0);
       }
       return super.fromConstant(obj);
-    }
-
-    @NotNull
-    @Override
-    public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
-      if (qualifier instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)qualifier;
-        PsiModifierListOwner owner = var.getPsiVariable();
-        if (var.getQualifier() != null && owner instanceof PsiMethod && MAP_COLLECTIONS.methodMatches((PsiMethod)owner)) {
-          return super.createValue(factory, var.getQualifier(), forAccessor);
-        }
-      }
-      return super.createValue(factory, qualifier, forAccessor);
     }
   },
   UNBOX("value", "special.field.unboxed.value", true) {

@@ -156,7 +156,19 @@ public final class CustomMethodHandlers {
       instanceCall("java.util.Random", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int"),
       instanceCall("java.util.SplittableRandom", "nextInt").parameterTypes("int", "int")), toValue(CustomMethodHandlers::randomNextInt))
-    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), CustomMethodHandlers::copyOfArray)
+    .register(staticCall(JAVA_UTIL_ARRAYS, "copyOf"), (arguments, state, factory, method) -> copyOfArray(arguments, factory, method))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableCollection", "unmodifiableList", "unmodifiableSet", "unmodifiableMap",
+                         "unmodifiableSortedSet", "unmodifiableSortedMap", "unmodifiableNavigableSet", "unmodifiableNavigableMap")
+                .parameterCount(1), (arguments, state, factory, method) -> unmodifiableView(arguments, factory, method))
+    .register(staticCall(JAVA_UTIL_COLLECTIONS, "checkedCollection", "checkedList", "checkedSet", "checkedMap",
+                         "checkedSortedSet", "checkedSortedMap", "checkedNavigableSet", "checkedNavigableMap", "checkedQueue",
+                         "synchronizedCollection", "synchronizedList", "synchronizedSet", "synchronizedMap",
+                         "synchronizedSortedSet", "synchronizedSortedMap", "synchronizedNavigableSet", "synchronizedNavigableMap"),
+              (arguments, state, factory, method) -> collectionView(ArrayUtil.getFirstElement(arguments.myArguments), factory, method))
+    .register(anyOf(instanceCall(JAVA_UTIL_MAP, "keySet", "values", "entrySet").parameterCount(0),
+                    instanceCall("java.util.NavigableSet", "descendingSet").parameterCount(0),
+                    instanceCall("java.util.NavigableMap", "descendingMap").parameterCount(0)),
+              (arguments, state, factory, method) -> collectionView(arguments.myQualifier, factory, method))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray);
@@ -279,15 +291,35 @@ public final class CustomMethodHandlers {
     return intRange(LongRangeSet.range(-1, range.max() - 1));
   }
 
-  private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+  private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments,
+                                                DfaValueFactory factory,
+                                                PsiMethod method) {
     if (arguments.myArguments.length < 2) return null;
     return factory.getWrapperFactory().createWrapper(typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(LOCAL_OBJECT),
                                                      ARRAY_LENGTH, arguments.myArguments[1]);
   }
 
+  @Contract("null, _, _ -> null; !null, _, _ -> !null")
+  private static DfaValue collectionView(@Nullable DfaValue orig,
+                                         @NotNull DfaValueFactory factory,
+                                         @NotNull PsiMethod method) {
+    if (orig == null) return null;
+    return factory.getWrapperFactory().createWrapper(typedObject(method.getReturnType(), Nullability.NOT_NULL),
+                                                     COLLECTION_SIZE, COLLECTION_SIZE.createValue(factory, orig));
+  }
+
+  private static @Nullable DfaValue unmodifiableView(@NotNull DfaCallArguments arguments,
+                                                     @NotNull DfaValueFactory factory,
+                                                     @NotNull PsiMethod method) {
+    if (arguments.myArguments.length != 1) return null;
+    return factory.getWrapperFactory().createWrapper(
+      typedObject(method.getReturnType(), Nullability.NOT_NULL).meet(Mutability.UNMODIFIABLE_VIEW.asDfType()),
+      COLLECTION_SIZE, COLLECTION_SIZE.createValue(factory, arguments.myArguments[0]));
+  }
+
   private static @Nullable DfaValue collectionFactory(DfaCallArguments args,
-                                                   DfaMemoryState memState, DfaValueFactory factory,
-                                                   PsiMethod method) {
+                                                      DfaMemoryState memState, DfaValueFactory factory,
+                                                      PsiMethod method) {
     PsiType type = method.getReturnType();
     if (!(type instanceof PsiClassType)) return null;
     int factor = PsiTypesUtil.classNameEquals(type, JAVA_UTIL_MAP) ? 2 : 1;
