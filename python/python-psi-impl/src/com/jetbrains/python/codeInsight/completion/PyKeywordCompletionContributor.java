@@ -323,6 +323,9 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
   private static final PsiElementPattern.Capture<PsiElement> IN_ELSE_BODY_OF_TRY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyElsePart.class).inside(PyTryExceptStatement.class)));
 
+  private static final PsiElementPattern.Capture<PsiElement> IN_ANNOTATION =
+    psiElement().inside(psiElement(PyAnnotation.class));
+
   private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class).withLastChild(
     psiElement(PyIfPart.class)));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
@@ -644,6 +647,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor implem
              .and(PY35)
              .afterLeaf(psiElement().withElementType(PyTokenTypes.IDENTIFIER).withText(PyNames.ASYNC)),
            new PyKeywordCompletionProvider(PyNames.DEF, PyNames.WITH, PyNames.FOR));
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(IN_ANNOTATION),
+           new PyKeywordCompletionProvider(TailType.NONE, PyNames.NONE));
   }
 
   private void addAs() {
