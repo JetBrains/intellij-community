@@ -29,8 +29,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
@@ -173,7 +171,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @Suppress("DEPRECATION")
-  private val baseComponents: MutableList<BaseComponent> = SmartList()
+  private val baseComponents = mutableListOf<BaseComponent>()
 
   protected open val componentStore: IComponentStore
     get() = getService(IComponentStore::class.java)!!
@@ -470,7 +468,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       LOG.error("$interfaceClass it is a service, use getService instead of getComponent")
     }
 
-    return if (adapter is BaseComponentAdapter) {
+    if (adapter is BaseComponentAdapter) {
       if (parent != null && adapter.componentManager !== this) {
         LOG.error("getComponent must be called on appropriate container (current: $this, expected: ${adapter.componentManager})")
       }
@@ -479,11 +477,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
         adapter.throwAlreadyDisposedError(this, indicator)
       }
-      adapter.getInstance(adapter.componentManager, interfaceClass, true, indicator)
+      return adapter.getInstance(adapter.componentManager, interfaceClass, indicator = indicator)
     }
     else {
-      @Suppress("UNCHECKED_CAST")
-      adapter.getComponentInstance(picoContainer) as T
+      (@Suppress("UNCHECKED_CAST")
+      return adapter.getComponentInstance(picoContainer) as T)
     }
   }
 
@@ -493,18 +491,22 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     // fast path optimization: lookup light service in the cache
-    val lightServiceMap: MutableMap<Class<*>, Any>? = lightServices
+    val lightServiceMap = lightServices
     @Suppress("UNCHECKED_CAST")
     val cachedLightService = lightServiceMap?.get(serviceClass) as T?
-    if (cachedLightService != null) return cachedLightService
+    if (cachedLightService != null) {
+      return cachedLightService
+    }
 
     // fast path optimization: lookup regular service in the cache
     val key = serviceClass.name
-    val serviceAdapter: ServiceComponentAdapter? = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
+    val serviceAdapter = picoContainer.getServiceAdapter(key) as? ServiceComponentAdapter
     if (serviceAdapter != null) {
       val initializedInstance = serviceAdapter.getInitializedInstance()
       @Suppress("UNCHECKED_CAST")
-      if (initializedInstance != null) return initializedInstance as T?
+      if (initializedInstance != null) {
+        return initializedInstance as T?
+      }
     }
 
     if (lightServiceMap != null && isLightService(serviceClass)) {
@@ -541,14 +543,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
 
     val result = getComponent(serviceClass) ?: return null
-    val message = "$key requested as a service, but it is a component - convert it to a service or " +
-                  "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}"
-    if (SystemProperties.`is`("idea.test.getService.assert.as.warn")) {
-      LOG.warn(message)
-    }
-    else {
-      PluginException.logPluginError(LOG, message, null, serviceClass)
-    }
+    PluginException.logPluginError(LOG, "$key requested as a service, but it is a component - convert it to a service or " +
+                                        "change call to ${if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()"}",
+                                   null, serviceClass)
     return result
   }
 
