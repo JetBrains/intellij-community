@@ -1323,12 +1323,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
-    if (myInstanceAttributes != null) {
-      myInstanceAttributes = null;
-    }
-    if (myFallbackInstanceAttributes != null) {
-      myFallbackInstanceAttributes = null;
-    }
+    myInstanceAttributes = null;
+    myFallbackInstanceAttributes = null;
     myLocalPropertyCache = null;
   }
 
