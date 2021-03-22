@@ -32,7 +32,7 @@ internal class HLRedundantUnitReturnTypeInspection :
 
     override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.Type> { function ->
         when {
-            function.getFunctionSymbol().annotatedType.type.isUnit -> CallableReturnTypeUpdaterApplicator.Type.UNIT
+            function.getFunctionLikeSymbol().annotatedType.type.isUnit -> CallableReturnTypeUpdaterApplicator.Type.UNIT
             else -> null
         }
     }
