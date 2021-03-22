@@ -60,6 +60,7 @@ import java.util.*;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.util.registry.Registry.is;
 
 /**
  * @author Konstantin Bulenkov
@@ -153,7 +154,7 @@ public final class Switcher extends BaseSwitcherAction {
       pinned = !onKeyRelease.isEnabled();
       boolean onlyEdited = Boolean.TRUE.equals(onlyEditedFiles);
       myTitle = title;
-      mySpeedSearch = recent ? new SwitcherSpeedSearch(this) : null;
+      mySpeedSearch = recent && is("ide.recent.files.speed.search") ? new SwitcherSpeedSearch(this) : null;
       cbShowOnlyEditedFiles = !recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")
                                       ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 
@@ -172,7 +173,7 @@ public final class Switcher extends BaseSwitcherAction {
         registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
         registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
       }
-      if (!recent) {
+      if (mySpeedSearch == null) {
         windows.forEach(this::registerToolWindowAction);
       }
 
@@ -227,7 +228,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (pinned) {
         twModel.add(new SwitcherRecentLocations(this));
       }
-      if (recent) {
+      if (mySpeedSearch != null) {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
