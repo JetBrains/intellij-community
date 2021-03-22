@@ -249,7 +249,6 @@ public final class UIUtil {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
   }
 
-  @ApiStatus.Experimental
   public static class GrayFilter extends RGBImageFilter {
     private float brightness;
     private float contrast;
