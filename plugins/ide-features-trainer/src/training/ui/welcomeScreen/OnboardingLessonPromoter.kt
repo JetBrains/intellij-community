@@ -26,6 +26,8 @@ import javax.swing.*
 import javax.swing.border.MatteBorder
 
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+  open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
+
   override fun needToHideSingleProject(path: String): Boolean {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return false
     return LangManager.getInstance().getLearningProjectPath(langSupport) == path
@@ -71,7 +73,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     hPanel.add(vPanel)
     hPanel.add(Box.createHorizontalGlue())
     hPanel.add(rigid(54, 0))
-    val picture = JLabel(FeaturesTrainerIcons.Img.PluginIcon)
+    val picture = JLabel(promoImage())
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
 
