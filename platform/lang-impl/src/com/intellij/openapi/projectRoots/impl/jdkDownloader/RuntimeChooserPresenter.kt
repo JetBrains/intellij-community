@@ -63,7 +63,7 @@ class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
   companion object {
     fun SimpleColoredComponent.presetRuntime(value: RuntimeChooserItemWithFixedLocation) {
       value.version?.let {
-        append(it, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true)
+        append(it, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
         append(" ")
       }
 
@@ -89,7 +89,7 @@ class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
     fun SimpleColoredComponent.presentJbrItem(value: RuntimeChooserDownloadableItem) {
       val item = value.item
 
-      append(item.jdkVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true)
+      append(item.jdkVersion, SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
       append(" ")
 
       item.product.vendor.let {
