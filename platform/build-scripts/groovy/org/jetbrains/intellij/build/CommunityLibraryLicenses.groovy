@@ -471,7 +471,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "jsr305", libraryName: "jsr305", license: "BSD", url: "http://code.google.com/p/jsr-305/",
                        licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE"),
     new LibraryLicense(name: "JUnit", libraryName: "JUnit3", license: "CPL 1.0", url: "http://junit.org/"),
-    new LibraryLicense(name: "JUnit", libraryName: "JUnit4", license: "CPL 1.0", url: "http://junit.org/"),
+    new LibraryLicense(name: "JUnit", libraryName: "JUnit4", license: "Eclipse Public License v1.0", url: "http://junit.org/"),
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet",
                        url: "https://code.google.com/archive/p/juniversalchardet",
                        license: "MPL 1.1",  licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
