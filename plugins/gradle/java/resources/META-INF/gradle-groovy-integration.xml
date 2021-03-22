@@ -41,6 +41,12 @@
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="BintrayPublishingPlugin"
+                     bundle="messages.GradleInspectionBundle"
+                     key="bintray.publishing.plugin" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.BintrayPublishingPluginInspection"/>
+
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
