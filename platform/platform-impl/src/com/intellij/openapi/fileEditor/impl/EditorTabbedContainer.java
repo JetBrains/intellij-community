@@ -655,6 +655,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     @Override
+    protected boolean supportsTableLayoutAsSingleRow() {
+      return true;
+    }
+
+    @Override
     protected void paintChildren(Graphics g) {
       super.paintChildren(g);
       drawBorder(g);

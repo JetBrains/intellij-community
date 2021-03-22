@@ -78,8 +78,7 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
                 myMultipleRowsRadio = radioButton(showTabsInMultipleRows)
                   .enableIf(myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).component
                 checkBox(showPinnedTabsInASeparateRow).enableIf(
-                  myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)
-                    and myMultipleRowsRadio.selected).withLargeLeftGap().component
+                  myEditorTabPlacement.selectedValueIs(SwingConstants.TOP)).withLargeLeftGap().component
               })
             }
             val group = ButtonGroup()
