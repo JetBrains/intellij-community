@@ -293,6 +293,16 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  public void closeAllFiles() {
+    ArrayList<EditorWindow> windows = new ArrayList<>(myWindows);
+    clear();
+    for (EditorWindow window : windows) {
+      for (VirtualFile file : window.getFiles()) {
+        window.closeFile(file, false, false);
+      }
+    }
+  }
+
   public static void stopOpenFilesActivity(@NotNull Project project) {
     Activity activity = project.getUserData(OPEN_FILES_ACTIVITY);
     if (activity != null) {

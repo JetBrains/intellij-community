@@ -104,6 +104,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         }
       })
       .setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
+        if (myWindow.isDisposed()) return ActionCallback.DONE;
         ActionCallback result = new ActionCallback();
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
@@ -164,11 +165,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
     TabInfo info = myTabs.getTabAt(componentIndex);
     // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
-    if (info.isHidden() || !myProject.isOpen()) {
+    if (info.isHidden() || !myProject.isOpen() || myWindow.isDisposed()) {
       toSelect = null;
     }
     ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
-    return myProject.isOpen() ? callback : ActionCallback.DONE;
+    return myProject.isOpen() && !myWindow.isDisposed() ? callback : ActionCallback.DONE;
   }
 
   public ActionCallback removeTabAt(int componentIndex, int indexToSelect) {
@@ -725,6 +726,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     @Nullable
     @Override
     public TabInfo getToSelectOnRemoveOf(TabInfo info) {
+      if (myWindow.isDisposed()) return null;
       int index = getIndexOf(info);
       if (index != -1) {
         VirtualFile file = myWindow.getFileAt(index);

@@ -54,7 +54,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
@@ -189,7 +190,7 @@ public final class EditorWindow {
     FileEditorManagerImpl editorManager = getManager();
     FileEditorManagerImpl.runBulkTabChange(myOwner, splitters -> {
       List<EditorWithProviderComposite> editors = splitters.findEditorComposites(file);
-      if (editors.isEmpty()) return;
+      if (!isDisposed() && editors.isEmpty()) return;
       try {
         EditorWithProviderComposite editor = findFileComposite(file);
 
