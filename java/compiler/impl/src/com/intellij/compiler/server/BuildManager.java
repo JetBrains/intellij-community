@@ -121,6 +121,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.compiler.server.LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory;
+import static com.intellij.compiler.server.WslBuildCommandLineBuilder.getWslBuildSystemDirectory;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
@@ -1233,7 +1235,7 @@ public final class BuildManager implements Disposable {
       cmdLine = new WslBuildCommandLineBuilder(project, wslPath.getDistribution(), wslPath.getLinuxPath(), progressIndicator);
     }
     else {
-      cmdLine = new LocalBuildCommandLineBuilder(project, vmExecutablePath);
+      cmdLine = new LocalBuildCommandLineBuilder(vmExecutablePath);
     }
     int listenPort = ensureListening(cmdLine.getListenAddress());
 
@@ -1530,24 +1532,6 @@ public final class BuildManager implements Disposable {
     }
     return true;
   }
-
-  @NotNull
-  public static Path getLocalBuildSystemDirectory() {
-    return PathManagerEx.getAppSystemDir().resolve(SYSTEM_ROOT);
-  }
-
-  @Nullable
-  public static Path getWslBuildSystemDirectory(WSLDistribution distribution) {
-    String pathsSelector = PathManager.getPathsSelector();
-    String wslUserHome = distribution.getUserHome();
-    if (wslUserHome == null) return null;
-    String windowsUserHomePath = distribution.getWindowsPath(wslUserHome);
-    if (pathsSelector == null) pathsSelector = "." + ApplicationNamesInfo.getInstance().getScriptName();
-    if (windowsUserHomePath == null) return null;
-    String workingDirectory = PathManager.getDefaultUnixSystemPath(windowsUserHomePath, pathsSelector) + "/" + BuildManager.SYSTEM_ROOT;
-    return Paths.get(workingDirectory);
-  }
-
 
   /**
    * @deprecated use getBuildSystemDirectory(Project)
