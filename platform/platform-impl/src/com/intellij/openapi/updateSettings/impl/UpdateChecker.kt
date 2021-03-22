@@ -140,7 +140,7 @@ object UpdateChecker {
 
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     val (pluginUpdates, customRepoPlugins) = try {
-      doFindPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
+      checkForPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -208,15 +208,18 @@ object UpdateChecker {
     }
   }
 
+  @JvmStatic
+  fun findPluginUpdates(indicator: ProgressIndicator?): PluginUpdates = findPluginUpdates(null, indicator)
+
   /**
    * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
    * otherwise, returns versions compatible with the specified build.
    */
   @JvmStatic
   fun findPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginUpdates =
-    doFindPluginUpdates(buildNumber, indicator).first
+    checkForPluginUpdates(buildNumber, indicator).first
 
-  private fun doFindPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): Pair<PluginUpdates, Collection<IdeaPluginDescriptor>> {
+  private fun checkForPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): Pair<PluginUpdates, Collection<IdeaPluginDescriptor>> {
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
       val brokenPlugins = getBrokenPlugins()
       if (brokenPlugins.isNotEmpty()) {

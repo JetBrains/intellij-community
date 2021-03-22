@@ -204,7 +204,7 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      PluginUpdates updates = UpdateChecker.findPluginUpdates(null, null);
+      PluginUpdates updates = UpdateChecker.findPluginUpdates(null);
       List<IdeaPluginDescriptor> cache = new ArrayList<>();
       cache.addAll(ContainerUtil.map(updates.getEnabled(), PluginDownloader::getDescriptor));
       cache.addAll(ContainerUtil.map(updates.getDisabled(), PluginDownloader::getDescriptor));
