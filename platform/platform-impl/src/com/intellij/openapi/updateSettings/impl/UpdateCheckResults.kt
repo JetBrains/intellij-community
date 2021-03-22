@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.ide.externalComponents.ExternalComponentSource
+import com.intellij.ide.externalComponents.UpdatableExternalComponent
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.util.BuildNumber
 
@@ -41,4 +43,9 @@ data class PluginUpdates(
   val enabled: Collection<PluginDownloader>,
   val disabled: Collection<PluginDownloader>,
   val incompatible: Collection<IdeaPluginDescriptor>,
+)
+
+data class ExternalUpdate(
+  val source: ExternalComponentSource,
+  val components: Collection<UpdatableExternalComponent>
 )

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -148,8 +147,9 @@ object UpdateChecker {
       return
     }
 
+    indicator?.text = IdeBundle.message("updates.external.progress")
     val externalUpdates = try {
-      checkExternalUpdates(showDialog, updateSettings, indicator)
+      findExternalUpdates(showDialog, updateSettings, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -387,13 +387,10 @@ object UpdateChecker {
     return updateable
   }
 
-  @VisibleForTesting
-  fun checkExternalUpdates(manualCheck: Boolean,
-                           updateSettings: UpdateSettings,
-                           indicator: ProgressIndicator?): Collection<ExternalUpdate> {
+  @JvmStatic
+  fun findExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
-    indicator?.text = IdeBundle.message("updates.external.progress")
 
     for (source in ExternalComponentManager.getComponentSources()) {
       indicator?.checkCanceled()
@@ -401,7 +398,7 @@ object UpdateChecker {
         val siteResult = source.getAvailableVersions(indicator, updateSettings)
           .filter { it.isUpdateFor(manager.findExistingComponentMatching(it, source)) }
         if (siteResult.isNotEmpty()) {
-          result += ExternalUpdate(siteResult, source)
+          result += ExternalUpdate(source, siteResult)
         }
       }
       catch (e: Exception) {
@@ -491,7 +488,7 @@ object UpdateChecker {
                                checkForUpdateResult: CheckForUpdateResult,
                                pluginUpdates: PluginUpdates,
                                customRepoPlugins: Collection<IdeaPluginDescriptor>,
-                               externalUpdates: Collection<ExternalUpdate>?,
+                               externalUpdates: Collection<ExternalUpdate>,
                                showSettingsLink: Boolean,
                                showDialog: Boolean,
                                showNotification: Boolean) {
@@ -571,7 +568,7 @@ object UpdateChecker {
       }
     }
 
-    if (externalUpdates != null && !externalUpdates.isEmpty()) {
+    if (externalUpdates.isNotEmpty()) {
       updateFound = true
 
       ourShownNotifications.remove(NotificationUniqueType.EXTERNAL)?.forEach { it.expire() }
