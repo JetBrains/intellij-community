@@ -16,6 +16,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +33,14 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "flatMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
   private static final CallMatcher STREAM_FILTER =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "filter").parameterCount(1);
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "filter")
+      .parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE);
   private static final CallMatcher STREAM_PEEK =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "peek").parameterCount(1);
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "peek")
+      .parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_CONSUMER);
   private static final CallMatcher STREAM_LIMIT =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "limit").parameterCount(1);
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "limit")
+      .parameterTypes("long");
 
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
@@ -68,8 +72,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
           PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
           CountFix fix = FIX_MAPPER.mapFirst(qualifierCall);
           if (fix == null &&
-              !(STREAM_LIMIT.test(qualifierCall) && ExpressionUtils.isOne(qualifierCall.getArgumentList().getExpressions()[0])) &&
-              !hasPeekCallBefore(methodCall)) {
+              !(STREAM_LIMIT.test(qualifierCall) && ExpressionUtils.isOne(qualifierCall.getArgumentList().getExpressions()[0]))) {
             if (extractComparisonWithZero(methodCall) != null) {
               fix = new CountFix(SimplificationMode.IS_PRESENT);
             } else if (extractComparisonWithZeroEq(methodCall) != null) {
@@ -118,6 +121,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   @Nullable
   private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
+    if (hasPeekCallBefore(call)) return null;
     final PsiMethodCallExpression countCall;
     if (STREAM_FILTER.test(call)) {
       countCall = ExpressionUtils.getCallForQualifier(call);
@@ -170,10 +174,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   private static boolean hasPeekCallBefore(@NotNull PsiMethodCallExpression call) {
     PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
-    while (qualifierCall != null && !STREAM_PEEK.test(qualifierCall)) {
+    while (qualifierCall != null &&
+           TypeUtils.expressionHasTypeOrSubtype(qualifierCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM) &&
+           !STREAM_PEEK.test(qualifierCall)) {
       qualifierCall = getQualifierMethodCall(qualifierCall);
     }
-    return qualifierCall != null;
+    return STREAM_PEEK.test(qualifierCall);
   }
 
   private enum SimplificationMode {
