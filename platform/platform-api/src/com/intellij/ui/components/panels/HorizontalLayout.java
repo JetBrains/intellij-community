@@ -2,7 +2,8 @@
 package com.intellij.ui.components.panels;
 
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,6 +20,7 @@ import java.util.List;
  * @see VerticalLayout
  */
 public final class HorizontalLayout implements LayoutManager2 {
+  public static final int FILL = -1;
   public static final String LEFT = "LEFT";
   public static final String RIGHT = "RIGHT";
   public static final String CENTER = "CENTER";
@@ -27,7 +29,7 @@ public final class HorizontalLayout implements LayoutManager2 {
   private final ArrayList<Component> myRight = new ArrayList<>();
   private final ArrayList<Component> myCenter = new ArrayList<>();
   private final int myAlignment;
-  private final int myGap;
+  private final JBValue myGap;
 
   /**
    * Creates a layout with the specified gap.
@@ -35,11 +37,10 @@ public final class HorizontalLayout implements LayoutManager2 {
    * but their heights will be set according to the container.
    * The gap will be scaled automatically.
    *
-   * @param gap horizontal gap between components
+   * @param gap horizontal gap between components, without DPI scaling
    */
   public HorizontalLayout(int gap) {
-    myGap = gap;
-    myAlignment = -1;
+    this(gap, FILL);
   }
 
   /**
@@ -47,16 +48,20 @@ public final class HorizontalLayout implements LayoutManager2 {
    * All components will have preferred sizes.
    * The gap will be scaled automatically.
    *
-   * @param gap       horizontal gap between components
+   * @param gap       horizontal gap between components, without DPI scaling
    * @param alignment vertical alignment for components
-   *
    * @see SwingConstants#TOP
    * @see SwingConstants#BOTTOM
    * @see SwingConstants#CENTER
    */
   public HorizontalLayout(int gap, int alignment) {
+    this(new JBValue.Float(Math.max(0, gap)), alignment);
+  }
+
+  public HorizontalLayout(@NotNull JBValue gap, int alignment) {
     myGap = gap;
     switch (alignment) {
+      case FILL:
       case SwingConstants.TOP:
       case SwingConstants.BOTTOM:
       case SwingConstants.CENTER:
@@ -133,7 +138,7 @@ public final class HorizontalLayout implements LayoutManager2 {
 
   @Override
   public void layoutContainer(Container container) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     synchronized (container.getTreeLock()) {
       Dimension left = getPreferredSize(myLeft);
       Dimension right = getPreferredSize(myRight);
@@ -177,12 +182,12 @@ public final class HorizontalLayout implements LayoutManager2 {
   }
 
   private int layout(List<? extends Component> list, int x, int height, Insets insets) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     for (Component component : list) {
       if (component.isVisible()) {
         Dimension size = component.getPreferredSize();
         int y = 0;
-        if (myAlignment == -1) {
+        if (myAlignment == FILL) {
           size.height = height;
         }
         else if (myAlignment != SwingConstants.TOP) {
@@ -213,7 +218,7 @@ public final class HorizontalLayout implements LayoutManager2 {
   }
 
   private Dimension getPreferredSize(List<? extends Component> list) {
-    int gap = myGap <= 0 ? 0 : JBUI.scale(myGap);
+    int gap = myGap.get();
     Dimension result = null;
     for (Component component : list) {
       if (component.isVisible()) {
@@ -224,7 +229,7 @@ public final class HorizontalLayout implements LayoutManager2 {
   }
 
   private Dimension getPreferredSize(Container container, boolean aligned) {
-    int gap2 = myGap <= 0 ? 0 : 2 * JBUI.scale(myGap);
+    int gap2 = 2 * myGap.get();
     synchronized (container.getTreeLock()) {
       Dimension left = getPreferredSize(myLeft);
       Dimension right = getPreferredSize(myRight);

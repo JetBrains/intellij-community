@@ -87,12 +87,13 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -118,7 +119,7 @@ public final class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
-  public static final int TITLE_GAP = JBUIScale.scale(2);
+  public static final JBValue TITLE_GAP = new JBValue.Float(2);
 
   public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
     return Arrays.asList(
@@ -695,8 +696,8 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, int vGap) {
-    JPanel panel = new JPanel(new VerticalStackLayout(vGap));
+  public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
+    JPanel panel = new JPanel(new VerticalLayout(vGap, VerticalLayout.FILL));
     for (JComponent component : components) {
       panel.add(component);
     }
