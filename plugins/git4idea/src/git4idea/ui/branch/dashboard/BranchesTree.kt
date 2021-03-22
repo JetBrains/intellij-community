@@ -139,16 +139,17 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       .mapNotNull { it as? BranchTreeNode }
   }
 
-  fun getSelectedRemotes(): Set<String> {
+  fun getSelectedRemotes(): Set<RemoteInfo> {
     val paths = selectionPaths ?: return emptySet()
     return paths.asSequence()
       .map(TreePath::getLastPathComponent)
       .mapNotNull { it as? BranchTreeNode }
       .filter {
+        it.getNodeDescriptor().displayName != null &&
         it.getNodeDescriptor().type == NodeType.GROUP_NODE &&
         (it.getNodeDescriptor().parent?.type == NodeType.REMOTE_ROOT || it.getNodeDescriptor().parent?.repository != null)
       }
-      .mapNotNull { it.getNodeDescriptor().displayName }
+      .mapNotNull { with(it.getNodeDescriptor()) { RemoteInfo(displayName!!, parent?.repository) } }
       .toSet()
   }
 

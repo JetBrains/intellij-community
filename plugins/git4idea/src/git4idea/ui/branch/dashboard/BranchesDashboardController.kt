@@ -19,6 +19,9 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitRemote
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import kotlin.properties.Delegates
 
@@ -62,6 +65,31 @@ internal class BranchesDashboardController(private val project: Project,
 
   fun toggleGrouping(key: GroupingKey, state: Boolean) {
     ui.toggleGrouping(key, state)
+  }
+
+  fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
+    val selectedRemotes = ui.getSelectedRemotes()
+    if (selectedRemotes.isEmpty()) return emptyMap()
+
+    val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
+    if (ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)) {
+      for (selectedRemote in selectedRemotes) {
+        val repository = selectedRemote.repository ?: continue
+        val remote = repository.remotes.find { it.name == selectedRemote.remoteName } ?: continue
+        result.getOrPut(repository) { hashSetOf() }.add(remote)
+      }
+    }
+    else {
+      val remoteNames = selectedRemotes.mapTo(hashSetOf()) { it.remoteName }
+      for (repository in GitRepositoryManager.getInstance(project).repositories) {
+        val remotes = repository.remotes.filter { remote -> remoteNames.contains(remote.name) }
+        if (remotes.isNotEmpty()) {
+          result.getOrPut(repository) { hashSetOf() }.addAll(remotes)
+        }
+      }
+    }
+
+    return result
   }
 
   fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)

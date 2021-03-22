@@ -95,16 +95,16 @@ internal object BranchesDashboardActions {
       arrayListOf<AnAction>(*super.getChildren(e)).toTypedArray()
   }
 
-  class GroupActions(private val currentRepository: GitRepository) : ActionGroup(), DumbAware {
+  class GroupActions : ActionGroup(), DumbAware {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(EditRemoteAction(currentRepository), RemoveRemoteAction(currentRepository)).toTypedArray()
+      arrayListOf<AnAction>(EditRemoteAction(), RemoveRemoteAction()).toTypedArray()
   }
 
-  class MultipleGroupActions(private val currentRepository: GitRepository) : ActionGroup(), DumbAware {
+  class MultipleGroupActions : ActionGroup(), DumbAware {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-      arrayListOf<AnAction>(RemoveRemoteAction(currentRepository)).toTypedArray()
+      arrayListOf<AnAction>(RemoveRemoteAction()).toTypedArray()
   }
 
   class RemoteGlobalActions : ActionGroup(), DumbAware {
@@ -138,10 +138,10 @@ internal object BranchesDashboardActions {
 
       val selectedRemotes = tree.getSelectedRemotes()
       if (selectedRemotes.size == 1) {
-        return GroupActions(guessRepo)
+        return GroupActions()
       }
       else if (selectedRemotes.isNotEmpty()) {
-        return MultipleGroupActions(guessRepo)
+        return MultipleGroupActions()
       }
 
       val selectedBranchNodes = tree.getSelectedBranchNodes()
@@ -503,58 +503,59 @@ internal object BranchesDashboardActions {
     }
   }
 
-  class RemoveRemoteAction(private val repository: GitRepository) : RemoteActionBase(repository) {
+  class RemoveRemoteAction : RemoteActionBase() {
 
-    override fun update(e: AnActionEvent, project: Project, remoteNames: Set<String>) {
-      e.presentation.text = message("action.Git.Log.Remove.Remote.text", remoteNames.size)
+    override fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
+      e.presentation.text = message("action.Git.Log.Remove.Remote.text", selectedRemotes.size)
     }
 
-    override fun doAction(e: AnActionEvent, project: Project, remotes: Set<GitRemote>) {
-      removeRemotes(service(), repository, remotes)
+    override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
+      for ((repository, remotes) in selectedRemotes) {
+        removeRemotes(service(), repository, remotes)
+      }
     }
   }
 
-  class EditRemoteAction(private val repository: GitRepository) :
-    RemoteActionBase(repository, messagePointer("action.Git.Log.Edit.Remote.text")) {
+  class EditRemoteAction : RemoteActionBase(messagePointer("action.Git.Log.Edit.Remote.text")) {
 
-    override fun update(e: AnActionEvent, project: Project, remoteNames: Set<String>) {
-      if (remoteNames.size != 1) {
+    override fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
+      if (selectedRemotes.size != 1) {
         e.presentation.isEnabledAndVisible = false
       }
     }
 
-    override fun doAction(e: AnActionEvent, project: Project, remotes: Set<GitRemote>) {
+    override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
+      val (repository, remotes) = selectedRemotes.entries.first()
       editRemote(service(), repository, remotes.first())
     }
   }
 
-  abstract class RemoteActionBase(private val repository: GitRepository,
-                                  @Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
+  abstract class RemoteActionBase(@Nls(capitalization = Nls.Capitalization.Title) text: () -> String = { "" },
                                   @Nls(capitalization = Nls.Capitalization.Sentence) private val description: () -> String = { "" },
                                   icon: Icon? = null) :
     DumbAwareAction(text, description, icon) {
 
-    open fun update(e: AnActionEvent, project: Project, remoteNames: Set<String>) {}
-    abstract fun doAction(e: AnActionEvent, project: Project, remotes: Set<GitRemote>)
+    open fun update(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {}
+    abstract fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>)
 
     override fun update(e: AnActionEvent) {
       val project = e.project
-      val remoteNames = e.getData(GIT_REMOTES)
-      val enabled =
-        project != null && remoteNames != null && remoteNames.isNotEmpty() && repository.remotes.any { remoteNames.contains(it.name) }
+      val controller = e.getData(BRANCHES_UI_CONTROLLER)
+      val selectedRemotes = controller?.getSelectedRemotes() ?: emptyMap()
+      val enabled = project != null && selectedRemotes.isNotEmpty()
       e.presentation.isEnabled = enabled
       e.presentation.description = description()
       if (enabled) {
-        update(e, project!!, remoteNames!!)
+        update(e, project!!, selectedRemotes)
       }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
-      val remoteNames = e.getData(GIT_REMOTES)!!
-      val remotes = repository.remotes.filterTo(hashSetOf()) { remoteNames.contains(it.name) }
+      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
+      val selectedRemotes = controller.getSelectedRemotes()
 
-      doAction(e, project, remotes)
+      doAction(e, project, selectedRemotes)
     }
   }
 

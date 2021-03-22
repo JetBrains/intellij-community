@@ -126,6 +126,10 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     return tree.getSelectedRepositories(branchInfo)
   }
 
+  internal fun getSelectedRemotes(): Set<RemoteInfo> {
+    return tree.getSelectedRemotes()
+  }
+
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
                                                                   logUi.changesBrowser.preferredFocusedComponent,
@@ -265,7 +269,6 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
       return when {
         GIT_BRANCHES.`is`(dataId) -> tree.getSelectedBranches()
         GIT_BRANCH_FILTERS.`is`(dataId) -> tree.getSelectedBranchFilters()
-        GIT_REMOTES.`is`(dataId) -> tree.getSelectedRemotes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null
