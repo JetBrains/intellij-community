@@ -168,7 +168,7 @@ public final class SocketLock {
 
       String token = UUID.randomUUID().toString();
       Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.start(6942, 50, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
+      BuiltInServer server = BuiltInServer.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
       try {
         byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
         Files.write(myConfigPath.resolve(PORT_FILE), portBytes);

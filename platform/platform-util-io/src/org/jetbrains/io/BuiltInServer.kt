@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -50,9 +50,9 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
     }
 
     @JvmStatic
-    fun start(firstPort: Int, portsCount: Int, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
+    fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
       val eventLoopGroup = multiThreadEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, BuiltInServerThreadFactory())
-      return start(eventLoopGroup, true, firstPort, portsCount, tryAnyPort = false, handler = handler)
+      return start(eventLoopGroup, true, firstPort, portsCount, tryAnyPort = tryAnyPort, handler = handler)
     }
 
     fun start(eventLoopGroup: EventLoopGroup,
