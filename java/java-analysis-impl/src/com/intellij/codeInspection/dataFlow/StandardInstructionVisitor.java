@@ -685,10 +685,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     PsiType type = instruction.getResultType();
 
+    SpecialField field = SpecialField.findSpecialField(instruction.getTargetMethod());
+    if (qualifierValue instanceof DfaWrappedValue && ((DfaWrappedValue)qualifierValue).getSpecialField() == field) {
+      return ((DfaWrappedValue)qualifierValue).getWrappedValue();
+    }
     if (precalculated != null) {
       return DfaUtil.boxUnbox(getPrecalculatedResult(qualifierValue, state, factory, precalculated), type);
     }
-    SpecialField field = SpecialField.findSpecialField(instruction.getTargetMethod());
     if (field != null) {
       return DfaUtil.boxUnbox(factory.fromDfType(field.getFromQualifier(state.getDfType(qualifierValue))), type);
     }
