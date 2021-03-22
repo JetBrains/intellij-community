@@ -22,6 +22,7 @@ public class JBCefJSQueryPoolSizeKeyTest {
 
   @Before
   public void before() {
+    TestScaleHelper.assumeStandalone();
     TestScaleHelper.setSystemProperty("ide.browser.jcef.jsQueryPoolSize", "1");
   }
 
@@ -32,8 +33,6 @@ public class JBCefJSQueryPoolSizeKeyTest {
 
   @Test
   public void test1() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefJSQueryPoolSizePropTest.test(b -> null);
   }
 }

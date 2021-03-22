@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -22,6 +23,11 @@ public class JBCefTestModeTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    assumeStandalone();
+  }
+
   @After
   public void after() {
     restoreProperties();
@@ -29,8 +35,6 @@ public class JBCefTestModeTest {
 
   @Test
   public void test() {
-    assumeStandalone();
-
     setRegistryProperty("ide.browser.jcef.headless.enabled", "false");
     setRegistryProperty("ide.browser.jcef.testMode.enabled", "false");
 
