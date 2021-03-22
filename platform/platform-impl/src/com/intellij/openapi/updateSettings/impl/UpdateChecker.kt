@@ -131,7 +131,7 @@ object UpdateChecker {
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
     indicator?.text = IdeBundle.message("updates.checking.platform")
-    val platformUpdates = checkForPlatformUpdates(updateSettings)
+    val platformUpdates = checkForPlatformUpdates(updateSettings, indicator)
     if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR) {
       showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message ?: "internal error"))
       callback?.setRejected()
@@ -164,9 +164,9 @@ object UpdateChecker {
     }
   }
 
-  private fun checkForPlatformUpdates(settings: UpdateSettings): CheckForUpdateResult =
+  private fun checkForPlatformUpdates(settings: UpdateSettings, indicator: ProgressIndicator?): CheckForUpdateResult =
     try {
-      val product = loadProductData()
+      val product = loadProductData(indicator)
       if (product != null) UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
       else CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
     }
@@ -181,7 +181,7 @@ object UpdateChecker {
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  fun loadProductData(): Product? =
+  fun loadProductData(indicator: ProgressIndicator?): Product? =
     productDataLock.withLock {
       val cached = SoftReference.dereference(productDataCache)
       if (cached != null) return@withLock cached.getOrThrow()
@@ -192,7 +192,7 @@ object UpdateChecker {
           url = UpdateRequestParameters.amendUpdateRequest(url)
         }
         if (LOG.isDebugEnabled) LOG.debug("loading ${url}")
-        val updates = HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
+        val updates = HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.getReader(indicator))) }
         updates[ApplicationInfo.getInstance().build.productCode]
       }
 

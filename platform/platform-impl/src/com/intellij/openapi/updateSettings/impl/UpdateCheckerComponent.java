@@ -227,7 +227,7 @@ final class UpdateCheckerComponent {
 
   private static @Nullable Product loadProductData() {
     try {
-      return UpdateChecker.loadProductData();
+      return UpdateChecker.loadProductData(null);
     }
     catch (Exception ignored) {
       return null;
