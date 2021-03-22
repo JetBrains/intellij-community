@@ -87,11 +87,9 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       ideProject = getIdeProject();
 
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
-      boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(getExternalSystemId())) {
         executionAware.prepareExecution(this, myProjectPath, myIsPreviewMode, progressNotificationListener, ideProject);
-
-        if (!isRunOnTargetsEnabled || environmentConfigurationProvider != null) continue;
+        if (environmentConfigurationProvider != null) continue;
         environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myProjectPath, myIsPreviewMode, ideProject);
       }
 

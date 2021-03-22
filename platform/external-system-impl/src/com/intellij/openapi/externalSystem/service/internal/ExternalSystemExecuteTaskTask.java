@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -97,11 +96,9 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       Project project = getIdeProject();
       ProjectSystemId projectSystemId = getExternalSystemId();
       ExternalSystemTaskNotificationListener progressNotificationListener = wrapWithListener(progressNotificationManager);
-      boolean isRunOnTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets");
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(projectSystemId)) {
         executionAware.prepareExecution(this, projectPath, false, progressNotificationListener, project);
-
-        if (!isRunOnTargetsEnabled || environmentConfigurationProvider != null) continue;
+        if (environmentConfigurationProvider != null) continue;
         environmentConfigurationProvider = executionAware.getEnvironmentConfigurationProvider(myConfiguration, project);
       }
 
