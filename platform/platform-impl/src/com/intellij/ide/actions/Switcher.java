@@ -334,17 +334,13 @@ public final class Switcher extends BaseSwitcherAction {
       new SwitcherListFocusAction(files, toolWindows, ListActions.Left.ID);
       new SwitcherListFocusAction(toolWindows, files, ListActions.Right.ID);
 
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window == null) {
-        window = WindowManager.getInstance().getFrame(project);
-      }
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
       SwitcherPanel old = project.getUserData(SWITCHER_KEY);
       if (old != null) old.cancel();
       project.putUserData(SWITCHER_KEY, this);
 
-      myPopup.showInCenterOf(window);
+      myPopup.showCenteredInCurrentWindow(project);
     }
 
     @Override
