@@ -61,7 +61,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
   @Override
   public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
-    if (myTargetDependentParameters.getTargetEnvironment() == null) {
+    if (myTargetDependentParameters.getTargetEnvironment() == null || !(configuration instanceof TargetEnvironmentAwareRunProfile)) {
       CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
       return;
     }
