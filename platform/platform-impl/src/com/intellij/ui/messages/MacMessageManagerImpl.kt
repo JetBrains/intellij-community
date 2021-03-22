@@ -413,6 +413,10 @@ private class NativeMacMessageManager : MacMessages() {
                                                           Foundation.createSelector("deliverJavaMouseEvent:"), ALERT_DEFAULT_CALLBACK, "v*")) {
       throw RuntimeException("Unable to add `deliverJavaMouseEvent:` method to Objective-C _NSAlertContentView class")
     }
+    if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("NSAlert"),
+                                                          Foundation.createSelector("setEnabled:"), ALERT_DEFAULT_CALLBACK, "v*")) {
+      throw RuntimeException("Unable to add `setEnabled:` method to Objective-C NSAlert class")
+    }
   }
 }
 
