@@ -134,6 +134,9 @@ public class FragmentHintManager {
         if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
           JComponent hintComponent = createHintComponent(fragment);
           Rectangle rect = component.getVisibleRect();
+          if (rect.height < component.getHeight()) {
+            continue; // scrolled out
+          }
           RelativePoint point = new RelativePoint(component, new Point(rect.x + rect.width - hintComponent.getPreferredSize().width,
                                                                        rect.y - hintComponent.getPreferredSize().height + 5));
           HintManager.getInstance().showHint(hintComponent, point, HintManager.HIDE_BY_ANY_KEY, -1);
