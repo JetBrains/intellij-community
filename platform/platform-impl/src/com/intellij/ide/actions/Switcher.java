@@ -173,7 +173,7 @@ public final class Switcher extends BaseSwitcherAction {
         registerSwingAction(ListActions.PageUp.ID, "PAGE_UP");
         registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN");
       }
-      if (mySpeedSearch == null) {
+      if (mySpeedSearch == null || is("ide.recent.files.tool.window.mnemonics")) {
         windows.forEach(this::registerToolWindowAction);
       }
 
@@ -228,7 +228,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (pinned) {
         twModel.add(new SwitcherRecentLocations(this));
       }
-      if (mySpeedSearch != null) {
+      if (mySpeedSearch != null && !is("ide.recent.files.tool.window.mnemonics")) {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
@@ -792,12 +792,16 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void registerAction(@NotNull Consumer<InputEvent> action, @NonNls String @NotNull ... keys) {
+      registerAction(action, onKeyRelease.getShortcuts(keys));
+    }
+
+    private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {
           if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
         }
-      }.registerCustomShortcutSet(onKeyRelease.getShortcuts(keys), this, this);
+      }.registerCustomShortcutSet(shortcuts, this, this);
     }
 
     private void registerSwingAction(@NonNls @NotNull String id, @NonNls String @NotNull ... keys) {
@@ -810,7 +814,11 @@ public final class Switcher extends BaseSwitcherAction {
         registerAction(event -> {
           cancel();
           window.getWindow().activate(null, true, true);
-        }, mnemonic);
+        }, mySpeedSearch == null
+           ? onKeyRelease.getShortcuts(mnemonic)
+           : SystemInfo.isMac
+             ? CustomShortcutSet.fromString("alt " + mnemonic, "alt control " + mnemonic)
+             : CustomShortcutSet.fromString("alt " + mnemonic));
       }
     }
 
