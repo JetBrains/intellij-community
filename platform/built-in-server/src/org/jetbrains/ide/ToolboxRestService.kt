@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.Disposable
@@ -18,9 +19,21 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
+val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
-interface ToolboxServiceHandler {
+interface ToolboxServiceHandler<T> {
+  /**
+   * Specifies a request, it is actually the last part of the path,
+   * e.g. `http://localhost:port/api/toolbox/update-notification
+   */
+  val requestName : String
+
+  /**
+   * This method is executed synchronously for the handler to parser
+   * request parameters, it may throw an exception on malformed inputs,
+   */
+  fun parseRequest(request: JsonElement) : T
+
   /**
    * This function is executes on a background thread to handle a Toolbox
    * request. The implementation allows to send a response after a long
@@ -36,26 +49,36 @@ interface ToolboxServiceHandler {
    */
   fun handleToolboxRequest(
     lifetime: Disposable,
-    request: ToolboxActionRequest,
-    onResult: (ToolboxActionResult) -> Unit,
+    request: T,
+    onResult: (JsonElement) -> Unit,
   )
 }
 
-sealed class ToolboxActionRequest {
-  data class UpdateNotification(val version: String, val build: String) : ToolboxActionRequest()
+private fun findToolboxHandlerByUri(requestUri: String): ToolboxServiceHandler<*>? = toolboxHandlerEP.findFirstSafe {
+  requestUri.endsWith("/" + it.requestName.trim('/'))
 }
 
-sealed class ToolboxActionResult {
-  data class SimpleResult(val status: String) : ToolboxActionResult()
+private fun interface ToolboxInnerHandler {
+  fun handleToolboxRequest(
+    lifetime: Disposable, onResult: (JsonElement) -> Unit,
+  )
 }
 
-internal val ErrorResult = ToolboxActionResult.SimpleResult("error")
+private fun <T> wrapHandler(handler: ToolboxServiceHandler<T>, request: JsonElement): ToolboxInnerHandler {
+  val param = handler.parseRequest(request)
+  return object : ToolboxInnerHandler {
+    override fun handleToolboxRequest(lifetime: Disposable, onResult: (JsonElement) -> Unit) {
+      handler.handleToolboxRequest(lifetime, param, onResult)
+    }
 
-internal class ToolboxUpdatesService : RestService() {
+    override fun toString(): String = "ToolboxInnerHandler{$handler, $param}"
+  }
+}
+
+internal class ToolboxRestService : RestService() {
   internal companion object {
-
     @Suppress("SSBasedInspection")
-    private val LOG = logger<ToolboxUpdatesService>()
+    private val LOG = logger<ToolboxRestService>()
   }
 
   override fun getServiceName() = "toolbox"
@@ -63,7 +86,8 @@ internal class ToolboxUpdatesService : RestService() {
   override fun isSupported(request: FullHttpRequest): Boolean {
     val token = System.getProperty("toolbox.notification.token") ?: return false
     if (request.headers()["Authorization"] != "toolbox $token") return false
-    if (!request.uri().substringBefore('?').endsWith("/update-notification")) return false
+    val requestUri = request.uri().substringBefore('?')
+    if (findToolboxHandlerByUri(requestUri) == null) return false
     return super.isSupported(request)
   }
 
@@ -73,22 +97,14 @@ internal class ToolboxUpdatesService : RestService() {
     val requestJson = createJsonReader(request).use { JsonParser.parseReader(it) }
     val channel = context.channel()
 
-    val toolboxRequest = try {
-      if (urlDecoder.path().endsWith("/update-notification")) {
-        require(requestJson.isJsonObject) { "JSON Object was expected" }
-        val obj = requestJson.asJsonObject
-
-        val build = obj["build"]?.asString
-        val version = obj["version"]?.asString
-
-        require(!build.isNullOrBlank()) { "the `build` attribute must not be blank" }
-        require(!version.isNullOrBlank()) { "the `version` attribute must not be blank" }
-
-        ToolboxActionRequest.UpdateNotification(version = version, build = build)
-      } else {
+    val toolboxRequest : ToolboxInnerHandler = try {
+      val handler = findToolboxHandlerByUri(urlDecoder.path())
+      if (handler == null) {
         sendStatus(HttpResponseStatus.NOT_FOUND, false, channel)
         return null
       }
+
+      wrapHandler(handler, requestJson)
     }
     catch (t: Throwable) {
       LOG.warn("Failed to process parameters of $request. ${t.message}", t)
@@ -96,14 +112,7 @@ internal class ToolboxUpdatesService : RestService() {
       return null
     }
 
-    val callback = CompletableFuture<ToolboxActionResult?>()
-    val lifetime = Disposer.newDisposable("toolbox-update")
-    AppExecutorUtil.getAppExecutorService().submit {
-      toolboxHandlerEP.forEachExtensionSafe {
-        it.handleToolboxRequest(lifetime, toolboxRequest) { r -> callback.complete(r) }
-      }
-    }
-
+    val lifetime = Disposer.newDisposable("toolbox-service-request")
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8")
     response.addCommonHeaders()
@@ -139,24 +148,21 @@ internal class ToolboxUpdatesService : RestService() {
 
     Disposer.register(lifetime) { heartbeat.cancel(false) }
 
+    val callback = CompletableFuture<JsonElement?>()
+    AppExecutorUtil.getAppExecutorService().submit {
+      toolboxRequest.handleToolboxRequest(lifetime) { r -> callback.complete(r) }
+    }
+
     callback
       .exceptionally { e ->
         LOG.warn("The future completed with exception. ${e.message}", e)
-        ErrorResult
+        JsonObject().apply { addProperty("status", "error") }
       }
       .thenAcceptAsync(
-        { result ->
+        { json ->
           try {
             heartbeat.cancel(false)
             heartbeat.await()
-
-            val json = JsonObject().apply {
-              when (result) {
-                is ToolboxActionResult.SimpleResult -> addProperty("status", result.status)
-                null -> addProperty("status", "null")
-              }.toString()
-            }
-
             channel.write(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8))
           }
           finally {

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
@@ -18,6 +20,11 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+
+private abstract class ToolboxServiceHandlerX : ToolboxServiceHandler<JsonElement> {
+  override val requestName: String = "update-notification"
+  override fun parseRequest(request: JsonElement): JsonElement = request
+}
 
 internal class ToolboxUpdateServiceTest : BuiltInServerTestCase() {
   private val notifyUpdatePayload = "{'build': '123', 'version': '2021.1 RC'}"
@@ -42,12 +49,12 @@ internal class ToolboxUpdateServiceTest : BuiltInServerTestCase() {
   fun testShouldCheckToken_withToken_beat_and_response() {
     val condition = CountDownLatch(10)
 
-    val ext = object : ToolboxServiceHandler {
-      override fun handleToolboxRequest(lifetime: Disposable, request: ToolboxActionRequest, onResult: (ToolboxActionResult) -> Unit) {
+    val ext = object : ToolboxServiceHandlerX() {
+      override fun handleToolboxRequest(lifetime: Disposable, request: JsonElement, onResult: (JsonElement) -> Unit) {
         try {
           condition.await()
         } finally {
-          onResult(ToolboxActionResult.SimpleResult("abc"))
+          onResult(JsonObject().apply { addProperty("status", "abc")})
         }
       }
     }
@@ -78,8 +85,8 @@ internal class ToolboxUpdateServiceTest : BuiltInServerTestCase() {
   @Test
   fun testShouldCheckToken_withToken_beat_client_close() {
     val condition = CountDownLatch(1)
-    val ext = object : ToolboxServiceHandler {
-      override fun handleToolboxRequest(lifetime: Disposable, request: ToolboxActionRequest, onResult: (ToolboxActionResult) -> Unit) {
+    val ext = object : ToolboxServiceHandlerX() {
+      override fun handleToolboxRequest(lifetime: Disposable, request: JsonElement, onResult: (JsonElement) -> Unit) {
         Disposer.register(lifetime) { condition.countDown() }
       }
     }
@@ -103,7 +110,7 @@ internal class ToolboxUpdateServiceTest : BuiltInServerTestCase() {
     condition.await()
   }
 
-  private fun withExtension(handler: ToolboxServiceHandler, action: () -> Unit) {
+  private fun withExtension(handler: ToolboxServiceHandler<*>, action: () -> Unit) {
     val d = Disposer.newDisposable()
     try {
       ExtensionTestUtil.maskExtensions(toolboxHandlerEP, listOf(handler), d)
