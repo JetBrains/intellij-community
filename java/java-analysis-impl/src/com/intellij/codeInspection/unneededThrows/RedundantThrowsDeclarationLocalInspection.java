@@ -12,6 +12,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,14 +34,13 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // delegates
 public final class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Logger LOGGER = Logger.getLogger(RedundantThrowsDeclarationLocalInspection.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(RedundantThrowsDeclarationLocalInspection.class.getName());
 
   @NotNull private final RedundantThrowsDeclarationInspection myGlobalTool;
 
@@ -99,8 +100,10 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
     final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
 
     if (referenceElements.length != referencedTypes.length) {
-      LOGGER.warning("Stub-PSI inconsistency detected. The number of elements in the throws list doesn't match the number of types in the throws list:");
-      LOGGER.warning(method.getText());
+      LOGGER.error("Stub-PSI inconsistency detected. " +
+                   "The number of elements in the throws list doesn't match the number of types in the throws list. " +
+                   "The method's class is " + method.getClass().getSimpleName(),
+                   new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
     }
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
@@ -247,15 +250,19 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
        * @return the set of throws declarations as strings from the throws list excluding the currently eliminated throws declaration
        */
       private static List<PsiClassType> getThrowsListWithoutCurrent(@NotNull final PsiReferenceList throwsList,
-                                                                   @NotNull final PsiJavaCodeReferenceElement currentRef) {
-
+                                                                    @NotNull final PsiJavaCodeReferenceElement currentRef) {
         final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
 
         final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
 
         if (referenceElements.length != referencedTypes.length) {
-          LOGGER.warning("Stub-PSI inconsistency detected. The number of elements in the throws list doesn't match the number of types in the throws list:");
-          LOGGER.warning(String.valueOf(PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class)));
+          final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
+          final String methodClass = method != null ? method.getClass().getSimpleName() : "null";
+
+          LOGGER.error("Stub-PSI inconsistency detected. " +
+                       "The number of elements in the throws list doesn't match the number of types in the throws list. " +
+                       "The method's class is " + methodClass,
+                       new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
         }
 
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(throwsList.getProject());
