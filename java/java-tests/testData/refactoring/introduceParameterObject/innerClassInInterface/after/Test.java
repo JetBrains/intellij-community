@@ -1,16 +1,7 @@
 public interface Test {
   void foo(Param param);
 
-    private static class Param {
-        private final String s;
-
-        private Param(String s) {
-            this.s = s;
-        }
-
-        public String getS() {
-            return s;
-        }
+    private static record Param(String s) {
     }
 }
 
