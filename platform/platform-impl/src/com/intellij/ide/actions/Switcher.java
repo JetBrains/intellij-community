@@ -235,6 +235,7 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.setVisibleRowCount(toolWindows.getModel().getSize());
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+      toolWindows.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.tool.window.list"));
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
@@ -284,6 +285,7 @@ public final class Switcher extends BaseSwitcherAction {
         .createListWithOpenInRightSplitter(createModel(filesModel, SwitcherListItem::getMainText, mySpeedSearch), null, true);
       files.setVisibleRowCount(toolWindows.getModel().getSize());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+      files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
 
       toolWindows.getSelectionModel().addListSelectionListener(filesSelectionListener);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
