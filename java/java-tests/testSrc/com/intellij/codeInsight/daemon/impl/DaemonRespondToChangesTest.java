@@ -2685,5 +2685,33 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     doHighlighting();
     assertTrue(reported.get());
   }
+  
+  public void testUncommittedByAccidentNonPhysicalDocumentMustNotHangDaemon() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    assertEmpty(highlightErrors());
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
+
+    PsiFile original = getPsiManager().findFile(getTempDir().createVirtualFile("X.txt", ""));
+    assertNotNull(original);
+    assertTrue(original.getViewProvider().isEventSystemEnabled());
+
+    PsiFile copy = (PsiFile)original.copy();
+    assertFalse(copy.getViewProvider().isEventSystemEnabled());
+
+    Document document = copy.getViewProvider().getDocument();
+    assertNotNull(document);
+    String text = "class A{}";
+    document.setText(text);
+    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+    assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
+
+    type("String i=0;");
+    waitForDaemon();
+    assertNotEmpty(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject()));
+    assertEquals(text, document.getText());  // retain non-phys document until after highlighting
+    assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
+    assertTrue(PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
+  }
 }
 
