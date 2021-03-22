@@ -29,8 +29,8 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.Action
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -50,7 +50,7 @@ class RuntimeChooserDialog(
 
   init {
     title = LangBundle.message("dialog.title.choose.ide.runtime")
-    setResizable(false)
+    isResizable = false
     init()
     initClipboardListener()
   }
@@ -88,10 +88,16 @@ class RuntimeChooserDialog(
     return RuntimeChooserCustom.jdkDownloaderExtensionProvider.getData(dataId)
   }
 
-  override fun createActions(): Array<Action> {
-    return super.createActions() + DialogWrapperExitAction(
-      LangBundle.message("dialog.button.choose.ide.runtime.useDefault"),
-      USE_DEFAULT_RUNTIME_CODE)
+  override fun createSouthAdditionalPanel(): JPanel {
+    return BorderLayoutPanel().apply {
+      addToCenter(
+        createJButtonForAction(
+          DialogWrapperExitAction(
+            LangBundle.message("dialog.button.choose.ide.runtime.useDefault"),
+            USE_DEFAULT_RUNTIME_CODE)
+        )
+      )
+    }
   }
 
   fun showDialogAndGetResult() : RuntimeChooserDialogResult {
@@ -199,21 +205,18 @@ class RuntimeChooserDialog(
               jdkInstallDirSelector.text = model.getDefaultInstallPathFor(item.item)
               jdkInstallDirSelector.setButtonEnabled(true)
               jdkInstallDirSelector.isEditable = true
-              jdkInstallDirSelector.isEnabled = true
               jdkInstallDirSelector.setButtonVisible(true)
             }
             is RuntimeChooserItemWithFixedLocation -> {
               jdkInstallDirSelector.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
               jdkInstallDirSelector.setButtonEnabled(false)
               jdkInstallDirSelector.isEditable = false
-              jdkInstallDirSelector.isEnabled = false
               jdkInstallDirSelector.setButtonVisible(false)
             }
             else -> {
               jdkInstallDirSelector.text = ""
               jdkInstallDirSelector.setButtonEnabled(false)
               jdkInstallDirSelector.isEditable = false
-              jdkInstallDirSelector.isEnabled = false
               jdkInstallDirSelector.setButtonVisible(false)
             }
           }
