@@ -1270,8 +1270,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
       }
     }
-    if (processInstanceAttributesNotInMethod(processor, instanceMethod, getInstanceAttributes())) return false;
-    if (processInstanceAttributesNotInMethod(processor, instanceMethod, getFallbackInstanceAttributes())) return false;
+    if (!processInstanceAttributesNotInMethod(processor, instanceMethod, getInstanceAttributes())) return false;
+    if (!processInstanceAttributesNotInMethod(processor, instanceMethod, getFallbackInstanceAttributes())) return false;
     return true;
   }
 
@@ -1282,9 +1282,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       if (instanceMethod != null && ScopeUtil.getScopeOwner(expr) == instanceMethod) {
         continue;
       }
-      if (!processor.execute(expr, ResolveState.initial())) return true;
+      if (!processor.execute(expr, ResolveState.initial())) return false;
     }
-    return false;
+    return true;
   }
 
   @Override
