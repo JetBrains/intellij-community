@@ -25,6 +25,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
+import sun.font.FontUtilities;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -2008,11 +2009,14 @@ public final class UIUtil {
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
     if (!SystemInfo.isMac) {
       try {
-        font = FontUtilitiesAccessor.createFontWithFallback(font);
+        if (!FontUtilities.fontSupportsDefaultEncoding(font)) {
+          font = FontUtilities.getCompositeFontUIResource(font);
+        }
       }
       catch (Throwable e) {
+        // this might happen e.g. if we're running under newer runtime, forbidding access to sun.font package
         getLogger().warn(e);
-        // this might not give the same result, but if accessing FontUtilities via reflection failed, we have no choice
+        // this might not give the same result, but we have no choice here
         return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
       }
     }
@@ -3476,34 +3480,5 @@ public final class UIUtil {
       return 0;
     }
     return Math.min(result, 255);
-  }
-
-  private static class FontUtilitiesAccessor {
-    private static final Method fontSupportsDefaultEncodingMethod;
-    private static final Method getCompositeFontUIResourceMethod;
-
-    static {
-      Method m1 = null;
-      Method m2 = null;
-      try {
-        Class<?> c = Class.forName("sun.font.FontUtilities");
-        m1 = c.getDeclaredMethod("fontSupportsDefaultEncoding", Font.class);
-        m2 = c.getDeclaredMethod("getCompositeFontUIResource", Font.class);
-      }
-      catch (Throwable e) {
-        getLogger().warn(e);
-      }
-      fontSupportsDefaultEncodingMethod = m1;
-      getCompositeFontUIResourceMethod = m2;
-    }
-
-    private static Font createFontWithFallback(Font font) throws Exception {
-      if (fontSupportsDefaultEncodingMethod == null ||
-          getCompositeFontUIResourceMethod == null ||
-          Boolean.TRUE.equals(fontSupportsDefaultEncodingMethod.invoke(null, font))) {
-        return font;
-      }
-      return (Font)getCompositeFontUIResourceMethod.invoke(null, font);
-    }
   }
 }
