@@ -30,17 +30,7 @@ fun confirmOpeningUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
-  @NlsContexts.Button cancelButtonText: String,
-) = confirmOpeningUntrustedProject(virtualFile) {
-  MessageDialogBuilder.yesNoCancel(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-    .cancelText(cancelButtonText)
-}
-
-fun confirmOpeningUntrustedProject(
-  virtualFile: VirtualFile,
-  createDialog: () -> MessageDialogBuilder.YesNoCancel
+  @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
   val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
@@ -48,7 +38,10 @@ fun confirmOpeningUntrustedProject(
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val choice = createDialog()
+  val choice = MessageDialogBuilder.yesNoCancel(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
+    .cancelText(cancelButtonText)
     .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
     .asWarning()
     .show(project = null)
@@ -72,20 +65,16 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-) = confirmLoadingUntrustedProject(project) {
-  MessageDialogBuilder.yesNo(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-}
-
-fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
+) : Boolean {
   val trustedCheckResult = getImplicitTrustedCheckResult(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
   }
 
-  val answer = createDialog()
+  val answer = MessageDialogBuilder.yesNo(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
     .asWarning()
     .ask(project)
   project.setTrusted(answer)
