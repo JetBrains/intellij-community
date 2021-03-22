@@ -68,8 +68,12 @@ object RuntimeChooserJreValidator {
                   ?: return callback.onError(
                     LangBundle.message("dialog.message.choose.ide.runtime.set.unknown.error", LangBundle.message("dialog.message.choose.ide.runtime.no.file.part")))
 
-    if (SystemInfo.isMac && homeDir.endsWith("Contents/Home")) {
+    if (SystemInfo.isMac && homeDir.toString().endsWith("/Contents/Home")) {
       return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.parent?.toString() }, callback)
+    }
+
+    if (SystemInfo.isMac && homeDir.fileName.toString() == "Contents" && (homeDir / "Home").isDirectory()) {
+      return testNewJdkUnderProgress(allowRunProcesses, { homeDir.parent?.toString() }, callback)
     }
 
     if (SystemInfo.isMac && !(homeDir / "Contents" / "Home").isDirectory()) {
