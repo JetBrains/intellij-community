@@ -60,8 +60,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setFocusable(false);
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && isUseInlineBrowserButton();
     if (inlineBrowseButton) {
-      ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension = ExtendableTextComponent.Extension.create(
-        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
+      myInlineButtonExtension = ExtendableTextComponent.Extension.create(
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners);
+      ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -226,8 +227,10 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   /**
    * @deprecated The implementation may attach the button via the
    * {@link ExtendableTextComponent#addExtension(ExtendableTextComponent.Extension)}
-   * so that the returned button may not be visible to the users. Instead,
-   * please use the class APIs without using the implementation details.
+   * so that the returned button may not be visible to the users
+   *
+   * @see #setButtonVisible
+   * @see #setButtonEnabled
    */
   @Deprecated
   public FixedSizeButton getButton() {
