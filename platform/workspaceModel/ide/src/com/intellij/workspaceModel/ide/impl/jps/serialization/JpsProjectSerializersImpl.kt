@@ -297,6 +297,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   override fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
     val affectedFileFactories = HashSet<JpsModuleListSerializer>()
+    val affectedEntityTypeSerializers = HashSet<JpsFileEntityTypeSerializer<*>>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
       val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
@@ -317,7 +318,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
         // Remove libraries under `external_build_system/libraries` folder
         if (it in entityTypeSerializers) {
-          (it as JpsFileEntityTypeSerializer).deleteObsoleteFile(fileUrl, writer)
+          if (getFilteredEntitiesForSerializer(it as JpsFileEntityTypeSerializer, storage).isEmpty()) {
+            it.deleteObsoleteFile(fileUrl, writer)
+          }
+          else {
+            affectedEntityTypeSerializers.add(it)
+          }
         }
       }
     }
@@ -424,7 +430,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (serializer in entityTypeSerializers) {
-      if (entitiesToSave.any { serializer.mainEntityClass in it.value }) {
+      if (entitiesToSave.any { serializer.mainEntityClass in it.value } || serializer in affectedEntityTypeSerializers) {
         val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
           storage.entities(it).toList()
