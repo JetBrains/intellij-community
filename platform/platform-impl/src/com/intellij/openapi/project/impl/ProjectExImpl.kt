@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -45,7 +45,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     val RUN_START_UP_ACTIVITIES = Key.create<Boolean>("RUN_START_UP_ACTIVITIES")
   }
 
-  private val earlyDisposable = AtomicReference<Disposable?>(Disposer.newDisposable())
+  private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
   @Volatile
   var isTemporarilyDisposed = false

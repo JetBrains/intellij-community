@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.pico;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -12,13 +12,12 @@ import org.picocontainer.defaults.AmbiguousComponentResolutionException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public class DefaultPicoContainer implements MutablePicoContainer {
   private final DefaultPicoContainer parent;
 
-  private final ConcurrentMap<Object, ComponentAdapter> componentKeyToAdapterCache = new ConcurrentHashMap<>();
+  private final Map<Object, ComponentAdapter> componentKeyToAdapter = new ConcurrentHashMap<>();
   private final LinkedHashSetWrapper<ComponentAdapter> componentAdapters = new LinkedHashSetWrapper<>();
 
   public DefaultPicoContainer(@Nullable DefaultPicoContainer parent) {
@@ -33,14 +32,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     return componentAdapters.getImmutableSet();
   }
 
-  // order is not guarantied
-  @ApiStatus.Internal
-  public final @NotNull Iterable<ComponentAdapter> unsafeGetAdapters() {
-    // not yet possible to get rid of componentAdapters - access by key should be lock-free
-    //return componentKeyToAdapterCache.values();
-    return componentAdapters.getImmutableSet();
-  }
-
   @Override
   public final @Nullable ComponentAdapter getComponentAdapter(@NotNull Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
@@ -51,19 +42,19 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   public final void release() {
-    componentKeyToAdapterCache.clear();
+    componentKeyToAdapter.clear();
     componentAdapters.clear();
   }
 
   private @Nullable ComponentAdapter getFromCache(@NotNull Object componentKey) {
-    ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
+    ComponentAdapter adapter = componentKeyToAdapter.get(componentKey);
     if (adapter != null) {
       return adapter;
     }
-    return componentKey instanceof Class ? componentKeyToAdapterCache.get(((Class<?>)componentKey).getName()) : null;
+    return componentKey instanceof Class ? componentKeyToAdapter.get(((Class<?>)componentKey).getName()) : null;
   }
 
-  public final  @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType) {
+  public final @Nullable ComponentAdapter getComponentAdapterOfType(@NotNull Class<?> componentType) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
     ComponentAdapter adapterByKey = getComponentAdapter(componentType);
     if (adapterByKey != null) {
@@ -92,40 +83,35 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
     List<ComponentAdapter> result = new ArrayList<>();
 
-    ComponentAdapter cacheHit = componentKeyToAdapterCache.get(componentType.getName());
+    ComponentAdapter cacheHit = componentKeyToAdapter.get(componentType.getName());
     if (cacheHit != null) {
       result.add(cacheHit);
     }
 
-    componentKeyToAdapterCache.forEach((key, adapter) -> {
-      // exclude services
-      if (!(key instanceof String)) {
-        Class<?> descendant = adapter.getComponentImplementation();
-        if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
-          result.add(adapter);
-        }
+    for (ComponentAdapter adapter : componentKeyToAdapter.values()) {// exclude services
+      if (adapter.getComponentKey() instanceof String) {
+        continue;
       }
-    });
+
+      Class<?> descendant = adapter.getComponentImplementation();
+      if (componentType == descendant || componentType.isAssignableFrom(descendant)) {
+        result.add(adapter);
+      }
+    }
     return result;
   }
 
-  @Override
   public final ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
-    Object componentKey = componentAdapter.getComponentKey();
-
-    ComponentAdapter oldAdapter = componentKeyToAdapterCache.put(componentKey, componentAdapter);
-    if (oldAdapter != null) {
-      componentKeyToAdapterCache.put(componentKey, oldAdapter);
-      throw new PicoRegistrationException("Key " + componentKey + " duplicated");
+    if (componentKeyToAdapter.putIfAbsent(componentAdapter.getComponentKey(), componentAdapter) != null) {
+      throw new PicoRegistrationException("Key " + componentAdapter.getComponentKey() + " duplicated");
     }
-
     componentAdapters.add(componentAdapter);
     return componentAdapter;
   }
 
   @Override
   public final @Nullable ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
-    ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
+    ComponentAdapter adapter = componentKeyToAdapter.remove(componentKey);
     if (adapter == null) {
       return null;
     }
@@ -144,7 +130,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   public final @Nullable <T> T getService(@NotNull Class<T> serviceClass) {
-    ComponentAdapter adapter = componentKeyToAdapterCache.get(serviceClass.getName());
+    ComponentAdapter adapter = componentKeyToAdapter.get(serviceClass.getName());
     if (adapter == null) {
       return null;
     }
@@ -155,7 +141,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
   @ApiStatus.Internal
   public final @Nullable ComponentAdapter getServiceAdapter(@NotNull String key) {
-    return componentKeyToAdapterCache.get(key);
+    return componentKeyToAdapter.get(key);
   }
 
   @Override
@@ -175,18 +161,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   }
 
   @Override
-  public final ComponentAdapter registerComponentInstance(@NotNull Object component) {
-    return registerComponentInstance(component.getClass(), component);
-  }
-
-  @Override
   public final ComponentAdapter registerComponentInstance(@NotNull Object componentKey, @NotNull Object componentInstance) {
     return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance));
-  }
-
-  @Override
-  public final ComponentAdapter registerComponentImplementation(@NotNull Class<?> componentImplementation) {
-    return registerComponentImplementation(componentImplementation, componentImplementation);
   }
 
   @Override

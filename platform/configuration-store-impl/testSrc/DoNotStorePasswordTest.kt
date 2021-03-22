@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jdom.Attribute
@@ -14,7 +13,6 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.util.function.BiPredicate
 
 class DoNotStorePasswordTest {
   companion object {
@@ -25,36 +23,33 @@ class DoNotStorePasswordTest {
 
   @Test
   fun printPasswordComponents() {
-    val processor = BiPredicate<Class<*>, PluginDescriptor?> { aClass, _ ->
+    val processor: (componentClass: Class<*>, plugin: PluginDescriptor?) -> Unit = p@{ aClass, _ ->
       val stateAnnotation = getStateSpec(aClass)
       if (stateAnnotation == null || stateAnnotation.name.isEmpty()) {
-        return@BiPredicate true
+        return@p
       }
 
       for (i in aClass.genericInterfaces) {
         if (checkType(i)) {
-          return@BiPredicate true
+          return@p
         }
       }
 
       // public static class Project extends WebServersConfigManagerBaseImpl<WebServersConfigManagerBaseImpl.State> {
       // so, we check not only PersistentStateComponent
       checkType(aClass.genericSuperclass)
-
-      true
     }
 
     val app = ApplicationManager.getApplication() as ComponentManagerImpl
-    processAllImplementationClasses(app.picoContainer, processor::test)
+    app.processAllImplementationClasses(processor)
     // yes, we don't use default project here to be sure
-    processAllImplementationClasses(projectRule.project.picoContainer, processor::test)
+    (projectRule.project as ComponentManagerImpl).processAllImplementationClasses(processor)
 
-    for (i in listOf(app.picoContainer, projectRule.project.picoContainer)) {
-      processAllImplementationClasses(app.picoContainer) { aClass, _ ->
+    for (container in listOf(app, projectRule.project as ComponentManagerImpl)) {
+      container.processAllImplementationClasses { aClass, _ ->
         if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
-          processor.test(aClass, null)
+          processor(aClass, null)
         }
-        true
       }
     }
   }

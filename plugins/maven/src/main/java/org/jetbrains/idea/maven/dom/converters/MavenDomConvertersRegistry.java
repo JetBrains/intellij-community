@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.converters.values.GenericDomValueConvertersRegistry;
 import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
@@ -9,8 +10,9 @@ import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 import java.io.File;
 import java.util.Set;
 
-public class MavenDomConvertersRegistry {
-  protected GenericDomValueConvertersRegistry myConvertersRegistry;
+@Service(Service.Level.APP)
+public final class MavenDomConvertersRegistry {
+  private GenericDomValueConvertersRegistry myConvertersRegistry;
 
   private final Set<String> mySoftConverterTypes = ContainerUtil.immutableSet(File.class.getCanonicalName());
 

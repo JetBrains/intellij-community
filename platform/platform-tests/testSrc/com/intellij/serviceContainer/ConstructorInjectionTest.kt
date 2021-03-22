@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.openapi.components.Service
@@ -21,11 +21,11 @@ class ConstructorInjectionTest {
     componentManager.instantiateClassWithConstructorInjection(Foo::class.java, Foo::class.java, pluginDescriptor.pluginId)
   }
 
-  @Test
-  fun `resolve light service`() {
-    val componentManager = TestComponentManager()
-    componentManager.instantiateClassWithConstructorInjection(BarServiceClient::class.java, BarServiceClient::class.java.name, pluginDescriptor.pluginId)
-  }
+  //@Test
+  //fun `resolve light service`() {
+  //  val componentManager = TestComponentManager()
+  //  componentManager.instantiateClassWithConstructorInjection(BarServiceClient::class.java, BarServiceClient::class.java.name, pluginDescriptor.pluginId)
+  //}
 
   @Test
   fun `light service getService() performance`() {
@@ -55,4 +55,4 @@ private class Foo(@Suppress("UNUSED_PARAMETER") bar: BarImpl)
 @Service
 private class BarService
 
-private class BarServiceClient(@Suppress("UNUSED_PARAMETER") bar: BarService)
+//private class BarServiceClient(@Suppress("UNUSED_PARAMETER") bar: BarService)

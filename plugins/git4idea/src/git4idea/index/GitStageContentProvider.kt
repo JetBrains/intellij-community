@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
 import com.intellij.openapi.Disposable
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
-import com.intellij.util.NotNullFunction
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.CommitTabTitleUpdater
 import com.intellij.vcsUtil.VcsUtil
@@ -20,10 +19,11 @@ import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.JComponent
 
-class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
+internal class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
   private var disposable: Disposable? = null
 
   override fun initContent(): JComponent {
@@ -77,11 +77,11 @@ class GitStageContentPreloader : ChangesViewContentProvider.Preloader {
   }
 }
 
-class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project) = isStagingAreaAvailable(project)
+internal class GitStageContentVisibilityPredicate : Predicate<Project> {
+  override fun test(project: Project) = isStagingAreaAvailable(project)
 }
 
-class GitStageDisplayNameSupplier : Supplier<String> {
+internal class GitStageDisplayNameSupplier : Supplier<String> {
   override fun get(): @Nls String = VcsBundle.message("tab.title.commit")
 }
 

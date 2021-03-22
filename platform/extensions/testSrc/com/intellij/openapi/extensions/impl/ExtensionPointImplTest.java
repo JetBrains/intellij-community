@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -354,16 +354,24 @@ public class ExtensionPointImplTest {
   }
 
   static final class MyComponentManager implements ComponentManager {
-    private final DefaultPicoContainer myContainer = new DefaultPicoContainer();
-
     @Override
     public <T> T getComponent(@NotNull Class<T> interfaceClass) {
       return null;
     }
 
     @Override
+    public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public @NotNull PicoContainer getPicoContainer() {
-      return myContainer;
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isInjectionForExtensionSupported() {
+      return false;
     }
 
     @Override
@@ -382,9 +390,26 @@ public class ExtensionPointImplTest {
     }
 
     @Override
+    public <T> T getService(@NotNull Class<T> serviceClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                          @NotNull Object key,
+                                                          @NotNull PluginId pluginId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
     public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
       //noinspection unchecked
       return (Class<T>)Class.forName(className);
+    }
+
+    @Override
+    public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+      return ActivityCategory.APP_EXTENSION;
     }
 
     @Override

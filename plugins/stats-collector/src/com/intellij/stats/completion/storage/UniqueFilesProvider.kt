@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.stats.completion.storage
 
@@ -32,7 +18,7 @@ import java.nio.file.Files
 open class UniqueFilesProvider(private val baseFileName: String,
                                private val rootDirectoryPath: String,
                                private val logsDirectoryName: String,
-                               private val storageSizeLimit: Int = MAX_STORAGE_SEND_SIZE) : FilePathProvider() {
+                               private val storageSizeLimit: Int = MAX_STORAGE_SEND_SIZE) : FilePathProvider {
     companion object {
         private const val MAX_STORAGE_SEND_SIZE = 3 * 1024 * 1024
 
@@ -43,8 +29,8 @@ open class UniqueFilesProvider(private val baseFileName: String,
 
     override fun cleanupOldFiles() {
         val files = getDataFiles()
-        val storageSize = files.fold(0L, { totalSize, file -> totalSize + file.length() })
-        if (storageSize > storageSizeLimit) {
+        val storageSize = files.fold(0L) { totalSize, file -> totalSize + file.length() }
+      if (storageSize > storageSizeLimit) {
             var currentSize = storageSize
             val iterator = files.iterator()
             while (iterator.hasNext() && currentSize > storageSizeLimit) {

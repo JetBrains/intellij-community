@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.DataManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -31,7 +31,7 @@ import java.util.function.Supplier;
  * <p/>
  * Delegates to the VcsLogManager.
  */
-public class VcsLogContentProvider implements ChangesViewContentProvider {
+public final class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
 
@@ -156,15 +156,15 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     return null;
   }
 
-  public static class VcsLogVisibilityPredicate implements NotNullFunction<Project, Boolean> {
+  final static class VcsLogVisibilityPredicate implements Predicate<Project> {
     @NotNull
     @Override
-    public Boolean fun(@NotNull Project project) {
+    public boolean test(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
     }
   }
 
-  public static class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
+  final static class VcsLogContentPreloader implements ChangesViewContentProvider.Preloader {
     @Override
     public void preloadTabContent(@NotNull Content content) {
       content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
@@ -172,7 +172,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  public static class DisplayNameSupplier implements Supplier<String> {
+  final static class DisplayNameSupplier implements Supplier<String> {
     @Override
     public String get() {
       return VcsLogBundle.message("vcs.log.tab.name");

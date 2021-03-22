@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.wsl
 
 import com.intellij.build.events.MessageEvent
@@ -27,7 +27,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getPropertiesFromMavenOpts
 
-class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
+internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
                        jdk: Sdk,
                        vmOptions: String?,
                        mavenDistribution: WslMavenDistribution,
@@ -78,7 +78,7 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val languageRuntime = JavaLanguageRuntimeConfiguration()
 
     var jdkHomePath = myJdk.homePath
-    val projectJdkHomePath = ProjectRootManager.getInstance(myProject).projectSdk?.let { it.homePath }
+    val projectJdkHomePath = ProjectRootManager.getInstance(myProject).projectSdk?.homePath
     if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
         projectJdkHomePath) != myWslDistribution) {
       MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(object : BuildIssue {
@@ -87,7 +87,7 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
           "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
           "maven.sync.wsl.jdk.fix") + "</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
-        override fun getNavigatable(project: Project): Navigatable? = null;
+        override fun getNavigatable(project: Project): Navigatable? = null
       }, MessageEvent.Kind.WARNING)
     }
     else if (MavenWslUtil.tryGetWslDistributionForPath(jdkHomePath) != myWslDistribution && MavenWslUtil.tryGetWslDistributionForPath(
@@ -99,7 +99,7 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
           "maven.sync.wsl.jdk.set.to.project") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
           "maven.sync.wsl.jdk.fix") + "</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
-        override fun getNavigatable(project: Project): Navigatable? = null;
+        override fun getNavigatable(project: Project): Navigatable? = null
       }, MessageEvent.Kind.INFO)
     }
 
@@ -111,8 +111,8 @@ class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
           "maven.sync.wsl.jdk") + "\n<a href=\"${OpenMavenImportingSettingsQuickFix.ID}\">" + SyncBundle.message(
           "maven.sync.wsl.jdk.fix") + "</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenImportingSettingsQuickFix())
-        override fun getNavigatable(project: Project): Navigatable? = null;
-      }, MessageEvent.Kind.WARNING);
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.WARNING)
     }
 
     languageRuntime.homePath = wslPath ?: "/usr"

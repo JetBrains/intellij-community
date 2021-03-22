@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -10,11 +11,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
+import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
@@ -87,15 +88,32 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   @NotNull
-  public DefaultPicoContainer getPicoContainer() {
+  public PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
+  }
+
+  @Override
+  public boolean isInjectionForExtensionSupported() {
+    return false;
   }
 
   @NotNull
   @Override
   public ExtensionsArea getExtensionArea() {
     throw new UnsupportedOperationException("getExtensionArea is not implement in : " + getClass());
+  }
+
+  @Override
+  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass,
+                                                        @NotNull Object key,
+                                                        @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -132,6 +150,11 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   public <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException {
     //noinspection unchecked
     return (Class<T>)Class.forName(className);
+  }
+
+  @Override
+  public @NotNull ActivityCategory getActivityCategory(boolean isExtension) {
+    return isExtension ? ActivityCategory.PROJECT_EXTENSION : ActivityCategory.PROJECT_SERVICE;
   }
 
   @Override

@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
-import com.intellij.util.NotNullFunction
+import java.util.function.Predicate
 import java.util.function.Supplier
 
 private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
@@ -80,17 +80,19 @@ internal class CommittedChangesViewManager(private val project: Project) : Chang
     }
   }
 
-  class VisibilityPredicate : NotNullFunction<Project, Boolean> {
-    override fun `fun`(project: Project): Boolean =
-      ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+  internal class VisibilityPredicate : Predicate<Project> {
+    override fun test(project: Project): Boolean {
+      return ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+    }
   }
 
-  class DisplayNameSupplier : Supplier<String> {
+  internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = VcsBundle.message("committed.changes.tab")
   }
 
   companion object {
-    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean =
-      vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
+    fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
+      return vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
+    }
   }
 }

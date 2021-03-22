@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.execution.wsl.WSLCommandLineOptions
@@ -18,7 +18,7 @@ import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
 
-object MavenWslUtil : MavenUtil() {
+internal object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getPropertiesFromMavenOpts(distribution: WSLDistribution): Map<String, String> {
     return parseMavenProperties(distribution.getEnvironmentVariable("MAVEN_OPTS"))
@@ -40,14 +40,18 @@ object MavenWslUtil : MavenUtil() {
   fun tryGetWslDistributionForPath(path: String?): WSLDistribution? {
     return path?.let { WslPath.getDistributionByWindowsUncPath(it)}
   }
+
   /**
    * return file in windows-style ("\\wsl$\distrib-name\home\user\.m2\settings.xml")
    */
   @JvmStatic
   fun WSLDistribution.resolveUserSettingsFile(overriddenUserSettingsFile: String?): File {
-    val localFile = if (!isEmptyOrSpaces(overriddenUserSettingsFile)) File(overriddenUserSettingsFile)
-    else File(this.resolveM2Dir(), SETTINGS_XML)
-    return localFile
+    if (isEmptyOrSpaces(overriddenUserSettingsFile)) {
+      return File(resolveM2Dir(), SETTINGS_XML)
+    }
+    else {
+      return File(overriddenUserSettingsFile)
+    }
   }
 
   /**
@@ -110,7 +114,7 @@ object MavenWslUtil : MavenUtil() {
       MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
       return home
     }
-    
+
     val options = WSLCommandLineOptions()
       .setExecuteCommandInLoginShell(true)
       .setShellPath(this.shellPath)
@@ -118,7 +122,7 @@ object MavenWslUtil : MavenUtil() {
     if (processOutput.exitCode == 0) {
       val path = processOutput.stdout.lines().find { it.isNotEmpty() }?.let(this::resolveSymlink)?.let(this::getWindowsPath)?.let(::File)
       if (path != null) {
-        return path;
+        return path
       }
 
     }
@@ -143,8 +147,9 @@ object MavenWslUtil : MavenUtil() {
            ?: File(this.resolveM2Dir(), REPOSITORY_DIR)
 
   }
+
   @JvmStatic
-  fun WSLDistribution.getDefaultMavenDistribution(overriddenMavenHome: String? = null): WslMavenDistribution? {
+  internal fun WSLDistribution.getDefaultMavenDistribution(overriddenMavenHome: String? = null): WslMavenDistribution? {
     val file = this.resolveMavenHomeDirectory(overriddenMavenHome) ?: return null
     val wslFile = this.getWslPath(file.path) ?: return null
     return WslMavenDistribution(this, wslFile, "default")
@@ -168,7 +173,7 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun <T> resolveWslAware(project: Project?, ordinary: Supplier<T>, wsl: Function<WSLDistribution, T>): T {
     if (project == null && ApplicationManager.getApplication().isUnitTestMode) {
-      MavenLog.LOG.error("resolveWslAware: Project is null");
+      MavenLog.LOG.error("resolveWslAware: Project is null")
     }
     val wslDistribution = project?.let { tryGetWslDistribution(it) } ?: return ordinary.get()
     return wsl.apply(wslDistribution)
@@ -191,13 +196,13 @@ object MavenWslUtil : MavenUtil() {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
         val projectWslDistr = tryGetWslDistribution(project)
-        var needReset = false;
+        var needReset = false
 
         MavenServerManager.getInstance().allConnectors.forEach {
           if (it.project == project) {
             val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
             if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
-              needReset = true;
+              needReset = true
               it.shutdown(true)
             }
           }

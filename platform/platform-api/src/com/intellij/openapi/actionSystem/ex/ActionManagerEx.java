@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Comparator;
-import java.util.List;
 
 public abstract class ActionManagerEx extends ActionManager {
   public static ActionManagerEx getInstanceEx() {
@@ -110,7 +107,5 @@ public abstract class ActionManagerEx extends ActionManager {
    */
   @SuppressWarnings("unused")  // used in Rider
   public abstract void addActionPopupMenuListener(@NotNull ActionPopupMenuListener listener, @NotNull Disposable parentDisposable);
-
-  public abstract @NotNull List<EditorActionHandlerBean> getRegisteredHandlers(@NotNull EditorAction editorAction);
 }
 

@@ -15,9 +15,11 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.lightEdit.LightEditCompatible
+import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -39,7 +41,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
-import com.intellij.serviceContainer.processProjectComponents
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.io.delete
@@ -379,12 +380,23 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
     // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
     // (and, so, should be called after project initialization)
-    processProjectComponents(project.picoContainer) { component, pluginDescriptor ->
-      StartupManagerImpl.runActivity {
+    @Suppress("DEPRECATION")
+    (project as ComponentManagerEx).processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+      ProgressManager.checkCanceled()
+      try {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
                                                               pluginDescriptor.pluginId.idString)
         component.projectOpened()
         componentActivity.end()
+      }
+      catch (e: ServiceNotReadyException) {
+        ProjectManagerImpl.LOG.error(Exception(e))
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        ProjectManagerImpl.LOG.error(e)
       }
     }
     activity.end()

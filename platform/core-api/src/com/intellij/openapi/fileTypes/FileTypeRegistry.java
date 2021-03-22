@@ -3,6 +3,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.util.Getter;
@@ -67,7 +68,7 @@ public abstract class FileTypeRegistry {
   public static FileTypeRegistry getInstance() {
     if (ourInstanceGetter == null) {
       // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
-      return (FileTypeRegistry)ApplicationManager.getApplication().getPicoContainer().getComponentInstance("com.intellij.openapi.fileTypes.FileTypeManager");
+      return ((ComponentManagerEx)ApplicationManager.getApplication()).getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
     }
     return ourInstanceGetter.get();
   }

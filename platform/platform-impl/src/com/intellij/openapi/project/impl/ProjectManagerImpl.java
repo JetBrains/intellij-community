@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -41,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -458,11 +460,16 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     LifecycleUsageTriggerCollector.onProjectClosed(project);
 
     getPublisher().projectClosed(project);
-    // see "why is called after message bus" in the fireProjectOpened
     //noinspection deprecation
-    List<ProjectComponent> components = project.getComponentInstancesOfType(ProjectComponent.class, false);
-    for (int i = components.size() - 1; i >= 0; i--) {
-      @SuppressWarnings("deprecation") ProjectComponent component = components.get(i);
+    List<ProjectComponent> projectComponents = new ArrayList<>();
+    //noinspection deprecation
+    ((ComponentManagerEx)project).processInitializedComponents(ProjectComponent.class, (component, __) -> {
+      projectComponents.add(component);
+      return Unit.INSTANCE;
+    });
+    // see "why is called after message bus" in the fireProjectOpened
+    for (int i = projectComponents.size() - 1; i >= 0; i--) {
+      @SuppressWarnings("deprecation") ProjectComponent component = projectComponents.get(i);
       try {
         component.projectClosed();
       }

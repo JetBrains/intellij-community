@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -35,7 +35,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -91,8 +90,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
   private static final ExtensionPointName<DynamicActionConfigurationCustomizer> DYNAMIC_EP_NAME =
     new ExtensionPointName<>("com.intellij.dynamicActionConfigurationCustomizer");
-  private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
-    new ExtensionPointName<>("com.intellij.editorActionHandler");
 
   private static final String ACTION_ELEMENT_NAME = "action";
   private static final String GROUP_ELEMENT_NAME = "group";
@@ -189,7 +186,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         extension.unregisterActions(ActionManagerImpl.this);
       }
     }, this);
-    EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
+    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
+      .addChangeListener(() -> {
+        synchronized (myLock) {
+          actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);
+        }
+      }, this);
   }
 
   @ApiStatus.Internal
@@ -1742,28 +1744,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         queueActionPerformedEvent(action, context, event);
       });
     }, ModalityState.defaultModalityState());
-  }
-
-  @Override
-  public @NotNull List<EditorActionHandlerBean> getRegisteredHandlers(@NotNull EditorAction editorAction) {
-    List<EditorActionHandlerBean> result = new ArrayList<>();
-    String id = getId(editorAction);
-    if (id != null) {
-      List<EditorActionHandlerBean> extensions = EDITOR_ACTION_HANDLER_EP.getExtensionList();
-      for (int i = extensions.size() - 1; i >= 0; i--) {
-        EditorActionHandlerBean handlerBean = extensions.get(i);
-        if (handlerBean.action.equals(id)) {
-          result.add(handlerBean);
-        }
-      }
-    }
-    return result;
-  }
-
-  private void updateAllHandlers() {
-    synchronized (myLock) {
-      actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);
-    }
   }
 
   private static void updateHandlers(Object action) {

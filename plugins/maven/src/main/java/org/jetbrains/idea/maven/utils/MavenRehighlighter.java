@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,7 +27,8 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
-public class MavenRehighlighter implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class MavenRehighlighter implements Disposable {
   private final MergingUpdateQueue queue;
 
   public MavenRehighlighter(@NotNull Project project) {

@@ -45,7 +45,7 @@
                     area="IDEA_PROJECT"
                     dynamic="true">
       <with attribute="className" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider"/>
-      <with attribute="predicateClassName" implements="com.intellij.util.NotNullFunction"/>
+      <with attribute="predicateClassName" implements="java.util.function.Predicate"/>
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 

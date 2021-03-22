@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mocks
 
 import com.intellij.completion.ml.experiment.ExperimentInfo
@@ -10,7 +9,6 @@ import com.intellij.stats.completion.sender.StatisticSender
 import com.intellij.stats.completion.storage.UniqueFilesProvider
 import org.mockito.Mockito
 import java.io.File
-
 
 internal class TestRequestService : RequestService() {
 
@@ -28,7 +26,6 @@ internal class TestStatisticSender : StatisticSender {
     override fun sendStatsData(url: String) {
     }
 }
-
 
 internal class TestExperimentStatus : ExperimentStatus {
     companion object {

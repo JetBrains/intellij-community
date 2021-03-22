@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -7,11 +7,12 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.util.pico.DefaultPicoContainer;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   private @Nullable Element myExtensionElement;
@@ -106,8 +107,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
 
     @Override
     protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
-      // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
-      if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
+      if (!aClass.getName().equals("org.jetbrains.kotlin.asJava.finder.JavaElementFinder")) {
         try {
           return super.instantiateClass(aClass, componentManager);
         }
@@ -120,14 +120,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
             throw e;
           }
 
-          String message = "Cannot create extension without pico container (class=" + aClass.getName() + ")," +
-                           " please remove extra constructor parameters";
-          if (pluginDescriptor.isBundled()) {
-            ExtensionPointImpl.LOG.error(message, e);
-          }
-          else {
-            ExtensionPointImpl.LOG.warn(message, e);
-          }
+          ExtensionPointImpl.LOG.error("Cannot create extension without pico container (class=" + aClass.getName() + ", constructors=" +
+                                       Arrays.toString(aClass.getDeclaredConstructors()) + ")," +
+                                       " please remove extra constructor parameters", e);
         }
       }
       return componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());

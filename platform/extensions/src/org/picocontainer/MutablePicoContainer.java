@@ -18,50 +18,24 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface MutablePicoContainer extends PicoContainer {
   /**
-   * @deprecated Do not use.
+   * @deprecated Use services.
    */
   @Deprecated
   ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class<?> componentImplementation);
 
   /**
-   * @deprecated Do not use.
+   * @deprecated Use services.
    */
   @Deprecated
-  ComponentAdapter registerComponentImplementation(@NotNull Class<?> componentImplementation);
+  default ComponentAdapter registerComponentImplementation(@NotNull Class<?> componentImplementation) {
+    return registerComponentImplementation(componentImplementation, componentImplementation);
+  }
 
   /**
-   * Register an arbitrary object. The class of the object will be used as a key. Calling this method is equivalent to
-   * calling     * <code>registerComponentImplementation(componentImplementation, componentImplementation)</code>.
-   *
-   * @param componentInstance
-   * @return the ComponentAdapter that has been associated with this component. In the majority of cases, this return
-   * value can be safely ignored, as one of the <code>getXXX()</code> methods of the
-   * {@link PicoContainer} interface can be used to retrieve a reference to the component later on.
-   * @throws PicoRegistrationException if registration fails.
+   * @deprecated Use services.
    */
-  ComponentAdapter registerComponentInstance(Object componentInstance);
-
-  /**
-   * Register an arbitrary object as a component in the container. This is handy when other components in the same
-   * container have dependencies on this kind of object, but where letting the container manage and instantiate it is
-   * impossible.
-   * <p/>
-   * @return the ComponentAdapter that has been associated with this component. In the majority of cases, this return
-   * value can be safely ignored, as one of the <code>getXXX()</code> methods of the
-   * {@link PicoContainer} interface can be used to retrieve a reference to the component later on.
-   * @throws PicoRegistrationException if registration fails.
-   */
+  @Deprecated
   ComponentAdapter registerComponentInstance(Object componentKey, Object componentInstance);
-
-  /**
-   * Register a component via a ComponentAdapter. Use this if you need fine grained control over what
-   * ComponentAdapter to use for a specific component.
-   *
-   * @param componentAdapter the adapter
-   * @return the same adapter that was passed as an argument.
-   * @throws PicoRegistrationException if registration fails.
-   */
-  ComponentAdapter registerComponent(ComponentAdapter componentAdapter);
 
   /**
    * Unregister a component by key.

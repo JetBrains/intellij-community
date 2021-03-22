@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
@@ -54,7 +54,10 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     return getInstance(componentManager, null)
   }
 
-  fun <T : Any> getInstance(componentManager: ComponentManagerImpl, keyClass: Class<T>?, createIfNeeded: Boolean = true, indicator: ProgressIndicator? = null): T? {
+  fun <T : Any> getInstance(componentManager: ComponentManagerImpl,
+                            keyClass: Class<T>?,
+                            createIfNeeded: Boolean = true,
+                            indicator: ProgressIndicator? = null): T? {
     // could be called during some component.dispose() call, in this case we don't attempt to instantiate
     @Suppress("UNCHECKED_CAST")
     val instance = initializedInstance as T?
@@ -133,29 +136,18 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     }
 
     if (componentManager.isDisposed) {
-      throwAlreadyDisposedError(componentManager, indicator)
+      throwAlreadyDisposedError(toString(), componentManager, indicator)
     }
     if (!isGettingServiceAllowedDuringPluginUnloading(pluginDescriptor)) {
       componentManager.componentContainerIsReadonly?.let {
         val error = AlreadyDisposedException("Cannot create ${toString()} because container in read-only mode (reason=$it, container=${componentManager})")
-        if (indicator == null) {
-          throw error
-        }
-        else {
-          throw ProcessCanceledException(error)
-        }
+        throw if (indicator == null) error else ProcessCanceledException(error)
       }
     }
   }
 
   internal fun throwAlreadyDisposedError(componentManager: ComponentManagerImpl, indicator: ProgressIndicator?) {
-    val error = AlreadyDisposedException("Cannot create ${toString()} because container is already disposed (container=${componentManager})")
-    if (indicator == null) {
-      throw error
-    }
-    else {
-      throw ProcessCanceledException(error)
-    }
+    throwAlreadyDisposedError(toString(), componentManager, indicator)
   }
 
   protected abstract fun getActivityCategory(componentManager: ComponentManagerImpl): ActivityCategory?
@@ -181,4 +173,14 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     @Suppress("UNCHECKED_CAST")
     return old as T?
   }
+
+  // used in LinkedHashSetWrapper
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    return other is ComponentAdapter && componentKey == other.componentKey
+  }
+
+  override fun hashCode() = componentKey.hashCode()
 }

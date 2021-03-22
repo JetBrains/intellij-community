@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -17,14 +17,13 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModifiableModelCommitterServiceBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.RootsChangeWatcher
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
 import org.jetbrains.annotations.ApiStatus
-import org.picocontainer.MutablePicoContainer
 
 @ApiStatus.Internal
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
@@ -53,7 +52,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerComponent(VirtualFileUrlWatcher::class.java, VirtualFileUrlWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
     container.registerComponent(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, true)
-    (container.picoContainer as MutablePicoContainer).unregisterComponent(ExternalModuleListStorage::class.java)
+    container.unregisterComponent(ExternalModuleListStorage::class.java)
 
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)

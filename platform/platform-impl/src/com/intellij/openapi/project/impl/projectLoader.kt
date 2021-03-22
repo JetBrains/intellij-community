@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectLoadHelper")
 @file:ApiStatus.Internal
 package com.intellij.openapi.project.impl
@@ -47,6 +47,9 @@ internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl
     }
     catch (e: ProcessCanceledException) {
       throw e
+    }
+    catch (e: PluginException) {
+      logger<ProjectImpl>().error(e)
     }
     catch (e: Throwable) {
       logger<ProjectImpl>().error(PluginException(e, pluginDescriptor.pluginId))

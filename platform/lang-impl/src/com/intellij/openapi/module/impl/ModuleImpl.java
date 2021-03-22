@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.configurationStore.RenameableStateStorageManager;
@@ -34,16 +34,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
@@ -95,7 +93,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
     //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins());
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), null);
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
@@ -199,7 +197,8 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   public void projectOpened() {
-    for (ModuleComponent component : getModuleComponents()) {
+    //noinspection deprecation
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
       try {
         //noinspection deprecation
         component.projectOpened();
@@ -207,12 +206,20 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       catch (Exception e) {
         LOG.error(e);
       }
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   @Override
   public void projectClosed() {
-    List<ModuleComponent> components = getModuleComponents();
+    //noinspection deprecation
+    List<ModuleComponent> components = new ArrayList<>();
+    //noinspection deprecation
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
+      components.add(component);
+      return Unit.INSTANCE;
+    });
+
     for (int i = components.size() - 1; i >= 0; i--) {
       try {
         //noinspection deprecation
@@ -241,18 +248,14 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     return isModuleAdded;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void moduleAdded() {
     isModuleAdded = true;
-    for (ModuleComponent component : getModuleComponents()) {
+    processInitializedComponents(ModuleComponent.class, (component, __) -> {
       component.moduleAdded();
-    }
-  }
-
-  @NotNull
-  private List<ModuleComponent> getModuleComponents() {
-    //noinspection deprecation
-    return getComponentInstancesOfType(ModuleComponent.class);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override

@@ -18,7 +18,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -442,23 +441,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     // don't count ProcessCanceledException as valid action to measure (later special category can be introduced if needed)
-    ActivityCategory category = getActivityCategory((DefaultPicoContainer)componentManager.getPicoContainer());
+    ActivityCategory category = componentManager.getActivityCategory(true);
     StartUpMeasurer.addCompletedActivity(startTime, extensionClass, category, /* pluginId = */ null, StartUpMeasurer.MEASURE_THRESHOLD);
     return result;
   }
 
   public abstract @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager);
-
-  private static @NotNull ActivityCategory getActivityCategory(@NotNull DefaultPicoContainer picoContainer) {
-    DefaultPicoContainer parent = picoContainer.getParent();
-    if (parent == null) {
-      return ActivityCategory.APP_EXTENSION;
-    }
-    if (parent.getParent() == null) {
-      return ActivityCategory.PROJECT_EXTENSION;
-    }
-    return ActivityCategory.MODULE_EXTENSION;
-  }
 
   // This method needs to be synchronized because XmlExtensionAdapter.createInstance takes a lock on itself, and if it's called without
   // EP lock and tries to add an EP listener, we can get a deadlock because of lock ordering violation
@@ -940,14 +928,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  protected abstract @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
-                                                                                                        @NotNull PluginDescriptor pluginDescriptor,
-                                                                                                        @NotNull ComponentManager componentManager);
+  protected abstract @NotNull ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement,
+                                                                      @NotNull PluginDescriptor pluginDescriptor,
+                                                                      @NotNull ComponentManager componentManager);
 
   final synchronized void createAndRegisterAdapter(@NotNull Element extensionElement,
                                              @NotNull PluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager) {
-    addExtensionAdapter(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
+    addExtensionAdapter(createAdapter(extensionElement, pluginDescriptor, componentManager));
   }
 
   /**
@@ -975,7 +963,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     int oldSize = adapters.size();
     for (Element extensionElement : extensionElements) {
-      adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
+      adapters.add(createAdapter(extensionElement, pluginDescriptor, componentManager));
     }
     int newSize = adapters.size();
 

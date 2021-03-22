@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.serviceContainer.processAllImplementationClasses
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.io.exists
@@ -123,9 +123,8 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  processAllImplementationClasses(defaultProject.picoContainer) { aClass, _ ->
+  (defaultProject.picoContainer as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
     processComponents(aClass)
-    true
   }
 
   // fileResolver may return the same file for different storage names (e.g. for IPR project)

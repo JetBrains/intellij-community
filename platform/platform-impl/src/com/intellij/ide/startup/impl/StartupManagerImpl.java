@@ -404,7 +404,19 @@ public class StartupManagerImpl extends StartupManagerEx {
                         ? ((PluginClassLoader)loader).getPluginId().getIdString()
                         : PluginManagerCore.CORE_ID.getIdString();
 
-      runActivity(runnable);
+      ProgressManager.checkCanceled();
+      try {
+        runnable.run();
+      }
+      catch (ServiceNotReadyException e) {
+        LOG.error(new Exception(e));
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
 
       StartUpMeasurer.addCompletedActivity(startTime, runnable.getClass(), ActivityCategory.POST_STARTUP_ACTIVITY, pluginId, StartUpMeasurer.MEASURE_THRESHOLD);
     }

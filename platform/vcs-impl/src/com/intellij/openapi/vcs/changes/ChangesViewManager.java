@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -46,7 +46,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -70,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
@@ -131,13 +131,12 @@ public class ChangesViewManager implements ChangesViewEx,
     }
   }
 
-  public static class ContentPredicate implements NotNullFunction<Project, Boolean> {
+  final static class ContentPredicate implements Predicate<Project> {
     @NotNull
     @Override
-    public Boolean fun(Project project) {
-      if (!ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
-      if (CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab()) return false;
-      return true;
+    public boolean test(Project project) {
+      return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&
+             !CommitModeManager.getInstance(project).getCurrentCommitMode().hideLocalChangesTab();
     }
   }
 
