@@ -45,7 +45,7 @@ class RecordBuilder {
         String annotationsText = generateAnnotationsText(parameterName, fieldAccessors);
         recordComponentsJoiner.add(annotationsText + parameter.getType().getCanonicalText() + " " + parameterName);
       }
-      myRecordText.append(recordComponentsJoiner.toString());
+      myRecordText.append(recordComponentsJoiner);
     }
     myRecordText.append(")");
   }

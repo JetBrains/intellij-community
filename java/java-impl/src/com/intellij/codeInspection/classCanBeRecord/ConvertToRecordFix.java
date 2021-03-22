@@ -236,11 +236,18 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     private RecordConstructorCandidate(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
       myConstructor = constructor;
 
-      if (constructor.getTypeParameters().length > 0) {
+      if (myConstructor.getTypeParameters().length > 0) {
         myCanonical = false;
         return;
       }
       PsiParameter[] ctorParams = myConstructor.getParameterList().getParameters();
+      Set<String> instanceFieldNames = instanceFields.stream().map(PsiField::getName).collect(Collectors.toSet());
+      for (PsiParameter param : ctorParams) {
+        if (!instanceFieldNames.contains(param.getName())) {
+          myCanonical = false;
+          return;
+        }
+      }
       Map<String, PsiType> ctorParamsWithType = Arrays.stream(ctorParams)
         .collect(Collectors.toMap(param -> param.getName(), param -> param.getType(), (first, second) -> first));
       if (ctorParams.length != ctorParamsWithType.size()) {
