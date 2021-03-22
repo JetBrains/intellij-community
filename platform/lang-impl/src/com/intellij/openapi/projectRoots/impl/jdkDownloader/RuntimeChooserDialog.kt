@@ -195,18 +195,21 @@ class RuntimeChooserDialog(
               jdkInstallDirSelector.setButtonEnabled(true)
               jdkInstallDirSelector.isEditable = true
               jdkInstallDirSelector.isEnabled = true
+              jdkInstallDirSelector.setButtonVisible(true)
             }
             is RuntimeChooserItemWithFixedLocation -> {
               jdkInstallDirSelector.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
               jdkInstallDirSelector.setButtonEnabled(false)
               jdkInstallDirSelector.isEditable = false
               jdkInstallDirSelector.isEnabled = false
+              jdkInstallDirSelector.setButtonVisible(false)
             }
             else -> {
               jdkInstallDirSelector.text = ""
               jdkInstallDirSelector.setButtonEnabled(false)
               jdkInstallDirSelector.isEditable = false
               jdkInstallDirSelector.isEnabled = false
+              jdkInstallDirSelector.setButtonVisible(false)
             }
           }
         }
