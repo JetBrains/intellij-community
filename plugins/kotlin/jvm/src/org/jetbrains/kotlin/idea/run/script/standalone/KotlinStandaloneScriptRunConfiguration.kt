@@ -69,36 +69,43 @@ class KotlinStandaloneScriptRunConfiguration(
 
     override fun getVMParameters() = vmParameters
     override fun setVMParameters(value: String?) {
+        super.setVMParameters(value)
         vmParameters = value
     }
 
     override fun getAlternativeJrePath() = alternativeJrePath
     override fun setAlternativeJrePath(path: String?) {
+        super.setAlternativeJrePath(path)
         alternativeJrePath = path
     }
 
     override fun getProgramParameters() = programParameters
     override fun setProgramParameters(value: String?) {
+        super.setProgramParameters(value)
         programParameters = value
     }
 
     override fun getEnvs() = envs
     override fun setEnvs(envs: MutableMap<String, String>) {
+        super.setEnvs(envs)
         this.envs = envs
     }
 
     override fun getWorkingDirectory() = workingDirectory
     override fun setWorkingDirectory(value: String?) {
+        super.setWorkingDirectory(value)
         workingDirectory = value
     }
 
     override fun isPassParentEnvs() = passParentEnvs
     override fun setPassParentEnvs(passParentEnvs: Boolean) {
+        super.setPassParentEnvs(passParentEnvs)
         this.passParentEnvs = passParentEnvs
     }
 
     override fun isAlternativeJrePathEnabled() = isAlternativeJrePathEnabled
     override fun setAlternativeJrePathEnabled(enabled: Boolean) {
+        super.setAlternativeJrePathEnabled(enabled)
         isAlternativeJrePathEnabled = enabled
     }
 

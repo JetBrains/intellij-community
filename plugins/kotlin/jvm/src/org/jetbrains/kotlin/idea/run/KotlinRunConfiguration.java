@@ -69,7 +69,11 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode;
 import java.util.*;
 
 @SuppressWarnings("deprecation")
-public class KotlinRunConfiguration extends JetRunConfiguration implements InputRedirectAware {
+public class KotlinRunConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
+        implements CommonJavaRunConfigurationParameters,
+                   RefactoringListenerProvider, InputRedirectAware {
+    public String MAIN_CLASS_NAME;
+    public String WORKING_DIRECTORY;
     public String VM_PARAMETERS;
     public String PROGRAM_PARAMETERS;
     public boolean ALTERNATIVE_JRE_PATH_ENABLED;
@@ -102,7 +106,7 @@ public class KotlinRunConfiguration extends JetRunConfiguration implements Input
         }
     };
 
-    private Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+    private Map<String, String> myEnvs = new LinkedHashMap<>();
 
     public KotlinRunConfiguration(String name, JavaRunConfigurationModule runConfigurationModule, ConfigurationFactory factory) {
         super(name, runConfigurationModule, factory);
@@ -123,10 +127,10 @@ public class KotlinRunConfiguration extends JetRunConfiguration implements Input
     @NotNull
     @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-        SettingsEditorGroup<KotlinRunConfiguration> group = new SettingsEditorGroup<KotlinRunConfiguration>();
+        SettingsEditorGroup<KotlinRunConfiguration> group = new SettingsEditorGroup<>();
         group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new KotlinRunConfigurationEditor(getProject()));
         JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-        group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<KotlinRunConfiguration>());
+        group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
         return group;
     }
 
@@ -137,6 +141,9 @@ public class KotlinRunConfiguration extends JetRunConfiguration implements Input
 
         JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
         DefaultJDOMExternalizer.readExternal(this, element);
+        if (WORKING_DIRECTORY == null) {
+            setWorkingDirectory(getProject().getBasePath());
+        }
 
         readModule(element);
         EnvironmentVariablesComponent.readExternal(element, getEnvs());
@@ -151,6 +158,16 @@ public class KotlinRunConfiguration extends JetRunConfiguration implements Input
         writeModule(element);
         EnvironmentVariablesComponent.writeExternal(element, getEnvs());
         PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
+    }
+
+    @Override
+    public void setWorkingDirectory(@Nullable String value) {
+        WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    }
+
+    @Override
+    public @Nullable String getWorkingDirectory() {
+        return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
     }
 
     @Override
@@ -338,7 +355,7 @@ public class KotlinRunConfiguration extends JetRunConfiguration implements Input
         return CollectionsKt.filterNotNull(
                 ArraysKt.map(
                         psiClass.getAllMethods(),
-                        new Function1<PsiMethod, KtNamedFunction>() {
+                        new Function1<>() {
                             @Override
                             public KtNamedFunction invoke(PsiMethod method) {
                                 if (!(method instanceof KtLightMethod)) return null;
