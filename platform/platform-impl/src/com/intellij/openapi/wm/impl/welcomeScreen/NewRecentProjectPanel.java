@@ -91,7 +91,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             group.setExpanded(true);
             ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
             int index = list.getSelectedIndex();
-            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
             list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
           }
         } else {
@@ -121,7 +121,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
           group.setExpanded(false);
           int index = list.getSelectedIndex();
           ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
-          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+          RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(model);
           list.setSelectedIndex(index);
         }
       }
