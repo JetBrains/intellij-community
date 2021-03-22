@@ -27,7 +27,7 @@ class KtQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::clas
         is HLQuickFixFactory.HLApplicatorBasedFactory -> {
             @Suppress("UNCHECKED_CAST")
             val factory = quickFixFactory.applicatorFactory
-                    as HLDiagnosticFixFactory<PsiElement, KtDiagnosticWithPsi<PsiElement>, PsiElement, HLApplicatorInput>
+                    as HLDiagnosticFixFactory<PsiElement, KtDiagnosticWithPsi<PsiElement>>
             createPlatformQuickFixes(diagnostic, factory)
         }
         is HLQuickFixFactory.HLQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
@@ -63,8 +63,8 @@ class KtQuickFixesListBuilder private constructor() {
     }
 
     @OptIn(PrivateForInline::class)
-    inline fun <DIAGNOSTIC_PSI : PsiElement, reified DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>, TARGET_PSI : PsiElement, INPUT : HLApplicatorInput> registerApplicator(
-        quickFixFactory: HLDiagnosticFixFactory<DIAGNOSTIC_PSI, DIAGNOSTIC, TARGET_PSI, INPUT>
+    inline fun <DIAGNOSTIC_PSI : PsiElement, reified DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerApplicator(
+        quickFixFactory: HLDiagnosticFixFactory<DIAGNOSTIC_PSI, DIAGNOSTIC>
     ) {
         registerApplicator(DIAGNOSTIC::class, quickFixFactory)
     }
@@ -79,9 +79,9 @@ class KtQuickFixesListBuilder private constructor() {
 
 
     @PrivateForInline
-    fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>, TARGET_PSI : PsiElement, INPUT : HLApplicatorInput> registerApplicator(
+    fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerApplicator(
         diagnosticClass: KClass<DIAGNOSTIC>,
-        quickFixFactory: HLDiagnosticFixFactory<DIAGNOSTIC_PSI, DIAGNOSTIC, TARGET_PSI, INPUT>
+        quickFixFactory: HLDiagnosticFixFactory<DIAGNOSTIC_PSI, DIAGNOSTIC>
     ) {
         quickFixes.getOrPut(diagnosticClass) { mutableListOf() }
             .add(HLQuickFixFactory.HLApplicatorBasedFactory(quickFixFactory))
@@ -102,7 +102,7 @@ sealed class HLQuickFixFactory {
     ) : HLQuickFixFactory()
 
     class HLApplicatorBasedFactory(
-        val applicatorFactory: HLDiagnosticFixFactory<*, *, *, *>
+        val applicatorFactory: HLDiagnosticFixFactory<*, *>
     ) : HLQuickFixFactory()
 }
 
@@ -118,4 +118,4 @@ private fun <K, V> List<Map<K, List<V>>>.merge(): Map<K, List<V>> {
 }
 
 @RequiresOptIn
-annotation class ForKtQuickFixesListBuilder()
+annotation class ForKtQuickFixesListBuilder
