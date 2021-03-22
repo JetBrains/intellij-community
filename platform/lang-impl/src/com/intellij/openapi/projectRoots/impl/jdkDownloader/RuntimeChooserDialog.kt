@@ -51,7 +51,7 @@ class RuntimeChooserDialog(
 
   init {
     title = LangBundle.message("dialog.title.choose.ide.runtime")
-    isResizable = false
+    setResizable(false)
     init()
     initClipboardListener()
   }
