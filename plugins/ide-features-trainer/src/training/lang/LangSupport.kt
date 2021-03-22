@@ -40,12 +40,6 @@ interface LangSupport {
   fun copyLearningProjectFiles(projectDirectory: File, destinationFilter: FileFilter? = null): Boolean
 
   /**
-   * @return true iff newly created project should be marked as trusted after creation. Otherwise project will have UNSURE status.
-   * @see com.intellij.ide.impl.TrustedProjectSettings
-   */
-  fun isTrusted(project: Project): Boolean = true
-
-  /**
    * Implement that method to define SDK lookup depending on a given project.
    *
    * @return an SDK instance which (existing or newly created) should be applied to the project given. Return `null`
