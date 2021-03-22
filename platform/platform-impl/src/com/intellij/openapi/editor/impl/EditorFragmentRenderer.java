@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -240,7 +241,7 @@ class EditorFragmentRenderer {
         int h = lineHeight - 2;
 
         EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
-        Font font = UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), Font.PLAIN, colorsScheme.getEditorFontSize());
+        Font font = UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.PLAIN));
         g2d.setFont(font.deriveFont(font.getSize() * .8F));
 
         for (RangeHighlighterEx ex : myHighlighters) {

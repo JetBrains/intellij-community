@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -99,7 +100,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
     int fontStyle = attributes == null ? Font.PLAIN : attributes.getFontType();
-    return UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), fontStyle, colorsScheme.getEditorFontSize());
+    return UIUtil.getFontWithFallback(colorsScheme.getFont(EditorFontType.forJavaStyle(fontStyle)));
   }
 
 
