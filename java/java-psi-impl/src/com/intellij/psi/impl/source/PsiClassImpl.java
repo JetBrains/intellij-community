@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
@@ -85,6 +86,10 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiElement getOriginalElement() {
+    if (DumbService.isDumb(getProject())) {
+      // Avoid caching in dumb mode, as JavaPsiImplementationHelper.getOriginalClass depends on it
+      return this;
+    }
     return CachedValuesManager.getCachedValue(this, () -> {
       final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
       final PsiClass result = helper != null ? helper.getOriginalClass(this) : this;
