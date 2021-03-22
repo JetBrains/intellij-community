@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
+import com.intellij.ide.externalComponents.ExternalComponentSource
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
@@ -43,9 +45,11 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
-import kotlin.Pair
 import kotlin.Result
 import kotlin.concurrent.withLock
+
+private typealias PluginResults = Triple<PluginUpdates, Collection<IdeaPluginDescriptor>, Map<String?, Exception>>
+private typealias ExternalResults = Pair<Collection<ExternalUpdate>, Map<ExternalComponentSource, Exception>>
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -125,41 +129,45 @@ object UpdateChecker {
   private fun doUpdateAndShowResult(project: Project?,
                                     showSettingsLink: Boolean,
                                     showDialog: Boolean,
-                                    reportNoUpdates: Boolean,
+                                    showResult: Boolean,
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
     indicator?.text = IdeBundle.message("updates.checking.platform")
     val platformUpdates = checkForPlatformUpdates(updateSettings, indicator)
     if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR) {
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message ?: "internal error"))
+      if (showResult) {
+        showErrors(project, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message), showDialog)
+      }
       callback?.setRejected()
       return
     }
 
     indicator?.text = IdeBundle.message("updates.checking.plugins")
-    val (pluginUpdates, customRepoPlugins) = try {
-      checkForPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
-    }
-    catch (e: IOException) {
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e.message))
-      callback?.setRejected()
-      return
-    }
+    val (pluginUpdates, customRepoPlugins, pluginErrors) = checkForPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
 
     indicator?.text = IdeBundle.message("updates.external.progress")
-    val externalUpdates = try {
-      findExternalUpdates(showDialog, updateSettings, indicator)
-    }
-    catch (e: IOException) {
-      showErrorMessage(showDialog, IdeBundle.message("updates.error.connection.failed", e.message))
-      callback?.setRejected()
-      return
-    }
+    val (externalUpdates, externalErrors) = checkForExternalUpdates(updateSettings, indicator)
 
     UpdateSettings.getInstance().saveLastCheckedInfo()
+
+    if (showResult && (pluginErrors.isNotEmpty() || externalErrors.isNotEmpty())) {
+      val builder = HtmlBuilder()
+      pluginErrors.forEach { (host, ex) ->
+        if (!builder.isEmpty) builder.br()
+        builder.append(
+          if (host == null) IdeBundle.message("updates.plugins.error.message1", ex.message)
+          else IdeBundle.message("updates.plugins.error.message2", host, ex.message))
+      }
+      externalErrors.forEach { (source, ex) ->
+        if (!builder.isEmpty) builder.br()
+        builder.append(IdeBundle.message("updates.external.error.message", source.name, ex.message))
+      }
+      showErrors(project, builder.wrapWithHtmlBody().toString(), showDialog)
+    }
+
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, platformUpdates, pluginUpdates, customRepoPlugins, externalUpdates, showSettingsLink, showDialog, reportNoUpdates)
+      showUpdateResult(project, platformUpdates, pluginUpdates, customRepoPlugins, externalUpdates, showSettingsLink, showDialog, showResult)
       callback?.setDone()
     }
   }
@@ -219,7 +227,7 @@ object UpdateChecker {
   fun findPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginUpdates =
     checkForPluginUpdates(buildNumber, indicator).first
 
-  private fun checkForPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): Pair<PluginUpdates, Collection<IdeaPluginDescriptor>> {
+  private fun checkForPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginResults {
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
       val brokenPlugins = getBrokenPlugins()
       if (brokenPlugins.isNotEmpty()) {
@@ -228,19 +236,20 @@ object UpdateChecker {
     }
 
     val updateable = collectUpdateablePlugins().ifEmpty {
-      return PluginUpdates(emptyList(), emptyList(), emptyList()) to emptyList()
+      return PluginResults(PluginUpdates(emptyList(), emptyList(), emptyList()), emptyList(), emptyMap())
     }
 
     val toUpdate = HashMap<PluginId, PluginDownloader>()
     val toUpdateDisabled = HashMap<PluginId, PluginDownloader>()
     val customRepoPlugins = HashMap<PluginId, IdeaPluginDescriptor>()
+    val errors = LinkedHashMap<String?, Exception>()
     val state = InstalledPluginsState.getInstance()
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
           validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator)
         }
-        else {
+        else if (host != "__BUILTIN_PLUGINS_URL__") {
           val list = RepositoryHelper.loadPlugins(host, buildNumber, indicator)
           for (descriptor in list) {
             val id = descriptor.pluginId
@@ -255,8 +264,9 @@ object UpdateChecker {
           }
         }
       }
-      catch (e: IOException) {
-        LOG.info("failed to load plugin descriptions from ${host ?: "default repository"}: ${e.message}", if (LOG.isDebugEnabled) e else null)
+      catch (e: Exception) {
+        LOG.info("failed to load plugins from ${host ?: "default repository"}: ${e.message}", if (LOG.isDebugEnabled) e else null)
+        errors[host] = e
       }
     }
 
@@ -269,7 +279,7 @@ object UpdateChecker {
         .toSet()
     }
 
-    return PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible) to customRepoPlugins.values
+    return PluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible), customRepoPlugins.values, errors)
   }
 
   private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
@@ -388,10 +398,14 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun findExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> {
-    val result = arrayListOf<ExternalUpdate>()
-    val manager = ExternalComponentManager.getInstance()
+  fun findExternalUpdates(updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> =
+    checkForExternalUpdates(updateSettings, indicator).first
 
+  private fun checkForExternalUpdates(updateSettings: UpdateSettings, indicator: ProgressIndicator?): ExternalResults {
+    val result = ArrayList<ExternalUpdate>()
+    val errors = LinkedHashMap<ExternalComponentSource, Exception>()
+
+    val manager = ExternalComponentManager.getInstance()
     for (source in ExternalComponentManager.getComponentSources()) {
       indicator?.checkCanceled()
       try {
@@ -402,12 +416,12 @@ object UpdateChecker {
         }
       }
       catch (e: Exception) {
-        LOG.warn(e)
-        showErrorMessage(manualCheck, IdeBundle.message("updates.external.error.message", source.name, e.message ?: "internal error"))
+        LOG.info("failed to load updates for ${source}: ${e.message}", if (LOG.isDebugEnabled) e else null)
+        errors[source] = e
       }
     }
 
-    return result
+    return ExternalResults(result, errors)
   }
 
   @JvmStatic
@@ -477,10 +491,12 @@ object UpdateChecker {
     }
   }
 
-  private fun showErrorMessage(showDialog: Boolean, @NlsContexts.DialogMessage message: String) {
-    LOG.info(message)
+  private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: String, showDialog: Boolean) {
     if (showDialog) {
-      UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title")) }
+      UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(project, message, IdeBundle.message("updates.error.connection.title")) }
+    }
+    else {
+      getNotificationGroup().createNotification(message, NotificationType.WARNING).notify(project)
     }
   }
 
