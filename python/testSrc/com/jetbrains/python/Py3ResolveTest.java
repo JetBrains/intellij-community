@@ -836,4 +836,10 @@ public class Py3ResolveTest extends PyResolveTestCase {
     PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
     assertEquals("self.foo = 1", target.getParent().getText());
   }
+
+  public void testInstanceAttrBelowInInitAndOtherMethodAbove() {
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
+    final PyFunction function = assertInstanceOf(ScopeUtil.getScopeOwner(target), PyFunction.class);
+    assertEquals("g", function.getName());
+  }
 }
