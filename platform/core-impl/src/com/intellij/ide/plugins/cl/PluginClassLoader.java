@@ -404,11 +404,6 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
     if (canonicalPath.startsWith("/")) {
       canonicalPath = canonicalPath.substring(1);
-      //noinspection SpellCheckingInspection
-      if (!canonicalPath.startsWith("/org/bridj/")) {
-        String message = "Do not request resource from classloader using path with leading slash";
-        Logger.getInstance(PluginClassLoader.class).error(message, new PluginException(name, pluginId));
-      }
     }
 
     Resource resource = classPath.findResource(canonicalPath);
