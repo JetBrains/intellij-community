@@ -5,12 +5,11 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import icons.GradleIcons
-import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import java.util.function.Supplier
 
 class GradleRuntimeType : LanguageRuntimeType<GradleRuntimeTargetConfiguration>(TYPE_ID) {
@@ -18,9 +17,9 @@ class GradleRuntimeType : LanguageRuntimeType<GradleRuntimeTargetConfiguration>(
 
   override val displayName = "Gradle"
 
-  override val configurableDescription = "Configure Gradle"
+  override val configurableDescription = message("gradle.target.configure.label")
 
-  override val launchDescription = "Run Gradle task"
+  override val launchDescription = message("gradle.target.run.label")
 
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
@@ -48,9 +47,9 @@ class GradleRuntimeType : LanguageRuntimeType<GradleRuntimeTargetConfiguration>(
 
     @JvmStatic
     val PROJECT_FOLDER_VOLUME = VolumeDescriptor(GradleRuntimeType::class.qualifiedName + ":projectFolder",
-                                                 GradleBundle.message("gradle.target.execution.project.folder.label"),
-                                                 GradleBundle.message("gradle.target.execution.project.folder.description"),
-                                                 GradleBundle.message("gradle.target.execution.project.folder.title"),
+                                                 message("gradle.target.execution.project.folder.label"),
+                                                 message("gradle.target.execution.project.folder.description"),
+                                                 message("gradle.target.execution.project.folder.title"),
                                                  "")
   }
 }
