@@ -1744,23 +1744,6 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet intersect(@NotNull LongRangeSet other) {
       LongRangeSet intersection = super.intersect(other);
-      if (intersection instanceof Range || intersection instanceof Point) {
-        long bits = myBits;
-        int mod = myMod;
-        if (other instanceof ModRange) {
-          ModRange modRange = (ModRange)other;
-          int lcm = lcm(modRange.myMod);
-          if (lcm <= Long.SIZE) {
-            bits = widenBits(lcm) & modRange.widenBits(lcm);
-            mod = (byte)lcm;
-          }
-          else if (modRange.myMod > myMod) {
-            bits = modRange.myBits; // new LCM doesn't fit the Long.SIZE: just select bigger mod
-            mod = modRange.myMod;
-          }
-        }
-        return modRange(intersection.min(), intersection.max(), mod, bits);
-      }
       if (intersection instanceof RangeSet) {
         long min = intersection.min();
         long max = intersection.max();
@@ -1779,6 +1762,34 @@ public abstract class LongRangeSet {
             }
           }
         }
+        long[] ranges = ((RangeSet)intersection).myRanges;
+        boolean emptyHoles = true;
+        for (int i = 2; i < ranges.length; i += 2) {
+          if (range(ranges[i - 1] + 1, ranges[i] - 1).intersects(this)) {
+            emptyHoles = false;
+            break;
+          }
+        }
+        if (emptyHoles) {
+          intersection = range(min, max);
+        }
+      }
+      if (intersection instanceof Range || intersection instanceof Point) {
+        long bits = myBits;
+        int mod = myMod;
+        if (other instanceof ModRange) {
+          ModRange modRange = (ModRange)other;
+          int lcm = lcm(modRange.myMod);
+          if (lcm <= Long.SIZE) {
+            bits = widenBits(lcm) & modRange.widenBits(lcm);
+            mod = (byte)lcm;
+          }
+          else if (modRange.myMod > myMod) {
+            bits = modRange.myBits; // new LCM doesn't fit the Long.SIZE: just select bigger mod
+            mod = modRange.myMod;
+          }
+        }
+        return modRange(intersection.min(), intersection.max(), mod, bits);
       }
       return intersection;
     }

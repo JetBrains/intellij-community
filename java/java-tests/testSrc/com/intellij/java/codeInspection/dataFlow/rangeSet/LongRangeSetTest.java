@@ -781,6 +781,7 @@ public class LongRangeSetTest {
     assertEquals("{5..15}: <5> mod 10", set.intersect(modRange(0, 24, 5, 0b1)).toString());
     assertEquals("{3..24}: <3, 4, 12, 13, 15, 22, 24, 25> mod 30", set.intersect(modRange(0, 24, 3, 0b11)).toString());
     assertEquals("{3..15}: <0, 3, 4, 12, 13> mod 15", set.intersect(modRange(0, 16, 3, 0b11)).toString());
+    assertEquals("{1..99}: odd", range(0, 100).without(10).intersect(modRange(-200, 200, 2, 0b10)).toString());
     
     LongRangeSet even = modRange(0, 15, 2, 0b1);
     even = even.intersect(point(10).fromRelation(RelationType.NE));
