@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -270,10 +270,12 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
+        val searchScope = PsiSearchHelper.getInstance(functionPsi.project).getUseScope(functionPsi)
+
         changeInfo.oldName?.let { oldName ->
             TextOccurrencesUtil.findNonCodeUsages(
                 functionPsi,
-                GlobalSearchScope.projectScope(functionPsi.project),
+                searchScope,
                 oldName,
                 /* searchInStringsAndComments = */true,
                 /* searchInNonJavaFiles = */true,
