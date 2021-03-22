@@ -1,7 +1,11 @@
-package com.intellij.ml.local.actions
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.ml.local
 
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.ml.local.MlLocalModelsBundle
 import com.intellij.ml.local.models.LocalModelsTraining
 import com.intellij.notification.Notification
@@ -12,24 +16,42 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import java.util.concurrent.atomic.AtomicInteger
 
-internal class IndexingFinishedListener : IndexDiagnosticDumper.ProjectIndexingHistoryListener {
+
+internal class CompletionSessionsCounter : LookupManagerListener {
   companion object {
     private const val NOTIFICATION_EXPIRED_KEY = "ml.local.models.training.notification.expired"
     private const val SHOW_NOTIFICATION_REGISTRY = "ml.local.models.show.notification"
+    private const val MIN_SESSIONS_COUNT = 10
   }
 
-  override fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory) {
-    if (Registry.`is`(SHOW_NOTIFICATION_REGISTRY, false)) {
-      val project = projectIndexingHistory.project
-      val language = Language.findLanguageByID("JAVA") ?: return
-      val isJavaProject = ModuleManager.getInstance(project).modules.any {
-        it.moduleTypeName == ModuleTypeId.JAVA_MODULE
+  private val counter = AtomicInteger()
+  private var isJavaProject = false
+
+  override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
+    if (newLookup == null && oldLookup != null) {
+      val project = oldLookup.project
+      val properties = PropertiesComponent.getInstance(project)
+
+      if (!Registry.`is`(SHOW_NOTIFICATION_REGISTRY, false) || properties.getBoolean(NOTIFICATION_EXPIRED_KEY)) {
+        return
       }
-      if (isJavaProject && !PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_EXPIRED_KEY)) {
-        TrainingNotification(project, language).notify(project)
+
+      if (counter.get() == 0) {
+        isJavaProject = ModuleManager.getInstance(project).modules.any {
+          it.moduleTypeName == ModuleTypeId.JAVA_MODULE
+        }
+      } else if (!isJavaProject) {
+        return
+      }
+
+      if (oldLookup.items.any { it.psiElement is PsiMethod || it.psiElement is PsiClass } &&
+          counter.incrementAndGet() >= MIN_SESSIONS_COUNT) {
+        properties.setValue(NOTIFICATION_EXPIRED_KEY, true)
+        TrainingNotification(project, JavaLanguage.INSTANCE).notify(project)
       }
     }
   }
@@ -43,21 +65,15 @@ internal class IndexingFinishedListener : IndexDiagnosticDumper.ProjectIndexingH
     init {
       addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.ok")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notificationExpired(project)
           LocalModelsTraining.train(project, language)
           notification.expire()
         }
       })
       addAction(object : NotificationAction(MlLocalModelsBundle.message("ml.local.models.notification.cancel")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notificationExpired(project)
           notification.expire()
         }
       })
-    }
-
-    private fun notificationExpired(project: Project) {
-      PropertiesComponent.getInstance(project).setValue(NOTIFICATION_EXPIRED_KEY, true)
     }
   }
 }
