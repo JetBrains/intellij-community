@@ -6,9 +6,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-@SuppressWarnings("HardCodedStringLiteral")
 public final class MockLanguageFileType extends LanguageFileType {
-  public static LanguageFileType INSTANCE = new MockLanguageFileType();
+  public static final LanguageFileType INSTANCE = new MockLanguageFileType();
 
   private MockLanguageFileType() {
     super(Language.ANY);
@@ -23,6 +22,7 @@ public final class MockLanguageFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
+    //noinspection HardCodedStringLiteral
     return "Mock";
   }
 

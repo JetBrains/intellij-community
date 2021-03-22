@@ -243,7 +243,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
   }
 
-  // returns runnable to execute under write action in AWT to finish the commit, updates "outChangedRange"
+  // returns runnable to execute under write action in AWT to finish the commit
   @NotNull
   private static BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,

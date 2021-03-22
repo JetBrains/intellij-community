@@ -471,25 +471,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return true; // the project must be closing or file deleted
     }
 
-    Runnable runnable = () -> {
-      myIsCommitInProgress.set(true);
-      try {
-        myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile);
-      }
-      finally {
-        myIsCommitInProgress.set(null);
-      }
-      assert !isInUncommittedSet(document) : "Document :" + document;
-    };
-
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      ApplicationManager.getApplication().runWriteAction(() -> doCommit(document, psiFile));
     }
     else {
-      runnable.run();
+      doCommit(document, psiFile);
     }
 
     return true;
+  }
+
+  private void doCommit(@NotNull Document document, @NotNull PsiFile psiFile) {
+    myIsCommitInProgress.set(true);
+    try {
+      myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile);
+    }
+    finally {
+      myIsCommitInProgress.set(null);
+    }
+    assert !isInUncommittedSet(document) : "Document :" + document;
   }
 
   // true if the PSI is being modified and events being sent
