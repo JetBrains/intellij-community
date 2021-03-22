@@ -1,9 +1,0 @@
-<idea-plugin>
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsProvider
-      id="spaceScriptDefinitionsProvider"
-      implementation="com.intellij.space.plugins.pipelines.services.SpaceScriptDefinitionsProvider"
-      order="first"
-    />
-  </extensions>
-</idea-plugin>
