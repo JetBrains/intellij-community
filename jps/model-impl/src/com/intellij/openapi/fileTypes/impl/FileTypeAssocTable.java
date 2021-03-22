@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public final class FileTypeAssocTable<T> {
@@ -29,15 +30,11 @@ public final class FileTypeAssocTable<T> {
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
                              @NotNull Map<String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
-    myExtensionMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, extensionMappings.size()), 0.5f);
-    myExtensionMappings.putAll(extensionMappings);
-    myExactFileNameMappings = CollectionFactory.createCharSequenceMap(true, Math.max(10, exactFileNameMappings.size()), 0.5f);
-    myExactFileNameMappings.putAll(exactFileNameMappings);
-    myExactFileNameAnyCaseMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f);
-    myExactFileNameAnyCaseMappings.putAll(exactFileNameAnyCaseMappings);
-    myHashBangMap = CollectionFactory.createSmallMemoryFootprintMap(Math.max(10, hashBangMap.size()), 0.5f);
-    myHashBangMap.putAll(hashBangMap);
-    myMatchingMappings = new ArrayList<>(matchingMappings);
+    myExtensionMappings = createCharSequenceConcurrentMap(extensionMappings);
+    myExactFileNameMappings = new ConcurrentHashMap<>(exactFileNameMappings);
+    myExactFileNameAnyCaseMappings = createCharSequenceConcurrentMap(exactFileNameAnyCaseMappings);
+    myHashBangMap = new ConcurrentHashMap<>(hashBangMap);
+    myMatchingMappings = Collections.synchronizedList(new ArrayList<>(matchingMappings));
   }
 
   public FileTypeAssocTable() {
@@ -75,11 +72,9 @@ public final class FileTypeAssocTable<T> {
       myMatchingMappings.add(Pair.create(matcher, type));
       return null;
     }
-    else {
-      Pair<FileNameMatcher, T> old = myMatchingMappings.get(i);
-      myMatchingMappings.set(i, Pair.create(matcher, type));
-      return Pair.getSecond(old);
-    }
+    Pair<FileNameMatcher, T> old = myMatchingMappings.get(i);
+    myMatchingMappings.set(i, Pair.create(matcher, type));
+    return Pair.getSecond(old);
   }
 
   void addHashBangPattern(@NotNull String hashBang, @NotNull T type) {
@@ -288,5 +283,12 @@ public final class FileTypeAssocTable<T> {
   @NotNull
   Map<String, T> getInternalRawHashBangPatterns() {
     return CollectionFactory.createSmallMemoryFootprintMap(myHashBangMap);
+  }
+
+  private static @NotNull <T> Map<CharSequence, T> createCharSequenceConcurrentMap(@NotNull Map<? extends CharSequence, ? extends T> source) {
+    // todo convert to ConcurrentCollectionFactory when it's available in the classpath
+    Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(false, source.size(), 0.5f);
+    map.putAll(source);
+    return Collections.synchronizedMap(map);
   }
 }
