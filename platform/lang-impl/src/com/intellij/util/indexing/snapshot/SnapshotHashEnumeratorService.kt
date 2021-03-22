@@ -32,6 +32,29 @@ internal class SnapshotHashEnumeratorService : Closeable {
     fun release()
   }
 
+  private inner class HashEnumeratorHandleImpl(private val requestorIndexId: ID<*, *>): HashEnumeratorHandle {
+    override fun enumerateHash(digest: ByteArray): Int = contentHashEnumerator!!.enumerate(digest)
+
+    override fun release() {
+      lock.withLock {
+        handles.remove(this)
+        LOG.assertTrue(state != State.CLOSED, "handle is released for closed enumerator")
+      }
+    }
+
+    override fun equals(other: Any?): Boolean {
+      return other is HashEnumeratorHandleImpl && other.requestorIndexId == requestorIndexId
+    }
+
+    override fun hashCode(): Int {
+      return requestorIndexId.hashCode()
+    }
+
+    override fun toString(): String {
+      return "handle for ${requestorIndexId.name}"
+    }
+  }
+
   @Volatile
   private var state: State = State.CLOSED
 
@@ -87,25 +110,10 @@ internal class SnapshotHashEnumeratorService : Closeable {
   }
 
   fun createHashEnumeratorHandle(requestorIndexId: ID<*, *>): HashEnumeratorHandle {
-    val handle = object : HashEnumeratorHandle {
-      override fun enumerateHash(digest: ByteArray): Int = contentHashEnumerator!!.enumerate(digest)
-
-      override fun release() {
-        lock.withLock {
-          handles.remove(this)
-          LOG.assertTrue(state != State.CLOSED, "handle is released for closed enumerator")
-        }
-      }
-
-      override fun toString(): String {
-        return "handle for ${requestorIndexId.name}"
-      }
-    }
-
+    val handle = HashEnumeratorHandleImpl(requestorIndexId)
     lock.withLock {
       handles.add(handle)
     }
-
     return handle
   }
 }
