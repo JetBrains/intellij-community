@@ -37,17 +37,25 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   @Nullable
-  public ObjectStubTree<?> readOrBuild(Project project, final VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
     ObjectStubTree<?> fromIndices = readFromVFile(project, vFile);
     if (fromIndices != null) {
       return fromIndices;
     }
 
+    return build(project, vFile, psiFile);
+  }
+
+  @Override
+  public @Nullable ObjectStubTree<?> build(@Nullable Project project,
+                                           @NotNull VirtualFile vFile,
+                                           @Nullable PsiFile psiFile) {
     try {
       byte[] content = vFile.contentsToByteArray();
       return vFile.computeWithPreloadedContentHint(content, () -> {
         FileContentImpl fc = (FileContentImpl)FileContentImpl.createByContent(vFile, content);
         if (project != null) {
+          LOG.assertTrue(!project.isDefault());
           fc.setProject(project);
         }
         if (psiFile != null && !vFile.getFileType().isBinary()) {
@@ -85,7 +93,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   @Nullable
-  public ObjectStubTree<?> readFromVFile(Project project, final VirtualFile vFile) {
+  public ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
     if (DumbService.getInstance(project).isDumb() || NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       return null;
     }

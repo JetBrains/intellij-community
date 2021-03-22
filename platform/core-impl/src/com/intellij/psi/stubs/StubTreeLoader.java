@@ -34,10 +34,13 @@ public abstract class StubTreeLoader {
   }
 
   @Nullable
-  public abstract ObjectStubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable final PsiFile psiFile);
+  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
 
   @Nullable
-  public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
+  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable final PsiFile psiFile);
+
+  @Nullable
+  public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
 
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 

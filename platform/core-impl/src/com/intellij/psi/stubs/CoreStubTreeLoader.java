@@ -27,7 +27,6 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +37,18 @@ import java.io.IOException;
  */
 public class CoreStubTreeLoader extends StubTreeLoader {
   @Override
-  public ObjectStubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
     if (!canHaveStub(vFile)) {
       return null;
     }
 
+    return build(project, vFile, psiFile);
+  }
+
+  @Override
+  public @Nullable ObjectStubTree<?> build(@Nullable Project project,
+                                           @NotNull VirtualFile vFile,
+                                           @Nullable PsiFile psiFile) {
     try {
       final FileContent fc = FileContentImpl.createByFile(vFile, project);
       final Stub element = StubTreeBuilder.buildStubTree(fc);
@@ -58,7 +64,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
   }
 
   @Override
-  public ObjectStubTree readFromVFile(Project project, VirtualFile vFile) {
+  public ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile) {
     return null;
   }
 
