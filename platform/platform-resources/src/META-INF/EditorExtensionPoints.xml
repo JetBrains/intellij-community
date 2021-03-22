@@ -27,6 +27,8 @@
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
 
+    <extensionPoint dynamic="true" name="generalEditorOptionsCustomizer" interface="com.intellij.application.options.editor.EditorOptionsPageCustomizer"/>
+
     <!--quote handlers-->
     <extensionPoint name="quoteHandler" beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP" dynamic="true">
       <with attribute="className" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>

@@ -301,18 +301,20 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      titledRow(message("group.refactorings")) {
-        row {
-          buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
-                      editorSettings::setVariableInplaceRenameEnabled) {
-            checkBoxGroup(message("radiogroup.rename.local.variables")) {
-              row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
-              row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()
+      if (!EditorOptionsPageCustomizer.EP_NAME.extensions().anyMatch { it.shouldHideRefactoringsSection() }) {
+        titledRow(message("group.refactorings")) {
+          row {
+            buttonGroup(editorSettings::isVariableInplaceRenameEnabled,
+                        editorSettings::setVariableInplaceRenameEnabled) {
+              checkBoxGroup(message("radiogroup.rename.local.variables")) {
+                row { radioButton(message("radiobutton.rename.local.variables.inplace"), value = true) }
+                row { radioButton(message("radiobutton.rename.local.variables.in.dialog"), value = false) }.largeGapAfter()
+              }
             }
           }
+          row { checkBox(preselectCheckBox) }
+          row { checkBox(showInlineDialogForCheckBox) }
         }
-        row { checkBox(preselectCheckBox) }
-        row { checkBox(showInlineDialogForCheckBox) }
       }
       titledRow(message("group.error.highlighting")) {
         row {
