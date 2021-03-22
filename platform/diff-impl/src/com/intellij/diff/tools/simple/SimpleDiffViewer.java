@@ -230,9 +230,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       if (isContentsEqual &&
           !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
       myModel.setChanges(ContainerUtil.notNullize(changes), isContentsEqual);

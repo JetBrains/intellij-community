@@ -427,9 +427,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
       if (isContentsEqual &&
           !DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DISABLE_CONTENTS_EQUALS_NOTIFICATION, myContext, myRequest)) {
-        boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(getContents());
-        boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(getContents());
-        myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
+        myPanel.addNotification(TextDiffViewerUtil.createEqualContentsNotification(getContents()));
       }
 
       IntUnaryOperator foldingLineConvertor = myFoldingModel.getLineNumberConvertor();

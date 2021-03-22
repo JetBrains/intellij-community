@@ -6,6 +6,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.ArrayUtil;
@@ -31,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -133,6 +136,17 @@ public final class TextDiffViewerUtil {
       }
       LOG.warn(message.toString());
     }
+  }
+
+  @Nullable
+  public static JPanel createEqualContentsNotification(@NotNull List<? extends DocumentContent> contents) {
+    boolean isPartialPreview = ContainerUtil.exists(contents, content ->
+      FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(content.getDocument()));
+    if (isPartialPreview) return null;
+
+    boolean equalCharsets = areEqualCharsets(contents);
+    boolean equalSeparators = areEqualLineSeparators(contents);
+    return DiffNotifications.createEqualContents(equalCharsets, equalSeparators);
   }
 
   public static boolean areEqualLineSeparators(@NotNull List<? extends DiffContent> contents) {

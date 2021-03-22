@@ -118,7 +118,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     updateNotifications();
   }
 
-  public void addNotification(@NotNull JComponent notification) {
+  public void addNotification(@Nullable JComponent notification) {
+    if (notification == null) return;
     myNotifications.add(notification);
     updateNotifications();
   }
