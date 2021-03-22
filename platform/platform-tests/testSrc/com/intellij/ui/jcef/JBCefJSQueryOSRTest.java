@@ -35,6 +35,7 @@ public class JBCefJSQueryOSRTest {
 
   @Before
   public void before() {
+    TestScaleHelper.assumeStandalone();
     TestScaleHelper.setSystemProperty("ide.browser.jcef.osr.enabled", "true");
   }
 

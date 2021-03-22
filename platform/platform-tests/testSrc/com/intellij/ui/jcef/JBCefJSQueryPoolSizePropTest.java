@@ -5,6 +5,7 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.jcef.JBCefClient.Properties;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -28,10 +29,13 @@ public class JBCefJSQueryPoolSizePropTest {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @Test
   public void test1() {
-    TestScaleHelper.assumeStandalone();
-
     test(client -> {
       client.setProperty(Properties.JS_QUERY_POOL_SIZE, 1);
       return null;
@@ -40,8 +44,6 @@ public class JBCefJSQueryPoolSizePropTest {
 
   @Test
   public void test2() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefJSQueryPoolSizePropTest.test(client -> {
       client.setProperty(Properties.JS_QUERY_POOL_SIZE, Integer.MAX_VALUE); // stress test
       return null;

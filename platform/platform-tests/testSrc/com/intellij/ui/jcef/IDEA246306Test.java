@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -27,6 +28,11 @@ public class IDEA246306Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreProperties();
@@ -34,8 +40,6 @@ public class IDEA246306Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     new MyBrowser();
     new MyBrowser();
   }
