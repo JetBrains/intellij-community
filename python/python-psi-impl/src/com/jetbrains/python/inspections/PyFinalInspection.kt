@@ -209,9 +209,7 @@ class PyFinalInspection : PyInspection() {
       cls.findMethodByName(PyNames.INIT, false, myTypeEvalContext)?.let { init ->
         val attributesInInit = mutableMapOf<String, PyTargetExpression>()
         PyClassImpl.collectInstanceAttributes(init, attributesInInit)
-        instanceFinals.keys.forEach {
-          attributesInInit.remove(it)
-        }
+        attributesInInit.keys.removeAll(instanceFinals.keys)
         instanceFinals += attributesInInit.filterValues { isFinal(it) }
       }
 
