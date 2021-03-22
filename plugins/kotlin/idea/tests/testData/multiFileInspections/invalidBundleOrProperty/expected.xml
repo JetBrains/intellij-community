@@ -5,7 +5,7 @@
     <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
     <entry_point TYPE="method" FQNAME="UnresolvedPropertyReferenceKt void test()"/>
     <problem_class id="KotlinInvalidBundleOrProperty" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>String literal 'foo.baz' doesn't appear to be a valid property key</description>
+    <description>'foo.baz' doesn't appear to be a valid property key</description>
     <highlighted_element>&quot;foo.baz&quot;</highlighted_element>
     <language>kotlin</language>
     <offset>14</offset>
@@ -18,7 +18,7 @@
     <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
     <entry_point TYPE="method" FQNAME="UnresolvedPropertyReferenceKt void test()"/>
     <problem_class id="KotlinInvalidBundleOrProperty" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>String literal 'foo.baz' doesn't appear to be a valid property key</description>
+    <description>'foo.baz' doesn't appear to be a valid property key</description>
     <highlighted_element>&quot;foo.baz&quot;</highlighted_element>
     <language>kotlin</language>
     <offset>14</offset>
@@ -31,7 +31,7 @@
     <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
     <entry_point TYPE="method" FQNAME="UnresolvedPropertyReferenceKt void test()"/>
     <problem_class id="KotlinInvalidBundleOrProperty" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>String literal 'foo.baz' doesn't appear to be a valid property key</description>
+    <description>'foo.baz' doesn't appear to be a valid property key</description>
     <highlighted_element>&quot;foo.baz&quot;</highlighted_element>
     <language>kotlin</language>
     <offset>14</offset>
@@ -44,7 +44,7 @@
     <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
     <entry_point TYPE="method" FQNAME="UnresolvedPropertyReferenceKt void test()"/>
     <problem_class id="KotlinInvalidBundleOrProperty" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>String literal 'foo.baz' doesn't appear to be a valid property key</description>
+    <description>'foo.baz' doesn't appear to be a valid property key</description>
     <highlighted_element>&quot;foo.baz&quot;</highlighted_element>
     <language>kotlin</language>
     <offset>14</offset>
@@ -96,7 +96,7 @@
     <module>testInvalidBundleOrProperty_InvalidBundleOrProperty</module>
     <entry_point TYPE="method" FQNAME="UnresolvedPropertyReferenceKt void test()"/>
     <problem_class id="KotlinInvalidBundleOrProperty" severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
-    <description>String literal 'www' doesn't appear to be a valid property key</description>
+    <description>'www' doesn't appear to be a valid property key</description>
     <highlighted_element>&quot;www&quot;</highlighted_element>
     <language>kotlin</language>
     <offset>15</offset>
