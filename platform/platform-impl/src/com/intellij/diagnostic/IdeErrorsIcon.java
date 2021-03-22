@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon.Blinking;
 import com.intellij.util.SystemProperties;
 
@@ -22,6 +23,7 @@ final class IdeErrorsIcon extends JLabel {
     if (state != null && state != MessagePool.State.NoErrors) {
       setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalErrorRead : myUnreadIcon);
       setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
+      getAccessibleContext().setAccessibleDescription(StringUtil.removeHtmlTags(DiagnosticBundle.message("error.notification.tooltip")));
       if (!myEnableBlink) {
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
