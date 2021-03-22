@@ -104,10 +104,20 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return new FileContentImpl(file, fileType, null, () -> content, true);
   }
 
-  public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
+  public static @NotNull FileContentImpl createByContent(@NotNull VirtualFile file,
                                                          @NotNull NotNullComputable<byte[]> contentComputable) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     return new FileContentImpl(file, fileType, null, contentComputable, true);
+  }
+
+  public static @NotNull FileContent createByContent(@NotNull VirtualFile file,
+                                                     @NotNull NotNullComputable<byte[]> contentComputable,
+                                                     @Nullable Project project) {
+    FileContentImpl fileContent = createByContent(file, contentComputable);
+    if (project != null) {
+      fileContent.setProject(project);
+    }
+    return fileContent;
   }
 
   public static @NotNull FileContent createByFile(@NotNull VirtualFile file) throws IOException {
@@ -122,15 +132,19 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText) {
+  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, @Nullable Project project) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
-    return new FileContentImpl(file,
-                               fileType,
-                               contentAsText,
-                               () -> {
-                                 throw new IllegalStateException("Content must be converted from 'contentAsText'");
-                               },
-                               false);
+    FileContentImpl content = new FileContentImpl(file,
+                                                  fileType,
+                                                  contentAsText,
+                                                  () -> {
+                                                    throw new IllegalStateException("Content must be converted from 'contentAsText'");
+                                                  },
+                                                  false);
+    if (project != null) {
+      content.setProject(project);
+    }
+    return content;
   }
 
   @NotNull
