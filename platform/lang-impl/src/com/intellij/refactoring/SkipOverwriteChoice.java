@@ -50,6 +50,7 @@ public enum SkipOverwriteChoice {
       RefactoringBundle.message("dialog.message.file.already.exists.in.directory", fileName, targetDirectory.getVirtualFile().getPath());
     int selection = Messages.showDialog(targetDirectory.getProject(), message, title,
                                         getOptions(includeAllCases), 0, Messages.getQuestionIcon());
+    if (selection < 0) return SKIP;
     return values()[selection];
   }
 }
