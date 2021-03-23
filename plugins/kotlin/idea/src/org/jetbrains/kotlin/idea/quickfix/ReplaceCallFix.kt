@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -51,6 +53,11 @@ abstract class ReplaceCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
+        replace(element, project, editor)
+    }
+
+    protected fun replace(element: KtQualifiedExpression?, project: Project, editor: Editor?): KtExpression? {
+        if (element?.selectorExpression == null) return null
         val elvis = element.elvisOrEmpty(notNullNeeded)
         val betweenReceiverAndOperation = element.elementsBetweenReceiverAndOperation().joinToString(separator = "") { it.text }
         val newExpression = KtPsiFactory(element).createExpressionByPattern(
@@ -62,6 +69,7 @@ abstract class ReplaceCallFix(
         if (elvis.isNotEmpty()) {
             replacement.moveCaretToEnd(editor, project)
         }
+        return replacement as? KtExpression
     }
 
     private fun KtQualifiedExpression.elementsBetweenReceiverAndOperation(): List<PsiElement> {
@@ -185,13 +193,38 @@ class ReplaceWithSafeCallForScopeFunctionFix(
     }
 }
 
-class ReplaceWithDotCallFix(expression: KtSafeQualifiedExpression) : ReplaceCallFix(expression, "."), CleanupFix {
+class ReplaceWithDotCallFix(
+    expression: KtSafeQualifiedExpression,
+    private val callChainCount: Int = 0
+) : ReplaceCallFix(expression, "."), CleanupFix {
     override fun getText() = KotlinBundle.message("replace.with.dot.call")
+
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        val element = element ?: return
+        var replaced = replace(element, project, editor) ?: return
+        repeat(callChainCount) {
+            val parent = replaced.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression ?: return
+            replaced = replace(parent, project, editor) ?: return
+        }
+    }
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val qualifiedExpression = diagnostic.psiElement.getParentOfType<KtSafeQualifiedExpression>(strict = false) ?: return null
-            return ReplaceWithDotCallFix(qualifiedExpression)
+
+            var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
+            var callChainCount = 0
+            if (parent != null) {
+                val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL)
+                while (parent is KtQualifiedExpression) {
+                    val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
+                    if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break
+                    callChainCount++
+                    parent = parent.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
+                }
+            }
+
+            return ReplaceWithDotCallFix(qualifiedExpression, callChainCount)
         }
     }
 }
