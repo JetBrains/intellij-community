@@ -23,9 +23,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class PyQualifiedNameCompletionMatcher {
   private static final Logger LOG = Logger.getInstance(PyQualifiedNameCompletionMatcher.class);
@@ -49,13 +47,20 @@ public class PyQualifiedNameCompletionMatcher {
     IndexLookupStats stats = new IndexLookupStats();
     try {
       IdFilter idFilter = IdFilter.getProjectIdFilter(project, true);
+
+      List<String> matchingAttributeNames = new ArrayList<>();
       stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
         ProgressManager.checkCanceled();
         stats.scannedKeys++;
         if (!matcher.attributeMatches(attributeName)) return true;
         stats.matchingKeys++;
-        return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
-                                         attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
+        matchingAttributeNames.add(attributeName);
+        return true;
+      }, moduleMatchingScope, idFilter);
+
+      for (String attributeName : matchingAttributeNames) {
+        stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
+                                  attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
             ProgressManager.checkCanceled();
             VirtualFile vFile = element.getContainingFile().getVirtualFile();
             QualifiedName moduleQualifiedName = findQualifiedNameInClosestRoot(vFile, project);
@@ -79,7 +84,7 @@ public class PyQualifiedNameCompletionMatcher {
             }
             return true;
           });
-      }, moduleMatchingScope, idFilter);
+      }
     }
     catch (ProcessCanceledException e) {
       stats.cancelled = true;
