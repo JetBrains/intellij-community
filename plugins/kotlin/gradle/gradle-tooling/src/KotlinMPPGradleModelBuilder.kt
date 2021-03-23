@@ -662,7 +662,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         androidDeps: Map<String, List<Any>>?,
         gradleSourceSet: Named
     ): Collection<KotlinDependency> {
-        return androidDeps?.get(gradleSourceSet.name)?.map { it ->
+        return androidDeps?.get(gradleSourceSet.name)?.mapNotNull { it ->
             @Suppress("UNCHECKED_CAST")
             val collection = it["getCollection"] as Set<File>?
             if (collection == null) {
@@ -672,7 +672,9 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
                         group = it["getGroup"] as String?
                         version = it["getVersion"] as String?
                     }
-                    file = it["getJar"] as File
+                    file = it["getJar"] as File? ?: return@mapNotNull null.also {
+                        logger.warn("[sync warning] ${gradleSourceSet.name}: $id does not resolve to a jar")
+                    }
                     source = it["getSource"] as File?
                 }
             } else {
