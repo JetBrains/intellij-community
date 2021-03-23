@@ -84,7 +84,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   @NotNull
-  private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
+  private GlobalSearchScope getResolveScopeFromProviders(@NotNull VirtualFile vFile) {
     return myDefaultResolveScopesCache.get(vFile);
   }
 
@@ -160,9 +160,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
   @NotNull
   @Override
-  public GlobalSearchScope getDefaultResolveScope(@NotNull final VirtualFile vFile) {
-    final PsiFile psiFile = myManager.findFile(vFile);
-    assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject;
+  public GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile) {
+    PsiFile psiFile = myManager.findFile(vFile);
+    assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject+"; vFile="+vFile+"; type="+vFile.getFileType();
     return getResolveScopeFromProviders(vFile);
   }
 
@@ -171,9 +171,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     VirtualFile vDirectory;
-    final VirtualFile virtualFile;
-    final PsiFile containingFile;
-    final GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
+    VirtualFile virtualFile;
+    PsiFile containingFile;
+    GlobalSearchScope allScope = GlobalSearchScope.allScope(myManager.getProject());
     if (element instanceof PsiDirectory) {
       vDirectory = ((PsiDirectory)element).getVirtualFile();
       virtualFile = null;
@@ -194,11 +194,11 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
     }
 
     if (vDirectory == null) return allScope;
-    final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
+    ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
     VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
-    final Module module = projectFileIndex.getModuleForFile(notNullVFile);
+    Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
-      final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
+      List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
       if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
         return allScope;
       }
@@ -213,9 +213,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
            : GlobalSearchScope.moduleWithDependentsScope(module);
   }
 
-  private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
-    for (final AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+  private boolean isFromAdditionalLibraries(@NotNull VirtualFile file) {
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
+      for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
         if (library.contains(file)) {
           return true;
         }
