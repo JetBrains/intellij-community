@@ -640,12 +640,14 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       val targetManager = ExecutionTargetManager.getInstance(project)
       if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
         ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage( environment.runProfile, environment.executionTarget)))
+        processNotStarted(environment)
         return
       }
 
       if (!DumbService.isDumb(project)) {
         if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
           if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+            processNotStarted(environment)
             return
           }
           editConfigurationUntilSuccess(environment, assignNewId)
@@ -661,6 +663,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               }
 
               if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+                processNotStarted(environment)
                 return@finishOnUiThread
               }
               editConfigurationUntilSuccess(environment, assignNewId)
@@ -696,6 +699,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           return@finishOnUiThread
         }
         if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+          processNotStarted(environment)
           return@finishOnUiThread
         }
 

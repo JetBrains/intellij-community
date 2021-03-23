@@ -102,11 +102,17 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
         str += (if (failed > 0) ", " else "")
         str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)
       }
+
+      val failedToStartMessages = problems.mapNotNull { it.predefinedMessage }.joinToString { it }
+      if (failedToStartMessages.isNotEmpty()) {
+        str += (if (ignored + failed > 0) ", " else "")
+        str += failedToStartMessages
+      }
       return str
     }
 }
 
-data class FailureDescription(val historyFileName: String, val failed : Int, val ignored : Int)
+data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val predefinedMessage: @Nls String? = null)
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
@@ -147,9 +153,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build() ?: return
     environment.setHeadless()
     val console = suspendCoroutine<ExecutionConsole?> { continuation ->
-      project.messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+      val messageBus = project.messageBus
+      messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           if (environment.executionId == env.executionId) {
+            Disposer.dispose(environment)
+            problems.add(FailureDescription("", 0, 0, TestRunnerBundle.message("failed.to.start.message", environment.runProfile.name)))
             continuation.resume(null)
           }
         }
