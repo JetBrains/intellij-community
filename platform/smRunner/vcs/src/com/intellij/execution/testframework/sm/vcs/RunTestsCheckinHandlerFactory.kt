@@ -11,7 +11,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-import com.intellij.execution.testframework.TestsUIUtil
+import com.intellij.execution.testframework.TestRunnerBundle
+import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
@@ -37,7 +38,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
@@ -91,11 +91,22 @@ class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
 class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblem {
   override val text: String
     get() {
-      return problems.joinToString { "${it.configurationName}: ${it.statusText}" }
+      var str = ""
+      val failed = problems.sumBy { it.failed }
+      if (failed > 0) {
+        str = TestRunnerBundle.message("tests.result.failure.summary", failed)
+      }
+
+      val ignored = problems.sumBy { it.ignored }
+      if (ignored > 0) {
+        str += (if (failed > 0) ", " else "")
+        str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)
+      }
+      return str
     }
 }
 
-data class FailureDescription(val historyFileName: String, @NlsSafe val configurationName : String, @NlsContexts.NotificationContent val statusText : String)
+data class FailureDescription(val historyFileName: String, val failed : Int, val ignored : Int)
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
@@ -147,10 +158,9 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     } ?: return
 
     val form = console.component as SMTestRunnerResultsForm
-    val rootNode = form.testsRootNode
-    if (rootNode.isDefect) {
+    reportProblem(form, problems)
+    if (form.testsRootNode.isDefect) {
       awaitSavingHistory(form.historyFileName)
-      problems.add(FailureDescription(form.historyFileName, configurationSettings.name, TestsUIUtil.getTestSummary(rootNode)))
     }
 
     disposeConsole(console)
@@ -367,10 +377,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
       resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
         override fun onTestingFinished(sender: TestResultsViewer) {
-          val rootNode = sender.testsRootNode
-          if (rootNode != null && rootNode.isDefect) {
-            problems.add(FailureDescription((sender as SMTestRunnerResultsForm).historyFileName, configuration.name, TestsUIUtil.getTestSummary(rootNode)))
-          }
+          reportProblem(resultsForm, problems)
         }
 
         override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) {
@@ -413,6 +420,15 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       return !canceled
     }
   }
+
+  private fun reportProblem(resultsForm: SMTestRunnerResultsForm,
+                            problems: ArrayList<FailureDescription>) {
+    val rootNode = resultsForm.testsRootNode
+    if (rootNode.isDefect) {
+      val presentation = TestResultPresentation(rootNode).presentation
+      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount))
+    }
+  }
 }
 
-private val canceledDescription = FailureDescription("", "", "CANCELED")
+private val canceledDescription = FailureDescription("", 0, 0)
