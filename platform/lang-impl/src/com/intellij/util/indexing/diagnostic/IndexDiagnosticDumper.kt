@@ -40,7 +40,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
 
-    private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
+    val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
     private const val fileNamePrefix = "diagnostic-"
 
@@ -157,7 +157,7 @@ class IndexDiagnosticDumper : Disposable {
     var diagnosticHtml: Path
     var nowTime = LocalDateTime.now()
     while (true) {
-      val timestamp = nowTime.format(diagnosticDateTimeFormatter)
+      val timestamp = nowTime.format(diagnosticTimestampFormat)
       diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
       diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
       if (!diagnosticJson.exists() && !diagnosticHtml.exists()) {
