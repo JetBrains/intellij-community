@@ -230,8 +230,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // FROM EDT: bg OR calling if can't
   @Override
   public <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
-    Ref<T> result = Ref.create();
-    Ref<Exception> exception = Ref.create();
+    Ref<T> result = new Ref<>();
+    Ref<Exception> exception = new Ref<>();
     executeNonCancelableSection(() -> {
       try {
         result.set(computable.compute());

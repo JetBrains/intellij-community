@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class WitherFieldProcessor extends AbstractFieldProcessor {
-
+public final class WitherFieldProcessor extends AbstractFieldProcessor {
   public WitherFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.WITHER, LombokClassNames.WITH);
   }

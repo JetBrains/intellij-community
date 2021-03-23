@@ -29,8 +29,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class ToStringProcessor extends AbstractClassProcessor {
-
+public final class ToStringProcessor extends AbstractClassProcessor {
   public static final String TO_STRING_METHOD_NAME = "toString";
 
   private static final String INCLUDE_ANNOTATION_METHOD = "name";

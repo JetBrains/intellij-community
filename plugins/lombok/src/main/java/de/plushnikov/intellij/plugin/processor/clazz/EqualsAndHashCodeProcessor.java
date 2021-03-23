@@ -32,8 +32,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
-
+public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
@@ -42,7 +41,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALSANDHASHCODE_INCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
   private static final String EQUALSANDHASHCODE_EXCLUDE = LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
 
-  public EqualsAndHashCodeProcessor() {
+  EqualsAndHashCodeProcessor() {
     super(PsiMethod.class, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 

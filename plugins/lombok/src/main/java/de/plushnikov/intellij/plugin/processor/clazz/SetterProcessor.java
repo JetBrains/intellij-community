@@ -24,8 +24,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class SetterProcessor extends AbstractClassProcessor {
-
+public final class SetterProcessor extends AbstractClassProcessor {
   public SetterProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }

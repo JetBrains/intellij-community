@@ -24,9 +24,8 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class SetterFieldProcessor extends AbstractFieldProcessor {
-
-  public SetterFieldProcessor() {
+public final class SetterFieldProcessor extends AbstractFieldProcessor {
+  SetterFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.SETTER);
   }
 

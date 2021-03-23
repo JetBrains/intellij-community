@@ -25,8 +25,7 @@ import java.util.Objects;
  *
  * @author Plushnikov Michail
  */
-public class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
-
+public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcessor {
   private static final String CONFIG_DEFAULT = " CONFIG DEFAULT ";
 
   public FieldNameConstantsFieldProcessor() {
