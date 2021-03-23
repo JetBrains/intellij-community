@@ -180,9 +180,4 @@ public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoin
 
     return actions;
   }
-
-  @Override
-  public int getOrder() {
-    return -1;
-  }
 }

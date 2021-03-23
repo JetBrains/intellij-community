@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -79,10 +75,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<ActionProvider> providers = new ArrayList<>(ActionProvider.EP_NAME.getExtensionList());
-    ContainerUtil.sort(providers, Comparator.comparingInt(ActionProvider::getOrder));
-
-    for (ActionProvider provider : providers) {
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
       Collection<AnAction> actions = provider.getUpdateActions(context);
       if (!actions.isEmpty()) {
         for (AnAction action : actions) {
@@ -308,9 +301,5 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     String ICON_KEY = "Update_Type_Icon_Key";
 
     @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
-
-    default int getOrder() {
-      return 0;
-    }
   }
 }
