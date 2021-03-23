@@ -76,12 +76,11 @@ public final class WinDockDelegate implements SystemDock.Delegate {
       final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
       final @SystemIndependent String projectPath = reopenProjectAction.getProjectPath();
-      if (Strings.isEmptyOrSpaces(projectPath)) {
+      final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);
+
+      if (Strings.isEmptyOrSpaces(projectPathSystem)) {
         continue;
       }
-
-      final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);
-      assert !Strings.isEmptyOrSpaces(projectPathSystem);
 
       final @NotNull String taskTitle;
       {
