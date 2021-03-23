@@ -61,13 +61,13 @@ internal class PackageDetailsPanel(
 
     fun display(
         selectedPackageModel: SelectedPackageModel<*>?,
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositories: List<RepositoryModel>,
         targetModules: TargetModules,
         onlyStable: Boolean
     ) {
         if (selectedPackageModel != null) {
-            headerPanel.display(selectedPackageModel, installedKnownRepositories, targetModules, onlyStable)
-            infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, installedKnownRepositories)
+            headerPanel.display(selectedPackageModel, knownRepositories, targetModules, onlyStable)
+            infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, knownRepositories)
 
             showPanel(CONTENT_PANEL)
         } else {

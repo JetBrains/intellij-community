@@ -74,9 +74,9 @@ internal class ActionsColumn(
             ?: return emptyList()
 
         val repoToInstall = item.packageModel.repositoryToAddWhenInstallingOrUpgrading(
-            installedKnownRepositories = installedKnownRepositories,
-            targetModules = targetModules,
-            selectedVersion = targetVersion
+          knownRepositoryModels = installedKnownRepositories,
+          targetModules = targetModules,
+          selectedVersion = targetVersion
         )
 
         return when (operationType) {

@@ -23,10 +23,9 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
-class GradleDependencyModificator(val myProject: Project) : ExternalDependencyModificator {
-  override fun supports(module: Module): Boolean {
-    return ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == SYSTEM_ID.id
-  }
+class GradleDependencyModificator(private val myProject: Project) : ExternalDependencyModificator {
+  override fun supports(module: Module): Boolean =
+    ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId() == SYSTEM_ID.id
 
   override fun addDependency(module: Module, descriptor: UnifiedDependency) {
     checkDescriptor(descriptor)
@@ -40,14 +39,12 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   }
 
   private fun checkDescriptor(descriptor: UnifiedDependency) {
-    requireNotNull(descriptor.coordinates.artifactId){GradleBundle.message("gradle.dsl.artifactid.is.null")}
-    requireNotNull(descriptor.coordinates.groupId){GradleBundle.message("gradle.dsl.groupid.is.null")}
-    requireNotNull(descriptor.coordinates.version){GradleBundle.message("gradle.dsl.version.is.null")}
+    requireNotNull(descriptor.coordinates.artifactId) { GradleBundle.message("gradle.dsl.artifactid.is.null") }
+    requireNotNull(descriptor.coordinates.groupId) { GradleBundle.message("gradle.dsl.groupid.is.null") }
+    requireNotNull(descriptor.coordinates.version) { GradleBundle.message("gradle.dsl.version.is.null") }
   }
 
-  private fun getConfigurationName(descriptor: UnifiedDependency): String {
-    return descriptor.scope ?: "implementation"
-  }
+  private fun getConfigurationName(descriptor: UnifiedDependency): String = descriptor.scope ?: "implementation"
 
   override fun updateDependency(module: Module,
                                 oldDescriptor: UnifiedDependency,
@@ -108,7 +105,7 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
       return
     }
 
-    val methodName = methodsByRepo[trimmedUrl]
+    val methodName = RepositoriesWithShorthandMethods.findByUrlLenient(trimmedUrl)?.methodName
     if (methodName != null) {
       if (repositoryModel.containsMethodCall(methodName)) {
         return
@@ -133,9 +130,9 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
   override fun declaredDependencies(module: @NotNull Module): List<DeclaredDependency> {
     val model = ProjectBuildModel.get(module.project).getModuleBuildModel(module) ?: throwFailToModify(module)
     return model.dependencies().artifacts().map {
-      val dataContext = object: DataContext {
+      val dataContext = object : DataContext {
         override fun getData(dataId: String): Any? {
-          if(CommonDataKeys.PSI_ELEMENT.`is`(dataId)){
+          if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) {
             return it.psiElement
           }
           return null
@@ -152,7 +149,9 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
       .mapNotNull { it as? UrlBasedRepositoryModelImpl }
       .mapNotNull { m ->
         m.url().valueAsString()?.let {
-          UnifiedDependencyRepository(m.name().valueAsString(), m.name().valueAsString(), it)
+          UnifiedDependencyRepository(id = RepositoriesWithShorthandMethods.findByRepoType(m.type)?.repositoryId,
+                                      name = m.name().valueAsString(),
+                                      url = it)
         }
       }
   }
@@ -167,13 +166,6 @@ class GradleDependencyModificator(val myProject: Project) : ExternalDependencyMo
     }
   }
 
-  companion object {
-    val reposByMethod = mapOf("mavenCentral" to "https://repo1.maven.org/maven2", "jcenter" to "https://jcenter.bintray.com")
-    val methodsByRepo = reposByMethod.map { it.value to it.key }.toMap()
-  }
-
-  private fun String.trimLastSlash(): String {
-    return this.trimEnd { it == '/' }
-  }
+  private fun String.trimLastSlash(): String = this.trimEnd { it == '/' }
 
 }

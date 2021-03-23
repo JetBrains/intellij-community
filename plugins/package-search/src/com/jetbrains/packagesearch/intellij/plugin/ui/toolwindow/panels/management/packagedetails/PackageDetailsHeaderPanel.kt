@@ -154,7 +154,7 @@ internal class PackageDetailsHeaderPanel(
 
     fun display(
         selectedPackageModel: SelectedPackageModel<*>,
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositories: List<RepositoryModel>,
         targetModules: TargetModules,
         onlyStable: Boolean
     ) {
@@ -185,7 +185,7 @@ internal class PackageDetailsHeaderPanel(
         val selectedVersion = selectedPackageModel.selectedVersion
         val selectedScope = selectedPackageModel.selectedScope
         val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(
-            installedKnownRepositories,
+            knownRepositories,
             targetModules,
             selectedVersion
         )

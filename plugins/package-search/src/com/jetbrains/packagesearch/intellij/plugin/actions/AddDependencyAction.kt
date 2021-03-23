@@ -37,7 +37,7 @@ class AddDependencyAction : AnAction(
             }
 
             val rootModel = project.dataService()
-            val modules = rootModel.data.value.projectModules
+            val modules = rootModel.dataModelProperty.value.projectModules
             findSelectedModule(e, modules) != null
         }
     }
@@ -46,7 +46,7 @@ class AddDependencyAction : AnAction(
         val project = e.project ?: return
 
         val rootModel = project.dataService()
-        val modules = rootModel.data.value.projectModules
+        val modules = rootModel.dataModelProperty.value.projectModules
         if (modules.isEmpty()) return
 
         val selectedModule = findSelectedModule(e, modules) ?: return

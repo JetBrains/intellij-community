@@ -3,10 +3,10 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 
-internal data class RootData(
+internal data class RootDataModel(
     val projectModules: List<ModuleModel>,
     val packageModels: List<PackageModel>,
-    val installedKnownRepositories: List<RepositoryModel>,
+    val knownRepositoryModels: List<RepositoryModel>,
     val headerData: PackagesHeaderData,
     val targetModules: TargetModules,
     val selectedPackage: SelectedPackageModel<*>?,
@@ -16,10 +16,10 @@ internal data class RootData(
 
     companion object {
 
-        val EMPTY = RootData(
+        val EMPTY = RootDataModel(
             projectModules = emptyList(),
             packageModels = emptyList(),
-            installedKnownRepositories = emptyList(),
+            knownRepositoryModels = emptyList(),
             headerData = PackagesHeaderData.EMPTY,
             targetModules = TargetModules.None,
             selectedPackage = null,

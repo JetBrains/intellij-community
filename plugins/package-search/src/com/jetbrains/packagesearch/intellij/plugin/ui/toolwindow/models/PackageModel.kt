@@ -43,11 +43,11 @@ internal sealed class PackageModel(
     abstract val searchableInfo: String
 
     fun repositoryToAddWhenInstallingOrUpgrading(
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositoryModels: List<RepositoryModel>,
         targetModules: TargetModules,
         selectedVersion: PackageVersion
     ): RepositoryModel? {
-        val repositoriesInTargetModules = targetModules.declaredKnownRepositories(installedKnownRepositories)
+        val repositoriesInTargetModules = targetModules.declaredKnownRepositories(knownRepositoryModels)
 
         val repoIdToInstall = remoteInfo?.versions
             ?.find { it.version == selectedVersion.versionName }
@@ -55,7 +55,7 @@ internal sealed class PackageModel(
             ?.firstOrNull { repoId -> !repositoriesInTargetModules.containsId(repoId) }
 
         return if (repoIdToInstall != null) {
-            installedKnownRepositories.find { it.id == repoIdToInstall }
+            knownRepositoryModels.find { it.id == repoIdToInstall }
         } else {
             null
         }

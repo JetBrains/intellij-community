@@ -78,7 +78,7 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
 
         val rootModel = project.dataService()
         panels += PackageManagementPanel(
-            rootDataProvider = rootModel,
+            rootDataModelProvider = rootModel,
             selectedPackageSetter = rootModel,
             targetModuleSetter = rootModel,
             searchClient = rootModel,
@@ -88,7 +88,7 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
 
         if (FeatureFlags.showRepositoriesTab) {
             panels += RepositoryManagementPanel(
-                rootDataProvider = rootModel,
+                rootDataModelProvider = rootModel,
                 lifetimeProvider = rootModel
             )
         }

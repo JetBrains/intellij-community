@@ -3,11 +3,11 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.reactive.IPropertyView
 
-internal interface RootDataProvider {
+internal interface RootDataModelProvider {
 
     val project: Project
 
-    val data: IPropertyView<RootData>
+    val dataModelProperty: IPropertyView<RootDataModel>
 
-    val status: IPropertyView<DataStatus>
+    val statusProperty: IPropertyView<DataStatus>
 }

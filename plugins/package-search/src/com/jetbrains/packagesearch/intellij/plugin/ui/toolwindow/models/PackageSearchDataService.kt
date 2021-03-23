@@ -53,6 +53,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
+import java.net.URI
 import java.util.Locale
 
 private const val API_TIMEOUT_MILLIS = 10_000L
@@ -62,7 +63,7 @@ private const val SEARCH_DEBOUNCE_MILLIS = 200L
 @Suppress("EXPERIMENTAL_API_USAGE") // Just playing around... can't use StateFlows yet
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable {
 
     private val mainScope = CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()) +
         CoroutineName("PackageSearchDataService")
@@ -78,19 +79,19 @@ internal class PackageSearchDataService(
     private val operationExecutor = ModuleOperationExecutor(project)
     private val operationFailureRenderer = OperationFailureRenderer()
 
-    private var knownRepositories = listOf<V2Repository>()
-    private val searchQuery = Property("")
-    private val searchResults = Property<StandardV2PackagesWithRepos?>(null)
+    private var knownRepositoriesRemoteInfo = listOf<V2Repository>()
+    private val searchQueryProperty = Property("")
+    private val searchResultsProperty = Property<StandardV2PackagesWithRepos?>(null)
 
-    private val _targetModules = Property<TargetModules>(TargetModules.None)
-    private val _selectedPackageModel = Property<SelectedPackageModel<*>?>(null)
-    private val _status = Property(DataStatus())
-    private val _data = Property(RootData.EMPTY)
-    private val _filterOptions = Property(FilterOptions())
+    private val _targetModulesProperty = Property<TargetModules>(TargetModules.None)
+    private val _selectedPackageModelProperty = Property<SelectedPackageModel<*>?>(null)
+    private val _statusProperty = Property(DataStatus())
+    private val _rootDataModelProperty = Property(RootDataModel.EMPTY)
+    private val _filterOptionsProperty = Property(FilterOptions())
 
-    override val status: IPropertyView<DataStatus> = _status
+    override val statusProperty: IPropertyView<DataStatus> = _statusProperty
 
-    override val data: IPropertyView<RootData> = _data
+    override val dataModelProperty: IPropertyView<RootDataModel> = _rootDataModelProperty
 
     init {
         logDebug("PKGSDataService#Starting up the Package Search root model...")
@@ -99,14 +100,14 @@ internal class PackageSearchDataService(
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT)) // Only doing it at startup, for now, as it won't change often
         }
 
-        searchQuery.advise(lifetime) { query ->
+        searchQueryProperty.advise(lifetime) { query ->
             val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
             logDebug(traceInfo, "PKGSDataService#searchQuery.advise()") { "searchQuery changed ('$query'), performing search..." }
 
             onSearchDataChanged(query, traceInfo)
         }
 
-        searchResults.advise(lifetime) {
+        searchResultsProperty.advise(lifetime) {
             val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_RESULTS)
             logDebug(traceInfo, "PKGSDataService#searchResults.advise()") {
                 val resultsInfo = if (it == null) {
@@ -118,14 +119,14 @@ internal class PackageSearchDataService(
             }
             refreshData(traceInfo)
         }
-        _targetModules.advise(lifetime) {
+        _targetModulesProperty.advise(lifetime) {
             val traceInfo = TraceInfo(TraceInfo.TraceSource.TARGET_MODULES)
             logDebug(traceInfo, "PKGSDataService#searchResults.advise()") {
                 "_targetModules changed (${it.javaClass.simpleName}, ${it.size} modules), refreshing data..."
             }
             refreshData(traceInfo)
         }
-        _filterOptions.advise(lifetime) {
+        _filterOptionsProperty.advise(lifetime) {
             val traceInfo = TraceInfo(TraceInfo.TraceSource.FILTERS)
             logDebug(traceInfo, "PKGSDataService#_filterOptions.advise()") { "_filters changed ($it), refreshing data..." }
             refreshData(traceInfo)
@@ -176,7 +177,7 @@ internal class PackageSearchDataService(
                 logError(traceInfo, "refreshKnownRepositories()") { "Failed to refresh known repositories list. $it" }
                          }
             .onSuccess{
-                    knownRepositories = it
+                    knownRepositoriesRemoteInfo = it
                     logInfo(traceInfo, "refreshKnownRepositories()") {
                         "Known repositories refreshed. We know of ${it.size} repo(s). Refreshing data..."
                     }
@@ -191,7 +192,7 @@ internal class PackageSearchDataService(
         logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
         if (query.isBlank()) {
             logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
-            searchResults.set(null)
+            searchResultsProperty.set(null)
             return
         }
 
@@ -203,7 +204,7 @@ internal class PackageSearchDataService(
             try {
                 withTimeout(API_TIMEOUT_MILLIS) {
                     yield()
-                    dataProvider.doSearch(query, _filterOptions.value)
+                    dataProvider.doSearch(query, _filterOptionsProperty.value)
                 }
             } catch (e: CancellationException) {
                 logDebug(traceInfo, "PKGSDataService#performSearch()", e) { "Searching for '$query' cancelled" }
@@ -225,7 +226,7 @@ internal class PackageSearchDataService(
                 logDebug(traceInfo, "PKGSDataService#performSearch()") {
                     "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
                 }
-                searchResults.set(it)
+                searchResultsProperty.set(it)
             }
 
         setStatus(isSearching = false)
@@ -242,12 +243,12 @@ internal class PackageSearchDataService(
                 setStatus(isRefreshingData = false)
             }
         }
-        onSearchDataChanged(searchQuery.value, traceInfo)
+        onSearchDataChanged(searchQueryProperty.value, traceInfo)
     }
 
     @RequiresEdt
     private suspend fun onDataChanged(traceInfo: TraceInfo) {
-        val currentStatus = _status.value
+        val currentStatus = _statusProperty.value
         if (currentStatus.isExecutingOperations) {
             logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Ignoring data changes (status: [$currentStatus])" }
             return
@@ -256,11 +257,11 @@ internal class PackageSearchDataService(
         setStatus(isRefreshingData = true)
         logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Refreshing data..." }
 
-        val targetModules = _targetModules.value
-        val filterOptions = _filterOptions.value
-        val currentSearchResults = searchResults.value
-        val query = searchQuery.value
-        val selectedPackage = _selectedPackageModel.value
+        val targetModules = _targetModulesProperty.value
+        val filterOptions = _filterOptionsProperty.value
+        val currentSearchResults = searchResultsProperty.value
+        val query = searchQueryProperty.value
+        val selectedPackage = _selectedPackageModelProperty.value
 
         val newData = withContext(Dispatchers.IO) {
             val moduleModels = fetchProjectModuleModels(targetModules, traceInfo)
@@ -270,13 +271,13 @@ internal class PackageSearchDataService(
                 .filter { it.matches(query, filterOptions.onlyKotlinMultiplatform) }
 
             val installablePackages = installablePackages(currentSearchResults, installedPackages, traceInfo)
-            val installedKnownRepositories = installedKnownRepositories(targetModules, knownRepositories)
+            val knownRepositoryModels = knownRepositoryModels(targetModules, knownRepositoriesRemoteInfo)
 
             yield()
 
             logDebug(traceInfo, "PKGSDataService#onDataChanged()") {
                 "New data: ${installedPackages.size} installed, ${installablePackages.size} installable, " +
-                    "${installedKnownRepositories.size} known repos, ${moduleModels.size} modules"
+                    "${knownRepositoryModels.size} known repos, ${moduleModels.size} modules"
             }
 
             val packageModels = installedPackages.union(installablePackages).sorted()
@@ -286,14 +287,14 @@ internal class PackageSearchDataService(
                 isSearching = query.isNotEmpty(),
                 onlyStable = filterOptions.onlyStable,
                 targetModules = targetModules,
-                installedKnownRepositories = installedKnownRepositories
+                knownRepositoryModels = knownRepositoryModels
             )
 
             yield()
-            RootData(
+            RootDataModel(
                 projectModules = moduleModels,
                 packageModels = packageModels,
-                installedKnownRepositories = installedKnownRepositories,
+                knownRepositoryModels = knownRepositoryModels,
                 headerData = headerData,
                 targetModules = targetModules,
                 selectedPackage = selectedPackage,
@@ -302,11 +303,10 @@ internal class PackageSearchDataService(
             )
         }
 
-        if (newData != _data.value) {
+        if (newData != _rootDataModelProperty.value) {
             yield()
-
             logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Sending data changes through" }
-            _data.set(newData)
+            _rootDataModelProperty.set(newData)
         } else {
             logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "No data changes detected, ignoring update" }
         }
@@ -427,11 +427,11 @@ internal class PackageSearchDataService(
             .toList()
     }
 
-    private fun installedKnownRepositories(
+    private fun knownRepositoryModels(
         projectModules: TargetModules,
-        knownRepositories: List<V2Repository>
+        knownRepositoriesRemoteInfo: List<V2Repository>
     ): List<RepositoryModel> =
-        knownRepositories.map { remoteInfo ->
+        knownRepositoriesRemoteInfo.map { remoteInfo ->
             val url = remoteInfo.url
             val id = remoteInfo.id
 
@@ -439,15 +439,26 @@ internal class PackageSearchDataService(
                 id = id,
                 name = remoteInfo.friendlyName,
                 url = url,
-                usageInfo = projectModules.filter { it.declaredRepositories.anyMatches(url, id) }
+                usageInfo = projectModules.filter { it.declaredRepositories.anyMatches(remoteInfo) }
                     .map { RepositoryUsageInfo(it.projectModule) },
                 remoteInfo = remoteInfo
             )
         }
 
-    private fun List<RepositoryDeclaration>.anyMatches(url: String?, id: String?): Boolean {
-        if (url == null || id == null) return false
-        return any { it.url == url || it.id == id }
+    private fun List<RepositoryDeclaration>.anyMatches(remoteInfo: V2Repository): Boolean {
+        val urls = ((remoteInfo.alternateUrls ?: emptyList()) + remoteInfo.url).filterNotNull()
+        val id = remoteInfo.id
+        if (urls.isEmpty() && id.isBlank()) return false
+        return any { declaredRepo ->
+            declaredRepo.id == id || urls.any { knownRepoUrl -> areEquivalentUrls(declaredRepo.url, knownRepoUrl) }
+        }
+    }
+
+    private fun areEquivalentUrls(first: String?, second: String?): Boolean  {
+        if (first == null || second == null) return false
+        val firstUri = URI(first.trim().trimEnd('/', '?', '#'))
+        val secondUri = URI(second.trim().trimEnd('/', '?', '#'))
+        return firstUri.normalize() == secondUri.normalize()
     }
 
     private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> {
@@ -463,10 +474,10 @@ internal class PackageSearchDataService(
         isSearching: Boolean,
         onlyStable: Boolean,
         targetModules: TargetModules,
-        installedKnownRepositories: List<RepositoryModel>
+        knownRepositoryModels: List<RepositoryModel>
     ): PackagesHeaderData {
         val count = installed.count() + installable.count()
-        val selectedModules = _targetModules.value
+        val selectedModules = _targetModulesProperty.value
         val moduleNames = if (selectedModules.size == 1) {
             selectedModules.first().projectModule.name
         } else {
@@ -486,7 +497,7 @@ internal class PackageSearchDataService(
                 ?: return@flatMap emptyList<PackageSearchOperation<*>>()
 
             val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(
-                installedKnownRepositories = installedKnownRepositories,
+                knownRepositoryModels = knownRepositoryModels,
                 targetModules = targetModules,
                 selectedVersion = newVersion
             )
@@ -508,7 +519,7 @@ internal class PackageSearchDataService(
     ) {
         mainScope.launch {
             val traceInfo = TraceInfo(TraceInfo.TraceSource.STATUS_CHANGES)
-            val currentStatus = _status.value
+            val currentStatus = _statusProperty.value
             val newStatus = currentStatus.copy(
                 isSearching = isSearching ?: currentStatus.isSearching,
                 isRefreshingData = isRefreshingData ?: currentStatus.isRefreshingData,
@@ -520,13 +531,13 @@ internal class PackageSearchDataService(
                 return@launch
             }
 
-            _status.set(newStatus)
+            _statusProperty.set(newStatus)
             logDebug(traceInfo, "PKGSDataService#setStatus()") { "Status changed: $newStatus" }
         }
     }
 
     override fun setTargetModules(targetModules: TargetModules) = AppUIExecutor.onUiThread().execute {
-        if (targetModules == _targetModules.value) {
+        if (targetModules == _targetModulesProperty.value) {
             logDebug("PKGSDataService#setTargetModules()") { "Ignoring target module change as it is the same we already have" }
             return@execute
         }
@@ -534,11 +545,11 @@ internal class PackageSearchDataService(
         logDebug("PKGSDataService#setTargetModules()") {
             "Setting target modules: ${targetModules.javaClass.simpleName} (count: ${targetModules.size})"
         }
-        _targetModules.set(targetModules)
+        _targetModulesProperty.set(targetModules)
     }
 
     override fun setSelectedPackage(selectedPackageModel: SelectedPackageModel<*>?) = AppUIExecutor.onUiThread().execute {
-        if (selectedPackageModel == _selectedPackageModel.value) {
+        if (selectedPackageModel == _selectedPackageModelProperty.value) {
             logDebug("PKGSDataService#setSelectedPackage()") { "Ignoring selected package change as it is the same we already have" }
             return@execute
         }
@@ -546,7 +557,7 @@ internal class PackageSearchDataService(
         logDebug("PKGSDataService#setSelectedPackage()") {
             "Setting selected package: ${selectedPackageModel?.packageModel?.identifier}"
         }
-        _selectedPackageModel.set(selectedPackageModel)
+        _selectedPackageModelProperty.set(selectedPackageModel)
     }
 
     override fun executeOperations(operations: List<PackageSearchOperation<*>>) {
@@ -605,28 +616,28 @@ internal class PackageSearchDataService(
 
     override fun setSearchQuery(query: String) = AppUIExecutor.onUiThread().execute {
         val normalizedQuery = StringUtils.normalizeSpace(query).trim()
-        if (normalizedQuery == searchQuery.value) {
+        if (normalizedQuery == searchQueryProperty.value) {
             logDebug("PKGSDataService#setSearchQuery()") { "Ignoring search query update as it has not changed" }
             return@execute
         }
 
         logDebug("PKGSDataService#setSearchQuery()") { "Search query changed: '$normalizedQuery'" }
         PackageSearchEventsLogger.onSearchRequest(project, normalizedQuery)
-        searchQuery.set(normalizedQuery)
+        searchQueryProperty.set(normalizedQuery)
     }
 
     override fun setOnlyStable(onlyStable: Boolean) = AppUIExecutor.onUiThread().execute {
-        if (onlyStable == _filterOptions.value.onlyStable) {
+        if (onlyStable == _filterOptionsProperty.value.onlyStable) {
             logDebug("PKGSDataService#setOnlyStable()") { "Ignoring onlyStable change as it is the same we already have" }
             return@execute
         }
 
         logDebug("PKGSDataService#setOnlyStable()") { "Setting onlyStable: $onlyStable" }
-        _filterOptions.set(_filterOptions.value.copy(onlyStable = onlyStable))
+        _filterOptionsProperty.set(_filterOptionsProperty.value.copy(onlyStable = onlyStable))
     }
 
     override fun setOnlyKotlinMultiplatform(onlyKotlinMultiplatform: Boolean) = AppUIExecutor.onUiThread().execute {
-        if (onlyKotlinMultiplatform == _filterOptions.value.onlyKotlinMultiplatform) {
+        if (onlyKotlinMultiplatform == _filterOptionsProperty.value.onlyKotlinMultiplatform) {
             logDebug("PKGSDataService#setOnlyKotlinMultiplatform()") {
                 "Ignoring onlyKotlinMultiplatform change as it is the same we already have"
             }
@@ -634,7 +645,7 @@ internal class PackageSearchDataService(
         }
 
         logDebug("PKGSDataService#setOnlyKotlinMultiplatform()") { "Setting onlyKotlinMultiplatform: $onlyKotlinMultiplatform" }
-        _filterOptions.set(_filterOptions.value.copy(onlyKotlinMultiplatform = onlyKotlinMultiplatform))
+        _filterOptionsProperty.set(_filterOptionsProperty.value.copy(onlyKotlinMultiplatform = onlyKotlinMultiplatform))
     }
 
     override fun dispose() {

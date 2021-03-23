@@ -12,7 +12,7 @@ import com.jetbrains.packagesearch.intellij.plugin.actions.TogglePackageDetailsA
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.LifetimeProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataProvider
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
@@ -31,7 +31,7 @@ import javax.swing.JScrollPane
 
 @Suppress("MagicNumber") // Thanks Swing
 internal class PackageManagementPanel(
-    private val rootDataProvider: RootDataProvider,
+    private val rootDataModelProvider: RootDataModelProvider,
     selectedPackageSetter: SelectedPackageSetter,
     targetModuleSetter: TargetModuleSetter,
     searchClient: SearchClient,
@@ -49,7 +49,7 @@ internal class PackageManagementPanel(
     )
 
     private val packagesListPanel = PackagesListPanel(
-        project = rootDataProvider.project,
+        project = rootDataModelProvider.project,
         searchClient = searchClient,
         lifetimeProvider = lifetimeProvider,
         operationExecutor = operationExecutor,
@@ -76,7 +76,7 @@ internal class PackageManagementPanel(
     }
 
     init {
-        updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(rootDataProvider.project).packageDetailsVisible)
+        updatePackageDetailsVisible(PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsVisible)
 
         modulesScrollPanel.apply {
             border = BorderFactory.createEmptyBorder()
@@ -91,22 +91,22 @@ internal class PackageManagementPanel(
 
             packageDetailsPanel.display(
                 selectedPackageModel = selectedPackage,
-                installedKnownRepositories = rootDataProvider.data.value.installedKnownRepositories,
-                targetModules = rootDataProvider.data.value.targetModules,
-                onlyStable = rootDataProvider.data.value.filterOptions.onlyStable
+                knownRepositories = rootDataModelProvider.dataModelProperty.value.knownRepositoryModels,
+                targetModules = rootDataModelProvider.dataModelProperty.value.targetModules,
+                onlyStable = rootDataModelProvider.dataModelProperty.value.filterOptions.onlyStable
             )
         }
 
-        rootDataProvider.status.advise(lifetimeProvider.lifetime) { status ->
+        rootDataModelProvider.statusProperty.advise(lifetimeProvider.lifetime) { status ->
             packagesListPanel.setIsBusy(status.isBusy)
         }
 
-        rootDataProvider.status.map { it.isExecutingOperations }.advise(lifetimeProvider.lifetime) { isExecutingOperations ->
+        rootDataModelProvider.statusProperty.map { it.isExecutingOperations }.advise(lifetimeProvider.lifetime) { isExecutingOperations ->
             content.isEnabled = !isExecutingOperations
             content.updateAndRepaint()
         }
 
-        rootDataProvider.data.advise(lifetimeProvider.lifetime) { data ->
+        rootDataModelProvider.dataModelProperty.advise(lifetimeProvider.lifetime) { data ->
             modulesTree.display(
                 projectModules = data.projectModules,
                 targetModules = data.targetModules,
@@ -116,13 +116,13 @@ internal class PackageManagementPanel(
                 headerData = data.headerData,
                 packageModels = data.packageModels,
                 targetModules = data.targetModules,
-                installedKnownRepositories = data.installedKnownRepositories,
+                installedKnownRepositories = data.knownRepositoryModels,
                 filterOptions = data.filterOptions,
                 traceInfo = data.traceInfo
             )
             packageDetailsPanel.display(
                 selectedPackageModel = data.selectedPackage,
-                installedKnownRepositories = data.installedKnownRepositories,
+                knownRepositories = data.knownRepositoryModels,
                 targetModules = data.targetModules,
                 onlyStable = data.filterOptions.onlyStable
             )
@@ -134,21 +134,21 @@ internal class PackageManagementPanel(
         packagesSplitter.secondComponent.isVisible = becomeVisible
 
         if (!wasVisible && becomeVisible) {
-            packagesSplitter.proportion = PackageSearchGeneralConfiguration.getInstance(rootDataProvider.project).packageDetailsSplitterProportion
+            packagesSplitter.proportion = PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion
         }
 
         if (!becomeVisible) {
-            PackageSearchGeneralConfiguration.getInstance(rootDataProvider.project).packageDetailsSplitterProportion = packagesSplitter.proportion
+            PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion = packagesSplitter.proportion
             packagesSplitter.proportion = 1.0f
         }
     }
 
-    private val togglePackageDetailsAction = TogglePackageDetailsAction(rootDataProvider.project, ::updatePackageDetailsVisible)
+    private val togglePackageDetailsAction = TogglePackageDetailsAction(rootDataModelProvider.project, ::updatePackageDetailsVisible)
 
     override fun build() = mainSplitter
 
     override fun buildGearActions() = DefaultActionGroup(
-        ShowSettingsAction(rootDataProvider.project),
+        ShowSettingsAction(rootDataModelProvider.project),
         togglePackageDetailsAction
     )
 
