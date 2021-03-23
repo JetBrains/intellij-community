@@ -110,7 +110,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   open fun LessonContext.epilogue() = Unit
 
   private fun TaskRuntimeContext.checkWordInSearch(expected: String): Boolean =
-    (focusOwner as? ExtendableTextField)?.text.equals(expected, ignoreCase = true)
+    (focusOwner as? ExtendableTextField)?.text?.equals(expected, ignoreCase = true) == true
 
   private fun TaskRuntimeContext.checkInsideSearchEverywhere(): Boolean {
     return UIUtil.getParentOfType(SearchEverywhereUI::class.java, focusOwner) != null

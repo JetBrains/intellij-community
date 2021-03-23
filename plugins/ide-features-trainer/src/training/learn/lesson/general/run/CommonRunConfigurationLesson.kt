@@ -93,7 +93,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
                                    strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic()),
                                    action(it)))
         triggerByUiComponentAndHighlight<JBCheckBox>(highlightInside = false) { ui ->
-          ui.text.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic())
+          ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
         }
         test {
           actions(it)
