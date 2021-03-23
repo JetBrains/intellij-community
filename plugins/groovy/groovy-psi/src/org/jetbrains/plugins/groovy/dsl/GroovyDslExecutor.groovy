@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.dsl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiType
 import com.intellij.util.ProcessingContext
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
@@ -37,7 +36,7 @@ class GroovyDslExecutor {
     myScript.staticInfo
   }
 
-  CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx, PsiType psiType) {
+  CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
     if (!enhancers) return CompoundMembersHolder.EMPTY
 
     CompoundMembersHolder holder = new CompoundMembersHolder()
@@ -45,7 +44,7 @@ class GroovyDslExecutor {
       ProgressManager.checkCanceled()
       ctx.put(DslPointcut.BOUND, null)
       if (pair.first.isApplicable(descriptor, ctx)) {
-        def generator = new CustomMembersGenerator(descriptor, psiType, ctx.get(DslPointcut.BOUND))
+        def generator = new CustomMembersGenerator(descriptor, ctx.get(DslPointcut.BOUND))
         doRun(generator, pair.second)
         holder.addHolder(generator.membersHolder)
       }

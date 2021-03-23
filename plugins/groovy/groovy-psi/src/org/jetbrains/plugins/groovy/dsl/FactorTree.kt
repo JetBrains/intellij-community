@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.dsl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -28,26 +25,20 @@ class FactorTree(
   fun cache(descriptor: GroovyClassDescriptor, holder: CustomMembersHolder) {
     var current: MutableMap<Any, Any>? = null
     for (factor: Factor in descriptor.affectingFactors) {
-      val key: Any = when (factor) {
+      val key: UserDataHolder = when (factor) {
         Factor.placeElement -> descriptor.place
         Factor.placeFile -> descriptor.placeFile
-        Factor.qualifierType -> descriptor.psiType.getCanonicalText(false)
+        Factor.qualifierType -> descriptor.psiClass
       }
       if (current == null) {
-        if (key is UserDataHolder) {
-          current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, myProvider, false)
-          continue
-        }
-        current = myTopLevelCache.value!!
+        current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, myProvider, false)
+        continue
       }
       @Suppress("UNCHECKED_CAST")
       var next: MutableMap<Any, Any>? = current[key] as MutableMap<Any, Any>?
       if (next == null) {
         next = ConcurrentHashMap<Any, Any>()
         current[key] = next
-        if (key is String) { // type
-          current[CONTAINS_TYPE] = true
-        }
       }
       current = next
     }
@@ -57,36 +48,25 @@ class FactorTree(
     current[myExecutor] = holder
   }
 
-  fun retrieve(place: PsiElement, placeFile: PsiFile, qualifierType: NotNullLazyValue<String>): CustomMembersHolder? {
-    return retrieveImpl(place, placeFile, qualifierType, myTopLevelCache.value, true)
+  fun retrieve(descriptor: GroovyClassDescriptor): CustomMembersHolder? {
+    return retrieveImpl(descriptor, myTopLevelCache.value, true)
   }
 
   private fun retrieveImpl(
-    place: PsiElement,
-    placeFile: PsiFile,
-    qualifierType: NotNullLazyValue<String>,
+    descriptor: GroovyClassDescriptor,
     current: Map<*, *>?,
     topLevel: Boolean
   ): CustomMembersHolder? {
     if (current == null) return null
-    val result: CustomMembersHolder? = current[myExecutor] as CustomMembersHolder?
-    if (result != null) {
-      return result
-    }
-    if (current.containsKey(CONTAINS_TYPE)) {
-      retrieveImpl(place, placeFile, qualifierType, current[qualifierType.value] as Map<*, *>?, false)?.let {
-        return it
-      }
-    }
-    return retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(placeFile, current, topLevel), false)
-           ?: retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(place, current, topLevel), false)
+    return current[myExecutor] as CustomMembersHolder?
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.psiClass, current, topLevel), false)
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.placeFile, current, topLevel), false)
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.place, current, topLevel), false)
   }
 
   companion object {
 
     private val GDSL_MEMBER_CACHE: Key<CachedValue<MutableMap<Any, Any>>> = Key.create("GDSL_MEMBER_CACHE")
-
-    private val CONTAINS_TYPE = Key.create<Boolean>("CONTAINS_TYPE")
 
     private fun getFromMapOrUserData(holder: UserDataHolder, map: Map<*, *>, fromUserData: Boolean): Map<*, *>? {
       if (fromUserData) {

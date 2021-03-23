@@ -186,23 +186,29 @@ public final class GroovyDslFileIndex {
     }
   }
 
-  public static boolean processExecutors(PsiType psiType,
-                                         PsiElement place,
-                                         PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor) {
+  public static boolean processExecutors(
+    @NotNull PsiClassType psiType,
+    @NotNull PsiElement place,
+    @NotNull PairProcessor<? super CustomMembersHolder, ? super GroovyClassDescriptor> processor
+  ) {
     if (insideAnnotation(place)) {
       // Basic filter, all DSL contexts are applicable for reference expressions only
       return true;
     }
 
     final PsiFile placeFile = place.getContainingFile().getOriginalFile();
+    final PsiClass psiClass = psiType.resolve();
+    if (psiClass == null) {
+      return true;
+    }
 
-    NotNullLazyValue<String> typeText = NotNullLazyValue.createValue(() -> psiType.getCanonicalText(false));
+    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, psiClass, place, placeFile);
     for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
-      if (!script.processExecutor(psiType, place, placeFile, typeText, processor)) {
+      CustomMembersHolder holder = script.processExecutor(descriptor);
+      if (!processor.process(holder, descriptor)) {
         return false;
       }
     }
-
     return true;
   }
 

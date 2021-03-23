@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,17 +44,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final @NonNls String THROWS = "throws";
   private FList<Map> myDeclarations = FList.emptyList();
-  private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
   private final GroovyClassDescriptor myDescriptor;
   @Nullable private final Map<String, List> myBindings;
-  private final PsiClass myPsiClass;
 
-  public CustomMembersGenerator(@NotNull GroovyClassDescriptor descriptor, @Nullable PsiType type, @Nullable Map<String, List> bindings) {
+  public CustomMembersGenerator(@NotNull GroovyClassDescriptor descriptor, @Nullable Map<String, List> bindings) {
     myDescriptor = descriptor;
     myBindings = bindings;
-    myProject = descriptor.getProject();
-    myPsiClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
   }
 
   @Override
@@ -76,7 +72,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   @Nullable
   @Override
   public PsiClass getPsiClass() {
-    return myPsiClass;
+    return myDescriptor.getPsiClass();
   }
 
   @Override
@@ -86,7 +82,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
   @Override
   public Project getProject() {
-    return myProject;
+    return myDescriptor.getProject();
   }
 
   @Nullable
