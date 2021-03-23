@@ -2,6 +2,7 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
@@ -47,7 +48,11 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
     val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName)}</html>").also {
-      it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + JBUIScale.scale(-1))
+      it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
+        SystemInfo.isLinux -> JBUIScale.scale(-2)
+        SystemInfo.isMac -> JBUIScale.scale(-1)
+        else -> 0
+      }))
       it.foreground = UIUtil.getContextHelpForeground()
     }
     vPanel.add(description)
@@ -72,7 +77,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
     hPanel.add(vPanel)
     hPanel.add(Box.createHorizontalGlue())
-    hPanel.add(rigid(49, 0))
+    hPanel.add(rigid(20, 0))
     val picture = JLabel(promoImage())
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
