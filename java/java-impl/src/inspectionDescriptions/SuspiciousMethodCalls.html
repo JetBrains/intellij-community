@@ -9,12 +9,12 @@ correspond to the collection's elements type.
 </pre>
 <!-- tooltip end -->
 <p>
-  The option '<b>Report suspicious but possibly correct method calls</b>' makes it possible to ignore
-  potentially correct code, like this:
+  Use the checkbox below to report potentially correct code, like this:
 </p>
 <pre>
-  Number number = new Integer(0);
-  list.remove(number);
+  public boolean accept(Map&lt;Integer, String&gt; map, Object key) {
+    return map.containsKey(key);
+  }
 </pre>
 </body>
 </html>
