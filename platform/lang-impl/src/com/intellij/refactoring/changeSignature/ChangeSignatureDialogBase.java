@@ -587,8 +587,10 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
     final Runnable updateRunnable = () -> {
       myUpdateSignatureAlarm.cancelAllRequests();
-      myUpdateSignatureAlarm.addRequest(() ->
-        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> updateSignatureAlarmFired()), 100, ModalityState.stateForComponent(mySignatureArea));
+      myUpdateSignatureAlarm.addRequest(() -> {
+        if (myProject.isDisposed()) return;
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> updateSignatureAlarmFired());
+      }, 100, ModalityState.stateForComponent(mySignatureArea));
     };
     SwingUtilities.invokeLater(updateRunnable);
   }
