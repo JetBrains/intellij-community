@@ -44,7 +44,7 @@ class CaseInsensitiveCharSequenceHashingStrategy implements HashingStrategy<Char
   public boolean equals(CharSequence s1, CharSequence s2) {
     return StringUtil.equalsIgnoreCase(s1, s2);
   }
-};
+}
 
 final class CanonicalHashingStrategy<T> implements HashingStrategy<T> {
   static final HashingStrategy<?> INSTANCE = new CanonicalHashingStrategy<>();

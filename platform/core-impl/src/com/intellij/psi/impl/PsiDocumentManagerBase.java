@@ -818,7 +818,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public Document @NotNull [] getUncommittedDocuments() {
+  public @NotNull Document @NotNull [] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
     return ArrayUtil.stripTrailingNulls(documents);
