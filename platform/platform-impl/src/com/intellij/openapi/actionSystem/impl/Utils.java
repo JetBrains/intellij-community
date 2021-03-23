@@ -17,11 +17,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -192,7 +193,7 @@ public final class Utils {
     if (glassPane == null || !isAsyncDataContext(context)) return () -> {};
     Component comp = point.getOriginalComponent();
     boolean isMenuItem = comp instanceof ActionMenu;
-    AsyncProcessIcon icon = isMenuItem ? new AsyncProcessIcon(place) : new AsyncProcessIcon.Big(place);
+    JLabel icon = new JLabel(isMenuItem ? AnimatedIcon.Default.INSTANCE : AnimatedIcon.Big.INSTANCE);
     Dimension size = icon.getPreferredSize();
     icon.setSize(size);
     Point location = point.getPoint(glassPane);
@@ -205,8 +206,14 @@ public final class Utils {
       location.y -= size.height / 2;
     }
     icon.setLocation(location);
-    glassPane.add(icon);
-    return () -> glassPane.remove(icon);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      if (!icon.isVisible()) return;
+      glassPane.add(icon);
+    }, 500, TimeUnit.MILLISECONDS);
+    return () -> {
+      if (icon.getParent() != null) glassPane.remove(icon);
+      else icon.setVisible(false);
+    };
   }
 
 

@@ -26,12 +26,14 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
@@ -1151,9 +1153,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myForcedUpdateRequested = true;
 
   private void addLoadingIcon() {
-    AsyncProcessIcon icon = new AsyncProcessIcon(myPlace);
-    icon.setBorder(JBUI.Borders.empty(4));
-    add(icon);
+    AnimatedIcon icon = AnimatedIcon.Default.INSTANCE;
+    JLabel label = new JLabel(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
+    label.setBorder(JBUI.Borders.empty(4));
+    add(label);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      label.setIcon(icon);
+    }, 500, TimeUnit.MILLISECONDS);
   }
 
   protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
