@@ -1407,7 +1407,7 @@ public final class BuildManager implements Disposable {
 
     final File projectSystemRoot = getProjectSystemDirectory(project);
     if (projectSystemRoot != null) {
-      cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
+      cmdLine.addPathParameter("-Djava.io.tmpdir=", FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
     }
 
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
@@ -1455,6 +1455,13 @@ public final class BuildManager implements Disposable {
 
     final List<String> cp = myClasspathManager.getBuildProcessClasspath(project);
     cmdLine.addClasspathParameter(cp, isProfilingMode ? Collections.singletonList("yjp-controller-api-redist.jar") : Collections.emptyList());
+
+    for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
+      List<String> pluginPaths = buildProcessParametersProvider.getAdditionalPluginPaths();
+      for (String path : pluginPaths) {
+        cmdLine.copyPathToTarget(new File(path));
+      }
+    }
 
     cmdLine.addParameter(BuildMain.class.getName());
     cmdLine.addParameter(cmdLine.getHostIp());
