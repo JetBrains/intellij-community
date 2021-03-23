@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -83,6 +85,16 @@ abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
+}
+
+class CopyRelativePathFromCurrentFileProvider : DumbAwareCopyPathProvider() {
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? =
+    virtualFile?.let {
+      FileEditorManager.getInstance(project).selectedFiles.firstOrNull()?.let { selectedEditorFile ->
+        if (virtualFile.path == selectedEditorFile.path) null
+        else FileUtil.getRelativePath(selectedEditorFile.path, virtualFile.path, '/')
+      }
+    }
 }
 
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
