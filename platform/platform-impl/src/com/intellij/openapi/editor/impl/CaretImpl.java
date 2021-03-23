@@ -237,7 +237,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         if (!editorSettings.isCaretInsideTabs()) {
           CharSequence text = document.getCharsSequence();
           if (offset >= 0 && offset < document.getTextLength()) {
-            if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == oldOffset)) {
+            if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == oldOffset) && !isAtRtlLocation()) {
               if (columnShift <= 0) {
                 newColumnNumber = myEditor.offsetToVisualPosition(offset, true, false).column;
               }

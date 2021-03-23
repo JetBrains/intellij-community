@@ -578,4 +578,11 @@ public class EditorRtlTest extends AbstractRtlTest {
   public void testIndentIsTreatedSeparately() {
     checkBidiRunBoundaries(" |R", "txt");
   }
+
+  public void testCaretMovementAroundTab() {
+    prepareText("R<caret>R\t");
+    left();
+    checkResult("RR<caret>\t");
+    assertVisualCaretLocation(0, true);
+  }
 }
