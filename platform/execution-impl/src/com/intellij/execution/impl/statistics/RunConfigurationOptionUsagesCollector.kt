@@ -14,7 +14,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("run.configuration.ui.interactions", 4)
+    val GROUP = EventLogGroup("run.configuration.ui.interactions", 5)
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope", // junit
@@ -30,6 +30,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     val removeOption = GROUP.registerEvent("remove.run.option", optionId, ID_FIELD, EventFields.InputEvent)
     val addNew = GROUP.registerEvent("add", ID_FIELD)
     val remove = GROUP.registerEvent("remove", ID_FIELD)
+    val hintsShown = GROUP.registerEvent("hints.shown", ID_FIELD, EventFields.Int("hint_number"), EventFields.DurationMs)
 
     @JvmStatic
     fun logAddNew(project: Project?, config: String?) {
@@ -62,6 +63,11 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     fun logRemoveOption(project: Project?, option: String?, config: String?, inputEvent: FusInputEvent?) {
       removeOption.log(project, option, config, inputEvent)
     }
+
+    @JvmStatic
+    fun logShowHints(project: Project?, config: String?, hintsCount: Int, duration: Long) {
+      hintsShown.log(project, config, hintsCount, duration)
+    }
   }
 }
 
@@ -72,5 +78,9 @@ class FragmentedStatisticsServiceImpl: FragmentStatisticsService() {
 
   override fun logOptionRemoved(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
     RunConfigurationOptionUsagesCollector.logRemoveOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))
+  }
+
+  override fun logHintsShown(project: Project?, runConfigId: String?, hintNumber: Int, duration: Long) {
+    RunConfigurationOptionUsagesCollector.logShowHints(project, runConfigId, hintNumber, duration)
   }
 }
