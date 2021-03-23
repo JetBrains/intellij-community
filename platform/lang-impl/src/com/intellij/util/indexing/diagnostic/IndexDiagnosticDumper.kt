@@ -141,7 +141,7 @@ class IndexDiagnosticDumper : Disposable {
         .mapNotNull { jsonFile ->
           val timeStampString = jsonFile.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
           val timeStamp = try {
-            LocalDateTime.parse(timeStampString, diagnosticDateTimeFormatter)
+            LocalDateTime.parse(timeStampString, diagnosticTimestampFormat)
           }
           catch (e: Exception) {
             return@mapNotNull null
