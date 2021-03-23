@@ -256,7 +256,11 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
       }
       return null;
     }
-    return myRunner.loadCoverageData(sessionDataFile, this);
+    final long startMs = System.currentTimeMillis();
+    final ProjectData projectData = myRunner.loadCoverageData(sessionDataFile, this);
+    final long timeMs = System.currentTimeMillis() - startMs;
+    CoverageLogger.logReportLoading(myRunner, timeMs);
+    return projectData;
   }
 
   @Override

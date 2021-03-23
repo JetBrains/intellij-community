@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations.coverage;
 
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.IDEACoverageRunner;
 import com.intellij.coverage.JavaCoverageEngine;
@@ -81,13 +82,19 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
           sourceMapPath = getSourceMapPath(path);
         }
 
-        ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
-                                                            getPatterns(),
-                                                            getExcludePatterns(),
-                                                            javaParameters,
-                                                            isTrackPerTestCoverage() && !isSampling(),
-                                                            isSampling(),
-                                                            sourceMapPath);
+        final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
+        final String[] patterns = getPatterns();
+        final String[] excludePatterns = getExcludePatterns();
+        CoverageLogger.logRunner(javaCoverageRunner, isSampling(), isTrackPerTestCoverage());
+        CoverageLogger.logPatterns(patterns == null ? 0 : patterns.length,
+                                   excludePatterns == null ? 0 : excludePatterns.length);
+        javaCoverageRunner.appendCoverageArgument(new File(path).getCanonicalPath(),
+                                                  patterns,
+                                                  excludePatterns,
+                                                  javaParameters,
+                                                  isTrackPerTestCoverage() && !isSampling(),
+                                                  isSampling(),
+                                                  sourceMapPath);
       }
     }
     catch (IOException e) {
