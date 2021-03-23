@@ -29,13 +29,22 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 @SuppressWarnings("ComponentNotRegistered")
 public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
+  private final Predicate<DataContext> myEnabledPredicate;
+
+  private static final Predicate<DataContext> ALWAYS_ENABLED_PREDICATE = (__) -> true;
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
+    this(actionGroup, ALWAYS_ENABLED_PREDICATE);
+  }
+
+  public SplitButtonAction(@NotNull ActionGroup actionGroup, @NotNull Predicate<@NotNull DataContext> enabledPredicate) {
     myActionGroup = actionGroup;
+    myEnabledPredicate = enabledPredicate;
     setPopup(true);
   }
 
@@ -71,7 +80,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
   @Override
   @NotNull
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new SplitButton(this, presentation, place, myActionGroup);
+    return new SplitButton(this, presentation, place, myActionGroup, myEnabledPredicate);
   }
 
   private static final class SplitButton extends ActionButton {
@@ -82,14 +91,20 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     private static final Icon ARROW_DOWN = AllIcons.General.ButtonDropTriangle;
 
     private final ActionGroup myActionGroup;
+    private final Predicate<DataContext> myEnabledPredicate;
     private AnAction selectedAction;
     private boolean actionEnabled = true;
     private MousePressType mousePressType = MousePressType.None;
     private SimpleMessageBusConnection myConnection;
 
-    private SplitButton(@NotNull AnAction action, @NotNull Presentation presentation, String place, ActionGroup actionGroup) {
+    private SplitButton(@NotNull AnAction action,
+                        @NotNull Presentation presentation,
+                        String place,
+                        ActionGroup actionGroup,
+                        @NotNull Predicate<@NotNull DataContext> enabledPredicate) {
       super(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
       myActionGroup = actionGroup;
+      myEnabledPredicate = enabledPredicate;
 
       AnAction[] actions = myActionGroup.getChildren(null);
       if (actions.length > 0) {
@@ -152,7 +167,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       look.paintIcon(g, this, ARROW_DOWN, x, y);
 
       x -= JBUIScale.scale(4);
-      if (getPopState() == POPPED || getPopState() == PUSHED) {
+      int popState = getPopState();
+      if (popState == POPPED || popState == PUSHED) {
         g.setColor(JBUI.CurrentTheme.ActionButton.hoverSeparatorColor());
         g.fillRect(x, baseRect.y, JBUIScale.scale(1), baseRect.height);
       }
@@ -176,6 +192,11 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
 
     @Override
+    protected boolean isEnabled(boolean componentEnabled) {
+      return componentEnabled && myEnabledPredicate.test(getDataContext());
+    }
+
+      @Override
     protected void onMousePressed(@NotNull MouseEvent e) {
       Rectangle baseRect = new Rectangle(getSize());
       JBInsets.removeFrom(baseRect, getInsets());
