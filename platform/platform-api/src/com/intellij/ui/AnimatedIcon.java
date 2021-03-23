@@ -78,6 +78,8 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Big.Step_6,
       AllIcons.Process.Big.Step_7,
       AllIcons.Process.Big.Step_8);
+
+    public static final AnimatedIcon INSTANCE = new Big();
   }
 
   public static class Recording extends AnimatedIcon {
