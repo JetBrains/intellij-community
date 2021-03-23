@@ -11,6 +11,7 @@ import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
