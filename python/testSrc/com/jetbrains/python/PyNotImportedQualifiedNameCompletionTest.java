@@ -94,6 +94,7 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
+  // PY-47304
   public void testDirectModuleAttributesSuggestedForNonEmptyAttributePrefix() {
     doTestBasicCompletion();
   }
