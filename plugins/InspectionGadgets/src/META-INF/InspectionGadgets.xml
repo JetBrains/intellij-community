@@ -2138,10 +2138,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NonFinalClone" bundle="messages.InspectionGadgetsBundle" key="non.final.clone.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.NonFinalCloneInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NonStaticInnerClassInSecureContext" bundle="messages.InspectionGadgetsBundle"
-                     key="non.static.inner.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.security.NonStaticInnerClassInSecureContextInspection"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.security.NonStaticInnerClassInSecureContextElementMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicStaticArrayField" bundle="messages.InspectionGadgetsBundle"
                      key="public.static.array.field.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
