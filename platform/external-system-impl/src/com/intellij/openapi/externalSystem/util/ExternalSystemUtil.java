@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.IdeActivity;
@@ -737,11 +738,11 @@ public final class ExternalSystemUtil {
     }
     return TrustedProjects.confirmOpeningUntrustedProject(
       virtualFile,
-      ExternalSystemBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
-      ExternalSystemBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size()),
-      ExternalSystemBundle.message("untrusted.project.notification.open.trust.button"),
-      ExternalSystemBundle.message("untrusted.project.notification.open.distrust.button"),
-      ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button")
+      IdeBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
+      IdeBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size()),
+      IdeBundle.message("untrusted.project.notification.open.trust.button"),
+      IdeBundle.message("untrusted.project.notification.open.distrust.button"),
+      IdeBundle.message("untrusted.project.notification.open.cancel.button")
     );
   }
 
