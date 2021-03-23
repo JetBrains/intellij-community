@@ -138,7 +138,7 @@ class PythonRenameLesson : KLesson("Rename", LessonsBundle.message("rename.lesso
     val confirmRefactoringButton = RefactoringBundle.message("usageView.doAction").dropMnemonic()
     task {
       triggerByUiComponentAndHighlight(highlightInside = false) { button: JButton ->
-        button.text.contains(confirmRefactoringButton)
+        button.text?.contains(confirmRefactoringButton) == true
       }
     }
 
