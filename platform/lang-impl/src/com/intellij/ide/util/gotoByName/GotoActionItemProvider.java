@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
@@ -13,8 +12,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
-import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,18 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.DefaultBundleService;
@@ -237,85 +229,13 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       actions = actions.append(provider.getActions(true));
     }
 
-    Set<AnAction> seenActions = new HashSet<>();
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
-      seenActions.add(action);
       if (action instanceof ActionGroup && !((ActionGroup)action).isSearchable()) return null;
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.getGroupMapping(action), mode, myModel);
     });
-    if (Registry.is("actionSystem.gotoAction.all.toolwindows")) {
-      List<ActionWrapper> toolWindowActions = collectToolWindowQuickActionProviders(pattern, matcher, seenActions);
-      actionWrappers = actionWrappers.append(toolWindowActions);
-    }
     return processItems(pattern, actionWrappers, consumer);
-  }
-
-  @NotNull
-  private List<ActionWrapper> collectToolWindowQuickActionProviders(String pattern, Matcher matcher, Set<AnAction> seenActions) {
-    Project project = myModel.getProject();
-    if (project == null) {
-      return Collections.emptyList();
-    }
-    List<ActionWrapper> result = new ArrayList<>();
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    String[] toolWindowIds = toolWindowManager.getToolWindowIds();
-    for (String toolWindowId : toolWindowIds) {
-      ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-      if (toolWindow == null || !toolWindow.isVisible()) {
-        continue;
-      }
-      ContentManager contentManager = toolWindow.getContentManagerIfCreated();
-      Content content = contentManager == null ? null : contentManager.getSelectedContent();
-      if (content == null) {
-        continue;
-      }
-      Pair<UpdateSession, List<? extends AnAction>> sessionAndActions = ActionUpdateEdtExecutor.computeOnEdt(
-        () -> {
-          DataContext dataContext = DataManager.getInstance().getDataContext(content.getComponent());
-          QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
-          List<AnAction> actions = provider == null ? Collections.emptyList() : provider.getActions(true);
-          if (actions.isEmpty()) return null;
-          DataContext wrapped = Utils.wrapDataContext(dataContext);
-          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, wrapped);
-          return Pair.create(Utils.getOrCreateUpdateSession(event), actions);
-        });
-      if (sessionAndActions != null) {
-        // todo the session must be passed to ActionWrapper.getPresentation
-        // todo currently with this code all actions are shown as disabled
-        String toolWindowTitle = toolWindow.getTitle();
-        String title = StringUtil.isNotEmpty(toolWindowTitle) ? toolWindowTitle : toolWindow.getStripeTitle();
-        ReadAction.nonBlocking(
-          () -> appendActionsFromProvider(pattern, matcher, result, seenActions,
-                                          sessionAndActions.second, sessionAndActions.first, title))
-          .executeSynchronously();
-
-      }
-    }
-    return result;
-  }
-
-  private void appendActionsFromProvider(String pattern,
-                                         Matcher matcher,
-                                         List<ActionWrapper> result,
-                                         Set<AnAction> seenActions,
-                                         List<? extends AnAction> providerActions,
-                                         UpdateSession updateSession,
-                                         @NlsContexts.TabTitle @Nullable String title) {
-    for (AnAction action : providerActions) {
-      if (!seenActions.add(action)) continue;
-      if (action instanceof ActionGroup) {
-        List<? extends AnAction> children = updateSession.children((ActionGroup)action);
-        appendActionsFromProvider(pattern, matcher, result, seenActions, children, updateSession, title);
-      }
-      else {
-        MatchMode mode = myModel.actionMatches(pattern, matcher, action);
-        if (mode != MatchMode.NONE) {
-          result.add(new ActionWrapper(action, GroupMapping.createFromText(title, true), mode, myModel));
-        }
-      }
-    }
   }
 
   public void clearIntentions() {
