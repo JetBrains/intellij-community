@@ -3,8 +3,12 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.Nls;
@@ -13,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
@@ -356,6 +361,10 @@ public final class Presentation implements Cloneable {
   }
 
   public void copyFrom(Presentation presentation) {
+    copyFrom(presentation, null);
+  }
+
+  public void copyFrom(Presentation presentation, @Nullable Component customComponent) {
     if (presentation == this) return;
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
@@ -373,7 +382,12 @@ public final class Presentation implements Cloneable {
       allKeys.addAll(myUserMap.keySet());
       if (!allKeys.isEmpty()) {
         for (String key : allKeys) {
-          putClientProperty(key, presentation.getClientProperty(key));
+          if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && customComponent != null) {
+            putClientProperty(key, customComponent);
+          }
+          else {
+            putClientProperty(key, presentation.getClientProperty(key));
+          }
         }
       }
     }
@@ -399,7 +413,7 @@ public final class Presentation implements Cloneable {
     synchronized (this) {
       oldValue = myUserMap.get(key);
       if (Comparing.equal(oldValue, value)) return;
-      if (key.equals("customComponent") && oldValue != null) {
+      if (key.equals(CustomComponentAction.COMPONENT_KEY.toString()) && oldValue != null) {
         LOG.error("Trying to reset custom component in a presentation", new Throwable());
       }
       myUserMap = value == null ? myUserMap.minus(key) : myUserMap.plus(key, value);
