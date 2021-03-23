@@ -28,6 +28,7 @@ import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
 import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.*
+import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -44,7 +45,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           targetBuildParametersBuilder: TargetBuildParameters.Builder,
           resultHandler: ResultHandler<Any?>) {
     val project: Project = connection.taskId?.findProject() ?: return
-    val progressIndicator = MyTargetProgressIndicator(connection.taskId, connection.taskListener)
+    val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
+    consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
     val environmentConfigurationProvider = connection.environmentConfigurationProvider
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
@@ -54,8 +56,9 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
   private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
                                serverEnvironmentSetup: GradleServerEnvironmentSetupImpl,
-                               targetProgressIndicator: TargetProgressIndicator,
+                               targetProgressIndicator: GradleServerProgressIndicator,
                                resultHandler: ResultHandler<Any?>) {
+    targetProgressIndicator.checkCanceled()
     val remoteEnvironment = serverEnvironmentSetup.targetEnvironment
     val process = remoteEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
     val processHandler: CapturingProcessHandler = object :
@@ -108,7 +111,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     processHandler.addProcessListener(
       GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
     )
-    processHandler.runProcessWithProgressIndicator(EmptyProgressIndicator(), -1, true)
+    processHandler.runProcessWithProgressIndicator(targetProgressIndicator.progressIndicator, -1, true)
   }
 
   private fun String.useLocalLineSeparators(targetPlatform: TargetPlatform) =
@@ -267,7 +270,13 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       if (!resultReceived) {
         val outputType = if (event.exitCode == 0) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
         event.text?.also { targetProgressIndicator.addText(it, outputType) }
-        resultHandler.onFailure(GradleConnectionException("Operation result has not been received."))
+        val gradleConnectionException = if (targetProgressIndicator.isCanceled) {
+          BuildCancelledException("Build cancelled.")
+        }
+        else {
+          GradleConnectionException("Operation result has not been received.")
+        }
+        resultHandler.onFailure(gradleConnectionException)
       }
       gradleServerEventsListener.stop()
     }
@@ -291,20 +300,19 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  class MyTargetProgressIndicator(private val taskId: ExternalSystemTaskId,
-                                  private val taskListener: ExternalSystemTaskNotificationListener?) : TargetProgressIndicator {
-    @Volatile
-    var stopped = false
+  internal class GradleServerProgressIndicator(private val taskId: ExternalSystemTaskId,
+                                               private val taskListener: ExternalSystemTaskNotificationListener?) : TargetProgressIndicator {
+    val progressIndicator = EmptyProgressIndicator().apply { start() }
+
     override fun addText(text: String, outputType: Key<*>) {
       taskListener?.onTaskOutput(taskId, text, outputType != ProcessOutputTypes.STDERR)
     }
 
-    override fun isCanceled(): Boolean = false
-    override fun stop() {
-      stopped = true
-    }
-
-    override fun isStopped(): Boolean = stopped
+    override fun stop() = progressIndicator.stop()
+    override fun isStopped(): Boolean = !progressIndicator.isRunning
+    fun cancel() = progressIndicator.cancel()
+    override fun isCanceled(): Boolean = progressIndicator.isCanceled
+    fun checkCanceled() = progressIndicator.checkCanceled()
   }
 
   companion object {
