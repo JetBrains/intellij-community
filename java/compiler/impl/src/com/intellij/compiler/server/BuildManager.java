@@ -31,7 +31,10 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -102,7 +105,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -111,7 +115,6 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -121,13 +124,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.compiler.server.LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory;
-import static com.intellij.compiler.server.WslBuildCommandLineBuilder.getWslBuildSystemDirectory;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class BuildManager implements Disposable {
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<Integer> COMPILER_PROCESS_DEBUG_PORT = Key.create("_compiler_process_debug_port_");
@@ -384,11 +382,11 @@ public final class BuildManager implements Disposable {
 
     if (!IS_UNIT_TEST_MODE) {
       ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(getLocalBuildSystemDirectory())), 3, 180, TimeUnit.MINUTES);
+        .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory())), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
       if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
         WslDistributionManager.getInstance().getInstalledDistributions().forEach(distribution -> {
-          Path wslBuildSystemDirectory = getWslBuildSystemDirectory(distribution);
+          Path wslBuildSystemDirectory = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(distribution);
           if (wslBuildSystemDirectory != null) {
             ScheduledFuture<?> wslFuture = AppExecutorUtil.getAppScheduledExecutorService()
               .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(wslBuildSystemDirectory)), 3, 180, TimeUnit.MINUTES);
@@ -1539,23 +1537,20 @@ public final class BuildManager implements Disposable {
   @Deprecated
   @NotNull
   public Path getBuildSystemDirectory() {
-    return getLocalBuildSystemDirectory();
+    return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
   }
 
   @NotNull
   public Path getBuildSystemDirectory(Project project) {
-    String projectPath = getProjectPath(project);
-    WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
-
-    if (wslPath == null) {
-      return getLocalBuildSystemDirectory();
+    final WslPath wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
+    if (wslPath != null) {
+      Path buildDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(wslPath.getDistribution());
+      if (buildDir != null) {
+        return buildDir;
+      }
     }
-    else {
-      Path buildDir = getWslBuildSystemDirectory(wslPath.getDistribution());
-      return buildDir != null ? buildDir : getLocalBuildSystemDirectory();
-    }
+    return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
   }
-
 
   @NotNull
   public static File getBuildLogDirectory() {
