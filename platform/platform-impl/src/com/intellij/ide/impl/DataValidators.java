@@ -47,7 +47,11 @@ public abstract class DataValidators {
     };
   }
 
-  static boolean isDataValid(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
+  public static @Nullable Object validOrNull(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
+    return isDataValid(data, dataId, source) ? data : null;
+  }
+
+  private static boolean isDataValid(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
     //noinspection unchecked
     Validator<Object>[] validators = (Validator<Object>[])getValidators(dataId);
     if (validators == null) return true;

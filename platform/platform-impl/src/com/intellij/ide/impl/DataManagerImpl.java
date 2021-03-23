@@ -42,6 +42,8 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.ide.impl.DataValidators.validOrNull;
+
 public class DataManagerImpl extends DataManager {
   private static final Logger LOG = Logger.getInstance(DataManagerImpl.class);
 
@@ -83,14 +85,14 @@ public class DataManagerImpl extends DataManager {
     try {
       depth[0]++;
       Object data = provider.getData(dataId);
-      if (data != null) return validated(data, dataId, provider);
+      if (data != null) return validOrNull(data, dataId, provider);
 
       if (dataRule != null) {
         final Set<String> ids = alreadyComputedIds == null ? new HashSet<>() : alreadyComputedIds;
         ids.add(dataId);
         data = dataRule.getData(id -> getDataFromProvider(provider, id, ids));
 
-        if (data != null) return validated(data, dataId, provider);
+        if (data != null) return validOrNull(data, dataId, provider);
       }
 
       return null;
@@ -151,13 +153,6 @@ public class DataManagerImpl extends DataManager {
       }
     }
     return null;
-  }
-
-  private static @Nullable Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object source) {
-    if (!DataValidators.isDataValid(data, dataId, source)) {
-      return null;
-    }
-    return data;
   }
 
   @Override
