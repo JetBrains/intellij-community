@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -142,7 +143,10 @@ internal class SwitcherVirtualFile(
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
-    component.icon = RenderingUtil.getIcon(icon, selected)
+    component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
+      true -> RenderingUtil.getIcon(icon, selected)
+      else -> icon
+    }
     val foreground = if (selected) null else FileStatusManager.getInstance(project).getStatus(file).color
     val effectColor = if (isProblemFile) JBColor.red else null
     val style = when (effectColor) {
