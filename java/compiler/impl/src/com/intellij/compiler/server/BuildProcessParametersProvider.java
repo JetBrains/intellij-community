@@ -32,6 +32,14 @@ public abstract class BuildProcessParametersProvider {
     return Collections.emptyList();
   }
 
+  /**
+   * Override this method to specify list of files that are required for the build to work but shouldn't be added to the
+   * build process classpath.
+   */
+  public @NotNull List<String> getAdditionalPluginPaths() {
+    return Collections.emptyList();
+  }
+
   public @NotNull List<String> getVMArguments() {
     return Collections.emptyList();
   }

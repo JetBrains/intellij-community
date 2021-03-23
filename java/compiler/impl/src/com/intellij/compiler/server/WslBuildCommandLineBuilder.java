@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.GlobalOptions;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
@@ -122,6 +123,21 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       builder.append(myWorkingDirectory).append("/").append(s);
     }
     myCommandLine.addParameter(builder.toString());
+  }
+
+  @Override
+  public void copyPathToTarget(File file) {
+    if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
+      Path targetPath = myHostClasspathDirectory.resolve(file.getName());
+      if (!targetPath.toFile().exists()) {
+        try {
+          FileUtil.copyFileOrDir(file, targetPath.toFile());
+        }
+        catch (IOException e) {
+          // ignore
+        }
+      }
+    }
   }
 
   @Override

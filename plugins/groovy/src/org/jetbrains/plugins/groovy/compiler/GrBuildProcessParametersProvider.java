@@ -5,12 +5,16 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildProcessParametersProvider;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.groovy.compiler.rt.GroovyRtJarPaths;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.incremental.groovy.GreclipseBuilder;
+import org.jetbrains.jps.incremental.groovy.GroovyBuilder;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,5 +40,14 @@ final class GrBuildProcessParametersProvider extends BuildProcessParametersProvi
     }
 
     return Collections.emptyList();
+  }
+
+  @Override
+  public @NotNull List<String> getAdditionalPluginPaths() {
+    Path jarPath = PathManager.getJarForClass(GroovyBuilder.class);
+    if (jarPath == null) {
+      return Collections.emptyList();
+    }
+    return GroovyRtJarPaths.getGroovyRtRoots(jarPath.toFile());
   }
 }
