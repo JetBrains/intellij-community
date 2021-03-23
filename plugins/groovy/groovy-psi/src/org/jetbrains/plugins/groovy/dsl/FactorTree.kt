@@ -1,106 +1,99 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.dsl;
+package org.jetbrains.plugins.groovy.dsl
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
+import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
+import java.util.concurrent.ConcurrentHashMap
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+class FactorTree(
+  project: Project,
+  private val myExecutor: GroovyDslExecutor
+) {
 
-/**
- * @author peter
- */
-public class FactorTree {
-
-  private static final Key<CachedValue<Map>> GDSL_MEMBER_CACHE = Key.create("GDSL_MEMBER_CACHE");
-  private static final Key<Boolean> CONTAINS_TYPE = Key.create("CONTAINS_TYPE");
-  private final CachedValueProvider<Map> myProvider;
-  private final CachedValue<Map> myTopLevelCache;
-  private final GroovyDslExecutor myExecutor;
-
-  public FactorTree(final Project project, GroovyDslExecutor executor) {
-    myExecutor = executor;
-    myProvider = () -> new CachedValueProvider.Result<>((ConcurrentMap<Object, Object>)new ConcurrentHashMap<Object, Object>(), PsiModificationTracker.MODIFICATION_COUNT);
-    myTopLevelCache = CachedValuesManager.getManager(project).createCachedValue(myProvider, false);
+  private val myProvider: CachedValueProvider<MutableMap<Any, Any>> = CachedValueProvider {
+    CachedValueProvider.Result(ConcurrentHashMap(), PsiModificationTracker.MODIFICATION_COUNT)
   }
+  private val myTopLevelCache: CachedValue<MutableMap<Any, Any>> =
+    CachedValuesManager.getManager(project).createCachedValue(myProvider, false)
 
-  public void cache(GroovyClassDescriptor descriptor, CustomMembersHolder holder) {
-    Map current = null;
-    for (Factor factor : descriptor.affectingFactors) {
-      Object key;
-      switch (factor) {
-        case placeElement: key = descriptor.getPlace(); break;
-        case placeFile: key = descriptor.getPlaceFile(); break;
-        case qualifierType: key = descriptor.getPsiType().getCanonicalText(false); break;
-        default: throw new IllegalStateException("Unknown variant: "+ factor);
+  fun cache(descriptor: GroovyClassDescriptor, holder: CustomMembersHolder) {
+    var current: MutableMap<Any, Any>? = null
+    for (factor: Factor in descriptor.affectingFactors) {
+      val key: Any = when (factor) {
+        Factor.placeElement -> descriptor.place
+        Factor.placeFile -> descriptor.placeFile
+        Factor.qualifierType -> descriptor.psiType.getCanonicalText(false)
       }
       if (current == null) {
-        if (key instanceof UserDataHolder) {
-          final Project project = descriptor.getProject();
-          current = CachedValuesManager.getManager(project).getCachedValue((UserDataHolder)key, GDSL_MEMBER_CACHE, myProvider, false);
-          continue;
+        if (key is UserDataHolder) {
+          current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, myProvider, false)
+          continue
         }
-
-        current = myTopLevelCache.getValue();
+        current = myTopLevelCache.value!!
       }
-      Map next = (Map)current.get(key);
+      @Suppress("UNCHECKED_CAST")
+      var next: MutableMap<Any, Any>? = current[key] as MutableMap<Any, Any>?
       if (next == null) {
-        //noinspection unchecked
-        current.put(key, next = new ConcurrentHashMap<>());
-        if (key instanceof String) { // type
-          //noinspection unchecked
-          current.put(CONTAINS_TYPE, true);
+        next = ConcurrentHashMap<Any, Any>()
+        current[key] = next
+        if (key is String) { // type
+          current[CONTAINS_TYPE] = true
         }
       }
-      current = next;
+      current = next
     }
-
-    if (current == null) current = myTopLevelCache.getValue();
-    //noinspection unchecked
-    current.put(myExecutor, holder);
+    if (current == null) {
+      current = myTopLevelCache.value!!
+    }
+    current[myExecutor] = holder
   }
 
-  public @Nullable CustomMembersHolder retrieve(PsiElement place, PsiFile placeFile, NotNullLazyValue<String> qualifierType) {
-    return retrieveImpl(place, placeFile, qualifierType, myTopLevelCache.getValue(), true);
+  fun retrieve(place: PsiElement, placeFile: PsiFile, qualifierType: NotNullLazyValue<String>): CustomMembersHolder? {
+    return retrieveImpl(place, placeFile, qualifierType, myTopLevelCache.value, true)
   }
 
-  private @Nullable CustomMembersHolder retrieveImpl(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull NotNullLazyValue<String> qualifierType, @Nullable Map current, boolean topLevel) {
-    if (current == null) return null;
-
-    CustomMembersHolder result;
-
-    result = (CustomMembersHolder)current.get(myExecutor);
-    if (result != null) return result;
-
+  private fun retrieveImpl(
+    place: PsiElement,
+    placeFile: PsiFile,
+    qualifierType: NotNullLazyValue<String>,
+    current: Map<*, *>?,
+    topLevel: Boolean
+  ): CustomMembersHolder? {
+    if (current == null) return null
+    val result: CustomMembersHolder? = current[myExecutor] as CustomMembersHolder?
+    if (result != null) {
+      return result
+    }
     if (current.containsKey(CONTAINS_TYPE)) {
-      result = retrieveImpl(place, placeFile, qualifierType, (Map)current.get(qualifierType.getValue()), false);
-      if (result != null) return result;
+      retrieveImpl(place, placeFile, qualifierType, current[qualifierType.value] as Map<*, *>?, false)?.let {
+        return it
+      }
     }
-
-    result = retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(placeFile, current, topLevel), false);
-    if (result != null) return result;
-
-    return retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(place, current, topLevel), false);
+    return retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(placeFile, current, topLevel), false)
+           ?: retrieveImpl(place, placeFile, qualifierType, getFromMapOrUserData(place, current, topLevel), false)
   }
 
-  private static Map getFromMapOrUserData(UserDataHolder holder, Map map, boolean fromUserData) {
-    if (fromUserData) {
-      CachedValue<Map> cache = holder.getUserData(GDSL_MEMBER_CACHE);
-      return cache != null && cache.hasUpToDateValue() ? cache.getValue() : null;
+  companion object {
+
+    private val GDSL_MEMBER_CACHE: Key<CachedValue<MutableMap<Any, Any>>> = Key.create("GDSL_MEMBER_CACHE")
+
+    private val CONTAINS_TYPE = Key.create<Boolean>("CONTAINS_TYPE")
+
+    private fun getFromMapOrUserData(holder: UserDataHolder, map: Map<*, *>, fromUserData: Boolean): Map<*, *>? {
+      if (fromUserData) {
+        val cache = holder.getUserData(GDSL_MEMBER_CACHE)
+        return if (cache != null && cache.hasUpToDateValue()) cache.value else null
+      }
+      return map[holder] as Map<*, *>?
     }
-    return (Map)map.get(holder);
   }
 }
-
