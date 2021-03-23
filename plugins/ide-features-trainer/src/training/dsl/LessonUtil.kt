@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
@@ -13,7 +14,9 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
+import training.ui.LearningUiManager
 import training.ui.LearningUiUtil
 import training.util.KeymapUtil
 import java.awt.Component
@@ -273,6 +277,30 @@ fun String.dropMnemonic(): String {
 }
 
 val seconds01 = Timeout.timeout(1, TimeUnit.SECONDS)
+
+fun LessonContext.showWarningIfInplaceRefactoringsDisabled() {
+  task {
+    val step = CompletableFuture<Boolean>()
+    addStep(step)
+    val callbackId = LearningUiManager.addCallback {
+      EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled = true
+      step.complete(true)
+    }
+    showWarning(LessonsBundle.message("refactorings.change.settings.warning.message", action("ShowSettings"),
+                                      strong(OptionsBundle.message("configurable.group.editor.settings.display.name")),
+                                      strong(ApplicationBundle.message("title.code.editing")),
+                                      strong(ApplicationBundle.message("radiobutton.rename.local.variables.inplace")),
+                                      strong(ApplicationBundle.message("radiogroup.rename.local.variables").dropLast(1)),
+                                      callbackId)
+    ) {
+      if (EditorSettingsExternalizable.getInstance().isVariableInplaceRenameEnabled) {
+        step.complete(true)
+        false
+      }
+      else true
+    }
+  }
+}
 
 fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boolean> {
   val feature: CompletableFuture<Boolean> = CompletableFuture()
