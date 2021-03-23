@@ -65,6 +65,7 @@ public abstract class AbstractCommand<T> {
 
   // Powerful DataViewer commands
   public static final int CMD_DATAVIEWER_ACTION = 210;
+  public static final int CMD_TABLE_EXEC = 211;
 
   /**
    * The code of the message that means that IDE received

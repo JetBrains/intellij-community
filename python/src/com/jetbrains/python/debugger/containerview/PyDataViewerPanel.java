@@ -24,10 +24,7 @@ import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.array.AbstractDataViewTable;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders;
@@ -77,7 +74,15 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    myFrameAccessor.addFrameListener(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel()));
+    myFrameAccessor.addFrameListener(new PyFrameListener() {
+      @Override
+      public void frameChanged() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel());
+      }
+
+      @Override
+      public void sessionStopped() { }
+    });
   }
 
   private void updateModel() {

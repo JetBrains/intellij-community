@@ -479,6 +479,9 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.executeCustomizer"
                     interface="com.jetbrains.python.console.PyExecuteConsoleCustomizer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.tableViewCustomizer"
+                    interface="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizer"
+                    dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
@@ -677,6 +680,10 @@
 
   <extensions defaultExtensionNs="com.jetbrains.python.console">
     <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.debugger">
+    <tableViewCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizerDefault"/>
   </extensions>
 
   <applicationListeners>

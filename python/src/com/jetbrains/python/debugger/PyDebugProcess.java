@@ -235,6 +235,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           listener.frameChanged();
         }
       }
+
+      @Override
+      public void sessionStopped() {
+        XDebugSessionListener.super.sessionStopped();
+        for (PyFrameListener listener : myFrameListeners) {
+          listener.sessionStopped();
+        }
+      }
     });
 
     session.addSessionListener(new XDebugSessionListener() {
@@ -761,6 +769,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public String execTableCommand(String command, TableCommandType commandType) throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.execTableCommand(frame.getThreadId(), frame.getFrameId(), command, commandType);
+  }
+
+  @Override
   public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
     synchronized (myFrameCacheObject) {
       final PyStackFrame frame = (PyStackFrame) contextFrame;
@@ -1210,7 +1224,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  public Project getProject() {
+  @Override
+  public @NotNull Project getProject() {
     return getSession().getProject();
   }
 
