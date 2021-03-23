@@ -72,7 +72,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
     hPanel.add(vPanel)
     hPanel.add(Box.createHorizontalGlue())
-    hPanel.add(rigid(54, 0))
+    hPanel.add(rigid(49, 0))
     val picture = JLabel(promoImage())
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
