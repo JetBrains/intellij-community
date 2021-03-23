@@ -15,7 +15,7 @@ internal class HeadlessPluginsInstaller : ApplicationStarter {
     try {
       installAndEnable(
         null,
-        args.subList(1, args.size - 1).map { PluginId.getId(it) }.toSet(),
+        args.subList(1, args.size).map { PluginId.getId(it) }.toSet(),
       ) {}
     }
     catch (e: IOException) {
