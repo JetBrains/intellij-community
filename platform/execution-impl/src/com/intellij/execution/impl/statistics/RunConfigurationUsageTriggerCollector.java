@@ -11,14 +11,17 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,27 +41,38 @@ public final class RunConfigurationUsageTriggerCollector {
                                     @NotNull ConfigurationFactory factory,
                                     @NotNull Executor executor,
                                     @Nullable RunConfiguration runConfiguration) {
+    return new IdeActivity(project, GROUP).startedWithDataAsync(data -> {
+      return ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, data))
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance());
+    });
+  }
+
+  private static @NotNull FeatureUsageData buildContext(@NotNull Project project,
+                                                        @NotNull ConfigurationFactory factory,
+                                                        @NotNull Executor executor,
+                                                        @Nullable RunConfiguration runConfiguration,
+                                                        @NotNull FeatureUsageData data) {
     final ConfigurationType configurationType = factory.getType();
-    return new IdeActivity(project, GROUP).startedWithData(data -> {
-      List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
-      ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
-      eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
-      if (runConfiguration instanceof FusAwareRunConfiguration) {
-        List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
-        ObjectEventData objectEventData = new ObjectEventData(additionalData);
-        eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
-      }
-      if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
-        String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
-        if (defaultTargetName != null) {
-          TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
-          if (target != null) {
-            eventPairs.add(TARGET.with(target.getTypeId()));
-          }
+    List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
+    ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
+    eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
+    if (runConfiguration instanceof FusAwareRunConfiguration) {
+      List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+      ObjectEventData objectEventData = new ObjectEventData(additionalData);
+      eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
+    }
+    if (runConfiguration instanceof TargetEnvironmentAwareRunProfile) {
+      String defaultTargetName = ((TargetEnvironmentAwareRunProfile)runConfiguration).getDefaultTargetName();
+      if (defaultTargetName != null) {
+        TargetEnvironmentConfiguration target = TargetEnvironmentsManager.getInstance(project).getTargets().findByName(defaultTargetName);
+        if (target != null) {
+          eventPairs.add(TARGET.with(target.getTypeId()));
         }
       }
-      eventPairs.forEach(pair -> pair.addData(data));
-    });
+    }
+    eventPairs.forEach(pair -> pair.addData(data));
+    return data;
   }
 
   public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {

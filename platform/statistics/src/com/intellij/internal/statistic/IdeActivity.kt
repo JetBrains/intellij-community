@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.Promise
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -41,6 +42,17 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
 
     startedTimestamp = System.nanoTime()
     FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(STARTED_EVENT_ID), data)
+    return this
+  }
+
+  fun startedWithDataAsync(dataSupplier: (FeatureUsageData) -> Promise<FeatureUsageData>): IdeActivity {
+    if (!LOG.assertTrue(state == State.NOT_STARTED, state.name)) return this
+    state = State.STARTED
+    startedTimestamp = System.nanoTime()
+
+    dataSupplier(createDataWithActivityId()).then { data ->
+      FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName(STARTED_EVENT_ID), data)
+    }
     return this
   }
 
