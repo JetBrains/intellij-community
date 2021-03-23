@@ -13,12 +13,15 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,12 +80,32 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (conf instanceof CommonJavaRunConfigurationParameters) {
       return true;
     }
+
+    if (Experiments.getInstance().isFeatureEnabled("run.targets")
+        && conf instanceof TargetEnvironmentAwareRunProfile
+        && willRunOnTarget((TargetEnvironmentAwareRunProfile)conf)) {
+      return false;
+    }
+
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isApplicableTo(conf)) {
         return true;
       }
     }
     return false;
+  }
+
+  private static boolean willRunOnTarget(@NotNull final TargetEnvironmentAwareRunProfile configuration) {
+    return configuration.getDefaultTargetName() != null || isProjectUnderWsl(((RunConfigurationBase<?>)configuration).getProject());
+  }
+
+  private static boolean isProjectUnderWsl(@NotNull Project project) {
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    if (projectSdk == null) {
+      return false;
+    }
+    String projectSdkHomePath = projectSdk.getHomePath();
+    return projectSdkHomePath != null && WslDistributionManager.isWslPath(projectSdkHomePath);
   }
 
   @Override
