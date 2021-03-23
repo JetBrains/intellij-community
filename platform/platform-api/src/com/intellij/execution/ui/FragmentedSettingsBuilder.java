@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,19 +38,26 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBuilder<Settings> {
+public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
   static final int TOP_INSET = 5;
   static final int GROUP_INSET = 20;
   public static final int TAG_VGAP = JBUI.scale(6);
   public static final int TAG_HGAP = JBUI.scale(2);
 
-  private final Disposable myDisposable;
+  private Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
       super.addNotify();
+      myDisposable = Disposer.newDisposable();
       registerShortcuts();
+    }
+
+    @Override
+    public void removeNotify() {
+      super.removeNotify();
+      Disposer.dispose(myDisposable);
     }
   };
   private final GridBagConstraints myConstraints =
@@ -60,10 +68,17 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private String myConfigId; // for FUS
 
   FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                            SettingsEditorFragment<Settings, ?> main, @NotNull Disposable disposable) {
+                            SettingsEditorFragment<Settings, ?> main, @NotNull Disposable parentDisposable) {
     myFragments = fragments;
     myMain = main;
-    myDisposable = disposable;
+    Disposer.register(parentDisposable, this);
+  }
+
+  @Override
+  public void dispose() {
+    if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
+      Disposer.dispose(myDisposable);
+    }
   }
 
   @Override
@@ -276,7 +291,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, myDisposable);
+    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, this);
     addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 
