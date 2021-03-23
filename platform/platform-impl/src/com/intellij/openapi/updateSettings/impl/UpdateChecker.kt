@@ -129,7 +129,7 @@ object UpdateChecker {
   private fun doUpdateAndShowResult(project: Project?,
                                     updateSettings: UpdateSettings,
                                     userInitiated: Boolean,
-                                    forceDialog: Boolean,
+                                    preferDialog: Boolean,
                                     showSettingsLink: Boolean,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
@@ -137,7 +137,7 @@ object UpdateChecker {
     val platformUpdates = checkForPlatformUpdates(updateSettings, indicator)
     if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR) {
       if (userInitiated) {
-        showErrors(project, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message), forceDialog)
+        showErrors(project, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message), preferDialog)
       }
       callback?.setRejected()
       return
@@ -163,11 +163,11 @@ object UpdateChecker {
         if (!builder.isEmpty) builder.br()
         builder.append(IdeBundle.message("updates.external.error.message", source.name, ex.message))
       }
-      showErrors(project, builder.wrapWithHtmlBody().toString(), forceDialog)
+      showErrors(project, builder.wrapWithHtmlBody().toString(), preferDialog)
     }
 
     ApplicationManager.getApplication().invokeLater {
-      showResults(project, platformUpdates, pluginUpdates, customRepoPlugins, externalUpdates, userInitiated, forceDialog, showSettingsLink)
+      showResults(project, platformUpdates, pluginUpdates, customRepoPlugins, externalUpdates, userInitiated, preferDialog, showSettingsLink)
       callback?.setDone()
     }
   }
@@ -491,8 +491,8 @@ object UpdateChecker {
     }
   }
 
-  private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: String, showDialog: Boolean) {
-    if (showDialog) {
+  private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: String, preferDialog: Boolean) {
+    if (preferDialog) {
       UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(project, message, IdeBundle.message("updates.error.connection.title")) }
     }
     else {
@@ -506,13 +506,14 @@ object UpdateChecker {
                           customRepoPlugins: Collection<IdeaPluginDescriptor>,
                           externalUpdates: Collection<ExternalUpdate>,
                           userInitiated: Boolean,
-                          forceDialog: Boolean,
+                          preferDialog: Boolean,
                           showSettingsLink: Boolean) {
     val updatedChannel = platformUpdates.updatedChannel
     val newBuild = platformUpdates.newBuild
     val updatedPlugins = (pluginUpdates.enabled.asSequence() + pluginUpdates.disabled.asSequence())
       .filter { !isIgnored(it.descriptor) }
       .toList()
+    val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (updatedChannel != null && newBuild != null) {
       val runnable = {
@@ -547,7 +548,7 @@ object UpdateChecker {
 
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
 
-      if (forceDialog || !canEnableNotifications()) {
+      if (forceDialog) {
         runnable()
       }
       // don't show notification if all updated plugins is disabled
@@ -609,7 +610,7 @@ object UpdateChecker {
     }
   }
 
-  private fun canEnableNotifications(): Boolean =
+  private fun notificationsEnabled(): Boolean =
     NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS &&
     NotificationsConfigurationImpl.getSettings(getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
 
