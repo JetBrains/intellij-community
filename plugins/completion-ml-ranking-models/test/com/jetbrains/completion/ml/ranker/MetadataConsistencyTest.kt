@@ -42,4 +42,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testSwiftMetadata() = ExperimentSwiftMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testCidrMetadata() = ExperimentCidrMLRankingProvider().assertModelMetadataConsistent()
 }

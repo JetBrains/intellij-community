@@ -643,6 +643,7 @@ class CommunityLibraryLicenses {
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-log-events"),
+    jetbrainsLibrary("completion-ranking-cpp-exp"),
     jetbrainsLibrary("completion-ranking-dart-exp"),
     jetbrainsLibrary("completion-ranking-go-exp"),
     jetbrainsLibrary("completion-ranking-java"),
