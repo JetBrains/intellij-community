@@ -2089,6 +2089,14 @@
       <category>Java/Other</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
+      <category>Java/Other</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
