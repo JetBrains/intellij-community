@@ -8,7 +8,7 @@ import java.awt.Font
 
 internal class SwingTextTrimmerTest : TestCase() {
   private val metrics = Container().getFontMetrics(Font(Font.DIALOG, Font.PLAIN, 10))
-  private val debug = true
+  private val debug = false
 
   private fun SwingTextTrimmer.assertEmpty(text: String?, width: Int) {
     assertTrue(trim(text, metrics, width).isEmpty())
