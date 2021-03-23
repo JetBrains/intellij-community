@@ -528,8 +528,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
       myMainPanel.addToCenter(previewSplitter);
       Disposer.register(changeProcessor, () -> {
+        if (Disposer.isDisposed(this)) return;
         myMainPanel.remove(previewSplitter);
-        if (!myProject.isOpen()) return;
         myMainPanel.addToCenter(myContentPanel);
 
         myMainPanel.revalidate();
