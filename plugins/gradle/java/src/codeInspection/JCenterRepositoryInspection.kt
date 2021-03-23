@@ -25,7 +25,8 @@ class JCenterRepositoryInspection : GradleBaseInspection() {
       if (!FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return
       super.visitLiteralExpression(literal)
       if (literal !is GrLiteralImpl || !literal.isStringLiteral) return
-      if ("https://jcenter.bintray.com" == literal.value || literal.value.toString().startsWith("https://dl.bintray.com/")) {
+      val value = literal.value ?: return
+      if ("https://jcenter.bintray.com" == value || value.toString().startsWith("https://dl.bintray.com/")) {
         val closure = literal.parentOfType<GrClosableBlock>() ?: return
         val typeToDelegate = getDelegatesToInfo(closure)?.typeToDelegate ?: return
         if (typeToDelegate.canonicalText == GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY) {
