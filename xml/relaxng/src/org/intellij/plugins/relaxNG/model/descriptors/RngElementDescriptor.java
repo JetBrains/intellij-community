@@ -422,7 +422,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       if (prevPrevSibling == null) {
         LOG.error("Failed to locate type for RNC element - " + myName);
       }
-      myKind = "element".equals(doIfNotNull(prevPrevSibling, PsiElement::getText)) ? Kind.ELEMENT : Kind.ATTRIBUTE;
+      myKind = prevPrevSibling != null && "element".equals(prevPrevSibling.getText()) ? Kind.ELEMENT : Kind.ATTRIBUTE;
     }
 
     @Override
