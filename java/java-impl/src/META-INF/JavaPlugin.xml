@@ -269,6 +269,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <compileServer.plugin classpath="java-compiler-impl.jar"/>
 
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
@@ -383,6 +384,8 @@
         implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.JarArtifactType" order="first"/>
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
+    <packaging.artifactType implementation="com.intellij.packaging.jlink.JLinkArtifactType"/>
+    <packaging.artifactPropertiesProvider implementation="com.intellij.packaging.jlink.JLinkArtifactPropertiesProvider"/>
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
 
     <projectTaskRunner implementation="com.intellij.task.impl.JpsProjectTaskRunner" id="jps" order="last"/>
