@@ -70,12 +70,12 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.locations.changed.locations")
       else -> message("recent.locations.popup.title")
-    }!!
+    }
   override val statusText: String
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.files.accessible.open.recently.edited.locations")
       else -> message("recent.files.accessible.open.recently.viewed.locations")
-    }!!
+    }
   override val shortcutText: String?
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> null
