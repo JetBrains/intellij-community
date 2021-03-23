@@ -45,7 +45,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
   private final Layout myDefaultLayout;
   private Layout myLayout;
+  private boolean myIsVerticalSplit;
   private JComponent myComponent;
+  private JBSplitter mySplitter;
   private SplitEditorToolbar myToolbarWrapper;
   private final @Nls String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
@@ -53,11 +55,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   public TextEditorWithPreview(@NotNull TextEditor editor,
                                @NotNull FileEditor preview,
                                @NotNull @Nls String editorName,
-                               @NotNull Layout defaultLayout) {
+                               @NotNull Layout defaultLayout,
+                               boolean isVerticalSplit) {
     myEditor = editor;
     myPreview = preview;
     myName = editorName;
     myDefaultLayout = defaultLayout;
+    myIsVerticalSplit = isVerticalSplit;
+  }
+
+  public TextEditorWithPreview(@NotNull TextEditor editor,
+                               @NotNull FileEditor preview,
+                               @NotNull @Nls String editorName,
+                               @NotNull Layout defaultLayout) {
+    this(editor, preview, editorName, defaultLayout, true);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
@@ -108,13 +119,13 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @Override
   public JComponent getComponent() {
     if (myComponent == null) {
-      final JBSplitter splitter = new JBSplitter(false, 0.5f, 0.15f, 0.85f);
-      splitter.setSplitterProportionKey(getSplitterProportionKey());
-      splitter.setFirstComponent(myEditor.getComponent());
-      splitter.setSecondComponent(myPreview.getComponent());
-      splitter.setDividerWidth(3);
+      mySplitter = new JBSplitter(myIsVerticalSplit, 0.5f, 0.15f, 0.85f);
+      mySplitter.setSplitterProportionKey(getSplitterProportionKey());
+      mySplitter.setFirstComponent(myEditor.getComponent());
+      mySplitter.setSecondComponent(myPreview.getComponent());
+      mySplitter.setDividerWidth(3);
 
-      myToolbarWrapper = createMarkdownToolbarWrapper(splitter);
+      myToolbarWrapper = createMarkdownToolbarWrapper(mySplitter);
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
@@ -122,7 +133,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       }
       adjustEditorsVisibility();
 
-      myComponent = JBUI.Panels.simplePanel(splitter).addToTop(myToolbarWrapper);
+      myComponent = JBUI.Panels.simplePanel(mySplitter).addToTop(myToolbarWrapper);
     }
     return myComponent;
   }
@@ -464,5 +475,14 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @Override
   public void navigateTo(@NotNull Navigatable navigatable) {
     getTextEditor().navigateTo(navigatable);
+  }
+
+  protected void handleLayoutChange(boolean isVerticalSplit) {
+    if (myIsVerticalSplit == isVerticalSplit) return;
+    myIsVerticalSplit = isVerticalSplit;
+
+    myToolbarWrapper.refresh();
+    mySplitter.setOrientation(!myIsVerticalSplit);
+    myComponent.repaint();
   }
 }
