@@ -63,6 +63,11 @@ public class HighlightingTestGenerated extends AbstractHighlightingTest {
         runTest("testData/highlighter/Functions.kt");
     }
 
+    @TestMetadata("InaccessibleExpression.kt")
+    public void testInaccessibleExpression() throws Exception {
+        runTest("idea/testData/highlighter/InaccessibleExpression.kt");
+    }
+
     @TestMetadata("InvokeCall.kt")
     public void testInvokeCall() throws Exception {
         runTest("testData/highlighter/InvokeCall.kt");
