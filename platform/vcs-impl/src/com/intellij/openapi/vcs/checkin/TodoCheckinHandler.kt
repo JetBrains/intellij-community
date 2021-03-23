@@ -148,7 +148,7 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 private class FindTodoItemsTask(project: Project, changes: Collection<Change>, todoFilter: TodoFilter?) :
   Task.Modal(project, message("checkin.dialog.title.looking.for.new.edited.todo.items"), true) {
 
-  private val worker = TodoCheckinHandlerWorker(myProject, changes, todoFilter)
+  private val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
   private var result: TodoCheckinHandlerWorker? = null
 
   fun find(): TodoCheckinHandlerWorker? {

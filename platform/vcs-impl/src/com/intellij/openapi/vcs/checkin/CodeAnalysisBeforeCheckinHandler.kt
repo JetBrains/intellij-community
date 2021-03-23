@@ -214,10 +214,10 @@ private class FindNewCodeSmellsTask(project: Project, private val files: List<Vi
 
   override fun compute(indicator: ProgressIndicator): List<CodeSmellInfo> {
     indicator.isIndeterminate = true
-    val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject!!, files, indicator)
+    val codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(project, files, indicator)
 
     indicator.text = message("before.checkin.waiting.for.smart.mode")
-    DumbService.getInstance(myProject).waitForSmartMode()
+    DumbService.getInstance(project).waitForSmartMode()
 
     return codeSmells
   }

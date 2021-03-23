@@ -74,7 +74,7 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
   @Override
   public void onSuccess() {
     if (!myExceptions.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myTitle);
+      AbstractVcsHelper.getInstance(getProject()).showErrors(myExceptions, getTitle());
     }
   }
 

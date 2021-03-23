@@ -182,20 +182,20 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
       }
       // Update all current branches in the selection
       if (currentBranchesMap.isNotEmpty()) {
-        GitUpdateExecutionProcess(myProject,
+        GitUpdateExecutionProcess(project,
                                   repositories,
                                   currentBranchesMap,
-                                  GitVcsSettings.getInstance(myProject).updateMethod,
+                                  GitVcsSettings.getInstance(project).updateMethod,
                                   false).execute()
       }
     }
 
     override fun onSuccess() {
       if (successfullyUpdated.isNotEmpty()) {
-        VcsNotifier.getInstance(myProject).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
-                                                         GitBundle.message("branches.selected.branches.updated.title",
-                                                                           successfullyUpdated.size,
-                                                                           successfullyUpdated.joinToString("\n")))
+        VcsNotifier.getInstance(project).notifySuccess(BRANCHES_UPDATE_SUCCESSFUL, "",
+                                                       GitBundle.message("branches.selected.branches.updated.title",
+                                                                         successfullyUpdated.size,
+                                                                         successfullyUpdated.joinToString("\n")))
       }
     }
   })

@@ -48,7 +48,7 @@ abstract class AbstractCommitter(
   fun runCommit(taskName: @Nls String, sync: Boolean) {
     val task = object : Task.Backgroundable(project, taskName, true, configuration.commitOption) {
       override fun run(indicator: ProgressIndicator) {
-        val vcsManager = ProjectLevelVcsManager.getInstance(myProject)
+        val vcsManager = ProjectLevelVcsManager.getInstance(project)
         val activity = IdeActivity.started(myProject, "vcs", "commit") // NON-NLS
         vcsManager.startBackgroundVcsOperation()
         try {

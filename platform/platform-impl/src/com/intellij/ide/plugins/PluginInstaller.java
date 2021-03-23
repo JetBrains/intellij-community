@@ -15,11 +15,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -155,12 +156,17 @@ public final class PluginInstaller {
                                                       @Nullable JComponent parent) {
     Path result;
     try {
-      result = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(() -> unpackPlugin(sourceFile, getPluginsPath()),
-                                             IdeBundle.message("progress.title.installing.plugin", descriptor.getName()),
-                                             false,
-                                             null,
-                                             parent);
+      Task.WithResult<Path, IOException> task = new Task.WithResult<>(null,
+                                                                      parent,
+                                                                      IdeBundle
+                                                                        .message("progress.title.installing.plugin", descriptor.getName()),
+                                                                      false) {
+        @Override
+        protected Path compute(@NotNull ProgressIndicator indicator) throws IOException {
+          return unpackPlugin(sourceFile, getPluginsPath());
+        }
+      };
+      result = ProgressManager.getInstance().run(task);
     }
     catch (Throwable throwable) {
       LOG.warn("Plugin " + descriptor + " failed to install without restart. " + throwable.getMessage(), throwable);
@@ -254,25 +260,27 @@ public final class PluginInstaller {
                                                       ? (PluginManagerMain.PluginEnabler)model
                                                       : new PluginManagerMain.PluginEnabler.HEADLESS();
 
-      ThrowableComputable<Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> computable = () -> {
-        PluginInstallOperation operation = new PluginInstallOperation(List.of(),
-                                                                      CustomPluginRepositoryService.getInstance()
-                                                                        .getCustomRepositoryPlugins(),
-                                                                      pluginEnabler,
-                                                                      ProgressManager.getInstance().getProgressIndicator());
-        operation.setAllowInstallWithoutRestart(true);
+      Task.WithResult<Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
+        new Task.WithResult<>(null,
+                              parent,
+                              IdeBundle.message("progress.title.checking.plugin.dependencies"),
+                              true) {
+          @Override
+          protected @NotNull Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
+            PluginInstallOperation operation = new PluginInstallOperation(List.of(),
+                                                                          CustomPluginRepositoryService.getInstance()
+                                                                            .getCustomRepositoryPlugins(),
+                                                                          pluginEnabler,
+                                                                          ProgressManager.getInstance().getProgressIndicator());
+            operation.setAllowInstallWithoutRestart(true);
 
-        return operation.checkMissingDependencies(pluginDescriptor, null) ?
-               Pair.create(operation, operation.checkDependenciesAndReplacements(pluginDescriptor)) :
-               Pair.empty();
-      };
+            return operation.checkMissingDependencies(pluginDescriptor, null) ?
+                   Pair.create(operation, operation.checkDependenciesAndReplacements(pluginDescriptor)) :
+                   Pair.empty();
+          }
+        };
 
-      Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor> pair = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(computable,
-                                             IdeBundle.message("progress.title.checking.plugin.dependencies"),
-                                             true,
-                                             null,
-                                             parent);
+      Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor> pair = ProgressManager.getInstance().run(task);
       PluginInstallOperation operation = pair.getFirst();
       if (operation == null) {
         return false;
