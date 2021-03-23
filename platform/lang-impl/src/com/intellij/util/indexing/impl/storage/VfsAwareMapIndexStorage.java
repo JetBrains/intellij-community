@@ -3,6 +3,7 @@
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final boolean myBuildKeyHashToVirtualFileMapping;
@@ -103,7 +105,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
   @Override
   public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
-    l.lock();
+    ProgressIndicatorUtils.awaitWithCheckCanceled(l, 10, TimeUnit.MILLISECONDS);
     try {
       myCache.clear(); // this will ensure that all new keys are made into the map
 
