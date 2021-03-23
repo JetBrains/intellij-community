@@ -192,7 +192,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
 
     @Override
     protected boolean isEnabled(boolean componentEnabled) {
-      return componentEnabled && myEnabledPredicate.test(getDataContext());
+      return componentEnabled && myEnabledPredicate.test(DataManager.getInstance().getDataContext(getParent()));
     }
 
       @Override
