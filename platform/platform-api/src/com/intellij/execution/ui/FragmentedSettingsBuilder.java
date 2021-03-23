@@ -57,6 +57,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final Collection<? extends SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
+  private String myConfigId; // for FUS
 
   FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
                             SettingsEditorFragment<Settings, ?> main, @NotNull Disposable disposable) {
@@ -208,6 +209,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     return popup;
   }
 
+  public void setConfigId(String configId) {
+    myConfigId = configId;
+  }
+
   @NotNull
   private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
     return (action != null && StringUtil.isNotEmpty(action.getTemplatePresentation().getDescription())) ?
@@ -270,7 +275,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list, myDisposable);
+    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, myDisposable);
     addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 

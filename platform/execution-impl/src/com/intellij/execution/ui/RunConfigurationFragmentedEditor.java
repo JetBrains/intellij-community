@@ -69,6 +69,13 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     return fragments;
   }
 
+  @Override
+  public @NotNull FragmentedSettingsBuilder<Settings> getBuilder() {
+    FragmentedSettingsBuilder<Settings> builder = super.getBuilder();
+    builder.setConfigId(mySettings.getType().getId());
+    return builder;
+  }
+
   private void addRunnerSettingsEditors(List<? super SettingsEditorFragment<Settings, ?>> fragments) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), mySettings);

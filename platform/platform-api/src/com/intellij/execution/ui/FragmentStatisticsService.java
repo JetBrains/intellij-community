@@ -13,4 +13,5 @@ public abstract class FragmentStatisticsService {
 
   public abstract void logOptionModified(Project project, String optionId, String runConfigId, AnActionEvent inputEvent);
   public abstract void logOptionRemoved(Project project, String optionId, String runConfigId, AnActionEvent inputEvent);
+  public abstract void logHintsShown(Project project, String runConfigId, int hintCount, long duration);
 }
