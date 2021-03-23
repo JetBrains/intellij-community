@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.eventLog.EventLogNotificationService;
+import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
@@ -15,6 +19,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistry.class);
@@ -165,6 +170,23 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
+  private @Nullable FeatureDescriptor getFeatureDescriptorByLogEvent(@NotNull String groupId,
+                                                                     @NotNull String eventId,
+                                                                     @NotNull Map<String, Object> eventData) {
+    lazyLoadFromPluginsFeaturesProviders();
+    var event2detectors = myLogEventDetectors.get(groupId);
+    if (event2detectors != null) {
+      var detectors = event2detectors.get(eventId);
+      if (detectors != null) {
+        var detector = detectors.stream().filter(d -> d.succeed(eventData)).findFirst();
+        if (detector.isPresent()) {
+          return getFeatureDescriptorEx(detector.get().featureId());
+        }
+      }
+    }
+    return null;
+  }
+
   @Override
   @NotNull
   public Set<String> getFeatureIds() {
@@ -183,24 +205,6 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       return new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
     }
     return myFeatures.get(id);
-  }
-
-  @Override
-  public @Nullable FeatureDescriptor getFeatureDescriptorByLogEvent(@NotNull String groupId,
-                                                                    @NotNull String eventId,
-                                                                    @NotNull Map<String, Object> eventData) {
-    lazyLoadFromPluginsFeaturesProviders();
-    var event2detectors = myLogEventDetectors.get(groupId);
-    if (event2detectors != null) {
-      var detectors = event2detectors.get(eventId);
-      if (detectors != null) {
-        var detector = detectors.stream().filter(d -> d.succeed(eventData)).findFirst();
-        if (detector.isPresent()) {
-          return getFeatureDescriptorEx(detector.get().featureId());
-        }
-      }
-    }
-    return null;
   }
 
   @Override
@@ -224,7 +228,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   @Override
   @NonNls
   public String toString() {
-    return super.toString() + "; myAdditionalFeaturesLoaded="+myAdditionalFeaturesLoaded;
+    return super.toString() + "; myAdditionalFeaturesLoaded=" + myAdditionalFeaturesLoaded;
   }
 
   @TestOnly
@@ -234,5 +238,31 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     myApplicabilityFilters.clear();
     myGroups.clear();
     reloadFromXml();
+  }
+
+  public static class EventLogSubscribeActivity implements StartupActivity.DumbAware {
+    private static final AtomicBoolean isSubscribed = new AtomicBoolean(false);
+
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
+      if (registry instanceof ProductivityFeaturesRegistryImpl) {
+        var registryImpl = (ProductivityFeaturesRegistryImpl)registry;
+        FeatureUsageTracker usageTracker = FeatureUsageTracker.getInstance();
+        if (usageTracker != null && !isSubscribed.getAndSet(true)) {
+          EventLogNotificationService.INSTANCE.subscribe(logEvent -> {
+            FeatureDescriptor feature = registryImpl.getFeatureDescriptorByLogEvent(logEvent.getGroup().getId(),
+                                                                                    logEvent.getEvent().getId(),
+                                                                                    logEvent.getEvent().getData());
+            if (feature != null) {
+              usageTracker.triggerFeatureUsed(feature.getId());
+            }
+            return null;
+          }, EventLogSystemLogger.DEFAULT_RECORDER);
+        }
+      } else {
+        LOG.warn("No ProductivityFeaturesRegistry implementation. Features from Event Log won't be recorded");
+      }
+    }
   }
 }

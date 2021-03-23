@@ -733,7 +733,7 @@
     <applicationInitializedListener implementation="com.intellij.ide.customize.CustomizeIDEWizardCollectorActivity"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
-    <postStartupActivity implementation="com.intellij.featureStatistics.FeatureUsageEventSubscribeActivity"/>
+    <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider" order="first"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereEventLoggerProvider" order="first"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService"/>
