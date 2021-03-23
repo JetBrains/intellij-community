@@ -450,12 +450,28 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, progressIndicator.getModalityState());
   }
 
+  @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
-  @NotNull
-  protected TaskRunnable createTaskRunnable(@NotNull Task task,
-                                            @NotNull ProgressIndicator indicator,
-                                            @Nullable Runnable continuation) {
-    return new TaskRunnable(task, indicator, continuation);
+  protected void startTask(@NotNull Task task,
+                           @NotNull ProgressIndicator indicator,
+                           @Nullable Runnable continuation) {
+
+
+    try {
+      task.run(indicator);
+    }
+    finally {
+      try {
+        if (indicator instanceof ProgressIndicatorEx) {
+          ((ProgressIndicatorEx)indicator).finish(task);
+        }
+      }
+      finally {
+        if (continuation != null) {
+          continuation.run();
+        }
+      }
+    }
   }
 
   private static class IndicatorDisposable implements Disposable {
@@ -502,7 +518,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return new ProgressRunner<>(progress -> {
       long start = System.currentTimeMillis();
       try {
-        createTaskRunnable(task, progress, continuation).run();
+        startTask(task, progress, continuation);
       }
       finally {
         elapsed.set(System.currentTimeMillis() - start);
@@ -550,7 +566,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       @Override
       public void run() {
         try {
-          createTaskRunnable(task, getProgressIndicator(), null).run();
+          startTask(task, getProgressIndicator(), null);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -578,12 +594,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
     }
 
-    Runnable process = createTaskRunnable(task, progressIndicator, null);
-
     boolean processCanceled = false;
     Throwable exception = null;
     try {
-      runProcess(process, progressIndicator);
+      runProcess(() -> startTask(task, progressIndicator, null), progressIndicator);
     }
     catch (ProcessCanceledException e) {
       processCanceled = true;
@@ -968,56 +982,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
   private static ProgressIndicator getCurrentIndicator(@NotNull Thread thread) {
     return currentIndicators.get(thread.getId());
-  }
-
-  protected abstract static class TaskContainer implements Runnable {
-    private final Task myTask;
-
-    protected TaskContainer(@NotNull Task task) {
-      myTask = task;
-    }
-
-    @NotNull
-    public Task getTask() {
-      return myTask;
-    }
-
-    @Override
-    public String toString() {
-      return myTask.toString();
-    }
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  protected static class TaskRunnable extends TaskContainer {
-    private final ProgressIndicator myIndicator;
-    private final Runnable myContinuation;
-
-    TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
-      super(task);
-      myIndicator = indicator;
-      myContinuation = continuation;
-    }
-
-    @Override
-    public void run() {
-      try {
-        getTask().run(myIndicator);
-      }
-      finally {
-        try {
-          if (myIndicator instanceof ProgressIndicatorEx) {
-            ((ProgressIndicatorEx)myIndicator).finish(getTask());
-          }
-        }
-        finally {
-          if (myContinuation != null) {
-            myContinuation.run();
-          }
-        }
-      }
-    }
   }
 
   @FunctionalInterface

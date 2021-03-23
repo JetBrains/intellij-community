@@ -106,16 +106,18 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected @NotNull TaskRunnable createTaskRunnable(@NotNull Task task,
-                                                     @NotNull ProgressIndicator indicator,
-                                                     @Nullable Runnable continuation) {
+  protected final void startTask(@NotNull Task task,
+                                 @NotNull ProgressIndicator indicator,
+                                 @Nullable Runnable continuation) {
     try {
-      return super.createTaskRunnable(task, indicator, continuation);
+      super.startTask(task, indicator, continuation);
     }
     finally {
       if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
-          .onTaskRunnableCreated(task, indicator, continuation);
+        ApplicationManager.getApplication()
+          .getMessageBus()
+          .syncPublisher(ProgressManagerListener.TOPIC)
+          .onTaskRunnableCreated(task, (ProgressWindow)indicator, continuation);
       }
     }
   }
@@ -148,12 +150,16 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
+  protected final void finishTask(@NotNull Task task,
+                                  boolean canceled,
+                                  @Nullable Throwable error) {
     try {
       super.finishTask(task, canceled, error);
     }
     finally {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProgressManagerListener.TOPIC)
+      ApplicationManager.getApplication()
+        .getMessageBus()
+        .syncPublisher(ProgressManagerListener.TOPIC)
         .onTaskFinished(task, canceled, error);
     }
   }
