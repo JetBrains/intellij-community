@@ -289,7 +289,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, myDisposable);
+    CommandLinePanel panel = new CommandLinePanel(list, myConfigId, this);
     addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 
