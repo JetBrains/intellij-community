@@ -5,6 +5,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements RunManagerListener, Disposable {
-  private static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Run Dashboard";
+  private static final String DASHBOARD_NOTIFICATION_GROUP_ID = "Services Tool Window";
   private static final String DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID = "run.dashboard.multiple.run.configurations";
   private static final String SHOW_RUN_DASHBOARD_NOTIFICATION = "show.run.dashboard.notification";
 
@@ -82,11 +83,12 @@ public abstract class ConfigurationTypeRunDashboardAdvertiserBase implements Run
 
     String toolWindowName = UIBundle.message("tool.window.name.services");
     myNotification = NotificationGroupManager.getInstance().getNotificationGroup(DASHBOARD_NOTIFICATION_GROUP_ID).createNotification(
-      toolWindowName,
+      "",
       ExecutionBundle.message("run.dashboard.multiple.run.config.notification", type.getDisplayName(), toolWindowName),
       NotificationType.INFORMATION,
       null,
       DASHBOARD_MULTIPLE_RUN_CONFIGURATIONS_NOTIFICATION_ID);
+    myNotification.setIcon(AllIcons.Nodes.Services);
     String typeId = type.getId();
     myNotification.addAction(new NotificationAction(ExecutionBundle.message("run.dashboard.use.services.action", toolWindowName)) {
       @Override
