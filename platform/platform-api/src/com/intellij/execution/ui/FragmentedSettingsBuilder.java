@@ -189,6 +189,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
             SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
             fragment.toggle(true, e); // show or set focus
             IdeFocusManager.getGlobalInstance().requestFocus(fragment.getEditorComponent(), false);
+            FragmentStatisticsService.getInstance().logNavigateOption(e.getProject(), fragment.getId(), myConfigId, e);
           }
         }.registerCustomShortcutSet(shortcutSet, myPanel.getRootPane(), myDisposable);
       }

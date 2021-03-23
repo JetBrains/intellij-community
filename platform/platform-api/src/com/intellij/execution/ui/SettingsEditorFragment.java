@@ -182,11 +182,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void toggle(boolean selected, @Nullable AnActionEvent e) {
+    boolean changed = isSelected() != selected;
     setSelected(selected);
     if (selected) {
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
     }
-    logChange(selected, e);
+    if (changed) {
+      logChange(selected, e);
+    }
   }
 
   protected void logChange(boolean selected, @Nullable AnActionEvent e) {
