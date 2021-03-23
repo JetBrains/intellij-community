@@ -3,7 +3,6 @@
 Reports method references, like <code>MyClass::myMethod</code> and <code>myObject::myMethod</code>,
 to allow them to be replaced with an equivalent lambda expression.
 Lambda expressions can be easier to modify than method references.
-By default this inspection does not highlight in the editor, but only provides a quick fix.
 <p>Example:
 <pre><code>
   System.out::println
@@ -12,5 +11,7 @@ By default this inspection does not highlight in the editor, but only provides a
 <pre><code>
   s -> System.out.println(s)
 </code></pre>
+<!-- tooltip end -->
+<p>By default this inspection does not highlight in the editor, but only provides a quick fix.
 </body>
 </html>

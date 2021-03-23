@@ -2,8 +2,9 @@
 <body>
 Reports <code>if</code> statements which only throw a <code>java.lang.Throwable</code> from the then branch,
 and don't have an <code>else</code> branch.
+Such statements can be converted to more compact <code>assert</code> statements.
 Also reports Guava's <code>Preconditions.checkNotNull()</code>.
-These can be replaced with an <code>assert</code> statement, or <code>Objects.requireNonNull()</code> call.
+These can be replaced with a <code>Objects.requireNonNull()</code> call, which may avoid the need for a library.
 <p>Example:
 <pre><code>
   <b>if</b> (x == 2) <b>throw new</b> RuntimeException("fail");
@@ -17,5 +18,6 @@ These can be replaced with an <code>assert</code> statement, or <code>Objects.re
   Objects.requireNonNull(z, "z");
 </code></pre>
 <!-- tooltip end -->
+<p>By default this inspection does not highlight in the editor, but only provides a quick fix.
 </body>
 </html>

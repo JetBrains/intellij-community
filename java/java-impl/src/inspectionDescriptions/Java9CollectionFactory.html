@@ -5,7 +5,7 @@ that can be converted to newer collection factory methods.
 These can be replaced with e.g. <code>List.of()</code> or <code>Set.of()</code> introduced in Java 9,
 or <code>List.copyOf()</code> introduced in Java 10.
 
-<p>Not that, in contrast to <code>java.util.Collections</code> methods, the Java 9 collection factory methods
+<p>Note that, in contrast to <code>java.util.Collections</code> methods, the Java 9 collection factory methods
 <ul>
   <li>do not accept <code>null</code> values
   <li>require unique set elements and map keys
@@ -25,9 +25,9 @@ This can change the semantics of the code after migration.
   List&lt;Integer> even = List.of(2, 4, 6, 8, 10, 2);
   List&lt;Integer> evenCopy = List.copyOf(list);
 </code></pre>
-<p>This inspection only reports if the configured language level is 9 or higher.
 
 <!-- tooltip end -->
+<p>This inspection only reports if the configured language level is 9 or higher.
 <p>
 Use the first checkbox below to only report if the supplied arguments are compile-time constants.
 This reduces the chance of changes in behaviour,

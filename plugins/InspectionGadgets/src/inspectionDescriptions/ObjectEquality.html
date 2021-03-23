@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any use of <code>==</code> or <code>!=</code>to test for Object equality, rather than the <code>equals()</code> method.
+Reports any use of <code>==</code> or <code>!=</code>to test for <code>Object</code> equality, rather than the <code>equals()</code> method.
 Comparisons to <code>null</code> are not reported.
-Comparison of arrays, Strings or Numbers using <code>==</code> are reported by separate inspections.
-Comparing objects using <code>==</code> or <code>!=</code> is usually a bug, because it compares objects by identity instead of equality.
+Array, <code>String</code> and <code>Number</code> comparisons using <code>==</code> are reported by separate inspections.
+Comparing objects using <code>==</code> or <code>!=</code> is often a bug, because it compares objects by identity instead of equality.
 <p>Example:
 <pre><code>
   <b>if</b> (list1 == list2) {

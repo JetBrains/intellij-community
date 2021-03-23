@@ -1,8 +1,7 @@
 <html>
 <body>
 Reports loops which can be replaced with stream API calls using lambda expressions.
-This inspection only reports if the configured language level is 8 or higher.
-
+This converts code from an imperative style to a more functional one, as well as making it more compact.
 <p>Example:
 <pre><code>
   <b>boolean</b> check(List&lt;String> data) {
@@ -21,5 +20,7 @@ This inspection only reports if the configured language level is 8 or higher.
     <b>return</b> data.stream().map(String::trim).allMatch(trimmed -> trimmed.startsWith("xyz"));
   }
 </code></pre>
+<!-- tooltip end -->
+<p>This inspection only reports if the configured language level is 8 or higher.
 </body>
 </html>

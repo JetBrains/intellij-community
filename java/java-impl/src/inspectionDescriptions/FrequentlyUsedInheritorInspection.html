@@ -3,7 +3,6 @@
 Reports when a more specific commonly used class or interface could be extended or implemented, instead of the current one.
 The super class needs to be located inside the project source files and
 the project needs to use the IntelliJ IDEA build system for this inspection to work.
-By default this inspection does not highlight in the editor, but only provides a quick fix.
 <p>Example:
 <pre>
   class MyInheritor implements A {} // B suggested on the A reference
@@ -19,6 +18,7 @@ By default this inspection does not highlight in the editor, but only provides a
   abstract class C5 extends B {}
 </pre>
 <!-- tooltip end -->
+<p>By default this inspection does not highlight in the editor, but only provides a quick fix.
 <p><small>New in 2017.2</small>
 </body>
 </html>
