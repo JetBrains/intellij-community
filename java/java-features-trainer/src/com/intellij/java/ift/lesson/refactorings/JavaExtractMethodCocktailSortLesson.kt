@@ -5,12 +5,9 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.ui.UIBundle
-import training.dsl.LessonContext
+import training.dsl.*
 import training.dsl.LessonUtil.rawEnter
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.defaultRestoreDelay
-import training.dsl.dropMnemonic
-import training.dsl.parseLessonSample
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import javax.swing.JDialog
@@ -20,6 +17,7 @@ class JavaExtractMethodCocktailSortLesson
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(javaSortSample)
+      showWarningIfInplaceRefactoringsDisabled()
 
       actionTask("ExtractMethod") {
         restoreIfModifiedOrMoved()

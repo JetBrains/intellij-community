@@ -61,6 +61,8 @@ class JavaRenameLesson
     val newNameExample = "pencil"
 
     prepareSample(sample)
+    showWarningIfInplaceRefactoringsDisabled()
+
     lateinit var startId: TaskContext.TaskId
     task("RenameElement") {
       startId = taskId
