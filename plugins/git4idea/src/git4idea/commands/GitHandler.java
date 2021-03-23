@@ -13,6 +13,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.VcsEnvCustomizer;
+import com.intellij.openapi.vcs.VcsEnvCustomizer.VcsExecutableContext;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,6 +23,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
@@ -449,6 +452,18 @@ public abstract class GitHandler {
     }
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
+
+    GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
+    VirtualFile root = VfsUtil.findFileByIoFile(myCommandLine.getWorkDirectory(), true);
+    VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
+                                                     ? VcsEnvCustomizer.ExecutableType.WSL
+                                                     : VcsEnvCustomizer.ExecutableType.LOCAL;
+    VcsExecutableContext context = new VcsExecutableContext(gitVcs, root, executableType);
+    VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
+      customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, context);
+    });
+
+    executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
   }
 
   protected abstract Process startProcess() throws ExecutionException;

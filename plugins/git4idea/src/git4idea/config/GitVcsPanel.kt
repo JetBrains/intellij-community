@@ -7,21 +7,24 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.options.BoundConfigurable
+import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
@@ -43,7 +46,6 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
-import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
@@ -92,7 +94,7 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
 }
 
 internal class GitVcsPanel(private val project: Project) :
-  BoundConfigurable(GitBundle.message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
+  BoundCompositeConfigurable<UnnamedConfigurable>(message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
   private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
@@ -125,7 +127,7 @@ internal class GitVcsPanel(private val project: Project) :
       modalityState, disposable!!
     )
 
-    object : Task.Modal(project, GitBundle.message("git.executable.version.progress.title"), true) {
+    object : Task.Modal(project, message("git.executable.version.progress.title"), true) {
       private lateinit var gitVersion: GitVersion
 
       override fun run(indicator: ProgressIndicator) {
@@ -227,18 +229,15 @@ internal class GitVcsPanel(private val project: Project) :
    * Special method to check executable after it has been changed through settings
    */
   private fun validateExecutableOnceAfterClose() {
-    if (!versionCheckRequested) {
-      ApplicationManager.getApplication().invokeLater(
-        {
-          object : Task.Backgroundable(project, message("git.executable.version.progress.title"), true) {
-            override fun run(indicator: ProgressIndicator) {
-              GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
-            }
-          }.queue()
-          versionCheckRequested = false
-        },
-        ModalityState.NON_MODAL)
-      versionCheckRequested = true
+    if (versionCheckRequested) return
+    versionCheckRequested = true
+
+    runInEdt(ModalityState.NON_MODAL) {
+      versionCheckRequested = false
+
+      runBackgroundableTask(message("git.executable.version.progress.title"), project, true) {
+        GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
+      }
     }
   }
 
@@ -279,6 +278,10 @@ internal class GitVcsPanel(private val project: Project) :
   }
 
   override fun getId() = "vcs.${GitVcs.NAME}"
+
+  override fun createConfigurables(): List<UnnamedConfigurable> {
+    return VcsEnvCustomizer.EP_NAME.extensions.mapNotNull { it.getConfigurable(project) }
+  }
 
   override fun createPanel(): DialogPanel = panel {
     gitExecutableRow()
@@ -362,6 +365,9 @@ internal class GitVcsPanel(private val project: Project) :
     }
     row {
       checkBox(cdOverrideCredentialHelper)
+    }
+    for (configurable in configurables) {
+      appendDslConfigurableRow(configurable)
     }
 
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
