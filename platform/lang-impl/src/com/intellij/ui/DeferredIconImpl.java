@@ -18,6 +18,7 @@ import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBScalableIcon;
@@ -284,7 +285,12 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   @NotNull
   @Override
   public Icon retrieveIcon() {
-    return isDone() ? myScaledDelegateIcon : evaluate();
+    if (isDone()) {
+      return myScaledDelegateIcon;
+    }
+    try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+      return evaluate();
+    }
   }
 
   public boolean isNeedReadAction() {
