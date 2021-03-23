@@ -14,6 +14,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -252,31 +254,43 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @NotNull
   private List<ActionWrapper> collectToolWindowQuickActionProviders(String pattern, Matcher matcher, Set<AnAction> seenActions) {
-    List<ActionWrapper> result = new ArrayList<>();
     Project project = myModel.getProject();
-    if (project != null) {
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-      String[] toolWindowIds = toolWindowManager.getToolWindowIds();
-      for (String toolWindowId : toolWindowIds) {
-        ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
-        if (toolWindow != null) {
-          if (!toolWindow.isVisible()) continue;
-          ContentManager contentManager = toolWindow.getContentManagerIfCreated();
-          if (contentManager != null) {
-            Content content = contentManager.getSelectedContent();
-            if (content != null) {
-              DataContext dataContext = ActionUpdateEdtExecutor.computeOnEdt(
-                () -> DataManager.getInstance().getDataContext(content.getComponent()));
-              QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
-              if (provider != null) {
-                List<AnAction> providerActions = provider.getActions(true);
-                String title = toolWindow.getTitle();
-                if (StringUtil.isEmpty(title)) title = toolWindow.getStripeTitle();
-                appendActionsFromProvider(pattern, matcher, result, seenActions, providerActions, dataContext, title);
-              }
-            }
-          }
-        }
+    if (project == null) {
+      return Collections.emptyList();
+    }
+    List<ActionWrapper> result = new ArrayList<>();
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    String[] toolWindowIds = toolWindowManager.getToolWindowIds();
+    for (String toolWindowId : toolWindowIds) {
+      ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
+      if (toolWindow == null || !toolWindow.isVisible()) {
+        continue;
+      }
+      ContentManager contentManager = toolWindow.getContentManagerIfCreated();
+      Content content = contentManager == null ? null : contentManager.getSelectedContent();
+      if (content == null) {
+        continue;
+      }
+      Pair<UpdateSession, List<? extends AnAction>> sessionAndActions = ActionUpdateEdtExecutor.computeOnEdt(
+        () -> {
+          DataContext dataContext = DataManager.getInstance().getDataContext(content.getComponent());
+          QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
+          List<AnAction> actions = provider == null ? Collections.emptyList() : provider.getActions(true);
+          if (actions.isEmpty()) return null;
+          DataContext wrapped = Utils.wrapDataContext(dataContext);
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, wrapped);
+          return Pair.create(Utils.getOrCreateUpdateSession(event), actions);
+        });
+      if (sessionAndActions != null) {
+        // todo the session must be passed to ActionWrapper.getPresentation
+        // todo currently with this code all actions are shown as disabled
+        String toolWindowTitle = toolWindow.getTitle();
+        String title = StringUtil.isNotEmpty(toolWindowTitle) ? toolWindowTitle : toolWindow.getStripeTitle();
+        ReadAction.nonBlocking(
+          () -> appendActionsFromProvider(pattern, matcher, result, seenActions,
+                                          sessionAndActions.second, sessionAndActions.first, title))
+          .executeSynchronously();
+
       }
     }
     return result;
@@ -286,15 +300,14 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
                                          Matcher matcher,
                                          List<ActionWrapper> result,
                                          Set<AnAction> seenActions,
-                                         List<AnAction> providerActions,
-                                         DataContext dataContext,
+                                         List<? extends AnAction> providerActions,
+                                         UpdateSession updateSession,
                                          @NlsContexts.TabTitle @Nullable String title) {
     for (AnAction action : providerActions) {
-      if (seenActions.contains(action)) continue;
-      seenActions.add(action);
+      if (!seenActions.add(action)) continue;
       if (action instanceof ActionGroup) {
-        AnAction[] children = ((ActionGroup)action).getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext));
-        appendActionsFromProvider(pattern, matcher, result, seenActions, Arrays.asList(children), dataContext, title);
+        List<? extends AnAction> children = updateSession.children((ActionGroup)action);
+        appendActionsFromProvider(pattern, matcher, result, seenActions, children, updateSession, title);
       }
       else {
         MatchMode mode = myModel.actionMatches(pattern, matcher, action);
