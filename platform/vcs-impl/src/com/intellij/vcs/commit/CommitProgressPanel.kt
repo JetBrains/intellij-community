@@ -17,6 +17,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextComponent
@@ -29,6 +31,8 @@ import com.intellij.util.ui.SwingHelper.createHtmlViewer
 import com.intellij.util.ui.SwingHelper.setHtml
 import com.intellij.util.ui.UIUtil.getErrorForeground
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -87,8 +91,20 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     commitMessage.addDocumentListener(this)
     commitWorkflowUi.addInclusionListener(this, this)
 
+    setupShowProgressInStatusBar()
     setupProgressVisibilityDelay()
   }
+
+  private fun setupShowProgressInStatusBar() =
+    Disposer.register(this, UiNotifyConnector(this, object : Activatable {
+      override fun showNotify() {
+        progress?.let { removeFromStatusBar(it) }
+      }
+
+      override fun hideNotify() {
+        progress?.let { addToStatusBar(it) }
+      }
+    }))
 
   @Suppress("EXPERIMENTAL_API_USAGE")
   private fun setupProgressVisibilityDelay() {
@@ -121,16 +137,31 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
   private fun progressStarted() {
     add(progress!!.component)
+    // we assume `isShowing == true` here - so we do not need to add progress to status bar
     failuresPanel.clearFailures()
   }
 
   private fun progressStopped() {
-    remove(progress!!.component)
-    Disposer.dispose(progress!!)
+    progress!!.let {
+      remove(it.component)
+      removeFromStatusBar(it)
+      Disposer.dispose(it)
+    }
     progress = null
 
     failuresPanel.endProgress()
   }
+
+  private fun addToStatusBar(progress: CommitChecksProgressIndicator) {
+    val frame = WindowManagerEx.getInstanceEx().findFrameFor(null) ?: return
+    val statusBar = frame.statusBar as? StatusBarEx ?: return
+
+    statusBar.addProgress(progress, CommitChecksTaskInfo())
+  }
+
+  private fun removeFromStatusBar(progress: CommitChecksProgressIndicator) =
+    // `finish` tracks list of finished `TaskInfo`-s - so we pass new instance to remove from status bar
+    progress.finish(CommitChecksTaskInfo())
 
   override fun addCommitCheckFailure(text: String, detailsViewer: () -> Unit) {
     progress?.component?.isVisible = false
@@ -167,7 +198,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-private class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo) {
+private class CommitChecksProgressIndicator : InlineProgressIndicator(true, CommitChecksTaskInfo()) {
   init {
     component.toolTipText = null
   }
@@ -184,8 +215,8 @@ private class CommitChecksProgressIndicator : InlineProgressIndicator(true, Comm
   }
 }
 
-private object CommitChecksTaskInfo : TaskInfo {
-  override fun getTitle(): String = ""
+private class CommitChecksTaskInfo : TaskInfo {
+  override fun getTitle(): String = message("progress.title.commit.checks")
   override fun getCancelText(): String = ""
   override fun getCancelTooltipText(): String = ""
   override fun isCancellable(): Boolean = false
