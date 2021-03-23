@@ -1117,11 +1117,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private List<PyTargetExpression> collectInstanceAttributes(Map<String, ScopeOwner> scopesToSkip) {
     Map<String, PyTargetExpression> result = new HashMap<>();
     collectAttributesInConstructors(result, scopesToSkip);
-    Set<String> existing = new HashSet<>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
-      collectInstanceAttributes(method, result, existing, scopesToSkip);
-      existing.addAll(result.keySet());
+      collectInstanceAttributes(method, result, result.keySet(), scopesToSkip);
     }
     return new ArrayList<>(result.values());
   }
