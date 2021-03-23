@@ -37,6 +37,9 @@
 
     <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>
+
+    <settingsEntryPointActionProvider implementation="org.jetbrains.ide.ToolboxSettingsActionRegistryActionProvider"/>
 
     <httpRequestHandler implementation="org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$WebServerPageRequestHandler"/>
     <registryKey description="Enables automatic reloading of a web page loaded from built-in web server when a related file is changed and saved."

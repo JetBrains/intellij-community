@@ -45,7 +45,8 @@ interface ToolboxServiceHandler<T> {
    *
    * Use the [onResult] to pass a result back to Toolbox and
    * to close the connection. The [lifetime] is disposed after
-   * the connection is closed too
+   * the connection is closed too, it must not be used after [onResult]
+   * callback is executed
    */
   fun handleToolboxRequest(
     lifetime: Disposable,
@@ -160,17 +161,23 @@ internal class ToolboxRestService : RestService() {
       }
       .thenAcceptAsync(
         { json ->
-          try {
+          //kill the heartbeat, it may close the lifetime too
+          runCatching {
             heartbeat.cancel(false)
             heartbeat.await()
-            channel.write(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8))
           }
-          finally {
-            runCatching {
-              channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT)
-            }
-            Disposer.dispose(lifetime)
+
+          //no need to do anything if it's already disposed
+          if (Disposer.isDisposed(lifetime)) {
+            //closing the channel just in case
+            runCatching { channel.close() }
+            return@thenAcceptAsync
           }
+
+          runCatching { channel.write(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8)) }
+          runCatching { channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT) }
+
+          Disposer.dispose(lifetime)
         },
         AppExecutorUtil.getAppExecutorService()
       )
