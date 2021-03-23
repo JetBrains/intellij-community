@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
+import com.jetbrains.python.PydevBundle;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.render.PyNodeRenderer;
 import org.jetbrains.annotations.Nls;
@@ -447,14 +448,14 @@ public class PyDebugValue extends XNamedValue {
         node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
       }
       if (myLoadValuePolicy == ValuesPolicy.ASYNC) {
-        node.setFullValueEvaluator(new PyLoadingValueEvaluator("... Loading Value", myFrameAccessor, treeName));
+        node.setFullValueEvaluator(new PyLoadingValueEvaluator(PydevBundle.message("pydev.loading.value"), myFrameAccessor, treeName));
       }
       else if (myLoadValuePolicy == ValuesPolicy.ON_DEMAND) {
-        node.setFullValueEvaluator(new PyOnDemandValueEvaluator("Show Value", myFrameAccessor, this, node));
+        node.setFullValueEvaluator(new PyOnDemandValueEvaluator(PydevBundle.message("pydev.show.value"), myFrameAccessor, this, node));
       }
       return;
     }
-    String linkText = "...View as " + postfix;
+    String linkText = PydevBundle.message("pydev.view.as", postfix);
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 

@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger
 
 import com.intellij.xdebugger.frame.XValueNode
+import com.jetbrains.python.PydevBundle
 import org.jetbrains.annotations.Nls
 
 class PyOnDemandValueEvaluator(linkText: @Nls String,
@@ -10,7 +11,7 @@ class PyOnDemandValueEvaluator(linkText: @Nls String,
                                var node: XValueNode) : PyFullValueEvaluator(linkText, debugProcess, debugValue.evaluationExpression) {
 
   override fun startEvaluation(callback: XFullValueEvaluationCallback) {
-    node.setFullValueEvaluator(PyLoadingValueEvaluator("... Loading Value", myDebugProcess, myExpression))
+    node.setFullValueEvaluator(PyLoadingValueEvaluator(PydevBundle.message("pydev.loading.value"), myDebugProcess, myExpression))
     callback.evaluated("... Loading Value")
     val pyAsyncValue = PyFrameAccessor.PyAsyncValue<String>(debugValue, debugValue.createDebugValueCallback())
     myDebugProcess.loadAsyncVariablesValues(null, listOf(pyAsyncValue))
