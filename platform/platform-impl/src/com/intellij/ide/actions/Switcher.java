@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.*;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
@@ -43,6 +42,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.SwingTextTrimmer;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
 
@@ -53,10 +53,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.codeInsight.hint.HintUtil.createAdComponent;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 import static com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode.*;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -97,7 +97,9 @@ public final class Switcher extends BaseSwitcherAction {
     final JBList<SwitcherListItem> toolWindows;
     final JBList<SwitcherVirtualFile> files;
     final JCheckBox cbShowOnlyEditedFiles;
-    final JLabel pathLabel = new JLabel(" ");
+    final JLabel pathLabel = createAdComponent(" ", JBUI.Borders.compound(
+      JBUI.Borders.customLineTop(JBUI.CurrentTheme.Advertiser.borderColor()),
+      JBUI.CurrentTheme.Advertiser.border()), SwingConstants.LEFT);
     final Project project;
     final boolean recent; // false - Switcher, true - Recent files / Recently changed files
     final boolean pinned; // false - auto closeable on modifier key release, true - default popup
@@ -179,19 +181,7 @@ public final class Switcher extends BaseSwitcherAction {
 
       setBorder(JBUI.Borders.empty());
       setBackground(JBColor.background());
-      pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
-
-      final Font font = pathLabel.getFont();
-      pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
-      pathLabel.setBorder(JBUI.CurrentTheme.Advertiser.border());
-      pathLabel.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
-      pathLabel.setBackground(JBUI.CurrentTheme.Advertiser.background());
-      pathLabel.setOpaque(true);
-
-      BorderLayoutPanel footer = new BorderLayoutPanel();
-      footer.setBackground(JBUI.CurrentTheme.Advertiser.background());
-      footer.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
-      footer.addToCenter(pathLabel);
+      pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT);
 
       JPanel header = new JPanel(new HorizontalLayout(5));
       header.setBackground(JBUI.CurrentTheme.Popup.headerBackground(false));
@@ -251,14 +241,7 @@ public final class Switcher extends BaseSwitcherAction {
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private @NlsSafe String getTitle2Text(@Nullable String fullText) {
-          int labelWidth = pathLabel.getWidth();
-          if (fullText == null || fullText.length() == 0) return " ";
-          while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-            int sep = fullText.indexOf(File.separatorChar, 4);
-            if (sep < 0) return fullText;
-            fullText = "..." + fullText.substring(sep);
-          }
-
+          if (StringUtil.isEmpty(fullText)) return " ";
           return fullText;
         }
 
@@ -308,7 +291,7 @@ public final class Switcher extends BaseSwitcherAction {
       }
       addToTop(header);
       addToLeft(new SwitcherScrollPane(toolWindows, null));
-      addToBottom(footer);
+      addToBottom(pathLabel);
 
       if (mySpeedSearch != null) {
         // copy a speed search listener from the panel to the lists
