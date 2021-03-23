@@ -4,6 +4,6 @@ import java.util.Arrays;
 
 class Test {
   boolean anyMatch() {
-    return Arrays.asList("ds", "e", "fe").stream().anyMatch(s -> s.length() > 1);
+    return 1 <= Arrays.asList("ds", "e", "fe").stream().filter(s -> s.length() > 1).c<caret>ount();
   }
 }

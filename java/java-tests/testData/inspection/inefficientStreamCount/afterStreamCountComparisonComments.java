@@ -1,4 +1,4 @@
-// "Replace 'Stream().filter().count() > 0' with 'stream.anyMatch()'" "true"
+// "Replace with 'stream.anyMatch()'" "true"
 
 import java.util.Arrays;
 

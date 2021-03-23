@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
@@ -8,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.ObjectUtils;
@@ -16,6 +16,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -45,8 +46,8 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
     .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
-    .register(STREAM_FILTER, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
-    .register(STREAM_FILTER, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
+    .register(STREAM_FILTER, call -> extractComparison(call, true) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
+    .register(STREAM_FILTER, call -> extractComparison(call, false) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
@@ -73,9 +74,9 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
           CountFix fix = FIX_MAPPER.mapFirst(qualifierCall);
           if (fix == null &&
               !(STREAM_LIMIT.test(qualifierCall) && ExpressionUtils.isOne(qualifierCall.getArgumentList().getExpressions()[0]))) {
-            if (extractComparisonWithZero(methodCall) != null) {
+            if (extractComparison(methodCall, true) != null) {
               fix = new CountFix(SimplificationMode.IS_PRESENT);
-            } else if (extractComparisonWithZeroEq(methodCall) != null) {
+            } else if (extractComparison(methodCall, false) != null) {
               final SimplificationMode simplificationMode;
               if (PsiUtil.getLanguageLevel(methodCall).isAtLeast(LanguageLevel.JDK_11)) {
                 simplificationMode = SimplificationMode.IS_EMPTY;
@@ -96,43 +97,35 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   @Nullable
-  private static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression call) {
-    PsiBinaryExpression binary = extractBinary(call);
-    if (binary == null) return null;
-    IElementType tokenType = binary.getOperationTokenType();
-    if(ExpressionUtils.isZero(binary.getLOperand()) && (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.NE) ||
-       ExpressionUtils.isZero(binary.getROperand()) && (tokenType == JavaTokenType.GT || tokenType == JavaTokenType.NE)) {
-      return binary;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiBinaryExpression extractComparisonWithZeroEq(PsiMethodCallExpression call) {
-    PsiBinaryExpression binary = extractBinary(call);
-    if (binary == null) return null;
-    IElementType tokenType = binary.getOperationTokenType();
-    if(ExpressionUtils.isZero(binary.getLOperand()) && tokenType == JavaTokenType.EQEQ ||
-       ExpressionUtils.isZero(binary.getROperand()) && tokenType == JavaTokenType.EQEQ) {
-      return binary;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
-    if (hasPeekCallBefore(call)) return null;
+  private static PsiBinaryExpression extractComparison(PsiMethodCallExpression call, boolean isPresent) {
     final PsiMethodCallExpression countCall;
     if (STREAM_FILTER.test(call)) {
       countCall = ExpressionUtils.getCallForQualifier(call);
     } else if (STREAM_COUNT.test(call)) {
       countCall = call;
     } else {
-      countCall = null;
+      return null;
     }
-    if(countCall == null) return null;
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
-    if(parent == null) return null;
+    if (countCall == null || hasPeekCallBefore(call)) return null;
+    final LongRangeSet range = JavaPsiMathUtil.getRangeFromComparison(countCall);
+    if (range == null) return null;
+    if ((isPresent && isPresent(range)) || (!isPresent && isEmpty(range))) {
+      return extractBinary(countCall);
+    }
+    return null;
+  }
+
+  private static boolean isPresent(@NotNull LongRangeSet range) {
+    return range.equals(LongRangeSet.range(1, Long.MAX_VALUE)) || range.equals(LongRangeSet.all().without(0));
+  }
+
+  private static boolean isEmpty(@NotNull LongRangeSet range) {
+    return !range.isEmpty() && range.max() == 0;
+  }
+
+  @Nullable
+  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
     return ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
   }
 
@@ -183,29 +176,26 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   private enum SimplificationMode {
-    SUM("Stream.flatMap().count()", "Stream.mapToLong().sum()"),
-    COLLECTION_SIZE("Collection.stream().count()", "Collection.size()"),
-    ANY_MATCH("Stream().filter().count() > 0", "stream.anyMatch()"),
-    NONE_MATCH("Stream().filter().count() == 0", "stream.noneMatch()"),
-    IS_PRESENT("stream.count() > 0", "stream.findAny().isPresent()"),
-    NOT_IS_PRESENT("stream.count() == 0", "!stream.findAny().isPresent()"),
-    IS_EMPTY("stream.count() == 0", "stream.findAny().isEmpty()");
+    SUM("Stream.mapToLong().sum()"),
+    COLLECTION_SIZE("Collection.size()"),
+    ANY_MATCH("stream.anyMatch()"),
+    NONE_MATCH("stream.noneMatch()"),
+    IS_PRESENT("stream.findAny().isPresent()"),
+    NOT_IS_PRESENT("!stream.findAny().isPresent()"),
+    IS_EMPTY("stream.findAny().isEmpty()");
 
-    private final @NonNls @NotNull String myOld;
     private final @NonNls @NotNull String myNew;
 
-    SimplificationMode(@NonNls @NotNull String old, @NonNls @NotNull String aNew) {
-      myOld = old;
+    SimplificationMode(@NonNls @NotNull String aNew) {
       myNew = aNew;
     }
 
-
     public @Nls String getName() {
-      return CommonQuickFixBundle.message("fix.replace.x.with.y", myOld, myNew);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myNew);
     }
 
     public @InspectionMessage String getMessage() {
-      return CommonQuickFixBundle.message("fix.can.replace.x.with.y", myOld, myNew);
+      return CommonQuickFixBundle.message("fix.can.replace.with.x", myNew);
     }
   }
 
@@ -262,12 +252,12 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     }
 
     private static void replaceFilterCountComparison(PsiMethodCallExpression filterCall, boolean isAnyMatch) {
-      if(!STREAM_FILTER.test(filterCall)) return;
-      PsiBinaryExpression comparison = isAnyMatch? extractComparisonWithZero(filterCall) : extractComparisonWithZeroEq(filterCall);
-      if(comparison == null) return;
+      if (!STREAM_FILTER.test(filterCall)) return;
+      PsiBinaryExpression comparison =  extractComparison(filterCall, isAnyMatch);
+      if (comparison == null) return;
       String filterText = filterCall.getArgumentList().getExpressions()[0].getText();
       PsiExpression filterQualifier = filterCall.getMethodExpression().getQualifierExpression();
-      if(filterQualifier == null) return;
+      if (filterQualifier == null) return;
       String base = filterQualifier.getText();
       CommentTracker ct = new CommentTracker();
       ct.markUnchanged(filterQualifier);
@@ -281,20 +271,20 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
-      if(parent instanceof PsiExpressionStatement) {
+      if (parent instanceof PsiExpressionStatement) {
         addCast = false;
-      } else if(parent instanceof PsiTypeCastExpression) {
+      } else if (parent instanceof PsiTypeCastExpression) {
         PsiTypeElement castElement = ((PsiTypeCastExpression)parent).getCastType();
-        if(castElement != null && castElement.getType() instanceof PsiPrimitiveType) {
+        if (castElement != null && castElement.getType() instanceof PsiPrimitiveType) {
           addCast = false;
-          if(PsiType.INT.equals(castElement.getType())) {
+          if (PsiType.INT.equals(castElement.getType())) {
             toReplace = parent;
           }
         }
       }
       CommentTracker ct = new CommentTracker();
       PsiReferenceParameterList parameterList = methodExpression.getParameterList();
-      if(parameterList != null) {
+      if (parameterList != null) {
         ct.delete(parameterList);
       }
       String replacementText = (addCast ? "(long) " : "") + ct.text(methodExpression)+"()";
@@ -326,13 +316,13 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       flatMapName.replace(factory.createIdentifier("mapToLong"));
       countName.replace(factory.createIdentifier("sum"));
       PsiReferenceParameterList parameterList = qualifierCall.getMethodExpression().getParameterList();
-      if(parameterList != null) {
+      if (parameterList != null) {
         parameterList.delete();
       }
     }
 
     private static void replaceSimpleCountComparison(PsiMethodCallExpression countCall, boolean isPresent) {
-      PsiBinaryExpression comparison = isPresent ? extractComparisonWithZero(countCall) : extractComparisonWithZeroEq(countCall);
+      PsiBinaryExpression comparison = extractComparison(countCall, isPresent);
       if (comparison == null) return;
       PsiExpression countQualifier = countCall.getMethodExpression().getQualifierExpression();
       if (countQualifier == null) return;

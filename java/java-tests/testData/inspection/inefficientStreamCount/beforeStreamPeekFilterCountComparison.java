@@ -1,4 +1,4 @@
-// "Replace 'stream.count() == 0' with 'stream.findAny().isEmpty()'" "false"
+// "Replace with 'stream.findAny().isEmpty()'" "false"
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

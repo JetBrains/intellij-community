@@ -1,4 +1,4 @@
-// "Replace 'stream.count() == 0' with '!stream.findAny().isPresent()'" "true"
+// "Replace with '!stream.findAny().isPresent()'" "true"
 
 import java.util.stream.Stream;
 

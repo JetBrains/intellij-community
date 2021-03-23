@@ -4,6 +4,6 @@ import java.util.stream.Stream;
 
 class Test {
   boolean isPresent(Stream<String> stream) {
-    return stream.skip(42).c<caret>ount() > 0;
+    return stream.c<caret>ount() >= 1;
   }
 }

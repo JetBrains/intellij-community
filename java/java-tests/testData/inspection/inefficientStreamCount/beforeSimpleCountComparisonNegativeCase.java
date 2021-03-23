@@ -1,4 +1,4 @@
-// "Replace 'stream.count() > 0' with 'stream.findAny().isPresent()'" "false"
+// "Replace with 'stream.findAny().isPresent()'" "false"
 
 import java.util.Arrays;
 
