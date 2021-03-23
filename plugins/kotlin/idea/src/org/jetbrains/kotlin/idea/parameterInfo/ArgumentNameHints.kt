@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.callUtil.getCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 fun provideArgumentNameHints(element: KtCallElement): List<InlayInfo> {
@@ -52,6 +53,10 @@ private fun getArgumentNameHintsForCallCandidate(
     }
 
     return resolvedCall.valueArguments.mapNotNull { (valueParam: ValueParameterDescriptor, resolvedArg) ->
+        if (resultingDescriptor.isAnnotationConstructor() && valueParam.name.identifier == "value") {
+            return@mapNotNull null
+        }
+
         if (resultingDescriptor is FunctionInvokeDescriptor &&
             valueParam.type.extractParameterNameFromFunctionTypeArgument() == null
         ) {
