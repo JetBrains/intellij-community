@@ -125,11 +125,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   @Override
   public boolean isEnabled() {
-    return super.isEnabled() && myPresentation.isEnabled();
+    return isEnabled(super.isEnabled());
   }
 
-  boolean isButtonEnabled() {
-    return isEnabled();
+  protected boolean isEnabled(boolean componentEnabled) {
+    return componentEnabled && myPresentation.isEnabled();
   }
 
   private void onMousePresenceChanged(boolean setInfo) {
@@ -163,7 +163,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       return;
     }
 
-    if (isButtonEnabled()) {
+    if (isEnabled()) {
       final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, dataContext, event);
@@ -336,7 +336,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    *         an empty icon.
    */
   public Icon getIcon() {
-    boolean enabled = isButtonEnabled();
+    boolean enabled = isEnabled();
     int popState = getPopState();
     Icon hoveredIcon = (popState == POPPED || popState == PUSHED) ? myPresentation.getHoveredIcon() : null;
     Icon icon = enabled ? hoveredIcon != null ? hoveredIcon : myIcon : myDisabledIcon;
@@ -423,7 +423,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
                          ((ActionToolbarImpl)parent).getOrientation() == SwingConstants.HORIZONTAL;
     int x = horizontal ? JBUIScale.scale(6) : JBUIScale.scale(5);
     int y = horizontal ? JBUIScale.scale(5) : JBUIScale.scale(6);
-    Icon arrowIcon = isButtonEnabled() ? AllIcons.General.Dropdown :
+    Icon arrowIcon = isEnabled() ? AllIcons.General.Dropdown :
                      IconLoader.getDisabledIcon(AllIcons.General.Dropdown);
     arrowIcon.paintIcon(this, g, x, y);
   }
@@ -454,7 +454,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
       case MouseEvent.MOUSE_PRESSED:
-        if (skipPress || !isButtonEnabled()) return;
+        if (skipPress || !isEnabled()) return;
         myMouseDown = true;
         onMousePressed(e);
         ourGlobalMouseDown = true;
@@ -462,7 +462,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         break;
 
       case MouseEvent.MOUSE_RELEASED:
-        if (skipPress || !isButtonEnabled()) return;
+        if (skipPress || !isEnabled()) return;
         myMouseDown = false;
         ourGlobalMouseDown = false;
         onMouseReleased(e);
@@ -504,10 +504,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private int getPopState(boolean isPushed) {
-    if (isPushed || myRollover && myMouseDown && isButtonEnabled()) {
+    if (isPushed || myRollover && myMouseDown && isEnabled()) {
       return PUSHED;
     }
-    else if (myRollover && isButtonEnabled()) {
+    else if (myRollover && isEnabled()) {
       return POPPED;
     }
     else if (isFocusOwner()) {
