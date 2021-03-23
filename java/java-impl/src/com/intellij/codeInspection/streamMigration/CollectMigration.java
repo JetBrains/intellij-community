@@ -403,16 +403,16 @@ class CollectMigration extends BaseStreamApiMigration {
       if (COLLECTIONS_ADD_ALL.test(call)) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         if (args.length < 2) return null;
-        return createAllAll(tb, call, args[0]);
+        return createAddAll(tb, call, args[0]);
       }
       if (COLLECTION_ADD_ALL.test(call)) {
-        return createAllAll(tb, call, call.getMethodExpression().getQualifierExpression());
+        return createAddAll(tb, call, call.getMethodExpression().getQualifierExpression());
       }
 
       return null;
     }
 
-    private static @Nullable AddingAllTerminal createAllAll(TerminalBlock tb,
+    private static @Nullable AddingAllTerminal createAddAll(TerminalBlock tb,
                                                             PsiMethodCallExpression call,
                                                             PsiExpression targetExpr) {
       PsiReferenceExpression collectionReference = tryCast(PsiUtil.skipParenthesizedExprDown(targetExpr), PsiReferenceExpression.class);
