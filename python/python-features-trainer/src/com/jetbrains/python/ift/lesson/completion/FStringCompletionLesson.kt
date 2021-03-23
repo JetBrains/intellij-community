@@ -2,6 +2,7 @@
 package com.jetbrains.python.ift.lesson.completion
 
 import com.jetbrains.python.ift.PythonLessonsBundle
+import com.jetbrains.python.ift.PythonLessonsUtil.showWarningIfPython3NotFound
 import training.dsl.LessonContext
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.parseLessonSample
@@ -47,6 +48,8 @@ class FStringCompletionLesson
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    showWarningIfPython3NotFound()
+
     task("{my") {
       text(PythonLessonsBundle.message("python.f.string.completion.type.prefix", code(it)))
       runtimeText {
