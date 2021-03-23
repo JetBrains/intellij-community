@@ -42,10 +42,6 @@ public final class WinDockDelegate implements SystemDock.Delegate {
         ctx.clearRecentTasksList();
         ctx.setRecentTasksList(tasks);
       }).get();
-
-      if (tasks.length < recentProjectActions.size()) {
-        LOG.warn("Only " + tasks.length + " out of " + recentProjectActions.size() + " actions are displayed in Jump list");
-      }
     }
     catch (final InterruptedException e) {
       LOG.warn(e);
@@ -70,6 +66,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     int i = 0;
     for (final var action : actions) {
       if (!(action instanceof ReopenProjectAction)) {
+        LOG.debug("Failed to convert an action \"" + action + "\" to Jump Task: the action is not ReopenProjectAction");
         continue;
       }
 
@@ -79,6 +76,8 @@ public final class WinDockDelegate implements SystemDock.Delegate {
       final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);
 
       if (Strings.isEmptyOrSpaces(projectPathSystem)) {
+        LOG.debug("Failed to convert a ReopenProjectAction \"" + reopenProjectAction +
+                  "\" to Jump Task: path to the project is empty (\"" + projectPathSystem + "\")");
         continue;
       }
 
