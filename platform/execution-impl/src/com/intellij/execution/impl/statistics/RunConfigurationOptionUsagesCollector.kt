@@ -27,6 +27,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     val projectSettingsAvailableField = EventFields.Boolean("projectSettingsAvailable")
     val useProjectSettingsField = EventFields.Boolean("useProjectSettings")
     val modifyOption = GROUP.registerVarargEvent("modify.run.option", optionId, projectSettingsAvailableField, useProjectSettingsField, ID_FIELD, EventFields.InputEvent)
+    val navigateOption = GROUP.registerVarargEvent("option.navigate", optionId, ID_FIELD, EventFields.InputEvent)
     val removeOption = GROUP.registerEvent("remove.run.option", optionId, ID_FIELD, EventFields.InputEvent)
     val addNew = GROUP.registerEvent("add", ID_FIELD)
     val remove = GROUP.registerEvent("remove", ID_FIELD)
@@ -45,6 +46,13 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     @JvmStatic
     fun logModifyOption(project: Project?, option: String?, config: String?, inputEvent: FusInputEvent?) {
       modifyOption.log(project, optionId.with(option),
+                       ID_FIELD.with(config),
+                       EventFields.InputEvent.with(inputEvent))
+    }
+
+    @JvmStatic
+    fun logNavigateOption(project: Project?, option: String?, config: String?, inputEvent: FusInputEvent?) {
+      navigateOption.log(project, optionId.with(option),
                        ID_FIELD.with(config),
                        EventFields.InputEvent.with(inputEvent))
     }
@@ -73,11 +81,16 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
 
 class FragmentedStatisticsServiceImpl: FragmentStatisticsService() {
   override fun logOptionModified(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
-    RunConfigurationOptionUsagesCollector.logModifyOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))
+    RunConfigurationOptionUsagesCollector.
+    logModifyOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))
   }
 
   override fun logOptionRemoved(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
     RunConfigurationOptionUsagesCollector.logRemoveOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))
+  }
+
+  override fun logNavigateOption(project: Project?, optionId: String?, runConfigId: String?, inputEvent: AnActionEvent?) {
+    RunConfigurationOptionUsagesCollector.logNavigateOption(project, optionId, runConfigId, FusInputEvent.from(inputEvent))
   }
 
   override fun logHintsShown(project: Project?, runConfigId: String?, hintNumber: Int, duration: Long) {
