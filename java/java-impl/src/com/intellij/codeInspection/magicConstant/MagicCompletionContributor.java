@@ -109,9 +109,20 @@ public final class MagicCompletionContributor extends CompletionContributor impl
         int i = ArrayUtil.indexOf(list.getExpressions(), argument);
         if (i == -1) continue;
         PsiParameter[] params = method.getParameterList().getParameters();
-        if (i >= params.length) continue;
-        PsiParameter parameter = params[i];
-        result.add(Pair.create(parameter, parameter.getType()));
+        PsiParameter parameter;
+        PsiType parameterType;
+        if (method.isVarArgs() && i >= params.length - 1) {
+          parameter = ArrayUtil.getLastElement(params);
+          parameterType = ((PsiEllipsisType)parameter.getType()).getComponentType();
+        }
+        else if (i < params.length) {
+          parameter = params[i];
+          parameterType = parameter.getType();
+        }
+        else {
+          continue;
+        }
+        result.add(Pair.create(parameter, parameterType));
       }
     }
     else if (IN_BINARY_COMPARISON.accepts(pos)) {

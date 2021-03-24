@@ -227,14 +227,22 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     PsiExpression[] arguments = argumentList.getExpressions();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      AllowedValues values = MagicConstantUtils.getAllowedValues(parameter, parameter.getType());
+      PsiType type = parameter.getType();
+      int stopArg = i;
+      if (type instanceof PsiEllipsisType) {
+        type = ((PsiEllipsisType)type).getComponentType();
+        stopArg = arguments.length - 1;
+      }
+      AllowedValues values = MagicConstantUtils.getAllowedValues(parameter, type);
       if (values == null) continue;
       if (i >= arguments.length) break;
-      PsiExpression argument = arguments[i];
-      argument = PsiUtil.deparenthesizeExpression(argument);
-      if (argument == null) continue;
+      for (int j = i; j <= stopArg; j++) {
+        PsiExpression argument = arguments[j];
+        argument = PsiUtil.deparenthesizeExpression(argument);
+        if (argument == null) continue;
 
-      checkMagicParameterArgument(parameter, argument, values, holder);
+        checkMagicParameterArgument(parameter, argument, values, holder);
+      }
     }
   }
 

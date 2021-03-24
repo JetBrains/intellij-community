@@ -157,4 +157,54 @@ interface Foo {
     myFixture.complete(CompletionType.SMART)
     myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void testVarargMethodCall() {
+    addMagicConstant()
+
+    @Language("JAVA")
+    def s = """
+import org.intellij.lang.annotations.MagicConstant;
+
+public class VarargMethodCall {
+  private static class Constants {
+    public static final int ONE = 1;
+    public static final int TWO = 2;
+  }
+  public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
+  }
+  public static void testMethod() {
+    testAnnotation2(<caret>);
+  }
+}
+"""
+    myFixture.configureByText "a.java", s
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'ONE', 'TWO'
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testVarargMethodCall2() {
+    addMagicConstant()
+
+    @Language("JAVA")
+    def s = """
+import org.intellij.lang.annotations.MagicConstant;
+
+public class VarargMethodCall {
+  private static class Constants {
+    public static final int ONE = 1;
+    public static final int TWO = 2;
+  }
+  public static void testAnnotation2(@MagicConstant(valuesFromClass = Constants.class) int... vars) {
+  }
+  public static void testMethod() {
+    testAnnotation2(Constants.ONE, <caret>);
+  }
+}
+"""
+    myFixture.configureByText "a.java", s
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'ONE', 'TWO'
+  }
 }
