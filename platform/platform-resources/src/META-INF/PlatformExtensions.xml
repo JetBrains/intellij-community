@@ -886,7 +886,6 @@
                     configurationSchemaKey="java"
     />
 
-    <notificationGroup id="JDK Update" displayType="BALLOON"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" />
 
     <notificationGroup id="Runtime Chooser" displayType="BALLOON" bundle="messages.LangBundle" key="notification.title.choose.ide.runtime" />
@@ -894,6 +893,7 @@
     <registryKey key="runtime.chooser.pretend.major" description="Makes Runtime Chooser show JBRs from previous releases" defaultValue="" />
 
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
+    <settingsEntryPointActionProvider implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkSettingsActionRegistryActionProvider"/>
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.updater" defaultValue="true" description="Check for JDK updates and suggest actions in notifications"/>
