@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
@@ -804,8 +805,14 @@ public class GitBranchPopupActions {
                                                getCurrentBranchPresentation(myRepositories),
                                                getBranchPresentation(myBranchName))
                            : GitBundle.message("branches.rebase.is.not.possible.in.the.detached.head.state");
-      e.getPresentation().setDescription(description);
-      e.getPresentation().setEnabled(isOnBranch);
+      Presentation presentation = e.getPresentation();
+      presentation.setDescription(description);
+      presentation.setEnabled(isOnBranch);
+
+      String actionText = GitBundle.message("branches.rebase.onto",
+                                            getCurrentBranchShortName(getCurrentBranchPresentation(myRepositories)),
+                                            getSelectedBranchShortName(getBranchPresentation(myBranchName)));
+      presentation.setText(actionText);
     }
 
     @Override
@@ -951,5 +958,34 @@ public class GitBranchPopupActions {
   @NotNull
   private static String getBranchPresentation(@NotNull String branch) {
     return "'" + branch + "'";
+  }
+
+  private static final int MAX_BRANCH_NAME_LENGTH = 60;
+
+  @NotNull
+  @NlsSafe
+  private static String shortBranchName(@NlsSafe String branchName) {
+    return StringUtil.shortenTextWithEllipsis(branchName,
+                                              MAX_BRANCH_NAME_LENGTH,
+                                              (int)(MAX_BRANCH_NAME_LENGTH / 2.0),
+                                              true);
+  }
+
+  @Nls
+  private static String getCurrentBranchShortName(@NlsSafe String branchName) {
+    return showBranchNameInsteadCurrent() ? shortBranchName(branchName) : "Current";
+  }
+
+  @Nls
+  private static String getSelectedBranchShortName(@NlsSafe String branchName) {
+    return showBranchNameInsteadSelected() ? shortBranchName(branchName) : "Selected";
+  }
+
+  private static boolean showBranchNameInsteadCurrent() {
+    return Registry.is("git.show.full.branch.name.instead.current");
+  }
+
+  private static boolean showBranchNameInsteadSelected() {
+    return Registry.is("git.show.full.branch.name.instead.selected");
   }
 }
