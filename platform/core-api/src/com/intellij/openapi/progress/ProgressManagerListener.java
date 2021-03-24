@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface ProgressManagerListener {
 
@@ -12,11 +10,13 @@ public interface ProgressManagerListener {
                                                      Topic.BroadcastDirection.NONE,
                                                      true);
 
-  void onTaskRunnableCreated(@NotNull Task task,
-                             @NotNull ProgressWindow indicator,
-                             @Nullable Runnable continuation);
+  default void beforeTaskStart(@NotNull Task task,
+                               @NotNull ProgressIndicator indicator) {}
 
-  void onTaskFinished(@NotNull Task task,
-                      boolean canceled,
-                      @Nullable Throwable error);
+  default void afterTaskStart(@NotNull Task task,
+                              @NotNull ProgressIndicator indicator) {}
+
+  default void beforeTaskFinished(@NotNull Task task) {}
+
+  default void afterTaskFinished(@NotNull Task task) {}
 }

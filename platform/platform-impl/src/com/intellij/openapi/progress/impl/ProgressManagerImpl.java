@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -109,15 +108,16 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   protected final void startTask(@NotNull Task task,
                                  @NotNull ProgressIndicator indicator,
                                  @Nullable Runnable continuation) {
+    ProgressManagerListener listener = getProjectManagerListener();
     try {
-      super.startTask(task, indicator, continuation);
+      listener.beforeTaskStart(task, indicator);
     }
     finally {
-      if (indicator instanceof ProgressWindow) {
-        ApplicationManager.getApplication()
-          .getMessageBus()
-          .syncPublisher(ProgressManagerListener.TOPIC)
-          .onTaskRunnableCreated(task, (ProgressWindow)indicator, continuation);
+      try {
+        super.startTask(task, indicator, continuation);
+      }
+      finally {
+        listener.afterTaskStart(task, indicator);
       }
     }
   }
@@ -153,14 +153,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   protected final void finishTask(@NotNull Task task,
                                   boolean canceled,
                                   @Nullable Throwable error) {
+    ProgressManagerListener listener = getProjectManagerListener();
     try {
-      super.finishTask(task, canceled, error);
+      listener.beforeTaskFinished(task);
     }
     finally {
-      ApplicationManager.getApplication()
-        .getMessageBus()
-        .syncPublisher(ProgressManagerListener.TOPIC)
-        .onTaskFinished(task, canceled, error);
+      try {
+        super.finishTask(task, canceled, error);
+      }
+      finally {
+        listener.afterTaskFinished(task);
+      }
     }
   }
 
@@ -210,5 +213,11 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   protected void prioritizingFinished() {
     removeCheckCanceledHook(mySleepHook);
+  }
+
+  private static @NotNull ProgressManagerListener getProjectManagerListener() {
+    return ApplicationManager.getApplication()
+      .getMessageBus()
+      .syncPublisher(ProgressManagerListener.TOPIC);
   }
 }
