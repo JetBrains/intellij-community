@@ -236,6 +236,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
     finally {
       exitModality();
+      // make sure focus returns to original component (at least requested to do so)
+      // before other code executed after showing modal progress
+      myDialog.hideImmediately();
     }
   }
 
