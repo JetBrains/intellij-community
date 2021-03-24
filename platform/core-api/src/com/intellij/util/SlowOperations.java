@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +31,7 @@ public final class SlowOperations {
     "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
-  private static final boolean ourAlwaysAllow = System.getenv("TEAMCITY_VERSION") != null ||
-                                                ApplicationManager.getApplication().isUnitTestMode();
+  private static int ourAlwaysAllow;
   private static Frame ourStack;
 
   private SlowOperations() {}
@@ -52,16 +51,16 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    if (ourAlwaysAllow) {
+    if (isAlwaysAllowed() || !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
-    if (!Registry.is("ide.slow.operations.assertion")) {
+    if (!Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
     Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() ||
         application.isWriteAccessAllowed() ||
-        ourStack == null && !Registry.is("ide.slow.operations.assertion.other")) {
+        ourStack == null && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
     }
     for (Frame frame = ourStack; frame != null; frame = frame.parent) {
@@ -69,11 +68,35 @@ public final class SlowOperations {
         return;
       }
     }
+
     String stackTrace = ExceptionUtil.currentStackTrace();
-    if (ContainerUtil.or(misbehavingFrames, stackTrace::contains) || !ourReportedTraces.add(stackTrace)) {
+    boolean result = false;
+    for (String t : misbehavingFrames) {
+      if (stackTrace.contains(t)) {
+        result = true;
+        break;
+      }
+    }
+    if (result || !ourReportedTraces.add(stackTrace)) {
       return;
     }
     LOG.error("Slow operations are prohibited in the EDT");
+  }
+
+  private static boolean isAlwaysAllowed() {
+    if (ourAlwaysAllow == 1) {
+      return true;
+    }
+    if (ourAlwaysAllow == 0) {
+      return false;
+    }
+    if (!LoadingState.APP_STARTED.isOccurred()) {
+      return true;
+    }
+
+    boolean result = System.getenv("TEAMCITY_VERSION") != null || ApplicationManager.getApplication().isUnitTestMode();
+    ourAlwaysAllow = result ? 1 : 0;
+    return result;
   }
 
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
@@ -88,11 +111,11 @@ public final class SlowOperations {
     }
   }
 
-  @NotNull
-  public static AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
-    if (ourAlwaysAllow || !EDT.isCurrentThreadEdt()) {
+  public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
+    if (isAlwaysAllowed() || !EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
+
     Frame prev = ourStack;
     ourStack = new Frame(activityName, prev);
     return new AccessToken() {
@@ -104,7 +127,7 @@ public final class SlowOperations {
     };
   }
 
-  private static class Frame {
+  private static final class Frame {
     final String activity;
     final Frame parent;
 

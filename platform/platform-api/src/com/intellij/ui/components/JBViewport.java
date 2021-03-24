@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -236,7 +237,12 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       myZoomer.paint(g);
     }
     else {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+      if (LoadingState.APP_STARTED.isOccurred()) {
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.RENDERING)) {
+          super.paint(g);
+        }
+      }
+      else {
         super.paint(g);
       }
 
