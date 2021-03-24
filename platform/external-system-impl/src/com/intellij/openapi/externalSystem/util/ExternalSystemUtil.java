@@ -708,10 +708,10 @@ public final class ExternalSystemUtil {
     return isTrusted(project, systemIds) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
-             ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
-             ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),
-             ExternalSystemBundle.message("untrusted.project.notification.trust.button"),
-             ExternalSystemBundle.message("untrusted.project.notification.distrust.button")
+             IdeBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.notification.trust.button"),
+             IdeBundle.message("untrusted.project.notification.distrust.button")
            );
   }
 
