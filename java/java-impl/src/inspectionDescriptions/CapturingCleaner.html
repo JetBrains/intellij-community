@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports Runnable passed to <code>Cleaner.register()</code> capturing reference that leads to memory leak.
+Reports the <code>Runnable</code> passed to <code>Cleaner.register()</code> capturing reference that leads to memory leak.
 Possible sources of this problem:
 <ul>
-  <li>Lambda using non static methods, fields or this itself</li>
+  <li>Lambda using non static methods, fields or <code>this</code> itself</li>
   <li>Non static inner class (anonymous or not) always captures this reference</li>
   <li>Instance method reference</li>
   <li>Access to outer class non static members from non static inner class</li>
@@ -14,6 +14,7 @@ Possible sources of this problem:
   int fileDescriptor;
   Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
     System.out.println("adsad");
+    //<i>this</i> is captured via <i>fileDescriptor</i>
     fileDescriptor = 0;
   });
 </pre>
