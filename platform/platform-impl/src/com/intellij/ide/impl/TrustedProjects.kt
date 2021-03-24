@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.annotations.Attribute
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
 fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
   @NlsContexts.DialogTitle title: String,
@@ -88,20 +87,12 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = this.service<TrustedProjectSettings>().trustedState == ThreeState.YES
+fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
-fun Project.getTrustedState() = this.service<TrustedProjectSettings>().trustedState
-
-fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
-  val explicit = getTrustedState()
+fun Project.getTrustedState() : ThreeState {
+  val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) return explicit
-
-  return if (getImplicitTrustedCheckResult(this) is Trusted) {
-    ThreeState.YES
-  }
-  else {
-    ThreeState.UNSURE
-  }
+  return if (getImplicitTrustedCheckResult(this) is Trusted) ThreeState.YES else ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
@@ -192,4 +183,3 @@ interface TrustChangeNotifier {
 const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
 
 private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")
-
