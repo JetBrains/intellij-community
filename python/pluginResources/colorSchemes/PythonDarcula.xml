@@ -5,6 +5,11 @@
       <option name="BACKGROUND" value="232364" />
     </value>
   </option>
+  <option name="PY.BUILTIN_NAME">
+    <value>
+      <option name="FOREGROUND" value="8888c6" />
+    </value>
+  </option>
   <option name="PY.DECORATOR">
     <value>
       <option name="FOREGROUND" value="bbb529" />
