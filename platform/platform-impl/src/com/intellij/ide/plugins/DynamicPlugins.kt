@@ -1272,7 +1272,8 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(extensions: Map<String, Lis
   val anyModule = openedProjects.firstOrNull()?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
 
   for (epName in extensions.keys) {
-    val result = findPluginExtensionPointRecursive(baseDescriptor ?: descriptor, epName, pluginStateChecker, context)
+    val result = findPluginExtensionPointRecursive(baseDescriptor ?: descriptor, epName, pluginStateChecker, context,
+                                                   Collections.newSetFromMap(IdentityHashMap()))
     if (result != null) {
       val (pluginExtensionPoint, foundInDependencies) = result
       // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
@@ -1350,16 +1351,19 @@ private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl,
 private fun findPluginExtensionPointRecursive(pluginDescriptor: IdeaPluginDescriptorImpl,
                                               epName: String,
                                               pluginStateChecker: PluginStateChecker,
-                                              context: List<IdeaPluginDescriptorImpl>): Pair<ExtensionPointImpl<*>, Boolean>? {
+                                              context: List<IdeaPluginDescriptorImpl>,
+                                              seenPlugins: MutableSet<IdeaPluginDescriptorImpl>): Pair<ExtensionPointImpl<*>, Boolean>? {
+  if (pluginDescriptor in seenPlugins) return null
+  seenPlugins.add(pluginDescriptor)
   findPluginExtensionPoint(pluginDescriptor, epName)?.let { return it to false }
   pluginDescriptor.pluginDependencies?.let { pluginDependencies ->
     for (dependency in pluginDependencies) {
       if (pluginStateChecker.isPluginOrModuleLoaded(dependency.id) || context.any { it.id == dependency.id }) {
         dependency.subDescriptor?.let { subDescriptor ->
-          findPluginExtensionPointRecursive(subDescriptor, epName, pluginStateChecker, context)?.let { return it }
+          findPluginExtensionPointRecursive(subDescriptor, epName, pluginStateChecker, context, seenPlugins)?.let { return it }
         }
         pluginStateChecker.findDescriptor(dependency.id)?.let { dependencyDescriptor ->
-          findPluginExtensionPointRecursive(dependencyDescriptor, epName, pluginStateChecker, context)?.let { return it.first to true }
+          findPluginExtensionPointRecursive(dependencyDescriptor, epName, pluginStateChecker, context, seenPlugins)?.let { return it.first to true }
         }
       }
     }
