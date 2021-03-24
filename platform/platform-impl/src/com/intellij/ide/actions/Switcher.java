@@ -241,7 +241,6 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
-      ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
@@ -296,14 +295,14 @@ public final class Switcher extends BaseSwitcherAction {
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
       myClickListener.installOn(files);
-      ScrollingUtil.ensureSelectionExists(files);
 
       if (filesModel.getSize() > 0) {
         addToCenter(new SwitcherScrollPane(files, JBUI.CurrentTheme.Popup.separatorColor()));
         int selectionIndex = getFilesSelectedIndex(project, files, forward);
-        if (selectionIndex > -1) {
-          files.setSelectedIndex(selectionIndex);
-        }
+        files.setSelectedIndex(selectionIndex > -1 ? selectionIndex : 0);
+      }
+      else {
+        ScrollingUtil.ensureSelectionExists(toolWindows);
       }
       addToTop(header);
       addToLeft(new SwitcherScrollPane(toolWindows, null));
