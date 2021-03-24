@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -52,6 +49,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -98,7 +96,7 @@ public class FontEditorPreview implements PreviewPanel{
     myTopPanel.setBackground(myEditor.getBackgroundColor());
     myTopPanel.setBorder(getBorder());
 
-    registerRestoreAction(myEditor);
+    registerActions(myEditor);
     installTrafficLights(myEditor);
   }
 
@@ -106,17 +104,24 @@ public class FontEditorPreview implements PreviewPanel{
     return JBUI.Borders.customLine(JBColor.border());
   }
 
-  private void registerRestoreAction(EditorEx editor) {
+  private void registerActions(EditorEx editor) {
     editor.putUserData(TEXT_MODEL_KEY, myTextModel);
     AnAction restoreAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RESTORE_FONT_PREVIEW_TEXT);
-    if (restoreAction != null) {
+    AnAction toggleBoldFontAction = ActionManager.getInstance().getAction("fontEditorPreview.ToggleBoldFont");
+    if (restoreAction != null || toggleBoldFontAction != null) {
       String originalGroupId = editor.getContextMenuGroupId();
       AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
       DefaultActionGroup group = new DefaultActionGroup();
       if (originalGroup instanceof ActionGroup) {
         group.addAll(((ActionGroup)originalGroup).getChildren(null));
       }
-      group.add(restoreAction);
+      if (restoreAction != null) {
+        group.add(restoreAction);
+      }
+      if (toggleBoldFontAction != null) {
+        group.add(toggleBoldFontAction);
+        toggleBoldFontAction.registerCustomShortcutSet(toggleBoldFontAction.getShortcutSet(), editor.getComponent());
+      }
       editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
     }
   }
@@ -243,8 +248,31 @@ public class FontEditorPreview implements PreviewPanel{
           textModel.resetToDefault();
           WriteCommandAction.runWriteCommandAction(editor.getProject(), null, null, () -> {
             editor.getDocument().setText(textModel.getText());
+            ((EditorEx)editor).reinitSettings();
           });
         }
+      }
+    }
+  }
+
+  public static class ToggleBoldFontAction extends DumbAwareAction {
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      e.getPresentation().setEnabledAndVisible(textModel != null &&
+                                               editor.getSelectionModel().hasSelection());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+      if (textModel != null) {
+        SelectionModel selectionModel = editor.getSelectionModel();
+        textModel.toggleBoldFont(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
+        ((EditorEx)editor).reinitSettings();
       }
     }
   }
@@ -252,8 +280,6 @@ public class FontEditorPreview implements PreviewPanel{
   private static class PreviewTextModel implements DocumentListener {
     private final static String BOLD_START_MARKER = "<bold>";
     private final static String BOLD_END_MARKER = "</bold>";
-
-    private final static RangeHighlightingData EMPTY_RANGE = new RangeHighlightingData(0, 0, false);
 
     private String myText;
     private final List<RangeHighlightingData> myRanges = new ArrayList<>();
@@ -315,8 +341,9 @@ public class FontEditorPreview implements PreviewPanel{
       return myRanges.size();
     }
 
+    @Nullable
     RangeHighlightingData getRangeDataAt(int index) {
-      return myRanges.isEmpty() ? EMPTY_RANGE :  myRanges.get(index);
+      return myRanges.isEmpty() ? null :  myRanges.get(index);
     }
 
     boolean isDefault() {
@@ -339,7 +366,7 @@ public class FontEditorPreview implements PreviewPanel{
         int offset = event.getOffset();
         if (event.getNewLength() >= event.getOldLength()) {
           if (myRanges.isEmpty()) {
-            myRanges.add(EMPTY_RANGE);
+            myRanges.add(new RangeHighlightingData(0, 0, false));
           }
           int insertedLen = event.getNewLength() - event.getOldLength();
           for (RangeHighlightingData data : myRanges) {
@@ -385,6 +412,36 @@ public class FontEditorPreview implements PreviewPanel{
         if (myRanges.get(i).textRange.contains(offset)) return i;
       }
       return -1;
+    }
+
+    void toggleBoldFont(@NotNull TextRange toggleRange) {
+      List<RangeHighlightingData> updatedRanges = new ArrayList<>();
+      myRanges.forEach(data -> {
+        int toggleStart = Math.max(toggleRange.getStartOffset(), data.textRange.getStartOffset());
+        int toggleEnd = Math.min(toggleRange.getEndOffset(), data.textRange.getEndOffset());
+        if (toggleStart < toggleEnd) {
+          glueRange(updatedRanges, TextRange.create(data.textRange.getStartOffset(), toggleStart), data.isBold);
+          glueRange(updatedRanges, TextRange.create(toggleStart, toggleEnd), !data.isBold);
+          glueRange(updatedRanges, TextRange.create(toggleEnd, data.textRange.getEndOffset()), data.isBold);
+        }
+        else {
+          glueRange(updatedRanges, data.textRange, data.isBold);
+        }
+      });
+      myRanges.clear();
+      myRanges.addAll(updatedRanges);
+    }
+
+    private static void glueRange(@NotNull List<RangeHighlightingData> ranges, @NotNull TextRange range, boolean isBold) {
+      if (!range.isEmpty()) {
+        RangeHighlightingData lastRange = ranges.isEmpty() ? null : ranges.get(ranges.size() - 1);
+        if (lastRange != null && lastRange.isBold == isBold) {
+          lastRange.updateRange(lastRange.textRange.grown(range.getLength()));
+        }
+        else {
+          ranges.add(new RangeHighlightingData(range.getStartOffset(), range.getEndOffset(), isBold));
+        }
+      }
     }
   }
 
@@ -438,6 +495,8 @@ public class FontEditorPreview implements PreviewPanel{
     private final static TextAttributes BOLD_ATTRIBUTES =
       new TextAttributes(null, null, null, null, Font.BOLD);
 
+    private final static RangeHighlightingData EMPTY_RANGE_DATA = new RangeHighlightingData(0, 0, false);
+
     private int myCurrIndex;
 
     private PreviewHighlighterIterator(@NotNull PreviewTextModel model, @NotNull Document document, int startOffset) {
@@ -448,7 +507,7 @@ public class FontEditorPreview implements PreviewPanel{
 
     @NotNull
     private RangeHighlightingData getData() {
-      return myTextModel.getRangeDataAt(myCurrIndex);
+      return ObjectUtils.notNull(myTextModel.getRangeDataAt(myCurrIndex), EMPTY_RANGE_DATA);
     }
 
     @Override
