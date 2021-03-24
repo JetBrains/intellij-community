@@ -2384,6 +2384,11 @@ public final class ContainerUtil {
     }
     return true;
   }
+  
+  @Contract(pure = true)
+  public static <T> boolean isSameElements(@NotNull Collection<? extends T> list1, @NotNull Collection<? extends T> list2) {
+    return list1.size() == list2.size() && list1.containsAll(list2);
+  }
 
   /**
    * Finds the first element in the list that satisfies given condition.
