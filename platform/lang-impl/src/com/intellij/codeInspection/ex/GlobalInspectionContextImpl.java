@@ -962,7 +962,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private static void addRepeatWithTestsAction(@NotNull AnalysisScope scope, Notification notification, Runnable analysisRepeater) {
+  private static void addRepeatWithTestsAction(@NotNull AnalysisScope scope, @NotNull Notification notification, @NotNull Runnable analysisRepeater) {
     notification.addAction(new NotificationAction(InspectionsBundle.message("inspection.no.problems.repeat.with.tests")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
