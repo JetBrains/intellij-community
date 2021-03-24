@@ -107,9 +107,8 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     try {
       if (!cacheFile.exists()) return null
 
-      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified() ||
-          invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
-        LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
+      if (invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
+        LOG.info("Skipping project model cache since '$invalidateProjectCacheMarkerFile' is present and newer than cache file '$cacheFile'")
         FileUtil.delete(cacheFile)
         return null
       }
@@ -189,21 +188,8 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
-    private val invalidateCachesMarkerFile = File(appSystemDir.resolve("projectModelCache").toFile(), ".invalidate")
 
     fun invalidateCaches() {
-      LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
-
-      cachesInvalidated.set(true)
-
-      try {
-        FileUtil.createParentDirs(invalidateCachesMarkerFile)
-        FileUtil.writeToFile(invalidateCachesMarkerFile, System.currentTimeMillis().toString())
-      }
-      catch (t: Throwable) {
-        LOG.warn("Cannot update the invalidation marker file", t)
-      }
-
       ApplicationManager.getApplication().executeOnPooledThread {
         clearCachesForAllProjects(DATA_DIR_NAME)
       }
