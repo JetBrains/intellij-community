@@ -87,12 +87,12 @@ class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
 }
 
-class CopyRelativePathFromCurrentFileProvider : DumbAwareCopyPathProvider() {
+class CopyCurrentFileDirectoryRelativePathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? =
     virtualFile?.let {
       FileEditorManager.getInstance(project).selectedFiles.firstOrNull()?.let { selectedEditorFile ->
         if (virtualFile.path == selectedEditorFile.path) null
-        else FileUtil.getRelativePath(selectedEditorFile.path, virtualFile.path, '/')
+        else FileUtil.getRelativePath(selectedEditorFile.parent.path, virtualFile.path, '/')
       }
     }
 }
