@@ -151,6 +151,6 @@ public class UnnecessaryParenthesesInspection
 class A{
 
   A() {
-    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error><EOLError descr="';' expected"></EOLError>
+    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error>
   }
 }

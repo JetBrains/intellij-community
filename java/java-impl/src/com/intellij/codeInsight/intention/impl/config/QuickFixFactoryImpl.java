@@ -1009,4 +1009,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue) {
     return new UnwrapArrayInitializerMemberValueAction(arrayValue);
   }
+
+  @Override
+  public @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression) {
+    return new IntroduceVariableErrorFixAction(expression);
+  }
 }

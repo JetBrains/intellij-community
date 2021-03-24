@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.introduceVariable.IntroduceEmptyVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
@@ -57,6 +58,12 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
 
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) {
+      return false;
+    }
+
+    if (expression.getParent() instanceof PsiExpressionStatement &&
+        !PsiUtil.isStatement(expression.getParent())) {
+      // Same action is available as an error quick-fix
       return false;
     }
 

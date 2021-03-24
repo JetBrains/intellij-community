@@ -397,6 +397,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testUnreachableArrayElementAssignment() { doTest(false); }
+  
+  public void testNotWellFormedExpressionStatementWithoutSemicolon() {
+    doTest(false);
+  }
 
   public void testInsane() {
     configureFromFileText("x.java", "class X { \nx_x_x_x\n }");

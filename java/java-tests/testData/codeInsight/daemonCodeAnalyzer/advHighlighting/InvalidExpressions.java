@@ -54,7 +54,7 @@ public class a12 {
     <error descr="Cannot resolve method 'xxxxxx' in 'a12'">xxxxxx</error>(<error descr="Cannot resolve symbol 'xxxxxx'">xxxxxx</error>);
 
     // incomplete code should not cause 'expr expected'
-    Object<error descr="';' expected"> </error>
+    <error descr="Not a statement">Object</error> 
 
 
     <error descr="Array type expected; found: 'int'">4</error>[1] = 5;
