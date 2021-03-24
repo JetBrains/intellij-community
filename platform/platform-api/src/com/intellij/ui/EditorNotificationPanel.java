@@ -33,7 +33,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -58,7 +61,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   private Project myProject;
   private final @NotNull Supplier<? extends EditorColorsScheme> mySchemeSupplier;
 
-  @ApiStatus.Internal
   protected static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
@@ -89,12 +91,10 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
    *
    * @param fileEditor is editor instance. null is equivalent to default constructor.
    */
-  @ApiStatus.Internal
   public EditorNotificationPanel(@Nullable FileEditor fileEditor) {
     this(fileEditorSupplier(fileEditor));
   }
 
-  @ApiStatus.Internal
   public EditorNotificationPanel(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     super(new BorderLayout());
 
