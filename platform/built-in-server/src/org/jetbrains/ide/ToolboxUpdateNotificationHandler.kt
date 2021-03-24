@@ -79,6 +79,6 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
 
-    service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-02-update-${request.build}", action)
+    service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-01-restart-${request.build}", action)
   }
 }

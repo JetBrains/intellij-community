@@ -14,12 +14,13 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.TestApplicationManager
 import com.intellij.util.ui.UIUtil
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions
-import org.junit.*
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.awt.event.KeyEvent
 import java.io.InputStream
 import java.net.URI
@@ -30,7 +31,6 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JPanel
 import kotlin.concurrent.thread
 
