@@ -733,7 +733,7 @@ public final class ExternalSystemUtil {
       virtualFile,
       IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, systemIds.size()),
       IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.open.dialog.trust.button"),
+      IdeBundle.message("untrusted.project.dialog.trust.button"),
       IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
       IdeBundle.message("untrusted.project.open.dialog.cancel.button")
     );
