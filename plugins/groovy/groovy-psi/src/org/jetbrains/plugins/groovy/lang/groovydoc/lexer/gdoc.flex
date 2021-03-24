@@ -35,7 +35,7 @@ WS = {WS_CHARS}+
 DIGIT = [0-9]
 ALPHA = [:jletter:]
 IDENTIFIER = {ALPHA} ({ALPHA} | {DIGIT} | [":.-"])*
-TAG_WITH_VALUE = "param" | "link" | "linkplain" | "see" | "value" | "throws"
+TAG_WITH_VALUE = "param" | "link" | "linkplain" | "see" | "value" | "throws" | "attr"
 VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 %%
 
@@ -76,7 +76,7 @@ VALUE_IDENTIFIER = ({ALPHA} | {DIGIT} | [_\."$"\[\]])+
 
 <AFTER_PLAIN_TAG_NAME> {
   {WS_NL}                       { yybegin(COMMENT_DATA); return TokenType.WHITE_SPACE; }
-  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }                                                              
+  "}"                           { yybegin(COMMENT_DATA); return mGDOC_INLINE_TAG_END; }
 }
 
 <TAG_VALUE> {
