@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import java.util.Locale;
+
 public enum ConfigKey {
 
   CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
@@ -89,7 +91,7 @@ public enum ConfigKey {
   private final String configDefaultValue;
 
   ConfigKey(String configKey, String configDefaultValue) {
-    this.configKey = configKey.toLowerCase();
+    this.configKey = configKey.toLowerCase(Locale.ENGLISH);
     this.configDefaultValue = configDefaultValue;
   }
 
