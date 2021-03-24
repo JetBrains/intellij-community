@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.FakePsiElement;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -18,14 +20,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
-import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.DeclarationType;
-import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.impl.NamedArgumentDescriptorImpl;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * @author peter
@@ -44,7 +42,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
   public static final @NonNls String THROWS = "throws";
   private FList<Map> myDeclarations = FList.emptyList();
-  private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
+  private final List<CustomMembersHolder> myMemberHolders = new ArrayList<>();
   private final GroovyClassDescriptor myDescriptor;
   @Nullable private final Map<String, List> myBindings;
 
@@ -86,28 +84,16 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @Nullable
-  public CustomMembersHolder getMembersHolder() {
+  public List<CustomMembersHolder> getMembersHolder() {
     if (!myDeclarations.isEmpty()) {
-      addMemberHolder(new CustomMembersHolder() {
-        @Override
-        public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-          return NonCodeMembersHolder.generateMembers(ContainerUtil.reverse(myDeclarations), descriptor.justGetPlaceFile()).processMembers(
-            descriptor, processor, state);
-        }
-
-        @Override
-        public void consumeClosureDescriptors(GroovyClassDescriptor descriptor, Consumer<? super ClosureDescriptor> consumer) {
-          NonCodeMembersHolder.generateMembers(ContainerUtil.reverse(myDeclarations), descriptor.justGetPlaceFile())
-            .consumeClosureDescriptors(descriptor, consumer);
-        }
-      });
+      addMemberHolder(new CustomMembersHolderImpl(myDeclarations));
     }
-    return myDepot;
+    return myMemberHolders;
   }
 
   @Override
   public void addMemberHolder(CustomMembersHolder holder) {
-    myDepot.addHolder(holder);
+    myMemberHolders.add(holder);
   }
 
   private Object[] constructNewArgs(Object[] args) {
