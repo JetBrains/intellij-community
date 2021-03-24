@@ -189,10 +189,6 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
     Files.createDirectories(tempJarFile.parent)
     FileChannel.open(tempJarFile, RW_CREATE_NEW).use { outChannel ->
       val zipCreator = ZipFileWriter(outChannel, deflater = null)
-      zipCreator.writeUncompressedEntry(SIZE_ENTRY, 2) {
-        it.putShort((orderedNames.size and 0xffff).toShort())
-      }
-
       packageIndexBuilder.writePackageIndex(zipCreator)
       writeEntries(entries, zipCreator, zipFile)
       writeDirs(packageIndexBuilder.dirsToCreate, zipCreator)

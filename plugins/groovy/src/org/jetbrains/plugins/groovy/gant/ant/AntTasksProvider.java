@@ -110,7 +110,7 @@ public final class AntTasksProvider {
   }
 
   private static final class AntClassLoader extends UrlClassLoader {
-    private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+    private static final boolean isParallelCapable = registerAsParallelCapable();
 
     private final Future<Map<String, Class<?>>> myFuture;
 

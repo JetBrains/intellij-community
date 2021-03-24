@@ -11,10 +11,9 @@ import java.security.ProtectionDomain;
 
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
-  private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY =
-    Boolean.parseBoolean(System.getProperty("idea.use.lock.free.zip.impl", "true")) ? file -> new ZipResourceFile(file) : null;
+  private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
 
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
   private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
 
   private final BytecodeTransformer transformer;
@@ -25,6 +24,7 @@ public final class PathClassLoader extends UrlClassLoader {
     transformer = null;
   }
 
+  @SuppressWarnings("unused")
   public static ClassPath.ResourceFileFactory getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }
@@ -36,7 +36,7 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   // for java.system.class.loader
-  @ApiStatus.Internal
+  @SuppressWarnings("unused")
   public PathClassLoader(@NotNull ClassLoader parent) {
     super(createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
 
@@ -52,18 +52,9 @@ public final class PathClassLoader extends UrlClassLoader {
     if (name.startsWith("com.intellij.util.lang.")) {
       return appClassLoader.loadClass(name);
     }
-
-    Class<?> clazz;
-    try {
-      clazz = classPath.findClass(name);
+    else {
+      return super.findClass(name);
     }
-    catch (IOException e) {
-      throw new ClassNotFoundException(name, e);
-    }
-    if (clazz == null) {
-      throw new ClassNotFoundException(name);
-    }
-    return clazz;
   }
 
   @Override

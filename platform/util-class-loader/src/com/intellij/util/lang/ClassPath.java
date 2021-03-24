@@ -57,7 +57,6 @@ public final class ClassPath {
   // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   final boolean lockJars;
   private final boolean useCache;
-  final boolean preloadJarContents;
   final boolean isClassPathIndexEnabled;
   private final @Nullable CachePoolImpl cachePool;
   private final @Nullable Predicate<? super Path> cachingCondition;
@@ -99,7 +98,6 @@ public final class ClassPath {
             boolean mimicJarUrlConnection) {
     lockJars = configuration.lockJars;
     useCache = configuration.useCache;
-    preloadJarContents = configuration.preloadJarContents;
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
     isClassPathIndexEnabled = configuration.isClassPathIndexEnabled;
@@ -388,7 +386,7 @@ public final class ClassPath {
     else {
       ResourceFile zipFile;
       if (resourceFileFactory == null) {
-        zipFile = new JdkZipResourceFile(file, lockJars, preloadJarContents, false);
+        zipFile = new JdkZipResourceFile(file, lockJars, false);
       }
       else {
         zipFile = resourceFileFactory.create(file);

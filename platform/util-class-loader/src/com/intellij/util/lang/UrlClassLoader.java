@@ -30,8 +30,7 @@ import java.util.function.Predicate;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
-  protected static final boolean USE_PARALLEL_LOADING = Boolean.parseBoolean(System.getProperty("use.parallel.class.loading", "true"));
-  private static final boolean isParallelCapable = USE_PARALLEL_LOADING && registerAsParallelCapable();
+  private static final boolean isParallelCapable = registerAsParallelCapable();
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
@@ -545,7 +544,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     boolean lockJars = true;
     boolean useCache;
     boolean isClassPathIndexEnabled;
-    boolean preloadJarContents = true;
     boolean isBootstrapResourcesAllowed;
     boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
@@ -636,7 +634,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     public @NotNull UrlClassLoader.Builder noPreload() {
-      preloadJarContents = false;
       return this;
     }
 

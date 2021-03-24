@@ -159,7 +159,7 @@ public final class ZipResourceFile implements ResourceFile {
     public @NotNull URL getURL() {
       URL result = url;
       if (result == null) {
-        URLStreamHandler handler = path == null ? new MyUrlStreamHandler(entry, file) : new MyJarUrlStreamHandler(entry, file, path);
+        URLStreamHandler handler = new MyJarUrlStreamHandler(entry, file, path);
         try {
           result = new URL(baseUrl, entry.getName(), handler);
         }
@@ -182,27 +182,12 @@ public final class ZipResourceFile implements ResourceFile {
     }
   }
 
-  private static final class MyUrlStreamHandler extends URLStreamHandler {
-    private @NotNull final ImmutableZipEntry entry;
-    private @NotNull final ImmutableZipFile file;
-
-    private MyUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file) {
-      this.entry = entry;
-      this.file = file;
-    }
-
-    @Override
-    protected URLConnection openConnection(URL url) throws MalformedURLException {
-      return new MyUrlConnection(url, entry, file);
-    }
-  }
-
   private static final class MyJarUrlStreamHandler extends URLStreamHandler {
     private @NotNull final ImmutableZipEntry entry;
     private @NotNull final ImmutableZipFile file;
-    private @NotNull final Path path;
+    private @Nullable final Path path;
 
-    private MyJarUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file, @NotNull Path path) {
+    private MyJarUrlStreamHandler(@NotNull ImmutableZipEntry entry, @NotNull ImmutableZipFile file, @Nullable Path path) {
       this.entry = entry;
       this.file = file;
       this.path = path;
@@ -210,7 +195,7 @@ public final class ZipResourceFile implements ResourceFile {
 
     @Override
     protected URLConnection openConnection(URL url) throws MalformedURLException {
-      return new MyJarUrlConnection(url, entry, file, path);
+      return path == null ? new MyUrlConnection(url, entry, file) : new MyJarUrlConnection(url, entry, file, path);
     }
   }
 
@@ -263,9 +248,9 @@ public final class ZipResourceFile implements ResourceFile {
     private byte[] data;
 
     MyJarUrlConnection(@NotNull URL url,
-                    @NotNull ImmutableZipEntry entry,
-                    @NotNull ImmutableZipFile file,
-                    @NotNull Path path) throws MalformedURLException {
+                       @NotNull ImmutableZipEntry entry,
+                       @NotNull ImmutableZipFile file,
+                       @NotNull Path path) throws MalformedURLException {
       super(url);
       this.entry = entry;
       this.file = file;
