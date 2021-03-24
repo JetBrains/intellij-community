@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.StringTokenizer;
@@ -50,12 +52,17 @@ public final class DirectoryUtil {
     return directory;
   }
 
-  public static PsiDirectory findLongestExistingDirectory(PsiManager manager,String existingPath) {
+  /**
+   * @param path directory path in the local file system; separators must be '/'
+   * @return the inner most existing directory along the given <code>path</code>
+   */
+  @Nullable
+  public static PsiDirectory findLongestExistingDirectory(@NotNull PsiManager manager, @NotNull String path) {
 
     PsiDirectory directory = null;
     // find longest existing path
-    while (existingPath.length() > 0) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(existingPath);
+    while (path.length() > 0) {
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
       if (file != null) {
         directory = manager.findDirectory(file);
         if (directory == null) {
@@ -64,20 +71,20 @@ public final class DirectoryUtil {
         break;
       }
 
-      if (StringUtil.endsWithChar(existingPath, '/')) {
-        existingPath = existingPath.substring(0, existingPath.length() - 1);
-        if (SystemInfo.isWindows && existingPath.length() == 2 && existingPath.charAt(1) == ':') {
+      if (StringUtil.endsWithChar(path, '/')) {
+        path = path.substring(0, path.length() - 1);
+        if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
           return null;
         }
       }
 
-      int index = existingPath.lastIndexOf('/');
+      int index = path.lastIndexOf('/');
       if (index == -1) {
         // nothing to do more
         return null;
       }
 
-      existingPath = existingPath.substring(0, index);
+      path = path.substring(0, index);
     }
     return directory;
   }
