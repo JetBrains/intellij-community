@@ -23,28 +23,10 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/incremental/multiModule/multiplatform/withGeneratedContent")
 public abstract class MultiplatformJpsTestWithGeneratedContentGenerated extends AbstractMultiplatformJpsTestWithGeneratedContent {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/incremental/multiModule/multiplatform/withGeneratedContent/ignoreAndWarnAboutNative")
-    public static class IgnoreAndWarnAboutNative extends AbstractMultiplatformJpsTestWithGeneratedContent {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("editingCKotlin")
-        public void testEditingCKotlin() throws Exception {
-            runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/ignoreAndWarnAboutNative/editingCKotlin/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/multiplatform/withGeneratedContent/simple")
     public static class Simple extends AbstractMultiplatformJpsTestWithGeneratedContent {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("editingCKotlin")
-        public void testEditingCKotlin() throws Exception {
-            runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/simple/editingCKotlin/");
         }
 
         @TestMetadata("editingPJsKotlin")
@@ -86,11 +68,6 @@ public abstract class MultiplatformJpsTestWithGeneratedContentGenerated extends 
     public static class SimpleNewMpp extends AbstractMultiplatformJpsTestWithGeneratedContent {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("editingCKotlin")
-        public void testEditingCKotlin() throws Exception {
-            runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/simpleNewMpp/editingCKotlin/");
         }
 
         @TestMetadata("editingPJsKotlin")
