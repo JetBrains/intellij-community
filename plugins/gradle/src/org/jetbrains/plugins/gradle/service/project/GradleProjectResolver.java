@@ -52,7 +52,6 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser;
 
@@ -77,7 +76,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   @NotNull private final GradleExecutionHelper myHelper;
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
 
-  private final MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.create();
+  private final MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.createConcurrent();
   public static final Key<Map<String/* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>> RESOLVED_SOURCE_SETS =
     Key.create("resolvedSourceSets");
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
@@ -177,10 +176,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @Override
   public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener) {
-    synchronized (myCancellationMap) {
-      for (CancellationTokenSource cancellationTokenSource : myCancellationMap.get(id)) {
-        cancellationTokenSource.cancel();
-      }
+    for (CancellationTokenSource cancellationTokenSource : myCancellationMap.get(id)) {
+      cancellationTokenSource.cancel();
     }
     return true;
   }
