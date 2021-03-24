@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,8 +25,12 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, ConfigValue> {
+  private static final AtomicLong configChangeCount = new AtomicLong(1);
+  public static final ModificationTracker CONFIG_CHANGE_TRACKER = configChangeCount::get;
+
   @NonNls
   public static final ID<ConfigKey, ConfigValue> NAME = ID.create("LombokConfigIndex");
 
@@ -56,7 +61,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigKey, Config
                                                               new ConfigValue(configValues.get(key.getConfigKey()), stopBubblingValue)));
           }
         }
-
+        configChangeCount.incrementAndGet();
         return result;
       }
 

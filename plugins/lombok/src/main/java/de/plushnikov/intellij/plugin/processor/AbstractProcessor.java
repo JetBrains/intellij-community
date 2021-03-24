@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -103,9 +102,9 @@ public abstract class AbstractProcessor implements Processor {
     final PsiClass containingClass = psiField.getContainingClass();
     // append only for BASE_COPYABLE
     if (copyableAnnotations == LombokUtils.BASE_COPYABLE_ANNOTATIONS && null != containingClass) {
-      String[] configuredCopyableAnnotations =
+      Collection<String> configuredCopyableAnnotations =
         ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
-      combinedListOfCopyableAnnotations.addAll(Arrays.asList(configuredCopyableAnnotations));
+      combinedListOfCopyableAnnotations.addAll(configuredCopyableAnnotations);
     }
 
     final List<String> existingAnnotations = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotation::getQualifiedName);
