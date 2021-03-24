@@ -112,6 +112,7 @@ object RankingSupport {
           val settings = CompletionMLRankingSettings.getInstance()
           settings.isShowDiffEnabled = true
           settings.isDecorateRelevantEnabled = true
+          notification.expire()
         }
       })
       addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
