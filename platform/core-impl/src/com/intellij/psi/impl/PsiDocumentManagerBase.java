@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -297,13 +298,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     checkWeAreOutsideAfterCommitHandler();
 
-    actionsWhenAllDocumentsAreCommitted.put(key, action);
+    actionsWhenAllDocumentsAreCommitted.put(key, ClientId.decorateRunnable(action));
     return false;
   }
 
   @ApiStatus.Internal
   public void addRunOnCommit(@NotNull Document document, @NotNull Runnable action) {
-    myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList()).add(action);
+    List<Runnable> actions = myActionsAfterCommit.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
+    actions.add(ClientId.decorateRunnable(action));
   }
 
   @NotNull
@@ -580,7 +582,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       actions = new CompositeRunnable();
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
-    actions.add(action);
+    actions.add(ClientId.decorateRunnable(action));
 
     if (modality != ModalityState.NON_MODAL && TransactionGuard.getInstance().isWriteSafeModality(modality)) {
       // this client obviously expects all documents to be committed ASAP even inside modal dialog
