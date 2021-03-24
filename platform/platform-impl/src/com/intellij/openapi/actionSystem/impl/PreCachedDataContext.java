@@ -6,10 +6,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -95,7 +93,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   public Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
-    if (answer != null && answer != NullResult.Initial) {
+    if (answer != null && answer != NullResult.Initial || isInjectedIdWhenNoInjectionPresent(dataId)) {
       return answer == NullResult.Final ? null : answer;
     }
     if (myMissedKeysIfFrozen != null) {
@@ -112,6 +110,15 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
     myCachedData.put(dataId, answer == null || answer == NullResult.Initial ? NullResult.Final : answer);
     return answer;
+  }
+
+  private boolean isInjectedIdWhenNoInjectionPresent(@NotNull String dataId) {
+    String uninjectedId = AnActionEvent.uninjectedId(dataId);
+    if (uninjectedId != dataId && !CommonDataKeys.EDITOR.is(uninjectedId) &&
+        !(myCachedData.get(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow)) {
+      return true;
+    }
+    return false;
   }
 
   private static void preGetAllData(@NotNull Component component, @NotNull Map<String, Object> cachedData) {
