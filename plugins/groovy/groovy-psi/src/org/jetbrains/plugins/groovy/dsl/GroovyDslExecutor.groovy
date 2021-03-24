@@ -9,7 +9,6 @@ import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.codehaus.groovy.control.CompilerConfiguration
-import org.jetbrains.plugins.groovy.dsl.holders.CompoundMembersHolder
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder
 import org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter
@@ -37,19 +36,19 @@ class GroovyDslExecutor {
   }
 
   CustomMembersHolder processVariants(GroovyClassDescriptor descriptor, ProcessingContext ctx) {
-    if (!enhancers) return CompoundMembersHolder.EMPTY
+    if (!enhancers) return CustomMembersHolder.EMPTY
 
-    CompoundMembersHolder holder = new CompoundMembersHolder()
+    List<CustomMembersHolder> holders = new ArrayList<>()
     for (pair in enhancers) {
       ProgressManager.checkCanceled()
       ctx.put(DslPointcut.BOUND, null)
       if (pair.first.isApplicable(descriptor, ctx)) {
         def generator = new CustomMembersGenerator(descriptor, ctx.get(DslPointcut.BOUND))
         doRun(generator, pair.second)
-        holder.addHolder(generator.membersHolder)
+        holders.addAll(generator.membersHolder)
       }
     }
-    return holder
+    return CustomMembersHolder.create(holders)
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
