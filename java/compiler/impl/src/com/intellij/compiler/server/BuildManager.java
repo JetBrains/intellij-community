@@ -64,7 +64,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
@@ -76,6 +75,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
@@ -90,8 +90,6 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -576,11 +574,16 @@ public final class BuildManager implements Disposable {
     String projectPath = getProjectPath(project);
     cancelPreloadedBuilds(projectPath);
 
+    boolean clearNameCache = false;
     synchronized (myProjectDataMap) {
       ProjectData data = myProjectDataMap.get(projectPath);
       if (data != null) {
         data.dropChanges();
+        clearNameCache = myProjectDataMap.size() == 1;
       }
+    }
+    if (clearNameCache) {
+      InternedPath.clearCache();
     }
     scheduleAutoMake();
   }
@@ -595,6 +598,7 @@ public final class BuildManager implements Disposable {
       }
     }
     if (cleared) {
+      InternedPath.clearCache();
       scheduleAutoMake();
     }
   }
@@ -900,6 +904,9 @@ public final class BuildManager implements Disposable {
           currentFSChanges = needRescan ? null : data.createNextEvent(wslPathMapper(wslDistribution));
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
+          }
+          if (!needRescan && myProjectDataMap.size() == 1) {
+            InternedPath.clearCache();
           }
           projectTaskQueue = data.taskQueue;
         }
@@ -1975,7 +1982,11 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void projectClosed(@NotNull Project project) {
-      myProjectDataMap.remove(getProjectPath(project));
+      if (myProjectDataMap.remove(getProjectPath(project)) != null) {
+        if (myProjectDataMap.isEmpty()) {
+          InternedPath.clearCache();
+        }
+      }
       MessageBusConnection connection = myConnections.remove(project);
       if (connection != null) {
         connection.disconnect();
@@ -2054,19 +2065,21 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract static class InternedPath {
-    protected final int[] myPath;
+    private static final SLRUCache<CharSequence, CharSequence> ourNamesCache = SLRUCache.create(1024, 1024, key -> key);
+    protected final CharSequence[] myPath;
 
     /**
      * @param path assuming system-independent path with forward slashes
      */
     InternedPath(String path) {
-      final IntList list = new IntArrayList();
+      final List<CharSequence> list = new ArrayList<>();
       final StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
-      while(tokenizer.hasMoreTokens()) {
-        final String element = tokenizer.nextToken();
-        list.add(FileNameCache.storeName(element));
+      synchronized (ourNamesCache) {
+        while(tokenizer.hasMoreTokens()) {
+          list.add(ourNamesCache.get(tokenizer.nextToken()));
+        }
       }
-      myPath = list.toIntArray();
+      myPath = list.toArray(CharSequence[]::new);
     }
 
     public abstract String getValue();
@@ -2086,6 +2099,12 @@ public final class BuildManager implements Disposable {
       return Arrays.hashCode(myPath);
     }
 
+    public static void clearCache() {
+      synchronized (ourNamesCache) {
+        ourNamesCache.clear();
+      }
+    }
+
     public static InternedPath create(String path) {
       return path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path);
     }
@@ -2099,17 +2118,17 @@ public final class BuildManager implements Disposable {
     @Override
     public String getValue() {
       if (myPath.length == 1) {
-        final String name = FileNameCache.getVFileName(myPath[0]).toString();
+        final String name = myPath[0].toString();
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }
 
       final StringBuilder buf = new StringBuilder();
-      for (int element : myPath) {
+      for (CharSequence element : myPath) {
         if (buf.length() > 0) {
           buf.append("/");
         }
-        buf.append(FileNameCache.getVFileName(element));
+        buf.append(element);
       }
       return buf.toString();
     }
@@ -2124,8 +2143,8 @@ public final class BuildManager implements Disposable {
     public String getValue() {
       if (myPath.length > 0) {
         final StringBuilder buf = new StringBuilder();
-        for (int element : myPath) {
-          buf.append("/").append(FileNameCache.getVFileName(element));
+        for (CharSequence element : myPath) {
+          buf.append("/").append(element);
         }
         return buf.toString();
       }
