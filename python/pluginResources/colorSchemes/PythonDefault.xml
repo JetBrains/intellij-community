@@ -10,11 +10,6 @@
       <option name="FOREGROUND" value="80" />
     </value>
   </option>
-  <option name="PY.DECORATOR">
-    <value>
-      <option name="FOREGROUND" value="0000B2" />
-    </value>
-  </option>
   <option name="PY.KEYWORD_ARGUMENT">
     <value>
       <option name="FOREGROUND" value="660099" />
