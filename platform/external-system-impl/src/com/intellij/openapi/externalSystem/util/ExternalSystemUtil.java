@@ -100,7 +100,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -708,10 +707,10 @@ public final class ExternalSystemUtil {
     return isTrusted(project, systemIds) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
-             IdeBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),
-             IdeBundle.message("untrusted.project.notification.trust.button"),
-             IdeBundle.message("untrusted.project.notification.distrust.button")
+             IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.trust.button"),
+             IdeBundle.message("untrusted.project.dialog.distrust.button")
            );
   }
 
@@ -732,11 +731,11 @@ public final class ExternalSystemUtil {
     }
     return TrustedProjects.confirmOpeningUntrustedProject(
       virtualFile,
-      IdeBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.notification.open.trust.button"),
-      IdeBundle.message("untrusted.project.notification.open.distrust.button"),
-      IdeBundle.message("untrusted.project.notification.open.cancel.button")
+      IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, systemIds.size()),
+      IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, systemIds.size()),
+      IdeBundle.message("untrusted.project.open.dialog.trust.button"),
+      IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+      IdeBundle.message("untrusted.project.open.dialog.cancel.button")
     );
   }
 
