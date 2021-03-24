@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +113,7 @@ public final class BlockUtils {
   }
 
   public static void unwrapTryBlock(PsiTryStatement tryStatement) {
-    assert tryStatement.isValid() : "The tryStatement PSI element must be valid";
+    PsiUtilCore.ensureValid(tryStatement);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
