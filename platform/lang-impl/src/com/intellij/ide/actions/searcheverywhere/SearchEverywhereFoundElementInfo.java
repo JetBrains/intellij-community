@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -10,6 +11,7 @@ import java.util.Comparator;
 /**
  * Class containing info about found elements
  */
+@ApiStatus.Internal
 public class SearchEverywhereFoundElementInfo {
   public final int priority;
   public final Object element;
