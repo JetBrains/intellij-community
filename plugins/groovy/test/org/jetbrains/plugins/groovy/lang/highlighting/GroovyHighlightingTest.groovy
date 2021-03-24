@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -2120,5 +2120,21 @@ A a = [<warning>s</warning> : "asd"]
 
   void testIllegalMethodName() {
     doTest()
+  }
+
+  void 'test method reference with just type argument'() {
+    testHighlighting """
+@groovy.transform.CompileStatic
+class A {
+  String key = ""
+  String foo(int x) {return key}
+  
+  public static void main() {
+    def ref = A.&foo
+    A a = new A()
+    ref(a, 1)
+  }
+}
+"""
   }
 }
