@@ -31,7 +31,7 @@ public final class SlowOperations {
     "org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor",
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
-  private static int ourAlwaysAllow;
+  private static int ourAlwaysAllow = -1;
   private static Frame ourStack;
 
   private SlowOperations() {}
