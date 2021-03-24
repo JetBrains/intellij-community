@@ -856,6 +856,7 @@
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
         <reference ref="GotoSuperMethod"/>
+        <reference ref="GotoRelated"/>
         <reference ref="GotoTest"/>
       </group>
       <reference ref="Generate"/>
