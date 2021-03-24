@@ -23,6 +23,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.prefs.Preferences
 
@@ -105,7 +106,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   val bucket: Int = deviceId.asBucket()
 
   private val salt: ByteArray = getOrGenerateSalt()
-  private val anonymizedCache = HashMap<String, String>()
+  private val anonymizedCache = ConcurrentHashMap<String, String>()
   private val machineIdConfigurationReference: AtomicReference<MachineIdConfiguration>
 
   val machineIdConfiguration: MachineIdConfiguration
@@ -132,13 +133,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return data
     }
 
-    if (anonymizedCache.containsKey(data)) {
-      return anonymizedCache[data] ?: ""
-    }
-
-    val result = EventLogConfiguration.hashSha256(salt, data)
-    anonymizedCache[data] = result
-    return result
+    return anonymizedCache.computeIfAbsent(data) { EventLogConfiguration.hashSha256(salt, it) }
   }
 
   private fun getNonNegative(value: Int): Int = if (value >= 0) value else 0
