@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
@@ -199,7 +200,7 @@ public abstract class CompletionPhase implements Disposable {
       ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
-          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
+          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled() && ClientId.isCurrentlyUnderLocalId()) {
             indicator.scheduleRestart();
           }
         }
