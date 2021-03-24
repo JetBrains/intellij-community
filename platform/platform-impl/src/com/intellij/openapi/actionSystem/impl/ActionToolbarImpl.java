@@ -24,8 +24,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -33,6 +31,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -1172,7 +1171,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 
-      Dimension oldSize = getPreferredSize();
+      boolean skipSizeAdjustments = mySkipWindowAdjustments;
+      Component compForSize = skipSizeAdjustments ? null : guessBestParentForSizeAdjustment();
+      Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
 
       removeAll();
       mySecondaryActions.removeAll();
@@ -1180,23 +1181,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
       myPresentationFactory.resetNeedRebuild();
 
-      Dimension newSize = getPreferredSize();
-      if (!mySkipWindowAdjustments) {
-        ((WindowManagerEx)WindowManager.getInstance()).adjustContainerWindow(this, oldSize, newSize);
+      if (!skipSizeAdjustments) {
+        Dimension availSize = compForSize.getSize();
+        Dimension newSize = compForSize.getPreferredSize();
+        adjustContainerWindowSize(shouldRebuildUI, availSize, oldSize, newSize);
       }
 
       if (shouldRebuildUI) {
         revalidate();
-        JBPopup popup = this instanceof PopupToolbar ? PopupUtil.getPopupContainerFor(this) : null;
-        if (popup != null) {
-          popup.setSize(newSize);
-        }
-        else {
-          JComponent parent = getParentLightweightHintComponent(this);
-          if (parent != null) { // a LightweightHint that fits in
-            parent.setSize(parent.getPreferredSize());
-          }
-        }
       }
       else {
         Container parent = getParent();
@@ -1208,6 +1200,55 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       repaint();
     }
+  }
+
+  private void adjustContainerWindowSize(boolean shouldRebuildUI,
+                                         @NotNull Dimension availSize,
+                                         @NotNull Dimension oldSize,
+                                         @NotNull Dimension newSize) {
+    Dimension delta = new Dimension(newSize.width - oldSize.width, newSize.height - oldSize.height);
+    if (!shouldRebuildUI) {
+      if (myOrientation == SwingConstants.HORIZONTAL) delta.width = 0;
+      if (myOrientation == SwingConstants.VERTICAL) delta.height = 0;
+    }
+    delta.width = Math.max(0, delta.width - Math.max(0, availSize.width - oldSize.width));
+    delta.height = Math.max(0, delta.height - Math.max(0, availSize.height - oldSize.height));
+    if (delta.width == 0 && delta.height == 0) {
+      return;
+    }
+    JBPopup popup = PopupUtil.getPopupContainerFor(this);
+    if (popup != null) {
+      Dimension size = popup.getSize();
+      size.width += delta.width;
+      size.height += delta.height;
+      popup.setSize(size);
+      popup.moveToFitScreen();
+    }
+    else {
+      JComponent parent = getParentLightweightHintComponent(this);
+      if (parent != null) { // a LightweightHint that fits in
+        Dimension size = parent.getSize();
+        size.width += delta.width;
+        size.height += delta.height;
+        parent.setSize(size);
+      }
+    }
+  }
+
+  private @NotNull Component guessBestParentForSizeAdjustment() {
+    if (this instanceof PopupToolbar) return this;
+    Component result = ObjectUtils.chooseNotNull(getParent(), this);
+    Dimension availSize = result.getSize();
+    for (Component p = result.getParent(); p != null && !(p instanceof JRootPane); p = p.getParent()) {
+      Dimension pSize = p.getSize();
+      if (myOrientation == SwingConstants.HORIZONTAL && pSize.height - availSize.height > 8 ||
+          myOrientation == SwingConstants.VERTICAL && pSize.width - availSize.width > 8) {
+        break;
+      }
+      result = p;
+      availSize = result.getSize();
+    }
+    return result;
   }
 
   @Nullable

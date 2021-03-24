@@ -92,8 +92,6 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void resetWindow(final Window window);
 
-  public abstract void adjustContainerWindow(@NotNull Component component, Dimension oldSize, Dimension newSize);
-
   @ApiStatus.Internal
   public abstract @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project);
 

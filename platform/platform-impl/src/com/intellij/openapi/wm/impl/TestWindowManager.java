@@ -164,9 +164,6 @@ public final class TestWindowManager extends WindowManagerEx {
   }
 
   @Override
-  public void adjustContainerWindow(@NotNull Component c, Dimension oldSize, Dimension newSize) { }
-
-  @Override
   public boolean isFullScreenSupportedInCurrentOS() {
     return false;
   }
