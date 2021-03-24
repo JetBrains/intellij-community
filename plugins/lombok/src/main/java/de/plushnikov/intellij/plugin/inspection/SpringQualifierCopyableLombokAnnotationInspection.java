@@ -11,7 +11,7 @@ import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -48,10 +48,10 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
             if (psiClass != null && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass,
                                                                             LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
                                                                             LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
-              String[] configuredCopyableAnnotations =
+              Collection<String> configuredCopyableAnnotations =
                 ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, psiClass);
 
-              if (!Arrays.asList(configuredCopyableAnnotations).contains(SPRING_QUALIFIER_FQN)) {
+              if (!configuredCopyableAnnotations.contains(SPRING_QUALIFIER_FQN)) {
                 holder.registerProblem(annotation,
                                        LombokBundle.message("inspection.message.annotation.not.lombok.copyable",
                                                             SPRING_QUALIFIER_FQN),

@@ -4,6 +4,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -30,7 +31,7 @@ public class AccessorsInfo {
     this.fluent = fluentValue;
     this.chain = chainValue;
     this.doNotUseIsPrefix = doNotUseIsPrefix;
-    this.prefixes = null == prefixes ? new String[0] : prefixes;
+    this.prefixes = null == prefixes ? ArrayUtil.EMPTY_STRING_ARRAY : prefixes;
   }
 
   @NotNull
@@ -109,9 +110,9 @@ public class AccessorsInfo {
       }
 
       if (prefixDeclared.isEmpty()) {
-        prefixes = configDiscovery.getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass);
+        prefixes = ArrayUtil.toStringArray(configDiscovery.getMultipleValueLombokConfigProperty(ConfigKey.ACCESSORS_PREFIX, psiClass));
       } else {
-        prefixes = prefixDeclared.toArray(new String[0]);
+        prefixes = ArrayUtil.toStringArray(prefixDeclared);
       }
 
       doNotUseIsPrefix = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.GETTER_NO_IS_PREFIX, psiClass);
@@ -119,7 +120,7 @@ public class AccessorsInfo {
     } else {
       isFluent = null != fluentDeclaredValue && fluentDeclaredValue;
       isChained = null != chainDeclaredValue && chainDeclaredValue;
-      prefixes = prefixDeclared.toArray(new String[0]);
+      prefixes = ArrayUtil.toStringArray(prefixDeclared);
       doNotUseIsPrefix = false;
     }
 
