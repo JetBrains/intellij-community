@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -26,14 +26,15 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
-        val gradleHome = resolverCtx.getExtraProject(BuildScriptClasspathModel::class.java)?.gradleHomeDir?.canonicalPath
+        val gradleHome = resolverCtx.getExtraProject(BuildScriptClasspathModel::class.java)?.gradleHomeDir?.absolutePath
             ?: resolverCtx.settings?.gradleHome
+
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
 
             sync.javaHome = (resolverCtx as? DefaultProjectResolverContext)
                 ?.buildEnvironment
-                ?.java?.javaHome?.canonicalPath
+                ?.java?.javaHome?.absolutePath
                 ?.let { toSystemIndependentName(it) }
 
             if (gradleHome != null) {
