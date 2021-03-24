@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -65,8 +66,19 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
         result.add(builder);
       }
     }
-    EP_NAME.forEachExtensionSafe(factory -> {
-      ModuleBuilder builder = factory.createBuilder();
+    EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
+      ModuleBuilder builder;
+      try {
+        builder = ApplicationManager.getApplication().instantiateClass(bean.builderClass, pluginDescriptor);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return;
+      }
+
       if (builder.isAvailable()) {
         result.add(builder);
       }

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.IdeBundle;
@@ -99,7 +98,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileTypeRef> implements 
 
   @Override
   public String getCheckBoxName() {
-    if (NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
+    if (NonProjectScopeDisablerEP.EP_NAME.extensions().anyMatch(ep -> ep.disable)) {
       return null;
     }
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");

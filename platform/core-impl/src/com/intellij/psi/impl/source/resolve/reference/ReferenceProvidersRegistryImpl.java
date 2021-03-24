@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
@@ -83,17 +83,15 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     }
 
     List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguageOrAny(language);
-    for (final PsiReferenceProviderBean providerBean : referenceProviderBeans) {
-      final ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
+    for (PsiReferenceProviderBean providerBean : referenceProviderBeans) {
+      ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
       if (pattern != null) {
         registrar.registerReferenceProvider(pattern, new PsiReferenceProvider() {
-
           PsiReferenceProvider myProvider;
 
           @Override
           public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
             if (myProvider == null) {
-
               myProvider = providerBean.instantiate();
               if (myProvider == null) {
                 myProvider = NULL_REFERENCE_PROVIDER;

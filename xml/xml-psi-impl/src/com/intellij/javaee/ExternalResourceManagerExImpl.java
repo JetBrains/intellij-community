@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -95,9 +95,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (StandardResourceProvider provider : StandardResourceProvider.EP_NAME.getIterable()) {
       provider.registerResources(registrar);
     }
-    for (StandardResourceEP extension : StandardResourceEP.EP_NAME.getIterable()) {
-      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, extension.getLoaderForClass());
-    }
+    StandardResourceEP.EP_NAME.processWithPluginDescriptor((extension, pluginDescriptor) -> {
+      registrar.addStdResource(extension.url, extension.version, extension.resourcePath, null, pluginDescriptor.getPluginClassLoader());
+    });
 
     myStandardIgnoredResources.clear();
     myStandardIgnoredResources.addAll(registrar.getIgnored());

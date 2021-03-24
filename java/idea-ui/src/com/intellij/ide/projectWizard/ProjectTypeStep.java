@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -69,8 +70,10 @@ import java.util.*;
 @SuppressWarnings("unchecked")
 public final class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
-  private static final ExtensionPointName<ProjectCategory> EP_NAME =
+  private static final ExtensionPointName<ProjectCategory> CATEGORY_EP =
     new ExtensionPointName<>("com.intellij.projectWizard.projectCategory");
+
+  private static final ExtensionPointName<ProjectTemplateEP> TEMPLATE_EP = new ExtensionPointName<>("com.intellij.projectTemplate");
 
   private static final Convertor<FrameworkSupportInModuleProvider, String> PROVIDER_STRING_CONVERTOR =
     o -> o.getId();
@@ -278,7 +281,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     myTemplatesMap.putAllValues(getTemplatesMap(context));
 
-    for (ProjectCategory category : EP_NAME.getExtensionList()) {
+    for (ProjectCategory category : CATEGORY_EP.getExtensionList()) {
       TemplatesGroup group = new TemplatesGroup(category);
       ModuleBuilder builder = group.getModuleBuilder();
       if (builder == null || builder.isAvailable()) {
@@ -577,31 +580,29 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     Disposer.dispose(this);
   }
 
-  private MultiMap<String, ProjectTemplate> loadLocalTemplates() {
+  private @NotNull MultiMap<String, ProjectTemplate> loadLocalTemplates() {
     MultiMap<String, ProjectTemplate> map = MultiMap.createConcurrent();
-    ProjectTemplateEP[] extensions = ProjectTemplateEP.EP_NAME.getExtensions();
-    for (ProjectTemplateEP ep : extensions) {
-      ClassLoader classLoader = ep.getLoaderForClass();
-      URL url = classLoader.getResource(ep.templatePath);
-      if (url != null) {
-        try {
-          LocalArchivedTemplate template = new LocalArchivedTemplate(url, classLoader);
-          if (ep.category) {
-            TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
-            myTemplatesMap.putValue(new TemplatesGroup(category), template);
-          }
-          else {
-            map.putValue(ep.projectType, template);
-          }
+    TEMPLATE_EP.processWithPluginDescriptor((ep, pluginDescriptor) -> {
+      URL url = pluginDescriptor.getPluginClassLoader().getResource(StringUtil.trimStart(ep.templatePath, "/"));
+      if (url == null) {
+        LOG.error(new PluginException("Can't find resource for project template: " + ep.templatePath, pluginDescriptor.getPluginId()));
+        return;
+      }
+
+      try {
+        LocalArchivedTemplate template = new LocalArchivedTemplate(url, pluginDescriptor.getPluginClassLoader());
+        if (ep.category) {
+          TemplateBasedCategory category = new TemplateBasedCategory(template, ep.projectType);
+          myTemplatesMap.putValue(new TemplatesGroup(category), template);
         }
-        catch (Exception e) {
-          LOG.error("Error loading template from URL '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]", e);
+        else {
+          map.putValue(ep.projectType, template);
         }
       }
-      else {
-        LOG.error("Can't find resource for project template '" + ep.templatePath + "' [Plugin: " + ep.getPluginId() + "]");
+      catch (Exception e) {
+        LOG.error(new PluginException("Error loading template from URL: " + ep.templatePath, e, pluginDescriptor.getPluginId()));
       }
-    }
+    });
     return map;
   }
 

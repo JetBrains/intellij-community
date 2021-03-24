@@ -27,7 +27,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -48,13 +47,15 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
-import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -328,13 +329,12 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
-    for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
-      PluginDescriptor descriptor = configBean.getPluginDescriptor();
-      final ClassLoader loader = descriptor.getPluginClassLoader();
+    LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
+      final ClassLoader loader = pluginDescriptor.getPluginClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());
         if (enumeration == null || !enumeration.hasMoreElements()) {
-          LOG.warn(descriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
+          LOG.warn(pluginDescriptor.getPluginId() +": " + configBean.getConfigUrl() + " was not found");
         }
         else {
           while (enumeration.hasMoreElements()) {
@@ -358,7 +358,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       catch (Exception e) {
         LOG.warn(e);
       }
-    }
+    });
 
     final List<BaseInjection> defaultInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {

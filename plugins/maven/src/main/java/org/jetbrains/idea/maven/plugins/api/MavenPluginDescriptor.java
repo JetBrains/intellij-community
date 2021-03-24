@@ -1,20 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.Required;
-import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomGoal;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
@@ -28,8 +25,7 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenPluginDescriptor extends AbstractExtensionPointBean {
-
+public final class MavenPluginDescriptor implements PluginAware {
   public static final ExtensionPointName<MavenPluginDescriptor> EP_NAME =
     new ExtensionPointName<>("org.jetbrains.idea.maven.pluginDescriptor");
 
@@ -53,6 +49,18 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
 
   @Attribute("propertyGenerator")
   public String propertyGenerator;
+  private PluginDescriptor pluginDescriptor;
+
+  @Transient
+  public PluginDescriptor getPluginDescriptor() {
+    return pluginDescriptor;
+  }
+
+  @Override
+  @Transient
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
+  }
 
   @Tag("property")
   public static class ModelProperty {
