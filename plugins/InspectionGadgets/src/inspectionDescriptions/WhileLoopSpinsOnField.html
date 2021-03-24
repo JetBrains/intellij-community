@@ -4,9 +4,8 @@ Reports on <code>while</code> loops which spin on the
 value of a non-<code>volatile</code> field, waiting for it to be changed by another thread.
 <p>
 In addition to being potentially extremely CPU intensive when little work is done inside the loop, such
-loops are likely have different semantics than intended, as the Java Memory Model allows such field accesses
-to be hoisted out of the loop, causing the loop to never complete even if another thread does change the
-field's value.
+loops likely have different semantics than intended. The Java Memory Model allows that loop to never complete even
+if another thread changes the field's value.
 </p>
 <p>Example:</p>
 <pre>
