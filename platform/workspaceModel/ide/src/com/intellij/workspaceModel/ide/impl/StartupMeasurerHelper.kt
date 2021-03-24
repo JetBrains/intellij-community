@@ -15,6 +15,6 @@ fun finishModuleLoadingActivity() {
 
 fun recordModuleLoadingActivity() {
   if (moduleLoadingActivity == null) {
-    moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
+    moduleLoadingActivity = StartUpMeasurer.startMainActivity("moduleLoading")
   }
 }

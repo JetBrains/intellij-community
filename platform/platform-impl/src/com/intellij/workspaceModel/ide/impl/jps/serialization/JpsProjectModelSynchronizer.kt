@@ -34,6 +34,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
+import com.intellij.workspaceModel.ide.impl.finishModuleLoadingActivity
 import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
@@ -229,6 +230,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       childActivity.end()
     }
     activity.end()
+    finishModuleLoadingActivity()
   }
 
   private fun loadStateOfUnloadedModules(serializers: JpsProjectSerializers) {

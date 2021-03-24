@@ -41,6 +41,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
+import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -68,6 +69,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
       val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
+      recordModuleLoadingActivity()
       val manager = ModuleManager.getInstance(project) as? ModuleManagerComponentBridge ?: return
 
       val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
