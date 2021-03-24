@@ -11,33 +11,26 @@ that catch block may silently ignore important VM exceptions like <code>NullPoin
   Also <code>catch</code> parameters named "expected" or "ok" are not reported inside test sources.
 </p>
 <p>
+  You can use a quick fix to change the name of the exception to "ignored".
   For empty <b>catch</b> blocks an additional fix to generate the <b>catch</b> body is suggested.
   You can modify the "Catch Statement Body" template in
   <a href="settings://fileTemplates">Settings | Editor | File and Code Templates</a> (see the "Code" tab).
 </p>
 <p>Example:</p>
 <pre>
-class AAA {
-  public static void main(String[] args) {
-    try {
-      throwingMethod();
-    } catch (IOException ex) {
+  try {
+    throwingMethod();
+  } catch (IOException ex) {
 
-    }
   }
-}
 </pre>
 <p>After the quick-fix is applied the result looks like:</p>
 <pre>
-class AAA {
-  public static void main(String[] args) {
-    try {
-      System.out.println(System.in.read());
-    } catch (IOException ignored) {
+  try {
+    System.out.println(System.in.read());
+  } catch (IOException ignored) {
 
-    }
   }
-}
 </pre>
   <!-- tooltip end -->
 <p>Use second checkbox to ignore <code>catch</code> that contains statements or comments inside while the variable itself is not used.</p>

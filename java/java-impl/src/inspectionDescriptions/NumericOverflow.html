@@ -1,13 +1,13 @@
 <html>
 <body>
-This inspection checks for expressions which overflow during computation.
+Reports expressions which overflow during computation.
 Usually it happens by accident (for example wrong type is used or shift should be done in opposite direction) and indicates a bug.
 
 <p>Examples:</p>
 <pre>
-  float a = 1.0/0.0;
+  float a = 1.0f/0.0f;
   long b = 30 * 24 * 60 * 60 * 1000;
-  long c = 1000 << 62;
+  long c = 1000L << 62;
 </pre>
 
 </body>

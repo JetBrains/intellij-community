@@ -2,7 +2,21 @@
 <body>
 Suggests replacing <code>for(Entry&lt;?,?&gt; entry : map.entrySet()) {...}</code> or
 <code>map.entrySet().forEach(entry -&gt; ...)</code> with <code>map.forEach((key, value) -> ...)</code>.
-It is better to avoid usage of <code>entrySet()</code> because in this case entries have to be allocated.
+<p>Example</p>
+<pre>
+  void print(Map<String, Integer> map) {
+    map.entrySet().forEach(entry -> {
+      String str = entry.getKey();
+      System.out.println(str + ":" + entry.getValue());
+    });
+  }
+</pre>
+<p>After the quick fix is applied the result looks like:</p>
+<pre>
+  void print(Map<String, Integer> map) {
+    map.forEach((str, value) -> System.out.println(str + ":" + value));
+  }
+</pre>
 <!-- tooltip end -->
 <p>
   When checkbox is checked, only <code>entrySet().forEach()</code> cases will be reported.

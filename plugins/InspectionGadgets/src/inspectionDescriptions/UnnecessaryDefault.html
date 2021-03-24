@@ -5,14 +5,14 @@ because all possible values are covered by a <code>case</code> branch.
 These are unnecessary, especially for <code>switch</code> expressions, because they don't compile when all
 <b>enum</b> constants are not covered by a <code>case</code> branch.
 <p>
-  The language level needs to be configured to 13 Preview to report <code>switch</code> expressions.
+  The language level needs to be configured to 14 to report <code>switch</code> expressions.
 </p>
 Quick fix removes default branch.
 <p>Example:</p>
 <pre>
   enum E { A, B }
   int foo(E e) {
-    return = switch (e) {
+    return switch (e) {
       case A -> 1;
       case B -> 2;
       default -> 3;
@@ -23,7 +23,7 @@ Quick fix removes default branch.
 <pre>
   enum E { A, B }
   int foo(E e) {
-    return = switch (e) {
+    return switch (e) {
       case A -> 1;
       case B -> 2;
     };
