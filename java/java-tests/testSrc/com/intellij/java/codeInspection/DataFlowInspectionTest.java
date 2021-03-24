@@ -693,4 +693,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalStaticFields() { doTest(); }
   public void testReassignInConstructor() { doTest(); }
   public void testCollectionViewsSize() { doTest(); }
+  public void testFlushedNullableOnUnknownCall() { doTest(); }
 }

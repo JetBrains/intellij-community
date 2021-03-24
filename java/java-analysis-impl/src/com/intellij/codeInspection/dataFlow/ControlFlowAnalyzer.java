@@ -1710,6 +1710,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       anchor = reference;
     }
     else {
+      if (ExpressionUtils.isVoidContext(expression) && ContainerUtil.all(contracts, c -> 
+        c.getReturnValue() != ContractReturnValue.fail() && !(c.getReturnValue() instanceof ContractReturnValue.ParameterReturnValue))) {
+        // Do not track contracts if return value is not used
+        contracts = Collections.emptyList();
+      }
       addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
       anchor = expression;
     }
