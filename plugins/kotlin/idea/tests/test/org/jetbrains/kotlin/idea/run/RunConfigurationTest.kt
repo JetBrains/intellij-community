@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.MapDataContext
+import org.jdom.Element
 import org.jetbrains.kotlin.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -104,6 +105,25 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
     fun testInJsModule() = checkClasses(Platform.JavaScript)
 
+    fun testRedirectInputPath() {
+        configureProject()
+
+        val runConfiguration1 = createConfigurationFromMain(project, "some.main")
+        runConfiguration1.inputRedirectOptions.apply {
+            isRedirectInput = true
+            redirectInputPath = "someFile"
+        }
+
+        val elementWrite = Element("temp")
+        runConfiguration1.writeExternal(elementWrite)
+
+        val runConfiguration2 = createConfigurationFromMain(project, "some.main")
+        runConfiguration2.readExternal(elementWrite)
+
+        assertEquals(runConfiguration1.inputRedirectOptions.isRedirectInput, runConfiguration2.inputRedirectOptions.isRedirectInput)
+        assertEquals(runConfiguration1.inputRedirectOptions.redirectInputPath, runConfiguration2.inputRedirectOptions.redirectInputPath)
+    }
+
     fun testUpdateOnClassRename() {
         configureProject()
 
@@ -113,7 +133,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         val rename = RefactoringFactory.getInstance(project).createRename(obj, "Bar")
         rename.run()
 
-        assertEquals("renameTest.Bar", runConfiguration.MAIN_CLASS_NAME)
+        assertEquals("renameTest.Bar", runConfiguration.runClass)
     }
 
     fun testUpdateOnPackageRename() {
@@ -125,7 +145,7 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
         val rename = RefactoringFactory.getInstance(project).createRename(pkg, "afterRenameTest")
         rename.run()
 
-        assertEquals("afterRenameTest.Foo", runConfiguration.MAIN_CLASS_NAME)
+        assertEquals("afterRenameTest.Foo", runConfiguration.runClass)
     }
 
     fun testWithModuleForJdk6() {

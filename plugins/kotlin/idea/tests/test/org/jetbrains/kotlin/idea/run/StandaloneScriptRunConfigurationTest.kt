@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.run
 
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
@@ -12,6 +14,8 @@ import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ActionRunner
+import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfiguration
@@ -34,6 +38,8 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
         Assert.assertEquals(script.containingFile.virtualFile.canonicalPath, runConfiguration.filePath)
         Assert.assertEquals("simpleScript.kts", runConfiguration.name)
+
+        Assert.assertTrue(runConfiguration.toXmlString().contains(Regex("""<option name="filePath" value="[^"]+simpleScript.kts" />""")))
 
         val javaParameters = getJavaRunParameters(runConfiguration)
         val programParametersList = javaParameters.programParametersList.list
@@ -140,6 +146,12 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
             JavaPsiFacade.getInstance(project).findPackage("dest")!!.directories[0],
             false, true, null, null
         ).run()
+    }
+
+    private fun RunConfiguration.toXmlString(): @NotNull String {
+        val element = Element("temp")
+        writeExternal(element)
+        return JDOMUtil.writeElement(element)
     }
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("run/StandaloneScript")

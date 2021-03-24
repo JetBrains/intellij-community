@@ -65,7 +65,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
         val startClassFQName = getStartClassFqName(entryPointContainer) ?: return false
 
         return configuration.runClass == startClassFQName &&
-                context.module?.asJvmModule() == configuration.configurationModule.module
+                context.module?.asJvmModule() == configuration.configurationModule?.module
     }
 
     companion object {
@@ -109,9 +109,9 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
                 PsiTreeUtil.getParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
             else
                 PsiTreeUtil.getNonStrictParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
-            return element as KtDeclarationContainer?
+            return element
         }
     }
 
-    override fun getConfigurationFactory(): ConfigurationFactory = KotlinRunConfigurationType.getInstance()
+    override fun getConfigurationFactory(): ConfigurationFactory = KotlinRunConfigurationType.instance
 }

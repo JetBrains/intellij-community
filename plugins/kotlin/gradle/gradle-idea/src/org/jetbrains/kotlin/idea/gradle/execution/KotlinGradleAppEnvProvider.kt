@@ -64,7 +64,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
 
         val applicationConfiguration = executeRunConfigurationTask.runProfile as KotlinRunConfiguration
 
-        val mainClass = applicationConfiguration.configurationModule?.findClass(applicationConfiguration.MAIN_CLASS_NAME) ?: return null
+        val mainClass = applicationConfiguration.configurationModule?.findClass(applicationConfiguration.runClass) ?: return null
 
         val virtualFile = mainClass.containingFile.virtualFile
         val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
@@ -84,7 +84,7 @@ class KotlinGradleAppEnvProvider : GradleExecutionEnvironmentProvider {
             javaExePath = (type as JavaSdkType).getVMExecutablePath(jdk)?.let {
                 FileUtil.toSystemIndependentName(it)
             } ?: throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
-            javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule, mainClass)
+            javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule!!, mainClass)
         } catch (e: CantRunException) {
             ExecutionErrorDialog.show(e, "Cannot use specified JRE", project)
             throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))

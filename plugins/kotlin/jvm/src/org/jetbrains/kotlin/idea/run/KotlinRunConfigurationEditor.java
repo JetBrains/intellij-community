@@ -110,8 +110,9 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
     protected void resetEditorFrom(KotlinRunConfiguration configuration) {
         commonProgramParameters.reset(configuration);
         moduleSelector.reset(configuration);
-        mainClass.getComponent().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");
-        jrePathEditor.setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+        String runClass = configuration.getRunClass();
+        mainClass.getComponent().setText(runClass != null ? runClass.replaceAll("\\$", "\\.") : "");
+        jrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     }
 
     @NotNull
