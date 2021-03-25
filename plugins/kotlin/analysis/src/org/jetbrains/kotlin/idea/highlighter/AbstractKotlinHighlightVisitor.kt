@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -53,6 +54,8 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
 
             action.run()
         } catch (e: Throwable) {
+            if (e is ControlFlowException) throw e
+
             val timestamp = System.currentTimeMillis()
             // daemon is restarted when exception is thrown
             // if there is a recurred error (e.g. within a resolve) it could lead to infinite highlighting loop
