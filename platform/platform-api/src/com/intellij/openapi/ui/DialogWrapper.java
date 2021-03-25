@@ -417,7 +417,7 @@ public abstract class DialogWrapper {
   protected void createDefaultActions() {
     myOKAction = new OkAction();
     myCancelAction = new CancelAction();
-    myHelpAction = new HelpAction();
+    myHelpAction = new HelpAction(this::doHelpAction);
   }
 
   public void setUndecorated(boolean undecorated) {
@@ -561,11 +561,16 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected JButton createHelpButton(@NotNull Insets insets) {
-    JButton helpButton = new JButton(getHelpAction());
+    JButton helpButton = createHelpButton(getHelpAction());
+    setHelpTooltip(helpButton);
+    helpButton.setMargin(insets);
+    return helpButton;
+  }
+
+  public static @NotNull JButton createHelpButton(@NotNull Action action) {
+    JButton helpButton = new JButton(action);
     helpButton.putClientProperty("JButton.buttonType", "help");
     helpButton.setText("");
-    helpButton.setMargin(insets);
-    setHelpTooltip(helpButton);
     helpButton.addPropertyChangeListener("ancestor", evt -> {
       if (evt.getNewValue() == null) {
         HelpTooltip.dispose((JComponent)evt.getSource());
@@ -1934,14 +1939,17 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
     }
   }
 
-  private final class HelpAction extends AbstractAction {
-    private HelpAction() {
+  public static final class HelpAction extends AbstractAction {
+    private final @NotNull Runnable myHelpActionPerformed;
+
+    public HelpAction(@NotNull Runnable helpActionPerformed) {
       super(CommonBundle.getHelpButtonText());
+      myHelpActionPerformed = helpActionPerformed;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doHelpAction();
+      myHelpActionPerformed.run();
     }
   }
 

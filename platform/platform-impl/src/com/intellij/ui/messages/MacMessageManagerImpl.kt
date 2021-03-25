@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("EnumEntryName")
 
 package com.intellij.ui.messages
@@ -150,9 +150,10 @@ private class NativeMacMessageManager : MacMessages() {
                                      noText: String,
                                      cancelText: String,
                                      window: Window?,
-                                     doNotAskOption: DoNotAskOption?): Int {
+                                     doNotAskOption: DoNotAskOption?,
+                                     helpId: String?): Int {
     return showMessageDialog(title, message, arrayOf(yesText, noText, cancelText), false, window, -1, doNotAskOption) {
-      getJBMessages().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+      getJBMessages().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption, helpId)
     }
   }
 
@@ -171,9 +172,10 @@ private class NativeMacMessageManager : MacMessages() {
                                yesText: String,
                                noText: String,
                                window: Window?,
-                               doNotAskDialogOption: DoNotAskOption?): Boolean {
+                               doNotAskDialogOption: DoNotAskOption?,
+                               helpId: String?): Boolean {
     return showMessageDialog(title, message, arrayOf(yesText, noText), false, window, -1, doNotAskDialogOption) {
-      if (getJBMessages().showYesNoDialog(title, message, yesText, noText, window, doNotAskDialogOption)) {
+      if (getJBMessages().showYesNoDialog(title, message, yesText, noText, window, doNotAskDialogOption, helpId)) {
         Messages.YES
       }
       else {

@@ -124,7 +124,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val yesText = yesText ?: CommonBundle.getYesButtonText()
       val noText = noText ?: CommonBundle.getNoButtonText()
       return showMessage(project, parentComponent, mac = { window ->
-        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+        MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption, helpId)
       }, other = {
         (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                          message = message, title = title, icon = icon,
@@ -164,7 +164,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       val noText = noText ?: CommonBundle.getNoButtonText()
       val cancelText = cancelText ?: CommonBundle.getCancelButtonText()
       return showMessage(project, parentComponent, mac = { window ->
-        MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+        MacMessages.getInstance().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption, helpId)
       }, other = {
         val options = arrayOf(yesText, noText, cancelText)
         when (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
@@ -197,7 +197,7 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
     val yesText = yesText ?: CommonBundle.getOkButtonText()
     val noText = noText ?: CommonBundle.getCancelButtonText()
     return showMessage(project, parentComponent, mac = { window ->
-      MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
+      MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption, helpId)
     }, other = {
       MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                       message = message, title = title, options = arrayOf(yesText, noText),
