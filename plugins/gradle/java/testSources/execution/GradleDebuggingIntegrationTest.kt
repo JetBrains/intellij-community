@@ -277,8 +277,8 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       withMavenCentral()
       withTask("simple")
       withTask("printArgs", "JavaExec") {
-        property("classpath", "rootProject.sourceSets.main.runtimeClasspath")
-        property("main", "'pack.AClass'")
+        assign("classpath", "rootProject.sourceSets.main.runtimeClasspath")
+        assign("main", "'pack.AClass'")
         call("args", "'${subProjectArgsFile.systemIndependentPath}'")
       }
     }

@@ -77,4 +77,28 @@ class GradleBuildScriptBuilderTest {
       }
     """.trimIndent())
   }
+
+  @Test
+  fun `test build script deduplication`() {
+    assertThat(buildscript {
+      withJUnit()
+      withGroovyPlugin()
+      withGroovyPlugin()
+    }).isEqualTo("""
+      apply plugin: 'groovy'
+      repositories {
+          maven {
+              url 'https://repo.labs.intellij.net/repo1'
+          }
+      }
+      dependencies {
+          testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+          implementation 'org.codehaus.groovy:groovy-all:3.0.5'
+      }
+      tasks.withType(Test) {
+          useJUnitPlatform()
+      }
+    """.trimIndent())
+  }
 }

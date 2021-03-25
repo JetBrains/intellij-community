@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.junit.runners.Parameterized
@@ -19,7 +20,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   fun createGradleSettingsFile(vararg moduleNames: String) {
     createSettingsFile(
       groovy {
-        property("rootProject.name", "'project'")
+        assign("rootProject.name", "'project'")
         for (moduleName in moduleNames) {
           call("include", "'$moduleName'")
         }
@@ -38,30 +39,29 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
     testSourceCompatibilityEnablePreview: Boolean = false,
     testTargetCompatibility: String? = null
   ): VirtualFile {
-    val buildScript = GradleBuildScriptBuilder()
-      .withJavaPlugin()
-      .withPrefix {
-        propertyIfNotNull("sourceCompatibility", projectSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", projectTargetCompatibility)
-      }
-      .withTaskConfiguration("compileJava") {
-        propertyIfNotNull("sourceCompatibility", mainSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", mainTargetCompatibility)
-        if (mainSourceCompatibilityEnablePreview) {
-          call("options.compilerArgs.add", "'--enable-preview'")
-        }
-      }
-      .withTaskConfiguration("compileTestJava") {
-        propertyIfNotNull("sourceCompatibility", testSourceCompatibility)
-        propertyIfNotNull("targetCompatibility", testTargetCompatibility)
-        if (testSourceCompatibilityEnablePreview) {
-          call("options.compilerArgs.add", "'--enable-preview'")
-        }
-      }
-      .generate()
     createProjectSubDir("$relativePath/src/main/java")
     createProjectSubDir("$relativePath/src/test/java")
-    return createProjectSubFile("$relativePath/build.gradle", buildScript)
+    return createProjectSubFile("$relativePath/build.gradle", buildscript {
+      withJavaPlugin()
+      withPrefix {
+        assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
+        assignIfNotNull("targetCompatibility", projectTargetCompatibility)
+        block("compileJava") {
+          assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
+          assignIfNotNull("targetCompatibility", mainTargetCompatibility)
+          if (mainSourceCompatibilityEnablePreview) {
+            call("options.compilerArgs.add", "'--enable-preview'")
+          }
+        }
+        block("compileTestJava") {
+          assignIfNotNull("sourceCompatibility", testSourceCompatibility)
+          assignIfNotNull("targetCompatibility", testTargetCompatibility)
+          if (testSourceCompatibilityEnablePreview) {
+            call("options.compilerArgs.add", "'--enable-preview'")
+          }
+        }
+      }
+    })
   }
 
   companion object {

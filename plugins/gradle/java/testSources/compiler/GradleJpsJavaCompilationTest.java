@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.util.Consumer;
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.importing.GroovyBuilder;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
   @Test
@@ -42,11 +42,11 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
       new GradleBuildScriptBuilder()
         .withJavaPlugin()
         .withPrefix((Consumer<GroovyBuilder>)it -> it
-          .property("sourceCompatibility", 7)
-          .property("targetCompatibility", 7))
-        .withTaskConfiguration("compileJava", (Consumer<GroovyBuilder>)it -> it
-          .property("sourceCompatibility", 8)
-          .property("targetCompatibility", 8))
+          .assign("sourceCompatibility", "7")
+          .assign("targetCompatibility", "7")
+          .block("compileJava", (Consumer<GroovyBuilder>)it1 -> it1
+            .assign("sourceCompatibility", "8")
+            .assign("targetCompatibility", "8")))
         .generate()
     );
     compileModules("project.main");

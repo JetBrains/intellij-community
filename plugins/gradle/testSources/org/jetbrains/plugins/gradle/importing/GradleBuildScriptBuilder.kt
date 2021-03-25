@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.Consumer
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase.IDEA_EXT_PLUGIN_VERSION
 import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import java.io.File
+import java.util.function.Consumer
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class GradleBuildScriptBuilder {
+class GradleBuildScriptBuilder() {
 
   private val imports = GroovyBuilder()
   private val buildScriptPrefixes = GroovyBuilder()
@@ -22,7 +22,17 @@ class GradleBuildScriptBuilder {
   private val repositories = GroovyBuilder()
   private val postfixes = GroovyBuilder()
 
+  constructor(configure: GradleBuildScriptBuilder.() -> Unit) : this() {
+    this.configure()
+  }
+
   private fun apply(builder: GroovyBuilder, configure: GroovyBuilder.() -> Unit) = apply { builder.configure() }
+  private fun applyIfNotContains(builder: GroovyBuilder, configure: GroovyBuilder.() -> Unit) = apply {
+    val childBuilder = GroovyBuilder(configure)
+    if (childBuilder !in builder) {
+      builder.join(childBuilder)
+    }
+  }
 
   /**
    * ...
@@ -33,7 +43,7 @@ class GradleBuildScriptBuilder {
    * dependencies { ... }
    * ...
    */
-  fun addImport(import: String) = apply(imports) { code("import $import") }
+  fun addImport(import: String) = applyIfNotContains(imports) { code("import $import") }
 
   /**
    * buildscript {
@@ -46,6 +56,7 @@ class GradleBuildScriptBuilder {
    */
   fun addBuildScriptPrefix(vararg prefix: String) = withBuildScriptPrefix { code(*prefix) }
   fun withBuildScriptPrefix(configure: GroovyBuilder.() -> Unit) = apply(buildScriptPrefixes, configure)
+  fun withBuildScriptPrefix(configure: Consumer<GroovyBuilder>) = withBuildScriptPrefix(configure::accept)
 
   /**
    * buildscript {
@@ -56,7 +67,8 @@ class GradleBuildScriptBuilder {
    * }
    */
   fun addBuildScriptDependency(dependency: String) = withBuildScriptDependency { code(dependency) }
-  fun withBuildScriptDependency(configure: GroovyBuilder.() -> Unit) = apply(buildScriptDependencies, configure)
+  fun withBuildScriptDependency(configure: GroovyBuilder.() -> Unit) = applyIfNotContains(buildScriptDependencies, configure)
+  fun withBuildScriptDependency(configure: Consumer<GroovyBuilder>) = withBuildScriptDependency(configure::accept)
 
   /**
    * buildscript {
@@ -67,7 +79,8 @@ class GradleBuildScriptBuilder {
    * }
    */
   fun addBuildScriptRepository(repository: String) = withBuildScriptRepository { code(repository) }
-  fun withBuildScriptRepository(configure: GroovyBuilder.() -> Unit) = apply(buildScriptRepositories, configure)
+  fun withBuildScriptRepository(configure: GroovyBuilder.() -> Unit) = applyIfNotContains(buildScriptRepositories, configure)
+  fun withBuildScriptRepository(configure: Consumer<GroovyBuilder>) = withBuildScriptRepository(configure::accept)
 
   /**
    * buildscript {
@@ -80,6 +93,7 @@ class GradleBuildScriptBuilder {
    */
   fun addBuildScriptPostfix(vararg postfix: String) = withBuildScriptPostfix { code(*postfix) }
   fun withBuildScriptPostfix(configure: GroovyBuilder.() -> Unit) = apply(buildScriptPostfixes, configure)
+  fun withBuildScriptPostfix(configure: Consumer<GroovyBuilder>) = withBuildScriptPostfix(configure::accept)
 
   /**
    * plugins {
@@ -87,12 +101,12 @@ class GradleBuildScriptBuilder {
    *   [plugin]
    * }
    */
-  fun addPlugin(plugin: String) = apply(plugins) { code(plugin) }
+  fun addPlugin(plugin: String) = applyIfNotContains(plugins) { code(plugin) }
 
   /**
    * apply plugin: [plugin]
    */
-  fun applyPlugin(plugin: String) = apply(applicablePlugins) { call("apply", "plugin: $plugin") }
+  fun applyPlugin(plugin: String) = applyIfNotContains(applicablePlugins) { call("apply", "plugin: $plugin") }
 
   /**
    * buildscript { ... }
@@ -104,7 +118,7 @@ class GradleBuildScriptBuilder {
    */
   fun addPrefix(vararg prefix: String) = withPrefix { code(*prefix) }
   fun withPrefix(configure: GroovyBuilder.() -> Unit) = apply(prefixes, configure)
-  fun withPrefix(configure: Consumer<GroovyBuilder>) = withPrefix(configure::consume)
+  fun withPrefix(configure: Consumer<GroovyBuilder>) = withPrefix(configure::accept)
 
   /**
    * dependencies {
@@ -112,7 +126,9 @@ class GradleBuildScriptBuilder {
    *   [dependency]
    * }
    */
-  fun addDependency(dependency: String) = apply(dependencies) { code(dependency) }
+  fun addDependency(dependency: String) = withDependency { code(dependency) }
+  fun withDependency(configure: GroovyBuilder.() -> Unit) = applyIfNotContains(dependencies, configure)
+  fun withDependency(configure: Consumer<GroovyBuilder>) = withDependency(configure::accept)
 
   /**
    * repositories {
@@ -121,7 +137,8 @@ class GradleBuildScriptBuilder {
    * }
    */
   fun addRepository(repository: String) = withRepository { code(repository) }
-  fun withRepository(configure: GroovyBuilder.() -> Unit) = apply(repositories, configure)
+  fun withRepository(configure: GroovyBuilder.() -> Unit) = applyIfNotContains(repositories, configure)
+  fun withRepository(configure: Consumer<GroovyBuilder>) = withRepository(configure::accept)
 
   /**
    * buildscript { ... }
@@ -133,6 +150,7 @@ class GradleBuildScriptBuilder {
    */
   fun addPostfix(vararg postfix: String) = withPostfix { code(*postfix) }
   fun withPostfix(configure: GroovyBuilder.() -> Unit) = apply(postfixes, configure)
+  fun withPostfix(configure: Consumer<GroovyBuilder>) = withPostfix(configure::accept)
 
 
   fun group(group: String) =
@@ -141,14 +159,23 @@ class GradleBuildScriptBuilder {
   fun version(version: String) =
     addPrefix("version = '$version'")
 
-  fun addImplementationDependency(dependency: String) =
-    addDependency("implementation $dependency")
+  fun addImplementationDependency(dependency: String, sourceSet: String? = null) =
+    when (sourceSet) {
+      null -> addDependency("implementation $dependency")
+      else -> addDependency("${sourceSet}Implementation $dependency")
+    }
+
+  fun addRuntimeOnlyDependency(dependency: String, sourceSet: String? = null) =
+    when (sourceSet) {
+      null -> addDependency("runtimeOnly $dependency")
+      else -> addDependency("${sourceSet}RuntimeOnly $dependency")
+    }
 
   fun addTestImplementationDependency(dependency: String) =
-    addDependency("testImplementation $dependency")
+    addImplementationDependency(dependency, sourceSet = "test")
 
   fun addTestRuntimeOnlyDependency(dependency: String) =
-    addDependency("testRuntimeOnly $dependency")
+    addRuntimeOnlyDependency(dependency, sourceSet = "test")
 
   fun addBuildScriptClasspath(dependency: String) =
     addBuildScriptDependency("classpath $dependency")
@@ -156,15 +183,9 @@ class GradleBuildScriptBuilder {
   fun withTask(name: String, type: String? = null, configure: GroovyBuilder.() -> Unit = {}) =
     withPostfix {
       when (type) {
-        null -> call("tasks.create", name, type, configure = configure)
-        else -> call("tasks.create", name, configure = configure)
+        null -> call("tasks.create", "'$name'", configure = configure)
+        else -> call("tasks.create", "'$name'", type, configure = configure)
       }
-    }
-
-  fun withTaskConfiguration(name: String, configure: Consumer<GroovyBuilder>) = withTaskConfiguration(name, configure::consume)
-  fun withTaskConfiguration(name: String, configure: GroovyBuilder.() -> Unit) =
-    withPostfix {
-      call(name, configure = configure)
     }
 
   fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean = false) =
@@ -178,10 +199,10 @@ class GradleBuildScriptBuilder {
     }
 
   private fun GroovyBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
-    call("maven") {
+    block("maven") {
       call("url", "'https://repo.labs.intellij.net/repo1'")
       if (useOldStyleMetadata) {
-        call("metadataSources") {
+        block("metadataSources") {
           call("mavenPom")
           call("artifact")
         }
@@ -196,7 +217,7 @@ class GradleBuildScriptBuilder {
   fun withKotlinPlugin(version: String) = apply {
     addBuildScriptPrefix("ext.kotlin_version = '$version'")
     withBuildScriptMavenCentral()
-    addBuildScriptClasspath("\"org.jetbrains.kotlin:kotlin-gradle-plugin:${'$'}kotlin_version\"")
+    addBuildScriptClasspath(""""org.jetbrains.kotlin:kotlin-gradle-plugin:${'$'}kotlin_version"""")
     applyPlugin("'kotlin'")
   }
 
@@ -221,9 +242,11 @@ class GradleBuildScriptBuilder {
   fun withJUnit5() = apply {
     withMavenCentral()
     addTestImplementationDependency("'org.junit.jupiter:junit-jupiter-api:5.7.0'")
-    addTestRuntimeOnlyDependency("'org.junit.jupiter:junit-jupiter-engine:1.7.0'")
-    withTaskConfiguration("test") {
-      call("useJUnitPlatform")
+    addTestRuntimeOnlyDependency("'org.junit.jupiter:junit-jupiter-engine:5.7.0'")
+    withPostfix {
+      call("tasks.withType", "Test") {
+        call("useJUnitPlatform")
+      }
     }
   }
 
@@ -274,8 +297,6 @@ class GradleBuildScriptBuilder {
   }
 
   companion object {
-    private fun builder(configure: GradleBuildScriptBuilder.() -> Unit) = GradleBuildScriptBuilder().apply(configure)
-
-    fun buildscript(configure: GradleBuildScriptBuilder.() -> Unit) = builder(configure).generate()
+    fun buildscript(configure: GradleBuildScriptBuilder.() -> Unit) = GradleBuildScriptBuilder(configure).generate()
   }
 }

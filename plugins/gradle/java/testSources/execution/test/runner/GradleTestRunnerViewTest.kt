@@ -71,8 +71,8 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
       .withJavaPlugin()
       .withJUnit4()
       .withTask("additionalTest", "Test") {
-        property("testClassesDirs", "sourceSets.test.output.classesDirs")
-        property("classpath", "sourceSets.test.runtimeClasspath")
+        assign("testClassesDirs", "sourceSets.test.output.classesDirs")
+        assign("classpath", "sourceSets.test.runtimeClasspath")
         code("jvmArgs += \"-Dprop='integ test error'\"")
       }
 

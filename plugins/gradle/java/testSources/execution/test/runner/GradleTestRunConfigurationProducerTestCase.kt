@@ -13,8 +13,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
 import java.io.File
@@ -43,16 +44,14 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
 
   protected fun assertProducersFromContext(
     element: PsiElement,
-    vararg producerTypes: String
+    vararg expectedProducerTypes: String
   ) = runReadActionAndWait {
     val context = getContextByLocation(element)
-    val producers = context.configurationsFromContext!!
+    val actualProducerTypes = context.configurationsFromContext!!
       .map { it as ConfigurationFromContextImpl }
       .map { it.configurationProducer }
-    assertEquals(producerTypes.size, producers.size)
-    for ((producer, producerType) in producers.zip(producerTypes)) {
-      assertEquals(producerType, producer::class.java.simpleName)
-    }
+      .map { it::class.java.simpleName }
+    assertContainsElements(actualProducerTypes, *expectedProducerTypes)
   }
 
   protected inline fun <reified P : GradleTestRunConfigurationProducer> assertConfigurationFromContext(
@@ -91,6 +90,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
   protected fun generateAndImportTemplateProject(): ProjectData {
     val testCaseFile = createProjectSubFile("src/test/java/TestCase.java", """
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class TestCase extends AbstractTestCase {
         @Test public void test1() {}
         @Test public void test2() {}
@@ -100,6 +100,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     val packageTestCaseFile = createProjectSubFile("src/test/java/pkg/TestCase.java", """
       package pkg;
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class TestCase extends AbstractTestCase {
         @Test public void test1() {}
         @Test public void test2() {}
@@ -108,20 +109,23 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     """.trimIndent())
     val automationTestCaseFile = createProjectSubFile("automation/AutomationTestCase.java", """
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class AutomationTestCase extends AbstractTestCase {
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
       }
     """.trimIndent())
-    val abstractTestCaseFile = createProjectSubFile("src/test/java/AbstractTestCase.java", """
+    val abstractTestCaseFile = createProjectSubFile("src/test/java/org/example/AbstractTestCase.java", """
+      package org.example;
       import org.junit.Test;
       public abstract class AbstractTestCase {
         @Test public void test() {}
       }
     """.trimIndent())
-    val moduleTestCaseFile = createProjectSubFile("module/src/test/java/ModuleTestCase.java", """
+    val moduleTestCaseFile = createProjectSubFile("module/src/test/java/ModuleTestCase.java", """      
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class ModuleTestCase extends AbstractTestCase {
         @Test public void test1() {}
         @Test public void test2() {}
@@ -130,8 +134,9 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     """.trimIndent())
     val groovyTestCaseFile = createProjectSubFile("src/test/groovy/GroovyTestCase.groovy", """
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class GroovyTestCase extends AbstractTestCase {
-        @Test public void 'Don\\\'t use single . quo\\"tes'() {}
+        @Test public void 'Don\\\'t use single quo\\"tes'() {}
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
@@ -139,56 +144,67 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     """.trimIndent())
     val myModuleTestCaseFile = createProjectSubFile("my module/src/test/groovy/MyModuleTestCase.groovy", """
       import org.junit.Test;
+      import org.example.AbstractTestCase;
       public class MyModuleTestCase extends AbstractTestCase {
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
       }
     """.trimIndent())
-    val buildScript = GradleBuildScriptBuilder()
-      .withJavaPlugin()
-      .withIdeaPlugin()
-      .withJUnit4()
-      .withGroovyPlugin()
-      .addPrefix("""
-        idea.module {
-          testSourceDirs += file('automation')
+    createProjectSubFile("settings.gradle", groovy {
+      code("rootProject.name = 'project'")
+      call("include", "'module'", "'my module'")
+    })
+    createProjectSubFile("build.gradle", buildscript {
+      withJavaPlugin()
+      withIdeaPlugin()
+      withJUnit4()
+      withGroovyPlugin()
+      withPrefix {
+        block("sourceSets") {
+          code("automation.java.srcDirs += 'automation'")
+          code("automation.runtimeClasspath += sourceSets.test.runtimeClasspath")
+          code("automation.compileClasspath += sourceSets.test.compileClasspath")
         }
-        sourceSets {
-          automation.java.srcDirs = ['automation']
-          automation.compileClasspath += sourceSets.test.runtimeClasspath
+      }
+      addImplementationDependency("project(path: ':', configuration: 'tests')", sourceSet = "automation")
+      withTask("autoTest", "Test") {
+        code("classpath = sourceSets.automation.runtimeClasspath")
+        code("testClassesDirs = sourceSets.automation.output.classesDirs")
+      }
+      withTask("automationTest", "Test") {
+        code("classpath = sourceSets.automation.runtimeClasspath")
+        code("testClassesDirs = sourceSets.automation.output.classesDirs")
+      }
+      withTask("testJar", "Jar") {
+        call("dependsOn", "testClasses")
+        code("baseName = \"test-${'$'}{project.archivesBaseName}\"")
+        call("from", "sourceSets.test.output")
+      }
+      withPostfix {
+        block("configurations") {
+          code("tests")
         }
-        task autoTest(type: Test) {
-          testClassesDirs = sourceSets.automation.output.classesDirs
+        block("artifacts") {
+          call("tests", "testJar")
         }
-        task automationTest(type: Test) {
-          testClassesDirs = sourceSets.automation.output.classesDirs
+        block("idea.module") {
+          code("testSourceDirs += file('automation')")
         }
-      """.trimIndent())
-      .addPrefix("""
-        task myTestsJar(type: Jar, dependsOn: testClasses) {
-          baseName = "test-${'$'}{project.archivesBaseName}"
-          from sourceSets.automation.output
-        }
-        configurations {
-          testArtifacts
-        }
-        artifacts {
-          testArtifacts  myTestsJar
-        }
-      """.trimIndent())
-    val moduleBuildScript = GradleBuildScriptBuilder()
-      .withJavaPlugin()
-      .withJUnit4()
-      .withGroovyPlugin()
-      .addDependency("testCompile project(path: ':', configuration: 'testArtifacts')")
-    createSettingsFile("""
-      rootProject.name = 'project'
-      include 'module', 'my module'
-    """.trimIndent())
-    createProjectSubFile("module/build.gradle", moduleBuildScript.generate())
-    createProjectSubFile("my module/build.gradle", moduleBuildScript.generate())
-    importProject(buildScript.generate())
+      }
+    })
+    createProjectSubFile("module/build.gradle", buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
+    })
+    createProjectSubFile("my module/build.gradle", buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      withGroovyPlugin()
+      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
+    })
+    importProject()
     assertModulesContains("project", "project.module", "project.my_module")
     val automationTestCase = extractJavaClassData(automationTestCaseFile)
     val testCase = extractJavaClassData(testCaseFile)
@@ -272,6 +288,6 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
      */
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(GradleImportingTestCase.BASE_GRADLE_VERSION))
+    fun tests(): Collection<Array<out String>> = arrayListOf(arrayOf(BASE_GRADLE_VERSION))
   }
 }
