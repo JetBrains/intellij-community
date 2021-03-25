@@ -60,7 +60,7 @@ public final class SheetController implements Disposable {
   private final static int TOP_SHEET_PADDING = 20;
   private final static int GAP_BETWEEN_LINES = 10;
 
-  private final static int LEFT_SHEET_PADDING = 35;
+  private final static int LEFT_SHEET_PADDING = 20;
   private final static int LEFT_SHEET_OFFSET = 120;
 
   private static final int GAP_BETWEEN_BUTTONS = 5;
