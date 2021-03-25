@@ -192,8 +192,12 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     return panel
   }
 
+  private val toolWindowsAllowed = when (switcher.recent) {
+    true -> Registry.`is`("ide.recent.files.tool.window.list")
+    else -> Registry.`is`("ide.switcher.tool.window.list")
+  }
 
-  val toolWindows: List<SwitcherToolWindow> by lazy {
+  val toolWindows: List<SwitcherToolWindow> = if (toolWindowsAllowed) {
     val manager = ToolWindowManager.getInstance(switcher.project)
     val windows = manager.toolWindowIds
       .mapNotNull { manager.getToolWindow(it) }
@@ -205,6 +209,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
 
     windows
   }
+  else emptyList()
 }
 
 
