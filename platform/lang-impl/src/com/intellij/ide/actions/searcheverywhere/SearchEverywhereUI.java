@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -48,6 +49,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
@@ -111,6 +113,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private final SEListSelectionTracker mySelectionTracker;
   private final SearchFieldTypingListener mySearchTypingListener;
   private final SearchEverywhereMLStatisticsCollector myMLStatisticsCollector;
+  private final HintHelper myHintHelper;
 
   public SearchEverywhereUI(@Nullable Project project,
                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
@@ -163,6 +166,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
     myMLStatisticsCollector = new SearchEverywhereMLStatisticsCollector(myProject);
+    myHintHelper = new HintHelper(mySearchField);
 
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
@@ -210,38 +214,51 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private final JLabel myAdvertisementLabel = new JBLabel();
-  {
-    myAdvertisementLabel.setForeground(JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground());
-    myAdvertisementLabel.setFont(RelativeFont.SMALL.derive(getFont()));
-  }
-
   private void updateSearchFieldAdvertisement() {
     if (mySearchField == null) return;
 
     List<SearchEverywhereContributor<?>> contributors = myHeader.getSelectedTab().getContributors();
-    boolean commandsSupported = contributors.stream()
-      .anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
-
-    String advertisementText;
-    if (commandsSupported) {
-      advertisementText = IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
+    String advertisementText = getWarning(contributors);
+    if (advertisementText != null) {
+      myHintHelper.setWarning(advertisementText);
+      return;
     }
-    else {
-      List<String> advertisements = contributors.stream()
+
+    advertisementText = getAdvertisement(contributors);
+    myHintHelper.setHint(advertisementText);
+  }
+
+  @Nls
+  @Nullable
+  private String getWarning(List<SearchEverywhereContributor<?>> contributors) {
+    if (myProject != null && DumbService.isDumb(myProject)) {
+      boolean containsPSIContributors = contributors.stream().anyMatch(c -> c instanceof AbstractGotoSEContributor);
+      if (containsPSIContributors) {
+        return IdeBundle.message("dumb.mode.results.might.be.incomplete");
+      }
+    }
+
+    return null;
+  }
+
+  @Nls
+  @Nullable
+  private static String getAdvertisement(List<SearchEverywhereContributor<?>> contributors) {
+    List<String> advertisements = new ArrayList<>();
+
+    boolean commandsSupported = contributors.stream().anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
+    if (commandsSupported) {
+      advertisements.add(IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator()));
+    }
+
+    advertisements.addAll(
+      contributors.stream()
         .map(c -> c.getAdvertisement())
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-      advertisementText = advertisements.isEmpty() ? "" : advertisements.get(new Random().nextInt(advertisements.size()));
-    }
+        .collect(Collectors.toList())
+    );
 
-    mySearchField.remove(myAdvertisementLabel);
-    if (advertisementText != null) {
-      myAdvertisementLabel.setText(advertisementText);
-      mySearchField.add(myAdvertisementLabel, BorderLayout.EAST);
-      mySearchField.doLayout();
-      mySearchField.repaint();
-    }
+    return advertisements.isEmpty() ? null : advertisements.get(new Random().nextInt(advertisements.size()));
   }
 
   public String getSelectedTabID() {
@@ -356,7 +373,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Override
   protected ExtendableTextField createSearchField() {
     SearchField res = new SearchField() {
-
       @Override
       public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
@@ -364,28 +380,25 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
         return accessibleContext;
       }
+    };
 
-      @NotNull
+    ExtendableTextComponent.Extension leftExt = new ExtendableTextComponent.Extension() {
       @Override
-      protected Extension getLeftExtension() {
-        return new Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return AllIcons.Actions.Search;
-          }
+      public Icon getIcon(boolean hovered) {
+        return AllIcons.Actions.Search;
+      }
 
-          @Override
-          public boolean isIconBeforeText() {
-            return true;
-          }
+      @Override
+      public boolean isIconBeforeText() {
+        return true;
+      }
 
-          @Override
-          public int getIconGap() {
-            return JBUIScale.scale(10);
-          }
-        };
+      @Override
+      public int getIconGap() {
+        return JBUIScale.scale(10);
       }
     };
+    res.addExtension(leftExt);
     res.putClientProperty(SEARCH_EVERYWHERE_SEARCH_FILED_KEY, true);
     res.setLayout(new BorderLayout());
     return res;
@@ -470,6 +483,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
     }
+
+    myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.search(contributorsMap, rawPattern);
   }
 
@@ -811,6 +826,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     Map<? extends SearchEverywhereContributor<?>, Integer> contributorsAndLimits =
       stream.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().size() + additionalItemsCount));
 
+    myHintHelper.setSearchInProgress(StringUtil.isNotEmpty(getSearchPattern()));
     mySearchProgressIndicator = mySearcher.findMoreItems(found, contributorsAndLimits, getSearchPattern());
   }
 
@@ -1132,10 +1148,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       updateEmptyText(pattern);
-
       hasMoreContributors.forEach(myListModel::setHasMore);
-
       mySelectionTracker.resetSelectionIfNeeded();
+      myHintHelper.setSearchInProgress(false);
 
       if (testCallback != null) testCallback.consume(myListModel.getItems());
     }
@@ -1286,4 +1301,66 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return null;
     }
   };
+
+  private static class HintHelper {
+
+    private final ExtendableTextField myTextField;
+
+    private final TextIcon myHintTextIcon = new TextIcon("", JBUI.CurrentTheme.BigPopup.searchFieldGrayForeground(), Gray.TRANSPARENT, 0);
+    private final RowIcon myWarnIcon = new RowIcon(2, com.intellij.ui.icons.RowIcon.Alignment.BOTTOM);
+    private final ExtendableTextComponent.Extension myHintExtension = createExtension(myHintTextIcon);
+    private final ExtendableTextComponent.Extension mySearchProcessExtension = createExtension(AnimatedIcon.Default.INSTANCE);
+    private final ExtendableTextComponent.Extension myWarningExtension;
+
+    private HintHelper(ExtendableTextField field) {
+      myTextField = field;
+      myHintTextIcon.setFont(myTextField.getFont());
+      myHintTextIcon.setFontTransform(FontInfo.getFontRenderContext(myTextField).getTransform());
+
+      myWarnIcon.setIcon(AllIcons.General.Warning, 0);
+      myWarnIcon.setIcon(myHintTextIcon, 1);
+      myWarningExtension = createExtension(myWarnIcon);
+    }
+
+    public void setHint(String hintText) {
+      myTextField.removeExtension(myHintExtension);
+      myTextField.removeExtension(myWarningExtension);
+      if (StringUtil.isNotEmpty(hintText)) {
+        myHintTextIcon.setText(hintText);
+        addExtensionAsLast(myHintExtension);
+      }
+    }
+
+    public void setWarning(String warnText) {
+      myTextField.removeExtension(myHintExtension);
+      myTextField.removeExtension(myWarningExtension);
+      if (StringUtil.isNotEmpty(warnText)) {
+        myHintTextIcon.setText(warnText);
+        myWarnIcon.setIcon(myHintTextIcon, 1);
+        addExtensionAsLast(myWarningExtension);
+      }
+    }
+
+    public void setSearchInProgress(boolean inProgress) {
+      myTextField.removeExtension(mySearchProcessExtension);
+      if (inProgress) myTextField.addExtension(mySearchProcessExtension);
+    }
+
+    //set extension which should be shown last
+    private void addExtensionAsLast(ExtendableTextComponent.Extension ext) {
+      ArrayList<ExtendableTextComponent.Extension> extensions = new ArrayList<>(myTextField.getExtensions());
+      extensions.add(0, ext);
+      myTextField.setExtensions(extensions);
+    }
+
+    @NotNull
+    private static ExtendableTextComponent.Extension createExtension(Icon icon) {
+      return new ExtendableTextComponent.Extension() {
+        @Override
+        public Icon getIcon(boolean hovered) {
+          return icon;
+        }
+      };
+    }
+  }
 }

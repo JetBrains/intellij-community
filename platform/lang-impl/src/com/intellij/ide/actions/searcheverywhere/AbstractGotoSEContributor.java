@@ -150,12 +150,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       .build();
   }
 
-  @Nullable
-  @Override
-  public String getAdvertisement() {
-    return DumbService.isDumb(myProject) ? IdeBundle.message("dumb.mode.results.might.be.incomplete") : null;
-  }
-
   @NotNull
   @Override
   public String getSearchProviderId() {
