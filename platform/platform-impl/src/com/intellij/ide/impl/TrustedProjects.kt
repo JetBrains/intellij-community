@@ -25,6 +25,20 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 
+fun confirmOpeningUntrustedProject(virtualFile: VirtualFile,
+                                   @NlsContexts.DialogTitle projectTypeName: String,
+                                   projectTypeCount: Int = 1,
+): OpenUntrustedProjectChoice {
+  return confirmOpeningUntrustedProject(
+    virtualFile,
+    IdeBundle.message("untrusted.project.open.dialog.title", projectTypeName, projectTypeCount),
+    IdeBundle.message("untrusted.project.open.dialog.text", projectTypeName, projectTypeCount),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
+}
+
 fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
   @NlsContexts.DialogTitle title: String,
