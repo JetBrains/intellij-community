@@ -11,7 +11,7 @@ import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import org.jetbrains.yaml.psi.YAMLScalar
 
-class YamlMultilineInjectionText : BasePlatformTestCase() {
+class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
   private val myInjectionFixture: InjectionTestFixture
     get() = InjectionTestFixture(myFixture)
@@ -134,6 +134,24 @@ class YamlMultilineInjectionText : BasePlatformTestCase() {
     myInjectionFixture.assertInjectedContent("root:\n  abc:\n     \n     ")
   }
 
+  fun testBlockInjectionKeep() {
+    myFixture.configureByText("test.yaml", """
+        X: |+
+          <html>
+          <body>hello world</body>
+          </html<caret>>
+          
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    assertInjectedAndLiteralValue("""
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |
+      |""".trimMargin())
+  }
+  
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)
     assertEquals("literal text should be", expectedText, literalTextAtTheCaret)
