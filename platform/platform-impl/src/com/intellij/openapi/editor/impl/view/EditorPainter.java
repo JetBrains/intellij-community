@@ -384,7 +384,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (inlay != null) {
               TextAttributes attrs = attributes.clone();
               myTextDrawingTasks.add(g -> {
-                inlay.getRenderer().paint(inlay, g, new Rectangle((int)xStart, y, inlay.getWidthInPixels(), myLineHeight), attrs);
+                inlay.getRenderer().paint(inlay, g, new Rectangle2D.Double(xStart, y, xEnd - xStart, myLineHeight), attrs);
               });
             }
             else {
@@ -437,7 +437,7 @@ public final class EditorPainter implements TextDrawingCallback {
                   float curX = x + myView.getPlainSpaceWidth();
                   for (Inlay inlay : inlays) {
                     int width = inlay.getWidthInPixels();
-                    inlay.getRenderer().paint(inlay, g, new Rectangle((int)curX, y, width, myLineHeight), backgroundAttributes);
+                    inlay.getRenderer().paint(inlay, g, new Rectangle2D.Double(curX, y, width, myLineHeight), backgroundAttributes);
                     curX += width;
                   }
                 }
@@ -1194,7 +1194,8 @@ public final class EditorPainter implements TextDrawingCallback {
             int height = inlay.getHeightInPixels();
             if (height > 0) {
               int newY = curY - height;
-              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, newY, inlay.getWidthInPixels(), height), attributes);
+              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle2D.Double(startX, newY, inlay.getWidthInPixels(), height),
+                                        attributes);
               curY = newY;
             }
           }
@@ -1207,7 +1208,8 @@ public final class EditorPainter implements TextDrawingCallback {
             if (curY >= myClip.y + myClip.height + myYShift) break;
             int height = inlay.getHeightInPixels();
             if (height > 0) {
-              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle(startX, curY, inlay.getWidthInPixels(), height), attributes);
+              inlay.getRenderer().paint(inlay, myGraphics, new Rectangle2D.Double(startX, curY, inlay.getWidthInPixels(), height),
+                                        attributes);
               curY += height;
             }
           }
