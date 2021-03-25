@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class RecursiveFilePathHolderImpl implements IgnoredFilesHolder {
+public class RecursiveFilePathHolderImpl implements FilePathHolder {
 
   private final Project myProject;
   private final Set<FilePath> myMap;

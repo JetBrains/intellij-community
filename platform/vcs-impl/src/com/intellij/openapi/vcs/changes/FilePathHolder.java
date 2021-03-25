@@ -6,14 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface IgnoredFilesHolder extends FileHolder {
+public interface FilePathHolder extends FileHolder {
   void addFile(@NotNull FilePath file);
 
   boolean containsFile(@NotNull FilePath file);
 
   @NotNull
   Collection<FilePath> values();
-
-  @Override
-  void cleanAndAdjustScope(@NotNull VcsModifiableDirtyScope scope);
 }
