@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
@@ -37,12 +38,15 @@ import com.intellij.vcsUtil.VcsImplUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
+import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.util.*
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.TransferHandler
@@ -72,6 +76,8 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
     private val colorManager = getColorManager(project)
     private val branchSettings = GitVcsSettings.getInstance(project).branchSettings
+
+    private var incomingOutgoingIcon: NodeIcon? = null
 
     override fun customizeCellRenderer(tree: JTree,
                                        value: Any?,
@@ -109,6 +115,10 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
       if (!repositoryGrouping && branchInfo != null && branchInfo.repositories.size < repositoryManager.repositories.size) {
         append(" (${DvcsUtil.getShortNames(branchInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
+
+      val incomingOutgoingState = branchInfo?.incomingOutgoingState
+      incomingOutgoingIcon = incomingOutgoingState?.icon?.let { NodeIcon(it, preferredSize.width + tree.insets.left) }
+      tree.toolTipText = incomingOutgoingState?.run { constructIncomingOutgoingTooltip(hasIncoming(), hasOutgoing()) }
     }
 
     override fun calcFocusedState() = super.calcFocusedState() || searchField?.textEditor?.hasFocus() ?: false
@@ -121,7 +131,16 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
         LinkedBranchDataImpl(presentableRootName, branchName, trackedBranchName)
       }
     }
+
+    override fun paint(g: Graphics) {
+      super.paint(g)
+      incomingOutgoingIcon?.let { (icon, locationX) ->
+        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, JBUIScale.scale(2))
+      }
+    }
   }
+
+  private data class NodeIcon(val icon: Icon, val locationX: Int)
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
 

@@ -12,8 +12,11 @@ import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.dashboard.BranchesDashboardUtil.getIncomingOutgoingState
+import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import java.util.*
+import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 
 internal val GIT_BRANCHES = DataKey.create<List<BranchInfo>>("GitBranchKey")
@@ -25,9 +28,24 @@ internal data class BranchInfo(val branchName: String,
                                val isLocal: Boolean,
                                val isCurrent: Boolean,
                                var isFavorite: Boolean,
+                               var incomingOutgoingState: IncomingOutgoing? = null,
                                val repositories: List<GitRepository>) {
   var isMy: ThreeState = ThreeState.UNSURE
   override fun toString() = branchName
+}
+
+internal enum class IncomingOutgoing {
+  INCOMING, OUTGOING, INCOMING_AND_OUTGOING;
+
+  fun hasIncoming() = this == INCOMING || this == INCOMING_AND_OUTGOING
+  fun hasOutgoing() = this == OUTGOING || this == INCOMING_AND_OUTGOING
+
+  val icon: Icon
+    get() = when (this) {
+      INCOMING -> DvcsImplIcons.Incoming
+      OUTGOING -> DvcsImplIcons.Outgoing
+      INCOMING_AND_OUTGOING -> DvcsImplIcons.IncomingOutgoing
+    }
 }
 
 internal data class BranchNodeDescriptor(val type: NodeType,
@@ -117,7 +135,9 @@ internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchN
     val repositoryNodeDescriptors = hashMapOf<GitRepository, BranchNodeDescriptor>()
 
     br.repositories.forEach { repository ->
-      val branch = br.copy(isCurrent = repository.isCurrentBranch(br.branchName), isFavorite = repository.isFavorite(br))
+      val branch = br.copy(isCurrent = repository.isCurrentBranch(br.branchName),
+                           isFavorite = repository.isFavorite(br),
+                           incomingOutgoingState = repository.getIncomingOutgoingState(br.branchName))
 
       val repositoryNodeDescriptor = repositoryNodeDescriptors.computeIfAbsent(repository) {
         val repositoryNodeDescriptor = BranchNodeDescriptor(NodeType.GROUP_REPOSITORY_NODE, repository = repository, parent = curParent)

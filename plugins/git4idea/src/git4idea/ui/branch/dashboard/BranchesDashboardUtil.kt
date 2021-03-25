@@ -8,6 +8,7 @@ import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchType
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -31,6 +32,7 @@ internal object BranchesDashboardUtil {
     val local = localMap.map { (branchName, repos) ->
       BranchInfo(branchName, true, repos.any { it.currentBranch?.name == branchName },
                  repos.any { gitBranchManager.isFavorite(GitBranchType.LOCAL, it, branchName) },
+                 repos.anyIncomingOutgoingState(branchName),
                  repos.toList())
     }.toHashSet()
 
@@ -48,6 +50,7 @@ internal object BranchesDashboardUtil {
     return remoteMap.map { (branchName, repos) ->
       BranchInfo(branchName, false, false,
                  repos.any { gitBranchManager.isFavorite(GitBranchType.REMOTE, it, branchName) },
+                 null,
                  repos)
     }.toHashSet()
   }
@@ -73,6 +76,32 @@ internal object BranchesDashboardUtil {
 
     return myBranches
   }
+
+  fun Collection<GitRepository>.anyIncomingOutgoingState(localBranchName: String): IncomingOutgoing? {
+    for (repository in this) {
+      val incomingOutgoingState = repository.getIncomingOutgoingState(localBranchName)
+      if (incomingOutgoingState != null) {
+        return incomingOutgoingState
+      }
+    }
+
+    return null
+  }
+
+
+  fun GitRepository.getIncomingOutgoingState(localBranchName: String): IncomingOutgoing? =
+    with(project.service<GitBranchIncomingOutgoingManager>()) {
+      val repo = this@getIncomingOutgoingState
+      val hasIncoming = hasIncomingFor(repo, localBranchName)
+      val hasOutgoing = hasOutgoingFor(repo, localBranchName)
+
+      when {
+        hasIncoming && hasOutgoing -> IncomingOutgoing.INCOMING_AND_OUTGOING
+        hasIncoming -> IncomingOutgoing.INCOMING
+        hasOutgoing -> IncomingOutgoing.OUTGOING
+        else -> null
+      }
+    }
 
   private fun findMyCommits(log: VcsProjectLog): Set<Int> {
     val filterByMe = VcsLogFilterObject.fromUserNames(listOf(VcsLogFilterObject.ME), log.dataManager!!)

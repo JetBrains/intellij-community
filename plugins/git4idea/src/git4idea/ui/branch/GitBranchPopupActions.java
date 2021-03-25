@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -230,7 +230,8 @@ public class GitBranchPopupActions {
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-      getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, constructTooltip());
+      getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY,
+                                                  constructIncomingOutgoingTooltip(hasIncomingCommits(), hasOutgoingCommits()));
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
@@ -246,9 +247,7 @@ public class GitBranchPopupActions {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Nullable
-    private String constructTooltip() {
-      boolean incoming = hasIncomingCommits();
-      boolean outgoing = hasOutgoingCommits();
+    public static String constructIncomingOutgoingTooltip(boolean incoming, boolean outgoing) {
       if (!incoming && !outgoing) return null;
 
       if (incoming && outgoing) {

@@ -7,6 +7,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -17,12 +18,15 @@ import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
+import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
+import git4idea.ui.branch.dashboard.BranchesDashboardUtil.anyIncomingOutgoingState
 import kotlin.properties.Delegates
 
 internal val BRANCHES_UI_CONTROLLER = DataKey.create<BranchesDashboardController>("GitBranchesUiControllerKey")
@@ -48,6 +52,10 @@ internal class BranchesDashboardController(private val project: Project,
     project.messageBus.connect(this).subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, DvcsBranchManagerListener {
       updateBranchesIsFavoriteState()
     })
+    project.messageBus.connect(this)
+      .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
+        runInEdt { updateBranchesIncomingOutgoingState() }
+      })
   }
 
   override fun dispose() {
@@ -139,6 +147,15 @@ internal class BranchesDashboardController(private val project: Project,
         val isFavorite = remoteBranch.repositories.any { isFavorite(GitBranchType.REMOTE, it, remoteBranch.branchName) }
         remoteBranch.apply { this.isFavorite = isFavorite }
       }
+    }
+
+    ui.refreshTree()
+  }
+
+  private fun updateBranchesIncomingOutgoingState() {
+    for (localBranch in localBranches) {
+      val incomingOutgoing = localBranch.repositories.anyIncomingOutgoingState(localBranch.branchName)
+      localBranch.apply { this.incomingOutgoingState = incomingOutgoing }
     }
 
     ui.refreshTree()
