@@ -34,17 +34,14 @@ private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions 
  * their own implementations of [ErrorReportSubmitter].
  */
 open class ITNReporter : ErrorReportSubmitter() {
-  private val credentials: Credentials? by lazy {
-    ErrorReportConfigurable.getCredentials()
-  }
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
   override fun getPrivacyNoticeText(): String =
-    if (credentials.isFulfilled()) DiagnosticBundle.message("error.dialog.notice.named")
+    if (ErrorReportConfigurable.credentialsFulfilled) DiagnosticBundle.message("error.dialog.notice.named")
     else DiagnosticBundle.message("error.dialog.notice.anonymous")
 
-  override fun getReporterAccount(): String? = credentials?.userName ?: ""
+  override fun getReporterAccount(): String? = ErrorReportConfigurable.userName
 
   override fun changeReporterAccount(parentComponent: Component) {
     askJBAccountCredentials(parentComponent, null)

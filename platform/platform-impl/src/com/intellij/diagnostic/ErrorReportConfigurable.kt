@@ -2,7 +2,9 @@
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.SERVICE_NAME_PREFIX
+import com.intellij.credentialStore.isFulfilled
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -13,13 +15,30 @@ import com.intellij.util.xmlb.annotations.XCollection
 internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>, SimpleModificationTracker() {
   companion object {
     @JvmStatic
-    val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
+    private val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     @JvmStatic
     fun getInstance() = service<ErrorReportConfigurable>()
 
     @JvmStatic
     fun getCredentials() = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
+
+    @JvmStatic
+    fun saveCredentials(userName: String?, password: CharArray?) {
+      val credentials = Credentials(userName, password)
+      PasswordSafe.instance.set(CredentialAttributes(SERVICE_NAME, userName), credentials)
+      lastCredentialsState = credentialsState(credentials)
+    }
+
+    val userName: String?
+      get() = getCredentialsState().userName
+
+    val credentialsFulfilled: Boolean
+      get() = getCredentialsState().isFulfilled
+
+    private var lastCredentialsState: CredentialsState? = null
+
+    private fun getCredentialsState(): CredentialsState = lastCredentialsState ?: credentialsState(getCredentials())
   }
 
   var developerList = DeveloperList()
@@ -34,6 +53,11 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     developerList = value
   }
 }
+
+private data class CredentialsState(val userName: String?, val isFulfilled: Boolean)
+
+private fun credentialsState(credentials: Credentials?): CredentialsState =
+  CredentialsState(credentials?.userName ?: "", credentials.isFulfilled())
 
 // 24 hours
 private const val UPDATE_INTERVAL = 24L * 60 * 60 * 1000

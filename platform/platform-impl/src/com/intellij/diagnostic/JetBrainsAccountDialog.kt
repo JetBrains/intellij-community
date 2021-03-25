@@ -60,6 +60,6 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
   val password = passwordField.password
   val passwordToRemember = if (rememberCheckBox.isSelected) password else null
   RememberCheckBoxState.update(rememberCheckBox)
-  PasswordSafe.instance.set(CredentialAttributes(ErrorReportConfigurable.SERVICE_NAME, userName), Credentials(userName, passwordToRemember))
+  ErrorReportConfigurable.saveCredentials(userName, passwordToRemember)
   return Credentials(userName, password)
 }
