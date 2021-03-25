@@ -17,11 +17,11 @@ fun logRefreshActionPerformed(project: Project,
                               unversionedAfter: Collection<FilePath>,
                               wasUpdatingBefore: Boolean) {
 
-  val changes = mutableSetOf(changesBefore union changesAfter)
-  changes -= (changesBefore intersect changesAfter)
+  val changes: MutableSet<Change> = (changesBefore union changesAfter).toMutableSet()
+  changes.removeAll(changesBefore intersect changesAfter)
 
-  val unversioned = mutableSetOf(unversionedBefore union unversionedAfter)
-  unversioned -= unversionedBefore intersect unversionedAfter
+  val unversioned: MutableSet<FilePath> = (unversionedBefore union unversionedAfter).toMutableSet()
+  unversioned.removeAll(unversionedBefore intersect unversionedAfter)
 
   val data = FeatureUsageData()
     .addData("wasUpdatingBefore", wasUpdatingBefore)
