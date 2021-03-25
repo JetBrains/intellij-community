@@ -5,8 +5,8 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.dsl.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,8 +23,7 @@ public interface CustomMembersHolder {
     }
 
     @Override
-    public void consumeClosureDescriptors(GroovyClassDescriptor descriptor,
-                                          Consumer<? super ClosureDescriptor> consumer) {}
+    public void consumeClosureDescriptors(GroovyClassDescriptor descriptor, Consumer<? super ClosureDescriptor> consumer) {}
   };
 
   boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state);

@@ -7,16 +7,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 
-import java.util.Map;
 import java.util.function.Consumer;
 
 final class CustomMembersHolderImpl implements CustomMembersHolder {
 
-  private final FList<Map> myDeclarations;
+  private final FList<Descriptor> myDeclarations;
 
-  CustomMembersHolderImpl(FList<Map> declarations) {
+  CustomMembersHolderImpl(FList<Descriptor> declarations) {
     myDeclarations = declarations;
   }
 
