@@ -53,7 +53,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
   }
   private var showingSelectors: Boolean? = null
 
-  override var initialView = GHPRToolWindowInitialView.LIST
+  override var initialView = GHPRToolWindowViewType.LIST
   override val componentController: GHPRToolWindowTabComponentController?
     get() {
       for (component in mainPanel.components) {
@@ -188,7 +188,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       ComponentController(result, wrapper, disposable).also {
         UIUtil.putClientProperty(parent, GHPRToolWindowTabComponentController.KEY, it)
       }
-      initialView = GHPRToolWindowInitialView.LIST
+      initialView = GHPRToolWindowViewType.LIST
       wrapper
     }
 
@@ -228,14 +228,15 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       GHPRCreateComponentHolder(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
                                 parentDisposable)
     }
-    private var currentDisposable: Disposable? = null
 
+    override lateinit var currentView: GHPRToolWindowViewType
+    private var currentDisposable: Disposable? = null
     private var currentPullRequest: GHPRIdentifier? = null
 
     init {
       when (initialView) {
-        GHPRToolWindowInitialView.LIST -> viewList(false)
-        GHPRToolWindowInitialView.NEW -> createPullRequest(false)
+        GHPRToolWindowViewType.NEW -> createPullRequest(false)
+        else -> viewList(false)
       }
 
       DataManager.registerDataProvider(wrapper) { dataId ->
@@ -253,6 +254,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
+      currentView = GHPRToolWindowViewType.NEW
       wrapper.setContent(createComponentHolder.value.component)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
@@ -269,6 +271,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
+      currentView = GHPRToolWindowViewType.LIST
       wrapper.setContent(listComponent)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
@@ -287,6 +290,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
           Disposer.register(parentDisposable, it)
         }
         currentPullRequest = id
+        currentView = GHPRToolWindowViewType.DETAILS
         val pullRequestComponent = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, this, id,
                                                             currentDisposable!!)
           .create()
