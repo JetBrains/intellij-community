@@ -69,16 +69,18 @@ public final class QueueProcessor<T> {
   }
 
   @NotNull
-  public static QueueProcessor<Runnable> createRunnableQueueProcessor(ThreadToUse threadToUse) {
+  public static QueueProcessor<Runnable> createRunnableQueueProcessor(@NotNull ThreadToUse threadToUse) {
     return new QueueProcessor<>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.alwaysFalse());
   }
 
   @NotNull
   private static <T> BiConsumer<T, Runnable> wrappingProcessor(@NotNull Consumer<? super T> processor) {
     return (item, continuation) -> {
-      // try-with-resources is the most simple way to ensure no suppressed exception is lost
-      try (SilentAutoClosable ignored = continuation::run) {
+      try {
         runSafely(() -> processor.consume(item));
+      }
+      finally {
+        continuation.run();
       }
     };
   }
@@ -277,13 +279,7 @@ public final class QueueProcessor<T> {
     }
   }
 
-  @FunctionalInterface
-  protected interface SilentAutoClosable extends AutoCloseable {
-    @Override
-    void close();
-  }
-
-  public static final class RunnableConsumer implements Consumer<Runnable> {
+  private static final class RunnableConsumer implements Consumer<Runnable> {
     @Override
     public void consume(Runnable runnable) {
       runnable.run();
