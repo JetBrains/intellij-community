@@ -4,8 +4,8 @@ package org.jetbrains.plugins.groovy.dsl.holders;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.dsl.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
