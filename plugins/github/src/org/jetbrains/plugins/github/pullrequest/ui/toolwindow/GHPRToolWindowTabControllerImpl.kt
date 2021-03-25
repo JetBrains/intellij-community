@@ -26,7 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentHolder
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
@@ -224,10 +224,9 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                           private val parentDisposable: Disposable) : GHPRToolWindowTabComponentController {
 
     private val listComponent by lazy { GHPRListComponent.create(project, dataContext, parentDisposable) }
-    private val createComponent = ClearableLazyValue.create {
-      GHPRCreateComponentFactory(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
-                                 parentDisposable)
-        .create()
+    private val createComponentHolder = ClearableLazyValue.create {
+      GHPRCreateComponentHolder(ActionManager.getInstance(), project, projectSettings, repositoryManager, dataContext, this,
+                                parentDisposable)
     }
     private var currentDisposable: Disposable? = null
 
@@ -254,13 +253,13 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                                                dataContext.repositoryDataService.repositoryCoordinates))
       currentDisposable?.let { Disposer.dispose(it) }
       currentPullRequest = null
-      wrapper.setContent(createComponent.value)
+      wrapper.setContent(createComponentHolder.value.component)
       wrapper.repaint()
       if (requestFocus) GHUIUtil.focusPanel(wrapper.targetComponent)
     }
 
     override fun resetNewPullRequestView() {
-      createComponent.drop()
+      createComponentHolder.value.resetModel()
     }
 
     override fun viewList(requestFocus: Boolean) {

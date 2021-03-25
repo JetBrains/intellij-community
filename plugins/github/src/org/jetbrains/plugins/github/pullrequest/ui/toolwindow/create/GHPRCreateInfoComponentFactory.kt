@@ -41,7 +41,6 @@ import git4idea.validators.GitRefNameValidator
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
@@ -56,7 +55,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabC
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.CollectionDelta
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.ActionEvent
@@ -101,10 +103,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       }
     }
     InfoController(directionModel, existenceCheckLoadingModel, existenceCheckProgressIndicator, createAction, createDraftAction)
-    directionModel.preFill()
-    descriptionDocument.loadContent(GithubBundle.message("pull.request.create.loading.template")) {
-      GHPRTemplateLoader.readTemplate(project)
-    }
 
     val directionSelector = GHPRCreateDirectionComponentFactory(repositoriesManager, directionModel).create().apply {
       border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
@@ -208,6 +206,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)
         }
       }
+      update()
     }
 
 
@@ -227,52 +226,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       else headBranch as GitLocalBranch
       val gitRemote = headRepo.gitRemote
       return GithubGitHelper.findPushTarget(gitRemote.repository, gitRemote.remote, headBranch)?.branch
-    }
-  }
-
-  private fun GHPRCreateDirectionModel.preFill() {
-    val repositoryDataService = dataContext.repositoryDataService
-    val currentRemote = repositoryDataService.repositoryMapping.gitRemote
-    val currentRepo = currentRemote.repository
-
-    val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
-
-    val branches = currentRepo.branches
-    val defaultBranchName = repositoryDataService.defaultBranchName
-    if (defaultBranchName != null) {
-      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/$defaultBranchName")
-    }
-    else {
-      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/master")
-      if (baseBranch == null) {
-        baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/main")
-      }
-    }
-
-    val repos = repositoriesManager.knownRepositories
-    val baseIsFork = repositoryDataService.isFork
-    val recentHead = settings.recentNewPullRequestHead
-    val headRepo = repos.find { it.repository == recentHead } ?: when {
-      repos.size == 1 -> repos.single()
-      baseIsFork -> baseRepo
-      else -> repos.find { it.gitRemote.remote.name == "origin" }
-    }
-
-    val headBranch = headRepo?.gitRemote?.repository?.currentBranch
-    setHead(headRepo, headBranch)
-    headSetByUser = false
-  }
-
-  private fun DisableableDocument.loadContent(@Nls loadingText: String, loader: () -> CompletableFuture<String?>) {
-    enabled = false
-    insertString(0, loadingText, null)
-    loader().successOnEdt {
-      if (!enabled) {
-        remove(0, length)
-        insertString(0, it, null)
-      }
-    }.completionOnEdt {
-      if (!enabled) enabled = true
     }
   }
 

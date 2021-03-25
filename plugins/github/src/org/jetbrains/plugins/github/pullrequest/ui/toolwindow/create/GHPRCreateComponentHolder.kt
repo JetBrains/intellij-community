@@ -31,6 +31,7 @@ import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -44,30 +45,39 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabC
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRViewTabsFactory
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.DiffRequestChainProducer
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.*
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.text.Document
 import javax.swing.text.PlainDocument
 
 
-internal class GHPRCreateComponentFactory(private val actionManager: ActionManager,
-                                          private val project: Project,
-                                          private val settings: GithubPullRequestsProjectUISettings,
-                                          private val repositoriesManager: GHProjectRepositoriesManager,
-                                          private val dataContext: GHPRDataContext,
-                                          private val viewController: GHPRToolWindowTabComponentController,
-                                          disposable: Disposable) {
+internal class GHPRCreateComponentHolder(private val actionManager: ActionManager,
+                                         private val project: Project,
+                                         private val settings: GithubPullRequestsProjectUISettings,
+                                         private val repositoriesManager: GHProjectRepositoriesManager,
+                                         private val dataContext: GHPRDataContext,
+                                         private val viewController: GHPRToolWindowTabComponentController,
+                                         disposable: Disposable) {
 
   private val repositoryDataService = dataContext.repositoryDataService
 
   private val directionModel = GHPRCreateDirectionModelImpl(repositoryDataService.repositoryMapping)
+  private val titleDocument = PlainDocument()
+  private val descriptionDocument = DisableableDocument()
+  private val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
 
   private val commitSelectionModel = SingleValueModel<VcsCommitMetadata?>(null)
 
   private val changesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
   private val commitsLoadingModel = GHIOExecutorLoadingModel<List<VcsCommitMetadata>>(disposable)
   private val commitChangesLoadingModel = GHIOExecutorLoadingModel<Collection<Change>>(disposable)
+  private val filesCountModel = createCountModel(changesLoadingModel)
+  private val commitsCountModel = createCountModel(commitsLoadingModel)
+
+  private val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(disposable)
+  private val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(disposable)
 
   init {
     directionModel.addAndInvokeDirectionChangesListener {
@@ -86,6 +96,7 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
         }
       }
     })
+    resetModel()
   }
 
   private fun checkLoadChanges(clear: Boolean) {
@@ -144,21 +155,12 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     Disposer.register(disposable, it)
   }
 
-  fun create(): JComponent {
-    val filesCountModel = createCountModel(changesLoadingModel)
-    val commitsCountModel = createCountModel(commitsLoadingModel)
-
-    val titleDocument = PlainDocument()
-    val descriptionDocument = DisableableDocument()
-    val metadataModel = GHPRCreateMetadataModel(repositoryDataService, dataContext.securityService.currentUser)
-    val existenceCheckLoadingModel = GHIOExecutorLoadingModel<GHPRIdentifier?>(uiDisposable)
-    val createLoadingModel = GHCompletableFutureLoadingModel<GHPullRequestShort>(uiDisposable)
-
+  val component by lazy {
     val infoComponent = GHPRCreateInfoComponentFactory(project, settings, repositoriesManager, dataContext, viewController)
       .create(directionModel, titleDocument, descriptionDocument, metadataModel, commitsCountModel, existenceCheckLoadingModel,
               createLoadingModel)
 
-    return GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
+    GHPRViewTabsFactory(project, viewController::viewList, uiDisposable)
       .create(infoComponent, diffController,
               createFilesComponent(), filesCountModel,
               createCommitsComponent(), commitsCountModel).apply {
@@ -258,6 +260,81 @@ internal class GHPRCreateComponentFactory(private val actionManager: ActionManag
     loadingModel.addStateChangeListener(loadingListener)
     loadingListener.onLoadingCompleted()
     return model
+  }
+
+  fun resetModel() {
+    existenceCheckLoadingModel.reset()
+    createLoadingModel.future = null
+
+    commitSelectionModel.value = null
+
+    changesLoadingModel.reset()
+    commitsLoadingModel.reset()
+    commitChangesLoadingModel.reset()
+
+    metadataModel.assignees = emptyList()
+    metadataModel.reviewers = emptyList()
+    metadataModel.labels = emptyList()
+
+    descriptionDocument.clear()
+    descriptionDocument.loadContent(GithubBundle.message("pull.request.create.loading.template")) {
+      GHPRTemplateLoader.readTemplate(project)
+    }
+    titleDocument.clear()
+
+    directionModel.preFill()
+  }
+
+  private fun GHPRCreateDirectionModel.preFill() {
+    val repositoryDataService = dataContext.repositoryDataService
+    val currentRemote = repositoryDataService.repositoryMapping.gitRemote
+    val currentRepo = currentRemote.repository
+
+    val baseRepo = GHGitRepositoryMapping(repositoryDataService.repositoryCoordinates, currentRemote)
+
+    val branches = currentRepo.branches
+    val defaultBranchName = repositoryDataService.defaultBranchName
+    if (defaultBranchName != null) {
+      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/$defaultBranchName")
+    }
+    else {
+      baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/master")
+      if (baseBranch == null) {
+        baseBranch = branches.findRemoteBranch("${currentRemote.remote.name}/main")
+      }
+    }
+
+    val repos = repositoriesManager.knownRepositories
+    val baseIsFork = repositoryDataService.isFork
+    val recentHead = settings.recentNewPullRequestHead
+    val headRepo = repos.find { it.repository == recentHead } ?: when {
+      repos.size == 1 -> repos.single()
+      baseIsFork -> baseRepo
+      else -> repos.find { it.gitRemote.remote.name == "origin" }
+    }
+
+    val headBranch = headRepo?.gitRemote?.repository?.currentBranch
+    setHead(headRepo, headBranch)
+    headSetByUser = false
+  }
+
+  private fun Document.clear() {
+    if (length > 0) {
+      remove(0, length)
+    }
+  }
+
+  private fun DisableableDocument.loadContent(@Nls loadingText: String, loader: () -> CompletableFuture<String?>) {
+    enabled = false
+    insertString(0, loadingText, null)
+    loader().successOnEdt {
+      if (!enabled) {
+        remove(0, length)
+        insertString(0, it, null)
+      }
+    }.completionOnEdt {
+      if (!enabled) enabled = true
+    }
   }
 
   private inner class NewPRDiffRequestChainProducer : DiffRequestChainProducer {
