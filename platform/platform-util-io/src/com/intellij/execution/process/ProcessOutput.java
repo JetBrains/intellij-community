@@ -22,6 +22,14 @@ public class ProcessOutput {
     myExitCode = exitCode;
   }
 
+  public ProcessOutput(@NotNull String stdout, @NotNull String stderr, int exitCode, boolean timeout, boolean cancelled) {
+    myStdoutBuilder.append(stdout);
+    myStderrBuilder.append(stderr);
+    myExitCode = exitCode;
+    myTimeout = timeout;
+    myCancelled = cancelled;
+  }
+
   public void appendStdout(@Nullable String text) {
     myStdoutBuilder.append(text);
   }

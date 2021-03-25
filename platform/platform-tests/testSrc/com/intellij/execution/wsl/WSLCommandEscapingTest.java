@@ -286,9 +286,15 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertWslCommandOutput(String expectedOut, Map<String, String> envs, List<String> command, WSLCommandLineOptions options) throws ExecutionException {
-    GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine(command).withEnvironment(envs), null, options);
-    ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
-
+    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(envs);
+    ProcessOutput output;
+    if (options.isExecuteCommandInShell()) {
+      output = wsl.executeInShellAndGetCommandOnlyStdout(commandLine, options, 10_000);
+    }
+    else {
+      wsl.patchCommandLine(commandLine, null, options);
+      output = new CapturingProcessHandler(commandLine).runProcess(10_000);
+    }
     String expected = stringify(false, "", 0, expectedOut);
     String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout());
     assertEquals(expected, actual);
