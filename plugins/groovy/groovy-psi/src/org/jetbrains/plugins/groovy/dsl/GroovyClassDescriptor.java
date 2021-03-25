@@ -10,7 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -32,8 +32,7 @@ public class GroovyClassDescriptor {
   private final PsiElement myPlace;
   private final PsiFile myFile;
 
-  //order is important
-  final Set<Factor> affectingFactors = new LinkedHashSet<>();
+  final Set<Factor> affectingFactors = EnumSet.noneOf(Factor.class);
 
   public GroovyClassDescriptor(
     @NotNull PsiType psiType,
