@@ -117,6 +117,10 @@ class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
     return toolbarState.state.oldToolbarVisible
   }
 
+  override fun showSettingsEntryPointInStatusBar(): Boolean {
+    return !isToolbarVisible() && !getShowToolbarInNavigationBar() && !toolbarState.state.newToolbarVisible
+  }
+
   override fun setToolbarVisible(value: Boolean) {
     if (value) {
       toolbarState.state = getToolbarStateByVisibilityFlags(newToolbarEnabled, value, false, toolbarState.state.navBarVisible)
