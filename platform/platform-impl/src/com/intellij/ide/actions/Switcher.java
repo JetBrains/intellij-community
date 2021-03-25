@@ -36,10 +36,10 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.SwingTextTrimmer;
@@ -67,9 +67,6 @@ import static com.intellij.openapi.util.registry.Registry.is;
  */
 public final class Switcher extends BaseSwitcherAction {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
-
-  private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
-  private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
 
   public Switcher() {
     super(null);
@@ -215,7 +212,7 @@ public final class Switcher extends BaseSwitcherAction {
                ? (m2 == null ? 0 : 1)
                : (m2 == null ? -1 : m1.compareTo(m2));
       }).forEach(twModel::add);
-      if (pinned) {
+      if (pinned && !windows.isEmpty()) {
         twModel.add(new SwitcherRecentLocations(this));
       }
       if (mySpeedSearch != null && !is("ide.recent.files.tool.window.mnemonics")) {
@@ -223,7 +220,7 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getMainText, mySpeedSearch));
-      toolWindows.setVisibleRowCount(toolWindows.getModel().getSize());
+      toolWindows.setVisibleRowCount(toolWindows.getItemsCount());
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.tool.window.list"));
@@ -235,7 +232,7 @@ public final class Switcher extends BaseSwitcherAction {
       myClickListener.installOn(toolWindows);
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
-                                                        toolWindows.getModel().getSize(), recent);
+                                                        toolWindows.getItemsCount(), recent);
       CollectionListModel<SwitcherVirtualFile> filesModel = new CollectionListModel<>(wrap(filesToShow));
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
@@ -266,7 +263,7 @@ public final class Switcher extends BaseSwitcherAction {
       };
       files = JBListWithOpenInRightSplit
         .createListWithOpenInRightSplitter(createModel(filesModel, SwitcherListItem::getMainText, mySpeedSearch), null, true);
-      files.setVisibleRowCount(toolWindows.getModel().getSize());
+      files.setVisibleRowCount(files.getItemsCount());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
 
@@ -281,7 +278,6 @@ public final class Switcher extends BaseSwitcherAction {
       myClickListener.installOn(files);
 
       if (filesModel.getSize() > 0) {
-        addToCenter(new SwitcherScrollPane(files, JBUI.CurrentTheme.Popup.separatorColor()));
         int selectionIndex = getFilesSelectedIndex(project, files, forward);
         files.setSelectedIndex(selectionIndex > -1 ? selectionIndex : 0);
       }
@@ -289,8 +285,11 @@ public final class Switcher extends BaseSwitcherAction {
         ScrollingUtil.ensureSelectionExists(toolWindows);
       }
       addToTop(header);
-      addToLeft(new SwitcherScrollPane(toolWindows, null));
       addToBottom(pathLabel);
+      addToCenter(new SwitcherScrollPane(files, null));
+      if (!windows.isEmpty()) {
+        addToLeft(new SwitcherScrollPane(toolWindows, JBUI.CurrentTheme.Popup.separatorColor()));
+      }
 
       if (mySpeedSearch != null) {
         // copy a speed search listener from the panel to the lists
@@ -299,7 +298,7 @@ public final class Switcher extends BaseSwitcherAction {
         toolWindows.addKeyListener(listener);
       }
 
-      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, filesModel.getSize() > 0 ? files : toolWindows)
+      myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, !files.isEmpty() || toolWindows.isEmpty() ? files : toolWindows)
         .setResizable(pinned)
         .setModalContext(false)
         .setFocusable(true)
@@ -307,11 +306,14 @@ public final class Switcher extends BaseSwitcherAction {
         .setCancelOnWindowDeactivation(true)
         .setCancelOnOtherWindowOpen(true)
         .setMovable(pinned)
-        .setMinSize(new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT))
         .setDimensionServiceKey(pinned ? project : null, pinned ? "SwitcherDM" : null , false)
         .setCancelKeyEnabled(false)
         .createPopup();
       Disposer.register(myPopup, this);
+
+      if (pinned) {
+        myPopup.setMinimumSize(new JBDimension(windows.isEmpty() ? 300 : 500, 200));
+      }
 
       setFocusCycleRoot(true);
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
@@ -593,7 +595,7 @@ public final class Switcher extends BaseSwitcherAction {
             editorManager.closeFile(virtualFile, wnd, false);
           }
           ListUtil.removeItem(files.getModel(), selectedIndex);
-          if (recent) {
+          if (svf.getWindow() == null) {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
         }
@@ -601,7 +603,7 @@ public final class Switcher extends BaseSwitcherAction {
           item.close(this);
         }
       }
-      int size = files.getModel().getSize();
+      int size = files.getItemsCount();
       if (size > 0) {
         int index = Math.min(Math.max(selectedIndex, 0), size - 1);
         files.setSelectedIndex(index);
@@ -614,10 +616,6 @@ public final class Switcher extends BaseSwitcherAction {
 
     private boolean isFilesSelected() {
       return getSelectedList() == files;
-    }
-
-    private boolean isFilesVisible() {
-      return files.getModel().getSize() > 0;
     }
 
     private void cancel() {
@@ -637,15 +635,15 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     public void go(boolean forward) {
-      JList<? extends SwitcherListItem> selected = getSelectedList();
-      JList<? extends SwitcherListItem> list = selected;
+      JBList<? extends SwitcherListItem> selected = getSelectedList();
+      JBList<? extends SwitcherListItem> list = selected;
       int index = list.getSelectedIndex();
       if (forward) index++; else index--;
-      if ((forward && index >= list.getModel().getSize()) || (!forward && index < 0)) {
-        if (isFilesVisible()) {
-          list = isFilesSelected() ? toolWindows : files;
+      if ((forward && index >= list.getItemsCount()) || (!forward && index < 0)) {
+        if (!toolWindows.isEmpty() && !files.isEmpty()) {
+          list = list == files ? toolWindows : files;
         }
-        index = forward ? 0 : list.getModel().getSize() - 1;
+        index = forward ? 0 : list.getItemsCount() - 1;
       }
       list.setSelectedIndex(index);
       list.ensureIndexIsVisible(index);
@@ -676,7 +674,7 @@ public final class Switcher extends BaseSwitcherAction {
       final boolean listWasSelected = files.getSelectedIndex() != -1;
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
-                                                        toolWindows.getModel().getSize(), recent);
+                                                        toolWindows.getItemsCount(), recent);
 
       ListModel<SwitcherVirtualFile> model = files.getModel();
       ListUtil.removeAllItems(model);
@@ -825,12 +823,12 @@ public final class Switcher extends BaseSwitcherAction {
       protected int getSelectedIndex() {
         return myComponent.isFilesSelected()
                ? myComponent.files.getSelectedIndex()
-               : myComponent.files.getModel().getSize() + myComponent.toolWindows.getSelectedIndex();
+               : myComponent.files.getItemsCount() + myComponent.toolWindows.getSelectedIndex();
       }
 
       @Override
       protected int getElementCount() {
-        return myComponent.files.getModel().getSize() + myComponent.toolWindows.getModel().getSize();
+        return myComponent.files.getItemsCount() + myComponent.toolWindows.getItemsCount();
       }
 
       @Override
@@ -897,7 +895,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
         ((NameFilteringListModel)myComponent.files.getModel()).refilter();
         ((NameFilteringListModel)myComponent.toolWindows.getModel()).refilter();
-        if (myComponent.files.getModel().getSize() + myComponent.toolWindows.getModel().getSize() == 0) {
+        if (myComponent.files.getItemsCount() + myComponent.toolWindows.getItemsCount() == 0) {
           myComponent.toolWindows.getEmptyText().setText("");
           myComponent.files.getEmptyText().setText(IdeBundle.message("empty.text.press.enter.to.search.in.project"));
         }
@@ -935,7 +933,7 @@ public final class Switcher extends BaseSwitcherAction {
     private int width;
 
     SwitcherScrollPane(@NotNull Component view, @Nullable Color color) {
-      super(view, VERTICAL_SCROLLBAR_AS_NEEDED, color == null ? HORIZONTAL_SCROLLBAR_NEVER : HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      super(view, VERTICAL_SCROLLBAR_AS_NEEDED, color == null ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
       setBorder(color == null ? JBUI.Borders.empty() : JBUI.Borders.customLineLeft(color));
       setViewportBorder(JBUI.Borders.empty());
     }
