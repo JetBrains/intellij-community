@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -64,7 +63,9 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
   @NotNull
   public Collection<FilePath> values() {
     final HashSet<FilePath> result = new HashSet<>();
-    result.addAll(StreamEx.of(myVcsIgnoredHolderMap.values()).flatCollection(IgnoredFilesHolder::values).toSet());
+    for (IgnoredFilesHolder fileHolder : myVcsIgnoredHolderMap.values()) {
+      result.addAll(fileHolder.values());
+    }
     return result;
   }
 
