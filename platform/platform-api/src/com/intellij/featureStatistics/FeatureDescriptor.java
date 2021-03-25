@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
@@ -27,6 +28,7 @@ public class FeatureDescriptor {
   private long myLastTimeUsed;
   private int myShownCount;
   private ProductivityFeaturesProvider myProvider;
+  private static final Logger LOG = Logger.getInstance(FeatureDescriptor.class);
   @NonNls private static final String ATTRIBUTE_COUNT = "count";
   @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
   @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
@@ -89,8 +91,12 @@ public class FeatureDescriptor {
       @NonNls String detectorTypeStr = eventDetectorElement.getAttributeValue(ATTRIBUTE_DETECTOR_TYPE);
       @NonNls String eventDataId = eventDetectorElement.getAttributeValue(ATTRIBUTE_ID);
       if (detectorTypeStr != null && eventDataId != null) {
-        LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase());
-        myLogEventDetectors.add(LogEventDetector.create(detectorType, myId, eventDataId));
+        try {
+          LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase());
+          myLogEventDetectors.add(LogEventDetector.create(detectorType, myId, eventDataId));
+        } catch (Throwable t) {
+          LOG.error(String.format("Error on reading event-detector with event data id %s for feature %s", eventDataId, myId), t);
+        }
       }
     }
     List<Element> dependencies = element.getChildren(ELEMENT_DEPENDENCY);
