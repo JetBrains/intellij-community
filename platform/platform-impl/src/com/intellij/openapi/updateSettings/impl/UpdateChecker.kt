@@ -533,8 +533,8 @@ object UpdateChecker {
       else {
         UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, pluginUpdates.incompatible)
 
-        IdeUpdateUsageTriggerCollector.trigger("notification.shown")
         if (userInitiated) {
+          IdeUpdateUsageTriggerCollector.trigger("notification.shown")
           val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
           showNotification(project, title, "", {
             IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
