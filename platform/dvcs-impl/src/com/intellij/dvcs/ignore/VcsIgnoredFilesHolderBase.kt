@@ -12,11 +12,11 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
 ) : VcsIgnoredFilesHolder {
 
-  private val vcsIgnoredHolderMap = repositoryManager.repositories.associateWith { getHolder(it) }
+  private val allHolders get() = repositoryManager.repositories.asSequence().map { getHolder(it) }
 
   protected abstract fun getHolder(repository: REPOSITORY): VcsRepositoryIgnoredFilesHolder
 
-  override fun isInUpdatingMode() = vcsIgnoredHolderMap.values.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
+  override fun isInUpdatingMode() = allHolders.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
   override fun cleanAll() = Unit
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = Unit
@@ -27,16 +27,16 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun containsFile(file: FilePath) = findIgnoreHolderByFile(file)?.containsFile(file) ?: false
 
-  override fun values() = vcsIgnoredHolderMap.flatMap { it.value.ignoredFilePaths }
+  override fun values() = allHolders.flatMap { it.ignoredFilePaths }.toList()
 
   override fun startRescan() {
-    vcsIgnoredHolderMap.values.forEach { it.startRescan() }
+    allHolders.forEach { it.startRescan() }
   }
 
-  private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? =
-    repositoryManager.getRepositoryForFileQuick(file)?.let { repositoryForFile ->
-      vcsIgnoredHolderMap[repositoryForFile]
-    }
+  private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? {
+    val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return null
+    return getHolder(repository)
+  }
 
   companion object {
     private val LOG = logger<VcsIgnoredFilesHolderBase<*>>()
