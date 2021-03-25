@@ -335,7 +335,7 @@ class LookupElementFactory(
                 .minByOrNull { it.enum }?.let { return it }
 
             val overridden = descriptor.overriddenTreeUniqueAsSequence(useOriginal = false)
-            return overridden.map { callableWeightBasic(it, receiverTypes)!! }.minBy { it.enum }!!
+            return overridden.map { callableWeightBasic(it, receiverTypes)!! }.minByOrNull { it.enum }!!
         }
 
         return callableWeightBasic(descriptor, receiverTypes)
