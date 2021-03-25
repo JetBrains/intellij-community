@@ -2406,7 +2406,8 @@ public final class HighlightUtil {
 
 
   static HighlightInfo checkIllegalType(@NotNull PsiTypeElement typeElement) {
-    if (typeElement.getParent() instanceof PsiTypeElement) return null;
+    PsiElement parent = typeElement.getParent();
+    if (parent instanceof PsiTypeElement) return null;
 
     if (PsiUtil.isInsideJavadocComment(typeElement)) return null;
 
@@ -2415,7 +2416,14 @@ public final class HighlightUtil {
     if (componentType instanceof PsiClassType) {
       PsiClass aClass = PsiUtil.resolveClassInType(componentType);
       if (aClass == null) {
-        String canonicalText = type.getCanonicalText();
+        if (typeElement.isInferredType() && parent instanceof PsiLocalVariable) {
+          PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiLocalVariable)parent).getInitializer());
+          if (initializer instanceof PsiNewExpression) {
+            // The problem is already reported on the initializer
+            return null;
+          }
+        }
+        String canonicalText = componentType.getCanonicalText();
         String description = JavaErrorBundle.message("unknown.class", canonicalText);
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
