@@ -1,0 +1,96 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions
+
+import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.Switcher.SwitcherPanel
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.SpeedSearchBase
+import com.intellij.ui.SpeedSearchComparator
+import com.intellij.ui.speedSearch.NameFilteringListModel
+import javax.swing.ListModel
+
+internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher) {
+
+  fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
+    NameFilteringListModel(model,
+                           { it.mainText },
+                           { !isPopupActive || compare(it, enteredPrefix) },
+                           { StringUtil.notNullize(enteredPrefix) })
+
+  private val files
+    get() = myComponent.files
+
+  private val windows
+    get() = myComponent.toolWindows
+
+  override fun getSelectedIndex() = when (files.isFocusOwner) {
+    true -> files.selectedIndex
+    else -> windows.selectedIndex + files.itemsCount
+  }
+
+  override fun getElementText(element: Any?) = (element as? SwitcherListItem)?.mainText ?: ""
+
+  override fun getElementCount() = files.itemsCount + windows.itemsCount
+
+  override fun getElementAt(index: Int): SwitcherListItem = when (index < files.itemsCount) {
+    true -> files.model.getElementAt(index)
+    else -> windows.model.getElementAt(index - files.itemsCount)
+  }
+
+  override fun selectElement(element: Any?, selectedText: String) {
+    val fileElement = element is SwitcherVirtualFile
+    val first = if (!fileElement) files else windows
+    val second = if (fileElement) files else windows
+    if (!first.isSelectionEmpty) first.clearSelection()
+    second.clearSelection()
+    if (element == null) return
+    second.setSelectedValue(element, true)
+    second.requestFocusInWindow()
+  }
+
+  override fun findElement(pattern: String): Any? {
+    val windowsFocused = windows.isFocusOwner
+    val first = if (!windowsFocused) files else windows
+    val second = if (windowsFocused) files else windows
+    return findElementIn(first.model, pattern) ?: findElementIn(second.model, pattern)
+  }
+
+  private fun <T> findElementIn(model: ListModel<T>, pattern: String): T? {
+    var foundElement: T? = null
+    var foundDegree = 0
+    for (i in 0 until model.size) {
+      val element = model.getElementAt(i)
+      val text = getElementText(element)
+      if (text.isEmpty()) continue
+      val degree = comparator.matchingDegree(pattern, text)
+      if (foundElement == null || foundDegree < degree) {
+        foundElement = element
+        foundDegree = degree
+      }
+    }
+    return foundElement
+  }
+
+  init {
+    comparator = SpeedSearchComparator(false, true)
+    addChangeListener {
+      if (myComponent.project.isDisposed) {
+        myComponent.myPopup.cancel()
+      }
+      else {
+        (files.model as? NameFilteringListModel<*>)?.refilter()
+        (windows.model as? NameFilteringListModel<*>)?.refilter()
+
+        if (isPopupActive && files.isEmpty && windows.isEmpty) {
+          files.setEmptyText(message("recent.files.speed.search.empty.text"))
+          windows.setEmptyText("")
+        }
+        else {
+          files.setEmptyText(message("recent.files.file.list.empty.text"))
+          windows.setEmptyText(message("recent.files.tool.window.list.empty.text"))
+        }
+        refreshSelection()
+      }
+    }
+  }
+}
