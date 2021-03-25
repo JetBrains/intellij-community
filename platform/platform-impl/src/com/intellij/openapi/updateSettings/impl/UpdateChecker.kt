@@ -510,9 +510,8 @@ object UpdateChecker {
                           showSettingsLink: Boolean) {
     val updatedChannel = platformUpdates.updatedChannel
     val newBuild = platformUpdates.newBuild
-    val updatedPlugins = (pluginUpdates.enabled.asSequence() + pluginUpdates.disabled.asSequence())
-      .filter { !isIgnored(it.descriptor) }
-      .toList()
+    val enabledPlugins = pluginUpdates.enabled.filter { !isIgnored(it.descriptor) }
+    val updatedPlugins = (enabledPlugins.asSequence() + pluginUpdates.disabled.asSequence().filter { !isIgnored(it.descriptor) }).toList()
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (updatedChannel != null && newBuild != null) {
@@ -543,7 +542,7 @@ object UpdateChecker {
       return
     }
 
-    if (updatedPlugins.isNotEmpty()) {
+    if (enabledPlugins.isNotEmpty()) {
       ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
 
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
@@ -551,8 +550,7 @@ object UpdateChecker {
       if (forceDialog) {
         runnable()
       }
-      // don't show notification if all updated plugins is disabled
-      else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {
+      else if (userInitiated) {
         UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
 
         if (userInitiated) {
@@ -599,7 +597,7 @@ object UpdateChecker {
       }
     }
 
-    if (updatedPlugins.isEmpty() && externalUpdates.isEmpty()) {
+    if (enabledPlugins.isEmpty() && externalUpdates.isEmpty()) {
       if (forceDialog) {
         NoUpdatesDialog(showSettingsLink).show()
       }
