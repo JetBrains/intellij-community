@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
@@ -54,9 +53,9 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
             .filter { platform == null || it.kind.isCompatibleWith(platform) }
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
         val icons = getRelevantToolings(declaration.module?.platform)
-            .mapNotNull { it.getTestIcon(declaration, descriptor) }
+            .mapNotNull { it.getTestIcon(declaration, descriptorProvider) }
             .distinct()
 
         return when (icons.size) {

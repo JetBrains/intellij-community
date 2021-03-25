@@ -9,8 +9,6 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.psi.PsiMethod
-import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -53,7 +51,7 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
         val (urls, framework) = when (declaration) {
             is KtClassOrObject -> {
                 val lightClass = declaration.toLightClass() ?: return null
@@ -80,13 +78,11 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
             else -> return null
         }
 
-        if (framework != null) {
-            return getTestStateIcon(urls, declaration.project, strict = false, framework.icon)
+        framework?.let {
+            return getTestStateIcon(urls, declaration.project, strict = false, it.icon)
         }
 
-        if (!descriptor.isKotlinTestDeclaration()) {
-            return null
-        }
+        descriptorProvider()?.takeIf { it.isKotlinTestDeclaration() } ?: return null
 
         return getTestStateIcon(urls, declaration.project, strict = false)
     }

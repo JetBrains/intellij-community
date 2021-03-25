@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.ide.konan
 
-import com.intellij.execution.TestStateStorage
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.DummyLibraryProperties
 import com.intellij.openapi.roots.libraries.Library
@@ -51,7 +49,8 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun getLibraryDescription(project: Project): CustomLibraryDescription? = null
     override fun getLibraryVersionProvider(project: Project): (Library) -> String? = { null }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+        val descriptor = descriptorProvider() ?: return null
         if (!descriptor.isKotlinTestDeclaration()) return null
 
         val moduleName = descriptor.module.stableName?.asString() ?: ""

@@ -31,9 +31,11 @@ import javax.swing.Icon
 private val TEST_FQ_NAME = FqName("kotlin.test.Test")
 private val IGNORE_FQ_NAME = FqName("kotlin.test.Ignore")
 
-fun getGenericTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor, initialLocations: () -> List<String>?): Icon? {
-    if (!descriptor.isKotlinTestDeclaration()) return null
-
+fun getGenericTestIcon(
+    declaration: KtNamedDeclaration,
+    descriptorProvider: () -> DeclarationDescriptor?,
+    initialLocations: () -> List<String>?
+): Icon? {
     val locations = initialLocations()?.toMutableList() ?: return null
 
     val clazz = when (declaration) {
@@ -41,6 +43,9 @@ fun getGenericTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationD
         is KtNamedFunction -> declaration.containingClassOrObject ?: return null
         else -> return null
     }
+
+    val descriptor = descriptorProvider() ?: return null
+    if (!descriptor.isKotlinTestDeclaration()) return null
 
     locations += clazz.parentsWithSelf.filterIsInstance<KtNamedDeclaration>()
         .mapNotNull { it.name }

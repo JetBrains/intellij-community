@@ -50,8 +50,8 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
         JsLibraryStdDetectionUtil.getJsLibraryStdVersion(library, project)
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
-        return getGenericTestIcon(declaration, descriptor) {
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+        return getGenericTestIcon(declaration, descriptorProvider) {
             val contexts by lazy { computeConfigurationContexts(declaration) }
 
             val runConfigData = RunConfigurationProducer
