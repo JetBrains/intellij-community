@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,14 @@ package org.jetbrains.kotlin.idea.refactoring
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.ui.components.JBList
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -41,13 +40,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Component
 import javax.swing.DefaultListCellRenderer
-import javax.swing.DefaultListModel
 import javax.swing.JList
 import kotlin.math.min
 
-@Throws(IntroduceRefactoringException::class)
 fun selectElement(
     editor: Editor,
     file: KtFile,
@@ -55,7 +53,6 @@ fun selectElement(
     callback: (PsiElement?) -> Unit
 ) = selectElement(editor, file, true, elementKinds, callback)
 
-@Throws(IntroduceRefactoringException::class)
 fun selectElement(
     editor: Editor,
     file: KtFile,
@@ -97,7 +94,6 @@ fun selectElement(
     }
 }
 
-@Throws(IntroduceRefactoringException::class)
 fun getSmartSelectSuggestions(
     file: PsiFile,
     offset: Int,
@@ -175,7 +171,6 @@ fun getSmartSelectSuggestions(
     return elements
 }
 
-@Throws(IntroduceRefactoringException::class)
 private fun smartSelectElement(
     editor: Editor,
     file: PsiFile,
@@ -187,7 +182,8 @@ private fun smartSelectElement(
     val elements = elementKinds.flatMap { getSmartSelectSuggestions(file, offset, it) }
     if (elements.isEmpty()) {
         if (failOnEmptySuggestion) throw IntroduceRefactoringException(
-            KotlinBundle.message("cannot.refactor.not.expression"))
+            KotlinBundle.message("cannot.refactor.not.expression")
+        )
         callback(null)
         return
     }
@@ -197,39 +193,7 @@ private fun smartSelectElement(
         return
     }
 
-    val model = DefaultListModel<PsiElement>()
-    elements.forEach { model.addElement(it) }
-
     val highlighter = ScopeHighlighter(editor)
-
-    val list = JBList<PsiElement>(model)
-
-    list.cellRenderer = object : DefaultListCellRenderer() {
-        override fun getListCellRendererComponent(
-            list: JList<*>,
-            value: Any?,
-            index: Int,
-            isSelected: Boolean,
-            cellHasFocus: Boolean
-        ): Component {
-            val rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-            val element = value as KtElement?
-            if (element!!.isValid) {
-                text = getExpressionShortText(element)
-            }
-            return rendererComponent
-        }
-    }
-
-    list.addListSelectionListener {
-        highlighter.dropHighlight()
-        val selectedIndex = list.selectedIndex
-        if (selectedIndex < 0) return@addListSelectionListener
-        val toExtract = ArrayList<PsiElement>()
-        toExtract.add(model.get(selectedIndex))
-        highlighter.highlight(model.get(selectedIndex), toExtract)
-    }
-
     var title = "Elements"
     if (elementKinds.size == 1) {
         title = when (elementKinds.iterator().next()) {
@@ -239,14 +203,31 @@ private fun smartSelectElement(
     }
 
     JBPopupFactory.getInstance()
-        .createListPopupBuilder(list)
+        .createPopupChooserBuilder(elements)
+        .setItemSelectedCallback { selectedElement ->
+            highlighter.dropHighlight()
+            selectedElement?.let { highlighter.highlight(it, listOf(it)) }
+        }
+        .setRenderer(object : DefaultListCellRenderer() {
+            override fun getListCellRendererComponent(
+                list: JList<*>,
+                value: Any?,
+                index: Int,
+                isSelected: Boolean,
+                cellHasFocus: Boolean,
+            ): Component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).apply {
+                value?.safeAs<KtElement>()?.takeIf { it.isValid }?.let {
+                    text = getExpressionShortText(it)
+                }
+            }
+        })
         .setTitle(title)
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback { callback(list.selectedValue as KtElement) }
+        .setItemChosenCallback(callback)
         .addListener(
-            object : JBPopupAdapter() {
+            object : JBPopupListener {
                 override fun onClosed(event: LightweightWindowEvent) {
                     highlighter.dropHighlight()
                 }
@@ -264,7 +245,6 @@ fun getExpressionShortText(element: KtElement): String {
     return trimmedText
 }
 
-@Throws(IntroduceRefactoringException::class)
 private fun findElement(
     file: KtFile,
     startOffset: Int,

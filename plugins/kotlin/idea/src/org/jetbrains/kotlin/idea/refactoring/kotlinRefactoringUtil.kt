@@ -14,9 +14,8 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.command.CommandAdapter
 import com.intellij.openapi.command.CommandEvent
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -27,7 +26,10 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.TextRange
@@ -45,7 +47,6 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.ui.ConflictsDialog
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.ui.components.JBList
 import com.intellij.usageView.UsageViewTypeLocation
 import com.intellij.util.VisibilityUtil
 import com.intellij.util.containers.MultiMap
@@ -84,7 +85,6 @@ import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -247,36 +247,26 @@ fun <T, E : PsiElement> getPsiElementPopup(
     highlightSelection: Boolean,
     toPsi: (T) -> E,
     processor: (T) -> Boolean
-): JBPopup {
+): JBPopup = with(JBPopupFactory.getInstance().createPopupChooserBuilder(elements)) {
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-
-    val list = JBList(elements.map(toPsi))
-    list.cellRenderer = renderer
-    list.addListSelectionListener {
+    setRenderer(renderer)
+    setItemSelectedCallback { element: T? ->
         highlighter?.dropHighlight()
-        val index = list.selectedIndex
-        if (index >= 0) {
-            highlighter?.highlight(list.model!!.getElementAt(index) as PsiElement)
+        element?.let {
+            highlighter?.highlight(toPsi(element))
         }
     }
 
-    return with(PopupChooserBuilder<E>(list)) {
-        title?.let { setTitle(it) }
-        renderer.installSpeedSearch(this as IPopupChooserBuilder<E>, true)
-        setItemChoosenCallback {
-            val index = list.selectedIndex
-            if (index >= 0) {
-                processor(elements[index])
-            }
+    title?.let { setTitle(it) }
+    renderer.installSpeedSearch(this, true)
+    setItemChosenCallback { it?.let(processor) }
+    addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+            highlighter?.dropHighlight()
         }
-        addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-                highlighter?.dropHighlight()
-            }
-        })
+    })
 
-        createPopup()
-    }
+    createPopup()
 }
 
 class SelectionAwareScopeHighlighter(val editor: Editor) {
@@ -408,7 +398,7 @@ fun <T> chooseContainerElement(
                 else -> this
             }
 
-            override fun getElementText(element: PsiElement): String? {
+            override fun getElementText(element: PsiElement): String {
                 val representativeElement = element.getRepresentativeElement()
                 return representativeElement.renderDeclaration() ?: representativeElement.renderText()
             }
@@ -417,8 +407,7 @@ fun <T> chooseContainerElement(
 
             override fun getIconFlags(): Int = 0
 
-            override fun getIcon(element: PsiElement): Icon? =
-                super.getIcon(element.getRepresentativeElement())
+            override fun getIcon(element: PsiElement): Icon? = super.getIcon(element.getRepresentativeElement())
         },
         title,
         highlightSelection,
@@ -525,7 +514,7 @@ fun createJavaMethod(template: PsiMethod, targetClass: PsiClass): PsiMethod {
 
     val targetParamList = method.parameterList
     val newParams = template.parameterList.parameters.map {
-        val param = factory.createParameter(it.name!!, it.type)
+        val param = factory.createParameter(it.name, it.type)
         copyModifierListItems(it.modifierList!!, param.modifierList!!)
         param
     }
@@ -696,14 +685,13 @@ fun KtElement?.validateElement(@NlsContexts.DialogMessage errorMessage: String) 
 }
 
 fun invokeOnceOnCommandFinish(action: () -> Unit) {
-    val commandProcessor = CommandProcessor.getInstance()
-    val listener = object : CommandAdapter() {
+    val simpleConnect = ApplicationManager.getApplication().messageBus.simpleConnect()
+    simpleConnect.subscribe(CommandListener.TOPIC, object : CommandListener {
         override fun beforeCommandFinished(event: CommandEvent) {
             action()
-            commandProcessor.removeCommandListener(this)
+            simpleConnect.disconnect()
         }
-    }
-    commandProcessor.addCommandListener(listener)
+    })
 }
 
 fun FqNameUnsafe.hasIdentifiersOnly(): Boolean = pathSegments().all { it.asString().quoteIfNeeded().isIdentifier() }
@@ -859,36 +847,35 @@ fun checkSuperMethods(
     ignore: Collection<PsiElement>?,
     @Nls actionString: String
 ): List<PsiElement> {
-    if (!declaration.hasModifier(OVERRIDE_KEYWORD)) return listOf(declaration)
+    if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
     val project = declaration.project
 
-    val (declarationDescriptor, overriddenElementsToDescriptor) =
-        underModalProgress(
-            project,
-            KotlinBundle.message("find.usages.progress.text.declaration.superMethods"))
-        {
-            val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
+    val (declarationDescriptor, overriddenElementsToDescriptor) = underModalProgress(
+        project,
+        KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
+    ) {
+        val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
 
-            if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
+        if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
 
-            val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
-            for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
-                declarationDescriptor
-            )) {
-                val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                    project,
-                    overriddenDescriptor
-                ) ?: continue
-                if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
-                    overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
-                }
+        val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
+        for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
+            declarationDescriptor
+        )) {
+            val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+                project,
+                overriddenDescriptor
+            ) ?: continue
+            if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
+                overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
             }
-            if (ignore != null) {
-                overriddenElementsToDescriptor.keys.removeAll(ignore)
-            }
-            (declarationDescriptor to overriddenElementsToDescriptor)
         }
+        if (ignore != null) {
+            overriddenElementsToDescriptor.keys.removeAll(ignore)
+        }
+        (declarationDescriptor to overriddenElementsToDescriptor)
+    }
 
     if (overriddenElementsToDescriptor.isEmpty()) return listOf(declaration)
 
@@ -978,15 +965,15 @@ fun checkSuperMethodsWithPopup(
         append(" of ")
         append(SymbolPresentationUtil.getSymbolPresentableText(superClass))
     }
-    val list = JBList<String>(renameBase, renameCurrent)
+
     JBPopupFactory.getInstance()
-        .createListPopupBuilder(list)
+        .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
         .setTitle(title)
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback {
-            val value = list.selectedValue ?: return@setItemChoosenCallback
+        .setItemChosenCallback { value: String? ->
+            if (value == null) return@setItemChosenCallback
             val chosenElements = if (value == renameBase) deepestSuperMethods + declaration else listOf(declaration)
             action(chosenElements)
         }

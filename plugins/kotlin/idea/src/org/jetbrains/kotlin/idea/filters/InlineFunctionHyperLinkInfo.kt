@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 package org.jetbrains.kotlin.idea.filters
@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.JBList
 import org.jetbrains.kotlin.idea.KotlinBundle
 import java.awt.Component
 import javax.swing.JList
@@ -23,20 +22,17 @@ class InlineFunctionHyperLinkInfo(
     private val project: Project,
     private val inlineInfo: List<InlineInfo>
 ) : HyperlinkInfoBase(), FileHyperlinkInfo {
-
     override fun navigate(project: Project, hyperlinkLocationPoint: RelativePoint?) {
         if (inlineInfo.isEmpty()) return
 
         if (inlineInfo.size == 1) {
             OpenFileHyperlinkInfo(project, inlineInfo.first().file, inlineInfo.first().line).navigate(project)
         } else {
-            val list = JBList(inlineInfo)
-            list.cellRenderer = InlineInfoCellRenderer()
-            val popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+            val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(inlineInfo)
                 .setTitle(KotlinBundle.message("filters.title.navigate.to"))
-                .setItemChoosenCallback {
-                    val fileInfo = list.selectedValue as InlineInfo
-                    OpenFileHyperlinkInfo(project, fileInfo.file, fileInfo.line).navigate(project)
+                .setRenderer(InlineInfoCellRenderer())
+                .setItemChosenCallback { fileInfo ->
+                    fileInfo?.let { OpenFileHyperlinkInfo(project, fileInfo.file, fileInfo.line).navigate(project) }
                 }
                 .createPopup()
 

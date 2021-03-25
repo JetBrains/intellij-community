@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiNamedElement
-import com.intellij.ui.components.JBList
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -76,16 +75,18 @@ internal fun chooseApplicableComponentFunctions(
 
     if (editor == null) return callback(emptyList())
 
-    val list = JBList<String>(
-        KotlinBundle.message("text.create.single.variable"),
-        KotlinBundle.message("text.create.destructuring.declaration")
+    val singleVariable = KotlinBundle.message("text.create.single.variable")
+    val listOfVariants = listOf(
+        singleVariable,
+        KotlinBundle.message("text.create.destructuring.declaration"),
     )
+
     JBPopupFactory.getInstance()
-        .createListPopupBuilder(list)
+        .createPopupChooserBuilder(listOfVariants)
         .setMovable(true)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback { callback(if (list.selectedIndex == 0) emptyList() else functions) }
+        .setItemChosenCallback { callback(if (it == singleVariable) emptyList() else functions) }
         .createPopup()
         .showInBestPositionFor(editor)
 }
