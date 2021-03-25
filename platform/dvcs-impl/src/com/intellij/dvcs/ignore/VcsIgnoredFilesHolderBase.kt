@@ -29,10 +29,6 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun values() = allHolders.flatMap { it.ignoredFilePaths }.toList()
 
-  override fun startRescan() {
-    allHolders.forEach { it.startRescan() }
-  }
-
   private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? {
     val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return null
     return getHolder(repository)

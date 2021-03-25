@@ -24,8 +24,6 @@ public interface VcsIgnoredFilesHolder extends IgnoredFilesHolder {
 
   default boolean isInUpdatingMode() {return false;}
 
-  default void startRescan(){}
-
   interface Provider {
     @NotNull
     AbstractVcs getVcs();
