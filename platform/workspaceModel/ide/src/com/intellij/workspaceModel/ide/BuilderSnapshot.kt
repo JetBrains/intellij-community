@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
 import kotlin.reflect.KClass
@@ -106,6 +108,10 @@ class BuilderSnapshot(val version: Long, private val storage: WorkspaceEntitySto
     return builder.getMutableVirtualFileUrlIndex()
   }
 
+  override fun getConsistencyCheckingMode(): ConsistencyCheckingMode = builder.getConsistencyCheckingMode()
+
   override val modificationCount: Long
     get() = builder.modificationCount
 }
+
+fun ConsistencyCheckingMode.Companion.defaultIde() = default(ApplicationManager.getApplication().isEAP)

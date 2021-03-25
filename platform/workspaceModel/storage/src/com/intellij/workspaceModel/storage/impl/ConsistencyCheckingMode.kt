@@ -9,8 +9,8 @@ enum class ConsistencyCheckingMode {
   SYNCHRONOUS;
 
   companion object {
-    fun default(): ConsistencyCheckingMode =
-      if (Registry.`is`("ide.new.project.model.strict.mode.rbs", true))
+    fun default(isStrictModeAllowed: Boolean = false): ConsistencyCheckingMode =
+      if (Registry.`is`("ide.new.project.model.strict.mode.rbs", false) || isStrictModeAllowed)
         ASYNCHRONOUS
       else
         DISABLED

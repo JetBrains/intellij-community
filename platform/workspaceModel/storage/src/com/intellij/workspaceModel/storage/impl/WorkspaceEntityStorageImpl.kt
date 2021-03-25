@@ -863,6 +863,8 @@ internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
+  override fun getConsistencyCheckingMode(): ConsistencyCheckingMode = consistencyCheckingMode
+
   internal fun assertConsistency() {
     entitiesByType.assertConsistency(this)
     // Rules:

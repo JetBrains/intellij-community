@@ -31,6 +31,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -224,7 +225,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       fileIdToFileName.remove(it.fileNameId)
     }
 
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
     affectedFileLoaders.forEach {
       loadEntitiesAndReportExceptions(it, builder, reader, errorReporter)
     }
@@ -235,12 +236,13 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                        builder: WorkspaceEntityStorageBuilder,
                        errorReporter: ErrorReporter,
                        project: Project?): List<EntitySource> {
+    val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
     try {
       val serializers = fileSerializersByUrl.values.toList()
       val tasks = serializers.map { serializer ->
         Callable {
-          val myBuilder = WorkspaceEntityStorageBuilder.create()
+          val myBuilder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
           loadEntitiesAndReportExceptions(serializer, myBuilder, reader, errorReporter)
           myBuilder
         }
@@ -252,7 +254,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         checkUniqueModules(builders, serializers, project)
       }
       else emptyList()
-      val squashedBuilder = squash(builders)
+      val squashedBuilder = squash(builders, consistencyCheckingMode)
       builder.addDiff(squashedBuilder)
       return sourcesToUpdate
     }
@@ -384,7 +386,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     LOG.error(text, *attachments.values.toTypedArray())
   }
 
-  private fun squash(builders: List<WorkspaceEntityStorageBuilder>): WorkspaceEntityStorageBuilder {
+  private fun squash(builders: List<WorkspaceEntityStorageBuilder>, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder {
     var result = builders
 
     while (result.size > 1) {
@@ -395,7 +397,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
 
-    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()  }
+    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)  }
 
   @TestOnly
   override fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter) {

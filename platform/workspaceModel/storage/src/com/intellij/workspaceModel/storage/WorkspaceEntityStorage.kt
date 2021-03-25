@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImp
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.TestOnly
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -150,6 +151,7 @@ interface WorkspaceEntityStorage {
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
   fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
+  fun getConsistencyCheckingMode(): ConsistencyCheckingMode
 }
 
 /**
@@ -175,11 +177,15 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
   fun toStorage(): WorkspaceEntityStorage
 
   companion object {
+    @TestOnly
     @JvmStatic
-    fun create(): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.default())
+    fun create(): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.default(true))
 
     @JvmStatic
-    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage, ConsistencyCheckingMode.default())
+    fun create(consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(consistencyCheckingMode)
+
+    @JvmStatic
+    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage, storage.getConsistencyCheckingMode())
   }
 }
 
