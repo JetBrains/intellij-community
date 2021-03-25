@@ -2,14 +2,18 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
-import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
@@ -32,7 +36,6 @@ import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
-import javax.swing.tree.DefaultTreeCellEditor
 
 class FirstWizardStepComponent(ideWizard: IdeWizard) : WizardStepComponent(ideWizard.context) {
     private val context = ideWizard.context
@@ -191,14 +194,43 @@ class KotlinJpsRuntimeComponent(ideWizard: IdeWizard) : DynamicComponent(ideWiza
 
 private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.context) {
     private val javaModuleBuilder = JavaModuleBuilder()
-    private val jdkComboBox = JdkComboBox(
-        ProjectSdksModel().apply { reset(null) },
-        Condition(javaModuleBuilder::isSuitableSdkType)
-    ).apply {
-        ideWizard.jdk = selectedJdk
-        addActionListener {
+    private val jdkComboBox: JdkComboBox
+    private val sdksModel: ProjectSdksModel
+
+    init {
+        val project = ProjectManager.getInstance().defaultProject
+
+        sdksModel = ProjectSdksModel()
+        sdksModel.reset(project)
+
+        jdkComboBox = JdkComboBox(
+            project,
+            sdksModel,
+            Condition(javaModuleBuilder::isSuitableSdkType),
+            null,
+            null,
+            null
+        ).apply {
+            reloadModel()
+            getDefaultJdk()?.let { jdk -> selectedJdk = jdk }
+
             ideWizard.jdk = selectedJdk
-            WizardStatsService.logDataOnJdkChanged(ideWizard.context.contextComponents.get())
+            addActionListener {
+                ideWizard.jdk = selectedJdk
+                WizardStatsService.logDataOnJdkChanged(ideWizard.context.contextComponents.get())
+            }
+        }
+    }
+
+    private fun getDefaultJdk(): Sdk? {
+        val defaultProject = ProjectManagerEx.getInstanceEx().defaultProject
+        return ProjectRootManagerEx.getInstanceEx(defaultProject).projectSdk ?: run {
+            val sdks = ProjectJdkTable.getInstance().allJdks
+                .filter { it.homeDirectory?.isValid == true && javaModuleBuilder.isSuitableSdkType(it.sdkType) }
+                .groupBy(Sdk::getSdkType)
+                .entries.firstOrNull()
+                ?.value?.filterNotNull() ?: return@run null
+            sdks.maxWithOrNull(sdks.firstOrNull()?.sdkType?.versionComparator() ?: return@run null)
         }
     }
 
