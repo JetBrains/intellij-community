@@ -6,6 +6,7 @@ import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -103,7 +104,10 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
         str += TestRunnerBundle.message("tests.result.ignore.summary", ignored)
       }
 
-      val failedToStartMessages = problems.mapNotNull { it.predefinedMessage }.joinToString { it }
+      val failedToStartMessages = problems
+        .filter { it.failed == 0 && it.ignored == 0 && it.historyFileName.isEmpty()}
+        .mapNotNull { it.configuration }
+        .joinToString { TestRunnerBundle.message("failed.to.start.message", it.configuration.name) }
       if (failedToStartMessages.isNotEmpty()) {
         str += (if (ignored + failed > 0) ", " else "")
         str += failedToStartMessages
@@ -112,7 +116,9 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
     }
 }
 
-data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val predefinedMessage: @Nls String? = null)
+data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?)
+private val canceledDescription = FailureDescription("", 0, 0, null)
+
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
@@ -158,7 +164,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           if (environment.executionId == env.executionId) {
             Disposer.dispose(environment)
-            problems.add(FailureDescription("", 0, 0, TestRunnerBundle.message("failed.to.start.message", environment.runProfile.name)))
+            problems.add(FailureDescription("", 0, 0, configurationSettings))
             continuation.resume(null)
           }
         }
@@ -167,7 +173,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     } ?: return
 
     val form = console.component as SMTestRunnerResultsForm
-    reportProblem(form, problems)
+    reportProblem(form, problems, configurationSettings)
     if (form.testsRootNode.isDefect) {
       awaitSavingHistory(form.historyFileName)
     }
@@ -211,6 +217,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   override fun showDetails(problem: FailedTestCommitProblem) {
     val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
     for (p in problem.problems) {
+      if (p.historyFileName.isEmpty() && p.failed == 0 && p.ignored == 0) {
+        if (p.configuration != null) {
+          RunDialog.editConfiguration(project, p.configuration, ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", p.configuration.name))
+          continue
+        }
+      }
       val (path, virtualFile) = getHistoryFile(p.historyFileName)
       if (virtualFile != null) {
         AbstractImportTestsAction.doImport(project, virtualFile, groupId)
@@ -386,7 +398,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
       resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
         override fun onTestingFinished(sender: TestResultsViewer) {
-          reportProblem(resultsForm, problems)
+          reportProblem(resultsForm, problems, configuration)
         }
 
         override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) {
@@ -431,13 +443,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   }
 
   private fun reportProblem(resultsForm: SMTestRunnerResultsForm,
-                            problems: ArrayList<FailureDescription>) {
+                            problems: ArrayList<FailureDescription>,
+                            configuration: RunnerAndConfigurationSettings) {
     val rootNode = resultsForm.testsRootNode
     if (rootNode.isDefect) {
       val presentation = TestResultPresentation(rootNode).presentation
-      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount))
+      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount, configuration))
     }
   }
 }
-
-private val canceledDescription = FailureDescription("", 0, 0)
