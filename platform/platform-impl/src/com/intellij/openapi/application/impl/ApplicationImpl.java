@@ -246,7 +246,33 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public @NotNull Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    return executeOnPooledThread(new RunnableCallable(action));
+    Runnable actionDecorated = ClientId.decorateRunnable(action);
+    return ourThreadExecutorsService.submit(new Runnable() {
+      @Override
+      public void run() {
+        if (isDisposed()) {
+          return;
+        }
+
+        try {
+          actionDecorated.run();
+        }
+        catch (ProcessCanceledException e) {
+          // ignore
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+        finally {
+          Thread.interrupted(); // reset interrupted status
+        }
+      }
+
+      @Override
+      public String toString() {
+        return action.toString();
+      }
+    });
   }
 
   @Override
