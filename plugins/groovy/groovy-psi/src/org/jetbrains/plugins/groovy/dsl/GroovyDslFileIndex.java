@@ -202,8 +202,8 @@ public final class GroovyDslFileIndex {
       return true;
     }
 
-    GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, psiClass, place, placeFile);
     for (GroovyDslScript script : getDslScripts(placeFile.getProject())) {
+      GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, psiClass, place, placeFile);
       CustomMembersHolder holder = script.processExecutor(descriptor);
       if (!processor.process(holder, descriptor)) {
         return false;
