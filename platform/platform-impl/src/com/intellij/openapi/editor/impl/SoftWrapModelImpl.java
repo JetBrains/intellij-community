@@ -154,9 +154,10 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       if (file != null) {
         EditorNotifications.getInstance(project).updateNotifications(file);
       } else {
-        if (ComponentUtil.getParentOfType(ConsoleView.class, myEditor.getComponent()) != null) {
+        if (Boolean.TRUE == EditorImpl.INITIALIZED.get(myEditor) && ComponentUtil.getParentOfType(ConsoleView.class, myEditor.getComponent()) != null) {
           ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myEditor.getComponent()), decorator -> {
-            ToolWindowManager.getInstance(project).notifyByBalloon(decorator.getToolWindowId(), MessageType.WARNING, ApplicationBundle.message("console.forced.soft.wrap.message"));
+            ToolWindowManager.getInstance(project).notifyByBalloon(decorator.getToolWindowId(), MessageType.WARNING, ApplicationBundle
+              .message("console.forced.soft.wrap.message"));
           });
         }
       }
