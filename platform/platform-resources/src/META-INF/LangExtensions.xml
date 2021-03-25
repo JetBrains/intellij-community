@@ -1033,7 +1033,7 @@
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="2"/>
     <statistics.counterUsagesCollector groupId="refactoring.dialog" version="2"/>
     <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
-    <statistics.counterUsagesCollector groupId="run.configuration.exec" version="59"/>
+    <statistics.counterUsagesCollector groupId="run.configuration.exec" version="60"/>
     <statistics.counterUsagesCollector groupId="intentions" version="57"/>
     <statistics.counterUsagesCollector groupId="completion.postfix" version="57"/>
 

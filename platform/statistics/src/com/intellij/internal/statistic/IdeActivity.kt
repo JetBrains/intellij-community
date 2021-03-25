@@ -71,13 +71,18 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     return this
   }
 
-  fun finished(): IdeActivity {
+  fun finished(): IdeActivity = finished(null)
+
+  fun finished(consumer: Consumer<FeatureUsageData>?): IdeActivity {
     if (!LOG.assertTrue(state == State.STARTED, state.name)) return this
     state = State.FINISHED
 
+    val data = createDataWithActivityId()
+    consumer?.accept(data)
+
     val duration = TimeoutUtil.getDurationMillis(startedTimestamp)
     FUCounterUsageLogger.getInstance().logEvent(projectOrNullForApplication, group, appendActivityName("finished"),
-                                                createDataWithActivityId().addData("duration_ms", duration))
+                                                data.addData("duration_ms", duration))
     return this
   }
 
