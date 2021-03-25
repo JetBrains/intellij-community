@@ -517,13 +517,13 @@ object UpdateChecker {
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (updatedChannel != null && newBuild != null) {
+      ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+
       val runnable = {
         UpdateInfoDialog(
           project, updatedChannel, newBuild, platformUpdates.patches, showSettingsLink, updatedPlugins, pluginUpdates.incompatible
         ).show()
       }
-
-      ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
 
       if (forceDialog) {
         runnable()
@@ -545,7 +545,9 @@ object UpdateChecker {
     }
 
     if (enabledPlugins.isNotEmpty()) {
-      ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
+      if (userInitiated) {
+        ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
+      }
 
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
 
