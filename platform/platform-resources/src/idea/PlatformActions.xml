@@ -1183,9 +1183,7 @@
       <action id="RestoreFontPreviewTextAction" class="com.intellij.application.options.colors.FontEditorPreview$RestorePreviewTextAction"
               icon="AllIcons.Actions.Rollback"/>
       <action id="fontEditorPreview.ToggleBoldFont"
-              class="com.intellij.application.options.colors.FontEditorPreview$ToggleBoldFontAction">
-        <keyboard-shortcut first-keystroke="control B" keymap="$default"/>
-      </action>
+              class="com.intellij.application.options.colors.FontEditorPreview$ToggleBoldFontAction"/>
       <separator/>
     </group>
 

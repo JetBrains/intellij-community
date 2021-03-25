@@ -73,6 +73,8 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
+  private final static ShortcutSet TOGGLE_BOLD_SHORTCUT = CustomShortcutSet.fromString("control B");
+
   public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
     mySchemeSupplier = schemeSupplier;
 
@@ -120,7 +122,7 @@ public class FontEditorPreview implements PreviewPanel{
       }
       if (toggleBoldFontAction != null) {
         group.add(toggleBoldFontAction);
-        toggleBoldFontAction.registerCustomShortcutSet(toggleBoldFontAction.getShortcutSet(), editor.getComponent());
+        DumbAwareAction.create(event -> toggleBoldFont(editor)).registerCustomShortcutSet(TOGGLE_BOLD_SHORTCUT, editor.getComponent());
       }
       editor.installPopupHandler(new ContextMenuPopupHandler.Simple(group));
     }
@@ -268,12 +270,18 @@ public class FontEditorPreview implements PreviewPanel{
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
-      if (textModel != null) {
-        SelectionModel selectionModel = editor.getSelectionModel();
-        textModel.toggleBoldFont(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
-        ((EditorEx)editor).reinitSettings();
+      if (editor != null) {
+        toggleBoldFont((EditorEx)editor);
       }
+    }
+  }
+
+  private static void toggleBoldFont(@NotNull EditorEx editor) {
+    PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+    if (textModel != null) {
+      SelectionModel selectionModel = editor.getSelectionModel();
+      textModel.toggleBoldFont(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
+      editor.reinitSettings();
     }
   }
 
