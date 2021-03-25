@@ -55,7 +55,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
           }
       }
     """.trimIndent())
-    val moduleBuildScript = GradleBuildScriptBuilder()
+    val moduleBuildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
       .addPostfix("""
@@ -72,7 +72,7 @@ class TestGradleConfigurationProducerUtilTest : GradleImportingTestCase() {
             testArtifacts  myTestsJar
         }
       """.trimIndent())
-    val depModuleBuildScript = GradleBuildScriptBuilder()
+    val depModuleBuildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
       .addDependency("compile project(':module')")

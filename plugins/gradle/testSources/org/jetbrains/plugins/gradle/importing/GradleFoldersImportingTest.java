@@ -38,7 +38,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   public void testUnsupportedTypesInDsl() throws Exception {
     importProject(
-      new GradleBuildScriptBuilder().addPostfix(
+      createBuildScriptBuilder().addPostfix(
           "import org.gradle.api.internal.FactoryNamedDomainObjectContainer;",
           "import org.gradle.internal.reflect.Instantiator;",
           "class MyObj implements Named {",
@@ -630,7 +630,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../outer3/A.java", "class A {}");
     createProjectSubFile("build/generated/A.java", "class A {}");
     createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    GradleBuildScriptBuilder buildScript = new GradleBuildScriptBuilder()
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
       .addPrefix("sourceSets {")
@@ -679,7 +679,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     createProjectSubFile("../outer3/A.java", "class A {}");
     createProjectSubFile("build/generated/A.java", "class A {}");
     createProjectSubFile("../outer4/generated/A.java", "class A {}");
-    GradleBuildScriptBuilder buildScript = new GradleBuildScriptBuilder()
+    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
       .addPrefix("sourceSets {")
@@ -722,7 +722,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");
-    createProjectSubFile("app1/build.gradle", new GradleBuildScriptBuilder()
+    createProjectSubFile("app1/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
         "sourceSets {",
@@ -730,7 +730,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "  }"
       )
       .generate());
-    createProjectSubFile("app2/build.gradle", new GradleBuildScriptBuilder()
+    createProjectSubFile("app2/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
       .addPostfix(
         "sourceSets {",

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer.findAllTestsTaskToRun
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assert
@@ -13,7 +12,7 @@ import org.junit.Test
 class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   fun `test simple tests finding`() {
-    val buildScript = GradleBuildScriptBuilder()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
     importProject(buildScript.generate())
@@ -24,7 +23,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("2.4 <=> 4.10.3")
   fun `test intellij tests finding`() {
-    val buildScript = GradleBuildScriptBuilder()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
       .addPrefix("""
@@ -55,7 +54,7 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("4.0+")
   fun `test intellij tests finding new interface`() {
-    val buildScript = GradleBuildScriptBuilder()
+    val buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withJUnit4()
       .addPrefix("""

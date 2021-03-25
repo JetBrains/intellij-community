@@ -19,7 +19,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,7 +50,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     createProjectSubFile("src/main/java/my/App.java", appClass);
     createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
-      new GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withIdeaPlugin()
         .withGradleIdeaExtPlugin()

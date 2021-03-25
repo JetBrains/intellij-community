@@ -303,6 +303,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     importProject(config, null);
   }
 
+  protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion());
+  }
+
   @Override
   protected ImportSpec createImportSpec() {
     ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(super.createImportSpec());

@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase.IDEA_EXT_PLUGIN_VERSION
 import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
 import java.io.File
 import java.util.function.Consumer
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class GradleBuildScriptBuilder() {
+class GradleBuildScriptBuilder(val gradleVersion: GradleVersion) {
 
   private val imports = GroovyBuilder()
   private val buildScriptPrefixes = GroovyBuilder()
@@ -21,10 +22,6 @@ class GradleBuildScriptBuilder() {
   private val dependencies = GroovyBuilder()
   private val repositories = GroovyBuilder()
   private val postfixes = GroovyBuilder()
-
-  constructor(configure: GradleBuildScriptBuilder.() -> Unit) : this() {
-    this.configure()
-  }
 
   private fun apply(builder: GroovyBuilder, configure: GroovyBuilder.() -> Unit) = apply { builder.configure() }
   private fun applyIfNotContains(builder: GroovyBuilder, configure: GroovyBuilder.() -> Unit) = apply {
@@ -161,14 +158,26 @@ class GradleBuildScriptBuilder() {
 
   fun addImplementationDependency(dependency: String, sourceSet: String? = null) =
     when (sourceSet) {
-      null -> addDependency("implementation $dependency")
-      else -> addDependency("${sourceSet}Implementation $dependency")
+      null -> when (isSupportedImplementationScope(gradleVersion)) {
+        true -> addDependency("implementation $dependency")
+        else -> addDependency("compile $dependency")
+      }
+      else -> when (isSupportedImplementationScope(gradleVersion)) {
+        true -> addDependency("${sourceSet}Implementation $dependency")
+        else -> addDependency("${sourceSet}Compile $dependency")
+      }
     }
 
   fun addRuntimeOnlyDependency(dependency: String, sourceSet: String? = null) =
     when (sourceSet) {
-      null -> addDependency("runtimeOnly $dependency")
-      else -> addDependency("${sourceSet}RuntimeOnly $dependency")
+      null -> when (isSupportedImplementationScope(gradleVersion)) {
+        true -> addDependency("runtimeOnly $dependency")
+        else -> addDependency("runtime $dependency")
+      }
+      else -> when (isSupportedImplementationScope(gradleVersion)) {
+        true -> addDependency("${sourceSet}RuntimeOnly $dependency")
+        else -> addDependency("${sourceSet}Runtime $dependency")
+      }
     }
 
   fun addTestImplementationDependency(dependency: String) =
@@ -232,7 +241,10 @@ class GradleBuildScriptBuilder() {
     addPostfix("mainClassName = '$mainClassName'")
   }
 
-  fun withJUnit() = withJUnit5()
+  fun withJUnit() = when (isSupportedJUnit5(gradleVersion)) {
+    true -> withJUnit5()
+    else -> withJUnit4()
+  }
 
   fun withJUnit4() = apply {
     withMavenCentral()
@@ -240,11 +252,12 @@ class GradleBuildScriptBuilder() {
   }
 
   fun withJUnit5() = apply {
+    assert(isSupportedJUnit5(gradleVersion))
     withMavenCentral()
     addTestImplementationDependency("'org.junit.jupiter:junit-jupiter-api:5.7.0'")
     addTestRuntimeOnlyDependency("'org.junit.jupiter:junit-jupiter-engine:5.7.0'")
     withPostfix {
-      call("tasks.withType", "Test") {
+      block("test") {
         call("useJUnitPlatform")
       }
     }
@@ -297,6 +310,34 @@ class GradleBuildScriptBuilder() {
   }
 
   companion object {
-    fun buildscript(configure: GradleBuildScriptBuilder.() -> Unit) = GradleBuildScriptBuilder(configure).generate()
+    @JvmStatic
+    fun buildscript(
+      gradleVersion: GradleVersion,
+      configure: Consumer<GradleBuildScriptBuilder>
+    ) = buildscript(gradleVersion, configure::accept)
+
+    fun buildscript(
+      gradleVersion: GradleVersion,
+      configure: GradleBuildScriptBuilder.() -> Unit
+    ): String {
+      val builder = GradleBuildScriptBuilder(gradleVersion)
+      builder.configure()
+      return builder.generate()
+    }
+
+    @JvmStatic
+    fun isSupportedImplementationScope(gradleVersion: GradleVersion): Boolean {
+      return gradleVersion.baseVersion >= GradleVersion.version("3.4")
+    }
+
+    @JvmStatic
+    fun isSupportedRuntimeOnlyScope(gradleVersion: GradleVersion): Boolean {
+      return gradleVersion.baseVersion >= GradleVersion.version("3.4")
+    }
+
+    @JvmStatic
+    fun isSupportedJUnit5(gradleVersion: GradleVersion): Boolean {
+      return gradleVersion.baseVersion >= GradleVersion.version("4.7")
+    }
   }
 }

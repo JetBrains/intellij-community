@@ -284,7 +284,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     )
 
     importProject(
-      GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .generate()
     )

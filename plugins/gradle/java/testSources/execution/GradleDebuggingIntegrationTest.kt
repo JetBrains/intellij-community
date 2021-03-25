@@ -28,7 +28,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
   @Test
   fun `daemon is started with debug flags only if script debugging is enabled`() {
     importProject(
-      GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .applyPlugin("'java'")
         .addPostfix("""
@@ -112,7 +112,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val explicitArgsFileName = "explicitTaskArgs.txt"
 
     importProject(
-      GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withMavenCentral()
         .applyPlugin("'java'")
         .addPostfix("""
@@ -179,7 +179,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val argsFileName = "args.txt"
 
     importProject(
-      GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix("""
@@ -234,7 +234,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val argsFileName = "args.txt"
 
     importProject(
-      GradleBuildScriptBuilder()
+      createBuildScriptBuilder()
         .withJavaPlugin()
         .withMavenCentral()
         .addPostfix("""          
@@ -320,7 +320,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
   }
 
   fun importProject(configure: GradleBuildScriptBuilder.() -> Unit) {
-    val buildScript = GradleBuildScriptBuilder()
+    val buildScript = createBuildScriptBuilder()
     buildScript.configure()
     importProject(buildScript.generate())
   }
