@@ -184,19 +184,19 @@ public class APIWrappers {
 
     @Override
     public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createSourceFile(name, originatingElements);
     }
 
     @Override
     public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
-      addMapping(name, Arrays.asList(originatingElements));
+      addMapping(name, originatingElements != null? Arrays.asList(originatingElements) : Collections.<Element>emptyList());
       return getWrapperDelegate().createClassFile(name, originatingElements);
     }
 
     @Override
     public FileObject createResource(JavaFileManager.Location location, CharSequence moduleAndPkg, CharSequence relativeName, Element... originatingElements) throws IOException {
-      if (originatingElements.length > 0) {
+      if (originatingElements != null && originatingElements.length > 0) {
         final String resourceName;
         if (moduleAndPkg == null) {
           resourceName = relativeName.toString();
@@ -224,7 +224,7 @@ public class APIWrappers {
         // package-path is a package-name where '.' replaced with '/'
         addMapping(resourceName, Arrays.asList(originatingElements));
       }
-      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements);
+      return getWrapperDelegate().createResource(location, moduleAndPkg, relativeName, originatingElements != null ? originatingElements : new Element[0]);
     }
 
     @Override
