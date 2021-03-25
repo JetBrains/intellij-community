@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -91,6 +92,17 @@ open class CommonInjectedFileChangesHandler(
                           "; decoded text to replace: " + decodedText, e)
           }
         }
+      }
+    }
+    
+    if (!markers.all { it.isValid() }) {
+      // marker reanimation attempt
+      val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
+      val markersFromShreds = getMarkersFromShreds(hostfulShreds)
+      if (markersFromShreds.isNotEmpty()) {
+        markers.forEach(MarkersMapping::dispose)
+        markers.clear()
+        markers.addAll(markersFromShreds)
       }
     }
   }

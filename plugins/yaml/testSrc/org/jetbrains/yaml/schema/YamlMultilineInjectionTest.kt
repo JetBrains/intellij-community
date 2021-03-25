@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.schema
 
+import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
@@ -9,6 +10,7 @@ import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
+import junit.framework.TestCase
 import org.jetbrains.yaml.psi.YAMLScalar
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
@@ -150,6 +152,37 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |</html>
       |
       |""".trimMargin())
+  }
+  
+  
+  fun testPutEnterInTheEnd() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html>
+          <body>hello world</body>
+          </html<caret>>
+          
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    TestCase.assertTrue("editor should survive adding enter to the end", quickEditHandler.isValid)
+    assertEquals("fragment editor should be", """
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |
+      |""".trimMargin(), fe.file.text)
+    assertEquals("literal text should be", """
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |""".trimMargin(), literalTextAtTheCaret)
   }
   
   private fun assertInjectedAndLiteralValue(expectedText: String) {
