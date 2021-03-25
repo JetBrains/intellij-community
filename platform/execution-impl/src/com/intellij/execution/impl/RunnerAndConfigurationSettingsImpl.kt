@@ -17,6 +17,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
@@ -53,7 +54,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var _configuration: RunConfiguration? = null,
   private var isTemplate: Boolean = false,
   private var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE
-) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme, Scheme {
 
   init {
     (_configuration as? PersistentAwareRunConfiguration)?.setTemplate(isTemplate)

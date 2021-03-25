@@ -35,7 +35,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   protected open fun getVirtualFileResolver(): VirtualFileResolver? = null
 
-  final override fun <T : Any, MutableT : T> create(directoryName: String,
+  final override fun <T: Scheme, MutableT : T> create(directoryName: String,
                                                     processor: SchemeProcessor<T, MutableT>,
                                                     presentableName: String?,
                                                     roamingType: RoamingType,
@@ -130,9 +130,9 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
     override fun getVirtualFileResolver() = project as? VirtualFileResolver?
 
-    private fun addVfsListener(schemeManager: SchemeManagerImpl<*, *>) {
+    private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
       @Suppress("UNCHECKED_CAST")
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, project))
+      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
     }
 
     override fun createFileChangeSubscriber(): FileChangeSubscriber? {

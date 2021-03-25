@@ -16,9 +16,9 @@ abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   override fun toString(): String = name
 }
 
-abstract class BaseSchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>()
+abstract class BaseSchemeProcessor<SCHEME: Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>()
 
-abstract class NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+abstract class NonLazySchemeProcessor<SCHEME: Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
   /**
    * @param duringLoad If occurred during [SchemeManager.loadSchemes] call
    * * Returns null if element is not valid.

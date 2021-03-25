@@ -12,6 +12,7 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -38,15 +39,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 import java.util.function.Predicate
 
-class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
-                                                     processor: SchemeProcessor<T, MUTABLE_SCHEME>,
-                                                     private val provider: StreamProvider?,
-                                                     internal val ioDirectory: Path,
-                                                     val roamingType: RoamingType = RoamingType.DEFAULT,
-                                                     val presentableName: String? = null,
-                                                     private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
-                                                     private val fileChangeSubscriber: FileChangeSubscriber? = null,
-                                                     private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
+class SchemeManagerImpl<T: Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
+                                                       processor: SchemeProcessor<T, MUTABLE_SCHEME>,
+                                                       private val provider: StreamProvider?,
+                                                       internal val ioDirectory: Path,
+                                                       val roamingType: RoamingType = RoamingType.DEFAULT,
+                                                       val presentableName: String? = null,
+                                                       private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
+                                                       private val fileChangeSubscriber: FileChangeSubscriber? = null,
+                                                       private val virtualFileResolver: VirtualFileResolver? = null) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUseVfs: Boolean
     get() = fileChangeSubscriber != null || virtualFileResolver != null
 

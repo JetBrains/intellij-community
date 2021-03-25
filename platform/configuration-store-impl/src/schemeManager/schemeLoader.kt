@@ -4,6 +4,7 @@ package com.intellij.configurationStore.schemeManager
 import com.intellij.configurationStore.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.options.NonLazySchemeProcessor
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -24,10 +25,10 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
 
-internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                         private val oldSchemes: List<T>,
-                                                         private val preScheduledFilesToDelete: MutableSet<String>,
-                                                         private val isDuringLoad: Boolean) {
+internal class SchemeLoader<T: Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
+                                                           private val oldSchemes: List<T>,
+                                                           private val preScheduledFilesToDelete: MutableSet<String>,
+                                                           private val isDuringLoad: Boolean) {
   private val filesToDelete: MutableSet<String> = HashSet()
 
   private val schemes: MutableList<T> = oldSchemes.toMutableList()

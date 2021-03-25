@@ -20,6 +20,7 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -43,8 +44,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.LinkedHashSet
 
-private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHashSet<StateStorage>>>("CHANGED_FILES_KEY")
-private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
+private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<StateStorage>>>("CHANGED_FILES_KEY")
+private val CHANGED_SCHEMES_KEY = Key<MutableMap<SchemeChangeApplicator<*,*>, MutableSet<SchemeChangeEvent<*,*>>>>("CHANGED_SCHEMES_KEY")
 
 @ApiStatus.Internal
 internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
@@ -59,7 +60,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
     val projectsToReload = HashSet<Project>()
     processOpenedProjects { project ->
-      val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
+      val changedSchemes: Map<SchemeChangeApplicator<*, *>, Set<SchemeChangeEvent<*, *>>>? = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
       if ((changedSchemes == null || changedSchemes.isEmpty()) && (changedStorages == null || changedStorages.isEmpty())
           && !mayHaveAdditionalConfigurations(project)) {
@@ -69,9 +70,9 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       runBatchUpdate(project) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
-          for ((tracker, files) in changedSchemes) {
+          for ((tracker: SchemeChangeApplicator<*, *>, files: Set<SchemeChangeEvent<*, *>>) in changedSchemes) {
             LOG.runAndLogException {
-              tracker.reload(files)
+              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
             }
           }
         }
@@ -212,7 +213,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     scheduleProcessingChangedFiles()
   }
 
-  internal fun registerChangedSchemes(events: List<SchemeChangeEvent>, schemeFileTracker: SchemeChangeApplicator, project: Project) {
+  internal fun <T : Scheme, M:T>registerChangedSchemes(events: List<SchemeChangeEvent<T,M>>, schemeFileTracker: SchemeChangeApplicator<T,M>, project: Project) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }
