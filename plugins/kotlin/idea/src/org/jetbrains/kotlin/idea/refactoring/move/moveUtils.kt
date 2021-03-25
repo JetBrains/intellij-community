@@ -722,6 +722,7 @@ internal fun <T> List<KtNamedDeclaration>.mapWithReadActionInProcess(
     val result = mutableListOf<T>()
     val task: Task.Modal = object : Task.Modal(project, title, false) {
         override fun run(indicator: ProgressIndicator) {
+            indicator.isIndeterminate = false
             val fraction: Double = 1.0 / declarations.size
             indicator.fraction = 0.0
             runReadAction {
