@@ -59,9 +59,9 @@ class FactorTree(
   ): CustomMembersHolder? {
     if (current == null) return null
     return current[myExecutor] as CustomMembersHolder?
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.psiClass, current, topLevel), false)
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.placeFile, current, topLevel), false)
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.place, current, topLevel), false)
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPsiClass(), current, topLevel), false)
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPlaceFile(), current, topLevel), false)
+           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPlace(), current, topLevel), false)
   }
 
   companion object {

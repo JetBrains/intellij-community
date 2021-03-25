@@ -80,4 +80,12 @@ public class GroovyClassDescriptor {
   public @NotNull PsiFile justGetPlaceFile() {
     return myFile;
   }
+
+  public @NotNull PsiElement justGetPlace() {
+    return myPlace;
+  }
+
+  public @NotNull PsiClass justGetPsiClass() {
+    return myPsiClass;
+  }
 }
