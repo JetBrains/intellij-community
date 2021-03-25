@@ -5,7 +5,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 
-class FilePathHolder(private val project: Project) : FileHolder {
+class FilePathHolderImpl(private val project: Project) : FileHolder {
   private val files = hashSetOf<FilePath>()
 
   fun getFiles(): List<FilePath> = files.toList()
@@ -21,8 +21,8 @@ class FilePathHolder(private val project: Project) : FileHolder {
     files.remove(file)
   }
 
-  override fun copy(): FilePathHolder =
-    FilePathHolder(project).also {
+  override fun copy(): FilePathHolderImpl =
+    FilePathHolderImpl(project).also {
       it.files.addAll(files)
     }
 
@@ -32,7 +32,7 @@ class FilePathHolder(private val project: Project) : FileHolder {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as FilePathHolder
+    other as FilePathHolderImpl
 
     return files == other.files
   }

@@ -88,7 +88,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
       return provider.createHolder();
     }
     else {
-      return new RecursiveFileHolder(project);
+      return new RecursiveFilePathHolderImpl(project);
     }
   }
 

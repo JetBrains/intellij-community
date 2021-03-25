@@ -10,12 +10,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-public class RecursiveFileHolder implements IgnoredFilesHolder {
+public class RecursiveFilePathHolderImpl implements IgnoredFilesHolder {
 
   private final Project myProject;
   private final Set<FilePath> myMap;
 
-  public RecursiveFileHolder(final Project project) {
+  public RecursiveFilePathHolderImpl(final Project project) {
     myProject = project;
     myMap = new HashSet<>();
   }
@@ -33,8 +33,8 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   }
 
   @Override
-  public RecursiveFileHolder copy() {
-    final RecursiveFileHolder copyHolder = new RecursiveFileHolder(myProject);
+  public RecursiveFilePathHolderImpl copy() {
+    final RecursiveFilePathHolderImpl copyHolder = new RecursiveFilePathHolderImpl(myProject);
     copyHolder.myMap.addAll(myMap);
     return copyHolder;
   }
@@ -76,7 +76,7 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final RecursiveFileHolder that = (RecursiveFileHolder)o;
+    final RecursiveFilePathHolderImpl that = (RecursiveFilePathHolderImpl)o;
     return myMap.equals(that.myMap);
   }
 

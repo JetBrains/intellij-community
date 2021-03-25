@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 
 internal class FileHolderComposite private constructor(
   private val project: Project,
-  val unversionedFileHolder: FilePathHolder = FilePathHolder(project),
+  val unversionedFileHolder: FilePathHolderImpl = FilePathHolderImpl(project),
   val ignoredFileHolder: IgnoredFilesCompositeHolder = IgnoredFilesCompositeHolder(project),
   val modifiedWithoutEditingFileHolder: VirtualFileHolder = VirtualFileHolder(project),
   val lockedFileHolder: VirtualFileHolder = VirtualFileHolder(project),
