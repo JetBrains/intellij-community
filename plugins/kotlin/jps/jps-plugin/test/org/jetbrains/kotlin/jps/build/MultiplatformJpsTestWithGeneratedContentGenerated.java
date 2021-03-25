@@ -29,11 +29,6 @@ public abstract class MultiplatformJpsTestWithGeneratedContentGenerated extends 
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("editingPJsKotlin")
-        public void testEditingPJsKotlin() throws Exception {
-            runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/simple/editingPJsKotlin/");
-        }
-
         @TestMetadata("editingPJvmJava")
         public void testEditingPJvmJava() throws Exception {
             runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/simple/editingPJvmJava/");
@@ -68,11 +63,6 @@ public abstract class MultiplatformJpsTestWithGeneratedContentGenerated extends 
     public static class SimpleNewMpp extends AbstractMultiplatformJpsTestWithGeneratedContent {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("editingPJsKotlin")
-        public void testEditingPJsKotlin() throws Exception {
-            runTest("testData/incremental/multiModule/multiplatform/withGeneratedContent/simpleNewMpp/editingPJsKotlin/");
         }
 
         @TestMetadata("editingPJvmJava")
