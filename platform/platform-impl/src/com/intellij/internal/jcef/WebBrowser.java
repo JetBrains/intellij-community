@@ -149,6 +149,17 @@ public class WebBrowser extends AnAction implements DumbAware {
       }
     });
 
+    final JMenuItem menuItemContext = new JMenuItem("Disable context menu", 'm');
+    menu.add(menuItemContext);
+    menuItemContext.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowserBase.Properties.NO_CONTEXT_MENU));
+        myJBCefBrowser.setProperty(JBCefBrowserBase.Properties.NO_CONTEXT_MENU, !value);
+        menuItemContext.setText(value ? "Disable context menu" : "Enable context menu");
+      }
+    });
+
     frame.setVisible(true);
   }
 }

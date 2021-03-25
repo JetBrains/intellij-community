@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
@@ -17,6 +18,8 @@ import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefAuthCallback;
+import org.cef.callback.CefContextMenuParams;
+import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
 import org.cef.network.CefRequest;
@@ -26,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
@@ -37,6 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
+import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
  * Base class for windowed and offscreen browsers.
@@ -55,8 +61,16 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
      */
     public static final @NotNull String NO_DEFAULT_AUTH_CREDENTIALS = "JBCefBrowserBase.noDefaultAuthCredentials";
 
+    /**
+     * Disables or enables a context menu on click.
+     * <p></p>
+     * Accepts {@link Boolean} values.
+     */
+    public static final @NotNull String NO_CONTEXT_MENU = "JBCefBrowserBase.noContextMenu";
+
     static {
       PropertiesHelper.putType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
+      PropertiesHelper.putType(NO_CONTEXT_MENU, Boolean.class);
     }
   }
 
@@ -121,11 +135,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @Nullable private final CefLoadHandler myLoadHandler;
   @Nullable private final CefRequestHandler myRequestHandler;
+  private final @Nullable CefContextMenuHandler myContextMenuHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   private final boolean myIsDefaultClient;
   @Nullable private volatile String myCssBgColor;
+  private @Nullable JDialog myDevtoolsFrame = null;
 
   JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, boolean isDefaultClient) {
     myCefClient = cefClient;
@@ -198,11 +214,14 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
         }
       }, getCefBrowser());
+
+      cefClient.addContextMenuHandler(myContextMenuHandler = createDefaultContextMenuHandler(), getCefBrowser());
     }
     else {
       myLifeSpanHandler = null;
       myLoadHandler = null;
       myRequestHandler = null;
+      myContextMenuHandler = null;
       myIsCefBrowserCreated = true; // if the browser comes from the outer - consider its native browser created
     }
   }
@@ -308,6 +327,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myLifeSpanHandler != null) getJBCefClient().removeLifeSpanHandler(myLifeSpanHandler, getCefBrowser());
       if (myLoadHandler != null) getJBCefClient().removeLoadHandler(myLoadHandler, getCefBrowser());
       if (myRequestHandler != null) getJBCefClient().removeRequestHandler(myRequestHandler, getCefBrowser());
+      if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
 
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
@@ -479,6 +499,76 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
     myPropertiesHelper.removePropertyChangeListener(name, listener);
+  }
+
+  protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
+    return new DefaultCefContextMenuHandler(ApplicationManager.getApplication().isInternal());
+  }
+
+  protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
+    protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
+    private final boolean isInternal;
+
+    public DefaultCefContextMenuHandler(boolean isInternal) {
+      this.isInternal = isInternal;
+    }
+
+    @Override
+    public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
+      if (myPropertiesHelper.is(Properties.NO_CONTEXT_MENU)) {
+        model.clear();
+        return;
+      }
+      if (isInternal) {
+        model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
+      }
+    }
+
+    @Override
+    public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
+      if (myPropertiesHelper.is(Properties.NO_CONTEXT_MENU)) {
+        return false;
+      }
+      if (commandId == DEBUG_COMMAND_ID) {
+        openDevtools();
+        return true;
+      }
+      return false;
+    }
+  }
+
+  public void openDevtools() {
+    if (myDevtoolsFrame != null) {
+      myDevtoolsFrame.toFront();
+      return;
+    }
+
+    Window activeFrame = null;
+    for (Frame frame : Frame.getFrames()) {
+      if (frame.isActive()) {
+        activeFrame = frame;
+        break;
+      }
+    }
+
+    if (activeFrame == null) return;
+    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
+
+    myDevtoolsFrame = new JDialog(activeFrame);
+    myDevtoolsFrame.setTitle("JCEF DevTools");
+    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
+    myDevtoolsFrame.setLayout(new BorderLayout());
+    JBCefBrowser devTools = new JBCefBrowser(myCefBrowser.getDevTools(), myCefClient);
+    myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
+    myDevtoolsFrame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        myDevtoolsFrame = null;
+        Disposer.dispose(devTools);
+      }
+    });
+    myDevtoolsFrame.setVisible(true);
   }
 
   private final class LoadDeferrer {

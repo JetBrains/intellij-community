@@ -4,10 +4,8 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.LightEditActionFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
@@ -16,8 +14,6 @@ import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
-import org.cef.callback.CefContextMenuParams;
-import org.cef.callback.CefMenuModel;
 import org.cef.handler.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +28,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
 import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
-import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 
 /**
  * A wrapper over {@link CefBrowser}.
@@ -130,9 +125,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private final @NotNull CefFocusHandler myCefFocusHandler;
   private final @NotNull CefKeyboardHandler myKeyboardHandler;
 
-  private JDialog myDevtoolsFrame = null;
-  protected CefContextMenuHandler myDefaultContextMenuHandler;
-
   private volatile boolean myFirstShow = true;
 
   /**
@@ -202,9 +194,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
         return consume;
       }
     }, myCefBrowser);
-
-    myDefaultContextMenuHandler = createDefaultContextMenuHandler();
-    myCefClient.addContextMenuHandler(myDefaultContextMenuHandler, this.getCefBrowser());
   }
 
   // New API is not available in JBR yet
@@ -217,11 +206,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
            ?
            cefBrowser
            : client.createBrowser(url != null ? url : BLANK_URI, mode, false, null);
-  }
-
-  protected DefaultCefContextMenuHandler createDefaultContextMenuHandler() {
-    boolean isInternal = ApplicationManager.getApplication().isInternal();
-    return new DefaultCefContextMenuHandler(isInternal);
   }
 
   private @NotNull JPanel createComponent() {
@@ -352,40 +336,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
     super.setProperty(name, value);
   }
 
-  private static @Nullable Window getActiveFrame() {
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) return frame;
-    }
-    return null;
-  }
-
-  public void openDevtools() {
-    if (myDevtoolsFrame != null) {
-      myDevtoolsFrame.toFront();
-      return;
-    }
-
-    Window activeFrame = getActiveFrame();
-    if (activeFrame == null) return;
-    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
-
-    myDevtoolsFrame = new JDialog(activeFrame);
-    myDevtoolsFrame.setTitle("JCEF DevTools");
-    myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
-    myDevtoolsFrame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = new JBCefBrowser(myCefBrowser.getDevTools(), myCefClient);
-    myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
-    myDevtoolsFrame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosed(WindowEvent e) {
-        myDevtoolsFrame = null;
-        Disposer.dispose(devTools);
-      }
-    });
-    myDevtoolsFrame.setVisible(true);
-  }
-
   @Override
   public void dispose() {
     super.dispose(() -> {
@@ -394,28 +344,10 @@ public class JBCefBrowser extends JBCefBrowserBase {
     });
   }
 
-  protected class DefaultCefContextMenuHandler extends CefContextMenuHandlerAdapter {
-    protected static final int DEBUG_COMMAND_ID = MENU_ID_USER_LAST;
-    private final boolean isInternal;
-
+  // for binary compatibility
+  protected class DefaultCefContextMenuHandler extends JBCefBrowserBase.DefaultCefContextMenuHandler {
     public DefaultCefContextMenuHandler(boolean isInternal) {
-      this.isInternal = isInternal;
-    }
-
-    @Override
-    public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
-      if (isInternal) {
-        model.addItem(DEBUG_COMMAND_ID, "Open DevTools");
-      }
-    }
-
-    @Override
-    public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
-      if (commandId == DEBUG_COMMAND_ID) {
-        openDevtools();
-        return true;
-      }
-      return false;
+      super(isInternal);
     }
   }
 
