@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.*
 import java.util.*
-import kotlin.collections.ArrayList
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     private var afterAnalysisVisitor: Array<AfterAnalysisHighlightingVisitor>? = null
@@ -52,7 +52,18 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             analyze(file, holder)
 
             action.run()
-        } finally {
+        } catch (e: Throwable) {
+            val timestamp = System.currentTimeMillis()
+            // daemon is restarted when exception is thrown
+            // if there is a recurred error (e.g. within a resolve) it could lead to infinite highlighting loop
+            // so, do not rethrow exception too often to disable HL for a while (1 minute)
+            if (timestamp - lastThrownExceptionTimestamp > TimeUnit.MINUTES.toMillis(1)) {
+                lastThrownExceptionTimestamp = timestamp
+                throw e
+            } else {
+                LOG.error(e)
+            }
+        }  finally {
           afterAnalysisVisitor = null
         }
 
@@ -118,7 +129,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             if (diagnostic in highlightInfoByDiagnostic) continue
 
             // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-            annotateDiagnostic(file, psiElement, holder, diagnostic, highlightInfoByDiagnostic, calculatingInProgress = false)
+            annotateDiagnostic(psiElement, holder, diagnostic, highlightInfoByDiagnostic, calculatingInProgress = false)
         }
 
         // apply quick fixes for all diagnostics grouping by element
@@ -136,14 +147,21 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     }
 
     private fun annotateDiagnostic(
-        file: KtFile,
         element: PsiElement,
         holder: HighlightInfoHolder,
         diagnostic: Diagnostic,
         highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
         highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>? = null,
         calculatingInProgress: Boolean = true
-    ) = annotateDiagnostics(file, element, holder, listOf(diagnostic), highlightInfoByDiagnostic, highlightInfoByTextRange, true, calculatingInProgress)
+    ) = annotateDiagnostics(
+        element,
+        holder,
+        listOf(diagnostic),
+        highlightInfoByDiagnostic,
+        highlightInfoByTextRange,
+        true,
+        calculatingInProgress
+    )
 
     private fun cleanUpCalculatingAnnotations(highlightInfoByTextRange: Map<TextRange, HighlightInfo>) {
         highlightInfoByTextRange.values.forEach { annotation ->
@@ -154,7 +172,6 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     }
 
     private fun annotateDiagnostics(
-        file: KtFile,
         element: PsiElement,
         holder: HighlightInfoHolder,
         diagnostics: List<Diagnostic>,
@@ -214,6 +231,11 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
     }
 
     companion object {
+        private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)
+
+        @Volatile
+        private var lastThrownExceptionTimestamp: Long = 0
+
         private val UNRESOLVED_KEY = Key<Unit>("KotlinHighlightVisitor.UNRESOLVED_KEY")
 
         fun getAfterAnalysisVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) = arrayOf(
