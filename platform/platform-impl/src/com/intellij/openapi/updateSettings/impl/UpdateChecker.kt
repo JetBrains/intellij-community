@@ -189,6 +189,23 @@ object UpdateChecker {
     }
 
   @JvmStatic
+  fun checkForPlatformUpdates(indicator: ProgressIndicator?): Triple<CheckForUpdateResult, List<PluginDownloader>?, Collection<IdeaPluginDescriptor>?> {
+    indicator?.text = IdeBundle.message("updates.checking.platform")
+    val platformUpdates = checkForPlatformUpdates(UpdateSettings.getInstance(), indicator)
+
+    if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR || platformUpdates.state == UpdateStrategy.State.NOTHING_LOADED ||
+        platformUpdates.updatedChannel == null || platformUpdates.newBuild == null) {
+      return Triple(platformUpdates, null, null)
+    }
+
+    indicator?.text = IdeBundle.message("updates.checking.plugins")
+    val (pluginUpdates, customRepoPlugins, _) = checkForPluginUpdates(platformUpdates.newBuild.apiVersion, indicator)
+    val updatedPlugins = (pluginUpdates.enabled.asSequence() + pluginUpdates.disabled.asSequence()).filter { !isIgnored(it.descriptor) }.toList()
+
+    return Triple(platformUpdates, updatedPlugins, customRepoPlugins)
+  }
+
+  @JvmStatic
   @Throws(IOException::class, JDOMException::class)
   fun loadProductData(indicator: ProgressIndicator?): Product? =
     productDataLock.withLock {
