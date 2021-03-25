@@ -10,7 +10,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -116,7 +115,7 @@ open class FileBasedStorage(file: Path,
         }
         else -> {
           val file = storage.file
-          LOG.debugOrInfoIfTestMode { "Save $file" }
+          LOG.debug { "Save $file" }
           try {
             dataWriter.writeTo(file, this, lineSeparator.separatorString)
           }
@@ -309,7 +308,7 @@ private fun isEqualContent(result: VirtualFile,
 }
 
 private fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
-  LOG.debugOrInfoIfTestMode { "Save ${file.presentableUrl}" }
+  LOG.debug { "Save ${file.presentableUrl}" }
 
   if (!file.isWritable) {
     // may be element is not long-lived, so, we must write it to byte array
