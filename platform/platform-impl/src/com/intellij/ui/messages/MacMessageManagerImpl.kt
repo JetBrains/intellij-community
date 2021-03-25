@@ -29,6 +29,7 @@ import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.lang.reflect.Proxy
+import javax.swing.Icon
 import javax.swing.JDialog
 import javax.swing.SwingUtilities
 
@@ -151,9 +152,10 @@ private class NativeMacMessageManager : MacMessages() {
                                      cancelText: String,
                                      window: Window?,
                                      doNotAskOption: DoNotAskOption?,
+                                     icon: Icon?,
                                      helpId: String?): Int {
     return showMessageDialog(title, message, arrayOf(yesText, noText, cancelText), false, window, -1, doNotAskOption) {
-      getJBMessages().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption, helpId)
+      getJBMessages().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption, icon, helpId)
     }
   }
 
@@ -173,9 +175,10 @@ private class NativeMacMessageManager : MacMessages() {
                                noText: String,
                                window: Window?,
                                doNotAskDialogOption: DoNotAskOption?,
+                               icon: Icon?,
                                helpId: String?): Boolean {
     return showMessageDialog(title, message, arrayOf(yesText, noText), false, window, -1, doNotAskDialogOption) {
-      if (getJBMessages().showYesNoDialog(title, message, yesText, noText, window, doNotAskDialogOption, helpId)) {
+      if (getJBMessages().showYesNoDialog(title, message, yesText, noText, window, doNotAskDialogOption, icon, helpId)) {
         Messages.YES
       }
       else {

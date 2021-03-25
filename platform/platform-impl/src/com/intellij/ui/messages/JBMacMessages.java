@@ -30,6 +30,7 @@ public final class JBMacMessages extends MacMessages {
                                    @NotNull String cancelText,
                                    @Nullable Window window,
                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                                   @Nullable Icon icon,
                                    @Nullable String helpId) {
     if (window == null) {
       window = getForemostWindow();
@@ -38,7 +39,7 @@ public final class JBMacMessages extends MacMessages {
     String defaultButtonCleaned = yesText.replace(BundleBase.MNEMONIC_STRING, "");
     String otherButtonCleaned = cancelText.replace(BundleBase.MNEMONIC_STRING, "");
     String alternateButtonCleaned = noText.replace(BundleBase.MNEMONIC_STRING, "");
-    SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
+    SheetMessage sheetMessage = new SheetMessage(window, title, message, icon,
                                                  new String [] {
                                                    defaultButtonCleaned,
                                                    otherButtonCleaned,
@@ -161,8 +162,9 @@ public final class JBMacMessages extends MacMessages {
                                  @NotNull String noText,
                                  @Nullable Window window,
                                  @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                 @Nullable Icon icon,
                                  @Nullable String helpId) {
-    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, UIUtil.getQuestionIcon(),
+    SheetMessage sheetMessage = new SheetMessage(window == null ? getForemostWindow() : window, title, message, icon,
                                                  new String[]{yesText, noText}, doNotAskDialogOption, yesText, noText, helpId);
     boolean result = sheetMessage.getResult().equals(yesText);
     if (doNotAskDialogOption != null && (result || doNotAskDialogOption.shouldSaveOptionsOnCancel())) {

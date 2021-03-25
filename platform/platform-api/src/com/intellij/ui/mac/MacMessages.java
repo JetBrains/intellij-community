@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -26,6 +27,7 @@ public abstract class MacMessages {
                                             @NlsContexts.Button @NotNull String cancelText,
                                             @Nullable Window window,
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
+                                            @Nullable Icon icon,
                                             @Nullable String helpId);
   public static @NotNull MacMessages getInstance() {
     return ApplicationManager.getApplication().getService(MacMessageManagerProvider.class).getMessageManager();
@@ -63,6 +65,7 @@ public abstract class MacMessages {
                                           @NlsContexts.Button @NotNull String noText,
                                           @Nullable Window window,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                          @Nullable Icon icon,
                                           @Nullable String helpId);
 
   public abstract void showErrorDialog(@NlsContexts.DialogTitle @NotNull String title,
