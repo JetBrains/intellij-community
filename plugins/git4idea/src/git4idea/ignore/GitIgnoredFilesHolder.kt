@@ -3,29 +3,23 @@ package git4idea.ignore
 
 import com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangesViewRefresher
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
 import git4idea.GitVcs
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-class GitIgnoredFilesHolder(val project: Project, val manager: GitRepositoryManager)
+class GitIgnoredFilesHolder(val manager: GitRepositoryManager)
   : VcsIgnoredFilesHolderBase<GitRepository>(manager) {
   override fun getHolder(repository: GitRepository) = repository.ignoredFilesHolder
 
-  override fun copy() = GitIgnoredFilesHolder(project, manager)
+  override fun copy() = GitIgnoredFilesHolder(manager)
 
-  class Provider(val project: Project) : VcsIgnoredFilesHolder.Provider, ChangesViewRefresher {
-
+  class Provider(project: Project) : VcsIgnoredFilesHolder.Provider {
     private val gitVcs = GitVcs.getInstance(project)
     private val manager = GitRepositoryManager.getInstance(project)
 
     override fun getVcs() = gitVcs
 
-    override fun createHolder() = GitIgnoredFilesHolder(project, manager)
-
-    override fun refresh(project: Project) {
-      manager.repositories.forEach { r -> r.ignoredFilesHolder.startRescan() }
-    }
+    override fun createHolder() = GitIgnoredFilesHolder(manager)
   }
 }
