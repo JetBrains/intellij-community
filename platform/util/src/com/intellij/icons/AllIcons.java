@@ -980,14 +980,14 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Postgresql = load("providers/postgresql.svg", 8942378240461502503L, 2);
     /** 16x16 */ public static final @NotNull Icon Presto = load("providers/presto.svg", 4677484317865724648L, 2);
     /** 16x16 */ public static final @NotNull Icon Redshift = load("providers/redshift.svg", -8161636076303129150L, 0);
-    /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", -4763079360495849532L, 0);
+    /** 16x16 */ public static final @NotNull Icon Singlestore = load("providers/singlestore.svg", -1596894298598251989L, 0);
     /** 16x16 */ public static final @NotNull Icon Snowflake = load("providers/snowflake.svg", -511196148296774621L, 0);
     /** 16x16 */ public static final @NotNull Icon Spark = load("providers/spark.svg", 529641334744352380L, 0);
     /** 16x16 */ public static final @NotNull Icon Sqlite = load("providers/sqlite.svg", -1354077436800259360L, 2);
     /** 16x16 */ public static final @NotNull Icon SqlServer = load("providers/sqlServer.svg", 2557052360809110194L, 2);
     /** 16x16 */ public static final @NotNull Icon Sun = load("providers/sun.svg", 901999003933198963L, 2);
     /** 16x16 */ public static final @NotNull Icon Sybase = load("providers/sybase.svg", 469976759404647468L, 0);
-    /** 16x16 */ public static final @NotNull Icon Tarantool = load("providers/tarantool.svg", 2749575921763625124L, 0);
+    /** 16x16 */ public static final @NotNull Icon Tarantool = load("providers/tarantool.svg", 1397980433223516839L, 0);
     /** 16x16 */ public static final @NotNull Icon Teradata = load("providers/teradata.svg", -1965526284412460845L, 0);
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", 3743642978823178398L, 2);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 6102370661544681716L, 2);
