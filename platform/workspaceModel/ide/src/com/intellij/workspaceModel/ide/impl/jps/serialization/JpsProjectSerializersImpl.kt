@@ -388,10 +388,17 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun squash(builders: List<WorkspaceEntityStorageBuilder>): WorkspaceEntityStorageBuilder {
-    if (builders.isEmpty()) return WorkspaceEntityStorageBuilder.create()
+    var result = builders
 
-    return builders.reduce { acc, builder -> acc.addDiff(builder); acc }
-  }
+    while (result.size > 1) {
+      result = result.chunked(2) { list ->
+        val res = list.first()
+        if (list.size == 2) res.addDiff(list.last())
+        res
+      }
+    }
+
+    return result.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()  }
 
   @TestOnly
   override fun saveAllEntities(storage: WorkspaceEntityStorage, writer: JpsFileContentWriter) {
