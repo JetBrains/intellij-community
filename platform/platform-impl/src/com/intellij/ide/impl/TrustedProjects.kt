@@ -61,6 +61,7 @@ fun confirmOpeningUntrustedProject(
     .cancelText(cancelButtonText)
     .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
     .asWarning()
+    .help(TRUSTED_PROJECTS_HELP_TOPIC)
     .show(project = null)
 
   val openChoice = when (choice) {
@@ -93,6 +94,7 @@ fun confirmLoadingUntrustedProject(
     .yesText(trustButtonText)
     .noText(distrustButtonText)
     .asWarning()
+    .help(TRUSTED_PROJECTS_HELP_TOPIC)
     .ask(project)
   project.setTrusted(answer)
   TrustedProjectsStatistics.LOAD_UNTRUSTED_PROJECT_CONFIRMATION_CHOICE.log(project, answer)

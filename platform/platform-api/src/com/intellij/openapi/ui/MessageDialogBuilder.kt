@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.mac.MacMessages
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.Window
 import javax.swing.Icon
@@ -28,6 +29,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
 
   protected var icon: Icon? = null
   protected var doNotAskOption: DoNotAskOption? = null
+  @NonNls protected var helpId: String? = null
+
   protected abstract fun getThis(): T
 
   companion object {
@@ -93,6 +96,11 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
     return getThis()
   }
 
+  fun help(@NonNls helpId: String): T {
+    this.helpId = helpId
+    return getThis()
+  }
+
   class YesNo internal constructor(title: String, message: String) : MessageDialogBuilder<YesNo>(title, message) {
     override fun getThis() = this
 
@@ -121,7 +129,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
         (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                          message = message, title = title, icon = icon,
                                                          options = arrayOf(yesText, noText),
-                                                         doNotAskOption = doNotAskOption) == 0)
+                                                         doNotAskOption = doNotAskOption,
+                                                         helpId = helpId) == 0)
       })
     }
   }
@@ -159,9 +168,10 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       }, other = {
         val options = arrayOf(yesText, noText, cancelText)
         when (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
-                                                              message = message, title = title, icon = icon,
-                                                              options = options,
-                                                              doNotAskOption = doNotAskOption)) {
+                                                              message = message, title = title, options = options,
+                                                              icon = icon,
+                                                              doNotAskOption = doNotAskOption,
+                                                              helpId = helpId)) {
           0 -> YES
           1 -> NO
           else -> CANCEL
@@ -190,8 +200,8 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
       MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, window, doNotAskOption)
     }, other = {
       MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
-                                                      message = message, title = title, icon = icon,
-                                                      options = arrayOf(yesText, noText),
+                                                      message = message, title = title, options = arrayOf(yesText, noText),
+                                                      icon = icon,
                                                       doNotAskOption = doNotAskOption) == 0
     })
   }

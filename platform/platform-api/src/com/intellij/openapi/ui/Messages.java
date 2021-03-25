@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -204,7 +204,7 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false, null);
   }
 
   /**
@@ -218,7 +218,7 @@ public class Messages {
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true);
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true, null);
   }
 
   public static boolean canShowMacSheetPanel() {
@@ -253,7 +253,8 @@ public class Messages {
                                String @NotNull @NlsContexts.Button [] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
-    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
+    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false,
+                                                           null);
   }
 
   /**
@@ -271,7 +272,7 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return MessagesService.getInstance()
-      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, null);
   }
 
   /**
@@ -647,7 +648,8 @@ public class Messages {
   public static void showErrorDialog(@Nullable Component component,
                                      @DialogMessage String message,
                                      @NotNull @DialogTitle String title) {
-    MessagesService.getInstance().showMessageDialog(null, component, message, title, new String[]{getOkButton()}, 0, 0, getErrorIcon(), null, false);
+    MessagesService.getInstance().showMessageDialog(null, component, message, title, new String[]{getOkButton()}, 0, 0, getErrorIcon(), null, false,
+                                                    null);
   }
 
   public static void showErrorDialog(@NotNull Component component, @DialogMessage String message) {
@@ -1112,7 +1114,7 @@ public class Messages {
       super(project, true);
       myComment = comment;
       myValidator = validator;
-      _init(title, message, options, defaultOption, -1, icon, null);
+      _init(title, message, options, defaultOption, -1, icon, null, null);
       myField.setText(initialValue);
       enableOkAction();
     }

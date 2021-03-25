@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.diagnostic.LoadingState;
@@ -47,7 +47,8 @@ public class MessagesServiceImpl implements MessagesService {
                                int focusedOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
-                               boolean alwaysUseIdeaUI) {
+                               boolean alwaysUseIdeaUI,
+                               @Nullable String helpId) {
     if (isApplicationInUnitTestOrHeadless()) {
       return TestDialogManager.getTestImplementation().show(message);
     }
@@ -67,7 +68,7 @@ public class MessagesServiceImpl implements MessagesService {
       LOG.error(reportThis);
     }
 
-    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
+    MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false, helpId);
     dialog.show();
     return dialog.getExitCode();
   }

@@ -7,12 +7,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +30,7 @@ public class MessageDialog extends DialogWrapper {
   protected int myFocusedOptionIndex;
   protected Icon myIcon;
   private MessagesBorderLayout myLayout;
+  private @NonNls @Nullable String myHelpId;
 
   public MessageDialog(@Nullable Project project,
                        @NlsContexts.DialogMessage @Nullable String message,
@@ -52,8 +53,22 @@ public class MessageDialog extends DialogWrapper {
                        @Nullable Icon icon,
                        @Nullable DoNotAskOption doNotAskOption,
                        boolean canBeParent) {
+    this(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, canBeParent, null);
+  }
+
+  public MessageDialog(@Nullable Project project,
+                       @Nullable Component parentComponent,
+                       @NlsContexts.DialogMessage @Nullable String message,
+                       @NlsContexts.DialogTitle String title,
+                       String @NotNull [] options,
+                       int defaultOptionIndex,
+                       int focusedOptionIndex,
+                       @Nullable Icon icon,
+                       @Nullable DoNotAskOption doNotAskOption,
+                       boolean canBeParent,
+                       @Nullable String helpId) {
     super(project, parentComponent, canBeParent, IdeModalityType.IDE);
-    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
+    _init(title, message, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, helpId);
   }
 
   public MessageDialog(@NlsContexts.DialogMessage @Nullable String message,
@@ -82,7 +97,8 @@ public class MessageDialog extends DialogWrapper {
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
-                       @Nullable DoNotAskOption doNotAskOption) {
+                       @Nullable DoNotAskOption doNotAskOption,
+                       @Nullable String helpId) {
     setTitle(title);
     if (Messages.isMacSheetEmulation()) {
       setUndecorated(true);
@@ -92,6 +108,7 @@ public class MessageDialog extends DialogWrapper {
     myDefaultOptionIndex = defaultOptionIndex;
     myFocusedOptionIndex = focusedOptionIndex;
     myIcon = icon;
+    myHelpId = helpId;
     setDoNotAskOption(doNotAskOption);
     init();
     if (Messages.isMacSheetEmulation()) {
@@ -101,7 +118,7 @@ public class MessageDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action[] actions = new Action[myOptions.length];
+    Action[] actions = new Action[myOptions.length + 1];
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];
       final int exitCode = i;
@@ -121,8 +138,9 @@ public class MessageDialog extends DialogWrapper {
       }
 
       UIUtil.assignMnemonic(option, actions[i]);
-
     }
+
+    actions[myOptions.length] = getHelpAction();
     return actions;
   }
 
@@ -249,5 +267,10 @@ public class MessageDialog extends DialogWrapper {
   protected JTextPane createMessageComponent(final @NlsContexts.DialogMessage String message) {
     final JTextPane messageComponent = new JTextPane();
     return Messages.configureMessagePaneUi(messageComponent, message);
+  }
+
+  @Override
+  protected @Nullable String getHelpId() {
+    return myHelpId;
   }
 }
