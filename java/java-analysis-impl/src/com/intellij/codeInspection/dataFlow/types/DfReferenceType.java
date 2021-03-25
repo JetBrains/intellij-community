@@ -125,7 +125,11 @@ public interface DfReferenceType extends DfType {
 
   @Override
   default boolean containsConstant(@NotNull DfConstantType<?> constant) {
-    return dropTypeConstraint().isSuperType(constant);
+    DfReferenceType filtered = dropTypeConstraint();
+    if (getConstraint().isComparedByEquals()) {
+      filtered = filtered.dropLocality();
+    }
+    return filtered.isSuperType(constant);
   }
 
   @Override
