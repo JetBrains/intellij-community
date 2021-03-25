@@ -18,7 +18,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Please use {@link java.util.function.Consumer} instead
+ * Deprecated. Please use {@link java.util.function.Consumer} instead
  */
 public interface Consumer<T> {
   /**
