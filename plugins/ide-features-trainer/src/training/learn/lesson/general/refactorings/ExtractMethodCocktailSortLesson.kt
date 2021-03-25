@@ -3,7 +3,7 @@ package training.learn.lesson.general.refactorings
 
 import com.intellij.CommonBundle
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.actions.BaseRefactoringAction
+import com.intellij.refactoring.extractMethod.ExtractMethodHelper
 import com.intellij.ui.UIBundle
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -57,7 +57,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { dialog: JDialog ->
           dialog.title == replaceFragmentDialogTitle
         }
-        restoreState(restoreId = startTaskId) {
+        restoreState(restoreId = startTaskId, delayMillis = defaultRestoreDelay) {
           !insideRefactoring()
         }
         test(waitEditorToBeReady = false) {
@@ -82,6 +82,6 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
     }
 
   private fun insideRefactoring() = Thread.currentThread().stackTrace.any {
-    it.className.contains(BaseRefactoringAction::class.java.simpleName)
+    it.className.contains(ExtractMethodHelper::class.java.simpleName)
   }
 }
