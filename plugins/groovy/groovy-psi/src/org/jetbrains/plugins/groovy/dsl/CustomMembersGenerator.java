@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -229,29 +228,4 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
     return null;
   }
-
-  public static class GdslNamedParameter extends FakePsiElement {
-    private final String myName;
-    public final String docString;
-    private final PsiElement myParent;
-    @Nullable public final String myParameterTypeText;
-
-    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent, @Nullable String type) {
-      myName = name;
-      this.docString = doc;
-      myParent = parent;
-      myParameterTypeText = type;
-    }
-
-    @Override
-    public PsiElement getParent() {
-      return myParent;
-    }
-
-    @Override
-    public String getName() {
-      return myName;
-    }
-  }
-
 }

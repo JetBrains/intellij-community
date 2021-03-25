@@ -13,7 +13,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.dsl.*;
-import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.impl.NamedArgumentDescriptorImpl;

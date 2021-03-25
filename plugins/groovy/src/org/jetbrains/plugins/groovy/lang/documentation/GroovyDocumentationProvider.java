@@ -25,7 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
+import org.jetbrains.plugins.groovy.dsl.GdslNamedParameter;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GrPropertyForCompletion;
@@ -278,8 +278,8 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof CustomMembersGenerator.GdslNamedParameter) {
-      CustomMembersGenerator.GdslNamedParameter parameter = (CustomMembersGenerator.GdslNamedParameter)element;
+    if (element instanceof GdslNamedParameter) {
+      GdslNamedParameter parameter = (GdslNamedParameter)element;
       String result = "<pre><b>" + parameter.getName() + "</b>";
       if (parameter.myParameterTypeText != null) {
         result += ": " + parameter.myParameterTypeText;
