@@ -179,7 +179,7 @@ public class BuildView extends CompositeView<ExecutionConsole>
 
   @Nullable
   @ApiStatus.Internal
-  ExecutionConsole getConsoleView() {
+  public ExecutionConsole getConsoleView() {
     return myExecutionConsole;
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.CommonBundle
+import com.intellij.build.BuildView
 import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
@@ -183,7 +184,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
   private fun onProcessStarted(descriptor: RunContentDescriptor,
                                continuation: Continuation<ExecutionConsole?>) {
-    val executionConsole = descriptor.executionConsole
+    var executionConsole = descriptor.executionConsole
+    if (executionConsole is BuildView) {
+      executionConsole = executionConsole.consoleView
+    }
+
     val component = executionConsole?.component
     val resultsForm = if (component is SMTestRunnerResultsForm) {
       component
