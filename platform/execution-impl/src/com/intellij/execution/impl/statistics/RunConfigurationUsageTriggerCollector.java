@@ -61,6 +61,13 @@ public final class RunConfigurationUsageTriggerCollector {
     });
   }
 
+  public static void logProcessFinished(@Nullable IdeActivity activity,
+                                        RunConfigurationFinishType finishType) {
+    if (activity != null) {
+      activity.finished(data -> data.addData("finish_type", finishType.name()));
+    }
+  }
+
   public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
 
     @Override
@@ -101,4 +108,6 @@ public final class RunConfigurationUsageTriggerCollector {
       return ValidationResultType.REJECTED;
     }
   }
+
+  public enum RunConfigurationFinishType {SUCCESS, FAILED}
 }

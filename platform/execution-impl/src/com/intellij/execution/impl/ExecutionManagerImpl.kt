@@ -13,6 +13,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationFinishType
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
@@ -152,7 +153,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
-  private fun processNotStarted(environment: ExecutionEnvironment) {
+  private fun processNotStarted(environment: ExecutionEnvironment, activity: IdeActivity?) {
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment)
@@ -222,7 +224,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
-        processNotStarted(environment)
+        processNotStarted(environment, activity)
       }
 
       try {
@@ -230,7 +232,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           .onSuccess { descriptor ->
             AppUIUtil.invokeLaterIfProjectAlive(project) {
               if (descriptor == null) {
-                processNotStarted(environment)
+                processNotStarted(environment, activity)
                 return@invokeLaterIfProjectAlive
               }
 
@@ -287,7 +289,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         ApplicationManager.getApplication().invokeLater(startRunnable, project.disposed)
       }, environment, Runnable {
         if (!project.isDisposed) {
-          processNotStarted(environment)
+          processNotStarted(environment, activity)
         }
       })
     }
@@ -405,7 +407,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   private fun doRun(environment: ExecutionEnvironment, startRunnable: Runnable) {
     val allowSkipRun = environment.getUserData(EXECUTION_SKIP_RUN)
     if (allowSkipRun != null && allowSkipRun) {
-      processNotStarted(environment)
+      processNotStarted(environment, null)
       return
     }
 
@@ -932,7 +934,7 @@ private class ProcessExecutionListener(private val project: Project,
 
     project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminated(executorId, environment, processHandler, event.exitCode)
 
-    activity?.finished()
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.SUCCESS)
 
     processHandler.removeProcessListener(this)
     SaveAndSyncHandler.getInstance().scheduleRefresh()
