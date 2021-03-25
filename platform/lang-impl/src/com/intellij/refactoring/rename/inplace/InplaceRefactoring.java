@@ -439,7 +439,8 @@ public abstract class InplaceRefactoring {
         variableHighlights(template, templateState).forEach((range, attributesKey) -> {
           TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(attributesKey);
           if (attributes != null) {
-            rangesToHighlight.put(range, attributes);
+            TextAttributesWithKey attributesWithKey = new TextAttributesWithKey(attributes, attributesKey);
+            rangesToHighlight.put(range, attributesWithKey);
           }
         });
       }
@@ -734,7 +735,12 @@ public abstract class InplaceRefactoring {
     for (Map.Entry<TextRange, TextAttributes> entry : ranges.entrySet()) {
       TextRange range = entry.getKey();
       TextAttributes attributes = entry.getValue();
-      highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
+      if (attributes instanceof TextAttributesWithKey) {
+        TextAttributesKey attributesKey = ((TextAttributesWithKey)attributes).getTextAttributesKey();
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributesKey, 0, highlighters);
+      } else {
+        highlightManager.addOccurrenceHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, 0, highlighters, null);
+      }
     }
 
     for (RangeHighlighter highlighter : highlighters) {
@@ -962,6 +968,19 @@ public abstract class InplaceRefactoring {
       String enterShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
       String tabShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
       setAdvertisementText(LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut));
+    }
+  }
+
+  private static class TextAttributesWithKey extends TextAttributes {
+    private final @NotNull TextAttributesKey myTextAttributesKey;
+
+    TextAttributesWithKey(@NotNull TextAttributes textAttributes, @NotNull TextAttributesKey textAttributesKey) {
+      myTextAttributesKey = textAttributesKey;
+      copyFrom(textAttributes);
+    }
+
+    @NotNull TextAttributesKey getTextAttributesKey() {
+      return myTextAttributesKey;
     }
   }
 
