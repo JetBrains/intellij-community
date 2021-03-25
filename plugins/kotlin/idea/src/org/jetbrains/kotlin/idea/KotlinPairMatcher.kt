@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -19,7 +19,8 @@ class KotlinPairMatcher : PairedBraceMatcher {
         BracePair(KtTokens.LPAR, KtTokens.RPAR, false),
         BracePair(KtTokens.LONG_TEMPLATE_ENTRY_START, KtTokens.LONG_TEMPLATE_ENTRY_END, false),
         BracePair(KtTokens.LBRACE, KtTokens.RBRACE, true),
-        BracePair(KtTokens.LBRACKET, KtTokens.RBRACKET, false)
+        BracePair(KtTokens.LBRACKET, KtTokens.RBRACKET, false),
+        BracePair(KtTokens.LT, KtTokens.GT, false),
     )
 
     override fun getPairs(): Array<BracePair> = pairs
@@ -43,8 +44,7 @@ class KotlinPairMatcher : PairedBraceMatcher {
     override fun getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int {
         val element = file.findElementAt(openingBraceOffset)
         if (element == null || element is PsiFile) return openingBraceOffset
-        val parent = element.parent
-        return when (parent) {
+        return when (val parent = element.parent) {
             is KtClassBody, is KtBlockExpression ->
                 DeclarationRangeUtil.getPossibleDeclarationAtRange(parent.parent)?.startOffset ?: openingBraceOffset
 
