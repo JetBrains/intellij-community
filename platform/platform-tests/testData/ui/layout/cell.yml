@@ -34,7 +34,7 @@ columnConstraints:
 componentConstrains:
   Repository [label]: {}
   'ComboBox #1': {split: 2}
-  Delete: {spanX: INF, wrap: true}
+  Delete: {hideMode: 2, spanX: INF, wrap: true}
   Use File -> Settings Repository... to configure [label]:
     horizontal:
       gapBefore: {}

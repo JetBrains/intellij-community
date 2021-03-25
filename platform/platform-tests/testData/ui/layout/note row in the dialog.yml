@@ -43,6 +43,7 @@ componentConstrains:
     wrap: true
   Sudo password [label]: {}
   'JPasswordField #2':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
@@ -138,8 +138,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
-      for (c in components) {
+      for ((index, c) in components.withIndex()) {
         c.isVisible = value
+        builder.componentConstraints[c]?.hideMode = if (index == components.size - 1 && value) 2 else 3
       }
     }
 

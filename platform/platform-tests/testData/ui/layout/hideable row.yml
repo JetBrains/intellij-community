@@ -30,6 +30,7 @@ columnConstraints:
 componentConstrains:
   Foo [label]: {}
   'JBTextField #1':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true

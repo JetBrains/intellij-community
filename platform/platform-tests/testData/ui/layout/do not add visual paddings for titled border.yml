@@ -33,7 +33,7 @@ columnConstraints:
   count: 2
 componentConstrains:
   Repository [label]: {}
-  Auto Sync: {spanX: INF, wrap: true}
+  Auto Sync: {hideMode: 2, spanX: INF, wrap: true}
   Use File -> Settings Repository... to configure [label]:
     horizontal:
       gapBefore: {}

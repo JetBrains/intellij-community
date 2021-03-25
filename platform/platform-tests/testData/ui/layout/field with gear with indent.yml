@@ -38,13 +38,14 @@ componentConstrains:
         preferred: *id008
   'JTextField #1':
     horizontal: {grow: 100.0}
-  'JLabel #2': {spanX: INF, wrap: true}
+  'JLabel #2': {hideMode: 2, spanX: INF, wrap: true}
   Master Password [label]:
     horizontal:
       gapBefore:
         min: &id009 {horizontal: true, value: 20.0}
         preferred: *id009
   'JBPasswordField #4':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true

@@ -191,6 +191,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           if (index == row.components.size - 1) {
             cc.spanX()
             cc.isWrap = true
+            if (row.components.size > 1) {
+              cc.hideMode = 2   // if hideMode is 3, the wrap constraint won't be processed
+            }
           }
 
           if (index >= row.rightIndex) {

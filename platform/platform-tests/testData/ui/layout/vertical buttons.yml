@@ -41,6 +41,7 @@ componentConstrains:
   Accept Theirs:
     horizontal: {grow: 1000.0}
   Merge ...:
+    hideMode: 2
     horizontal: {grow: 1000.0}
     spanX: INF
     wrap: true

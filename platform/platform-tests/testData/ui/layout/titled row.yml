@@ -45,6 +45,7 @@ componentConstrains:
         min: &id008 {horizontal: true, value: 20.0}
         preferred: *id008
   'JTextField #2':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
@@ -54,6 +55,7 @@ componentConstrains:
         min: &id009 {horizontal: true, value: 20.0}
         preferred: *id009
   'JTextField #4':
+    hideMode: 2
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true

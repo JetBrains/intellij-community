@@ -34,6 +34,7 @@ componentConstrains:
     vertical: {grow: 100.0}
   Merge ...:
     flowX: false
+    hideMode: 2
     horizontal: {grow: 1000.0}
     spanX: INF
     vertical:
