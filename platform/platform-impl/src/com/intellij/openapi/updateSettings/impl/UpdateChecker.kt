@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -500,6 +501,7 @@ object UpdateChecker {
     }
   }
 
+  @RequiresEdt
   private fun showResults(project: Project?,
                           platformUpdates: CheckForUpdateResult,
                           pluginUpdates: PluginUpdates,
