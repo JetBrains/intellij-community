@@ -219,7 +219,7 @@ public final class Switcher extends BaseSwitcherAction {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
-      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getMainText, mySpeedSearch));
+      toolWindows = new JBList<>(mySpeedSearch != null ? mySpeedSearch.wrap(twModel) : twModel);
       toolWindows.setVisibleRowCount(toolWindows.getItemsCount());
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
@@ -262,7 +262,7 @@ public final class Switcher extends BaseSwitcherAction {
         }
       };
       files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(createModel(filesModel, SwitcherListItem::getMainText, mySpeedSearch), null, true);
+        .createListWithOpenInRightSplitter(mySpeedSearch != null ? mySpeedSearch.wrap(filesModel) : filesModel, null, true);
       files.setVisibleRowCount(files.getItemsCount());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
@@ -354,22 +354,6 @@ public final class Switcher extends BaseSwitcherAction {
     @Override
     public void unregisterHint() {
       myHint = null;
-    }
-
-    private static <T> ListModel<T> createModel(CollectionListModel<T> baseModel,
-                                                Function<? super T, String> namer,
-                                                SpeedSearchBase<SwitcherPanel> speedSearch) {
-      ListModel<T> listModel;
-      if (speedSearch != null) {
-        listModel = new NameFilteringListModel<>(baseModel, namer, s -> !speedSearch.isPopupActive()
-                                                                        || StringUtil.isEmpty(speedSearch.getEnteredPrefix())
-                                                                        || speedSearch.getComparator().matchingFragments(speedSearch.getEnteredPrefix(), s) != null, () -> StringUtil.notNullize(
-          speedSearch.getEnteredPrefix()));
-      }
-      else {
-        listModel = baseModel;
-      }
-      return listModel;
     }
 
     static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
@@ -904,6 +888,18 @@ public final class Switcher extends BaseSwitcherAction {
           myComponent.toolWindows.getEmptyText().setText(StatusText.getDefaultEmptyText());
         }
         refreshSelection();
+      }
+
+      private boolean isMatchingText(@Nullable String text) {
+        return text != null && (!isPopupActive() || compare(text, getEnteredPrefix()));
+      }
+
+      private @NotNull String getPattern() {
+        return StringUtil.notNullize(getEnteredPrefix());
+      }
+
+      <T extends SwitcherListItem> @NotNull ListModel<T> wrap(@NotNull ListModel<T> model) {
+        return new NameFilteringListModel<>(model, SwitcherListItem::getMainText, this::isMatchingText, this::getPattern);
       }
     }
   }
