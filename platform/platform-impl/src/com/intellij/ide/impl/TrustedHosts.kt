@@ -107,7 +107,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
 
 @State(name = "Trusted.Paths.Settings", storages = [Storage("trusted-paths.xml")])
 @Service(Service.Level.APP)
-class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
+internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PATHS")
