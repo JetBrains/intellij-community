@@ -85,9 +85,14 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
       writer.saveComponent(fileUrlString, "ExternalSystem", componentTag)
     }
-    if (moduleType != null) {
+    if (moduleType != null || customImlData?.customModuleOptions != null) {
       val componentTag = JDomSerializationUtil.createComponentElement(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME)
-      componentTag.addContent(Element("option").setAttribute("key", "type").setAttribute("value", moduleType))
+      if (moduleType != null) {
+        componentTag.addContent(Element("option").setAttribute("key", "type").setAttribute("value", moduleType))
+      }
+      customImlData?.customModuleOptions?.forEach{ (key, value) ->
+        componentTag.addContent(Element("option").setAttribute("key", key).setAttribute("value", value))
+      }
       writer.saveComponent(fileUrlString, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
     }
   }
