@@ -11,10 +11,10 @@ import org.jetbrains.annotations.ApiStatus
 class EventLogListenersManager {
   private val subscribers = MultiMap.createConcurrent<String, StatisticsEventLogListener>()
 
-  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
-    val copyOnWriteArraySet = subscribers[recorderId]
-    for (listener in copyOnWriteArraySet) {
-      listener.onLogEvent(validatedEvent, rawGroupId, rawEventId, rawData)
+  fun notifySubscribers(recorderId: String, validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>) {
+    val listeners = subscribers[recorderId]
+    for (listener in listeners) {
+      listener.onLogEvent(validatedEvent, rawEventId, rawData)
     }
   }
 
@@ -31,5 +31,5 @@ class EventLogListenersManager {
 }
 
 interface StatisticsEventLogListener {
-  fun onLogEvent(validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>)
+  fun onLogEvent(validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>)
 }

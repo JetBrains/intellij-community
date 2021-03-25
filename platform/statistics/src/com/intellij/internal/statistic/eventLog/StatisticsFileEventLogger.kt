@@ -47,7 +47,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         val event = validator.validate(group.id, group.version.toString(), build, sessionId, bucket, eventTime, recorderVersion, eventId,
                                        data, isState)
         if (event != null) {
-          log(event, System.currentTimeMillis(), group.id, eventId, data)
+          log(event, System.currentTimeMillis(), eventId, data)
         }
       }, logExecutor)
     }
@@ -57,14 +57,14 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
   }
 
-  private fun log(event: LogEvent, createdTime: Long, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
+  private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
     if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && lastEvent!!.validatedEvent.shouldMerge(event)) {
       lastEventTime = event.time
       lastEvent!!.validatedEvent.event.increment()
     }
     else {
       logLastEvent()
-      lastEvent = FusEvent(event, rawGroupId, rawEventId, rawData)
+      lastEvent = FusEvent(event, rawEventId, rawData)
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
@@ -90,8 +90,8 @@ open class StatisticsFileEventLogger(private val recorderId: String,
         event.addData("system_headless", true)
       }
       writer.log(it.validatedEvent)
-      ServiceManager.getService(EventLogListenersManager::class.java).notifySubscribers(recorderId, it.validatedEvent, it.rawGroupId,
-                                                                                        it.rawEventId, it.rawData)
+      ServiceManager.getService(EventLogListenersManager::class.java).notifySubscribers(recorderId, it.validatedEvent, it.rawEventId,
+                                                                                        it.rawData)
     }
     lastEvent = null
   }
@@ -125,7 +125,6 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   private data class FusEvent(val validatedEvent: LogEvent,
-                              val rawGroupId: String,
                               val rawEventId: String,
                               val rawData: Map<String, Any>)
 }

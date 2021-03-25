@@ -6,7 +6,10 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.*
 import com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction
 import com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
+import com.intellij.internal.statistic.eventLog.LogEvent
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -37,8 +40,8 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     val model = StatisticsLogFilterModel()
     consoleLog = StatisticsEventLogConsole(project, model, recorderId)
     eventLogListener = object : StatisticsEventLogListener {
-      override fun onLogEvent(validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
-        consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawGroupId, rawEventId, rawData))
+      override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>) {
+        consoleLog.addLogLine(messageBuilder.buildLogMessage(validatedEvent, rawEventId, rawData))
       }
     }
 

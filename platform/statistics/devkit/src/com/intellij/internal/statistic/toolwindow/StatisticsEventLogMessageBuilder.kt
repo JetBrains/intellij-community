@@ -6,11 +6,11 @@ import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.util.text.DateFormatUtil
 
 class StatisticsEventLogMessageBuilder {
-  fun buildLogMessage(logEvent: LogEvent, rawGroupId: String?, rawEventId: String?, rawData: Map<String, Any>?): String {
+  fun buildLogMessage(logEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?): String {
     return buildString {
       append(DateFormatUtil.formatTimeWithSeconds(logEvent.time))
       val event = logEvent.event
-      val groupId = formatValue(rawGroupId, logEvent.group.id)
+      val groupId = logEvent.group.id
       val eventId = formatValue(rawEventId, logEvent.event.id)
       append(" - [\"$groupId\", v${logEvent.group.version}]: \"$eventId\" ")
       val count = event.count

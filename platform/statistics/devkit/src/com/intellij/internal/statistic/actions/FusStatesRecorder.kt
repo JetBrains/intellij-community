@@ -29,7 +29,7 @@ internal object FusStatesRecorder {
       state.clear()
       isRecordingInProgress.getAndSet(true)
       val subscriber = object : StatisticsEventLogListener {
-        override fun onLogEvent(validatedEvent: LogEvent, rawGroupId: String, rawEventId: String, rawData: Map<String, Any>) {
+        override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String, rawData: Map<String, Any>) {
           recordEvent(validatedEvent)
         }
       }

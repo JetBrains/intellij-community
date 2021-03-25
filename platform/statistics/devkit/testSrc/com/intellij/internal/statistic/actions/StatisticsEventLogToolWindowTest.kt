@@ -64,7 +64,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(incorrectEventId)
 
     val filterModel = StatisticsLogFilterModel()
-    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, emptyMap())
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$incorrectEventId[$eventId]\" {}", logMessage)
     val processingResult = filterModel.processLine(logMessage)
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
@@ -81,7 +81,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
       "test" to "foo",
       "project" to "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea"
     )
-    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, rawData)
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, rawData)
     val expectedLine = buildExpectedLine(
       "{\"test\":\"validation.incorrect_rule[foo]\", \"project\":\"validation.undefined_rule[5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea]\"}")
     assertEquals(expectedLine, logMessage)
@@ -96,7 +96,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("project", UNDEFINED_RULE.description)
 
     val filterModel = StatisticsLogFilterModel()
-    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), null, null, null)
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), null, null)
     val expectedLine = buildExpectedLine("{\"test\":\"validation.incorrect_rule\", \"project\":\"validation.undefined_rule\"}")
     assertEquals(expectedLine, logMessage)
     val processingResult = filterModel.processLine(logMessage)
@@ -125,7 +125,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val count = 2
     val action = LogEventAction(eventId, false, count)
 
-    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, emptyMap())
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" (count=${count}) {}", actual)
   }
 
@@ -133,7 +133,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   fun testLogLineWithCountMatchesRegexpPattern() {
     val action = LogEventAction(eventId, false, 2)
 
-    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, emptyMap())
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
     assertTrue(matcher.find())
     assertEquals(eventGroup, matcher.group("groupId"))
@@ -146,7 +146,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(eventId, true)
     action.addData("plugin_type", "PLATFORM")
 
-    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, emptyMap())
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
     assertTrue(matcher.find())
     assertEquals(eventGroup, matcher.group("groupId"))
@@ -155,7 +155,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   }
 
   private fun doTestCountCollector(expectedEventDataPart: String, action: LogEventAction, rawData: Map<String, Any> = emptyMap()) {
-    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventGroup, eventId, rawData)
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, rawData)
     assertEquals(buildExpectedLine(expectedEventDataPart), actual)
   }
 
