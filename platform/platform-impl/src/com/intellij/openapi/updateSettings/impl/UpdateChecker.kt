@@ -517,7 +517,9 @@ object UpdateChecker {
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (updatedChannel != null && newBuild != null) {
-      ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+      if (userInitiated) {
+        ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+      }
 
       val runnable = {
         UpdateInfoDialog(
