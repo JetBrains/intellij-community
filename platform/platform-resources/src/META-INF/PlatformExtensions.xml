@@ -700,7 +700,7 @@
 
     <statistics.counterUsagesCollector groupId="vfs" version="2"/>
     <statistics.counterUsagesCollector groupId="indexing" version="3"/>
-    <statistics.counterUsagesCollector groupId="vcs" version="6"/>
+    <statistics.counterUsagesCollector groupId="vcs" version="7"/>
     <statistics.counterUsagesCollector groupId="build" version="3"/>
     <statistics.counterUsagesCollector groupId="project.import" version="3"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLogger"/>
