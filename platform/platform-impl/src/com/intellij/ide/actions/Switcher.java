@@ -41,7 +41,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.SwingTextTrimmer;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
@@ -51,8 +50,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 
@@ -224,6 +221,7 @@ public final class Switcher extends BaseSwitcherAction {
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       toolWindows.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.tool.window.list"));
+      toolWindows.setEmptyText(IdeBundle.message("recent.files.tool.window.list.empty.text"));
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
@@ -266,6 +264,7 @@ public final class Switcher extends BaseSwitcherAction {
       files.setVisibleRowCount(files.getItemsCount());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
       files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
+      files.setEmptyText(IdeBundle.message("recent.files.file.list.empty.text"));
 
       toolWindows.getSelectionModel().addListSelectionListener(filesSelectionListener);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
@@ -598,10 +597,6 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    private boolean isFilesSelected() {
-      return getSelectedList() == files;
-    }
-
     private void cancel() {
       myPopup.cancel();
     }
@@ -793,114 +788,6 @@ public final class Switcher extends BaseSwitcherAction {
       }
       final EditorWindow[] windows = window.getOwner().getWindows();
       return ArrayUtil.contains(window, windows) ? window : windows.length > 0 ? windows[0] : null;
-    }
-
-    private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
-
-      SwitcherSpeedSearch(@NotNull SwitcherPanel switcher) {
-        super(switcher);
-        addChangeListener(this);
-        setComparator(new SpeedSearchComparator(false, true));
-      }
-
-      @Override
-      protected int getSelectedIndex() {
-        return myComponent.isFilesSelected()
-               ? myComponent.files.getSelectedIndex()
-               : myComponent.files.getItemsCount() + myComponent.toolWindows.getSelectedIndex();
-      }
-
-      @Override
-      protected int getElementCount() {
-        return myComponent.files.getItemsCount() + myComponent.toolWindows.getItemsCount();
-      }
-
-      @Override
-      protected Object getElementAt(int index) {
-        ListModel<?> files = myComponent.files.getModel();
-        if (index < files.getSize()) return files.getElementAt(index);
-        return myComponent.toolWindows.getModel().getElementAt(index - files.getSize());
-      }
-
-      @Override
-      protected @NotNull String getElementText(Object element) {
-        SwitcherListItem item = element instanceof SwitcherListItem ? (SwitcherListItem)element : null;
-        return item == null ? "" : item.getMainText();
-      }
-
-      @Override
-      protected void selectElement(final Object element, String selectedText) {
-        if (element instanceof SwitcherVirtualFile) {
-          if (!myComponent.toolWindows.isSelectionEmpty()) myComponent.toolWindows.clearSelection();
-          myComponent.files.clearSelection();
-          myComponent.files.setSelectedValue(element, true);
-          myComponent.files.requestFocusInWindow();
-        }
-        else {
-          if (!myComponent.files.isSelectionEmpty()) myComponent.files.clearSelection();
-          myComponent.toolWindows.clearSelection();
-          myComponent.toolWindows.setSelectedValue(element, true);
-          myComponent.toolWindows.requestFocusInWindow();
-        }
-      }
-
-      @Nullable
-      @Override
-      protected Object findElement(@NotNull String pattern) {
-        boolean toolWindowsFocused = myComponent.toolWindows.hasFocus();
-        JList<?> firstList = !toolWindowsFocused ? myComponent.files : myComponent.toolWindows;
-        JList<?> secondList = toolWindowsFocused ? myComponent.files : myComponent.toolWindows;
-        Object element = findElementIn(firstList, pattern);
-        return element != null ? element : findElementIn(secondList, pattern);
-      }
-
-      private <T> @Nullable T findElementIn(@NotNull JList<T> list, @NotNull String pattern) {
-        T foundElement = null;
-        int foundDegree = 0;
-        ListModel<T> model = list.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-          T element = model.getElementAt(i);
-          String text = getElementText(element);
-          if (text.isEmpty()) continue;
-          int degree = getComparator().matchingDegree(pattern, text);
-          if (foundElement == null || foundDegree < degree) {
-            foundElement = element;
-            foundDegree = degree;
-          }
-        }
-        return foundElement;
-      }
-
-      @Override
-      public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        if (myComponent.project.isDisposed()) {
-          myComponent.cancel();
-          return;
-        }
-        ((NameFilteringListModel)myComponent.files.getModel()).refilter();
-        ((NameFilteringListModel)myComponent.toolWindows.getModel()).refilter();
-        if (myComponent.files.getItemsCount() + myComponent.toolWindows.getItemsCount() == 0) {
-          myComponent.toolWindows.getEmptyText().setText("");
-          myComponent.files.getEmptyText().setText(IdeBundle.message("empty.text.press.enter.to.search.in.project"));
-        }
-        else {
-          myComponent.files.getEmptyText().setText(StatusText.getDefaultEmptyText());
-          myComponent.toolWindows.getEmptyText().setText(StatusText.getDefaultEmptyText());
-        }
-        refreshSelection();
-      }
-
-      private boolean isMatchingText(@Nullable String text) {
-        return text != null && (!isPopupActive() || compare(text, getEnteredPrefix()));
-      }
-
-      private @NotNull String getPattern() {
-        return StringUtil.notNullize(getEnteredPrefix());
-      }
-
-      <T extends SwitcherListItem> @NotNull ListModel<T> wrap(@NotNull ListModel<T> model) {
-        return new NameFilteringListModel<>(model, SwitcherListItem::getMainText, this::isMatchingText, this::getPattern);
-      }
     }
   }
 
