@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
+@file:ApiStatus.Experimental
 
 package com.intellij.ide.impl
 
@@ -20,6 +21,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -81,6 +83,7 @@ fun confirmLoadingUntrustedProject(
   return answer
 }
 
+@ApiStatus.Experimental
 enum class OpenUntrustedProjectChoice {
   IMPORT,
   OPEN_WITHOUT_IMPORTING,
@@ -149,6 +152,7 @@ private fun getImplicitTrustedCheckResult(projectDir: Path?, project: Project? =
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
 
   class State : BaseState() {
@@ -172,6 +176,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     }
 }
 
+@ApiStatus.Experimental
 interface TrustChangeNotifier {
   fun projectTrusted(project: Project)
 
