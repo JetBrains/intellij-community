@@ -200,7 +200,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     String group = descriptor.getGroupId();
     FeatureUsageData data = new FeatureUsageData().addData("id", id).addData("group", StringUtil.notNullize(group, "unknown"));
     FUCounterUsageLogger.getInstance().logEvent("productivity", "feature.used", data);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(FeaturesRegistryListener.TOPIC).featureUsed(featureId);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(FeaturesRegistryListener.TOPIC).featureUsed(descriptor);
   }
 
   @Override

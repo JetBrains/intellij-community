@@ -2,9 +2,11 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Experimental
 public interface FeaturesRegistryListener {
-  void featureUsed(String featureId);
+  void featureUsed(FeatureDescriptor feature);
 
   @Topic.AppLevel
   Topic<FeaturesRegistryListener> TOPIC = Topic.create("Features Registry listener", FeaturesRegistryListener.class);
