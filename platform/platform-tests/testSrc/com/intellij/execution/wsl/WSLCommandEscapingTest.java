@@ -238,9 +238,7 @@ public class WSLCommandEscapingTest extends BareTestFixtureTestCase {
   }
 
   private void assertEnvOutput(Map<String, String> envs) throws ExecutionException {
-    List<String> command = new ArrayList<>();
-    command.add("printenv");
-    command.addAll(envs.keySet());
+    List<String> command = ContainerUtil.concat(List.of("printenv"), List.copyOf(envs.keySet()));
     String expectedOut = String.join("\n", envs.values()) + "\n";
     assertWslCommandOutput(expectedOut, null, envs, command);
     assertWslCommandOutput(expectedOut, envs, command, new WSLCommandLineOptions().setLaunchWithWslExe(false).setPassEnvVarsUsingInterop(true));
