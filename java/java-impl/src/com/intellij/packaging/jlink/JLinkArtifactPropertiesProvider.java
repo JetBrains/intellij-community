@@ -6,8 +6,8 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-public class JLinkArtifactPropertiesProvider extends ArtifactPropertiesProvider {
-  protected JLinkArtifactPropertiesProvider() {
+public final class JLinkArtifactPropertiesProvider extends ArtifactPropertiesProvider {
+  public JLinkArtifactPropertiesProvider() {
     super("jlink-properties");
   }
 

@@ -2,18 +2,18 @@
 package com.intellij.packaging.jlink;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class JLinkArtifactType extends ArtifactType {
-  protected JLinkArtifactType() {
-    super("jlink", () -> "Run-time image");
+public final class JLinkArtifactType extends ArtifactType {
+  public JLinkArtifactType() {
+    super("jlink", () -> JavaBundle.message("packaging.jlink.artifact.title"));
   }
 
   @Override
@@ -22,7 +22,7 @@ public class JLinkArtifactType extends ArtifactType {
   }
 
   @Override
-  public @Nullable String getDefaultPathFor(@NotNull PackagingElementOutputKind kind) {
+  public @NotNull String getDefaultPathFor(@NotNull PackagingElementOutputKind kind) {
     return "/";
   }
 

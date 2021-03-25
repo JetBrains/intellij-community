@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.jlink;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.ui.FormBuilder;
@@ -15,22 +15,20 @@ import java.util.Optional;
 
 import static com.intellij.packaging.jlink.JLinkArtifactProperties.CompressionLevel;
 
-public class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JLinkArtifactProperties myProperties;
-  private final Project myProject;
 
   private ComboBox<Integer> myCompressionLevel;
   private JCheckBox myVerbose;
 
-  public JLinkArtifactPropertiesEditor(@NotNull JLinkArtifactProperties properties, @NotNull Project project) {
+  JLinkArtifactPropertiesEditor(@NotNull JLinkArtifactProperties properties) {
     myProperties = properties;
-    myProject = project;
   }
 
   @Nls
   @Override
   public String getTabName() {
-    return "JLink";
+    return JavaBundle.message("packaging.jlink.artifact.name");
   }
 
   @Override
@@ -39,9 +37,9 @@ public class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
     myCompressionLevel = new ComboBox<>(EnumSet.allOf(CompressionLevel.class).stream().map(level -> level.myValue).toArray(Integer[]::new));
     myCompressionLevel.setItem(myProperties.compressionLevel.myValue);
-    builder.addLabeledComponent("Compress level", myCompressionLevel);
+    builder.addLabeledComponent(JavaBundle.message("packaging.jlink.compression.level"), myCompressionLevel);
 
-    myVerbose = new JCheckBox("Enable verbose tracing", myProperties.verbose);
+    myVerbose = new JCheckBox(JavaBundle.message("packaging.jlink.verbose.tracing"), myProperties.verbose);
     builder.addComponent(myVerbose);
 
     return builder.getPanel();

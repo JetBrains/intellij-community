@@ -10,17 +10,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
-public class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProperties> {
+final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProperties> {
   public CompressionLevel compressionLevel = CompressionLevel.ZERO;
   public boolean verbose;
 
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new JLinkArtifactPropertiesEditor(this, context.getProject());
+    return new JLinkArtifactPropertiesEditor(this);
   }
 
   @Override
-  public @Nullable JLinkArtifactProperties getState() {
+  public @NotNull JLinkArtifactProperties getState() {
     return this;
   }
 
@@ -29,7 +29,7 @@ public class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactPro
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  public enum CompressionLevel {
+  enum CompressionLevel {
     ZERO(0),
     FIRST(1),
     SECOND(2);
@@ -42,10 +42,6 @@ public class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactPro
     @Nullable
     public static CompressionLevel getLevelByValue(int value) {
       return Stream.of(values()).filter(v -> v.myValue == value).findFirst().orElse(null);
-    }
-
-    public boolean hasCompression() {
-      return this == FIRST || this == SECOND;
     }
   }
 }

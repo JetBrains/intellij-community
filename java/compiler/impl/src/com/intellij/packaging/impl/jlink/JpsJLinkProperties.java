@@ -2,19 +2,16 @@
 package com.intellij.packaging.impl.jlink;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-import java.util.stream.Stream;
-
-public class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
+final class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
   public CompressionLevel compressionLevel = CompressionLevel.ZERO;
   public boolean verbose;
 
-  public JpsJLinkProperties() {
+  JpsJLinkProperties() {
   }
 
-  public JpsJLinkProperties(@NotNull JpsJLinkProperties properties) {
+  JpsJLinkProperties(@NotNull JpsJLinkProperties properties) {
     copyToThis(properties);
   }
 
@@ -33,7 +30,7 @@ public class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
     verbose = copy.verbose;
   }
 
-  public enum CompressionLevel {
+  enum CompressionLevel {
     ZERO(0),
     FIRST(1),
     SECOND(2);
@@ -43,12 +40,7 @@ public class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
       this.myValue = value;
     }
 
-    @Nullable
-    public static CompressionLevel getLevelByValue(int value) {
-      return Stream.of(values()).filter(v -> v.myValue == value).findFirst().orElse(null);
-    }
-
-    public boolean hasCompression() {
+    boolean hasCompression() {
       return this == FIRST || this == SECOND;
     }
   }

@@ -6,6 +6,7 @@ import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -35,7 +36,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
+public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   @Override
   public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
@@ -44,9 +45,7 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       return Collections.emptyList();
     }
     final JpsElement properties = artifact.getProperties();
-    if (!(properties instanceof JpsJLinkProperties)) {
-      return Collections.emptyList();
-    }
+    if (!(properties instanceof JpsJLinkProperties)) return Collections.emptyList();
     return Collections.singletonList(new JLinkBuildTask(artifact));
   }
 
@@ -59,25 +58,47 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     }
 
     @Override
-    public void build(CompileContext context) throws ProjectBuildException {
-      LOG.warn("jlink task was started");
+    public void build(@NotNull CompileContext context) throws ProjectBuildException {
+      LOG.info("jlink task was started");
 
-      Set<JpsSdk<?>> sdks = context.getProjectDescriptor().getProjectJavaSdks();
-      if (sdks.isEmpty()) {
+      JpsJLinkProperties properties = (JpsJLinkProperties)myArtifact.getProperties();
+      String runtimeImagePath = myArtifact.getOutputPath() + File.separator + "jdk";
+      List<String> commands = buildCommands(context, properties, runtimeImagePath);
+      if (commands.isEmpty()) return;
+      try {
+        FileUtil.delete(Path.of(runtimeImagePath));
+      }
+      catch (IOException e) {
+        error(context, JavaCompilerBundle.message("packaging.jlink.build.task.run.time.image.deletion.failure"));
         return;
       }
-      ModuleFinder moduleFinder = ModuleFinder.of(Path.of(myArtifact.getOutputFilePath()));
-      String modulesStr = moduleFinder.findAll().stream().map(mr -> mr.descriptor().name()).collect(Collectors.joining(","));
-      if (modulesStr.isEmpty()) {
-        error(context, "No module has been found");
+      final int errorCode = startProcess(context, commands, properties);
+      if (errorCode != 0) {
+        error(context, JavaCompilerBundle.message("packaging.jlink.build.task.failure"));
         return;
+      }
+
+      LOG.info("jlink task was finished");
+    }
+
+    @NotNull
+    private List<String> buildCommands(@NotNull CompileContext context,
+                                       @NotNull JpsJLinkProperties properties,
+                                       @NotNull String runtimeImagePath) {
+      Set<JpsSdk<?>> sdks = context.getProjectDescriptor().getProjectJavaSdks();
+      if (sdks.isEmpty()) return Collections.emptyList();
+      String artifactOutputPath = myArtifact.getOutputFilePath();
+      ModuleFinder moduleFinder = ModuleFinder.of(Path.of(artifactOutputPath));
+      String modulesSequence = moduleFinder.findAll().stream().map(mr -> mr.descriptor().name()).collect(Collectors.joining(","));
+      if (modulesSequence.isEmpty()) {
+        error(context, JavaCompilerBundle.message("packaging.jlink.build.task.modules.not.found"));
+        return Collections.emptyList();
       }
       JpsSdk<?> javaSdk = sdks.iterator().next();
       String sdkHomePath = javaSdk.getHomePath();
       String jLinkPath = sdkHomePath + File.separatorChar + "bin" + File.separatorChar + "jlink";
       List<String> commands = new ArrayList<>();
       commands.add(jLinkPath);
-      JpsJLinkProperties properties = (JpsJLinkProperties)myArtifact.getProperties();
       if (properties.compressionLevel.hasCompression()) {
         addOption(commands, "--compress", String.valueOf(properties.compressionLevel.myValue));
       }
@@ -85,30 +106,17 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         commands.add("--verbose");
       }
       commands.add("--module-path");
-      commands.add(myArtifact.getOutputFilePath());
+      commands.add(artifactOutputPath);
       commands.add("--add-modules");
-      commands.add(modulesStr);
-      String outputPath = myArtifact.getOutputFilePath() + File.separator + "jdk";
-      addOption(commands, "--output", outputPath);
-
-      LOG.warn(String.join(" ", commands));
-
-      try {
-        FileUtil.delete(Path.of(outputPath));
-      }
-      catch (IOException e) {
-        error(context,"Couldn't delete existing run-time image: " + e.getMessage());
-      }
-
-      final int errorCode = startProcess(context, commands, properties);
-      if (errorCode != 0) {
-        error(context,"jlink task has failed");
-      }
-
-      LOG.warn("jlink task was finished");
+      commands.add(modulesSequence);
+      addOption(commands, "--output", runtimeImagePath);
+      LOG.info(String.join(" ", commands));
+      return commands;
     }
 
-    private int startProcess(@NotNull CompileContext context, @NotNull List<String> commands, @NotNull JpsJLinkProperties properties) {
+    private static int startProcess(@NotNull CompileContext context,
+                                    @NotNull List<String> commands,
+                                    @NotNull JpsJLinkProperties properties) {
       try {
         final AtomicInteger exitCode = new AtomicInteger();
         final @NlsSafe StringBuilder errorOutput = new StringBuilder();
@@ -118,17 +126,7 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         BaseOSProcessHandler handler = new BaseOSProcessHandler(process, commands.toString(), null);
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void startNotified(@NotNull ProcessEvent event) {
-            if (properties.verbose) {
-              LOG.info("Started " + commands);
-            }
-          }
-
-          @Override
           public void processTerminated(@NotNull ProcessEvent event) {
-            if (properties.verbose) {
-              LOG.info("Terminated " + commands + ", exit code: " + event.getExitCode());
-            }
             exitCode.set(event.getExitCode());
           }
 
@@ -140,7 +138,6 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
               errorOutput.append(event.getText());
             }
             else {
-              LOG.info(message);
               if (properties.verbose) {
                 info(context, message);
               }
@@ -180,11 +177,11 @@ public class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       }
     }
 
-    private void error(@NotNull CompileContext compileContext, @Nls String message) {
+    private static void error(@NotNull CompileContext compileContext, @Nls String message) {
       compileContext.processMessage(new CompilerMessage("jlink", BuildMessage.Kind.ERROR, message));
     }
 
-    private void info(@NotNull CompileContext compileContext, @Nls String message) {
+    private static void info(@NotNull CompileContext compileContext, @Nls String message) {
       compileContext.processMessage(new CompilerMessage("jlink", BuildMessage.Kind.INFO, message));
     }
   }

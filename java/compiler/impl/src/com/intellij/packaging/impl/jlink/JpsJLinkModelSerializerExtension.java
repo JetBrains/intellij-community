@@ -12,14 +12,14 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 import java.util.Collections;
 import java.util.List;
 
-public class JpsJLinkModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsJLinkModelSerializerExtension extends JpsModelSerializerExtension {
 
   @Override
   public @NotNull List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.singletonList(new JpsJLinkArtifactPropertiesSerializer());
   }
 
-  static class JpsJLinkArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJLinkProperties> {
+  private static class JpsJLinkArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJLinkProperties> {
 
     JpsJLinkArtifactPropertiesSerializer() {
       super("jlink", JpsJLinkArtifactType.INSTANCE);
@@ -30,9 +30,7 @@ public class JpsJLinkModelSerializerExtension extends JpsModelSerializerExtensio
       final ArtifactPropertiesState state = findApplicationProperties(stateList);
       if (state != null) {
         final Element options = state.getOptions();
-        if (options != null) {
-          return new JpsJLinkProperties(XmlSerializer.deserialize(options, JpsJLinkProperties.class));
-        }
+        if (options != null) return new JpsJLinkProperties(XmlSerializer.deserialize(options, JpsJLinkProperties.class));
       }
       return new JpsJLinkProperties();
     }
