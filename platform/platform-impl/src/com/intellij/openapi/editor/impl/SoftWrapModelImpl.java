@@ -2,7 +2,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,14 +19,19 @@ import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapp
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -142,9 +150,20 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();
     VirtualFile file = myEditor.getVirtualFile();
-    if (project != null && file != null) {
-      EditorNotifications.getInstance(project).updateNotifications(file);
+    if (project != null) {
+      if (file != null) {
+        EditorNotifications.getInstance(project).updateNotifications(file);
+      } else {
+        if (ComponentUtil.getParentOfType(ConsoleView.class, myEditor.getComponent()) != null) {
+          ObjectUtils.consumeIfNotNull(ComponentUtil.getParentOfType(InternalDecoratorImpl.class, myEditor.getComponent()), decorator -> {
+            ToolWindowManager.getInstance(project).notifyByBalloon(decorator.getToolWindowId(), MessageType.WARNING, ApplicationBundle.message("console.forced.soft.wrap.message"));
+          });
+        }
+      }
     }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionToolbarImpl.updateAllToolbarsImmediately();
+    });
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -152,6 +171,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private boolean shouldSoftWrapsBeForced(@Nullable DocumentEvent event) {
+    if (Boolean.FALSE.equals(myEditor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))) {
+      return false;
+    }
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
     if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
