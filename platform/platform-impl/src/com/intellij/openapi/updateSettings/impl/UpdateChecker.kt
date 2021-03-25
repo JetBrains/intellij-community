@@ -25,6 +25,7 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -516,7 +517,9 @@ object UpdateChecker {
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (updatedChannel != null && newBuild != null) {
-      if (userInitiated) {
+      val showNotification = userInitiated || WelcomeFrame.getInstance() != null
+
+      if (showNotification) {
         ourShownNotifications.remove(NotificationKind.PLATFORM)?.forEach { it.expire() }
       }
 
@@ -532,7 +535,7 @@ object UpdateChecker {
       else {
         UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, pluginUpdates.incompatible)
 
-        if (userInitiated) {
+        if (showNotification) {
           IdeUpdateUsageTriggerCollector.trigger("notification.shown")
           val message = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
           showNotification(
