@@ -40,6 +40,7 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -55,6 +56,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
+  private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
 
   init {
     if (!project.isDefault) {
@@ -209,8 +211,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val serializers = prepareSerializers()
     registerListener()
-    val builder = WorkspaceEntityStorageBuilder.create()
-
+    val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
     childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
     loadStateOfUnloadedModules(serializers)
 
@@ -241,7 +242,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     serializers as JpsProjectSerializersImpl
     val (unloadedModulePaths, modulePathsToLoad) = serializers.getAllModulePaths().partition { it.moduleName in unloadedModuleNames }
 
-    val tmpBuilder = WorkspaceEntityStorageBuilder.create()
+    val tmpBuilder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
     val unloaded = unloadedModulePaths.map { modulePath ->
       loadAndReportErrors {
         serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, it, virtualFileManager)
