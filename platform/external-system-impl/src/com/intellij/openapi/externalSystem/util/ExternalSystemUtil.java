@@ -735,14 +735,7 @@ public final class ExternalSystemUtil {
     if (executesTrustedCodeOnly(systemIds)) {
       return OpenUntrustedProjectChoice.IMPORT;
     }
-    return TrustedProjects.confirmOpeningUntrustedProject(
-      virtualFile,
-      IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, systemIds.size()),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-      IdeBundle.message("untrusted.project.open.dialog.cancel.button")
-    );
+    return TrustedProjects.confirmOpeningUntrustedProject(virtualFile, systemsPresentation, systemIds.size());
   }
 
   public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
