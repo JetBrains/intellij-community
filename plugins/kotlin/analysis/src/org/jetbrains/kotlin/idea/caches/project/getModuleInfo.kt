@@ -44,6 +44,12 @@ fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
     return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
 }
 
+fun IdeaModuleInfo.findJvmStdlibAcrossDependencies(): LibraryInfo? {
+    val project = project ?: return null
+
+    return KotlinStdlibCache.getInstance(project).findStdlibInModuleDependencies(this)
+}
+
 fun getModuleInfoByVirtualFile(project: Project, virtualFile: VirtualFile): IdeaModuleInfo? =
     collectInfosByVirtualFile(
         project, virtualFile,
