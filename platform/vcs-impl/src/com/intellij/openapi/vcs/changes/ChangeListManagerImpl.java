@@ -26,6 +26,10 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -499,7 +503,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                       "\ncurrent changes: " + myWorker);
           }
         }
-        dataHolder.notifyStart();
         myChangesViewManager.setBusy(true);
         myChangesViewManager.scheduleRefresh();
 
@@ -526,12 +529,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
             boolean takeChanges = myUpdateException == null && !wasCancelled &&
                                   updatedWorker.areChangeListsEnabled() == myWorker.areChangeListsEnabled();
 
-            // do same modifications to change lists as was done during update + do delayed notifications
-            dataHolder.notifyEnd();
-
             // update member from copy
             if (takeChanges) {
               dataHolder.finish();
+              // do same modifications to change lists as was done during update + do delayed notifications
               myModifier.finishUpdate(updatedWorker);
 
               myWorker.applyChangesFromUpdate(updatedWorker, new MyChangesDeltaForwarder(myProject, myScheduler));
@@ -598,15 +599,22 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(updater,
                                                                             dataHolder.getComposite(), disposedGetter);
 
-    for (final VcsDirtyScope scope : scopes) {
-      indicator.checkCanceled();
+    dataHolder.notifyStart();
+    try {
+      for (final VcsDirtyScope scope : scopes) {
+        indicator.checkCanceled();
 
-      actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
+        actualUpdate(builder, scope, scope.getVcs(), dataHolder, updater, indicator);
 
-      synchronized (myDataLock) {
-        if (myUpdateException != null) break;
+        synchronized (myDataLock) {
+          if (myUpdateException != null) break;
+        }
       }
     }
+    finally {
+      dataHolder.notifyEnd();
+    }
+
     synchronized (myDataLock) {
       if (myAdditionalInfo == null) {
         myAdditionalInfo = builder.getAdditionalInfo();
@@ -642,7 +650,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       }
     }
 
-    private void notifyStartProcessingChanges(@NotNull final VcsModifiableDirtyScope scope) {
+    private void notifyStartProcessingChanges(@NotNull VcsModifiableDirtyScope scope) {
       if (!myWasEverythingDirty) {
         myComposite.cleanAndAdjustScope(scope);
         myChangeListUpdater.notifyStartProcessingChanges(scope);
