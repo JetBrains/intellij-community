@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.dsl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.PsiClass
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -20,45 +21,62 @@ class FactorTree(
     CachedValuesManager.getManager(project).createCachedValue(ourProvider, false)
 
   fun cache(descriptor: GroovyClassDescriptor, holder: CustomMembersHolder) {
-    var current: MutableMap<Any, Any>? = null
-    for (factor: Factor in descriptor.affectingFactors) {
-      val key: UserDataHolder = when (factor) {
-        Factor.placeElement -> descriptor.place
-        Factor.placeFile -> descriptor.placeFile
-        Factor.qualifierType -> descriptor.psiClass
-      }
-      if (current == null) {
-        current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, ourProvider, false)
-        continue
-      }
+    val map: MutableMap<Any, Any> = findOrCreateMap(descriptor)
+    map[myExecutor] = holder
+  }
+
+  /**
+   * Depending on affecting factors the method follows one of the paths:
+   * - top level cache
+   * - place
+   * - file
+   * - qualifierType
+   * - place -> qualifierType
+   * - file -> qualifierType
+   *
+   * There is not much sense in following "place -> file -> type" path,
+   * because place as an affecting factor implicitly implies file as an affecting factor.
+   */
+  private fun findOrCreateMap(descriptor: GroovyClassDescriptor): MutableMap<Any, Any> {
+    val affectingFactors = descriptor.affectingFactors
+    if (affectingFactors.isEmpty()) {
+      return myTopLevelCache.value
+    }
+    val userDataHolder: UserDataHolder = when {
+      Factor.placeElement in affectingFactors -> descriptor.place
+      Factor.placeFile in affectingFactors -> descriptor.placeFile
+      Factor.qualifierType in affectingFactors -> descriptor.psiClass
+      else -> error("can't happen")
+    }
+    val userDataMap = CachedValuesManager.getManager(descriptor.project).getCachedValue(
+      userDataHolder, GDSL_MEMBER_CACHE, ourProvider, false
+    )
+    if (Factor.qualifierType in affectingFactors && (Factor.placeElement in affectingFactors || Factor.placeFile in affectingFactors)) {
       @Suppress("UNCHECKED_CAST")
-      var next: MutableMap<Any, Any>? = current[key] as MutableMap<Any, Any>?
-      if (next == null) {
-        next = ConcurrentHashMap<Any, Any>(1)
-        current[key] = next
-      }
-      current = next
+      return userDataMap.getOrPut(descriptor.psiClass) {
+        ConcurrentHashMap<Any, Any>(1)
+      } as MutableMap<Any, Any>
     }
-    if (current == null) {
-      current = myTopLevelCache.value!!
+    else {
+      return userDataMap
     }
-    current[myExecutor] = holder
   }
 
   fun retrieve(descriptor: GroovyClassDescriptor): CustomMembersHolder? {
-    return retrieveImpl(descriptor, myTopLevelCache.value, true)
+    return myTopLevelCache.value.byExecutor()
+           ?: byUserDataOrInnerMap(descriptor.justGetPlace(), descriptor.justGetPsiClass())
+           ?: byUserDataOrInnerMap(descriptor.justGetPlaceFile(), descriptor.justGetPsiClass())
+           ?: fromUserData(descriptor.justGetPsiClass())?.byExecutor()
   }
 
-  private fun retrieveImpl(
-    descriptor: GroovyClassDescriptor,
-    current: Map<*, *>?,
-    topLevel: Boolean
-  ): CustomMembersHolder? {
-    if (current == null) return null
-    return current[myExecutor] as CustomMembersHolder?
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPsiClass(), current, topLevel), false)
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPlaceFile(), current, topLevel), false)
-           ?: retrieveImpl(descriptor, getFromMapOrUserData(descriptor.justGetPlace(), current, topLevel), false)
+  private fun byUserDataOrInnerMap(holder: UserDataHolder, psiClass: PsiClass): CustomMembersHolder? {
+    val map = fromUserData(holder) ?: return null
+    return map.byExecutor()
+           ?: fromMap(map, psiClass)?.byExecutor()
+  }
+
+  private fun Map<*, *>.byExecutor(): CustomMembersHolder? {
+    return this[myExecutor] as CustomMembersHolder?
   }
 
   companion object {
@@ -69,12 +87,12 @@ class FactorTree(
 
     private val GDSL_MEMBER_CACHE: Key<CachedValue<MutableMap<Any, Any>>> = Key.create("GDSL_MEMBER_CACHE")
 
-    private fun getFromMapOrUserData(holder: UserDataHolder, map: Map<*, *>, fromUserData: Boolean): Map<*, *>? {
-      if (fromUserData) {
-        val cache = holder.getUserData(GDSL_MEMBER_CACHE)
-        return if (cache != null && cache.hasUpToDateValue()) cache.value else null
-      }
-      return map[holder] as Map<*, *>?
+    private fun fromUserData(holder: UserDataHolder): Map<*, *>? {
+      return holder.getUserData(GDSL_MEMBER_CACHE)?.takeIf { it.hasUpToDateValue() }?.value
+    }
+
+    private fun fromMap(map: Map<*, *>, key: Any): Map<*, *>? {
+      return map[key] as Map<*, *>?
     }
   }
 }
