@@ -285,9 +285,9 @@ public final class Switcher extends BaseSwitcherAction {
       }
       addToTop(header);
       addToBottom(pathLabel);
-      addToCenter(new SwitcherScrollPane(files, null));
+      addToCenter(new SwitcherScrollPane(files, true));
       if (!windows.isEmpty()) {
-        addToLeft(new SwitcherScrollPane(toolWindows, JBUI.CurrentTheme.Popup.separatorColor()));
+        addToLeft(new SwitcherScrollPane(toolWindows, false));
       }
 
       if (mySpeedSearch != null) {
@@ -815,9 +815,9 @@ public final class Switcher extends BaseSwitcherAction {
   private static final class SwitcherScrollPane extends JBScrollPane {
     private int width;
 
-    SwitcherScrollPane(@NotNull Component view, @Nullable Color color) {
-      super(view, VERTICAL_SCROLLBAR_AS_NEEDED, color == null ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
-      setBorder(color == null ? JBUI.Borders.empty() : JBUI.Borders.customLineLeft(color));
+    SwitcherScrollPane(@NotNull Component view, boolean noBorder) {
+      super(view, VERTICAL_SCROLLBAR_AS_NEEDED, noBorder ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
+      setBorder(noBorder ? JBUI.Borders.empty() : JBUI.Borders.customLineRight(JBUI.CurrentTheme.Popup.separatorColor()));
       setViewportBorder(JBUI.Borders.empty());
     }
 
