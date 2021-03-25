@@ -25,7 +25,7 @@ object MessageFactory {
         message.runnable = Runnable {
           val link = message.link
           if (link == null || link.isEmpty()) {
-            val lesson = CourseManager.instance.findLesson(message.text)
+            val lesson = CourseManager.instance.findLessonByName(message.text)
             if (lesson != null) {
               try {
                 CourseManager.instance.openLesson(project, lesson)
