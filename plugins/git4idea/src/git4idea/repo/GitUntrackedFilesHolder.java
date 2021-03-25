@@ -91,6 +91,7 @@ public class GitUntrackedFilesHolder implements Disposable {
       myUntrackedFiles.addAll(files);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
     }
+    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     scheduleUpdate();
   }
 
@@ -102,6 +103,7 @@ public class GitUntrackedFilesHolder implements Disposable {
       files.forEach(myUntrackedFiles::remove);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
     }
+    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     scheduleUpdate();
   }
 

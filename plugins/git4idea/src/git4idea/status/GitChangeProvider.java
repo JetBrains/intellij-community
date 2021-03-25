@@ -94,12 +94,6 @@ public final class GitChangeProvider implements ChangeProvider {
           }
         }
 
-        Collection<FilePath> untracked = repo.getUntrackedFilesHolder().retrieveUntrackedFilePaths();
-        for (FilePath path : untracked) {
-          builder.processUnversionedFile(path);
-          holder.markPathProcessed(path);
-        }
-
         BackgroundTaskUtil.syncPublisher(project, TOPIC).repositoryUpdated(repo);
       }
       holder.feedBuilder(dirtyScope, builder);
@@ -179,9 +173,9 @@ public final class GitChangeProvider implements ChangeProvider {
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
         if (repository == null) continue;
+        if (repository.getUntrackedFilesHolder().containsFile(filePath)) continue;
+
         VirtualFile root = repository.getRoot();
-
-
         VcsRevisionNumber beforeRevisionNumber = myHeadRevisions.get(root);
         if (beforeRevisionNumber == null) {
           beforeRevisionNumber = GitChangesCollector.getHead(repository);

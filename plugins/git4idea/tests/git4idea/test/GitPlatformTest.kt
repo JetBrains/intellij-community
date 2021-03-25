@@ -260,6 +260,11 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     return changeListManager.assertChanges(changes)
   }
 
+  protected fun updateUntrackedFiles(repo: GitRepository) {
+    repo.untrackedFilesHolder.invalidate()
+    repo.untrackedFilesHolder.createWaiter().waitFor()
+  }
+
   protected data class ReposTrinity(val projectRepo: GitRepository, val parent: Path, val bro: Path)
 
   private enum class ConfigScope {

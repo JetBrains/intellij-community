@@ -41,6 +41,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
 
     val file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.toFile())!!
     updateChangeListManager()
+    updateUntrackedFiles()
     assertUnversioned(file)
     return file
   }
@@ -54,6 +55,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   protected fun renameFile(file: VirtualFile, newName: String) {
     VcsTestUtil.renameFileInCommand(project, file, newName)
     updateChangeListManager()
+    updateUntrackedFiles()
   }
 
   protected fun build(f: RepoBuilder.() -> Unit) = build(repo, f)
@@ -67,4 +69,8 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
   protected fun git(command: String, ignoreExitCode: Boolean = false) = repo.git(command, ignoreExitCode)
 
   internal fun file(path: String) = repo.file(path)
+
+  protected fun updateUntrackedFiles() {
+    updateUntrackedFiles(repo)
+  }
 }

@@ -494,7 +494,8 @@
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
         implementation="git4idea.diff.GitSubmoduleDiffRequestProvider"/>
-    <vcs.ignoredFilesHolder implementation="git4idea.ignore.GitIgnoredFilesHolder$Provider"/>
+    <vcs.ignoredFilesHolder implementation="git4idea.repo.GitIgnoredFilesHolder$Provider"/>
+    <vcs.unversionedFilesHolder implementation="git4idea.repo.GitUnversionedFilesHolder$Provider"/>
     <projectConfigurable id="vcs.Git" key="settings.git.option.group" instance="git4idea.config.GitVcsPanel"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
 
