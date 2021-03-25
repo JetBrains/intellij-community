@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -62,7 +61,7 @@ object UpdateChecker {
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MS = 300_000L
 
-  private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
+  private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
@@ -70,7 +69,7 @@ object UpdateChecker {
   private val productDataLock = ReentrantLock()
   private var productDataCache: SoftReference<Result<Product?>>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
-  private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
+  private val ourShownNotifications = MultiMap<NotificationKind, Notification>()
 
   /**
    * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
@@ -518,7 +517,7 @@ object UpdateChecker {
 
     if (updatedChannel != null && newBuild != null) {
       if (userInitiated) {
-        ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
+        ourShownNotifications.remove(NotificationKind.PLATFORM)?.forEach { it.expire() }
       }
 
       val runnable = {
@@ -535,11 +534,13 @@ object UpdateChecker {
 
         if (userInitiated) {
           IdeUpdateUsageTriggerCollector.trigger("notification.shown")
-          val title = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
-          showNotification(project, title, "", {
-            IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
-            runnable()
-          }, null, NotificationUniqueType.PLATFORM, "ide.update.available")
+          val message = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName, newBuild.version)
+          showNotification(
+            project, NotificationKind.PLATFORM, "ide.update.available", "", message,
+            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
+              IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
+              runnable()
+            })
         }
       }
 
@@ -548,7 +549,7 @@ object UpdateChecker {
 
     if (enabledPlugins.isNotEmpty()) {
       if (userInitiated) {
-        ourShownNotifications.remove(NotificationUniqueType.PLUGINS)?.forEach { it.expire() }
+        ourShownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
       }
 
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
@@ -560,34 +561,25 @@ object UpdateChecker {
         UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
 
         if (userInitiated) {
-          val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
-          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
-          else IdeBundle.message("updates.plugins.ready.short.title.available")
-          val message = if (updatedPlugins.size == 1) "" else names
-
-          showNotification(project, title, message, runnable, { notification ->
-            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
-            val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button")
-            else IdeBundle.message("plugin.manager.update.all")
-            notification.actions.add(0, object : NotificationAction(text) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
-              }
+          val (title, message) = when (updatedPlugins.size) {
+            1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPlugins[0].pluginName)
+            else -> IdeBundle.message("updates.plugins.ready.title") to updatedPlugins.joinToString { "\"${it.pluginName}\"" }
+          }
+          showNotification(
+            project, NotificationKind.PLUGINS, "plugins.update.available", title, message,
+            NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+            },
+            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
+            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
+              ignorePlugins(updatedPlugins.map { it.descriptor })
             })
-            notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                ignorePlugins(updatedPlugins.map { it.descriptor })
-              }
-            })
-          }, NotificationUniqueType.PLUGINS, "plugins.update.available")
         }
       }
     }
 
     if (externalUpdates.isNotEmpty()) {
-      ourShownNotifications.remove(NotificationUniqueType.EXTERNAL)?.forEach { it.expire() }
+      ourShownNotifications.remove(NotificationKind.EXTERNAL)?.forEach { it.expire() }
 
       for (update in externalUpdates) {
         val runnable = { update.source.installUpdates(update.components) }
@@ -595,10 +587,10 @@ object UpdateChecker {
           runnable()
         }
         else {
-          val title = IdeBundle.message("updates.plugins.ready.title.available", ApplicationNamesInfo.getInstance().fullProductName)
-          val updates = update.components.joinToString(", ")
-          val message = IdeBundle.message("updates.external.ready.message", update.components.size, updates)
-          showNotification(project, title, message, runnable, null, NotificationUniqueType.EXTERNAL, "external.components.available")
+          val message = IdeBundle.message("updates.external.ready.message", update.components.size, update.components.joinToString(", "))
+          showNotification(
+            project, NotificationKind.EXTERNAL, "external.components.available", "", message,
+            NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action"), runnable))
         }
       }
     }
@@ -608,8 +600,8 @@ object UpdateChecker {
         NoUpdatesDialog(showSettingsLink).show()
       }
       else if (userInitiated) {
-        val title = IdeBundle.message("updates.no.updates.notification")
-        showNotification(project, title, "", {}, { notification -> notification.actions.clear() }, NotificationUniqueType.PLUGINS, "no.updates.available")
+        val message = IdeBundle.message("updates.no.updates.notification")
+        showNotification(project, NotificationKind.PLUGINS, "no.updates.available", "", message)
       }
     }
   }
@@ -619,26 +611,18 @@ object UpdateChecker {
     NotificationsConfigurationImpl.getSettings(getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
 
   private fun showNotification(project: Project?,
+                               kind: NotificationKind,
+                               displayId: String,
                                @NlsContexts.NotificationTitle title: String,
                                @NlsContexts.NotificationContent message: String,
-                               action: () -> Unit,
-                               extraBuilder: ((Notification) -> Unit)?,
-                               notificationType: NotificationUniqueType,
-                               notificationDisplayId: String) {
-    val content = if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message)
-    val type = if (notificationType == NotificationUniqueType.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
-    val notification = getNotificationGroup().createNotification(title, content, type, null, notificationDisplayId)
+                               vararg actions: NotificationAction) {
+    val type = if (kind == NotificationKind.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
+    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), type, null, displayId)
     notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
-    notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        notification.expire()
-        action.invoke()
-      }
-    })
-    extraBuilder?.invoke(notification)
-    notification.whenExpired { ourShownNotifications.remove(notificationType, notification) }
+    notification.whenExpired { ourShownNotifications.remove(kind, notification) }
+    actions.forEach { notification.addAction(it) }
     notification.notify(project)
-    ourShownNotifications.putValue(notificationType, notification)
+    ourShownNotifications.putValue(kind, notification)
   }
 
   @JvmStatic
