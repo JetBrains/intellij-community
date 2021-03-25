@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 /**
  * @author ven
@@ -60,7 +60,7 @@ public final class CachedValuesManagerImpl extends CachedValuesManager {
                                         boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
     if (value instanceof CachedValueBase && ((CachedValueBase<?>)value).isFromMyProject(myProject)) {
-      Getter<T> data = value.getUpToDateOrNull();
+      Supplier<T> data = value.getUpToDateOrNull();
       if (data != null) {
         return data.get();
       }

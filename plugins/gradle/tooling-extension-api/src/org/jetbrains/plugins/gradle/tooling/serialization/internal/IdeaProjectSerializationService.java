@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.openapi.util.Getter;
 import gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
 import org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Objects;
@@ -122,7 +121,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     writer.stepIn(IonType.STRUCT);
     writeString(writer, "name", ideaModule.getName());
     writeString(writer, "description", ideaModule.getDescription());
-    writeString(writer, "jdkName", nullizeUnsupported(new Getter<String>() {
+    writeString(writer, "jdkName", nullizeUnsupported(new Supplier<String>() {
       @Override
       public String get() {
         return ideaModule.getJdkName();
@@ -131,7 +130,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     writeGradleProject(writer, "gradleProject", context, ideaModule.getGradleProject());
     writeCompilerOutput(writer, context, ideaModule.getCompilerOutput());
     writeContentRoots(writer, ideaModule.getContentRoots());
-    writeJavaLanguageSettings(writer, context, nullizeUnsupported(new Getter<IdeaJavaLanguageSettings>() {
+    writeJavaLanguageSettings(writer, context, nullizeUnsupported(new Supplier<IdeaJavaLanguageSettings>() {
       @Override
       public IdeaJavaLanguageSettings get() {
         return ideaModule.getJavaLanguageSettings();
@@ -1070,7 +1069,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  private static final class TargetBytecodeVersionGetter implements Getter<JavaVersion> {
+  private static final class TargetBytecodeVersionGetter implements Supplier<JavaVersion> {
     private final IdeaJavaLanguageSettings myObject;
 
     private TargetBytecodeVersionGetter(IdeaJavaLanguageSettings object) {myObject = object;}
@@ -1081,7 +1080,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  private static final class JdkGetter implements Getter<InstalledJdk> {
+  private static final class JdkGetter implements Supplier<InstalledJdk> {
     private final IdeaJavaLanguageSettings myObject;
 
     private JdkGetter(IdeaJavaLanguageSettings object) {myObject = object;}
@@ -1092,7 +1091,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  private static final class JavaHomePathGetter implements Getter<String> {
+  private static final class JavaHomePathGetter implements Supplier<String> {
     private final IdeaJavaLanguageSettings myObject;
 
     private JavaHomePathGetter(IdeaJavaLanguageSettings object) {myObject = object;}
@@ -1109,7 +1108,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
   }
 
   @Nullable
-  private static <T> T nullizeUnsupported(Getter<T> getter) {
+  private static <T> T nullizeUnsupported(@NotNull Supplier<T> getter) {
     try {
       return getter.get();
     }
@@ -1123,7 +1122,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     return set == null ? GradleContainerUtil.<T>emptyDomainObjectSet() : set;
   }
 
-  private static final class ResourceDirectoriesGetter implements Getter<DomainObjectSet<? extends IdeaSourceDirectory>> {
+  private static final class ResourceDirectoriesGetter implements Supplier<DomainObjectSet<? extends IdeaSourceDirectory>> {
     private final IdeaContentRoot myContentRoot;
 
     private ResourceDirectoriesGetter(IdeaContentRoot contentRoot) {myContentRoot = contentRoot;}
@@ -1134,7 +1133,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  private static final class TestResourceDirectoriesGetter implements Getter<DomainObjectSet<? extends IdeaSourceDirectory>> {
+  private static final class TestResourceDirectoriesGetter implements Supplier<DomainObjectSet<? extends IdeaSourceDirectory>> {
     private final IdeaContentRoot myContentRoot;
 
     private TestResourceDirectoriesGetter(IdeaContentRoot contentRoot) {myContentRoot = contentRoot;}
@@ -1145,7 +1144,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
     }
   }
 
-  private static final class TargetModuleNameGetter implements Getter<String> {
+  private static final class TargetModuleNameGetter implements Supplier<String> {
     private final IdeaModuleDependency myModuleDependency;
     private final GradleVersionComparator myGradleVersionComparator;
 

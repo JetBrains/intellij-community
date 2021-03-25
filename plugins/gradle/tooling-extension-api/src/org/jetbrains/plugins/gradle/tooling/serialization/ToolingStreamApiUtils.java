@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonBinaryWriterBuilder;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,8 +87,8 @@ public class ToolingStreamApiUtils {
 
 
   public static <K, V> Map<K, V> readMap(@NotNull IonReader reader,
-                                         @NotNull Getter<? extends K> keyReader,
-                                         @NotNull Getter<? extends V> valueReader) {
+                                         @NotNull Supplier<? extends K> keyReader,
+                                         @NotNull Supplier<? extends V> valueReader) {
     reader.next();
     reader.stepIn();
     Map<K, V> map = new HashMap<K, V>();
@@ -102,12 +102,12 @@ public class ToolingStreamApiUtils {
   }
 
   public static Map<String, Set<File>> readStringToFileSetMap(@NotNull final IonReader reader) {
-    return readMap(reader, new Getter<String>() {
+    return readMap(reader, new Supplier<String>() {
       @Override
       public String get() {
         return readString(reader, null);
       }
-    }, new Getter<Set<File>>() {
+    }, new Supplier<Set<File>>() {
       @Override
       public Set<File> get() {
         return readFilesSet(reader);

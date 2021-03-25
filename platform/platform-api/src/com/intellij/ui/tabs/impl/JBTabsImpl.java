@@ -62,6 +62,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -100,7 +101,7 @@ public class JBTabsImpl extends JComponent
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFocused;
 
-  private Getter<? extends ActionGroup> myPopupGroup;
+  private Supplier<? extends ActionGroup> myPopupGroup;
   private String myPopupPlace;
 
   TabInfo myPopupInfo;
@@ -1203,9 +1204,9 @@ public class JBTabsImpl extends JComponent
 
   @Override
   @NotNull
-  public JBTabs setPopupGroup(@NotNull final Getter<? extends ActionGroup> popupGroup,
-                              @NotNull final String place,
-                              final boolean addNavigationGroup) {
+  public JBTabs setPopupGroup(Supplier<? extends ActionGroup> popupGroup,
+                              @NotNull String place,
+                              boolean addNavigationGroup) {
     myPopupGroup = popupGroup;
     myPopupPlace = place;
     myAddNavigationGroup = addNavigationGroup;

@@ -95,7 +95,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private VirtualFile myFileToSelect;
   private final Trinity<@NlsContexts.Label String, Supplier<? extends T>, Consumer<? super T>> myProjectMapping;
 
-  protected interface Value<T> extends Setter<T>, Getter<T> {
+  protected interface Value<T> extends Setter<T>, Supplier<T> {
     void commit();
   }
 

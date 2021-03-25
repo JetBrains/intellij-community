@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -26,7 +26,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -66,6 +69,7 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -673,7 +677,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @Nullable
-  private Object getData(@NotNull String dataId, Getter<JBIterable<?>> selection) {
+  private Object getData(@NotNull String dataId, Supplier<JBIterable<?>> selection) {
     DataProvider dataProvider = getDataProviderInner(selection);
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Object data = modelExtension.getData(dataId, dataProvider);
@@ -683,12 +687,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   @NotNull
-  private DataProvider getDataProvider(Getter<JBIterable<?>> selection) {
+  private DataProvider getDataProvider(Supplier<JBIterable<?>> selection) {
     return d -> getData(d, selection);
   }
 
   @NotNull
-  private DataProvider getDataProviderInner(Getter<JBIterable<?>> selection) {
+  private DataProvider getDataProviderInner(Supplier<JBIterable<?>> selection) {
     return d -> getDataImpl(d, this, selection);
   }
 
@@ -700,7 +704,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return JBIterable.of(size > 0 ? myModel.getElement(size - 1) : null);
   }
 
-  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Getter<? extends JBIterable<?>> selection) {
+  Object getDataImpl(String dataId, @NotNull JComponent source, @NotNull Supplier<? extends JBIterable<?>> selection) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }

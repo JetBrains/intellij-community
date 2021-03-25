@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -40,15 +40,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
-/**
- * @author anna
- */
 public abstract class AbstractRerunFailedTestsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
-  private Getter<? extends TestFrameworkRunningModel> myModelProvider;
+  private Supplier<? extends TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
 
   protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
@@ -251,7 +249,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
 
     @Override
     public @Nullable TestConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
-      return myConfiguration instanceof ConsolePropertiesProvider ? 
+      return myConfiguration instanceof ConsolePropertiesProvider ?
              ((ConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor) : null;
     }
 

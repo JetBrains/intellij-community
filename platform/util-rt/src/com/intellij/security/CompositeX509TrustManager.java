@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.security;
 
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +10,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CompositeX509TrustManager implements X509TrustManager {
+public final class CompositeX509TrustManager implements X509TrustManager {
   private final List<X509TrustManager> myManagers = new ArrayList<X509TrustManager>();
 
   public CompositeX509TrustManager(@NotNull TrustManager[]... managerSets) {
@@ -23,10 +23,12 @@ public class CompositeX509TrustManager implements X509TrustManager {
     }
   }
 
+  @Override
   public void checkClientTrusted(X509Certificate[] certificates, String s) throws CertificateException {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void checkServerTrusted(X509Certificate[] certificates, String s) throws CertificateException {
     for (X509TrustManager manager : myManagers) {
       try {
@@ -38,6 +40,7 @@ public class CompositeX509TrustManager implements X509TrustManager {
     throw new CertificateException("No trusting managers found for " + s);
   }
 
+  @Override
   @NotNull
   public X509Certificate[] getAcceptedIssuers() {
     return new X509Certificate[0];

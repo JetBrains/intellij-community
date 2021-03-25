@@ -1,17 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -19,8 +17,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-
-public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> implements Getter<PyDebuggerSettings> {
+public final class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> {
   private boolean myLibrariesFilterEnabled;
   private boolean mySteppingFiltersEnabled;
   private @NotNull List<PySteppingFilter> mySteppingFilters;
@@ -107,9 +104,8 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
     mySteppingFilters = steppingFilters;
   }
 
-  @Nullable
   @Override
-  public PyDebuggerSettings getState() {
+  public @NotNull PyDebuggerSettings getState() {
     return this;
   }
 
@@ -128,13 +124,8 @@ public class PyDebuggerSettings extends XDebuggerSettings<PyDebuggerSettings> im
   public Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     if (category == DebuggerSettingsCategory.STEPPING) {
       return singletonList(SimpleConfigurable.create("python.debug.configurable", "Python", //NON-NLS
-                                                     PyDebuggerSteppingConfigurableUi.class, this));
+                                                     PyDebuggerSteppingConfigurableUi.class, () -> this));
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public PyDebuggerSettings get() {
-    return this;
   }
 }

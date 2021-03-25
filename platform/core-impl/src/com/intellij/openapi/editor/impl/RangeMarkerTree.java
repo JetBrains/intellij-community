@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedDocumentListener {
   RangeMarkerTree(@NotNull Document document) {
@@ -234,9 +234,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   @Nullable
   private static <T extends RangeMarkerEx> RangeMarkerImpl getNodeMarker(@NotNull IntervalNode<T> node) {
-    List<Getter<T>> keys = node.intervals;
+    List<Supplier<T>> keys = node.intervals;
     for (int i = keys.size() - 1; i >= 0; i--) {
-      Getter<T> key = keys.get(i);
+      Supplier<T> key = keys.get(i);
       RangeMarkerImpl marker = (RangeMarkerImpl)key.get();
       if (marker != null) {
         if (marker.isValid()) return marker;

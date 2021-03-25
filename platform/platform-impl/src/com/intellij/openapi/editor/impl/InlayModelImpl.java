@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -25,6 +24,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
@@ -572,8 +572,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
         void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
-            List<Getter<InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
-            List<Getter<InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
+            List<Supplier<InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+            List<Supplier<InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
             added.clear();
             intervals.addAll(0, addedCopy);
           }

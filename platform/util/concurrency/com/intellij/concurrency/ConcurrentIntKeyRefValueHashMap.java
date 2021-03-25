@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -10,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Base class for concurrent key:int -> (weak/soft) value:V map
@@ -22,7 +22,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @NotNull
   protected abstract IntReference<V> createReference(int key, @NotNull V value, @NotNull ReferenceQueue<V> queue);
 
-  interface IntReference<V> extends Getter<V> {
+  interface IntReference<V> extends Supplier<V> {
     int getKey();
   }
 

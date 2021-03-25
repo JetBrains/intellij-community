@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -14,7 +14,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SslUtil {
+public final class SslUtil {
   public static final String SSL_CA_CERT_PATH = "sslCaCertPath";
   public static final String SSL_CLIENT_CERT_PATH = "sslClientCertPath";
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";

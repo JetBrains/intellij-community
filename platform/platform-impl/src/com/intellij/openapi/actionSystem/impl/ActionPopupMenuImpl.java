@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.ComponentUtil;
@@ -29,6 +28,7 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.function.Supplier;
 
 /**
  * @author Anton Katilin
@@ -39,7 +39,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  private Getter<? extends DataContext> myDataContextProvider;
+  private Supplier<? extends DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
@@ -70,7 +70,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     return myMenu.myGroup;
   }
 
-  void setDataContextProvider(@NotNull Getter<? extends DataContext> dataContextProvider) {
+  void setDataContextProvider(@NotNull Supplier<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 

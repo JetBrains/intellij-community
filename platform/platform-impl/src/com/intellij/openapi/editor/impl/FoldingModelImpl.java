@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentEventUtil;
@@ -30,8 +29,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
+import java.util.function.Supplier;
 
 public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
@@ -83,7 +81,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
           boolean relatedToPrecedingText = inlay.isRelatedToPrecedingText();
           if ((relatedToPrecedingText || offset != foldStartOffset) &&
               (!relatedToPrecedingText || offset != foldEndOffset) &&
-              !showWhenFolded(inlay)) {
+              !InlayModelImpl.showWhenFolded(inlay)) {
             sum += inlay.getHeightInPixels();
           }
         }
@@ -738,7 +736,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void onRemoved() {
-          for (Getter<FoldRegionImpl> getter : intervals) {
+          for (Supplier<FoldRegionImpl> getter : intervals) {
             removeRegionFromGroup(getter.get());
           }
         }

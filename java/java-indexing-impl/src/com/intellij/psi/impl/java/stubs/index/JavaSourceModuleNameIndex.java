@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -22,7 +22,7 @@ import java.util.jar.Manifest;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 
-public class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
+public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.source.module.name");
 
   private final FileBasedIndex.InputFilter myFilter =

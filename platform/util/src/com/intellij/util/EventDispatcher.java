@@ -5,8 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -18,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class EventDispatcher<T extends EventListener> {
   private static final Logger LOG = Logger.getInstance(EventDispatcher.class);
@@ -65,13 +64,13 @@ public final class EventDispatcher<T extends EventListener> {
   }
 
   public static <T> T createMulticaster(@NotNull Class<T> listenerClass,
-                                        @NotNull Getter<? extends Iterable<T>> listeners) {
+                                        @NotNull Supplier<? extends Iterable<T>> listeners) {
     return createMulticaster(listenerClass, null, listeners);
   }
 
   static @NotNull <T> T createMulticaster(@NotNull Class<T> listenerClass,
                                           @Nullable Map<String, Object> methodReturnValues,
-                                          @NotNull Getter<? extends Iterable<T>> listeners) {
+                                          @NotNull Supplier<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
@@ -107,7 +106,7 @@ public final class EventDispatcher<T extends EventListener> {
     T multicaster = myMulticaster;
     if (multicaster == null) {
       // benign race
-      myMulticaster = multicaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(myListeners));
+      myMulticaster = multicaster = createMulticaster(myListenerClass, myMethodReturnValues, () -> myListeners);
     }
     return multicaster;
   }
@@ -188,7 +187,7 @@ public final class EventDispatcher<T extends EventListener> {
   @TestOnly
   public void neuterMultiCasterWhilePerformanceTestIsRunningUntil(@NotNull Disposable disposable) {
     T multicaster = myMulticaster;
-    myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, new StaticGetter<Iterable<T>>(Collections.emptyList()));
+    myMulticaster = createMulticaster(myListenerClass, myMethodReturnValues, () -> Collections.emptyList());
     Disposer.register(disposable, () -> myMulticaster = multicaster);
   }
 }

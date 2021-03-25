@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -8,9 +8,9 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.TimeoutCachedValue
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 /**
  * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
@@ -130,7 +130,7 @@ private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
 val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)
 
-private val pluginIdsFromOfficialJbPluginRepo: Getter<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+private val pluginIdsFromOfficialJbPluginRepo: Supplier<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
   val infoProvider = PluginInfoProvider.getInstance()
   infoProvider.loadCachedPlugins()

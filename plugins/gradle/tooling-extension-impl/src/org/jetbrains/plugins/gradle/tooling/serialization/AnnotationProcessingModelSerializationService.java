@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 
@@ -29,7 +29,7 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   public byte[] write(AnnotationProcessingModel annotationProcessingModel, Class<? extends AnnotationProcessingModel> modelClazz)
     throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    IonWriter writer = ToolingStreamApiUtils.createIonWriter().build(out);
+    IonWriter writer = createIonWriter().build(out);
     try {
       write(writer, myWriteContext, annotationProcessingModel);
     }
@@ -119,12 +119,12 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   }
 
   private static Map<String, AnnotationProcessingConfig> readConfigs(final IonReader reader, final ReadContext context) {
-    return readMap(reader, new Getter<String>() {
+    return readMap(reader, new Supplier<String>() {
       @Override
       public String get() {
         return readString(reader, null);
       }
-    }, new Getter<AnnotationProcessingConfig>() {
+    }, new Supplier<AnnotationProcessingConfig>() {
       @Override
       public AnnotationProcessingConfig get() {
         return readConfig(reader, context);

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -42,10 +41,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-public class AuthenticationService {
+public final class AuthenticationService {
   private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
 
   private static final @NonNls String FATAL_HANDSHAKE_FAILURE_ERROR = "received fatal alert: handshake_failure";
@@ -95,7 +95,7 @@ public class AuthenticationService {
   }
 
   @Nullable
-  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Getter<T> fromUserProvider) {
+  private <T> T requestCredentials(@NotNull String realm, @NotNull String type, @NotNull Supplier<T> fromUserProvider) {
     T result = null;
     // Search for stored credentials not only by key but also by "parent" keys. This is useful when we work just with URLs
     // (not working copy) and can't detect repository url beforehand because authentication is required. If found credentials of "parent"
