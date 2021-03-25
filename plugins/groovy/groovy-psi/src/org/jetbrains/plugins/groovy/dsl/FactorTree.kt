@@ -17,7 +17,7 @@ class FactorTree(
 ) {
 
   private val myProvider: CachedValueProvider<MutableMap<Any, Any>> = CachedValueProvider {
-    CachedValueProvider.Result(ConcurrentHashMap(), PsiModificationTracker.MODIFICATION_COUNT)
+    CachedValueProvider.Result(ConcurrentHashMap(1), PsiModificationTracker.MODIFICATION_COUNT)
   }
   private val myTopLevelCache: CachedValue<MutableMap<Any, Any>> =
     CachedValuesManager.getManager(project).createCachedValue(myProvider, false)
@@ -37,7 +37,7 @@ class FactorTree(
       @Suppress("UNCHECKED_CAST")
       var next: MutableMap<Any, Any>? = current[key] as MutableMap<Any, Any>?
       if (next == null) {
-        next = ConcurrentHashMap<Any, Any>()
+        next = ConcurrentHashMap<Any, Any>(1)
         current[key] = next
       }
       current = next
