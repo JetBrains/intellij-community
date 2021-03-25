@@ -19,8 +19,10 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
@@ -48,6 +50,16 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
         FileUtil.createIfDoesntExist(PersistentUtil.getCorruptionMarkerFile());
       }
     }
+  }
+
+  @Override
+  public @Nullable String getDescription() {
+    return VcsLogBundle.message("vcs.log.clear.caches.checkbox.description");
+  }
+
+  @Override
+  public @Nullable Boolean optionalCheckboxDefaultValue() {
+    return Boolean.TRUE;
   }
 
   @NotNull
