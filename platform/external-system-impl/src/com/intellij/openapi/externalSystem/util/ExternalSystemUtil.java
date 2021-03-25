@@ -747,7 +747,7 @@ public final class ExternalSystemUtil {
   }
 
 
-  public static @NotNull String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
+  public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
     return naturalJoin(
       new HashSet<>(systemIds).stream()
         .map(it -> it.getReadableName())
@@ -756,7 +756,7 @@ public final class ExternalSystemUtil {
     );
   }
 
-  private static @NotNull String naturalJoin(@NotNull List<String> words) {
+  private static @NotNull @Nls String naturalJoin(@NotNull List<String> words) {
     if (words.size() == 0) return "";
     if (words.size() == 1) return words.get(0);
     String lastWord = words.get(words.size() - 1);
