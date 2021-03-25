@@ -11,8 +11,8 @@ private const val VCS_GROUP = "vcs"
 private const val REFRESH_ACTION_ID = "changes.view.refresh"
 
 fun logRefreshActionPerformed(project: Project,
-                              changesBefore: MutableCollection<Change>,
-                              changesAfter: MutableCollection<Change>,
+                              changesBefore: Collection<Change>,
+                              changesAfter: Collection<Change>,
                               unversionedBefore: Collection<FilePath>,
                               unversionedAfter: Collection<FilePath>,
                               wasUpdatingBefore: Boolean) {
