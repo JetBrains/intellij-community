@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.test
 
 import com.intellij.openapi.externalSystem.model.task.*
@@ -6,8 +6,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
@@ -30,10 +29,10 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll(
+      { Registry.get("gradle.testLauncherAPI.enabled").setValue(false) },
+      { super.tearDown() }
+    )
   }
 
   @Test
@@ -117,12 +116,12 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .generate()
     )
 
-    RunAll(
-      ThrowableRunnable { `call test task produces test events`() },
-      ThrowableRunnable { `call build task does not produce test events`() },
-      ThrowableRunnable { `call task for specific test overrides existing filters`() },
-      ThrowableRunnable { if (gradleSupportsJunitPlatform) `test events use display name`() }
-    ).run()
+    runAll(
+      { `call test task produces test events`() },
+      { `call build task does not produce test events`() },
+      { `call task for specific test overrides existing filters`() },
+      { if (gradleSupportsJunitPlatform) `test events use display name`() }
+    )
   }
 
   private fun testLauncherAPISupported(): Boolean = isGradleNewerOrSameAs("6.1")

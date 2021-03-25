@@ -4,8 +4,7 @@ package git4idea.tests
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runAll
 import com.intellij.util.WaitFor
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
@@ -18,7 +17,6 @@ import git4idea.test.git
 import java.io.File
 
 class GitCommitTemplateTest : GitPlatformTest() {
-
   override fun setUp() {
     super.setUp()
 
@@ -26,10 +24,10 @@ class GitCommitTemplateTest : GitPlatformTest() {
   }
 
   override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { git("config --global --unset commit.template", ignoreNonZeroExitCode = true) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll(
+      { git("config --global --unset commit.template", ignoreNonZeroExitCode = true) },
+      { super.tearDown() }
+    )
   }
 
   fun `test set commit template`() {

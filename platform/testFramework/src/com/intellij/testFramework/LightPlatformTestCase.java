@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
@@ -86,8 +86,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import static com.intellij.testFramework.RunAll.runAll;
 
 /**
  * @author yole
@@ -357,7 +355,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> {
         if (ApplicationManager.getApplication() != null) {
           CodeStyle.dropTemporarySettings(project);
@@ -461,7 +459,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void checkEditorsReleased() {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
         // getAllEditors() should be called only after dispatchAllInvocationEvents(), that's why separate RunAll is used

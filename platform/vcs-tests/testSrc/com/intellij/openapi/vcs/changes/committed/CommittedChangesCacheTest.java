@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,9 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 /**
  * @author yole
@@ -61,7 +60,7 @@ public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
     PsiTestUtil.addContentRoot(myModule, myContentRoot);
 
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping(myContentRoot.getPath(), myVcs.getName())));
+    myVcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myContentRoot.getPath(), myVcs.getName())));
     myVcsManager.waitForInitialized();
     assertTrue(myVcsManager.hasActiveVcss());
 
@@ -72,7 +71,7 @@ public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
 
   @Override
   protected void tearDown() {
-    new RunAll(
+    RunAll.runAll(
       () -> {
         if (myConnection != null) myConnection.disconnect();
       },
@@ -80,7 +79,7 @@ public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
       () -> myCache.clearCaches(EmptyRunnable.INSTANCE),
       () -> clearFields(this),
       () -> super.tearDown()
-    ).run();
+    );
   }
 
   public void testEmpty() throws Exception {

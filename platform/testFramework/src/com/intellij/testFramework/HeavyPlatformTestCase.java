@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -85,8 +85,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.testFramework.RunAll.runAll;
 
 /**
  * Base class for heavy tests.
@@ -467,7 +465,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
-    runAll(
+    RunAll.runAll(
       () -> disposeRootDisposable(),
       () -> {
         if (project != null) {
