@@ -16,11 +16,8 @@ class FactorTree(
   private val myExecutor: GroovyDslExecutor
 ) {
 
-  private val myProvider: CachedValueProvider<MutableMap<Any, Any>> = CachedValueProvider {
-    CachedValueProvider.Result(ConcurrentHashMap(1), PsiModificationTracker.MODIFICATION_COUNT)
-  }
   private val myTopLevelCache: CachedValue<MutableMap<Any, Any>> =
-    CachedValuesManager.getManager(project).createCachedValue(myProvider, false)
+    CachedValuesManager.getManager(project).createCachedValue(ourProvider, false)
 
   fun cache(descriptor: GroovyClassDescriptor, holder: CustomMembersHolder) {
     var current: MutableMap<Any, Any>? = null
@@ -31,7 +28,7 @@ class FactorTree(
         Factor.qualifierType -> descriptor.psiClass
       }
       if (current == null) {
-        current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, myProvider, false)
+        current = CachedValuesManager.getManager(descriptor.project).getCachedValue(key, GDSL_MEMBER_CACHE, ourProvider, false)
         continue
       }
       @Suppress("UNCHECKED_CAST")
@@ -65,6 +62,10 @@ class FactorTree(
   }
 
   companion object {
+
+    private val ourProvider: CachedValueProvider<MutableMap<Any, Any>> = CachedValueProvider {
+      CachedValueProvider.Result(ConcurrentHashMap(1), PsiModificationTracker.MODIFICATION_COUNT)
+    }
 
     private val GDSL_MEMBER_CACHE: Key<CachedValue<MutableMap<Any, Any>>> = Key.create("GDSL_MEMBER_CACHE")
 
