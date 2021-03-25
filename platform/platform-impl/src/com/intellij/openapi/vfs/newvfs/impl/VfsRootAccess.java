@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -126,6 +127,13 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
       allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".m2")));
       allowed.add(FileUtil.toSystemIndependentName(findInUserHome(".gradle")));
+
+      if (SystemInfo.isWindows) {
+        String wslName = System.getProperty("wsl.distribution.name");
+        if (wslName != null) {
+          allowed.add(FileUtil.toSystemIndependentName("\\\\wsl$\\" + wslName));
+        }
+      }
 
       // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the JDK installation folder
       allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
