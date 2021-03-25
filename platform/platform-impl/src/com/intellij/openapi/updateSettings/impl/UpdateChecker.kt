@@ -555,30 +555,28 @@ object UpdateChecker {
       else if (userInitiated) {
         UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
 
-        if (userInitiated) {
-          val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
-          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
-          else IdeBundle.message("updates.plugins.ready.short.title.available")
-          val message = if (updatedPlugins.size == 1) "" else names
+        val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
+        val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
+        else IdeBundle.message("updates.plugins.ready.short.title.available")
+        val message = if (updatedPlugins.size == 1) "" else names
 
-          showNotification(project, title, message, runnable, { notification ->
-            notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
-            val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button")
-            else IdeBundle.message("plugin.manager.update.all")
-            notification.actions.add(0, object : NotificationAction(text) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
-              }
-            })
-            notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
-              override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-                notification.expire()
-                ignorePlugins(updatedPlugins.map { it.descriptor })
-              }
-            })
-          }, NotificationUniqueType.PLUGINS, "plugins.update.available")
-        }
+        showNotification(project, title, message, runnable, { notification ->
+          notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
+          val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button")
+          else IdeBundle.message("plugin.manager.update.all")
+          notification.actions.add(0, object : NotificationAction(text) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+            }
+          })
+          notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
+            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+              notification.expire()
+              ignorePlugins(updatedPlugins.map { it.descriptor })
+            }
+          })
+        }, NotificationUniqueType.PLUGINS, "plugins.update.available")
       }
     }
 
