@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
@@ -6,8 +6,7 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -25,6 +24,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.StatusBarProgress
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -38,6 +38,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   companion object {
     const val NAVIGATE_COMMAND = "navigate"
     const val PROJECT_NAME_KEY = "project"
+    const val ORIGIN_URL_KEY = "origin"
     const val REFERENCE_TARGET = "reference"
     const val PATH_KEY = "path"
     const val FQN_KEY = "fqn"
@@ -60,7 +61,8 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
      */
 
     val projectName = parameters[PROJECT_NAME_KEY]
-    if (projectName.isNullOrEmpty()) {
+    val originUrl = parameters[ORIGIN_URL_KEY]
+    if (projectName.isNullOrEmpty() && originUrl.isNullOrEmpty()) {
       return
     }
 
@@ -69,27 +71,37 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       return
     }
 
-    for (recentProjectAction in RecentProjectListActionProvider.getInstance().getActions()) {
-      if (recentProjectAction !is ReopenProjectAction || recentProjectAction.projectName != projectName) {
-        continue
-      }
-
-      for (project in ProjectUtil.getOpenProjects()) {
-        if (project.name == projectName) {
-          findAndNavigateToReference(project, parameters)
-          return
-        }
-      }
-
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        val project = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
-        StartupManager.getInstance(project).runAfterOpened {
-          DumbService.getInstance(project).runWhenSmart {
-            findAndNavigateToReference(project, parameters)
-          }
-        }
-      }, ModalityState.NON_MODAL)
+    val project = ProjectUtil.getOpenProjects().find { project ->
+      if (!projectName.isNullOrEmpty() && project.name == projectName) return@find true
+      isOriginsEqual(originUrl, getProjectOriginUrl(project.guessProjectDir()?.toNioPath()))
     }
+
+    if (project != null) {
+      findAndNavigateToReference(project, parameters)
+    }
+
+    val actions = RecentProjectListActionProvider.getInstance().getActions()
+    val recentProjectAction = actions.filterIsInstance(ReopenProjectAction::class.java).find {
+      if (!projectName.isNullOrEmpty() && it.projectName == projectName) return@find true
+      if (isOriginsEqual(originUrl, it.projectOrigin)) return@find true
+
+      isOriginsEqual(originUrl, getProjectOriginUrl(Paths.get(it.projectPath)))
+    } ?: return
+
+
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      val openProject = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
+      StartupManager.getInstance(openProject).runAfterOpened {
+        DumbService.getInstance(openProject).runWhenSmart {
+          findAndNavigateToReference(openProject, parameters)
+        }
+      }
+    }, ModalityState.NON_MODAL)
+  }
+
+  private fun isOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
+    if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
+    return originUrl.removeSuffix(".git") == originUrl.removeSuffix(".git")
   }
 }
 

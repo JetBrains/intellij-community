@@ -16,7 +16,7 @@ import java.nio.file.Paths
 import java.util.*
 
 @NlsSafe
-internal fun getProjectOriginUrl(projectDir: Path?): String? {
+fun getProjectOriginUrl(projectDir: Path?): String? {
   if (projectDir == null) return null
   val epName = ExtensionPointName.create<ProjectOriginInfoProvider>("com.intellij.projectOriginInfoProvider")
   for (extension in epName.extensions) {
