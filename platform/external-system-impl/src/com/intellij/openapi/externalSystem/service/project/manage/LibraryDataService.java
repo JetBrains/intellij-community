@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTy
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
@@ -114,7 +114,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
                             @NotNull String libraryName) {
     for (Map.Entry<OrderRootType, Collection<File>> entry: libraryFiles.entrySet()) {
       for (File file: entry.getValue()) {
-        VirtualFile virtualFile = unresolved ? null : ExternalSystemUtil.refreshAndFindFileByIoFile(file);
+        VirtualFile virtualFile = unresolved ? null : VirtualFileManager.getInstance().findFileByNioPath(file.toPath().toAbsolutePath());
         if (virtualFile == null) {
           if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
             LOG.warn(
