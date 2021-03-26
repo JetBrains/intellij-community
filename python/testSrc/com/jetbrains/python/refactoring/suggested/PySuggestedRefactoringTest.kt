@@ -775,6 +775,22 @@ class PySuggestedRefactoringTest : PyTestCase() {
     )
   }
 
+  // EA-252027
+  fun testOverload() {
+    doNoIntentionTest(
+      """
+        from typing import overload
+        
+        @overload
+        def foo(p<caret>1: int, p2: int) -> int: ...
+        
+        def foo(p1, p2): ...
+      """.trimIndent(),
+      { myFixture.type("aram") },
+      intention = changeSignatureIntention()
+    )
+  }
+
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
