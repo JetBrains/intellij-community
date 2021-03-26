@@ -65,8 +65,12 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
       val headBranch = model.headBranch
       val showRepoOwners = headRepoPath != null && baseRepoPath != headRepoPath
 
-      base.text = getRepoText(baseRepoPath, showRepoOwners, baseBranch)
-      head.text = getRepoText(headRepoPath, showRepoOwners, headBranch)
+      val baseText = getRepoText(baseRepoPath, showRepoOwners, baseBranch)
+      base.text = baseText
+      base.toolTipText = baseText
+      val headText = getRepoText(headRepoPath, showRepoOwners, headBranch)
+      head.text = headText
+      head.toolTipText = headText
 
       with(changesWarningLabel) {
         if (headRepo != null && headBranch != null && headBranch is GitLocalBranch) {
