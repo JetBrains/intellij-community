@@ -324,7 +324,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         type = ((PsiArrayType)type).getComponentType();
         PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
         for (PsiAnnotationMemberValue initializer1 : initializers) {
-          myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(initializer1, type));
+          myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(initializer1, type, method));
         }
       }
     }
@@ -335,7 +335,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiType returnType = method.getReturnType();
     PsiAnnotationMemberValue value = method.getDefaultValue();
     if (returnType != null && value != null) {
-      myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType));
+      myHolder.add(AnnotationsHighlightUtil.checkMemberValueType(value, returnType, method));
     }
 
     PsiTypeElement typeElement = method.getReturnTypeElement();

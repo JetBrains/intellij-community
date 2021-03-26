@@ -93,6 +93,14 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAnnotationMethodReturnFix(@NotNull PsiMethod method,
+                                                                                     @NotNull PsiType toReturn,
+                                                                                     boolean fromDefaultValue) {
+    return new AnnotationMethodReturnTypeFix(method, toReturn, fromDefaultValue);
+  }
+
+  @NotNull
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
     return new AddMethodFix(method, toClass);
   }

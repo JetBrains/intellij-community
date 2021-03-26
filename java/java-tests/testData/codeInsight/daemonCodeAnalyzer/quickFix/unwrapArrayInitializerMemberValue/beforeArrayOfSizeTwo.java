@@ -1,4 +1,4 @@
-// "Replace array initializer with its element" "false"
+// "Unwrap '"one"'" "false"
 class X {
 
   @interface MyAnnotation {
