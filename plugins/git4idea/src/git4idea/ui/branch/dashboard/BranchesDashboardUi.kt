@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -43,6 +44,7 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
 import com.intellij.vcs.log.ui.frame.*
 import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -130,6 +132,13 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     return tree.getSelectedRemotes()
   }
 
+  internal fun getRootsToFilter(): Set<VirtualFile> {
+    val roots = logUi.logData.roots.toSet()
+    if (roots.size == 1) return roots
+
+    return VcsLogUtil.getAllVisibleRoots(roots, logUi.filterUi.filters)
+  }
+
   private val BRANCHES_UI_FOCUS_TRAVERSAL_POLICY = object : ComponentsListFocusTraversalPolicy() {
     override fun getOrderedComponents(): List<Component> = listOf(tree.component, logUi.table,
                                                                   logUi.changesBrowser.preferredFocusedComponent,
@@ -148,6 +157,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private fun installLogUi() {
     uiController.registerDataPackListener(logUi.logData)
     uiController.registerLogUiPropertiesListener(logUi.properties)
+    uiController.registerLogUiFilterListener(logUi.filterUi)
     branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
     branchViewSplitter.secondComponent = logUi.mainLogComponent
     val isDiffPreviewInEditor = isDiffPreviewInEditor()

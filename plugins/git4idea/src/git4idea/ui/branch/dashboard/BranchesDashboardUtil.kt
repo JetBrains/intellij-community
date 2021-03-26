@@ -4,6 +4,7 @@ package git4idea.ui.branch.dashboard
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.util.exclusiveCommits
 import com.intellij.vcs.log.util.findBranch
@@ -17,9 +18,11 @@ import gnu.trove.TIntHashSet
 
 internal object BranchesDashboardUtil {
 
-  fun getLocalBranches(project: Project): Set<BranchInfo> {
+  fun getLocalBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val localMap = mutableMapOf<String, MutableSet<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (branch in repo.branches.localBranches) {
         localMap.computeIfAbsent(branch.name) { hashSetOf() }.add(repo)
       }
@@ -39,9 +42,11 @@ internal object BranchesDashboardUtil {
     return local
   }
 
-  fun getRemoteBranches(project: Project): Set<BranchInfo> {
+  fun getRemoteBranches(project: Project, rootsToFilter: Set<VirtualFile>?): Set<BranchInfo> {
     val remoteMap = mutableMapOf<String, MutableList<GitRepository>>()
     for (repo in GitRepositoryManager.getInstance(project).repositories) {
+      if (rootsToFilter != null && !rootsToFilter.contains(repo.root)) continue
+
       for (remoteBranch in repo.branches.remoteBranches) {
         remoteMap.computeIfAbsent(remoteBranch.name) { mutableListOf() }.add(repo)
       }
