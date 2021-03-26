@@ -103,16 +103,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   void buildGroupMappings() {
     if (!myActionGroups.isEmpty()) return;
+    ActionGroup mainMenu = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU));
+    ActionGroup keymapOthers = Objects.requireNonNull((ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup"));
 
-    ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
-    assert mainMenu != null && keymapOthers != null;
-    collectActions(myActionGroups, mainMenu, Collections.emptyList(), false);
+    Map<AnAction, GroupMapping> mainGroups = new HashMap<>();
+    collectActions(mainGroups, mainMenu, Collections.emptyList(), false);
 
-    Map<AnAction, GroupMapping> keymapActionGroups = new HashMap<>();
-    collectActions(keymapActionGroups, keymapOthers, Collections.emptyList(), true);
-    // Let menu groups have priority over keymap (and do not introduce ambiguity)
-    keymapActionGroups.forEach(myActionGroups::putIfAbsent);
+    Map<AnAction, GroupMapping> otherGroups = new HashMap<>();
+    collectActions(otherGroups, keymapOthers, Collections.emptyList(), true);
+
+    myActionGroups.putAll(mainGroups);
+    otherGroups.forEach(myActionGroups::putIfAbsent);
   }
 
   @NotNull
@@ -624,7 +625,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
-                         GotoActionModel model) {
+                         @NotNull GotoActionModel model) {
       myAction = action;
       myMode = mode;
       myGroupMapping = groupMapping;
