@@ -222,27 +222,27 @@ public class HelpTooltip {
 
   /**
    * Set HelpTooltip initial delay. Tooltip is show after component's mouse enter plus initial delay.
-   * @param initialDelay - non negative value for initial delay
+   * @param delay - non negative value for initial delay
    * @return {@code this}
+   * @throws IllegalArgumentException if delay is less than zero
    */
-  public HelpTooltip setInitialDelay(int initialDelay) {
-    if (initialDelay >= 0) {
-      myInitialDelay = initialDelay;
-    }
+  public HelpTooltip setInitialDelay(int delay) {
+    if (delay < 0) throw new IllegalArgumentException("Negative delay is not allowed");
 
+    myInitialDelay = delay;
     return this;
   }
 
   /**
    * Set HelpTooltip hide delay. Tooltip is hidden after component's mouse exit plus hide delay.
-   * @param hideDelay - non negative value for hide delay
+   * @param delay - non negative value for hide delay
    * @return {@code this}
+   * @throws IllegalArgumentException if delay is less than zero
    */
-  public HelpTooltip setHideDelay(int hideDelay) {
-    if (hideDelay >= 0) {
-      myHideDelay = hideDelay;
-    }
+  public HelpTooltip setHideDelay(int delay) {
+    if (delay < 0) throw new IllegalArgumentException("Negative delay is not allowed");
 
+    myHideDelay = delay;
     return this;
   }
 
