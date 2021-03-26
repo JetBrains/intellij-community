@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
@@ -128,7 +127,7 @@ public final class TypeEvalContext {
    */
   @NotNull
   private static TypeEvalContext getContextFromCache(@NotNull final Project project, @NotNull final TypeEvalContext context) {
-    return ServiceManager.getService(project, TypeEvalContextCache.class).getContext(context);
+    return project.getService(TypeEvalContextCache.class).getContext(context);
   }
 
   public TypeEvalContext withTracing() {

@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +26,7 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
     myProject = project;
     myVcs = Objects.requireNonNull(HgVcs.getInstance(myProject));
     mySettings = myVcs.getProjectSettings();
-    myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
+    myCommonPushSettings = project.getService(PushSettings.class);
   }
 
   @NotNull

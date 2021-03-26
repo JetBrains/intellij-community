@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.moduleDependencies;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -41,7 +44,7 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
   }
 
   public static DependenciesAnalyzeManager getInstance(Project project) {
-    return ServiceManager.getService(project, DependenciesAnalyzeManager.class);
+    return project.getService(DependenciesAnalyzeManager.class);
   }
 
   public void addContent(Content content) {

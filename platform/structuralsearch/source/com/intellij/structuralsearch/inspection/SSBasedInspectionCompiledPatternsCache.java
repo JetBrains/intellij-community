@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -30,7 +29,7 @@ final class SSBasedInspectionCompiledPatternsCache {
   private final Project myProject;
 
   public static SSBasedInspectionCompiledPatternsCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, SSBasedInspectionCompiledPatternsCache.class);
+    return project.getService(SSBasedInspectionCompiledPatternsCache.class);
   }
 
   private SSBasedInspectionCompiledPatternsCache(Project project) {

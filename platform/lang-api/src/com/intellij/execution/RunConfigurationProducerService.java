@@ -17,7 +17,6 @@ package com.intellij.execution;
 
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -51,7 +50,7 @@ public final class RunConfigurationProducerService implements PersistentStateCom
 
   @NotNull
   public static RunConfigurationProducerService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, RunConfigurationProducerService.class);
+    return project.getService(RunConfigurationProducerService.class);
   }
 
   public void addIgnoredProducer(@NotNull Class<? extends RunConfigurationProducer<?>> ignoredProducer) {

@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.util;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -477,7 +476,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static HgRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return ServiceManager.getService(project, HgRepositoryManager.class);
+    return project.getService(HgRepositoryManager.class);
   }
 
   @Nullable

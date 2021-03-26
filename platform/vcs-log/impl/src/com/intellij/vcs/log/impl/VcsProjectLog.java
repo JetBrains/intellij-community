@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
@@ -79,7 +78,7 @@ public final class VcsProjectLog implements Disposable {
     myProject = project;
     myMessageBus = myProject.getMessageBus();
 
-    VcsLogProjectTabsProperties uiProperties = ServiceManager.getService(myProject, VcsLogProjectTabsProperties.class);
+    VcsLogProjectTabsProperties uiProperties = myProject.getService(VcsLogProjectTabsProperties.class);
     myUiProperties = uiProperties;
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 

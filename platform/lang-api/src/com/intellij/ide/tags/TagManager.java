@@ -1,6 +1,6 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.tags;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
@@ -26,7 +26,7 @@ public abstract class TagManager {
 
   @NotNull
   public static TagManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, TagManager.class);
+    return project.getService(TagManager.class);
   }
 
   public static boolean isEnabled() {

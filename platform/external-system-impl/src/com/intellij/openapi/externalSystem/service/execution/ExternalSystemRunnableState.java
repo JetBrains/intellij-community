@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -210,7 +209,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     Filter[] filters = consoleManager.getCustomExecutionFilters(myProject, task, myEnv);
     Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
     final BuildProgressListener progressListener =
-      progressListenerClazz != null ? ServiceManager.getService(myProject, progressListenerClazz)
+      progressListenerClazz != null ? myProject.getService(progressListenerClazz)
                                     : createBuildView(buildDescriptor, consoleView);
 
     ExternalSystemRunConfiguration.EP_NAME

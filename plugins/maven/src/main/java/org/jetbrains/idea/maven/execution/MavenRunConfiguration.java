@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.CommonBundle;
@@ -29,7 +29,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -426,7 +425,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                                   ProcessHandler processHandler,
                                                   Function<String, String> targetFileMapper) throws ExecutionException {
       ConsoleView consoleView = super.createConsole(executor);
-      BuildViewManager viewManager = ServiceManager.getService(getEnvironment().getProject(), BuildViewManager.class);
+      BuildViewManager viewManager = getEnvironment().getProject().getService(BuildViewManager.class);
       descriptor.withProcessHandler(new MavenBuildHandlerFilterSpyWrapper(processHandler), null);
       descriptor.withExecutionEnvironment(getEnvironment());
       StartBuildEventImpl startBuildEvent = new StartBuildEventImpl(descriptor, "");

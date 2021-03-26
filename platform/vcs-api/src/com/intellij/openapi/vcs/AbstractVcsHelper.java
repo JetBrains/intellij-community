@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
@@ -42,7 +41,7 @@ public abstract class AbstractVcsHelper {
 
   @NotNull
   public static AbstractVcsHelper getInstance(Project project) {
-    return ServiceManager.getService(project, AbstractVcsHelper.class);
+    return project.getService(AbstractVcsHelper.class);
   }
 
   public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull @TabTitle String tabDisplayName);

@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +26,7 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
 
   @Override
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
-    FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
+    FileHistoryUiProperties properties = project.getService(FileHistoryUiProperties.class);
 
     VcsLogFilterCollection filters =
       FileHistoryFilterer.createFilters(myFilePath, myHash, myRoot, properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));

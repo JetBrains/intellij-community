@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -73,7 +72,7 @@ public class SpellCheckerManager implements Disposable {
 
 
   public static SpellCheckerManager getInstance(Project project) {
-    return ServiceManager.getService(project, SpellCheckerManager.class);
+    return project.getService(SpellCheckerManager.class);
   }
 
   public SpellCheckerManager(Project project) {
@@ -198,7 +197,7 @@ public class SpellCheckerManager implements Disposable {
     myAppDictionary = cachedDictionaryState.getDictionary();
     mySpellChecker.addModifiableDictionary(myAppDictionary);
 
-    final ProjectDictionaryState dictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
+    final ProjectDictionaryState dictionaryState = project.getService(ProjectDictionaryState.class);
     dictionaryState.addProjectDictListener((dict) -> restartInspections());
     myProjectDictionary = dictionaryState.getProjectDictionary();
     myProjectDictionary.setActiveName(System.getProperty("user.name"));

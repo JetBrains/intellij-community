@@ -1,9 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -15,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public static JavaRefactoringFactory getInstance(Project project) {
-    return (JavaRefactoringFactory) ServiceManager.getService(project, RefactoringFactory.class);
+    return (JavaRefactoringFactory)project.getService(RefactoringFactory.class);
   }
 
   @Override

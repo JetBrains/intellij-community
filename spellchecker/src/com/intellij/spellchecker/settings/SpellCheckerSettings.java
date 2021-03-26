@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -34,7 +37,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
-  private static final String SETTINGS_TRANSFERRED = "transferred"; 
+  private static final String SETTINGS_TRANSFERRED = "transferred";
 
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
@@ -72,7 +75,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
   public static @NotNull SpellCheckerSettings getInstance(Project project) {
-    return ServiceManager.getService(project, SpellCheckerSettings.class);
+    return project.getService(SpellCheckerSettings.class);
   }
 
   public List<String> getCustomDictionariesPaths() {

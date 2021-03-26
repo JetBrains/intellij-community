@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
   @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
 
   public static ClientPropertiesManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ClientPropertiesManager.class);
+    return project.getService(ClientPropertiesManager.class);
   }
 
   private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = NotNullLazyValue.atomicLazy(() -> {

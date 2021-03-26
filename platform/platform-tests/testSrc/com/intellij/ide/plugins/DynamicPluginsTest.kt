@@ -18,7 +18,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.PluginId
@@ -405,7 +408,7 @@ class DynamicPluginsTest {
       <projectService serviceImplementation="${MyProjectService::class.java.name}"/>
     """.trimIndent(), DynamicPluginsTest::class.java.classLoader)
     try {
-      assertThat(ServiceManager.getService(project, MyProjectService::class.java)).isNotNull()
+      assertThat(project.getService(MyProjectService::class.java)).isNotNull()
     }
     finally {
       Disposer.dispose(disposable)

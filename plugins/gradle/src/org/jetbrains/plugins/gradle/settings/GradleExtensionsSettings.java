@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -52,7 +51,7 @@ public class GradleExtensionsSettings {
 
   @NotNull
   public static Settings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GradleExtensionsSettings.class).myState;
+    return project.getService(GradleExtensionsSettings.class).myState;
   }
 
   public static void load(Project project) {

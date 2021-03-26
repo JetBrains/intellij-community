@@ -25,7 +25,6 @@
 package com.intellij.openapi.vcs.changes.ignore.cache;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -322,6 +321,6 @@ public class PatternCache implements Disposable {
   }
 
   public static PatternCache getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, PatternCache.class);
+    return project.getService(PatternCache.class);
   }
 }

@@ -12,17 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import static com.intellij.util.containers.ContainerUtil.exists;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
-
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
@@ -31,14 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CheckoutProvider;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VcsType;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -52,23 +40,11 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Supplier;
-import javax.swing.event.HyperlinkEvent;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.provider.HgChangeProvider;
-import org.zmlx.hg4idea.provider.HgCheckoutProvider;
-import org.zmlx.hg4idea.provider.HgCommittedChangesProvider;
-import org.zmlx.hg4idea.provider.HgDiffProvider;
-import org.zmlx.hg4idea.provider.HgHistoryProvider;
-import org.zmlx.hg4idea.provider.HgMergeProvider;
-import org.zmlx.hg4idea.provider.HgRollbackEnvironment;
+import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
@@ -80,6 +56,17 @@ import org.zmlx.hg4idea.status.HgRemoteStatusUpdater;
 import org.zmlx.hg4idea.status.ui.HgWidgetUpdater;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
+
+import javax.swing.event.HyperlinkEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Supplier;
+
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.*;
 
 public class HgVcs extends AbstractVcs {
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
@@ -354,7 +341,7 @@ public class HgVcs extends AbstractVcs {
     new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        Collection<VcsRoot> roots = myProject.getService(VcsRootDetector.class).detect();
         new HgIntegrationEnabler(HgVcs.this).enable(roots);
       }
     }.queue();

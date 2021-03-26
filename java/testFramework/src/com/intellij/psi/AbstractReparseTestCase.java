@@ -1,8 +1,8 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.psi.impl.DebugUtil;
@@ -75,7 +75,7 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
 
   protected void doReparse(final String s, final int length) {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      BlockSupport blockSupport = ServiceManager.getService(getProject(), BlockSupport.class);
+      BlockSupport blockSupport = getProject().getService(BlockSupport.class);
       blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
     }), "asd", null);
   }

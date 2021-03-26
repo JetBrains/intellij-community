@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.CommaTailType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -48,7 +47,7 @@ public final class ExpectedTypesProvider {
   private static final Logger LOG = Logger.getInstance(ExpectedTypesProvider.class);
 
   public static ExpectedTypesProvider getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExpectedTypesProvider.class);
+    return project.getService(ExpectedTypesProvider.class);
   }
 
   private static final int MAX_COUNT = 50;

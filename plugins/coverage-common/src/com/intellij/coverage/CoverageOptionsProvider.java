@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +18,7 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
   private final State myState = new State();
 
   public static CoverageOptionsProvider getInstance(Project project) {
-    return ServiceManager.getService(project, CoverageOptionsProvider.class);
+    return project.getService(CoverageOptionsProvider.class);
   }
 
   public int getOptionToReplace() {
@@ -29,7 +32,7 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
   public boolean activateViewOnRun() {
     return myState.myActivateViewOnRun;
   }
-  
+
   public void setActivateViewOnRun(boolean state) {
     myState.myActivateViewOnRun = state;
   }

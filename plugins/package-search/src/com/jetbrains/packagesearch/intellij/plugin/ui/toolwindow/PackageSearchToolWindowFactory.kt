@@ -1,6 +1,5 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbUnawareHider
@@ -60,7 +59,7 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
         // Once indices have been built once, show tool window forever
         DumbService.getInstance(project).runWhenSmart {
-            ServiceManager.getService(project, PackageSearchToolWindowAvailabilityService::class.java).initialize(toolWindow)
+            project.getService(PackageSearchToolWindowAvailabilityService::class.java).initialize(toolWindow)
         }
     }
 }

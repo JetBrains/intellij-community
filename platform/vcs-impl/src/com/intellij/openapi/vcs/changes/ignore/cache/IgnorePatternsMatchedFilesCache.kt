@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -135,7 +134,7 @@ internal class IgnorePatternsMatchedFilesCache(private val project: Project) : D
   companion object {
     @JvmStatic
     fun getInstance(project: Project): IgnorePatternsMatchedFilesCache {
-      return ServiceManager.getService(project, IgnorePatternsMatchedFilesCache::class.java)
+      return project.getService(IgnorePatternsMatchedFilesCache::class.java)
     }
   }
 }

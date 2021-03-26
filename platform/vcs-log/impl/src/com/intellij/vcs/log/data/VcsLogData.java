@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -77,7 +76,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
                     @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
-    myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
+    myUserRegistry = (VcsUserRegistryImpl)project.getService(VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
     VcsLogProgress progress = new VcsLogProgress(this);

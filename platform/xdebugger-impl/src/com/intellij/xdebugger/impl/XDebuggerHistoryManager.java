@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -31,7 +34,7 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
   private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<>();
 
   public static XDebuggerHistoryManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, XDebuggerHistoryManager.class);
+    return project.getService(XDebuggerHistoryManager.class);
   }
 
   public boolean addRecentExpression(@NotNull @NonNls String id, @Nullable XExpression expression) {

@@ -24,7 +24,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   private final Project myProject;
 
   public static MavenRunner getInstance(Project project) {
-    return ServiceManager.getService(project, MavenRunner.class);
+    return project.getService(MavenRunner.class);
   }
 
   @Nullable

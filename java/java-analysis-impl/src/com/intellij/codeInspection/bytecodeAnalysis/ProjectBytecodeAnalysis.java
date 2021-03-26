@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -62,7 +61,7 @@ public class ProjectBytecodeAnalysis {
   private final NullableNotNullManager myNullabilityManager;
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
+    return project.getService(ProjectBytecodeAnalysis.class);
   }
 
   public ProjectBytecodeAnalysis(Project project) {
@@ -532,7 +531,7 @@ public class ProjectBytecodeAnalysis {
   /**
    * Returns true if the method is pure except calling the delegate that has failing contract in the form other than null->fail.
    * Allows handling methods like
-   * <pre>{@code 
+   * <pre>{@code
    * void assertNotNull(Object obj) {
    *   assertTrue(obj != null);
    * }}</pre>

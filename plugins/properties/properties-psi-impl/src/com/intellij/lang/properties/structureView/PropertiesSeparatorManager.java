@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.IProperty;
@@ -7,7 +7,6 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.SoftFactoryMap;
@@ -28,7 +27,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
   private final Project myProject;
 
   public static PropertiesSeparatorManager getInstance(final Project project) {
-    return ServiceManager.getService(project, PropertiesSeparatorManager.class);
+    return project.getService(PropertiesSeparatorManager.class);
   }
 
   private PropertiesSeparatorManagerState myUserDefinedSeparators = new PropertiesSeparatorManagerState();

@@ -35,7 +35,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
@@ -456,7 +455,7 @@ public final class ExternalSystemUtil {
         }
 
         Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = Ref.create();
-        SyncViewManager syncViewManager = ServiceManager.getService(project, SyncViewManager.class);
+        SyncViewManager syncViewManager = project.getService(SyncViewManager.class);
         try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(resolveProjectTask.getId(), syncViewManager, false)) {
           ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
             @Override

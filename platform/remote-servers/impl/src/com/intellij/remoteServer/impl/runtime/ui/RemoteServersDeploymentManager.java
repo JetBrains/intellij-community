@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceEventListener;
@@ -7,7 +7,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
@@ -33,7 +32,7 @@ public final class RemoteServersDeploymentManager {
   private static final int POLL_DEPLOYMENTS_DELAY = 2000;
 
   public static RemoteServersDeploymentManager getInstance(Project project) {
-    return ServiceManager.getService(project, RemoteServersDeploymentManager.class);
+    return project.getService(RemoteServersDeploymentManager.class);
   }
 
   private final Project myProject;

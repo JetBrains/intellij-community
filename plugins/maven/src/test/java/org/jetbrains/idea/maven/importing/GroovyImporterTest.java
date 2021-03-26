@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -231,7 +228,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals("", compilerSettings.getState().greclipsePath);
   }
 
@@ -297,7 +294,7 @@ public class GroovyImporterTest extends MavenImportingTestCase {
                       "src/test/java");
     assertTestResources("project", "src/test/resources");
 
-    GreclipseIdeaCompilerSettings compilerSettings = ServiceManager.getService(myProject, GreclipseIdeaCompilerSettings.class);
+    GreclipseIdeaCompilerSettings compilerSettings = myProject.getService(GreclipseIdeaCompilerSettings.class);
     assertEquals(LocalFileSystem.getInstance().findFileByIoFile(batchJar).getPath(), compilerSettings.getState().greclipsePath);
   }
 

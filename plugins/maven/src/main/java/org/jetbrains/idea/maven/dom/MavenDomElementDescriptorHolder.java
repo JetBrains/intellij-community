@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -62,7 +61,7 @@ public final class MavenDomElementDescriptorHolder {
   }
 
   public static MavenDomElementDescriptorHolder getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, MavenDomElementDescriptorHolder.class);
+    return project.getService(MavenDomElementDescriptorHolder.class);
   }
 
   @Nullable

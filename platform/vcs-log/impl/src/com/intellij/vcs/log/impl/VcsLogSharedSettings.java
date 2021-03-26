@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -34,7 +33,7 @@ public final class VcsLogSharedSettings implements PersistentStateComponent<VcsL
   }
 
   public static boolean isIndexSwitchedOn(@NotNull Project project) {
-    VcsLogSharedSettings indexSwitch = ServiceManager.getService(project, VcsLogSharedSettings.class);
+    VcsLogSharedSettings indexSwitch = project.getService(VcsLogSharedSettings.class);
     return indexSwitch.isIndexSwitchedOn() || Registry.is("vcs.log.index.force");
   }
 }

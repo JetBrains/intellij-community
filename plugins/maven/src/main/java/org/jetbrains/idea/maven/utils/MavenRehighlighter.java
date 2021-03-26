@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -84,7 +83,7 @@ public final class MavenRehighlighter implements Disposable {
   public static void rehighlight(@NotNull Project project, @Nullable MavenProject mavenProject) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (!project.isDisposed()) {
-        ServiceManager.getService(project, MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
+        project.getService(MavenRehighlighter.class).queue.queue(new MyUpdate(project, mavenProject));
       }
     });
   }

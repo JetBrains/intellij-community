@@ -17,7 +17,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -67,7 +66,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, JpsOutputLoaderManager.class);
+    return project.getService(JpsOutputLoaderManager.class);
   }
 
   public JpsOutputLoaderManager(@NotNull Project project) {

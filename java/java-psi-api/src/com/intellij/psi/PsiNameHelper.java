@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +21,7 @@ import java.util.regex.Pattern;
 public abstract class PsiNameHelper {
 
   public static PsiNameHelper getInstance(Project project) {
-    return ServiceManager.getService(project, PsiNameHelper.class);
+    return project.getService(PsiNameHelper.class);
   }
 
   /**
@@ -139,7 +138,7 @@ public abstract class PsiNameHelper {
 
   /**
    * @param referenceText text of the inner class reference (without annotations), e.g. {@code A.B<C>.D<E, F.G>}
-   * @return outer class reference (e.g. {@code A.B<C>}); empty string if the original reference is unqualified  
+   * @return outer class reference (e.g. {@code A.B<C>}); empty string if the original reference is unqualified
    */
   @Contract(pure = true)
   public static @NotNull String getOuterClassReference(String referenceText) {
@@ -163,7 +162,7 @@ public abstract class PsiNameHelper {
 
   /**
    * @param referenceText text of the class reference (without annotations), e.g. {@code A.B<C>.D<E, F.G>}
-   * @return qualified class name (e.g. {@code A.B.D}).  
+   * @return qualified class name (e.g. {@code A.B.D}).
    */
   @Contract(pure = true)
   public static @NotNull String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {

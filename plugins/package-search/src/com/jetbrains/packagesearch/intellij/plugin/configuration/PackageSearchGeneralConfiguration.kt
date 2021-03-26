@@ -2,7 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.configuration
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
@@ -18,7 +17,7 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
         const val StorageFileName = "packagesearch.xml"
 
         fun getInstance(project: Project): PackageSearchGeneralConfiguration =
-            ServiceManager.getService(project, PackageSearchGeneralConfiguration::class.java)
+          project.getService(PackageSearchGeneralConfiguration::class.java)
     }
 
     override fun getState(): PackageSearchGeneralConfiguration? = this

@@ -8,7 +8,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -580,7 +579,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   public static ProjectStructureConfigurable getInstance(@NotNull final Project project) {
-    return ServiceManager.getService(project, ProjectStructureConfigurable.class);
+    return project.getService(ProjectStructureConfigurable.class);
   }
 
   @NotNull

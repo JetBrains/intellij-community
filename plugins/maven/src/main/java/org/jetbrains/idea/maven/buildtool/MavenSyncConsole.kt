@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
@@ -15,7 +15,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -163,7 +162,7 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun startWrapperResolving() {
     if (!started || finished) {
-      startImport(ServiceManager.getService(myProject, SyncViewManager::class.java))
+      startImport(myProject.getService(SyncViewManager::class.java))
     }
     startTask(mySyncId, SyncBundle.message("maven.sync.wrapper"))
   }

@@ -26,7 +26,7 @@ public final class ExecuteMavenGoalHistoryService implements PersistentStateComp
   private String myCanceledCommand;
 
   public static ExecuteMavenGoalHistoryService getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ExecuteMavenGoalHistoryService.class);
+    return project.getService(ExecuteMavenGoalHistoryService.class);
   }
 
   @Nullable

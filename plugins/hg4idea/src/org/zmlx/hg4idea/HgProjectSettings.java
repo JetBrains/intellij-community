@@ -15,7 +15,10 @@ package org.zmlx.hg4idea;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -67,7 +70,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public static HgProjectSettings getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, HgProjectSettings.class);
+    return project.getService(HgProjectSettings.class);
   }
 
   @Nullable

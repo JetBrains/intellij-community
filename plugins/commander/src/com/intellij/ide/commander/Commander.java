@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.actions.CompareFilesAction;
@@ -13,7 +13,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -192,7 +195,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
   }
 
   public static Commander getInstance(final Project project) {
-    return ServiceManager.getService(project, Commander.class);
+    return project.getService(Commander.class);
   }
 
   public CommanderHistory getCommandHistory() {

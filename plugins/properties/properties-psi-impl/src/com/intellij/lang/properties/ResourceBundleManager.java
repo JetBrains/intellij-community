@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -6,7 +6,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -152,7 +151,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
   }
 
   public static ResourceBundleManager getInstance(final Project project) {
-    return ServiceManager.getService(project, ResourceBundleManager.class);
+    return project.getService(ResourceBundleManager.class);
   }
 
   @Nullable

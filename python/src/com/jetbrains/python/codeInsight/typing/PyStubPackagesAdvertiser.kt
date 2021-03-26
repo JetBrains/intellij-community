@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ui.ListEditForm
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -276,11 +275,11 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
       val installationListener = object : PyPackageManagerUI.Listener {
         override fun started() {
-          ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
+          project.getService(PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
         }
 
         override fun finished(exceptions: MutableList<ExecutionException>?) {
-          val status = ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java)
+          val status = project.getService(PyStubPackagesInstallingStatus::class.java)
 
           val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
             .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }

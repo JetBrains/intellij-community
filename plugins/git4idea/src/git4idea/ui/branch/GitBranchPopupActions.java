@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -227,7 +226,7 @@ public class GitBranchPopupActions {
       myRepositories = immutableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
-      myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+      myGitBranchManager = project.getService(GitBranchManager.class);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
       getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY,
@@ -470,7 +469,7 @@ public class GitBranchPopupActions {
       myRepositories = repositories;
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
-      myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+      myGitBranchManager = project.getService(GitBranchManager.class);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
       setFavorite(myGitBranchManager.isFavorite(REMOTE, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }

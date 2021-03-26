@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.repo;
 
 import com.google.common.io.BaseEncoding;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -76,7 +75,7 @@ public final class HgRepositoryReader {
     mySubrepoFile = new File(myHgDir.getParentFile(), ".hgsubstate");
     myDirStateFile = new File(myHgDir, "dirstate");
     myMqInternalDir = new File(myHgDir, "patches");
-    myVcsObjectsFactory = ServiceManager.getService(vcs.getProject(), VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = vcs.getProject().getService(VcsLogObjectsFactory.class);
   }
 
   /**

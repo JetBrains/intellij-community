@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.CommonBundle;
@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -124,7 +123,7 @@ public class MavenRepositoriesHolder {
   }
 
   public static MavenRepositoriesHolder getInstance(@NotNull Project p) {
-    return ServiceManager.getService(p, MavenRepositoriesHolder.class);
+    return p.getService(MavenRepositoriesHolder.class);
   }
 
   public void update(Set<MavenRemoteRepository> remoteRepositories) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,7 +6,6 @@ import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +44,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
 
   @NotNull
   public static GitRepositoryManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRepositoryManager.class);
+    return project.getService(GitRepositoryManager.class);
   }
 
   @Override

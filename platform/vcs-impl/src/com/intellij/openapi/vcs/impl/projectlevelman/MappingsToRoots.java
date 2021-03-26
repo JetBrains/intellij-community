@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -29,7 +28,7 @@ public final class MappingsToRoots {
       result.sort(FilePathComparator.getInstance());
 
       ApplicationManager.getApplication().runReadAction(() -> {
-        final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
+        final FileIndexFacade facade = project.getService(FileIndexFacade.class);
         int i = 1;
         while (i < result.size()) {
           final VirtualFile previous = result.get(i - 1);
@@ -63,7 +62,7 @@ public final class MappingsToRoots {
     });
 
     List<VirtualFile> modulesToAdd = ApplicationManager.getApplication().runReadAction((Computable<List<VirtualFile>>)() -> {
-      final FileIndexFacade facade = ServiceManager.getService(project, FileIndexFacade.class);
+      final FileIndexFacade facade = project.getService(FileIndexFacade.class);
       return ContainerUtil.filter(modulesUnderVcs,
                                   module -> ContainerUtil.or(roots, root -> facade.isValidAncestor(root, module)));
     });

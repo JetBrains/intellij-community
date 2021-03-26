@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -710,7 +709,7 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     return false;
-    
+
   }
 
   /**
@@ -1070,7 +1069,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
     }
 
-    PsiResolveHelper instance = ServiceManager.getService(element.getProject(), PsiResolveHelper.class);
+    PsiResolveHelper instance = element.getProject().getService(PsiResolveHelper.class);
     return instance != null ? instance.getEffectiveLanguageLevel(getVirtualFile(file)) : LanguageLevel.HIGHEST;
   }
 

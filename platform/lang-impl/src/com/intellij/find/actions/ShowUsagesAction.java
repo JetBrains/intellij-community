@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -1114,7 +1113,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   @NotNull
   private static ShowUsagesActionState getState(@NotNull Project project) {
-    return ServiceManager.getService(project, ShowUsagesActionState.class);
+    return project.getService(ShowUsagesActionState.class);
   }
 
   private static void runWhenHidden(@NotNull Component c, @NotNull Runnable r) {

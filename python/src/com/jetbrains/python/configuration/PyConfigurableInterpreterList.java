@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -28,7 +27,7 @@ public class PyConfigurableInterpreterList {
 
   public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
     final Project effectiveProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
-    final PyConfigurableInterpreterList instance = ServiceManager.getService(effectiveProject, PyConfigurableInterpreterList.class);
+    final PyConfigurableInterpreterList instance = effectiveProject.getService(PyConfigurableInterpreterList.class);
     if (effectiveProject != project) {
       instance.disposeModel();
     }

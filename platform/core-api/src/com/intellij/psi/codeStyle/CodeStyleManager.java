@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -37,7 +36,7 @@ public abstract class CodeStyleManager  {
    * @return the code style manager instance.
    */
   public static CodeStyleManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, CodeStyleManager.class);
+    return project.getService(CodeStyleManager.class);
   }
 
   /**

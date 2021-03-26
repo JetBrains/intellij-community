@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -9,9 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaCodeFragmentFactory {
   public static JavaCodeFragmentFactory getInstance(Project project) {
-    return ServiceManager.getService(project, JavaCodeFragmentFactory.class);
+    return project.getService(JavaCodeFragmentFactory.class);
   }
-  
+
   /**
    * Creates a Java expression code fragment from the text of the expression.
    *

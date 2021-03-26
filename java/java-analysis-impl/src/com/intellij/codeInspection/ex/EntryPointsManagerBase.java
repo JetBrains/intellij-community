@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,7 +10,6 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -87,7 +86,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   public static EntryPointsManagerBase getInstance(Project project) {
-    return (EntryPointsManagerBase)ServiceManager.getService(project, EntryPointsManager.class);
+    return (EntryPointsManagerBase)project.getService(EntryPointsManager.class);
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -54,7 +53,7 @@ public final class ConcurrencyAnnotationsManager {
   }
 
   public static ConcurrencyAnnotationsManager getInstance(Project project) {
-    return ServiceManager.getService(project, ConcurrencyAnnotationsManager.class);
+    return project.getService(ConcurrencyAnnotationsManager.class);
   }
 
   public List<String> getImmutableAnnotations() {

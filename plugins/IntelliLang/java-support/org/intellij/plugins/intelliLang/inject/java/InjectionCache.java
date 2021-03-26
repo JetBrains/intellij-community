@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -80,7 +79,7 @@ public final class InjectionCache {
   }
 
   public static InjectionCache getInstance(Project project) {
-    return ServiceManager.getService(project, InjectionCache.class);
+    return project.getService(InjectionCache.class);
   }
 
   public Set<String> getAnnoIndex() {
