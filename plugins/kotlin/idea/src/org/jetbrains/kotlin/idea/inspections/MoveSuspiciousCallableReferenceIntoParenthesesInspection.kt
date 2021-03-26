@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,7 +12,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
-import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
+import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
@@ -39,35 +39,29 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class MoveSuspiciousCallableReferenceIntoParenthesesInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
         lambdaExpressionVisitor(fun(lambdaExpression) {
-            val callableReference = lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression
-            if (callableReference != null) {
-                val context = lambdaExpression.analyze()
-                val parentResolvedCall = lambdaExpression.getParentResolvedCall(context)
-                if (parentResolvedCall != null) {
-                    val originalParameterDescriptor =
-                        parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)?.original
-                    if (originalParameterDescriptor != null) {
-                        val expectedType = originalParameterDescriptor.type
-                        if (expectedType.isBuiltinFunctionalType) {
-                            val returnType = expectedType.getReturnTypeFromFunctionType()
-                            if (returnType.isBuiltinFunctionalTypeOrSubtype) return
-                            if (parentResolvedCall.call.callElement.getParentCall(context) != null) return
-                        }
-                    }
+            val callableReference = lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression ?: return
+            val context = lambdaExpression.analyze()
+            val parentResolvedCall = lambdaExpression.getParentResolvedCall(context)
+            if (parentResolvedCall != null) {
+                val expectedType = parentResolvedCall.getParameterForArgument(lambdaExpression.parent as? ValueArgument)?.type
+                if (expectedType?.isBuiltinFunctionalType == true) {
+                    val returnType = expectedType.getReturnTypeFromFunctionType()
+                    if (returnType.isFunctionOrSuspendFunctionType) return
+                    if (parentResolvedCall.call.callElement.getParentCall(context) != null) return
                 }
-
-                val quickFix = if (canMove(lambdaExpression, callableReference, context))
-                    IntentionWrapper(MoveIntoParenthesesIntention(), lambdaExpression.containingFile)
-                else
-                    null
-
-                holder.registerProblem(
-                    lambdaExpression,
-                    KotlinBundle.message("suspicious.callable.reference.as.the.only.lambda.element"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    quickFix
-                )
             }
+
+            val quickFix = if (canMove(lambdaExpression, callableReference, context))
+                IntentionWrapper(MoveIntoParenthesesIntention(), lambdaExpression.containingFile)
+            else
+                null
+
+            holder.registerProblem(
+                lambdaExpression,
+                KotlinBundle.message("suspicious.callable.reference.as.the.only.lambda.element"),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                quickFix
+            )
         })
 
     private fun canMove(

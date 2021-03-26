@@ -6609,6 +6609,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/it.kt");
         }
 
+        @TestMetadata("lambdaInsideLambda.kt")
+        public void testLambdaInsideLambda() throws Exception {
+            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/lambdaInsideLambda.kt");
+        }
+
         @TestMetadata("lambdaInvoke.kt")
         public void testLambdaInvoke() throws Exception {
             runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/lambdaInvoke.kt");
