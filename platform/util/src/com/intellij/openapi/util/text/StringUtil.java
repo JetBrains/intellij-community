@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
@@ -3156,5 +3157,15 @@ public class StringUtil extends StringUtilRt {
 
   private static boolean isWhitespaceOrTab(char c) {
     return c == ' ' || c == '\t';
+  }
+
+  @Nls
+  @NotNull
+  public static String naturalJoin(List<String> strings) {
+    if (strings.isEmpty()) return "";
+    if (strings.size() == 1) return strings.get(0);
+    String lastWord = strings.get(strings.size() - 1);
+    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
+    return UtilBundle.message("natural.join", leadingWords, lastWord);
   }
 }
