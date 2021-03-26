@@ -25,6 +25,7 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.PyPackageVersionComparator.STR_COMPARATOR
 import com.jetbrains.python.sdk.PySdkUtil
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
@@ -54,22 +55,28 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
     currentJob?.cancel()
     selectedPackage = pkg
     currentJob = GlobalScope.launch(Dispatchers.Default) {
-      val response = fetchPackageInfo(selectedPackage!!.name)
-      if (response != null) {
-        val packageDetails = gson.fromJson(response, PyPIPackageUtil.PackageDetails::class.java)
-        selectedInfo = with(packageDetails.info) {
-          val renderedDescription  = when {
-            description.isNotEmpty() -> convertToHTML(descriptionContentType, description)
-            summary.isNotEmpty() -> wrapHtml(summary)
-            else -> PyPackagingToolWindowPanel.NO_DESCRIPTION
-          }
-          PackageInfo(projectUrls["Documentation"],
-                      renderedDescription,
-                      packageDetails.releases.sortedWith(STR_COMPARATOR.reversed()))
-        }
+      if (PythonSdkUtil.isRemote(currentSdk)) {
+        selectedInfo = REMOTE_INTERPRETER_INFO
       }
       else {
-        selectedInfo = EMPTY_INFO
+        val response = fetchPackageInfo(selectedPackage!!.name)
+        if (response != null) {
+          val packageDetails = gson.fromJson(response, PyPIPackageUtil.PackageDetails::class.java)
+
+          selectedInfo = with(packageDetails.info) {
+            val renderedDescription  = when {
+              description.isNotEmpty() -> convertToHTML(descriptionContentType, description)
+              summary.isNotEmpty() -> wrapHtml(summary)
+              else -> PyPackagingToolWindowPanel.NO_DESCRIPTION
+            }
+            PackageInfo(projectUrls["Documentation"],
+                        renderedDescription,
+                        packageDetails.releases.sortedWith(STR_COMPARATOR.reversed()))
+          }
+        }
+        else {
+          selectedInfo = EMPTY_INFO
+        }
       }
 
       if (isActive) {
@@ -247,5 +254,6 @@ class PyPackagingToolWindowService(val project: Project) : Disposable {
 
   companion object {
     private val EMPTY_INFO = PackageInfo(null, PyPackagingToolWindowPanel.REQUEST_FAILED_TEXT, emptyList())
+    private val REMOTE_INTERPRETER_INFO = PackageInfo(null, PyPackagingToolWindowPanel.REMOTE_INTERPRETER_TEXT, emptyList())
   }
 }
