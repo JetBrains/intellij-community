@@ -2220,6 +2220,16 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/tests/testData/basic/common/primitiveCompletion/insideFunctionWithParameters.kt");
             }
 
+            @TestMetadata("localClassConstructor.kt")
+            public void testLocalClassConstructor() throws Exception {
+                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/localClassConstructor.kt");
+            }
+
+            @TestMetadata("localClassMember.kt")
+            public void testLocalClassMember() throws Exception {
+                runTest("idea/idea-completion/testData/basic/common/primitiveCompletion/localClassMember.kt");
+            }
+
             @TestMetadata("localVariablesAndFunctions.kt")
             public void testLocalVariablesAndFunctions() throws Exception {
                 runTest("../completion/tests/testData/basic/common/primitiveCompletion/localVariablesAndFunctions.kt");
