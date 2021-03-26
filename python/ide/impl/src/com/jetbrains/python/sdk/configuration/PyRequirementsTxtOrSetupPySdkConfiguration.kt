@@ -57,16 +57,13 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = askForEnvData(module, existingSdks, source) ?: return null
     val baseSdk = installSdkIfNeeded(chosenBaseSdk!!, module, existingSdks) ?: return null
     val systemIndependentLocation = FileUtil.toSystemIndependentName(location)
+    val projectPath = module.basePath ?: module.project.basePath
 
     Disposer.newDisposable("Creating virtual environment").use {
       PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
 
       return createVirtualEnv(module, baseSdk, location, requirementsTxtOrSetupPy, existingSdks)?.also {
-        PySdkSettings.instance.onVirtualEnvCreated(
-          baseSdk,
-          systemIndependentLocation,
-          module.basePath ?: module.project.basePath
-        )
+        PySdkSettings.instance.onVirtualEnvCreated(baseSdk, systemIndependentLocation, projectPath)
       }
     }
   }
@@ -117,6 +114,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       return null
     }
 
+    if (module.isDisposed) return null
     val basePath = module.basePath
 
     LOGGER.debug("Setting up associated virtual environment: $path, $basePath")
