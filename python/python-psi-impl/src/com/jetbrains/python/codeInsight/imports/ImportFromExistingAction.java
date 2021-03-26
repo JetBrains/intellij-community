@@ -80,7 +80,7 @@ public class ImportFromExistingAction implements QuestionAction {
       return false;
     }
     // act
-    if (mySources.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (mySources.size() == 1) {
       doWriteAction(mySources.get(0));
     }
     else {
