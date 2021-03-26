@@ -32,16 +32,17 @@ class HtmlRtfPane {
 
     fun replaceText(newText: String): JTextPane {
         resultPane.document.remove(0, resultPane.document.length)
-        clearMouseListeners()
+        clearLinks()
         process(newText)
         return resultPane
     }
 
-    private fun clearMouseListeners() {
+    private fun clearLinks() {
         mouseListenersList.forEach { resultPane.removeMouseListener(it) }
         mouseListenersList.clear()
         mouseMotionListenersList.forEach { resultPane.removeMouseMotionListener(it) }
         mouseMotionListenersList.clear()
+        linkMap.clear()
     }
 
     private fun process(htmlContent: String): DefaultStyledDocument {
