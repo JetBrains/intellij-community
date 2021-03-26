@@ -3,7 +3,6 @@ package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -24,7 +23,7 @@ public final class OverrideFileTypeManager extends PersistentFileSetManager {
   }
 
   public static OverrideFileTypeManager getInstance() {
-    return ServiceManager.getService(OverrideFileTypeManager.class);
+    return ApplicationManager.getApplication().getService(OverrideFileTypeManager.class);
   }
 
   @TestOnly

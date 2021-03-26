@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -18,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 final class TerminalUiSettingsManager implements Disposable {
@@ -55,7 +54,7 @@ final class TerminalUiSettingsManager implements Disposable {
   }
 
   static @NotNull TerminalUiSettingsManager getInstance() {
-    return ServiceManager.getService(TerminalUiSettingsManager.class);
+    return ApplicationManager.getApplication().getService(TerminalUiSettingsManager.class);
   }
 
   void addListener(@NotNull JBTerminalPanel terminalPanel) {

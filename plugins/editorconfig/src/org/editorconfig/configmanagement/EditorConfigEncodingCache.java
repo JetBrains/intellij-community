@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -30,7 +34,7 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   private final Map<String, CharsetData> myCharsetMap = new ConcurrentHashMap<>();
 
   public static EditorConfigEncodingCache getInstance() {
-    return ServiceManager.getService(EditorConfigEncodingCache.class);
+    return ApplicationManager.getApplication().getService(EditorConfigEncodingCache.class);
   }
 
   @Override

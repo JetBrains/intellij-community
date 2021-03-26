@@ -2,8 +2,12 @@
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -178,7 +182,7 @@ public final class TerminalCommandHistoryManager implements PersistentStateCompo
     if (PRUNE_SCHEDULED.compareAndSet(false, true)) {
       JobScheduler.getScheduler().schedule(() -> pruneOutdated(), 4, TimeUnit.MINUTES);
     }
-    return ServiceManager.getService(TerminalCommandHistoryManager.class);
+    return ApplicationManager.getApplication().getService(TerminalCommandHistoryManager.class);
   }
 
   private static void pruneOutdated() {

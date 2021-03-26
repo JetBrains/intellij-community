@@ -6,7 +6,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService
@@ -17,7 +16,6 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -27,7 +25,7 @@ import kotlin.math.round
 
 
 internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
-  private val mySessionId = ServiceManager.getService(SearchEverywhereSessionService::class.java).incAndGet()
+  private val mySessionId = ApplicationManager.getApplication().getService(SearchEverywhereSessionService::class.java).incAndGet()
   private val myIsReporting: Boolean
 
   init {
@@ -77,9 +75,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     logData.addData(TOTAL_SYMBOLS_AMOUNT_DATA_KEY, symbolsInQuery)
     logData.addData(SE_TAB_ID_KEY, tabId)
 
-    val globalSummary = ServiceManager.getService(ActionsGlobalSummaryManager::class.java)
+    val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
     val globalTotalStats = globalSummary.totalSummary
-    val localSummary = ServiceManager.getService(ActionsLocalSummary::class.java)
+    val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
     val localActionsStats = localSummary.getActionsStats()
     val localTotalStats = localSummary.getTotalStats()
     logData.addData(LOCAL_MAX_USAGE_COUNT_KEY, localTotalStats.maxUsageCount)
