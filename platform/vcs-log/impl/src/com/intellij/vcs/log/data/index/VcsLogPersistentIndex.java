@@ -319,7 +319,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       Disposer.register(parentDisposable, this);
 
       try {
-        StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
+        StorageId storageId = indexStorageId(projectName, logId);
         StorageLockContext storageLockContext = new StorageLockContext(true);
 
         Path commitsStorage = storageId.getStorageFile(COMMITS);
@@ -373,14 +373,15 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     }
 
     private static void cleanup(@NotNull String projectName, @NotNull String logId) {
-      StorageId storageId = new StorageId(projectName, INDEX, logId, getVersion());
+      StorageId storageId = indexStorageId(projectName, logId);
       if (!storageId.cleanupAllStorageFiles()) {
         LOG.error("Could not clean up storage files in " + storageId.getSubdir());
       }
     }
 
-    private static int getVersion() {
-      return VcsLogStorageImpl.VERSION + VERSION;
+    @NotNull
+    private static StorageId indexStorageId(@NotNull String projectName, @NotNull String logId) {
+      return new StorageId(projectName, INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
     }
 
     public void unmarkFresh() {
