@@ -18,7 +18,6 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PsiElementMemberChooserObject extends MemberChooserObjectBase {
-  private final PsiElement myPsiElement;
-  private final SmartPsiElementPointer<?> myPsiElementPointer;
+  private final @NotNull PsiElement myPsiElement;
+  private final @NotNull SmartPsiElementPointer<?> myPsiElementPointer;
 
   public PsiElementMemberChooserObject(@NotNull final PsiElement psiElement, final @NlsContexts.Label String text) {
     this(psiElement, text, null);
@@ -58,11 +57,10 @@ public class PsiElementMemberChooserObject extends MemberChooserObjectBase {
 
     final PsiElementMemberChooserObject that = (PsiElementMemberChooserObject)o;
 
-    PsiManager manager = PsiManager.getInstance(myPsiElementPointer.getProject());
-    return manager.areElementsEquivalent(getPsiElement(), that.getPsiElement());
+    return myPsiElementPointer.equals(that.myPsiElementPointer);
   }
 
   public int hashCode() {
-    return myPsiElement.hashCode();
+    return myPsiElementPointer.hashCode();
   }
 }
