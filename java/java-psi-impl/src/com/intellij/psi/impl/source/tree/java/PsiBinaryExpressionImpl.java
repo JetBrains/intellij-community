@@ -172,7 +172,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
       if (inside) {
         int role = getChildRole(node);
         if (role == ChildRole.OPERATION_SIGN || role == ChildRole.LOPERAND) {
-          throw new IncorrectOperationException("Unable to remove child with role " + role + "(" + node.getElementType() + ")");
+          LOG.error("Unable to remove child with role " + role + "(" + node.getElementType() + ")");
         }
       }
       if (node.getPsi() == last) {
