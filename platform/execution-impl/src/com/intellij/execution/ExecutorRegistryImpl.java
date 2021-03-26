@@ -394,11 +394,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         e.getPresentation().setEnabled(false);
         return;
       }
-      e.getPresentation().setEnabledAndVisible(isEnabled(project));
-    }
-
-    public boolean isEnabled(@NotNull Project project) {
-      return myExecutorGroup.isApplicable(project);
+      e.getPresentation().setEnabledAndVisible(myExecutorGroup.isApplicable(project));
     }
   }
 
