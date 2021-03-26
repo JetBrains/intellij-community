@@ -104,6 +104,14 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     }
   }
 
+  private static class MyWarningItem extends MyFontItem {
+    final static MyWarningItem INSTANCE = new MyWarningItem();
+
+    private MyWarningItem() {
+      super("<Custom font missing>", false);
+    }
+  }
+
   private static class MySeparatorItem extends MyFontItem {
     private boolean isUpdating = true;
 
@@ -184,7 +192,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
     @Override
     public @Nullable MyFontItem getSelectedItem() {
-      return mySelectedItem;
+      return mySelectedItem == null && myNoFontItem == null ? MyWarningItem.INSTANCE : mySelectedItem;
     }
 
     @Override
@@ -263,6 +271,10 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     protected void customizeCellRenderer(@NotNull JList<? extends MyFontItem> list,
                                          MyFontItem value, int index, boolean selected, boolean hasFocus) {
       if (value != null) {
+        if (value instanceof MyWarningItem) {
+          append(value.getFamilyName(), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return;
+        }
         SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         if (value.myFont != null) {
           if (value.myFontCanDisplayName) {
