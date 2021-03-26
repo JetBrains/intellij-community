@@ -11,7 +11,6 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -245,15 +244,27 @@ object UpdateChecker {
   fun findPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginUpdates =
     checkForPluginUpdates(buildNumber, indicator).first
 
+  @ApiStatus.Internal
+  @JvmStatic
+  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
+    if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
+      val updateable = collectUpdateablePlugins()
+      if (updateable.isNotEmpty()) {
+        findUpdatesInJetBrainsRepository(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
+      }
+    }
+  }
+
   private fun checkForPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginResults {
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
-      val brokenPlugins = getBrokenPlugins()
+      val brokenPlugins = MarketplaceRequests.Instance.getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
         PluginManagerCore.updateBrokenPlugins(brokenPlugins)
       }
     }
 
-    val updateable = collectUpdateablePlugins().ifEmpty {
+    val updateable = collectUpdateablePlugins()
+    if (updateable.isEmpty()) {
       return PluginResults(PluginUpdates(emptyList(), emptyList(), emptyList()), emptyList(), emptyMap())
     }
 
@@ -265,14 +276,13 @@ object UpdateChecker {
     for (host in RepositoryHelper.getPluginHosts()) {
       try {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
-          validateCompatibleUpdatesForCurrentPlugins(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator)
+          findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator)
         }
         else if (host != "__BUILTIN_PLUGINS_URL__") {
-          val list = RepositoryHelper.loadPlugins(host, buildNumber, indicator)
-          for (descriptor in list) {
+          RepositoryHelper.loadPlugins(host, buildNumber, indicator).forEach { descriptor ->
             val id = descriptor.pluginId
             if (updateable.remove(id) != null) {
-              buildDownloaderAndPrepareToInstall(state, descriptor, buildNumber, toUpdate, toUpdateDisabled, indicator, host)
+              prepareDownloader(state, descriptor, buildNumber, toUpdate, toUpdateDisabled, indicator, host)
             }
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
@@ -289,110 +299,33 @@ object UpdateChecker {
     }
 
     val incompatible = if (buildNumber == null) emptyList() else {
-      // collect plugins that were not updated and would be incompatible with the new version
-      // `updateable` could contain bundled plugins with allow-bundled-update - those always have compatible version in IDE
+      // collecting plugins that aren't going to be updated and are incompatible with the new build
+      // (the map may contain updateable bundled plugins - those are expected to have a compatible version in IDE)
       updateable.values.asSequence()
         .filterNotNull()
-        .filter { it.isEnabled && !it.isBundled && it.pluginId !in toUpdate.keys && !PluginManagerCore.isCompatible(it, buildNumber) }
+        .filter { it.isEnabled && !it.isBundled && !PluginManagerCore.isCompatible(it, buildNumber) }
         .toSet()
     }
 
     return PluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible), customRepoPlugins.values, errors)
   }
 
-  private fun getBrokenPlugins(): Map<PluginId, Set<String>> {
-    val currentBuild = ApplicationInfoImpl.getInstance().build
-    val brokenPluginsMap = HashMap<PluginId, MutableSet<String>>()
-    for (item in MarketplaceRequests.Instance.getBrokenPlugins()) {
-      try {
-        val parsedOriginalUntil = item.originalUntil?.trim()?.takeIf { it.isNotEmpty() } ?: continue
-        val parsedOriginalSince = item.originalSince?.trim()?.takeIf { it.isNotEmpty() } ?: continue
-        val originalUntil = BuildNumber.fromString(parsedOriginalUntil, item.id, null) ?: currentBuild
-        val originalSince = BuildNumber.fromString(parsedOriginalSince, item.id, null) ?: currentBuild
-        val until = BuildNumber.fromString(item.until) ?: currentBuild
-        val since = BuildNumber.fromString(item.since) ?: currentBuild
-        if (currentBuild !in originalSince..originalUntil || currentBuild in since..until) continue
-        brokenPluginsMap.computeIfAbsent(PluginId.getId(item.id)) { HashSet() }.add(item.version)
-      }
-      catch (e: Exception) {
-        LOG.error("cannot parse $item", e)
-        continue
-      }
-    }
-    return brokenPluginsMap
-  }
-
-  @JvmStatic
-  fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
-    val updateable = collectUpdateablePlugins()
-    if (updateable.isEmpty()) return
-    validateCompatibleUpdatesForCurrentPlugins(updateable, mutableMapOf(), mutableMapOf(), null, state, null)
-  }
-
-  /**
-   * Use Plugin Repository API for checking and loading compatible updates for updateable plugins.
-   * If current plugin version is out of date, schedule downloading of a newer version.
-   */
-  private fun validateCompatibleUpdatesForCurrentPlugins(
-    updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
-    toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
-    buildNumber: BuildNumber?,
-    state: InstalledPluginsState,
-    indicator: ProgressIndicator?
-  ) {
-    val requests = MarketplaceRequests.Instance
-    val marketplacePluginIds = requests.getMarketplacePlugins(indicator).map { it.idString }
-    val idsToUpdate = updateable.keys.filter { it.idString in marketplacePluginIds }.toSet()
-    val updates = requests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
-    for ((id, descriptor) in updateable) {
-      val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
-      val isOutdated = descriptor == null ||
-                       PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0
-      if (isOutdated) {
-        val newDescriptor = try {
-          requests.loadPluginDescriptor(id.idString, lastUpdate, indicator)
-        }
-        catch (e: HttpRequests.HttpStatusException) {
-          if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue
-          else throw e
-        }
-        buildDownloaderAndPrepareToInstall(state, newDescriptor, buildNumber, toUpdate, toUpdateDisabled, indicator, null)
-      }
-    }
-    toUpdate.keys.forEach { updateable.remove(it) }
-  }
-
-  private fun buildDownloaderAndPrepareToInstall(
-    state: InstalledPluginsState,
-    descriptor: IdeaPluginDescriptor,
-    buildNumber: BuildNumber?,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
-    toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
-    indicator: ProgressIndicator?,
-    host: String?
-  ) {
-    val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
-    state.onDescriptorDownload(descriptor)
-    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, buildNumber, indicator)
-  }
-
-  /**
-   * Returns a list of plugins that are currently installed or were installed in the previous installation from which
-   * we're importing the settings. Null values are for once-installed plugins.
-   */
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor?> {
     val updateable = HashMap<PluginId, IdeaPluginDescriptor?>()
-    PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate() }.associateByTo(updateable) { it.pluginId }
 
+    // installed plugins that could be updated (either downloaded or updateable bundled)
+    PluginManagerCore.getPlugins()
+      .filter { !it.isBundled || it.allowBundledUpdate() }
+      .associateByTo(updateable) { it.pluginId }
+
+    // plugins installed in an instance from which the settings were imported
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
       try {
-        Files.readAllLines(onceInstalled)
-          .asSequence()
-          .map { line -> PluginId.getId(line.trim { it <= ' ' }) }
-          .filter { it !in updateable }
-          .forEach { updateable[it] = null }
+        Files.readAllLines(onceInstalled).forEach { line ->
+          val id = PluginId.getId(line.trim { it <= ' ' })
+          updateable.putIfAbsent(id, null)
+        }
       }
       catch (e: IOException) {
         LOG.error(onceInstalled.toString(), e)
@@ -402,17 +335,52 @@ object UpdateChecker {
       onceInstalled.toFile().deleteOnExit()
     }
 
+    // excluding plugins that take care about their own updates
     if (excludedFromUpdateCheckPlugins.isNotEmpty() && !ApplicationManager.getApplication().isInternal) {
       excludedFromUpdateCheckPlugins.forEach {
-        val excluded = PluginId.getId(it)
-        val plugin = updateable[excluded]
+        val id = PluginId.getId(it)
+        val plugin = updateable[id]
         if (plugin != null && plugin.isBundled) {
-          updateable.remove(excluded)
+          updateable.remove(id)
         }
       }
     }
 
     return updateable
+  }
+
+  private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
+                                               toUpdate: MutableMap<PluginId, PluginDownloader>,
+                                               toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
+                                               buildNumber: BuildNumber?,
+                                               state: InstalledPluginsState,
+                                               indicator: ProgressIndicator?) {
+    val requests = MarketplaceRequests.Instance
+    val marketplacePluginIds = requests.getMarketplacePlugins(indicator).map { it.idString }
+    val idsToUpdate = updateable.keys.filter { it.idString in marketplacePluginIds }.toSet()
+    val updates = requests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    updateable.forEach { (id, descriptor) ->
+      val lastUpdate = updates.find { it.pluginId == id.idString }
+      if (lastUpdate != null &&
+          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
+        runCatching { requests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
+          .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
+          .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
+      }
+    }
+    (toUpdate.keys.asSequence() + toUpdateDisabled.keys.asSequence()).forEach { updateable.remove(it) }
+  }
+
+  private fun prepareDownloader(state: InstalledPluginsState,
+                                descriptor: IdeaPluginDescriptor,
+                                buildNumber: BuildNumber?,
+                                toUpdate: MutableMap<PluginId, PluginDownloader>,
+                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
+                                indicator: ProgressIndicator?,
+                                host: String?) {
+    val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
+    state.onDescriptorDownload(descriptor)
+    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, buildNumber, indicator)
   }
 
   @JvmStatic
@@ -442,67 +410,36 @@ object UpdateChecker {
     return ExternalResults(result, errors)
   }
 
-  @JvmStatic
-  fun mergePluginsFromRepositories(
-    marketplaceUpdates: List<IdeaPluginDescriptor>,
-    customPlugins: List<IdeaPluginDescriptor>,
-    addNotExist: Boolean
-  ): List<IdeaPluginDescriptor> {
-    val compatiblePluginMap = marketplaceUpdates.associateBy { it.pluginId }.toMutableMap()
-    for (customPlugin in customPlugins) {
-      val pluginId = customPlugin.pluginId
-      val plugin = compatiblePluginMap[pluginId]
-      if (plugin == null) {
-        if (addNotExist) {
-          compatiblePluginMap[pluginId] = customPlugin
-        }
-      }
-      else if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.version, plugin) > 0) {
-        compatiblePluginMap[pluginId] = customPlugin
-      }
-    }
-    return compatiblePluginMap.values.toList()
-  }
-
+  @ApiStatus.Internal
   @Throws(IOException::class)
   @JvmStatic
-  fun checkAndPrepareToInstall(
-    downloader: PluginDownloader,
-    state: InstalledPluginsState,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
-    buildNumber: BuildNumber?,
-    indicator: ProgressIndicator?
-  ) {
-    @Suppress("NAME_SHADOWING")
-    var downloader = downloader
-    val pluginId = downloader.id
-
-    val pluginVersion = downloader.pluginVersion
+  fun checkAndPrepareToInstall(originalDownloader: PluginDownloader,
+                               state: InstalledPluginsState,
+                               toUpdate: MutableMap<PluginId, PluginDownloader>,
+                               buildNumber: BuildNumber?,
+                               indicator: ProgressIndicator?) {
+    val pluginId = originalDownloader.id
+    val pluginVersion = originalDownloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
     if (installedPlugin == null || pluginVersion == null ||
         PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
-      var descriptor: IdeaPluginDescriptor?
-
-      if (PluginManagerCore.isDisabled(pluginId)) {
-        descriptor = downloader.descriptor
+      val oldDownloader = ourUpdatedPlugins[pluginId]
+      val downloader = if (PluginManagerCore.isDisabled(pluginId)) {
+        originalDownloader
+      }
+      else if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+        val descriptor = originalDownloader.descriptor
+        if (descriptor is PluginNode && descriptor.isIncomplete) {
+          originalDownloader.prepareToInstall(indicator ?: EmptyProgressIndicator())
+          ourUpdatedPlugins[pluginId] = originalDownloader
+        }
+        originalDownloader
       }
       else {
-        val oldDownloader = ourUpdatedPlugins[pluginId]
-        if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
-          descriptor = downloader.descriptor
-          if (descriptor is PluginNode && descriptor.isIncomplete) {
-            if (downloader.prepareToInstall(indicator ?: EmptyProgressIndicator())) {
-              descriptor = downloader.descriptor
-            }
-            ourUpdatedPlugins[pluginId] = downloader
-          }
-        }
-        else {
-          downloader = oldDownloader
-          descriptor = oldDownloader.descriptor
-        }
+        oldDownloader
       }
 
+      val descriptor = downloader.descriptor
       if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate[pluginId] = downloader
       }

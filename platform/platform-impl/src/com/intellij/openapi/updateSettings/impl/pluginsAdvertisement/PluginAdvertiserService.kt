@@ -2,10 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.NotificationAction
@@ -17,7 +14,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
 
@@ -79,7 +75,7 @@ open class PluginAdvertiserService {
     val plugins = mutableSetOf<PluginDownloader>()
 
     if (ids.isNotEmpty()) {
-      UpdateChecker.mergePluginsFromRepositories(
+      RepositoryHelper.mergePluginsFromRepositories(
         marketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys),
         customPlugins,
         true,

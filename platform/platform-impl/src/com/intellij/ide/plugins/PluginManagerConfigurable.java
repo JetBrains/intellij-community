@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -669,7 +668,7 @@ public final class PluginManagerConfigurable
                 }
 
                 List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
-                List<IdeaPluginDescriptor> plugins = UpdateChecker.mergePluginsFromRepositories(
+                Collection<IdeaPluginDescriptor> plugins = RepositoryHelper.mergePluginsFromRepositories(
                   pluginsFromMarketplace,
                   ContainerUtil.flatten(customRepositoriesMap.values()), false
                 ); // compare plugin versions between marketplace & custom repositories

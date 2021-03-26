@@ -206,9 +206,9 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  fun getBrokenPlugins(): List<MarketplaceBrokenPlugin> {
-    try {
-      return readOrUpdateFile(
+  fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>> {
+    val brokenPlugins = try {
+      readOrUpdateFile(
         getBrokenPluginsFile(),
         "${PLUGIN_MANAGER_URL}/files/brokenPlugins.json",
         null,
@@ -217,8 +217,29 @@ class MarketplaceRequests : PluginInfoProvider {
     }
     catch (e: Exception) {
       logWarnOrPrintIfDebug("Can not get broken plugins file from Marketplace", e)
-      return emptyList()
+      return emptyMap()
     }
+
+    val brokenPluginsMap = HashMap<PluginId, MutableSet<String>>()
+    brokenPlugins.forEach { record ->
+      try {
+        val parsedOriginalUntil = record.originalUntil?.trim()
+        val parsedOriginalSince = record.originalSince?.trim()
+        if (!parsedOriginalUntil.isNullOrEmpty() && !parsedOriginalSince.isNullOrEmpty()) {
+          val originalUntil = BuildNumber.fromString(parsedOriginalUntil, record.id, null) ?: currentBuild
+          val originalSince = BuildNumber.fromString(parsedOriginalSince, record.id, null) ?: currentBuild
+          val until = BuildNumber.fromString(record.until) ?: currentBuild
+          val since = BuildNumber.fromString(record.since) ?: currentBuild
+          if (currentBuild in originalSince..originalUntil && currentBuild !in since..until) {
+            brokenPluginsMap.computeIfAbsent(PluginId.getId(record.id)) { HashSet() }.add(record.version)
+          }
+        }
+      }
+      catch (e: Exception) {
+        LOG.error("cannot parse ${record}", e)
+      }
+    }
+    return brokenPluginsMap
   }
 
   fun getAllPluginsTags(): List<String> {

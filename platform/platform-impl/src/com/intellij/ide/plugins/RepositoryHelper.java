@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -26,10 +27,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
 import static java.util.Collections.singletonMap;
@@ -197,4 +195,25 @@ public final class RepositoryHelper {
     return corePluginImpl != null && corePluginImpl.getModules().contains(PluginId.getId(ULTIMATE_MODULE));
   }
 
+  @ApiStatus.Internal
+  public static @NotNull Collection<IdeaPluginDescriptor> mergePluginsFromRepositories(@NotNull Collection<? extends IdeaPluginDescriptor> marketplacePlugins,
+                                                                                       @NotNull Collection<? extends IdeaPluginDescriptor> customPlugins,
+                                                                                       boolean addMissing) {
+    Map<PluginId, IdeaPluginDescriptor> compatiblePluginMap = new HashMap<>(marketplacePlugins.size());
+
+    for (IdeaPluginDescriptor marketplacePlugin : marketplacePlugins) {
+      compatiblePluginMap.put(marketplacePlugin.getPluginId(), marketplacePlugin);
+    }
+
+    for (IdeaPluginDescriptor customPlugin : customPlugins) {
+      PluginId pluginId = customPlugin.getPluginId();
+      IdeaPluginDescriptor plugin = compatiblePluginMap.get(pluginId);
+      if (plugin == null && addMissing ||
+          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin) > 0) {
+        compatiblePluginMap.put(pluginId, customPlugin);
+      }
+    }
+
+    return compatiblePluginMap.values();
+  }
 }

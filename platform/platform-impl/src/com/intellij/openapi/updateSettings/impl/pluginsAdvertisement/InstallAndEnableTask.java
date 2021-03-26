@@ -5,13 +5,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,12 +44,11 @@ final class InstallAndEnableTask extends Task.Modal {
       List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(myPluginIds);
       myCustomPlugins = PluginsAdvertiser.loadPluginsFromCustomRepositories(indicator);
 
-      List<IdeaPluginDescriptor> descriptors = new ArrayList<>(UpdateChecker.mergePluginsFromRepositories(marketplacePlugins,
-                                                                                                          myCustomPlugins,
-                                                                                                          true));
+      List<IdeaPluginDescriptor> descriptors =
+        new ArrayList<>(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true));
+
       for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-        if (!descriptor.isEnabled() &&
-            PluginManagerCore.isCompatible(descriptor)) {
+        if (!descriptor.isEnabled() && PluginManagerCore.isCompatible(descriptor)) {
           descriptors.add(descriptor);
         }
       }
