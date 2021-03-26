@@ -436,8 +436,8 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     @Override
-    public void convertPaths(@NotNull Consumer<Object> pathsConverter) {
-      super.convertPaths(pathsConverter);
+    public void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
+      super.applyPathsConverter(pathsConverter);
       BuildEnvironment buildEnvironment = getBuildEnvironment();
       if (buildEnvironment != null) {
         pathsConverter.consume(buildEnvironment);
