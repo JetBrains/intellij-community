@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.idea.intentions.getLambdaByImplicitItReference
+import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter.Companion.getLambdaByImplicitItReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression

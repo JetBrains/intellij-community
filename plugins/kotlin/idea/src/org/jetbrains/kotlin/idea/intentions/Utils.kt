@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
-import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -29,13 +27,11 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.isFlexible
@@ -63,18 +59,6 @@ fun KtCallExpression.isMethodCall(fqMethodName: String): Boolean {
     val resolvedCall = this.resolveToCall() ?: return false
     return resolvedCall.resultingDescriptor.fqNameUnsafe.asString() == fqMethodName
 }
-
-fun isAutoCreatedItUsage(expression: KtNameReferenceExpression) = resolveToAutoCreatedItDescriptor(expression) != null
-
-fun resolveToAutoCreatedItDescriptor(expression: KtNameReferenceExpression): ValueParameterDescriptor? {
-    if (expression.getReferencedName() != "it") return null
-    val context = expression.analyze(BodyResolveMode.PARTIAL)
-    val target = expression.mainReference.resolveToDescriptors(context).singleOrNull() as? ValueParameterDescriptor ?: return null
-    return if (context[BindingContext.AUTO_CREATED_IT, target] == true) target else null
-}
-
-fun getLambdaByImplicitItReference(expression: KtNameReferenceExpression) =
-    resolveToAutoCreatedItDescriptor(expression)?.containingDeclaration?.source?.getPsi() as? KtFunctionLiteral
 
 // returns assignment which replaces initializer
 fun splitPropertyDeclaration(property: KtProperty): KtBinaryExpression? {
