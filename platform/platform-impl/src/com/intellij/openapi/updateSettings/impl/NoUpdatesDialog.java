@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -47,7 +47,7 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
         myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.toolbox.message", app));
       }
       else if (manager == ExternalUpdateManager.SNAP) {
-        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.snaps.message", app));
+        myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.snap.message", app));
       }
       else {
         myNothingToUpdateLabel.setText(IdeBundle.message("updates.no.updates.unknown.message", app, manager.toolName));
