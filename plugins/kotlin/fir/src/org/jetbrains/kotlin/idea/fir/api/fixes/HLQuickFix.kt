@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.fir.api.fixes
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicator
-import org.jetbrains.kotlin.idea.fir.api.applicator.HLApplicatorInput
+import org.jetbrains.kotlin.idea.api.applicator.HLApplicator
+import org.jetbrains.kotlin.idea.api.applicator.HLApplicatorInput
 import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -17,7 +17,7 @@ class HLQuickFix<PSI : PsiElement, in INPUT : HLApplicatorInput>(
 ) : KotlinQuickFixAction<PSI>(target) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        if (applicator.isApplicableByPsi(element) && input.isValidFor(element)) {
+        if (applicator.isApplicableByPsi(element, project) && input.isValidFor(element)) {
             applicator.applyTo(element, input, project, editor)
         }
     }
