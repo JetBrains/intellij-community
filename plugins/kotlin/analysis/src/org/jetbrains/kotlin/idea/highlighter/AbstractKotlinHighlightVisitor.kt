@@ -64,7 +64,7 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
                 lastThrownExceptionTimestamp = timestamp
                 throw e
             } else {
-                LOG.error(e)
+                LOG.warn(e)
             }
         }  finally {
           afterAnalysisVisitor = null
