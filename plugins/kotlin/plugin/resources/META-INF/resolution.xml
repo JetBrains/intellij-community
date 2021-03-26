@@ -63,6 +63,8 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.framework.LibraryEffectiveKindProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.framework.LibraryEffectiveKindProviderImpl"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.api.fe10.impl.ResolveAllowanceServiceFE10Impl"
+                    serviceInterface="org.jetbrains.kotlin.idea.api.ResolveAllowanceService"/>
 
     <registryKey
             key="kotlin.dispatch.thread.resolve.check"
