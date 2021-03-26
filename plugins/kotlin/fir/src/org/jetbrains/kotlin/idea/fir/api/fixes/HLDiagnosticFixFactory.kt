@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnosticWithPsi
 
 sealed class HLDiagnosticFixFactory<in DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
-    abstract fun KtAnalysisSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<HLQuickFix<*, *>>
+    abstract fun KtAnalysisSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction>
 }
 
 private class HLDiagnosticFixFactoryWithFixedApplicator<DIAGNOSTIC : KtDiagnosticWithPsi<*>, TARGET_PSI : PsiElement, INPUT : HLApplicatorInput>(
@@ -22,9 +22,9 @@ private class HLDiagnosticFixFactoryWithFixedApplicator<DIAGNOSTIC : KtDiagnosti
 }
 
 private class HLDiagnosticFixFactoryWithVariableApplicator<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
-    private val createQuickFixes: KtAnalysisSession.(DIAGNOSTIC) -> List<HLQuickFix<*, *>>
+    private val createQuickFixes: KtAnalysisSession.(DIAGNOSTIC) -> List<IntentionAction>
 ) : HLDiagnosticFixFactory<DIAGNOSTIC>() {
-    override fun KtAnalysisSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<HLQuickFix<*, *>> =
+    override fun KtAnalysisSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction> =
         createQuickFixes.invoke(this, diagnostic)
 }
 
@@ -47,6 +47,6 @@ fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>, TARGET_PSI : PsiElement, INPUT : HLApp
  * Returns a [HLDiagnosticFixFactory] that creates [HLQuickFix]es from a diagnostic.
  */
 fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> diagnosticFixFactory(
-    createQuickFixes: KtAnalysisSession.(DIAGNOSTIC) -> List<HLQuickFix<*, *>>
+    createQuickFixes: KtAnalysisSession.(DIAGNOSTIC) -> List<IntentionAction>
 ): HLDiagnosticFixFactory<DIAGNOSTIC> =
     HLDiagnosticFixFactoryWithVariableApplicator(createQuickFixes)
