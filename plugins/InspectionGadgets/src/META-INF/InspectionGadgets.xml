@@ -609,7 +609,7 @@
                      level="INFORMATION" implementationClass="com.siyeh.ig.controlflow.ConditionalExpressionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConditionalExpressionWithIdenticalBranches" bundle="messages.InspectionGadgetsBundle"
                      key="conditional.expression.with.identical.branches.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ConditionalExpressionWithIdenticalBranchesInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConditionalCanBePushedInsideExpression" bundle="messages.InspectionGadgetsBundle"
                      key="conditional.can.be.pushed.inside.expression.display.name" groupBundle="messages.InspectionsBundle"
@@ -2546,7 +2546,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.threading.DoubleCheckedLockingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EmptySynchronizedStatement" bundle="messages.InspectionGadgetsBundle"
                      key="empty.synchronized.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.EmptySynchronizedStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ClassExplicitlyExtendsThread" shortName="ExtendsThread" bundle="messages.InspectionGadgetsBundle"
                      key="extends.thread.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
@@ -2684,7 +2684,7 @@
                      implementationClass="com.siyeh.ig.threading.WaitOrAwaitWithoutTimeoutInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WaitWhileHoldingTwoLocks" bundle="messages.InspectionGadgetsBundle"
                      key="wait.while.holding.two.locks.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.WaitWhileHoldingTwoLocksInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WaitWithoutCorrespondingNotify" bundle="messages.InspectionGadgetsBundle"
                      key="wait.without.corresponding.notify.display.name" groupBundle="messages.InspectionsBundle"
