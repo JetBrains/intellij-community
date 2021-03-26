@@ -757,7 +757,7 @@ public final class ExternalSystemUtil {
       .map(it -> it.getReadableName())
       .sorted(NaturalComparator.INSTANCE)
       .collect(Collectors.toList());
-    return TrustedProjects.naturalJoin(projectTypeNames);
+    return StringUtil.naturalJoin(projectTypeNames);
   }
 
   public static boolean isNewProject(Project project) {
