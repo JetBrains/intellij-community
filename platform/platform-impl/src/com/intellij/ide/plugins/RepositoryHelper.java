@@ -37,8 +37,8 @@ import static java.util.Collections.singletonMap;
  */
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
-  @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
 
+  @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
   private static final String ULTIMATE_MODULE = "com.intellij.modules.ultimate";
 
@@ -46,8 +46,7 @@ public final class RepositoryHelper {
    * Returns a list of configured plugin hosts.
    * Note that the list always ends with {@code null} element denoting a main plugin repository.
    */
-  @NotNull
-  public static List<String> getPluginHosts() {
+  public static @NotNull List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
     hosts.add(null);  // main plugin repository
@@ -58,18 +57,16 @@ public final class RepositoryHelper {
    * Loads list of plugins, compatible with a current build, from a main plugin repository.
    * @deprecated Use `loadPlugins` only for custom repositories. Use {@link MarketplaceRequests} for getting descriptors.
    */
-  @NotNull
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
+  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(null, indicator);
   }
 
   /**
    * Use method only for getting plugins from custom repositories
    */
-  @NotNull
-  public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
+  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(repositoryUrl, null, indicator);
   }
 
@@ -114,10 +111,9 @@ public final class RepositoryHelper {
    * Reads cached plugin descriptors from a file. Returns {@code null} if cache file does not exist.
    * @deprecated use `MarketplaceRequest.getMarketplaceCachedPlugins`
    */
-  @Nullable
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
+  public static @Nullable List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     return file.length() > 0 ? process(loadPluginList(file), null, null) : null;
   }
@@ -128,7 +124,7 @@ public final class RepositoryHelper {
     }
   }
 
-  private static @NotNull List<IdeaPluginDescriptor> process(@NotNull List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
+  private static List<IdeaPluginDescriptor> process(List<PluginNode> list, @Nullable String repositoryUrl, @Nullable BuildNumber build) {
     Map<PluginId, IdeaPluginDescriptor> result = new LinkedHashMap<>(list.size());
     if (build == null) {
       build = PluginManagerCore.getBuildNumber();
@@ -173,7 +169,6 @@ public final class RepositoryHelper {
    */
   public static void addMarketplacePluginDependencyIfRequired(@NotNull PluginNode node) {
     boolean isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
-
     addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
   }
 
