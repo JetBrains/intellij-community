@@ -84,6 +84,7 @@ final class ActionUpdater {
   private boolean myPreCacheSlowDataKeys;
   private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
+  private final int myTestDelayMillis;
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
@@ -128,6 +129,11 @@ final class ActionUpdater {
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(getDataContext(group))));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
+
+    myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) ||
+                        ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
+                        ActionPlaces.MOUSE_SHORTCUT.equals(myPlace) ?
+                        0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
   @Nullable
@@ -202,6 +208,15 @@ final class ActionUpdater {
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
+
+    if (myTestDelayMillis > 0) {
+      long start = System.currentTimeMillis();
+      while (true) {
+        progress.checkCanceled();
+        if (System.currentTimeMillis() - start > myTestDelayMillis) break;
+        TimeoutUtil.sleep(1);
+      }
+    }
 
     return computeOnEdt(() -> {
       long start = System.currentTimeMillis();
