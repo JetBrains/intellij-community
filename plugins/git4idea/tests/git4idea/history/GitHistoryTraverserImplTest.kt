@@ -1,17 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.util.containers.getIfSingle
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitCommit
 import git4idea.log.createLogData
 import git4idea.log.refreshAndWait
 import git4idea.test.GitSingleRepoTest
@@ -52,7 +52,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
         if (commitId in authorCommitIds) {
           loadFullDetailsLater(commitId) { details ->
             assertTrue(details.id in authorCommits)
-            assertTrue(ChangesUtil.getFiles(details.changes.stream()).getIfSingle()!!.name.startsWith("file"))
+            assertTrue(areOnlyFilesInCommit(details, setOf("file.txt")))
           }
         }
         true
@@ -83,7 +83,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     var commitsCounter = 0
     traverser.traverse(repo.root) { (commitId, _) ->
       loadFullDetailsLater(commitId) { details ->
-        if (ChangesUtil.getFiles(details.changes.stream()).getIfSingle()!!.name.startsWith("file")) {
+        if (areOnlyFilesInCommit(details, setOf("file.txt"))) {
           fileInCommitCount++
         }
       }
@@ -219,5 +219,17 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     }
     catch (e: IllegalArgumentException) {
     }
+  }
+
+  private fun areOnlyFilesInCommit(commit: GitCommit, fileNames: Collection<String>): Boolean {
+    val fileNamesMap = fileNames.associateWith { false }.toMutableMap()
+    for (change in commit.changes) {
+      val fileName = ChangesUtil.getFilePath(change).name
+      if (fileName !in fileNamesMap) {
+        return false
+      }
+      fileNamesMap[fileName] = true
+    }
+    return fileNamesMap.values.all { it }
   }
 }
