@@ -15,6 +15,9 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -22,10 +25,10 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalShellCommandHandler;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -237,13 +240,21 @@ public final class TerminalShellCommandHandlerHelper {
       if (commandStartInd < 0) {
         return null;
       }
-      TextStyle style = new TextStyle(null, getSmartCommandExecutionHighlightingColor());
-      return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), style);
+      TextStyle textStyle = getSmartCommandExecutionStyle();
+      if (textStyle == null) {
+        return null;
+      }
+      return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), textStyle);
     });
   }
 
-  private static @NotNull TerminalColor getSmartCommandExecutionHighlightingColor() {
-    return new TerminalColor(() -> new JBColor(0xCFEFC6, 0x40503C));
+  private static @Nullable TextStyle getSmartCommandExecutionStyle() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attributes = scheme.getAttributes(JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
+    if (attributes == null) {
+      return null;
+    }
+    return new TextStyle(TerminalColor.awt(attributes.getForegroundColor()), TerminalColor.awt(attributes.getBackgroundColor()));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
