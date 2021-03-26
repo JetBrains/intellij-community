@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,29 +31,17 @@ import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class DoubleCheckedLockingInspection extends BaseInspection {
 
   /**
-   * @noinspection PublicField
+   * Preserved for serialization compatibility
    */
-  public boolean ignoreOnVolatileVariables = false;
+  @SuppressWarnings("unused") public boolean ignoreOnVolatileVariables = false;
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "double.checked.locking.problem.descriptor");
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "double.checked.locking.ignore.on.volatiles.option"), this,
-                                          "ignoreOnVolatileVariables"
-    );
+    return InspectionGadgetsBundle.message("double.checked.locking.problem.descriptor");
   }
 
   @Override
@@ -154,11 +142,10 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     return new DoubleCheckedLockingVisitor();
   }
 
-  private class DoubleCheckedLockingVisitor extends BaseInspectionVisitor {
+  private static class DoubleCheckedLockingVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(
-      @NotNull PsiIfStatement statement) {
+    public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression outerCondition = statement.getCondition();
       if (outerCondition == null) {
@@ -167,8 +154,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       if (SideEffectChecker.mayHaveSideEffects(outerCondition)) {
         return;
       }
-      PsiStatement thenBranch = statement.getThenBranch();
-      thenBranch = ControlFlowUtils.stripBraces(thenBranch);
+      final PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
       if (!(thenBranch instanceof PsiSynchronizedStatement)) {
         return;
       }
@@ -180,20 +166,15 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       }
       final PsiIfStatement innerIf = (PsiIfStatement)firstStatement;
       final PsiExpression innerCondition = innerIf.getCondition();
-      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(innerCondition,
-                                                                                    outerCondition)) {
+      if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(innerCondition, outerCondition)) {
         return;
       }
-      final PsiField field;
-      if (ignoreOnVolatileVariables) {
-        field = findCheckedField(innerCondition);
-        if (field != null &&
-            field.hasModifierProperty(PsiModifier.VOLATILE)) {
-          return;
-        }
+      final PsiField field = findCheckedField(innerCondition);
+      if (field == null || field.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
       }
-      else {
-        field = null;
+      if (field.hasModifierProperty(PsiModifier.VOLATILE) && PsiUtil.isLanguageLevel5OrHigher(statement)) {
+        return;
       }
       registerStatementError(statement, field);
     }
