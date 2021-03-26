@@ -101,7 +101,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
 
   private fun isOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
     if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
-    return originUrl.removeSuffix(".git") == originUrl.removeSuffix(".git")
+    return originUrl.removeSuffix(".git") == projectOriginUrl.removeSuffix(".git")
   }
 }
 
