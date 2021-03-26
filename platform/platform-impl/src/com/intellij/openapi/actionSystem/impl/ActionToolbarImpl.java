@@ -1156,9 +1156,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     JLabel label = new JLabel(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
     label.setBorder(JBUI.Borders.empty(4));
     add(label);
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
+    if (this instanceof PopupToolbar) {
       label.setIcon(icon);
-    }, 500, TimeUnit.MILLISECONDS);
+    }
+    else {
+      EdtScheduledExecutorService.getInstance().schedule(() -> label.setIcon(icon), 500, TimeUnit.MILLISECONDS);
+    }
   }
 
   protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
