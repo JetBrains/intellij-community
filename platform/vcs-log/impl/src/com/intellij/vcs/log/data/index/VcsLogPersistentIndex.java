@@ -363,6 +363,18 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       catchAndWarn(commits::markCorrupted);
     }
 
+    public void unmarkFresh() {
+      myIsFresh = false;
+    }
+
+    public boolean isFresh() {
+      return myIsFresh;
+    }
+
+    @Override
+    public void dispose() {
+    }
+
     private static void catchAndWarn(@NotNull ThrowableRunnable<IOException> runnable) {
       try {
         runnable.run();
@@ -382,18 +394,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     @NotNull
     private static StorageId indexStorageId(@NotNull String projectName, @NotNull String logId) {
       return new StorageId(projectName, INDEX, logId, VcsLogStorageImpl.VERSION + VERSION);
-    }
-
-    public void unmarkFresh() {
-      myIsFresh = false;
-    }
-
-    public boolean isFresh() {
-      return myIsFresh;
-    }
-
-    @Override
-    public void dispose() {
     }
   }
 
