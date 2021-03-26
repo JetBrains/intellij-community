@@ -62,7 +62,6 @@ class StorageId(@NonNls private val projectName: String,
                 @NonNls private val subdirName: String,
                 private val logId: String,
                 val version: Int) {
-  private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
   private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
   val subdir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
 
@@ -74,7 +73,6 @@ class StorageId(@NonNls private val projectName: String,
       for (oldVersion in 0 until version) {
         StorageId(projectName, subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
       }
-      IOUtil.deleteAllFilesStartingWith(File(File(LOG_CACHE, subdirName), "$safeLogId."))
     }
     return getFile(kind).toPath()
   }
