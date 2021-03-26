@@ -102,8 +102,7 @@ public class FeatureDescriptor {
     List<Element> dependencies = element.getChildren(ELEMENT_DEPENDENCY);
     if (!dependencies.isEmpty()) {
       myDependencies = new HashSet<>();
-      for (Object dependency : dependencies) {
-        Element dependencyElement = (Element)dependency;
+      for (Element dependencyElement : dependencies) {
         myDependencies.add(dependencyElement.getAttributeValue(ATTRIBUTE_ID));
       }
     }
