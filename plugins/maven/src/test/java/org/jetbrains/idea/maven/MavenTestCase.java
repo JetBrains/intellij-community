@@ -131,6 +131,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     Sdk sdk = getWslSdk(myWSLDistribution.getWindowsPath(jdkPath));
     WriteAction.runAndWait(() -> ProjectRootManagerEx.getInstanceEx(myProject).setProjectSdk(sdk));
+    assertTrue(new File(myWSLDistribution.getWindowsPath(myWSLDistribution.getUserHome())).isDirectory());
   }
 
   private Sdk getWslSdk(String jdkPath) {
