@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
@@ -25,7 +25,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
     message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename),
     message("vcs.add.to.ignore.file.action.group.description", ignoreFileType.ignoreLanguage.filename),
     ignoreFileType.icon
-  ), DumbAware {
+  ), DumbAware, UpdateInBackground {
 
   private var actions: Collection<AnAction> = emptyList()
 
