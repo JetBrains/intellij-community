@@ -111,7 +111,7 @@ public final class CountingLoop {
     if(initializer == null) return null;
 
     // check that increment is like for(...;...;i++)
-    LoopDirection loopDirection = evaluateLoopDirection(counter, forStatement.getUpdate());
+    LoopDirection loopDirection = LoopDirection.evaluateLoopDirection(counter, forStatement.getUpdate());
     if (loopDirection == null) return null;
 
     // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
@@ -138,53 +138,5 @@ public final class CountingLoop {
     if(!TypeConversionUtil.areTypesAssignmentCompatible(counterType, bound)) return null;
     if(VariableAccessUtils.variableIsAssigned(counter, forStatement.getBody())) return null;
     return new CountingLoop(forStatement, counter, initializer, bound, closed, loopDirection, relationType == RelationType.NE);
-  }
-
-  public static LoopDirection evaluateLoopDirection(@NotNull PsiVariable counter, @Nullable PsiStatement updateStatement) {
-    PsiExpressionStatement expressionStatement = tryCast(updateStatement, PsiExpressionStatement.class);
-    if (expressionStatement == null) return null;
-    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expressionStatement.getExpression());
-    if (expression instanceof PsiUnaryExpression) {
-      PsiUnaryExpression unaryExpression = (PsiUnaryExpression)expression;
-      IElementType tokenType = unaryExpression.getOperationTokenType();
-      if (tokenType != JavaTokenType.PLUSPLUS && tokenType != JavaTokenType.MINUSMINUS) return null;
-      PsiExpression operand = unaryExpression.getOperand();
-      if (!ExpressionUtils.isReferenceTo(operand, counter)) return null;
-      return tokenType == JavaTokenType.PLUSPLUS ? LoopDirection.ASCENDING : LoopDirection.DESCENDING;
-    }
-    if (expression instanceof PsiAssignmentExpression) {
-      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-      PsiExpression lhs = assignmentExpression.getLExpression();
-      if (!ExpressionUtils.isReferenceTo(lhs, counter)) return null;
-      PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
-      IElementType tokenType = assignmentExpression.getOperationTokenType();
-      if (tokenType == JavaTokenType.EQ) {
-        PsiBinaryExpression binaryExpression = tryCast(rhs, PsiBinaryExpression.class);
-        if (binaryExpression == null) return null;
-        IElementType binaryTokenType = binaryExpression.getOperationTokenType();
-        if (binaryTokenType != JavaTokenType.PLUS && binaryTokenType != JavaTokenType.MINUS) return null;
-        PsiExpression lOperand = binaryExpression.getLOperand();
-        PsiExpression rOperand = binaryExpression.getROperand();
-        if (ExpressionUtils.isOne(lOperand)) {
-          if (!ExpressionUtils.isReferenceTo(rOperand, counter)) return null;
-          return binaryTokenType == JavaTokenType.PLUS ? LoopDirection.ASCENDING : LoopDirection.DESCENDING;
-        }
-        if (ExpressionUtils.isOne(rOperand)) {
-          if (!ExpressionUtils.isReferenceTo(lOperand, counter)) return null;
-          return binaryTokenType == JavaTokenType.PLUS ? LoopDirection.ASCENDING : LoopDirection.DESCENDING;
-        }
-      }
-      else if (tokenType == JavaTokenType.PLUSEQ || tokenType == JavaTokenType.MINUSEQ) {
-        if (ExpressionUtils.isOne(rhs)) {
-          return tokenType == JavaTokenType.PLUSEQ ? LoopDirection.ASCENDING : LoopDirection.DESCENDING;
-        }
-      }
-    }
-    return null;
-  }
-
-  public enum LoopDirection {
-    ASCENDING,
-    DESCENDING
   }
 }

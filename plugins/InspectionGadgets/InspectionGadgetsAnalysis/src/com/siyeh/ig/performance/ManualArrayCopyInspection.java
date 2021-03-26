@@ -407,11 +407,11 @@ public class ManualArrayCopyInspection extends BaseInspection {
       }
       final PsiStatement update = statement.getUpdate();
       final boolean decrement;
-      if (VariableAccessUtils.variableIsIncremented(variable, update)) {
+      LoopDirection direction = LoopDirection.evaluateLoopDirection(variable, update);
+      if (direction == LoopDirection.ASCENDING) {
         decrement = false;
       }
-      else if (VariableAccessUtils.variableIsDecremented(variable,
-                                                         update)) {
+      else if (direction == LoopDirection.DESCENDING) {
         decrement = true;
       }
       else {

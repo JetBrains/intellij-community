@@ -687,8 +687,7 @@ public final class ControlFlowUtils {
       PsiStatement update = ((PsiForStatement)loop).getUpdate();
       if (initialization != null && update != null) {
         PsiLocalVariable variable = StreamEx.of(initialization.getDeclaredElements()).select(PsiLocalVariable.class)
-          .findFirst(var -> VariableAccessUtils.variableIsIncremented(var, update) ||
-                            VariableAccessUtils.variableIsDecremented(var, update)).orElse(null);
+          .findFirst(var -> LoopDirection.evaluateLoopDirection(var, update) != null).orElse(null);
         if (variable != null) {
           boolean hasLoopVarCheck = conditions(statement).select(PsiBinaryExpression.class)
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
