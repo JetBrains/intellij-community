@@ -731,11 +731,16 @@ public final class ExternalSystemUtil {
     @NotNull VirtualFile virtualFile,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = naturalJoinSystemIds(systemIds);
     if (executesTrustedCodeOnly(systemIds)) {
       return OpenUntrustedProjectChoice.IMPORT;
     }
-    return TrustedProjects.confirmOpeningUntrustedProject(virtualFile, systemsPresentation, systemIds.size());
+    return TrustedProjects.confirmOpeningUntrustedProject(
+      virtualFile,
+      new HashSet<>(systemIds)
+        .stream()
+        .map(it -> it.getReadableName())
+        .sorted(NaturalComparator.INSTANCE)
+        .collect(Collectors.toList()));
   }
 
   public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
@@ -748,20 +753,11 @@ public final class ExternalSystemUtil {
 
 
   public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
-    return naturalJoin(
-      new HashSet<>(systemIds).stream()
-        .map(it -> it.getReadableName())
-        .sorted(NaturalComparator.INSTANCE)
-        .collect(Collectors.toList())
-    );
-  }
-
-  private static @NotNull @Nls String naturalJoin(@NotNull List<String> words) {
-    if (words.size() == 0) return "";
-    if (words.size() == 1) return words.get(0);
-    String lastWord = words.get(words.size() - 1);
-    String leadingWords = StringUtil.join(words.subList(0, words.size() - 1), ", ");
-    return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leadingWords, lastWord);
+    List<String> projectTypeNames = new HashSet<>(systemIds).stream()
+      .map(it -> it.getReadableName())
+      .sorted(NaturalComparator.INSTANCE)
+      .collect(Collectors.toList());
+    return TrustedProjects.naturalJoin(projectTypeNames);
   }
 
   public static boolean isNewProject(Project project) {
