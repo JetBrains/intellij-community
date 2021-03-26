@@ -23,7 +23,6 @@ import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -31,7 +30,7 @@ fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
   projectTypeNames: List<String>,
 ): OpenUntrustedProjectChoice {
-  val systemsPresentation: String = naturalJoin(projectTypeNames)
+  val systemsPresentation: String = StringUtil.naturalJoin(projectTypeNames)
   return confirmOpeningUntrustedProject(
     virtualFile,
     IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),
@@ -40,15 +39,6 @@ fun confirmOpeningUntrustedProject(
     IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
     IdeBundle.message("untrusted.project.open.dialog.cancel.button")
   )
-}
-
-@Nls
-fun naturalJoin(projectTypeNames: List<String>): String {
-  if (projectTypeNames.isEmpty()) return ""
-  if (projectTypeNames.size == 1) return projectTypeNames[0]
-  val lastWord = projectTypeNames[projectTypeNames.size - 1]
-  val leadingWords = StringUtil.join(projectTypeNames.subList(0, projectTypeNames.size - 1), ", ")
-  return IdeBundle.message("projectTypes.natural.join", leadingWords, lastWord)
 }
 
 fun confirmOpeningUntrustedProject(
