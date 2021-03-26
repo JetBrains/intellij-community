@@ -36,16 +36,16 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   @NonNls public static final String TAB_NAME = "Log"; // used as tab id, not user-visible
 
   @NotNull private final VcsProjectLog myProjectLog;
-  @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
+  @NotNull private final JPanel myContainer = new JBPanel<>(new BorderLayout());
   @Nullable private Consumer<? super MainVcsLogUi> myOnCreatedListener;
 
   @Nullable private MainVcsLogUi myUi;
   @Nullable private Content myContent;
 
-  public VcsLogContentProvider(@NotNull Project project, @NotNull VcsProjectLog projectLog) {
-    myProjectLog = projectLog;
+  public VcsLogContentProvider(@NotNull Project project) {
+    myProjectLog = VcsProjectLog.getInstance(project);
 
-    MessageBusConnection connection = project.getMessageBus().connect(projectLog);
+    MessageBusConnection connection = project.getMessageBus().connect(myProjectLog);
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager logManager) {
@@ -64,8 +64,7 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
-  @Nullable
-  public MainVcsLogUi getUi() {
+  public @Nullable MainVcsLogUi getUi() {
     return myUi;
   }
 

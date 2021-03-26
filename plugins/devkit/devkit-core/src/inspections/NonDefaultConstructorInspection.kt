@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.jvm.JvmClassKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiParameterList
@@ -30,7 +29,6 @@ import org.jetbrains.uast.convertOpt
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
 class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
-
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
@@ -173,10 +171,11 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
 }
 
 // todo can we use attribute `with`?
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
-private val ignoredTagNames = HashSet(
-  listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix",
-         "explainPlanProvider"))
+private val ignoredTagNames = java.util.Set.of("semContributor", "modelFacade", "scriptGenerator",
+                                               "editorActionHandler", "editorTypedHandler",
+                                               "dataImporter", "java.error.fix", "explainPlanProvider", "typeIcon")
 
 // problem - tag
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
@@ -190,12 +189,14 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 
   return tag.attributes.any {
     val name = it.name
-    (name.startsWith(Extension.IMPLEMENTATION_ATTRIBUTE) || name == "instance") && it.value == qualifiedName
+    // ignore lang.elementManipulator
+    (name != "forClass" && name != "presentation" && name != "vcsClass") && it.value == qualifiedName
   }
 }
 
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
-private val allowedServiceQualifiedNames = setOf(
+private val allowedServiceQualifiedNames = java.util.Set.of(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
   "com.intellij.util.messages.MessageBus",
@@ -203,7 +204,7 @@ private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.editor.actionSystem.TypedActionHandler",
   "com.intellij.database.Dbms"
 )
-private val allowedServiceNames = allowedServiceQualifiedNames.map { StringUtil.getShortName(it) }
+private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }
 
 @Suppress("HardCodedStringLiteral")
 private fun isAllowedParameters(list: PsiParameterList,

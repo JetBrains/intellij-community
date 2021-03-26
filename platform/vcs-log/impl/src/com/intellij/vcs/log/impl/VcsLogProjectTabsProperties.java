@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -19,6 +16,7 @@ import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@Service(Service.Level.PROJECT)
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
   @NonNls public static final String MAIN_LOG_ID = "MAIN";

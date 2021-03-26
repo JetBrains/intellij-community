@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
@@ -57,7 +58,8 @@ import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
-public class VcsProjectLog implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
     Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
@@ -241,7 +243,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   public static VcsProjectLog getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsProjectLog.class);
+    return project.getService(VcsProjectLog.class);
   }
 
   @Override
@@ -359,7 +361,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   static final class InitLogStartupActivity implements StartupActivity, DumbAware {
-    public InitLogStartupActivity() {
+    InitLogStartupActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
         throw ExtensionNotApplicableException.INSTANCE;

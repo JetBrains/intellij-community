@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -21,7 +18,8 @@ import java.util.*;
 import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 
 @State(name = "Vcs.Log.History.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
+@Service(Service.Level.PROJECT)
+public final class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
   public static final VcsLogUiProperty<Boolean> SHOW_ALL_BRANCHES = new VcsLogUiProperty<>("Table.ShowOtherBranches");
 
   @NotNull private final Collection<PropertiesChangeListener> myListeners = new LinkedHashSet<>();

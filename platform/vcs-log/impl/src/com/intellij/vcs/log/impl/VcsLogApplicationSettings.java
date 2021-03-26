@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -20,7 +20,7 @@ import static com.intellij.vcs.log.impl.CommonUiProperties.*;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"))
-public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
+public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
   @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = new LinkedHashSet<>();
   private State myState = new State();
 

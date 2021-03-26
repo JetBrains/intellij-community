@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -10,10 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.Time
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import java.nio.file.Files
 import java.nio.file.Path
 
 private const val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
@@ -50,7 +49,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
 fun saveSettings(settings: IcsSettings, settingsFile: Path) {
   val serialized = ObjectMapper().writer(MyPrettyPrinter()).writeValueAsBytes(settings)
   if (serialized.size <= 2) {
-    settingsFile.delete()
+    Files.delete(settingsFile)
   }
   else {
     settingsFile.write(serialized)
@@ -58,7 +57,7 @@ fun saveSettings(settings: IcsSettings, settingsFile: Path) {
 }
 
 fun loadSettings(settingsFile: Path): IcsSettings {
-  if (!settingsFile.exists()) {
+  if (!Files.exists(settingsFile)) {
     return IcsSettings()
   }
 
