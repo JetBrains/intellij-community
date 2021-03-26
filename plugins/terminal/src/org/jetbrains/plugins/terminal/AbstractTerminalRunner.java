@@ -96,7 +96,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public T createProcess(@Nullable String directory) throws ExecutionException {
+  protected T createProcess(@Nullable String directory) throws ExecutionException {
     throw new AssertionError("Call createProcess(TerminalProcessOptions, JBTerminalWidget)");
   }
 
