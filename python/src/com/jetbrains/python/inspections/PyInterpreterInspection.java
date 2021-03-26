@@ -172,7 +172,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       if (name != null) {
         final Matcher matcher = NAME.matcher(name);
-        if (!matcher.matches()) {
+        if (matcher.matches()) {
           final String venvName = matcher.group("name");
           if (venvName != null) {
             final PyDetectedSdk detectedAssociatedViaRootNameEnv = detectAssociatedViaRootNameEnv(venvName, module, existingSdks, context);
