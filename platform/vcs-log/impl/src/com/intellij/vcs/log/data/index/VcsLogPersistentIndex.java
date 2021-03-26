@@ -386,7 +386,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static void cleanup(@NotNull String projectName, @NotNull String logId) {
       StorageId storageId = indexStorageId(projectName, logId);
       if (!storageId.cleanupAllStorageFiles()) {
-        LOG.error("Could not clean up storage files in " + storageId.getSubdir());
+        LOG.error("Could not clean up storage files in " + storageId.getProjectStorageDir());
       }
     }
 
