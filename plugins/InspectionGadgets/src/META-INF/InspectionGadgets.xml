@@ -2634,7 +2634,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.threading.SynchronizedMethodInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToSystemRunFinalizersOnExit" shortName="SystemRunFinalizersOnExit"
                      bundle="messages.InspectionGadgetsBundle" key="system.run.finalizers.on.exit.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.SystemRunFinalizersOnExitInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ThreadLocalNotStaticFinal" bundle="messages.InspectionGadgetsBundle"
                      key="thread.local.not.static.final.display.name" groupBundle="messages.InspectionsBundle"
