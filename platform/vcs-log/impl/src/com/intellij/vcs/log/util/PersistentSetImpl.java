@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.util;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
@@ -41,6 +42,16 @@ public class PersistentSetImpl<T> extends PersistentEnumerator<T> implements Per
   @Override
   public void put(@NotNull T element) throws IOException {
     enumerate(element);
+  }
+
+  @Override
+  public boolean isEmpty() throws IOException {
+    Ref<Boolean> isEmpty = Ref.create(true);
+    myEnumerator.iterateData(element -> {
+      isEmpty.set(false);
+      return false;
+    });
+    return isEmpty.get();
   }
 
   @Override
