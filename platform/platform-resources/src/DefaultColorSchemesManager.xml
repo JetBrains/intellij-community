@@ -1150,6 +1150,11 @@
             <option name="ERROR_STRIPE_COLOR" />
           </value>
         </option>
+        <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+          <value>
+            <option name="BACKGROUND" value="CFEFC6" />
+          </value>
+        </option>
         <option name="SPY-JS.FUNCTION_SCOPE">
           <value>
             <option name="BACKGROUND" value="ffffd7"/>
@@ -1536,6 +1541,11 @@
         <value>
           <option name="FOREGROUND" value="E5BF00" />
           <option name="BACKGROUND" value="A87B00" />
+        </value>
+      </option>
+      <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
+        <value>
+          <option name="BACKGROUND" value="40503C" />
         </value>
       </option>
       <option name="CSS.COLOR">
