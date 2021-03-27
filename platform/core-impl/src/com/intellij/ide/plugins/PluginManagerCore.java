@@ -1431,7 +1431,7 @@ public final class PluginManagerCore {
     }
   }
 
-  public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     if (id != null) {
       for (IdeaPluginDescriptor plugin : getPlugins()) {
         if (id == plugin.getPluginId()) {
