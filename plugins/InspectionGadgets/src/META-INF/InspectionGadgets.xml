@@ -2546,7 +2546,7 @@
                      key="condition.signal.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.threading.ConditionSignalInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleCheckedLocking" bundle="messages.InspectionGadgetsBundle" key="double.checked.locking.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.DoubleCheckedLockingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EmptySynchronizedStatement" bundle="messages.InspectionGadgetsBundle"
                      key="empty.synchronized.statement.display.name" groupBundle="messages.InspectionsBundle"
