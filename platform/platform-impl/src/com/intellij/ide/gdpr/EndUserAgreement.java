@@ -5,9 +5,7 @@ import com.intellij.ide.Prefs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -132,7 +130,7 @@ public final class EndUserAgreement {
 
   private static void writeToFile(@NotNull Path file, @NotNull String text) throws IOException {
     Files.createDirectories(file.getParent());
-    Files.write(file, text.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(file, text);
   }
 
   public static void update(@NotNull String docName, @NotNull String text) {
@@ -151,7 +149,11 @@ public final class EndUserAgreement {
   private static @NotNull Document loadContent(String docName, String resourcePath) {
     try (InputStream stream = EndUserAgreement.class.getResourceAsStream(resourcePath)) {
       if (stream != null) {
-        return new Document(docName, ResourceUtil.loadText(stream));
+        String result;
+        try (stream) {
+          result = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        return new Document(docName, result);
       }
     }
     catch (IOException e) {
@@ -182,7 +184,7 @@ public final class EndUserAgreement {
 
     try {
       String docName = Files.readString(getDocumentNameFile());
-      if (!StringUtilRt.isEmptyOrSpaces(docName)) {
+      if (docName != null && !docName.isBlank()) {
         return docName;
       }
     }
@@ -239,7 +241,7 @@ public final class EndUserAgreement {
     }
 
     private static @NotNull Version parseVersion(String text) {
-      if (!StringUtilRt.isEmptyOrSpaces(text)) {
+      if (text != null && !text.isBlank()) {
         try (BufferedReader reader = new BufferedReader(new StringReader(text))) {
           final String line = reader.readLine();
           if (line != null) {

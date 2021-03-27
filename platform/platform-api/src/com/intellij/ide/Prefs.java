@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.StringTokenizer;
 
 import java.util.prefs.BackingStoreException;
@@ -14,7 +14,6 @@ import java.util.prefs.Preferences;
  * @author Eugene Zhuravlev
  */
 public final class Prefs {
-
   public static void put(String key, String value) {
     Preferences.userRoot().remove(key); // remove from old location
     getPreferences(key).put(getNodeKey(key), value);
@@ -95,7 +94,7 @@ public final class Prefs {
 
   private static String getNodeKey(String key) {
     final int dotIndex = key.lastIndexOf('.');
-    return StringUtil.toLowerCase((dotIndex >= 0 ? key.substring(dotIndex + 1) : key));
+    return Strings.toLowerCase((dotIndex >= 0 ? key.substring(dotIndex + 1) : key));
   }
 
   private static Preferences getPreferences(String key) {
@@ -104,7 +103,7 @@ public final class Prefs {
     if (dotIndex > 0) {
       final StringTokenizer tokenizer = new StringTokenizer(key.substring(0, dotIndex), ".", false);
       while (tokenizer.hasMoreElements()) {
-        prefs = prefs.node(StringUtil.toLowerCase(tokenizer.nextElement()));
+        prefs = prefs.node(Strings.toLowerCase(tokenizer.nextElement()));
       }
     }
     return prefs;
