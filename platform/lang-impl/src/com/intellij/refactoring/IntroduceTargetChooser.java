@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -26,6 +26,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public final class IntroduceTargetChooser {
   private IntroduceTargetChooser() {
@@ -63,21 +64,15 @@ public final class IntroduceTargetChooser {
                                                         int selection,
                                                         @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
     List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer));
-    Pass<MyIntroduceTarget<T>> callbackWrapper = new Pass<>() {
-      @Override
-      public void pass(MyIntroduceTarget<T> target) {
-        callback.pass(target.getPlace());
-      }
-    };
-    showIntroduceTargetChooser(editor, targets, callbackWrapper, title, selection);
+    showIntroduceTargetChooser(editor, targets, target -> callback.pass(target.getPlace()), title, selection);
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
                                                                             @NotNull List<T> expressions,
-                                                                            @NotNull Pass<? super T> callback,
+                                                                            @NotNull Consumer<? super T> callback,
                                                                             @NotNull @NlsContexts.PopupTitle String title,
                                                                             int selection) {
-    showIntroduceTargetChooser(editor, expressions, callback, title, null, selection);
+    showIntroduceTargetChooser(editor, expressions, Pass.create(callback), title, null, selection);
   }
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,

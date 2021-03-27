@@ -1,12 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -26,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Pavel.Dolgov
@@ -33,10 +31,8 @@ import java.util.*;
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
-  private static final Pass<ExtractMethodProcessor> USE_SNAPSHOT_TARGET_CLASS = new Pass<>() {
-    @Override
-    public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
-  };
+  // it's a dummy but it's required to select the target class
+  private static final Consumer<ExtractMethodProcessor> USE_SNAPSHOT_TARGET_CLASS = processor -> {};
 
   public JavaDuplicatesExtractMethodProcessor(PsiElement @NotNull [] elements, @NotNull @NlsContexts.DialogTitle String refactoringName) {
     this(elements, null, refactoringName);
@@ -167,7 +163,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return prepare(null, showErrorHint);
   }
 
-  private boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass, boolean showErrorHint) {
+  private boolean prepare(@Nullable Consumer<ExtractMethodProcessor> pass, boolean showErrorHint) {
     setShowErrorDialogs(false);
     try {
       if (prepare(pass)) {

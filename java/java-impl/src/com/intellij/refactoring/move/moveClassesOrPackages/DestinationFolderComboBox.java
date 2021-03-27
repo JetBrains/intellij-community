@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
@@ -36,15 +36,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.Consumer;
 
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);
-  
+
   private PsiDirectory myInitialTargetDirectory;
   private List<VirtualFile> mySourceRoots;
   private Project myProject;
   private boolean myLeaveInTheSameRoot;
-  private Pass<String> myUpdateErrorMessage;
+  private Consumer<String> myUpdateErrorMessage;
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   public DestinationFolderComboBox() {
@@ -79,7 +80,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
 
   public void setData(final Project project,
                       final PsiDirectory initialTargetDirectory,
-                      final Pass<@NlsContexts.DialogMessage String> errorMessageUpdater, 
+                      final Consumer<@NlsContexts.DialogMessage String> errorMessageUpdater,
                       final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
     mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
@@ -115,7 +116,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};
-    myLeaveInTheSameRoot = initialTargetDirectory == null || 
+    myLeaveInTheSameRoot = initialTargetDirectory == null ||
                            initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
     addActionListener(new ActionListener() {
       @Override
@@ -193,18 +194,18 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   private void updateErrorMessage(ProjectFileIndex fileIndex, Object selectedItem) {
-    myUpdateErrorMessage.pass(null);
+    myUpdateErrorMessage.accept(null);
     if (myInitialTargetDirectory != null && selectedItem instanceof DirectoryChooser.ItemWrapper && selectedItem != NULL_WRAPPER) {
       final PsiDirectory directory = ((DirectoryChooser.ItemWrapper)selectedItem).getDirectory();
       final boolean isSelectionInTestSourceContent = fileIndex.isInTestSourceContent(directory.getVirtualFile());
       final boolean inTestSourceContent = fileIndex.isInTestSourceContent(myInitialTargetDirectory.getVirtualFile());
       if (isSelectionInTestSourceContent != inTestSourceContent) {
         if (inTestSourceContent && reportBaseInTestSelectionInSource()) {
-          myUpdateErrorMessage.pass(JavaBundle.message("destination.combo.source.root.not.expected.conflict"));
+          myUpdateErrorMessage.accept(JavaBundle.message("destination.combo.source.root.not.expected.conflict"));
         }
 
         if (isSelectionInTestSourceContent && reportBaseInSourceSelectionInTest()) {
-          myUpdateErrorMessage.pass(JavaBundle.message("destination.combo.test.root.not.expected.conflict"));
+          myUpdateErrorMessage.accept(JavaBundle.message("destination.combo.test.root.not.expected.conflict"));
         }
       }
     }

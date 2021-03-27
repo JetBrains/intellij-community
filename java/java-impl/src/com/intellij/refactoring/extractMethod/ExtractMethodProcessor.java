@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -60,6 +60,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchType;
@@ -217,7 +218,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   /**
    * Invoked in atomic action
    */
-  public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+  public boolean prepare(@Nullable java.util.function.Consumer<ExtractMethodProcessor> pass) throws PrepareFailedException {
     if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
@@ -476,11 +477,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
-    
+
     class Visitor extends StandardInstructionVisitor {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
-      
+
       @Override
       protected void beforeExpressionPush(@NotNull DfaValue value,
                                           @NotNull PsiExpression expression,
@@ -1865,7 +1866,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean chooseTargetClass(PsiElement codeFragment,
-                                    final Pass<ExtractMethodProcessor> extractPass,
+                                    final java.util.function.Consumer<ExtractMethodProcessor> extractPass,
                                     @Nullable PsiClass defaultTargetClass) throws PrepareFailedException {
     final List<PsiVariable> inputVariables = myControlFlowWrapper.getInputVariables(codeFragment, myElements, myOutputVariables);
 
@@ -2036,11 +2037,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     return variable.getName();
   }
 
-  private static boolean shouldAcceptCurrentTarget(Pass<ExtractMethodProcessor> extractPass, PsiElement target) {
+  private static boolean shouldAcceptCurrentTarget(java.util.function.Consumer<ExtractMethodProcessor> extractPass, PsiElement target) {
     return extractPass == null && !(target instanceof PsiAnonymousClass);
   }
 
-  private boolean applyChosenClassAndExtract(List<? extends PsiVariable> inputVariables, @Nullable Pass<? super ExtractMethodProcessor> extractPass)
+  private boolean applyChosenClassAndExtract(List<? extends PsiVariable> inputVariables, @Nullable Consumer<? super ExtractMethodProcessor> extractPass)
     throws PrepareFailedException {
     myStatic = shouldBeStatic();
     final Set<PsiField> fields = new LinkedHashSet<>();
@@ -2055,7 +2056,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     checkCanBeChainedConstructor();
 
     if (extractPass != null) {
-      extractPass.pass(this);
+      extractPass.accept(this);
     }
     return true;
   }

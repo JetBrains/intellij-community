@@ -194,7 +194,7 @@ public final class PrivateKeyReader {
  *
  * @author zhang
  */
-class DerParser {
+final class DerParser {
 
   // Classes
   public final static int UNIVERSAL = 0x00;
@@ -330,7 +330,7 @@ class DerParser {
  *
  * @author zhang
  */
-class Asn1Object {
+final class Asn1Object {
 
   protected final int type;
   protected final int length;

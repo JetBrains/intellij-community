@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.JavaBundle;
@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
@@ -46,6 +45,7 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   private static final String RECENTS_KEY = "MoveClassesOrPackagesDialog.RECENTS_KEY";
@@ -164,13 +164,10 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
         initialTargetDirectory = null;
       }
     }
-    Pass<String> updater = new Pass<@NlsContexts.DialogMessage String>() {
-      @Override
-      public void pass(@NlsContexts.DialogMessage String s) {
-        setErrorText(s, myDestinationFolderCB);
-        if (s == null) {
-          validateButtons();
-        }
+    Consumer<String> updater = s -> {
+      setErrorText(s, myDestinationFolderCB);
+      if (s == null) {
+        validateButtons();
       }
     };
     validateButtons();
