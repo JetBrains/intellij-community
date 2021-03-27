@@ -20,16 +20,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.IntroduceHolderFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class DoubleCheckedLockingInspection extends BaseInspection {
 
@@ -45,12 +49,17 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(final Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
-    if (field == null) {
-      return null;
+    final PsiIfStatement innerIf = (PsiIfStatement)infos[1];
+    final PsiIfStatement outerIf = (PsiIfStatement)infos[2];
+    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+    final IntroduceHolderFix fix = IntroduceHolderFix.createFix(field, innerIf);
+    if (fix != null && outerIf.getElseBranch() == null) {
+      fixes.add(fix);
     }
-    return new DoubleCheckedLockingFix(field);
+    fixes.add(new DoubleCheckedLockingFix(field));
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   private static final class DoubleCheckedLockingFix extends InspectionGadgetsFix {
@@ -176,7 +185,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
       if (field.hasModifierProperty(PsiModifier.VOLATILE) && PsiUtil.isLanguageLevel5OrHigher(statement)) {
         return;
       }
-      registerStatementError(statement, field);
+      registerStatementError(statement, field, innerIf, statement);
     }
   }
 }

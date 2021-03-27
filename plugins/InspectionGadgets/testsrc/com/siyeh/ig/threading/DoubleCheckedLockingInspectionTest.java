@@ -3,6 +3,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,6 +14,7 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
 
   public void testDoubleCheckedLocking() {
     doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
   public void testSimple() {

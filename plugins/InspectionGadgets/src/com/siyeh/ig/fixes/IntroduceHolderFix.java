@@ -43,15 +43,58 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
-    final PsiElement resolved = expression.resolve();
+    final PsiElement element = descriptor.getPsiElement();
+    final PsiReferenceExpression referenceExpression;
+    final PsiIfStatement ifStatement;
+    if (element instanceof PsiKeyword) {
+      // double-checked locking
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiIfStatement)) {
+        return;
+      }
+      ifStatement = (PsiIfStatement)parent;
+      final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+      if (!(thenBranch instanceof PsiSynchronizedStatement)) {
+        return;
+      }
+      final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)thenBranch;
+      final PsiCodeBlock body = synchronizedStatement.getBody();
+      final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
+      if (!(statement instanceof PsiIfStatement)) {
+        return;
+      }
+      final PsiIfStatement innerIfStatement = (PsiIfStatement)statement;
+      final PsiStatement thenBranch2 = ControlFlowUtils.stripBraces(innerIfStatement.getThenBranch());
+      if (!(thenBranch2 instanceof PsiExpressionStatement)) {
+        return;
+      }
+      final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)thenBranch2;
+      final PsiExpression expression = expressionStatement.getExpression();
+      if (!(expression instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      referenceExpression = (PsiReferenceExpression)lhs;
+    } else {
+      referenceExpression = (PsiReferenceExpression)element;
+      ifStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiIfStatement.class);
+    }
+    replaceWithStaticHolder(referenceExpression, ifStatement);
+  }
+
+  private void replaceWithStaticHolder(PsiReferenceExpression referenceExpression, PsiIfStatement ifStatement) {
+    final PsiElement resolved = referenceExpression.resolve();
     if (!(resolved instanceof PsiField)) {
       return;
     }
     final PsiField field = (PsiField)resolved;
     final String fieldName = field.getName();
     @NonNls final String holderName = StringUtil.capitalize(fieldName) + "Holder";
-    final PsiElement expressionParent = expression.getParent();
+    final PsiElement expressionParent = referenceExpression.getParent();
     if (!(expressionParent instanceof PsiAssignmentExpression)) {
       return;
     }
@@ -63,7 +106,7 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     @NonNls final String text = "private static final class " + holderName + " {}";
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(field.getProject());
     final PsiClass holder = elementFactory.createClassFromText(text, field).getInnerClasses()[0];
-    final PsiMember method = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+    final PsiMember method = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class);
     if (method == null) {
       return;
     }
@@ -76,9 +119,8 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     }
     newField.setInitializer(rhs);
-    CodeStyleManager.getInstance(project).reformat(holderClass);
+    CodeStyleManager.getInstance(referenceExpression.getProject()).reformat(holderClass);
 
-    final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(expression, PsiIfStatement.class);
     if (ifStatement != null) {
       new CommentTracker().deleteAndRestoreComments(ifStatement);
     }
