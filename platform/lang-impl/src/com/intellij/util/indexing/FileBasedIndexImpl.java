@@ -1349,7 +1349,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             fc.setSubstituteFileType(indexedFile.getFileType());
             ProgressManager.checkCanceled();
 
-            psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
             initFileContent(fc, psiFile);
 
             fileTypeRef.set(fc.getFileType());
