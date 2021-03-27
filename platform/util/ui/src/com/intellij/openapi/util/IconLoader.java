@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -54,9 +54,8 @@ public final class IconLoader {
 
   // the key: URL or Pair(path, classLoader)
   private static final ConcurrentMap<Object, CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
-  /**
-   * This cache contains mapping between icons and disabled icons.
-   */
+
+  // contains mapping between icons and disabled icons.
   private static final Cache<Icon, Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
 
   private static volatile boolean STRICT_GLOBAL;
@@ -530,8 +529,9 @@ public final class IconLoader {
       icon = getOrigin((RetrievableIcon)icon);
     }
 
-    return Objects.requireNonNull(iconToDisabledIcon.get(icon,
-           existingIcon -> filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor)));
+    return Objects.requireNonNull(iconToDisabledIcon.get(icon, existingIcon -> {
+      return filterIcon(existingIcon, UIUtil::getGrayFilter/* returns laf-aware instance */, ancestor);
+    }));
   }
 
   /**

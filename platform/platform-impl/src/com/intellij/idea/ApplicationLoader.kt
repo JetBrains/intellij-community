@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ApplicationLoader")
 package com.intellij.idea
 
@@ -50,6 +50,7 @@ import java.util.function.Function
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
+@Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 private fun executeInitAppInEdt(args: List<String>,
@@ -117,7 +118,7 @@ private fun startApp(app: ApplicationImpl,
   // this code is here for one simple reason - here we have application,
   // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
   // but it is very important to call registerRegistryAndMessageBusAndComponent immediately after application creation
-  // and do not place any time-consuming code in between (e.g. showLicenseeInfoOnSplash)
+  // and do not place any time-consuming code in between
   val registerRegistryAndInitStoreFuture = registerRegistryAndInitStore(registerFuture, app)
 
   val headless = app.isHeadlessEnvironment
