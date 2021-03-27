@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -12,15 +13,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class DescriptorLoadingContext implements AutoCloseable {
-  @SuppressWarnings("SpellCheckingInspection")
-  private static final Map<String, String> ZIP_OPTIONS = Collections.singletonMap("zipinfo-time", "false");
-
-  private final Map<Path, FileSystem> openedFiles = new HashMap<>();
+  private @Nullable Map<Path, FileSystem> openedFiles;
   final DescriptorListLoadingContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
 
-  final PathBasedJdomXIncluder.PathResolver<?> pathResolver;
+  final PathBasedJdomXIncluder.PathResolver pathResolver;
 
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
@@ -28,17 +26,21 @@ final class DescriptorLoadingContext implements AutoCloseable {
   DescriptorLoadingContext(@NotNull DescriptorListLoadingContext parentContext,
                            boolean isBundled,
                            boolean isEssential,
-                           @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
+                           @NotNull PathBasedJdomXIncluder.PathResolver pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;
     this.pathResolver = pathResolver;
   }
 
-  @NotNull FileSystem open(@NotNull Path file) throws IOException {
+  @NotNull FileSystem open(@NotNull Path file) {
+    if (openedFiles == null) {
+      openedFiles = new HashMap<>();
+    }
     return openedFiles.computeIfAbsent(file, it -> {
       try {
-        return parentContext.zipFsProvider.newFileSystem(it, ZIP_OPTIONS);
+        //noinspection SpellCheckingInspection
+        return parentContext.getZipFsProvider().newFileSystem(it, Collections.singletonMap("zipinfo-time", "false"));
       }
       catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -48,11 +50,13 @@ final class DescriptorLoadingContext implements AutoCloseable {
 
   @Override
   public void close() {
-    for (FileSystem file : openedFiles.values()) {
-      try {
-        file.close();
-      }
-      catch (IOException ignore) {
+    if (openedFiles != null) {
+      for (FileSystem file : openedFiles.values()) {
+        try {
+          file.close();
+        }
+        catch (IOException ignore) {
+        }
       }
     }
   }

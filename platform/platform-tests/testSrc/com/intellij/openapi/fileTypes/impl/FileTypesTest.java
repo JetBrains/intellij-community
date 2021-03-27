@@ -63,7 +63,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -534,7 +534,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.name = MyTestFileType.NAME;
     bean.implementationClass = MyTestFileType.class.getName();
     bean.extensions = MyTestFileType.EXTENSION;
-    IdeaPluginDescriptorImpl pluginDescriptor = new IdeaPluginDescriptorImpl(Paths.get(""), Paths.get(""), false);
+    IdeaPluginDescriptorImpl pluginDescriptor = new IdeaPluginDescriptorImpl(Path.of(""), false);
     pluginDescriptor.readForTest(new Element("empty"), PluginId.getId("myPlugin"));
     Disposable disposable = registerFileType(bean, pluginDescriptor);
     myFileTypeManager.getRegisteredFileTypes();

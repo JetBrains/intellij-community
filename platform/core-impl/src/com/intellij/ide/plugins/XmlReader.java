@@ -238,8 +238,9 @@ final class XmlReader {
   static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                    @NotNull IdeaPluginDescriptorImpl descriptor,
                                    @NotNull DescriptorListLoadingContext context,
-                                   @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver,
-                                   @NotNull List<PluginDependency> dependencies) throws IOException {
+                                   @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
+                                   @NotNull List<PluginDependency> dependencies,
+                                   @NotNull DataLoader dataLoader) throws IOException, JDOMException {
     List<String> visitedFiles = null;
     for (PluginDependency dependency : dependencies) {
       if (dependency.isDisabledOrBroken) {
@@ -257,17 +258,25 @@ final class XmlReader {
       }
 
       Element element;
+      Exception resolveError = null;
       try {
-        element = pathResolver.resolvePath(descriptor.basePath, configFile, context.getXmlFactory());
+        element = pathResolver.resolvePath(dataLoader, configFile, context.getXmlFactory());
       }
       catch (IOException | JDOMException e) {
+        resolveError = e;
+        element = null;
+      }
+
+      if (element == null) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
         if (context.ignoreMissingSubDescriptor) {
           LOG.info(message);
-          LOG.debug(e);
+          if (resolveError != null) {
+            LOG.debug(resolveError);
+          }
         }
         else {
-          throw new RuntimeException(message, e);
+          throw new RuntimeException(message, resolveError);
         }
         continue;
       }
@@ -278,11 +287,11 @@ final class XmlReader {
 
       checkCycle(rootDescriptor, configFile, visitedFiles);
 
-      IdeaPluginDescriptorImpl subDescriptor = new IdeaPluginDescriptorImpl(descriptor.path, descriptor.basePath, descriptor.isBundled());
+      IdeaPluginDescriptorImpl subDescriptor = new IdeaPluginDescriptorImpl(descriptor.path, descriptor.isBundled());
       subDescriptor.id = rootDescriptor.id;
       subDescriptor.descriptorPath = dependency.configFile;
       visitedFiles.add(configFile);
-      if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor)) {
+      if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor, dataLoader)) {
         dependency.subDescriptor = subDescriptor;
       }
       visitedFiles.clear();

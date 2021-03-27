@@ -6,7 +6,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Murmur3_32Hash
-import com.intellij.util.zip.ImmutableZipEntry
+import com.intellij.util.lang.ImmutableZipEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.io.zip
@@ -32,7 +32,8 @@ class ReorderJarsTest {
   @Test
   fun `dir to create`() {
     val packageIndexBuilder = PackageIndexBuilder()
-    packageIndexBuilder.add(listOf(ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
+    packageIndexBuilder.add(listOf(
+      ImmutableZipEntry("tsMeteorStubs/meteor-v1.3.1.d.ts", 0, 0, 0, 0, 0)))
     assertThat(packageIndexBuilder.dirsToCreate).containsExactlyInAnyOrder("tsMeteorStubs")
     assertThat(packageIndexBuilder.resourcePackageHashSet).containsExactlyInAnyOrder(0, Murmur3_32Hash.MURMUR3_32.hashString("tsMeteorStubs", 0, "tsMeteorStubs".length))
   }

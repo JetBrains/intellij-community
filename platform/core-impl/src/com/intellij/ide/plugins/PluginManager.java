@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
@@ -22,6 +22,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -70,7 +71,7 @@ public final class PluginManager {
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                                   @NotNull Set<PluginId> disabledPlugins,
                                                                   boolean bundled,
-                                                                  PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
+                                                                  PathBasedJdomXIncluder.PathResolver pathResolver) {
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
       return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
@@ -121,7 +122,6 @@ public final class PluginManager {
     return PluginManagerCore.getLoadedPlugins();
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
@@ -151,7 +151,6 @@ public final class PluginManager {
   /**
    * Consider using {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}.
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {
     return PluginManagerCore.enablePlugin(id);
   }
@@ -161,21 +160,22 @@ public final class PluginManager {
     return PluginManagerCore.getLogger();
   }
 
-  @ApiStatus.Internal
+  @TestOnly
   public static void loadDescriptorFromFile(@NotNull IdeaPluginDescriptorImpl descriptor,
                                             @NotNull Path file,
+                                            @NotNull Path basePath,
                                             @Nullable SafeJdomFactory factory,
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
-    descriptor.readExternal(JDOMUtil.load(file, factory), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, parentContext, descriptor);
+    descriptor.readExternal(JDOMUtil.load(file, factory), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, parentContext, descriptor,
+                            new LocalFsDataLoader(basePath));
   }
 
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) {
       return false;
@@ -194,7 +194,6 @@ public final class PluginManager {
     return false;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {
@@ -205,12 +204,10 @@ public final class PluginManager {
     return null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public boolean hideImplementationDetails() {
     return !Registry.is("plugins.show.implementation.details");
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @ApiStatus.Internal
   public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
     @SuppressWarnings("SuspiciousToArrayCall")

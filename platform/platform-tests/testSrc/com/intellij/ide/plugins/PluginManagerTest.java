@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -21,7 +21,6 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -135,7 +134,7 @@ public class PluginManagerTest {
 
   @Test
   public void testModulePluginIdContract() {
-    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
+    Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "withModules");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath, Collections.emptySet(), true);
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = PluginManagerCore.buildPluginIdMap(Collections.singletonList(descriptorBundled));
     PluginId moduleId = PluginId.getId("foo.bar");
@@ -145,7 +144,7 @@ public class PluginManagerTest {
 
   @Test
   public void testIdentifyPreInstalledPlugins() {
-    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
@@ -162,7 +161,7 @@ public class PluginManagerTest {
 
   @Test
   public void testIdentifyPreInstalledPluginsInReverseOrder() {
-    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    Path pluginsPath = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
@@ -220,18 +219,28 @@ public class PluginManagerTest {
 
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
-    Path file = Paths.get(getTestDataPath(), testDataName);
+    Path file = Path.of(getTestDataPath(), testDataName);
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
     Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
-    BasePathResolver pathResolver = new BasePathResolver() {
+    PathBasedJdomXIncluder.PathResolver pathResolver = new PathBasedJdomXIncluder.PathResolver() {
       @Override
-      public @NotNull Element resolvePath(@NotNull Path basePath,
+      public @NotNull Element loadXIncludeReference(@NotNull DataLoader dataLoader,
+                                                    @Nullable String base,
+                                                    @NotNull String relativePath,
+                                                    @NotNull SafeJdomFactory jdomFactory) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public @NotNull Element resolvePath(@NotNull DataLoader dataLoader,
                                           @NotNull String relativePath,
                                           @NotNull SafeJdomFactory jdomFactory) {
         for (Element child : root.getChildren("config-file-idea-plugin")) {
           String url = Objects.requireNonNull(child.getAttributeValue("url"));
-          if (url.endsWith("/" + relativePath)) return child;
+          if (url.endsWith("/" + relativePath)) {
+            return child;
+          }
         }
         throw new AssertionError("Unexpected: " + relativePath);
       }
@@ -239,9 +248,9 @@ public class PluginManagerTest {
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
-      Path pluginPath = Paths.get(Objects.requireNonNull(url));
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, pluginPath, isBundled);
-      descriptor.readExternal(element, pathResolver, parentContext, descriptor);
+      Path pluginPath = Path.of(Objects.requireNonNull(url));
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, isBundled);
+      descriptor.readExternal(element, pathResolver, parentContext, descriptor, new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();

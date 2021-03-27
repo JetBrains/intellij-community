@@ -58,7 +58,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  final FileSystemProvider zipFsProvider;
+  private FileSystemProvider zipFsProvider;
 
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
@@ -70,8 +70,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
     ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
     optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
-
-    zipFsProvider = findZipFsProvider();
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
@@ -95,8 +93,16 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
-  private @NotNull
-  static FileSystemProvider findZipFsProvider() {
+  FileSystemProvider getZipFsProvider() {
+    FileSystemProvider result = zipFsProvider;
+    if (result == null) {
+      result = findZipFsProvider();
+      zipFsProvider = result;
+    }
+    return result;
+  }
+
+  private static @NotNull FileSystemProvider findZipFsProvider() {
     for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
       try {
         if (provider.getScheme().equals("jar")) {

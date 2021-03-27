@@ -27,8 +27,8 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
     Path base = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "updates/customRepositories", getTestName(true));
     BuildNumber buildNumber = BuildNumber.fromString("IU-142.100");
     for (String name : new String[]{"plugin1.xml", "plugin2.xml"}) {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(base, base, false);
-      PluginManager.loadDescriptorFromFile(descriptor, base.resolve(name), null, Collections.emptySet());
+      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(base, false);
+      PluginManager.loadDescriptorFromFile(descriptor, base.resolve(name), base, null, Collections.emptySet());
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
       UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null, null);
     }

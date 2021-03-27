@@ -3,15 +3,12 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.Murmur3_32Hash;
-import com.intellij.util.zip.ImmutableZipEntry;
-import com.intellij.util.zip.ImmutableZipFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,15 +26,14 @@ public final class ZipResourceFile implements ResourceFile {
 
   private final ImmutableZipFile zipFile;
 
-  public ZipResourceFile(@NotNull Path file) {
-    try {
-      zipFile = ImmutableZipFile.load(file, buffer -> {
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.getInt();
-      });
+  public ZipResourceFile(@NotNull Path file) throws IOException {
+    ZipFilePool pool = ZipFilePool.POOL;
+    if (pool == null) {
+      zipFile = ImmutableZipFile.load(file);
     }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
+    else {
+      Object zipFile = pool.loadZipFile(file);
+      this.zipFile = (ImmutableZipFile)zipFile;
     }
   }
 

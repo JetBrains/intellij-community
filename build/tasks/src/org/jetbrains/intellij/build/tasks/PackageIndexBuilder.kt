@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.io.Murmur3_32Hash
-import com.intellij.util.zip.ImmutableZipEntry
+import com.intellij.util.lang.ImmutableZipEntry
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.intellij.build.io.ZipFileWriter
 

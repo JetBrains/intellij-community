@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -21,10 +20,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 @SuppressWarnings("DuplicatedCode")
-final class PathBasedJdomXIncluder<T> {
+final class PathBasedJdomXIncluder {
   private static final Logger LOG = Logger.getInstance(PathBasedJdomXIncluder.class);
 
-  public static final PathResolver<Path> DEFAULT_PATH_RESOLVER = new BasePathResolver();
+  public static final PathResolver DEFAULT_PATH_RESOLVER = new PluginXmlPathResolver(Collections.emptyList());
 
   private static final @NonNls String INCLUDE = "include";
   private static final @NonNls String HREF = "href";
@@ -34,29 +33,21 @@ final class PathBasedJdomXIncluder<T> {
   private static final @NonNls String XPOINTER = "xpointer";
 
   private final DescriptorListLoadingContext context;
-  private final PathResolver<T> pathResolver;
+  private final PathResolver pathResolver;
 
-  private PathBasedJdomXIncluder(@NotNull DescriptorListLoadingContext context, @NotNull PathResolver<T> pathResolver) {
+  PathBasedJdomXIncluder(@NotNull DescriptorListLoadingContext context, @NotNull PathResolver pathResolver) {
     this.context = context;
     this.pathResolver = pathResolver;
-  }
-
-  /**
-   * Original element will be mutated in place.
-   */
-  public static <T> void resolveNonXIncludeElement(@NotNull Element original,
-                                                   @Nullable Path base,
-                                                   @NotNull DescriptorListLoadingContext context,
-                                                   @NotNull PathResolver<T> pathResolver) {
-    LOG.assertTrue(!isIncludeElement(original));
-    new PathBasedJdomXIncluder<>(context, pathResolver).resolveNonXIncludeElement(original, pathResolver.createNewStack(base));
   }
 
   private static boolean isIncludeElement(Element element) {
     return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
   }
 
-  private @NotNull List<Element> resolveXIncludeElement(@NotNull Element linkElement, @NotNull List<T> bases, @Nullable ArrayList<Element> result) {
+  private @NotNull List<Element> resolveXIncludeElement(@NotNull DataLoader dataLoader,
+                                                        @NotNull Element linkElement,
+                                                        @Nullable String base,
+                                                        @Nullable ArrayList<Element> result) throws JDOMException {
     String relativePath = linkElement.getAttributeValue(HREF);
     if (relativePath == null) {
       throw new RuntimeException("Missing href attribute");
@@ -67,7 +58,7 @@ final class PathBasedJdomXIncluder<T> {
       LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
     }
 
-    Element remoteParsed = loadXIncludeReference(bases, relativePath, linkElement);
+    Element remoteParsed = loadXIncludeReference(dataLoader, base, relativePath, linkElement);
     if (remoteParsed != null) {
       String xpointer = linkElement.getAttributeValue(XPOINTER);
       if (xpointer != null) {
@@ -85,6 +76,7 @@ final class PathBasedJdomXIncluder<T> {
       result.ensureCapacity(result.size() + remoteParsed.getContentSize());
     }
 
+    String childBase = getChildBase(base, relativePath);
     Iterator<Content> iterator = remoteParsed.getContent().iterator();
     while (iterator.hasNext()) {
       Content content = iterator.next();
@@ -96,14 +88,33 @@ final class PathBasedJdomXIncluder<T> {
 
       Element element = (Element)content;
       if (isIncludeElement(element)) {
-        resolveXIncludeElement(element, bases, result);
+        resolveXIncludeElement(dataLoader, element, childBase, result);
       }
       else {
-        resolveNonXIncludeElement(element, bases);
+        resolveNonXIncludeElement(dataLoader, element, childBase);
         result.add(element);
       }
     }
     return result;
+  }
+
+  private static @Nullable String getChildBase(@Nullable String base, @NotNull String relativePath) {
+    String childBase;
+    int end = relativePath.lastIndexOf('/');
+    if (end > 0) {
+      if (relativePath.startsWith("/META-INF/")) {
+        return base;
+      }
+
+      childBase = relativePath.substring(0, end);
+      if (base != null) {
+        childBase = base + "/" + childBase;
+      }
+    }
+    else {
+      childBase = base;
+    }
+    return childBase;
   }
 
   private static @Nullable Element extractNeededChildren(@NotNull Element remoteElement, @NotNull String xpointer) {
@@ -132,25 +143,40 @@ final class PathBasedJdomXIncluder<T> {
     return result;
   }
 
-  private @Nullable Element loadXIncludeReference(@NotNull List<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
-    int baseStackSize = bases.size();
+  private @Nullable Element loadXIncludeReference(@NotNull DataLoader dataLoader,
+                                                  @Nullable String base,
+                                                  @NotNull String relativePath,
+                                                  @NotNull Element referrerElement) throws JDOMException {
     try {
-      String base = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
-      if (base != null) {
+      String explicitBase = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
+      if (explicitBase != null) {
         // to simplify implementation, no need to support obscure and not used base attribute
-        LOG.error("Do not use xml:base attribute: " + base);
+        LOG.error("Do not use xml:base attribute: " + explicitBase);
       }
-      Element root = pathResolver.loadXIncludeReference(bases, relativePath, base, context.getXmlFactory());
+
+      Element root = pathResolver.loadXIncludeReference(dataLoader, base, relativePath, context.getXmlFactory());
+      if (root == null) {
+        Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
+        if (fallbackElement != null) {
+          return null;
+        }
+
+        if (context.ignoreMissingInclude) {
+          LOG.info(relativePath + " include ignored (dataLoader=" + dataLoader + ")");
+          return null;
+        }
+        else {
+          throw new RuntimeException("Cannot resolve " + relativePath + " (dataLoader=" + dataLoader + ")");
+        }
+      }
+
       if (isIncludeElement(root)) {
         throw new UnsupportedOperationException("root tag of remote cannot be include");
       }
       else {
-        resolveNonXIncludeElement(root, bases);
+        resolveNonXIncludeElement(dataLoader, root, getChildBase(base, relativePath));
       }
       return root;
-    }
-    catch (JDOMException e) {
-      throw new RuntimeException(e);
     }
     catch (IOException e) {
       Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
@@ -166,15 +192,10 @@ final class PathBasedJdomXIncluder<T> {
         throw new RuntimeException(e);
       }
     }
-    finally {
-      // stack not modified, if, for example, pathResolver resolves element not via filesystem
-      if (baseStackSize != bases.size()) {
-        bases.remove(bases.size() - 1);
-      }
-    }
   }
 
-  private void resolveNonXIncludeElement(@NotNull Element original, @NotNull List<T> bases) {
+  public void resolveNonXIncludeElement(@NotNull DataLoader dataLoader, @NotNull Element original, @Nullable String base)
+    throws JDOMException {
     List<Content> contentList = original.getContent();
     for (int i = contentList.size() - 1; i >= 0; i--) {
       Content content = contentList.get(i);
@@ -184,28 +205,26 @@ final class PathBasedJdomXIncluder<T> {
 
       Element element = (Element)content;
       if (isIncludeElement(element)) {
-        original.setContent(i, resolveXIncludeElement(element, bases, null));
+        original.setContent(i, resolveXIncludeElement(dataLoader, element, base, null));
       }
       else {
         // process child element to resolve possible includes
-        resolveNonXIncludeElement(element, bases);
+        resolveNonXIncludeElement(dataLoader, element, base);
       }
     }
   }
 
-  interface PathResolver<T> {
+  interface PathResolver {
     default boolean isFlat() {
       return false;
     }
 
-    @NotNull Element loadXIncludeReference(@NotNull List<T> bases,
-                                           @NotNull String relativePath,
-                                           @Nullable String base,
-                                           @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+    @Nullable Element loadXIncludeReference(@NotNull DataLoader dataLoader,
+                                            @Nullable String base,
+                                            @NotNull String relativePath,
+                                            @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
 
-    @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
+    @Nullable Element resolvePath(@NotNull DataLoader dataLoader, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
       throws IOException, JDOMException;
-
-    @NotNull List<T> createNewStack(@Nullable Path base);
   }
 }

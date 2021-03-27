@@ -33,6 +33,7 @@ import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.write
+import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
@@ -236,6 +237,8 @@ private fun startApp(app: ApplicationImpl,
     .thenRun {
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
+        // no need to use pool once plugins are loaded
+        ZipFilePool.POOL = null
       }
       else {
         // backward compatibility

@@ -39,6 +39,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
@@ -63,7 +64,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
@@ -180,7 +184,7 @@ public final class StartupUtil {
     Future<AppStarter> appStarterFuture = executorService.submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("main class loading");
       @SuppressWarnings("unchecked")
-      Class<AppStarter> aClass = (Class<AppStarter>)Class.forName(mainClass);
+      Class<AppStarter> aClass = (Class<AppStarter>)StartupUtil.class.getClassLoader().loadClass(mainClass);
       subActivity.end();
       return aClass.getDeclaredConstructor().newInstance();
     });
@@ -229,6 +233,7 @@ public final class StartupUtil {
 
     // plugins cannot be loaded at this moment if needed to import configs, because plugins may be added after importing
     if (!configImportNeeded) {
+      ZipFilePool.POOL = new ZipFilePoolImpl();
       PluginManagerCore.scheduleDescriptorLoading();
     }
 
@@ -326,11 +331,13 @@ public final class StartupUtil {
    * This method works by calling {@link AWTAutoShutdown#notifyThreadBusy(Thread)} from a non-EDT thread. This will put a
    * thread into the thread map forever, and thus will effectively disable auto shutdown behavior for this application.
    * <p/>
-   * This should never be called from a EDT, since a EDT could remove itself from the busy map while there're no events in
+   * This should never be called from a EDT, since a EDT could remove itself from the busy map while there are no events in
    * the event queue.
    */
   private static void enableHeadlessAwtGuard() {
-    if (EventQueue.isDispatchThread()) throw new AssertionError("Should not be called from EDT");
+    if (EventQueue.isDispatchThread()) {
+      throw new AssertionError("Should not be called from EDT");
+    }
     AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
   }
 
@@ -444,6 +451,7 @@ public final class StartupUtil {
     Activity activity = StartUpMeasurer.startMainActivity("console logger configuration");
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
+    @SuppressWarnings("deprecation")
     org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
     if (!root.getAllAppenders().hasMoreElements()) {
       root.setLevel(Level.WARN);
@@ -498,12 +506,12 @@ public final class StartupUtil {
       return false;
     }
 
-    Path logPath = Paths.get(PathManager.getLogPath()).normalize();
+    Path logPath = Path.of(PathManager.getLogPath()).normalize();
     if (!checkDirectory(logPath, "Log", PathManager.PROPERTY_LOG_PATH, !logPath.startsWith(systemPath), false, false)) {
       return false;
     }
 
-    Path tempPath = Paths.get(PathManager.getTempPath()).normalize();
+    Path tempPath = Path.of(PathManager.getTempPath()).normalize();
     return checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !tempPath.startsWith(systemPath),
                           false, SystemInfoRt.isUnix && !SystemInfoRt.isMac);
   }
@@ -654,7 +662,7 @@ public final class StartupUtil {
       System.setProperty("pty4j.tmpdir", ideTempPath);
     }
     if (System.getProperty("pty4j.preferred.native.folder") == null) {
-      System.setProperty("pty4j.preferred.native.folder", Paths.get(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString());
+      System.setProperty("pty4j.preferred.native.folder", Path.of(PathManager.getLibPath(), "pty4j-native").toAbsolutePath().toString());
     }
     subActivity.end();
   }
@@ -721,7 +729,7 @@ public final class StartupUtil {
 
   private static String logPath(String path) {
     try {
-      Path configured = Paths.get(path), real = configured.toRealPath();
+      Path configured = Path.of(path), real = configured.toRealPath();
       if (!configured.equals(real)) return path + " -> " + real;
     }
     catch (IOException | InvalidPathException ignored) { }
@@ -856,10 +864,10 @@ public final class StartupUtil {
   public static @NotNull Path canonicalPath(@NotNull String path) {
     try {
       // toRealPath doesn't properly restore actual name of file on case-insensitive fs (see LockSupportTest.testUseCanonicalPathLock)
-      return Paths.get(new File(path).getCanonicalPath());
+      return Path.of(new File(path).getCanonicalPath());
     }
     catch (IOException ignore) {
-      Path file = Paths.get(path);
+      Path file = Path.of(path);
       try {
         return file.toAbsolutePath().normalize();
       }

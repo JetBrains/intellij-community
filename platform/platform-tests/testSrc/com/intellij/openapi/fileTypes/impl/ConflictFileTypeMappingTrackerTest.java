@@ -21,7 +21,7 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     IdeaPluginDescriptorImpl core = createDescriptor(PluginManagerCore.CORE_ID, true);
     IdeaPluginDescriptorImpl user1 = createDescriptor(PluginId.getId("user1"), false);
     IdeaPluginDescriptorImpl user2 = createDescriptor(PluginId.getId("user2"), false);
-    
+
     assertConflict(bundled1, bundled2, false, false);
     assertConflict(bundled1, core, false, true);
     assertConflict(bundled1, user1, true, true);
@@ -61,7 +61,7 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
 
   @NotNull
   private static IdeaPluginDescriptorImpl createDescriptor(PluginId id, boolean isBundled) {
-    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Path.of(""), Path.of(""), isBundled);
+    IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(Path.of(""), isBundled);
     descriptor.readForTest(new Element("empty"), id);
     return descriptor;
   }

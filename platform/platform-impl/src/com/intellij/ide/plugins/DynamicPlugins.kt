@@ -23,6 +23,7 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
+import com.intellij.idea.ZipFilePoolImpl
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
@@ -76,7 +77,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
-import com.intellij.util.io.URLUtil
+import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
 import net.sf.cglib.core.ClassNameReader
@@ -86,6 +87,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.text.SimpleDateFormat
@@ -97,7 +99,7 @@ import javax.swing.ToolTipManager
 import kotlin.collections.component1
 import kotlin.collections.component2
 
-private val LOG = logger<DynamicPlugins>()
+ private val LOG = logger<DynamicPlugins>()
 private val classloadersFromUnloadedPlugins = ContainerUtil.createWeakValueMap<PluginId, PluginClassLoader>()
 
 object DynamicPlugins {
@@ -516,6 +518,7 @@ object DynamicPlugins {
           serviceIfCreated<IconDeferrer>()?.clearCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
+          @Suppress("TestOnlyProblems")
           (ProjectManager.getInstanceIfCreated() as? ProjectManagerImpl)?.disposeDefaultProjectAndCleanupComponentsForDynamicPluginTests()
 
           if (options.disable) {
@@ -664,7 +667,7 @@ object DynamicPlugins {
       val subDescriptor = dependency.subDescriptor ?: continue
       val classLoader = subDescriptor.classLoader
       if (!pluginStateChecker.isPluginOrModuleLoaded(dependency.id)) {
-        LOG.assertTrue(classLoader == null, "Expected not to have any subdescriptor classloader when dependency ${dependency.id} is not loaded")
+        LOG.assertTrue(classLoader == null, "Expected not to have any sub descriptor classloader when dependency ${dependency.id} is not loaded")
         continue
       }
 
@@ -1015,25 +1018,26 @@ private class OptionalDependencyDescriptorLoader {
   private val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins())
 
   fun load(mainDescriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
-    val context = DescriptorLoadingContext(listContext, mainDescriptor.isBundled, /* isEssential = */ false,
-                                           PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)
-    val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(mainDescriptor, context)
+    val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(mainDescriptor, true)
+    val zipFilePool = ZipFilePoolImpl()
+    ZipFilePool.POOL = zipFilePool
     try {
-      val jarPair = URLUtil.splitJarUrl(mainDescriptor.basePath.toUri().toString())
-      val newBasePath = if (jarPair == null) {
-        mainDescriptor.basePath
+      val dataLoader: DataLoader
+      if (mainDescriptor.pluginPath.toString().endsWith(".jar")) {
+        val resolver = zipFilePool.load(mainDescriptor.pluginPath)
+        dataLoader = ImmutableZipFileDataLoader(resolver, mainDescriptor.pluginPath, zipFilePool)
       }
       else {
-        context.open(Paths.get(jarPair.first)).getPath(jarPair.second)
+        dataLoader = LocalFsDataLoader(mainDescriptor.pluginPath)
       }
 
-      val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
-      val subDescriptor = IdeaPluginDescriptorImpl(mainDescriptor.pluginPath, newBasePath, mainDescriptor.isBundled)
+      val element = pathResolver.resolvePath(dataLoader, dependencyConfigFile, pluginXmlFactory)!!
+      val subDescriptor = IdeaPluginDescriptorImpl(mainDescriptor.pluginPath, mainDescriptor.isBundled)
       // readExternal requires not-null id
       subDescriptor.id = mainDescriptor.id
       subDescriptor.name = mainDescriptor.name
       subDescriptor.descriptorPath = dependencyConfigFile
-      if (subDescriptor.readExternal(element, pathResolver, listContext, mainDescriptor)) {
+      if (subDescriptor.readExternal(element, pathResolver, listContext, mainDescriptor, dataLoader)) {
         return subDescriptor
       }
 
@@ -1045,7 +1049,9 @@ private class OptionalDependencyDescriptorLoader {
       return null
     }
     finally {
-      context.close()
+      ZipFilePool.POOL = null
+      // help GC
+      zipFilePool.clear()
     }
   }
 }
@@ -1154,7 +1160,7 @@ private fun loadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
 
 private class PluginStateChecker(private val loadedIdMap: MutableMap<PluginId, IdeaPluginDescriptorImpl>? = null) {
   companion object {
-    private val NULL_PLUGIN_DESCRIPTOR = IdeaPluginDescriptorImpl(Paths.get(""), Paths.get(""), false)
+    private val NULL_PLUGIN_DESCRIPTOR = IdeaPluginDescriptorImpl(Path.of(""), false)
   }
 
   private val loadedPlugins = PluginManagerCore.getLoadedPlugins(null)

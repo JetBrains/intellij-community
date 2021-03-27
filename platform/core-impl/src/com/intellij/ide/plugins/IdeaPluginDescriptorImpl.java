@@ -35,8 +35,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
   final Path path;
-  // base path for resolving optional dependency descriptors
-  final Path basePath;
 
   private final boolean isBundled;
 
@@ -92,9 +90,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   boolean incomplete;
 
-  public IdeaPluginDescriptorImpl(@NotNull Path path, @NotNull Path basePath, boolean isBundled) {
+  public IdeaPluginDescriptorImpl(@NotNull Path path, boolean isBundled) {
     this.path = path;
-    this.basePath = basePath;
     this.isBundled = isBundled;
   }
 
@@ -134,9 +131,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   boolean readExternal(@NotNull Element element,
-                       @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                       @NotNull DescriptorListLoadingContext context,
-                       @NotNull IdeaPluginDescriptorImpl mainDescriptor) throws IOException {
+                           @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
+                           @NotNull DescriptorListLoadingContext context,
+                           @NotNull IdeaPluginDescriptorImpl mainDescriptor,
+                           @NotNull DataLoader dataLoader) throws IOException, JDOMException {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -146,8 +144,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     XmlReader.readIdAndName(this, element);
 
-    //some information required for "incomplete" plugins can be in included files
-    PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context, pathResolver);
+    // some information required for "incomplete" plugins can be in included files
+    new PathBasedJdomXIncluder(context, pathResolver).resolveNonXIncludeElement(dataLoader, element, null);
+
     if (id != null && context.isPluginDisabled(id)) {
       markAsIncomplete(context, null, null);
     }
@@ -155,7 +154,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       if (id == null || name == null) {
         // read again after resolve
         XmlReader.readIdAndName(this, element);
-
         if (id != null && context.isPluginDisabled(id)) {
           markAsIncomplete(context, null, null);
         }
@@ -185,12 +183,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (pluginDependencies != null) {
-      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
+      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies, dataLoader);
     }
 
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     if (this == mainDescriptor) {
-      moduleLoop: for (PluginContentDescriptor.ModuleItem module : contentDescriptor.modules) {
+      moduleLoop:
+      for (PluginContentDescriptor.ModuleItem module : contentDescriptor.modules) {
         String descriptorFile = module.name + ".xml";
         if (pluginDependencies != null) {
           for (PluginDependency dependency : pluginDependencies) {
@@ -203,7 +202,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         // inject as xi:include does
         try {
-          Element moduleElement = pathResolver.resolvePath(basePath, descriptorFile, context.getXmlFactory());
+          Element moduleElement = pathResolver.resolvePath(dataLoader, descriptorFile, context.getXmlFactory());
+          if (moduleElement == null) {
+            throw new RuntimeException("Plugin " + this + " misses optional descriptor " + descriptorFile);
+          }
           doRead(moduleElement, context, mainDescriptor);
         }
         catch (JDOMException e) {
@@ -217,7 +219,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
+  private void readEssentialPluginInformation(@NotNull Element element,
+                                              @NotNull DescriptorListLoadingContext context) {
     if (descriptionChildText == null) {
       descriptionChildText = element.getChildTextTrim("description");
     }
@@ -228,12 +231,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myVersion = element.getChildTextTrim("version");
     }
     if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
-      DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + basePath + " (reason: disabled)");
+      DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + path + " (reason: disabled)");
     }
     if (pluginDependencies == null) {
       List<Element> dependsElements = element.getChildren("depends");
       for (Element dependsElement : dependsElements) {
-        readPluginDependency(basePath, context, dependsElement);
+        readPluginDependency(context, dependsElement);
       }
     }
     Element productElement = element.getChild("product-descriptor");
@@ -259,8 +262,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    * <br>{@code false} - otherwise
    */
   private boolean doRead(@NotNull Element element,
-                        @NotNull DescriptorListLoadingContext context,
-                        @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
+                         @NotNull DescriptorListLoadingContext context,
+                         @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -321,7 +324,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "depends":
-          if (!readPluginDependency(basePath, context, child)) {
+          if (!readPluginDependency(context, child)) {
             return true;
           }
           break;
@@ -422,7 +425,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     incompatibilities.add(PluginId.getId(pluginId));
   }
 
-  private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorListLoadingContext context, @NotNull Element child) {
+  private boolean readPluginDependency(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
     String dependencyIdString = child.getTextTrim();
     if (dependencyIdString.isEmpty()) {
       return true;
@@ -444,7 +447,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     else if (context.result.isBroken(dependencyId)) {
       if (!isOptional) {
         DescriptorListLoadingContext.LOG.info("Skipping reading of " +
-                                              id + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+                                              id + " from " + path + " (reason: non-optional dependency " + dependencyId + " is broken)");
         markAsIncomplete(context, () -> {
           return CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependencyId);
         }, null);
@@ -489,13 +492,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return true;
     }
 
-    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
-                                                                                         beforeCreateErrorCallback);
+    PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
+                                                                               beforeCreateErrorCallback);
     if (error == null) {
       return true;
     }
 
-    markAsIncomplete(context, null, null);  // error will be added by reportIncompatiblePlugin
+    // error will be added by reportIncompatiblePlugin
+    markAsIncomplete(context, null, null);
     context.result.reportIncompatiblePlugin(this, error);
     return false;
   }
@@ -756,12 +760,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public String getVendor() {
     return myVendor;
-  }
-
-  @Override
-  public String getOrganization() {
-    //TODO[ivan.chirkov]: support organizations for installed plugins
-    return "";
   }
 
   @Override

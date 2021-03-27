@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.io
 
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.util.zip.ImmutableZipFile
+import com.intellij.util.lang.ImmutableZipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.junit.Rule

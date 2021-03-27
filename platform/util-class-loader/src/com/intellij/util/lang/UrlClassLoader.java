@@ -36,7 +36,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private final List<Path> files;
   protected final ClassPath classPath;
-  private final ClassLoadingLocks classLoadingLocks;
+  private final ClassLoadingLocks<String> classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
 
   /**
@@ -163,7 +163,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, this, isMimicJarUrlConnectionNeeded);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
-    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
+    classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
