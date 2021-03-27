@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -22,7 +22,8 @@ internal val TestPath = System.getenv("PYCHARM_PERF_ENVS")
 fun createSdkForPerformance(module: Module,
                             sdkCreationType: SdkCreationType,
                             sdkHome: String = File(TestPath, "envs/py36_64").absolutePath): Sdk {
-  ApplicationInfoImpl.setInStressTest(true) // To disable slow debugging
+  ApplicationManagerEx.setInStressTest(true)
+  // To disable slow debugging
   val executable = File(PythonSdkUtil.getPythonExecutable(sdkHome) ?: throw AssertionError("No python on $sdkHome"))
   println("Creating Python SDK $sdkHome")
   return PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(executable, true)!!, sdkCreationType, module)

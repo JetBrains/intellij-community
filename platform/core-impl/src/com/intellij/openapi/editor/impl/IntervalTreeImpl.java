@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
@@ -380,7 +380,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   private void assertUnderWriteLock() {
-    if (DEBUG && !ApplicationInfoImpl.isInStressTest()) {
+    if (DEBUG && !ApplicationManagerEx.isInStressTest()) {
       assert isAcquired(l.writeLock()) : l.writeLock();
     }
   }

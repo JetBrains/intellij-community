@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
@@ -1038,12 +1039,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  private static volatile boolean myInStressTest;
+  /**
+   * @deprecated Use {{@link ApplicationManagerEx#isInStressTest()}}
+   */
+  @Deprecated
   public static boolean isInStressTest() {
-    return myInStressTest;
-  }
-  @TestOnly
-  public static void setInStressTest(boolean inStressTest) {
-    myInStressTest = inStressTest;
+    return ApplicationManagerEx.isInStressTest();
   }
 }

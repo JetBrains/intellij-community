@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
@@ -37,12 +36,9 @@ import com.intellij.util.SingleAlarm
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashSet
 
 private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<StateStorage>>>("CHANGED_FILES_KEY")
 private val CHANGED_SCHEMES_KEY = Key<MutableMap<SchemeChangeApplicator<*,*>, MutableSet<SchemeChangeEvent<*,*>>>>("CHANGED_SCHEMES_KEY")
@@ -134,7 +130,7 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
   }
 
   override fun blockReloadingProjectOnExternalChanges() {
-    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationInfoImpl.isInStressTest()) {
+    if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationManagerEx.isInStressTest()) {
       blockStackTrace.set(Throwable())
     }
   }

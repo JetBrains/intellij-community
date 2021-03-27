@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public final class VfsRootAccess {
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
         ((ApplicationImpl)application).getComponentCreated() &&
-        !ApplicationInfoImpl.isInStressTest()) {
+        !ApplicationManagerEx.isInStressTest()) {
 
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;

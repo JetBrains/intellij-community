@@ -31,7 +31,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -233,7 +233,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
     if (Registry.is("ide.check.stub.text.consistency") ||
-        ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       if (hostFile.isValid()) {
         StubTextInconsistencyException.checkStubTextConsistency(hostFile);
       }

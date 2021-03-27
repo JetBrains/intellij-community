@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -357,7 +357,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (ok[0]) {
       // run after commit actions outside write action
       runAfterCommitActions(document);
-      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationInfoImpl.isInStressTest()) {
+      if (DebugUtil.DO_EXPENSIVE_CHECKS && !ApplicationManagerEx.isInStressTest()) {
         checkAllElementsValid(document, reason);
       }
     }

@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
@@ -65,7 +65,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Before
   fun prepareProject() {
-    ApplicationInfoImpl.setInStressTest(true)
+    ApplicationManagerEx.setInStressTest(true)
 
     disposerDebugMode = Disposer.isDebugMode()
     Disposer.setDebugMode(false)
@@ -78,7 +78,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   }
 
   fun tearDown() {
-    ApplicationInfoImpl.setInStressTest(false)
+    ApplicationManagerEx.setInStressTest(false)
     Disposer.setDebugMode(disposerDebugMode)
   }
 

@@ -7,7 +7,7 @@ import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
@@ -509,7 +509,7 @@ public final class DebugUtil {
       return;
     }
     if (ourPsiModificationTrace.get() == null) {
-      ourPsiModificationTrace.set(trace != null || ApplicationInfoImpl.isInStressTest() ? trace : new Throwable());
+      ourPsiModificationTrace.set(trace != null || ApplicationManagerEx.isInStressTest() ? trace : new Throwable());
     }
     Integer depth = ourPsiModificationDepth.get();
     if (depth == null) depth = 0;
@@ -598,7 +598,7 @@ public final class DebugUtil {
 
   private static @Nullable Object currentInvalidationTrace() {
     Object trace = ourPsiModificationTrace.get();
-    return trace != null || ApplicationInfoImpl.isInStressTest() ? trace : handleUnspecifiedTrace();
+    return trace != null || ApplicationManagerEx.isInStressTest() ? trace : handleUnspecifiedTrace();
   }
 
   private static Throwable handleUnspecifiedTrace() {

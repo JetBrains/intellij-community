@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
@@ -29,7 +29,7 @@ final class ListResult {
   private ListResult(int modStamp, @NotNull List<? extends ChildInfo> children) {
     this.modStamp = modStamp;
     this.children = children;
-    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest() || ApplicationManager.getApplication().isInternal()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || ApplicationManager.getApplication().isInternal()) {
       assertSortedById(children);
     }
   }
