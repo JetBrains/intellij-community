@@ -10,14 +10,19 @@ import io.netty.channel.*
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.util.concurrent.FastThreadLocalThread
 import io.netty.util.internal.logging.InternalLoggerFactory
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.channels.spi.SelectorProvider
 import java.util.*
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
-class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val port: Int, private val channelRegistrar: ChannelRegistrar) : Disposable {
+class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
+                                        val port: Int,
+                                        private val channelRegistrar: ChannelRegistrar) : Disposable {
   val isRunning: Boolean
     get() = !channelRegistrar.isEmpty
 
@@ -131,6 +136,18 @@ private class BuiltInServerThreadFactory : ThreadFactory {
   }
 }
 
+private val selectorProvider: SelectorProvider? by lazy {
+  try {
+    val aClass = ClassLoader.getSystemClassLoader().loadClass("sun.nio.ch.DefaultSelectorProvider")
+    MethodHandles.lookup()
+      .findStatic(aClass, "create", MethodType.methodType(SelectorProvider::class.java))
+      .invokeExact() as SelectorProvider
+  }
+  catch (e: Throwable) {
+    null
+  }
+}
+
 private fun multiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
 //  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
 //    try {
@@ -140,6 +157,6 @@ private fun multiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFac
 //      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
 //    }
 //  }
-
-  return NioEventLoopGroup(workerCount, threadFactory)
+  // do not use service loader to get default SelectorProvider
+  return NioEventLoopGroup(workerCount, threadFactory, selectorProvider ?: SelectorProvider.provider())
 }
