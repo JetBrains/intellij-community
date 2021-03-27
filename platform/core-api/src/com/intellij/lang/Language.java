@@ -3,6 +3,7 @@ package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
+  private static final Logger LOG = Logger.getInstance(Language.class);
   private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
   private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
   private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
@@ -39,6 +41,7 @@ public abstract class Language extends UserDataHolderBase {
   private final String myID;
   private final String[] myMimeTypes;
   private final List<Language> myDialects = ContainerUtil.createLockFreeCopyOnWriteList();
+  private static final Map<String, Language> testDisplayNames = new ConcurrentHashMap<>();
 
   public static final Language ANY = new Language("") {
     @Override
@@ -97,6 +100,15 @@ public abstract class Language extends UserDataHolderBase {
 
     if (baseLanguage != null) {
       baseLanguage.myDialects.add(this);
+    }
+
+    if (ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Language dup = testDisplayNames.put(getDisplayName(), this);
+        if (dup != null) {
+          LOG.error(dup + " ("+dup.getClass()+") and " + this +" ("+getClass()+") both have identical .getDisplayName(): "+getDisplayName());
+        }
+      });
     }
   }
 
