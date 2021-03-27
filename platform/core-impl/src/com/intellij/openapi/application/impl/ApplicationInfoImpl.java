@@ -6,7 +6,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.extensions.PluginId;
@@ -19,8 +18,6 @@ import org.jetbrains.annotations.*;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * Provides access to content of *ApplicationInfo.xml file. Scheme for *ApplicationInfo.xml files is defined in platform/platform-resources/src/idea/ApplicationInfo.xsd,
@@ -498,6 +495,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public Calendar getBuildDate() {
+    if (myBuildDate == null) {
+      myBuildDate = Calendar.getInstance();
+    }
     return myBuildDate;
   }
 
@@ -878,8 +878,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private static @Nullable BuildNumber fromStringWithProductCode(@NotNull @NlsSafe String version,
                                                                  @NotNull BuildNumber buildNumber) {
-    return BuildNumber.fromStringWithProductCode(version,
-                                                 buildNumber.getProductCode());
+    return BuildNumber.fromStringWithProductCode(version, buildNumber.getProductCode());
   }
 
   private static @Nullable String getAttributeValue(@NotNull Element element, @NotNull String name) {
@@ -892,17 +891,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     myApiVersion = getAttributeValue(element, ATTRIBUTE_API_VERSION);
 
     String dateString = element.getAttributeValue(ATTRIBUTE_DATE);
-    if ("__BUILD_DATE__".equals(dateString)) {
-      myBuildDate = new GregorianCalendar();
-      try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
-        // META-INF is always updated on build
-        JarEntry jarEntry = bootstrapJar.entries().nextElement();
-        myBuildDate.setTime(new Date(jarEntry.getTime()));
-      }
-      catch (Exception ignore) { }
-    }
-    else {
-      myBuildDate = dateString == null ? Calendar.getInstance() : parseDate(dateString);
+    if (dateString != null && !dateString.equals("__BUILD_DATE__")) {
+      myBuildDate = parseDate(dateString);
     }
 
     String majorReleaseDateString = element.getAttributeValue(ATTRIBUTE_MAJOR_RELEASE_DATE);
