@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.ui.layout.*
-import com.jetbrains.python.PyCharmCommunityCustomizationBundle
+import com.jetbrains.python.PyBundle
 
 class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
@@ -39,7 +39,7 @@ class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
       override fun RowBuilder.createComponentRow() {
         val settings = PyVirtualEnvVcsSettings.getInstance(project)
         row {
-          checkBox(PyCharmCommunityCustomizationBundle.message("vcs.activate.virtualenv.checkbox.text"), settings::virtualEnvActivate)
+          checkBox(PyBundle.message("vcs.activate.virtualenv.checkbox.text"), settings::virtualEnvActivate)
         }
       }
     }
