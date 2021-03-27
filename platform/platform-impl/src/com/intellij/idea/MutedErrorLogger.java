@@ -37,19 +37,22 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
     }
   }
 
-  private static final Cache<@NotNull String, @NotNull LoggerWithCounter> ourCache = Caffeine.newBuilder()
-    .maximumSize(1000)
-    .expireAfterAccess(Math.max(EXPIRATION, 0), TimeUnit.MINUTES)
-    .removalListener((@Nullable String key, @Nullable LoggerWithCounter value, RemovalCause cause) -> {
-      if (key != null && value != null) {
-        value.logger.logOccurrences(key.substring(0, key.indexOf(':')), value.counter.get());
-      }
-    })
-    .build();
+  // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
+  private static final class MyCache {
+    private static final Cache<@NotNull String, @NotNull LoggerWithCounter> cache = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .expireAfterAccess(Math.max(EXPIRATION, 0), TimeUnit.MINUTES)
+      .removalListener((@Nullable String key, @Nullable LoggerWithCounter value, RemovalCause cause) -> {
+        if (key != null && value != null) {
+          value.logger.logOccurrences(key.substring(0, key.indexOf(':')), value.counter.get());
+        }
+      })
+      .build();
+  }
 
   public static void dropCaches() {
-    ourCache.invalidateAll();
-    ourCache.cleanUp();
+    MyCache.cache.invalidateAll();
+    MyCache.cache.cleanUp();
   }
 
   @Contract("_ -> new")
@@ -135,7 +138,7 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
 
     int hash = ThrowableInterner.computeTraceHashCode(t);
     String key = hash + ":" + t;
-    LoggerWithCounter holder = ourCache.get(key, __ -> new LoggerWithCounter(this));
+    LoggerWithCounter holder = MyCache.cache.get(key, __ -> new LoggerWithCounter(this));
     if (holder.counter.compareAndSet(0, 1)) {
       log("Hash for the following exception is '" + hash + "': " + t);
       return true;
