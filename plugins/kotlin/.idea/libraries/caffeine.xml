@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="caffeine" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.0.0" />
+    <properties include-transitive-deps="false" maven-id="com.github.ben-manes.caffeine:caffeine:3.0.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.0.0/caffeine-3.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.0.1/caffeine-3.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.0.0/caffeine-3.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ben-manes/caffeine/caffeine/3.0.1/caffeine-3.0.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
