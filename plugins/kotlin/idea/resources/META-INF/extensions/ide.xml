@@ -47,7 +47,8 @@
                         dynamic="true"/>
 
         <extensionPoint qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
-                        interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"/>
+                        interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
+                        dynamic="true"/>
 
         <extensionPoint qualifiedName="org.jetbrains.kotlin.scriptDiagnosticFixProvider"
                         interface="org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider"/>
