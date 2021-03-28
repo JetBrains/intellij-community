@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Point
-import java.util.*
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
@@ -134,7 +133,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      if (blocks.isEmpty()) {
+      if (blocks.isEmpty() && isOperational()) {
         fireFileUnchanged()
       }
     }
