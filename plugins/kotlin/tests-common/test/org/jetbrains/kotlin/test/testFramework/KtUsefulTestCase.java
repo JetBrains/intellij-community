@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -198,7 +199,7 @@ public abstract class KtUsefulTestCase extends TestCase {
         }
 
         boolean isStressTest = isStressTest();
-        ApplicationInfoImpl.setInStressTest(isStressTest);
+        ApplicationManagerEx.setInStressTest(isStressTest);
         if (isPerformanceTest()) {
             Timings.getStatistics();
         }
