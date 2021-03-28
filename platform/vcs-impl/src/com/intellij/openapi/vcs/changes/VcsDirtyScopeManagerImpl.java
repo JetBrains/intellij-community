@@ -96,10 +96,10 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       }
       ongoingRefresh = myRefreshInProgress;
     }
-    if (ongoingRefresh != null) ongoingRefresh.setRejected();
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
+      if (ongoingRefresh != null) ongoingRefresh.setRejected();
     }
   }
 
