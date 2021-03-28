@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <ml.local.models.factory language="JAVA" implementationClass="com.intellij.java.ml.local.JavaMethodsFrequencyModelFactory"/>

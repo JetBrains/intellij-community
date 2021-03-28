@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin>
   <extensions defaultExtensionNs="training">
     <ift.language.extension language="JAVA" implementationClass="com.intellij.java.ift.JavaLangSupport"/>
