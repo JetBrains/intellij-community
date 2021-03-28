@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
   </component>
 </module>
