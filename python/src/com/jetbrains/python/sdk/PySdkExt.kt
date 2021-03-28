@@ -224,7 +224,11 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(value) {
-    ModuleRootModificationUtil.setModuleSdk(this, value)
+    if (value is PyProjectInheritedSdk) {
+      ModuleRootModificationUtil.setSdkInherited(this)
+    } else {
+      ModuleRootModificationUtil.setModuleSdk(this, value)
+    }
     PyUiUtil.clearFileLevelInspectionResults(project)
   }
 
