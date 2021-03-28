@@ -17,10 +17,10 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public final class JBAutoscroller implements ActionListener {
+public final class JBAutoScroller implements ActionListener {
   private static final int SCROLL_UPDATE_INTERVAL = 15;
   private static final Key<ScrollDeltaProvider> SCROLL_HANDLER_KEY = Key.create("JBAutoScroller.AutoScrollHandler");
-  private static final JBAutoscroller INSTANCE = new JBAutoscroller();
+  private static final JBAutoScroller ourInstance = new JBAutoScroller();
 
   private final Timer myTimer = TimerUtil.createNamedTimer("JBAutoScroller", SCROLL_UPDATE_INTERVAL, this);
   private final DefaultScrollDeltaProvider myDefaultAutoScrollHandler = new DefaultScrollDeltaProvider();
@@ -29,7 +29,7 @@ public final class JBAutoscroller implements ActionListener {
   private int myHorizontalScrollDelta;
   private int myVerticalScrollDelta;
 
-  private JBAutoscroller() {
+  private JBAutoScroller() {
   }
 
   public static void installOn(@NotNull JComponent component, @Nullable AutoscrollLocker locker) {
@@ -41,11 +41,7 @@ public final class JBAutoscroller implements ActionListener {
   }
 
   public static void installOn(@NotNull JComponent component, @Nullable ScrollDeltaProvider handler, @Nullable AutoscrollLocker locker) {
-    getInstance().doInstallOn(component, handler, locker);
-  }
-
-  private static JBAutoscroller getInstance() {
-    return INSTANCE;
+    ourInstance.doInstallOn(component, handler, locker);
   }
 
   private void doInstallOn(@NotNull JComponent component, @Nullable ScrollDeltaProvider handler, @Nullable AutoscrollLocker locker) {
@@ -287,7 +283,7 @@ public final class JBAutoscroller implements ActionListener {
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-      if (e.getValueIsAdjusting() || getInstance().isRunningOn(myTable) || locked()) return;
+      if (e.getValueIsAdjusting() || ourInstance.isRunningOn(myTable) || locked()) return;
 
       int row = getLeadSelectionIndexIfSelectionIsNotEmpty(getRowSelectionModel());
       int col = getLeadSelectionIndexIfSelectionIsNotEmpty(getColumnSelectionModel());
