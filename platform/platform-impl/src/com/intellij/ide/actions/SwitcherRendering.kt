@@ -45,7 +45,7 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 internal interface SwitcherListItem {
   val mainText: String
-  val statusText: String? get() = null
+  val statusText: String get() = ""
   val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
 
@@ -133,7 +133,7 @@ internal class SwitcherVirtualFile(
 
   override var mainText: String = ""
 
-  override val statusText: String?
+  override val statusText: String
     get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
@@ -188,7 +188,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     value.prepareExtraRenderer(extra, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
     panel.accessibleContext.accessibleName = value.mainText
-    panel.accessibleContext.accessibleDescription = value.statusText ?: ""
+    panel.accessibleContext.accessibleDescription = value.statusText
     return panel
   }
 
