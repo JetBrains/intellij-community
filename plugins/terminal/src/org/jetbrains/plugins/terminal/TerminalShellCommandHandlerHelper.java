@@ -21,18 +21,14 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalShellCommandHandler;
-import com.intellij.ui.GotItMessage;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.PositionTracker;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
@@ -47,7 +43,6 @@ import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
 import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -57,7 +52,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
-  @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
   private static Experiments ourExperiments;
@@ -118,13 +112,8 @@ public final class TerminalShellCommandHandlerHelper {
     }
 
     String command = myWidget.getTypedShellCommand().trim();
-    TerminalLineIntervalHighlighting commandHighlighting = highlightCommand(project, command);
+    TerminalLineIntervalHighlighting commandHighlighting = highlightCommandIfMatched(project, command);
     setCommandHighlighting(commandHighlighting);
-
-    //show notification
-    if (getPropertiesComponent().getBoolean(TERMINAL_CUSTOM_COMMANDS_GOT_IT, false)) {
-      return;
-    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       showOrHideNotification(commandHighlighting);
@@ -150,44 +139,35 @@ public final class TerminalShellCommandHandlerHelper {
   }
 
   private void showOrHideNotification(@Nullable TerminalLineIntervalHighlighting commandHighlighting) {
-    if (commandHighlighting == null) {
+    if (commandHighlighting == null || commandHighlighting.isDisposed()) {
       hideNotification();
       return;
     }
     if (myNotificationDisposable != null && !Disposer.isDisposed(myNotificationDisposable)) {
       return;
     }
-    String title = TerminalBundle.message("smart_command_execution.notification.title");
+    Disposable notificationDisposable = Disposer.newDisposable(myWidget.getTerminalPanel(), "terminal.smart_command_execution"); 
     String content = TerminalBundle.message("smart_command_execution.notification.text",
                                             KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
                                             KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()));
-    GotItMessage message = GotItMessage.createMessage(title, content);
-    myNotificationDisposable = Disposer.newDisposable();
-    Disposer.register(myWidget.getTerminalPanel(), myNotificationDisposable);
-    message.setDisposable(myNotificationDisposable);
-    message.setShowCallout(true);
-    message.setHyperlinkListener(new HyperlinkAdapter() {
-      @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+    GotItTooltip tooltip = new GotItTooltip("terminal.smart_command_execution", content, notificationDisposable)
+      .withHeader(TerminalBundle.message("smart_command_execution.notification.title"))
+      .withLink(TerminalBundle.message("smart_command_execution.notification.configure_link.text"), () -> {
         ShowSettingsUtil.getInstance().showSettingsDialog(myWidget.getProject(), TerminalOptionsConfigurable.class);
+      });
+    if (!tooltip.canShow()) {
+      Disposer.dispose(notificationDisposable);
+      return;
+    }
+    tooltip.show(myWidget.getTerminalPanel(), component -> {
+      Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
+      if (bounds != null) {
+        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height);
       }
+      Disposer.dispose(notificationDisposable);
+      return new Point(0, 0);
     });
-    message.setCallback(() -> {
-      hideNotification();
-      getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true);
-    });
-    JComponent component = myWidget.getTerminalPanel();
-    message.show(new PositionTracker<>(component) {
-      @Override
-      public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
-        RelativePoint point = RelativePoint.getNorthWestOf(component);
-        Rectangle bounds = myWidget.getTerminalPanel().getBounds(commandHighlighting);
-        if (bounds != null) {
-          point.getPoint().translate(bounds.x + bounds.width / 2, bounds.y + bounds.height);
-        }
-        return point;
-      }
-    }, Balloon.Position.below);
+    myNotificationDisposable = notificationDisposable;
   }
 
   private boolean isEnabledForProject() {
@@ -223,7 +203,7 @@ public final class TerminalShellCommandHandlerHelper {
     return hasRunningCommands;
   }
 
-  private @Nullable TerminalLineIntervalHighlighting highlightCommand(@NotNull Project project, @NotNull String command) {
+  private @Nullable TerminalLineIntervalHighlighting highlightCommandIfMatched(@NotNull Project project, @NotNull String command) {
     if (command.isEmpty()) {
       return null;
     }
