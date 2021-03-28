@@ -34,8 +34,8 @@ abstract class KotlinMavenImportingTestCase : MavenImportingTestCase() {
 
     override fun tearDown() {
         RunAll.runAll(
-            ThrowableRunnable { sdkCreationChecker!!.removeNewKotlinSdk() },
-            ThrowableRunnable { super.tearDown() },
+            ThrowableRunnable<Throwable> { sdkCreationChecker!!.removeNewKotlinSdk() },
+            ThrowableRunnable<Throwable> { super.tearDown() },
         )
     }
 

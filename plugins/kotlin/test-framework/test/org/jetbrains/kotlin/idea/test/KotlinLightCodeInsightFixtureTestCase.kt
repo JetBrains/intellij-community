@@ -399,7 +399,7 @@ fun resetCodeStyle(project: Project) {
 fun runAll(
     vararg actions: ThrowableRunnable<Throwable>,
     suppressedExceptions: List<Throwable> = emptyList()
-) = RunAll(*actions).run(suppressedExceptions)
+) = RunAll(actions.toList()).run(suppressedExceptions)
 
 private fun rollbackCompilerOptions(project: Project, module: Module, removeFacet: Boolean) {
     KotlinCompilerSettings.getInstance(project).update { this.additionalArguments = DEFAULT_ADDITIONAL_ARGUMENTS }
