@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil.naturalCompare
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor
@@ -41,6 +41,8 @@ import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
+
+private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
 
 
 internal interface SwitcherListItem {
@@ -203,7 +205,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
       .mapNotNull { manager.getToolWindow(it) }
       .filter { it.isAvailable && it.isShowStripeButton }
       .map { SwitcherToolWindow(it, switcher.pinned) }
-      .sortedWith(Comparator { window1, window2 -> naturalCompare(window1.mainText, window2.mainText) })
+      .sortedWith(mainTextComparator)
 
     // TODO: assign mnemonics
 
