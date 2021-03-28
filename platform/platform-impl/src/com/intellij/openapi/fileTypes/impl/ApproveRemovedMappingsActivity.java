@@ -35,7 +35,8 @@ final class ApproveRemovedMappingsActivity implements StartupActivity {
         FileType fileType = FileTypeManager.getInstance().findFileTypeByName(mapping.getFileTypeName());
         if (fileType == null) continue;
         String fileTypeName = fileType.getName();
-        String oldFileTypeName = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getExtensionMap().findAssociatedFileType(matcher), PlainTextFileType.INSTANCE).getName();
+        FileTypeManagerImpl.FileTypeWithDescriptor associated = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getExtensionMap().findAssociatedFileType(matcher);
+        String oldFileTypeName = (associated == null ? PlainTextFileType.INSTANCE : associated.fileType).getName();
         Notification notification = new Notification(NotificationGroup.createIdWithTitle("File type recognized", FileTypesBundle.message("notification.title.file.type.recognized")),
                                                      FileTypesBundle.message("notification.title.file.type.recognized"),
                                                      FileTypesBundle.message("notification.file.extension.0.was.reassigned.to.1.revert", matcher.getPresentableString(), fileTypeName, oldFileTypeName),
