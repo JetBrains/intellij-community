@@ -740,4 +740,4 @@ class KotlinUastApiTest : AbstractKotlinUastTest() {
 fun <T, R> Iterable<T>.assertedFind(value: R, transform: (T) -> R): T =
     find { transform(it) == value } ?: throw AssertionError("'$value' not found, only ${this.joinToString { transform(it).toString() }}")
 
-fun runAll(vararg asserts: () -> Unit) = RunAll(*asserts.map { ThrowableRunnable<Throwable>(it) }.toTypedArray()).run()
+fun runAll(vararg asserts: () -> Unit) = RunAll(asserts.map { ThrowableRunnable<Throwable>(it) }).run()
