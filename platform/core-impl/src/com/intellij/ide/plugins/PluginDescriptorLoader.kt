@@ -1,217 +1,260 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+package com.intellij.ide.plugins
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.serialization.SerializationException;
-import com.intellij.util.ExceptionUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.io.Decompressor;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.lang.ZipFilePool;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.*;
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.util.PlatformUtils
+import com.intellij.util.io.Decompressor
+import com.intellij.util.io.URLUtil
+import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.lang.ZipFilePool
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.io.File
+import java.io.IOException
+import java.net.URL
+import java.nio.file.*
+import java.util.*
+import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.RecursiveAction
+import java.util.concurrent.RecursiveTask
+import java.util.function.Supplier
 
 @ApiStatus.Internal
-public final class PluginDescriptorLoader {
-  @ApiStatus.Internal
-  public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
-                                                                  boolean isBundled,
-                                                                  @NotNull DescriptorListLoadingContext parentContext) {
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ false)) {
-      return loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, Files.isDirectory(file));
-    }
+object PluginDescriptorLoader {
+  fun loadDescriptor(file: Path,
+                     isBundled: Boolean,
+                     parentContext: DescriptorListLoadingContext): IdeaPluginDescriptorImpl? {
+    return loadDescriptorFromFileOrDir(file = file,
+                                       pathName = PluginManagerCore.PLUGIN_XML,
+                                       context = parentContext,
+                                       pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                       isBundled = isBundled,
+                                       isEssential = false,
+                                       isDirectory = Files.isDirectory(file))
   }
 
-  static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromDir(@NotNull Path file,
-                                                                  @NotNull String descriptorRelativePath,
-                                                                  @Nullable Path pluginPath,
-                                                                  @NotNull DescriptorListLoadingContext context,
-                                                                  boolean isBundled,
-                                                                  boolean isEssential,
-                                                                  @NotNull PathResolver pathResolver) {
-    try {
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, isBundled);
-      Element element = JDOMUtil.load(file.resolve(descriptorRelativePath), context.getXmlFactory());
-      descriptor.readExternal(element, pathResolver, context, descriptor, new LocalFsDataLoader(file));
-      return descriptor;
-    }
-    catch (NoSuchFileException e) {
-      return null;
-    }
-    catch (SerializationException | JDOMException | IOException e) {
-      if (isEssential) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-      context.result.reportCannotLoad(file, e);
-    }
-    catch (Throwable e) {
-      if (isEssential) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-      DescriptorListLoadingContext.LOG.warn("Cannot load " + file.resolve(descriptorRelativePath), e);
-    }
-    return null;
-  }
-
-  static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull Path file,
-                                                                  @NotNull String fileName,
-                                                                  @NotNull PathResolver pathResolver,
-                                                                  @NotNull DescriptorLoadingContext context,
-                                                                  @Nullable Path pluginPath) {
-    SafeJdomFactory factory = context.parentContext.getXmlFactory();
-    try {
-      Element element;
-      DataLoader dataLoader;
-      try {
-        ZipFilePool pool = ZipFilePool.POOL;
-        if (pool == null) {
-          FileSystem fs = context.open(file);
-          Path pluginDescriptorFile = fs.getPath("/META-INF/" + fileName);
-          element = JDOMUtil.load(pluginDescriptorFile, factory);
-          dataLoader = new ZipFsDataLoader(pluginDescriptorFile.getRoot());
-        }
-        else {
-          ZipFilePool.EntryResolver resolver = pool.load(file);
-          InputStream data = resolver.loadZipEntry("META-INF/" + fileName);
-          if (data == null) {
-            return null;
-          }
-
-          element = JDOMUtil.load(data, factory);
-          dataLoader = new ImmutableZipFileDataLoader(resolver, file, pool);
-        }
-      }
-      catch (NoSuchFileException ignore) {
-        return null;
-      }
-
-      IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, context.isBundled);
-      if (descriptor.readExternal(element, pathResolver, context.parentContext, descriptor, dataLoader)) {
-        descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
-      }
-      return descriptor;
-    }
-    catch (SerializationException | InvalidDataException | JDOMException e) {
-      if (context.isEssential) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-      context.parentContext.result.reportCannotLoad(file, e);
-    }
-    catch (Throwable e) {
-      if (context.isEssential) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-      DescriptorListLoadingContext.LOG.info("Cannot load " + file + "!/META-INF/" + fileName, e);
-    }
-
-    return null;
-  }
-
-  static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file,
-                                                                        @NotNull String pathName,
-                                                                        @NotNull DescriptorLoadingContext context,
-                                                                        @NotNull PathResolver pathResolver,
-                                                                        boolean isDirectory) {
-    if (isDirectory) {
-      return loadDescriptorFromDirAndNormalize(file, pathName, context, pathResolver);
-    }
-    else if (StringUtilRt.endsWithIgnoreCase(file.getFileName().toString(), ".jar")) {
-      return loadDescriptorFromJar(file, pathName, pathResolver, context, null);
+  internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
+    val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+    val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins())
+    if (Files.isDirectory(pluginRoot)) {
+      return loadDescriptorFromDir(file = pluginRoot,
+                                   descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
+                                   pluginPath = null,
+                                   context = parentContext,
+                                   isBundled = true,
+                                   isEssential = true,
+                                   pathResolver = pathResolver)
     }
     else {
-      return null;
+      DescriptorLoadingContext().use { context ->
+        return loadDescriptorFromJar(file = pluginRoot,
+                                     fileName = fileName,
+                                     pathResolver = pathResolver,
+                                     context = context,
+                                     parentContext = parentContext,
+                                     isBundled = true,
+                                     isEssential = true,
+                                     pluginPath = null)
+      }
     }
   }
 
-  private static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromDirAndNormalize(@NotNull Path file,
-                                                                                      @NotNull String pathName,
-                                                                                      @NotNull DescriptorLoadingContext context,
-                                                                                      @NotNull PathResolver pathResolver) {
-    String descriptorRelativePath = PluginManagerCore.META_INF + pathName;
-    IdeaPluginDescriptorImpl descriptor =
-      loadDescriptorFromDir(file, descriptorRelativePath, null, context.parentContext, context.isEssential, context.isBundled, pathResolver);
-    if (descriptor != null) {
-      return descriptor;
+  private fun loadDescriptorFromDir(file: Path,
+                                    descriptorRelativePath: String,
+                                    pluginPath: Path?,
+                                    context: DescriptorListLoadingContext,
+                                    isBundled: Boolean,
+                                    isEssential: Boolean,
+                                    pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
+    try {
+      val descriptor = IdeaPluginDescriptorImpl(pluginPath ?: file, isBundled)
+      val element = JDOMUtil.load(file.resolve(descriptorRelativePath), context.xmlFactory)
+      descriptor.readExternal(element, pathResolver, context, descriptor, LocalFsDataLoader(file))
+      return descriptor
+    }
+    catch (e: NoSuchFileException) {
+      return null
+    }
+    catch (e: Throwable) {
+      if (isEssential) {
+        throw e
+      }
+      DescriptorListLoadingContext.LOG.warn("Cannot load ${file.resolve(descriptorRelativePath)}", e)
+      return null
+    }
+  }
+
+  internal fun loadDescriptorFromJar(file: Path,
+                                    fileName: String,
+                                    pathResolver: PathResolver,
+                                    context: DescriptorLoadingContext,
+                                    parentContext: DescriptorListLoadingContext,
+                                    isBundled: Boolean,
+                                    isEssential: Boolean,
+                                    pluginPath: Path?): IdeaPluginDescriptorImpl? {
+    val factory = parentContext.xmlFactory
+    try {
+      val element: Element
+      val dataLoader: DataLoader
+      try {
+        val pool = ZipFilePool.POOL
+        if (pool == null) {
+          val fs = context.open(file)
+          val pluginDescriptorFile = fs.getPath("/META-INF/$fileName")
+          element = JDOMUtil.load(pluginDescriptorFile, factory)
+          dataLoader = ZipFsDataLoader(pluginDescriptorFile.root)
+        }
+        else {
+          val resolver = pool.load(file)
+          val data = resolver.loadZipEntry("META-INF/$fileName") ?: return null
+          element = JDOMUtil.load(data, factory)
+          dataLoader = ImmutableZipFileDataLoader(resolver, file, pool)
+        }
+      }
+      catch (ignore: NoSuchFileException) {
+        return null
+      }
+
+      val descriptor = IdeaPluginDescriptorImpl(pluginPath ?: file, isBundled)
+      if (descriptor.readExternal(element, pathResolver, parentContext, descriptor, dataLoader)) {
+        descriptor.jarFiles = listOf(descriptor.pluginPath)
+      }
+      return descriptor
+    }
+    catch (e: Throwable) {
+      if (isEssential) {
+        throw e
+      }
+      parentContext.result.reportCannotLoad(file, e)
+    }
+    return null
+  }
+
+  @JvmStatic
+  fun loadDescriptorFromFileOrDir(file: Path,
+                                  pathName: String,
+                                  context: DescriptorListLoadingContext,
+                                  pathResolver: PathResolver,
+                                  isBundled: Boolean,
+                                  isEssential: Boolean,
+                                  isDirectory: Boolean): IdeaPluginDescriptorImpl? {
+    return when {
+      isDirectory -> loadDescriptorFromDirAndNormalize(file = file,
+                                                       pathName = pathName,
+                                                       parentContext = context,
+                                                       isBundled = isBundled,
+                                                       isEssential = isEssential,
+                                                       pathResolver = pathResolver)
+      file.fileName.toString().endsWith(".jar", ignoreCase = true) -> {
+        DescriptorLoadingContext().use { loadingContext ->
+          loadDescriptorFromJar(file = file,
+                                fileName = pathName,
+                                pathResolver = pathResolver,
+                                context = loadingContext,
+                                parentContext = context,
+                                isBundled = isBundled,
+                                isEssential = isEssential,
+                                pluginPath = null)
+        }
+      }
+      else -> null
+    }
+  }
+
+  internal fun loadDescriptorFromDirAndNormalize(file: Path,
+                                                 pathName: String,
+                                                 parentContext: DescriptorListLoadingContext,
+                                                 isBundled: Boolean,
+                                                 isEssential: Boolean,
+                                                 pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
+    val descriptorRelativePath = "${PluginManagerCore.META_INF}$pathName"
+    loadDescriptorFromDir(file = file,
+                          descriptorRelativePath = descriptorRelativePath,
+                          pluginPath = null,
+                          context = parentContext,
+                          isBundled = isBundled,
+                          isEssential = isEssential,
+                          pathResolver = pathResolver)?.let {
+      return it
     }
 
-    List<Path> pluginJarFiles = new ArrayList<>();
-    List<Path> dirs = new ArrayList<>();
+    val pluginJarFiles = ArrayList<Path>()
+    val dirs = ArrayList<Path>()
     if (!collectPluginDirectoryContents(file, pluginJarFiles, dirs)) {
-      return null;
+      return null
     }
 
     if (!pluginJarFiles.isEmpty()) {
-      PluginXmlPathResolver pluginPathResolver = new PluginXmlPathResolver(pluginJarFiles);
-      for (Path jarFile : pluginJarFiles) {
-        descriptor = loadDescriptorFromJar(jarFile, pathName, pluginPathResolver, context, file);
-        if (descriptor != null) {
-          descriptor.jarFiles = pluginJarFiles;
-          return descriptor;
-        }
-      }
-    }
-
-    for (Path dir : dirs) {
-      IdeaPluginDescriptorImpl otherDescriptor =
-        loadDescriptorFromDir(dir, descriptorRelativePath, file, context.parentContext, context.isEssential, context.isBundled,
-                              pathResolver);
-      if (otherDescriptor != null) {
-        if (descriptor != null) {
-          //noinspection SpellCheckingInspection
-          DescriptorListLoadingContext.LOG.info("Cannot load " + file + " because two or more plugin.xml's detected");
-          return null;
-        }
-        descriptor = otherDescriptor;
-      }
-    }
-
-    return descriptor;
-  }
-
-  private static boolean collectPluginDirectoryContents(@NotNull Path file, @NotNull List<Path> pluginJarFiles, @NotNull List<Path> dirs) {
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(file.resolve("lib"))) {
-      for (Path childFile : stream) {
-        if (Files.isDirectory(childFile)) {
-          dirs.add(childFile);
-        }
-        else {
-          String path = childFile.toString();
-          if (StringUtilRt.endsWithIgnoreCase(path, ".jar") || StringUtilRt.endsWithIgnoreCase(path, ".zip")) {
-            pluginJarFiles.add(childFile);
+      val pluginPathResolver = PluginXmlPathResolver(pluginJarFiles)
+      DescriptorLoadingContext().use { loadingContext ->
+        for (jarFile in pluginJarFiles) {
+          loadDescriptorFromJar(file = jarFile,
+                                fileName = pathName,
+                                pathResolver = pluginPathResolver,
+                                context = loadingContext,
+                                parentContext = parentContext,
+                                isBundled = isBundled,
+                                isEssential = isEssential,
+                                pluginPath = file)?.let {
+            it.jarFiles = pluginJarFiles
+            return it
           }
         }
       }
     }
-    catch (IOException e) {
-      return false;
+
+    var descriptor: IdeaPluginDescriptorImpl? = null
+    for (dir in dirs) {
+      val otherDescriptor = loadDescriptorFromDir(file = dir,
+                                                  descriptorRelativePath = descriptorRelativePath,
+                                                  pluginPath = file,
+                                                  context = parentContext,
+                                                  isBundled = isBundled,
+                                                  isEssential = isEssential,
+                                                  pathResolver = pathResolver)
+      if (otherDescriptor != null) {
+        if (descriptor != null) {
+          DescriptorListLoadingContext.LOG.error("Cannot load $file because two or more plugin.xml detected")
+          return null
+        }
+        descriptor = otherDescriptor
+      }
     }
+    return descriptor
+  }
+
+  private fun collectPluginDirectoryContents(file: Path, pluginJarFiles: MutableList<Path>, dirs: MutableList<Path>): Boolean {
+    try {
+      Files.newDirectoryStream(file.resolve("lib")).use { stream ->
+        for (childFile in stream) {
+          if (Files.isDirectory(childFile)) {
+            dirs.add(childFile)
+          }
+          else {
+            val path = childFile.toString()
+            if (path.endsWith(".jar", ignoreCase = true) || path.endsWith(".zip", ignoreCase = true)) {
+              pluginJarFiles.add(childFile)
+            }
+          }
+        }
+      }
+    }
+    catch (e: IOException) {
+      return false
+    }
+
     if (!pluginJarFiles.isEmpty()) {
-      putMoreLikelyPluginJarsFirst(file, pluginJarFiles);
+      putMoreLikelyPluginJarsFirst(file, pluginJarFiles)
     }
-    return true;
+    return true
   }
 
   /*
@@ -222,254 +265,169 @@ public final class PluginDescriptorLoader {
    * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before all-open-XXX.jar
    * d) shorter name, e.g. android.jar is before android-base-common.jar
    */
-  private static void putMoreLikelyPluginJarsFirst(@NotNull Path pluginDir, @NotNull List<Path> filesInLibUnderPluginDir) {
-    String pluginDirName = pluginDir.getFileName().toString();
-
-    filesInLibUnderPluginDir.sort((o1, o2) -> {
-      String o2Name = o2.getFileName().toString();
-      String o1Name = o1.getFileName().toString();
-
-      boolean o2StartsWithResources = o2Name.startsWith("resources");
-      boolean o1StartsWithResources = o1Name.startsWith("resources");
+  private fun putMoreLikelyPluginJarsFirst(pluginDir: Path, filesInLibUnderPluginDir: MutableList<Path>) {
+    val pluginDirName = pluginDir.fileName.toString()
+    filesInLibUnderPluginDir.sortWith(Comparator { o1: Path, o2: Path ->
+      val o2Name = o2.fileName.toString()
+      val o1Name = o1.fileName.toString()
+      val o2StartsWithResources = o2Name.startsWith("resources")
+      val o1StartsWithResources = o1Name.startsWith("resources")
       if (o2StartsWithResources != o1StartsWithResources) {
-        return o2StartsWithResources ? -1 : 1;
+        return@Comparator if (o2StartsWithResources) -1 else 1
       }
 
-      boolean o2IsVersioned = fileNameIsLikeVersionedLibraryName(o2Name);
-      boolean o1IsVersioned = fileNameIsLikeVersionedLibraryName(o1Name);
+      val o2IsVersioned = fileNameIsLikeVersionedLibraryName(o2Name)
+      val o1IsVersioned = fileNameIsLikeVersionedLibraryName(o1Name)
       if (o2IsVersioned != o1IsVersioned) {
-        return o2IsVersioned ? -1 : 1;
+        return@Comparator if (o2IsVersioned) -1 else 1
       }
 
-      boolean o2StartsWithNeededName = StringUtilRt.startsWithIgnoreCase(o2Name, pluginDirName);
-      boolean o1StartsWithNeededName = StringUtilRt.startsWithIgnoreCase(o1Name, pluginDirName);
+      val o2StartsWithNeededName = o2Name.startsWith(pluginDirName, ignoreCase = true)
+      val o1StartsWithNeededName = o1Name.startsWith(pluginDirName, ignoreCase = true)
       if (o2StartsWithNeededName != o1StartsWithNeededName) {
-        return o2StartsWithNeededName ? 1 : -1;
+        return@Comparator if (o2StartsWithNeededName) 1 else -1
       }
 
-      boolean o2EndsWithIdea = o2Name.endsWith("-idea.jar");
-      boolean o1EndsWithIdea = o1Name.endsWith("-idea.jar");
+      val o2EndsWithIdea = o2Name.endsWith("-idea.jar")
+      val o1EndsWithIdea = o1Name.endsWith("-idea.jar")
       if (o2EndsWithIdea != o1EndsWithIdea) {
-        return o2EndsWithIdea ? 1 : -1;
+        return@Comparator if (o2EndsWithIdea) 1 else -1
       }
-
-      return o1Name.length() - o2Name.length();
-    });
+      o1Name.length - o2Name.length
+    })
   }
 
-  private static boolean fileNameIsLikeVersionedLibraryName(@NotNull String name) {
-    int i = name.lastIndexOf('-');
+  private fun fileNameIsLikeVersionedLibraryName(name: String): Boolean {
+    val i = name.lastIndexOf('-')
     if (i == -1) {
-      return false;
+      return false
     }
-    if (i + 1 < name.length()) {
-      char c = name.charAt(i + 1);
+    if (i + 1 < name.length) {
+      val c = name[i + 1]
       if (Character.isDigit(c)) {
-        return true;
-      }
-      return (c == 'm' || c == 'M') && i + 2 < name.length() && Character.isDigit(name.charAt(i + 2));
-    }
-    return false;
-  }
-
-  private static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource,
-                                                                               @NotNull String pathName,
-                                                                               @NotNull DescriptorLoadingContext loadingContext,
-                                                                               boolean isEssential,
-                                                                               @NotNull PathResolver pathResolver) {
-    try {
-      Path file;
-      if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(Strings.trimEnd(UrlClassLoader.urlToFilePath(resource.getPath()).replace('\\', '/'), pathName)).getParent();
-        return loadDescriptorFromFileOrDir(file, pathName, loadingContext, pathResolver, Files.isDirectory(file));
-      }
-      else if (URLUtil.JAR_PROTOCOL.equals(resource.getProtocol())) {
-        file = Paths.get(UrlClassLoader.urlToFilePath(resource.getPath()));
-        Path parentFile = file.getParent();
-        if (parentFile == null || !parentFile.endsWith("lib")) {
-          return loadDescriptorFromJar(file, pathName, pathResolver, loadingContext, null);
-        }
-        else {
-          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-          IdeaPluginDescriptorImpl descriptor = loadDescriptorFromJar(file, pathName, pathResolver, loadingContext, file.getParent().getParent());
-          if (descriptor != null) {
-            descriptor.jarFiles = null;
-          }
-          return descriptor;
-        }
+        return true
       }
       else {
-        return null;
+        return (c == 'm' || c == 'M') && i + 2 < name.length && Character.isDigit(name[i + 2])
       }
     }
-    catch (Throwable e) {
-      if (isEssential) {
-        ExceptionUtilRt.rethrowUnchecked(e);
-        throw new RuntimeException(e);
-      }
-      DescriptorListLoadingContext.LOG.info("Cannot load " + resource, e);
-      return null;
-    }
-    finally {
-      loadingContext.close();
-    }
+    return false
   }
 
-  private static void loadDescriptorsFromProperty(@NotNull PluginLoadingResult result,
-                                                  @NotNull DescriptorListLoadingContext context) {
-    String pathProperty = System.getProperty(PluginManagerCore.PROPERTY_PLUGIN_PATH);
-    if (pathProperty == null) {
-      return;
-    }
+  private fun loadDescriptorsFromProperty(result: PluginLoadingResult, context: DescriptorListLoadingContext) {
+    val pathProperty = System.getProperty(PluginManagerCore.PROPERTY_PLUGIN_PATH) ?: return
 
     // gradle-intellij-plugin heavily depends on this property in order to have core class loader plugins during tests
-    boolean useCoreClassLoaderForPluginsFromProperty =
-      Boolean.parseBoolean(System.getProperty("idea.use.core.classloader.for.plugin.path"));
-
-    for (StringTokenizer t = new StringTokenizer(pathProperty, File.pathSeparatorChar + ","); t.hasMoreTokens(); ) {
-      String s = t.nextToken();
-      IdeaPluginDescriptorImpl descriptor = loadDescriptor(Paths.get(s), false, context);
-      if (descriptor != null) {
+    val useCoreClassLoaderForPluginsFromProperty = java.lang.Boolean.parseBoolean(
+      System.getProperty("idea.use.core.classloader.for.plugin.path"))
+    val t = StringTokenizer(pathProperty, File.pathSeparatorChar.toString() + ",")
+    while (t.hasMoreTokens()) {
+      val s = t.nextToken()
+      loadDescriptor(Paths.get(s), false, context)?.let {
         // plugins added via property shouldn't be overridden to avoid plugin root detection issues when running external plugin tests
-        result.add(descriptor,  /* overrideUseIfCompatible = */ true);
+        result.add(it, /* overrideUseIfCompatible = */true)
         if (useCoreClassLoaderForPluginsFromProperty) {
-          descriptor.setUseCoreClassLoader();
+          it.setUseCoreClassLoader()
         }
       }
     }
   }
 
-  static @NotNull DescriptorListLoadingContext loadDescriptors() {
-    int flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
-    boolean isUnitTestMode = PluginManagerCore.isUnitTestMode;
+  @JvmStatic
+  fun loadDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): DescriptorListLoadingContext {
+    var flags = DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR
     if (isUnitTestMode) {
-      flags |= DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE;
+      flags = flags or DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE
     }
-    if (isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
-      flags |= DescriptorListLoadingContext.CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS;
+    if (isUnitTestMode || isRunningFromSources) {
+      flags = flags or DescriptorListLoadingContext.CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS
     }
 
-    PluginLoadingResult result = PluginManagerCore.createLoadingResult(null);
-    Path bundledPluginPath;
-    if (isUnitTestMode) {
-      bundledPluginPath = null;
+    val result = PluginManagerCore.createLoadingResult(null)
+    val bundledPluginPath: Path? = if (isUnitTestMode) {
+      null
     }
-    else if (Boolean.getBoolean("idea.use.dev.build.server")) {
-      bundledPluginPath = Paths.get(PathManager.getHomePath(), "out/dev-run", PlatformUtils.getPlatformPrefix(), "plugins");
+    else if (java.lang.Boolean.getBoolean("idea.use.dev.build.server")) {
+      Paths.get(PathManager.getHomePath(), "out/dev-run", PlatformUtils.getPlatformPrefix(), "plugins")
     }
     else {
-      bundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
+      Paths.get(PathManager.getPreInstalledPluginsPath())
     }
 
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, DisabledPluginsState.disabledPlugins(), result);
-    try {
-      loadBundledDescriptorsAndDescriptorsFromDir(context, Paths.get(PathManager.getPluginsPath()), bundledPluginPath);
-
-      loadDescriptorsFromProperty(result, context);
-
+    val context = DescriptorListLoadingContext(flags, DisabledPluginsState.disabledPlugins(), result)
+    context.use {
+      loadBundledDescriptorsAndDescriptorsFromDir(context = context,
+                                                  customPluginDir = Paths.get(PathManager.getPluginsPath()),
+                                                  bundledPluginDir = bundledPluginPath,
+                                                  isRunningFromSources = isRunningFromSources)
+      loadDescriptorsFromProperty(result, context)
       if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
-        context.usePluginClassLoader = true;
-        ForkJoinPool.commonPool().invoke(new LoadDescriptorsFromDirAction(Paths.get(PathManager.getPreInstalledPluginsPath()), context, true));
+        context.usePluginClassLoader = true
+        ForkJoinPool.commonPool().invoke(LoadDescriptorsFromDirAction(Paths.get(PathManager.getPreInstalledPluginsPath()), context, true))
       }
     }
-    catch (InterruptedException | ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      context.close();
-    }
-
-    context.result.finishLoading();
-    return context;
+    context.result.finishLoading()
+    return context
   }
 
-  static void loadBundledDescriptorsAndDescriptorsFromDir(@NotNull DescriptorListLoadingContext context,
-                                                          @NotNull Path customPluginDir,
-                                                          @Nullable Path bundledPluginDir)
-    throws ExecutionException, InterruptedException {
-    ClassLoader classLoader = PluginDescriptorLoader.class.getClassLoader();
-    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
-    URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
-    ClassPathXmlPathResolver pathResolver = new ClassPathXmlPathResolver(classLoader);
-    loadDescriptorsFromClassPath(urlsFromClassPath, context, platformPluginURL, pathResolver);
+  @JvmStatic
+  fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListLoadingContext,
+                                                  customPluginDir: Path,
+                                                  bundledPluginDir: Path?,
+                                                  isRunningFromSources: Boolean) {
+    val classLoader = PluginDescriptorLoader::class.java.classLoader
+    val urlsFromClassPath = LinkedHashMap<URL, String>()
+    val platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, isRunningFromSources)
 
-    ForkJoinPool.commonPool().invoke(new LoadDescriptorsFromDirAction(customPluginDir, context, false));
+    val pool = ForkJoinPool.commonPool()
+
+    if (!urlsFromClassPath.isEmpty()) {
+      pool.invoke(LoadDescriptorsFromClassPathAction(urls = urlsFromClassPath,
+                                                     context = context,
+                                                     platformPluginURL = platformPluginURL,
+                                                     pathResolver = ClassPathXmlPathResolver(classLoader)))
+    }
+
+    pool.invoke(LoadDescriptorsFromDirAction(customPluginDir, context, false))
     if (bundledPluginDir != null) {
-      ForkJoinPool.commonPool().invoke(new LoadDescriptorsFromDirAction(bundledPluginDir, context, true));
+      pool.invoke(LoadDescriptorsFromDirAction(bundledPluginDir, context, true))
     }
   }
 
-  static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
-                                           @NotNull DescriptorListLoadingContext context,
-                                           @Nullable URL platformPluginURL,
-                                           @NotNull PathResolver pathResolver) {
-    if (urls.isEmpty()) {
-      return;
-    }
-
-    ForkJoinPool.commonPool().invoke(new RecursiveAction() {
-      @Override
-      protected void compute() {
-        List<RecursiveTask<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>(urls.size());
-        for (Map.Entry<URL, String> entry : urls.entrySet()) {
-          tasks.add(new RecursiveTask<IdeaPluginDescriptorImpl>() {
-            @Override
-            protected IdeaPluginDescriptorImpl compute() {
-              URL url = entry.getKey();
-              boolean isEssential = url.equals(platformPluginURL);
-              return loadDescriptorFromResource(url, entry.getValue(), new DescriptorLoadingContext(context, true, isEssential), isEssential, pathResolver);
-            }
-          });
-        }
-
-        PluginLoadingResult result = context.result;
-        ForkJoinTask.invokeAll(tasks);
-        for (RecursiveTask<IdeaPluginDescriptorImpl> task : tasks) {
-          IdeaPluginDescriptorImpl descriptor = task.getRawResult();
-          if (descriptor != null) {
-            if (!PluginManagerCore.usePluginClassLoader) {
-              descriptor.setUseCoreClassLoader();
-            }
-            result.add(descriptor, /* overrideUseIfCompatible = */ false);
-          }
-        }
-      }
-    });
-  }
-
-  private static @Nullable URL computePlatformPluginUrlAndCollectPluginUrls(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
-    String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
+  private fun computePlatformPluginUrlAndCollectPluginUrls(loader: ClassLoader,
+                                                           urls: MutableMap<URL, String>,
+                                                           isRunningFromSources: Boolean): URL? {
+    val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
 
     // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-    if ((platformPrefix == null || platformPrefix.equals(PlatformUtils.IDEA_PREFIX) || platformPrefix.equals(PlatformUtils.WEB_PREFIX)) &&
-        (Boolean.getBoolean("idea.use.dev.build.server") || !PluginManagerCore.isRunningFromSources())) {
-      urls.put(loader.getResource(PluginManagerCore.PLUGIN_XML_PATH), PluginManagerCore.PLUGIN_XML);
-      return null;
+    if ((platformPrefix == null || platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
+        (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || !isRunningFromSources)) {
+      urls.put(loader.getResource(PluginManagerCore.PLUGIN_XML_PATH)!!, PluginManagerCore.PLUGIN_XML)
+      return null
     }
 
-    URL result = null;
+    var result: URL? = null
     if (platformPrefix != null) {
-      String fileName = platformPrefix + "Plugin.xml";
-      URL resource = loader.getResource(PluginManagerCore.META_INF + fileName);
-      if (resource != null) {
-        urls.put(resource, fileName);
-        result = resource;
+      val fileName = "${platformPrefix}Plugin.xml"
+      loader.getResource("${PluginManagerCore.META_INF}$fileName")?.let {
+        urls.put(it, fileName)
+        result = it
       }
     }
-    collectPluginFilesInClassPath(loader, urls);
-    return result;
+    collectPluginFilesInClassPath(loader, urls)
+    return result
   }
 
-  static void collectPluginFilesInClassPath(@NotNull ClassLoader loader, @NotNull Map<URL, String> urls) {
+  private fun collectPluginFilesInClassPath(loader: ClassLoader, urls: MutableMap<URL, String>) {
     try {
-      Enumeration<URL> enumeration = loader.getResources(PluginManagerCore.PLUGIN_XML_PATH);
+      val enumeration = loader.getResources(PluginManagerCore.PLUGIN_XML_PATH)
       while (enumeration.hasMoreElements()) {
-        urls.put(enumeration.nextElement(), PluginManagerCore.PLUGIN_XML);
+        urls.put(enumeration.nextElement(), PluginManagerCore.PLUGIN_XML)
       }
     }
-    catch (IOException e) {
-      DescriptorListLoadingContext.LOG.info(e);
+    catch (e: IOException) {
+      DescriptorListLoadingContext.LOG.warn(e)
     }
   }
 
@@ -479,129 +437,263 @@ public final class PluginDescriptorLoader {
    * Returns enabled plugins only.
    */
   @ApiStatus.Internal
-  public static @NotNull List<IdeaPluginDescriptorImpl> loadUncachedDescriptors() {
-    return loadDescriptors().result.getEnabledPlugins();
+  @JvmStatic
+  fun loadUncachedDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boolean): List<IdeaPluginDescriptorImpl> {
+    return loadDescriptors(isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources).result.enabledPlugins
   }
 
-  public static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact(@NotNull Path file, @Nullable BuildNumber buildNumber) throws IOException {
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR,
-                                                                                  DisabledPluginsState.disabledPlugins(),
-                                                                                  PluginManagerCore.createLoadingResult(buildNumber));
-    Path outputDir = null;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false)) {
-      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, false);
+  @Throws(IOException::class)
+  @JvmStatic
+  fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
+    val context = DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR,
+                                               DisabledPluginsState.disabledPlugins(),
+                                               PluginManagerCore.createLoadingResult(buildNumber))
+    var outputDir: Path? = null
+    try {
+      var descriptor = loadDescriptorFromFileOrDir(file = file,
+                                                   pathName = PluginManagerCore.PLUGIN_XML,
+                                                   context = context,
+                                                   pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                                   isBundled = false,
+                                                   isEssential = false,
+                                                   isDirectory = false)
       if (descriptor != null || !file.toString().endsWith(".zip")) {
-        return descriptor;
+        return descriptor
       }
 
-      outputDir = Files.createTempDirectory("plugin");
-      new Decompressor.Zip(file).extract(outputDir);
-      try (DirectoryStream<Path> stream = Files.newDirectoryStream(outputDir)) {
-        Iterator<Path> iterator = stream.iterator();
-        if (iterator.hasNext()) {
-          descriptor = loadDescriptorFromFileOrDir(iterator.next(), PluginManagerCore.PLUGIN_XML, context, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, true);
+      outputDir = Files.createTempDirectory("plugin")
+      Decompressor.Zip(file).extract(outputDir!!)
+      try {
+        Files.newDirectoryStream(outputDir).use { stream ->
+          val iterator = stream.iterator()
+          if (iterator.hasNext()) {
+            descriptor = loadDescriptorFromFileOrDir(file = iterator.next(),
+                                                     pathName = PluginManagerCore.PLUGIN_XML,
+                                                     context = context,
+                                                     pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                                     isBundled = false,
+                                                     isEssential = false,
+                                                     isDirectory = true)
+          }
         }
       }
-      catch (NoSuchFileException ignore) {
+      catch (ignore: NoSuchFileException) {
       }
-      return descriptor;
+      return descriptor
     }
     finally {
-      if (outputDir != null) {
-        FileUtil.delete(outputDir);
+      outputDir?.let {
+        FileUtil.delete(it)
       }
     }
   }
 
-
-  public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return isFull(descriptor) ? descriptor : PluginManager.loadDescriptor(descriptor.getPluginPath(),
-                                                                          Collections.emptySet(),
-                                                                          descriptor.isBundled(),
-                                                                          createPathResolverForPlugin(descriptor, false));
-  }
-
-  static @NotNull PathResolver createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor, boolean checkPluginJarFiles) {
-    if (PluginManagerCore.isRunningFromSources() &&
-        descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
-        descriptor.getPluginPath().toString().contains("out/classes")) {
-      return new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
-    }
-
-    if (checkPluginJarFiles) {
-      List<Path> pluginJarFiles = new ArrayList<>();
-      List<Path> dirs = new ArrayList<>();
-      if (collectPluginDirectoryContents(descriptor.getPluginPath(), pluginJarFiles, dirs)) {
-        return new PluginXmlPathResolver(pluginJarFiles);
-      }
-    }
-    return PluginXmlPathResolver.DEFAULT_PATH_RESOLVER;
-  }
-
-  public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-    IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
-    if (fullDescriptor == null) {
-      DescriptorListLoadingContext.LOG.error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
-      return descriptor;
+  @JvmStatic
+  fun tryLoadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescriptorImpl? {
+    if (!PluginManagerCore.hasDescriptorByIdentity(descriptor) || PluginManagerCore.getLoadedPlugins().contains(descriptor)) {
+      return descriptor
     }
     else {
-      return fullDescriptor;
+      return loadDescriptor(file = descriptor.pluginPath,
+                            disabledPlugins = emptySet(),
+                            isBundled = descriptor.isBundled,
+                            pathResolver = createPathResolverForPlugin(descriptor = descriptor, checkPluginJarFiles = false))
     }
   }
 
-  private static boolean isFull(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return !PluginManagerCore.hasDescriptorByIdentity(descriptor) ||
-           PluginManagerCore.getLoadedPlugins().contains(descriptor);
+  @JvmStatic
+  fun loadDescriptor(file: Path,
+                     disabledPlugins: Set<PluginId?>,
+                     isBundled: Boolean,
+                     pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
+    DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins).use { context ->
+      return loadDescriptorFromFileOrDir(file = file,
+                                         pathName = PluginManagerCore.PLUGIN_XML,
+                                         context = context,
+                                         pathResolver = pathResolver,
+                                         isBundled = isBundled,
+                                         isEssential = false,
+                                         isDirectory = Files.isDirectory(file))
+    }
   }
 
-  private static final class LoadDescriptorsFromDirAction extends RecursiveAction {
-    private @NotNull final Path dir;
-    private @NotNull final DescriptorListLoadingContext context;
-    private final boolean isBundled;
-
-    LoadDescriptorsFromDirAction(@NotNull Path dir, @NotNull DescriptorListLoadingContext context, boolean isBundled) {
-      this.dir = dir;
-      this.context = context;
-      this.isBundled = isBundled;
+  fun createPathResolverForPlugin(descriptor: IdeaPluginDescriptorImpl, checkPluginJarFiles: Boolean): PathResolver {
+    if (PluginManagerCore.isRunningFromSources() && descriptor.pluginPath.fileSystem == FileSystems.getDefault() &&
+        descriptor.pluginPath.toString().contains("out/classes")) {
+      return ClassPathXmlPathResolver(descriptor.pluginClassLoader)
     }
+    else if (checkPluginJarFiles) {
+      val pluginJarFiles = ArrayList<Path>()
+      val dirs = ArrayList<Path>()
+      if (collectPluginDirectoryContents(descriptor.pluginPath, pluginJarFiles, dirs)) {
+        return PluginXmlPathResolver(pluginJarFiles)
+      }
+    }
+    return PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+  }
 
-    @Override
-    protected void compute() {
-      List<RecursiveTask<IdeaPluginDescriptorImpl>> tasks = new ArrayList<>();
-      try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)) {
-        for (Path file : dirStream) {
-          tasks.add(new RecursiveTask<@Nullable IdeaPluginDescriptorImpl>() {
-            @Override
-            protected IdeaPluginDescriptorImpl compute() {
+  @JvmStatic
+  fun loadFullDescriptor(descriptor: IdeaPluginDescriptorImpl): IdeaPluginDescriptorImpl {
+    // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
+    val fullDescriptor = tryLoadFullDescriptor(descriptor)
+    if (fullDescriptor == null) {
+      DescriptorListLoadingContext.LOG.error("Could not load full descriptor for plugin ${descriptor.pluginPath}")
+      return descriptor
+    }
+    else {
+      return fullDescriptor
+    }
+  }
+
+  @TestOnly
+  @JvmStatic
+  fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescriptor> {
+    val urlsFromClassPath = LinkedHashMap<URL, String>()
+    collectPluginFilesInClassPath(loader, urlsFromClassPath)
+    val buildNumber = BuildNumber.fromString("2042.42")
+    val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), Supplier { buildNumber }, false))
+    LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader)).compute()
+    context.result.finishLoading()
+    return context.result.enabledPlugins
+  }
+}
+
+private class LoadDescriptorsFromDirAction(private val dir: Path,
+                                           private val context: DescriptorListLoadingContext,
+                                           private val isBundled: Boolean) : RecursiveAction() {
+  override fun compute() {
+    val tasks = ArrayList<RecursiveTask<IdeaPluginDescriptorImpl?>>()
+    try {
+      Files.newDirectoryStream(dir).use { dirStream ->
+        for (file in dirStream) {
+          tasks.add(object : RecursiveTask<IdeaPluginDescriptorImpl?>() {
+            override fun compute(): IdeaPluginDescriptorImpl? {
               if (Files.isDirectory(file)) {
-                try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, isBundled, /* isEssential = */ false)) {
-                  return loadDescriptorFromDirAndNormalize(file, PluginManagerCore.PLUGIN_XML, loadingContext, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
-                }
+                return PluginDescriptorLoader.loadDescriptorFromDirAndNormalize(file = file,
+                                                                                pathName = PluginManagerCore.PLUGIN_XML,
+                                                                                parentContext = context,
+                                                                                isBundled = isBundled,
+                                                                                isEssential = false,
+                                                                                pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
               }
-              else if (StringUtilRt.endsWithIgnoreCase(file.getFileName().toString(), ".jar")) {
-                try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, isBundled, /* isEssential = */ false)) {
-                  return loadDescriptorFromJar(file, PluginManagerCore.PLUGIN_XML, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                               loadingContext, null);
+              else if (file.fileName.toString().endsWith(".jar", ignoreCase = true)) {
+                DescriptorLoadingContext().use { loadingContext ->
+                  return PluginDescriptorLoader.loadDescriptorFromJar(file = file,
+                                                                      fileName = PluginManagerCore.PLUGIN_XML,
+                                                                      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                                                      context = loadingContext,
+                                                                      parentContext = context,
+                                                                      isBundled = isBundled,
+                                                                      isEssential = false,
+                                                                      pluginPath = null)
                 }
               }
               else {
-                return null;
+                return null
               }
             }
-          });
+          })
         }
       }
-      catch (IOException ignore) {
-        return;
-      }
+    }
+    catch (ignore: IOException) {
+      return
+    }
 
-      ForkJoinTask.invokeAll(tasks);
-      for (RecursiveTask<IdeaPluginDescriptorImpl> task : tasks) {
-        IdeaPluginDescriptorImpl descriptor = task.getRawResult();
-        if (descriptor != null) {
-          context.result.add(descriptor, /* overrideUseIfCompatible = */ false);
+    ForkJoinTask.invokeAll(tasks)
+    for (task in tasks) {
+      task.rawResult?.let {
+        context.result.add(it,  /* overrideUseIfCompatible = */false)
+      }
+    }
+  }
+}
+
+private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, String>,
+                                                 private val context: DescriptorListLoadingContext,
+                                                 private val platformPluginURL: URL?,
+                                                 private val pathResolver: PathResolver) : RecursiveAction() {
+  public override fun compute() {
+    val tasks = ArrayList<RecursiveTask<IdeaPluginDescriptorImpl?>>(urls.size)
+    for ((url, value) in urls) {
+      tasks.add(object : RecursiveTask<IdeaPluginDescriptorImpl?>() {
+        override fun compute(): IdeaPluginDescriptorImpl? {
+          val isEssential = url == platformPluginURL
+          try {
+            return loadDescriptorFromResource(resource = url, pathName = value, isEssential = isEssential)
+          }
+          catch (e: Throwable) {
+            if (isEssential) {
+              throw e
+            }
+            DescriptorListLoadingContext.LOG.info("Cannot load $url", e)
+            return null
+          }
         }
+      })
+    }
+
+    val result = context.result
+    ForkJoinTask.invokeAll(tasks)
+    val usePluginClassLoader = PluginManagerCore.usePluginClassLoader
+    for (task in tasks) {
+      task.rawResult?.let {
+        if (!usePluginClassLoader) {
+          it.setUseCoreClassLoader()
+        }
+        result.add(it, /* overrideUseIfCompatible = */false)
+      }
+    }
+  }
+
+  private fun loadDescriptorFromResource(resource: URL, pathName: String, isEssential: Boolean): IdeaPluginDescriptorImpl? {
+    when {
+      URLUtil.FILE_PROTOCOL == resource.protocol -> {
+        val file = Paths.get(Strings.trimEnd(UrlClassLoader.urlToFilePath(resource.path).replace('\\', '/'), pathName)).parent
+        return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = file,
+                                                                  pathName = pathName,
+                                                                  context = context,
+                                                                  pathResolver = pathResolver,
+                                                                  isBundled = true,
+                                                                  isEssential = isEssential,
+                                                                  isDirectory = Files.isDirectory(file))
+      }
+      URLUtil.JAR_PROTOCOL == resource.protocol -> {
+        val file = Paths.get(UrlClassLoader.urlToFilePath(resource.path))
+        val parentFile = file.parent
+        if (parentFile == null || !parentFile.endsWith("lib")) {
+          DescriptorLoadingContext().use { loadingContext ->
+            return PluginDescriptorLoader.loadDescriptorFromJar(file = file,
+                                                                fileName = pathName,
+                                                                pathResolver = pathResolver,
+                                                                context = loadingContext,
+                                                                parentContext = context,
+                                                                isBundled = true,
+                                                                isEssential = isEssential,
+                                                                pluginPath = null)
+          }
+        }
+        else {
+          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          DescriptorLoadingContext().use { loadingContext ->
+            val descriptor = PluginDescriptorLoader.loadDescriptorFromJar(file = file,
+                                                                          fileName = pathName,
+                                                                          pathResolver = pathResolver,
+                                                                          context = loadingContext,
+                                                                          parentContext = context,
+                                                                          isBundled = true,
+                                                                          isEssential = isEssential,
+                                                                          pluginPath = file.parent.parent)
+
+            if (descriptor != null) {
+              descriptor.jarFiles = null
+            }
+            return descriptor
+          }
+        }
+      }
+      else -> {
+        return null
       }
     }
   }

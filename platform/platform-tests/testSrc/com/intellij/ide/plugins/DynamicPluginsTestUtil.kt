@@ -22,10 +22,13 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
   val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true).use { context ->
-    PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context,
-                                                       PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, Files.isDirectory(dir))
-  }
+  val result = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = dir,
+                                                                  pathName = PluginManagerCore.PLUGIN_XML,
+                                                                  context = parentContext,
+                                                                  pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                                                  isBundled = isBundled,
+                                                                  isEssential = true,
+                                                                  isDirectory = Files.isDirectory(dir))
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty
@@ -44,10 +47,13 @@ fun loadExtensionWithText(
 }
 
 internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
-  val directory = if (fs == FileSystems.getDefault())
+  val directory = if (fs == FileSystems.getDefault()) {
     FileUtil.createTempDirectory("test", "test", true).toPath()
-  else
+  }
+  else {
     fs.getPath("/").resolve(Ksuid.generate())
+  }
+
   val pluginDirectory = directory.resolve("plugin")
 
   pluginBuilder.build(pluginDirectory)

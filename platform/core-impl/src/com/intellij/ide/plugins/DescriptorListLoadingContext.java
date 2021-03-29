@@ -7,19 +7,19 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.ProviderNotFoundException;
-import java.nio.file.spi.FileSystemProvider;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-final class DescriptorListLoadingContext implements AutoCloseable {
+@ApiStatus.Internal
+public final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
@@ -46,8 +46,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   private final Map<String, PluginId> optionalConfigNames;
 
-  private FileSystemProvider zipFsProvider;
-
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
     return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
@@ -68,28 +66,6 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       toDispose.add(ref);
       return ref;
     });
-  }
-
-  FileSystemProvider getZipFsProvider() {
-    FileSystemProvider result = zipFsProvider;
-    if (result == null) {
-      result = findZipFsProvider();
-      zipFsProvider = result;
-    }
-    return result;
-  }
-
-  private static @NotNull FileSystemProvider findZipFsProvider() {
-    for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
-      try {
-        if (provider.getScheme().equals("jar")) {
-          return provider;
-        }
-      }
-      catch (UnsupportedOperationException ignored) {
-      }
-    }
-    throw new ProviderNotFoundException("Provider not found");
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {

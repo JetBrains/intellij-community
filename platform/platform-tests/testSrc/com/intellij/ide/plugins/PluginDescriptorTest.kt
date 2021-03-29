@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
@@ -104,7 +104,7 @@ class PluginDescriptorTest {
       Paths.get(testDataPath, "duplicate1.jar").toUri().toURL(),
       Paths.get(testDataPath, "duplicate2.jar").toUri().toURL()
     )
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
+    assertThat(PluginDescriptorLoader.testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
   }
 
   @Test
@@ -126,7 +126,7 @@ class PluginDescriptorTest {
         urls.add(path.toUri().toURL())
       }
     }
-    val descriptors = PluginManagerCore.testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
+    val descriptors = PluginDescriptorLoader.testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
     // core and com.intellij.workspace
     assertThat(descriptors).hasSize(1)
   }
@@ -379,13 +379,13 @@ class PluginDescriptorTest {
     }
 
     val loader1 = TestLoader("", "/spaces%20spaces/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader1).size)
+    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader1).size)
     val loader2 = TestLoader("", "/spaces spaces/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader2).size)
+    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader2).size)
     val loader3 = TestLoader("jar:", "/jar%20spaces.jar!/")
-    TestCase.assertEquals(1, PluginManagerCore.testLoadDescriptorsFromClassPath(loader3).size)
+    TestCase.assertEquals(1, PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader3).size)
     val loader4 = TestLoader("jar:", "/jar spaces.jar!/")
-    assertThat(PluginManagerCore.testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
+    assertThat(PluginDescriptorLoader.testLoadDescriptorsFromClassPath(loader4)).hasSize(1)
   }
 
   @Test
@@ -457,8 +457,8 @@ private fun writeDescriptor(id: String, pluginDir: Path, @Language("xml") data: 
 }
 
 private val testDataPath: String
-  get() = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginDescriptor"
+  get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
 private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
-  return loadDescriptorInTest(Paths.get(testDataPath, dirName), disabledPlugins)
+  return loadDescriptorInTest(Path.of(testDataPath, dirName), disabledPlugins)
 }

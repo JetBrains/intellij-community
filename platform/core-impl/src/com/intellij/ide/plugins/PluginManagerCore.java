@@ -41,7 +41,6 @@ import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
-import java.net.URL;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -731,7 +730,7 @@ public final class PluginManagerCore {
     else {
       effectiveBundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
     }
-    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath);
+    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath, isRunningFromSources());
 
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
       if (!descriptor.isBundled()) {
@@ -777,19 +776,6 @@ public final class PluginManagerCore {
     prepareLoadingPluginsErrorMessage(pluginErrors, globalErrors, actions);
   }
 
-  @TestOnly
-  public static @NotNull List<? extends IdeaPluginDescriptor> testLoadDescriptorsFromClassPath(@NotNull ClassLoader loader)
-    throws ExecutionException, InterruptedException {
-    Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
-    PluginDescriptorLoader.collectPluginFilesInClassPath(loader, urlsFromClassPath);
-    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, false));
-    PluginDescriptorLoader.loadDescriptorsFromClassPath(urlsFromClassPath, context, null, new ClassPathXmlPathResolver(loader));
-
-    context.result.finishLoading();
-    return context.result.getEnabledPlugins();
-  }
-
   public static void scheduleDescriptorLoading() {
     getOrScheduleLoading();
   }
@@ -802,7 +788,7 @@ public final class PluginManagerCore {
 
     future = CompletableFuture.supplyAsync(() -> {
       Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading");
-      DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors();
+      DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       activity.end();
       return context;
     }, ForkJoinPool.commonPool());
@@ -1350,21 +1336,7 @@ public final class PluginManagerCore {
    * @param area       area which extension points and extensions should be registered
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    IdeaPluginDescriptorImpl descriptor;
-    DescriptorListLoadingContext parentContext =
-      DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins());
-    PathResolver pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, true)) {
-      if (Files.isDirectory(pluginRoot)) {
-        descriptor = PluginDescriptorLoader
-          .loadDescriptorFromDir(pluginRoot, META_INF + fileName, null, context.parentContext, context.isEssential, context.isBundled,
-                                 pathResolver);
-      }
-      else {
-        descriptor = PluginDescriptorLoader.loadDescriptorFromJar(pluginRoot, fileName, pathResolver, context, null);
-      }
-    }
-
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.INSTANCE.loadForCoreEnv$intellij_platform_core_impl(pluginRoot, fileName);
     if (descriptor == null) {
       getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
       return;
@@ -1387,7 +1359,7 @@ public final class PluginManagerCore {
 
     try {
       if (context == null) {
-        context = PluginDescriptorLoader.loadDescriptors();
+        context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       }
       Activity activity = StartUpMeasurer.startActivity("plugin initialization");
       PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -34,7 +34,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors();
+    myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources());
     SwingWorker<List<PluginNode>, Object> worker = new SwingWorker<>() {
       @Override
       protected @NotNull List<PluginNode> doInBackground() {

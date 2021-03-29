@@ -64,12 +64,10 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
     app.loadComponents(null)
 
-    preloadServiceFuture
-      .thenRun { ForkJoinTask.invokeAll(callAppInitialized(app)) }
-      .get(40, TimeUnit.SECONDS)
+    preloadServiceFuture.get(40, TimeUnit.SECONDS)
+    ForkJoinTask.invokeAll(callAppInitialized(app))
 
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
-
   }
   catch (e: TimeoutException) {
     throw RuntimeException("Cannot preload services in 40 seconds: ${ThreadDumper.dumpThreadsToString()}", e)

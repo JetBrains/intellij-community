@@ -353,10 +353,10 @@ public final class PluginInstaller {
       return false;
     }
 
-    IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile,
-                                                                             DisabledPluginsState.disabledPlugins(),
-                                                                             false,
-                                                                             PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
+    IdeaPluginDescriptorImpl targetDescriptor = PluginDescriptorLoader.loadDescriptor(targetFile,
+                                                                                      DisabledPluginsState.disabledPlugins(),
+                                                                                      false,
+                                                                                      PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
     if (targetDescriptor == null) {
       return false;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -109,7 +109,7 @@ final class PluginLoadingResult {
     error.register(pluginErrors);
   }
 
-  void reportCannotLoad(@NotNull Path file, Exception e) {
+  void reportCannotLoad(@NotNull Path file, Throwable e) {
     DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
     globalErrors.add(() -> CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
                                                FileUtil.getLocationRelativeToUserHome(file.toString(), false)));
