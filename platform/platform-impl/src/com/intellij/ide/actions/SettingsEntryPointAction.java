@@ -223,11 +223,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return isAvailableInStatusBar();
     }
-
-    @Override
-    public boolean isConfigurable() {
-      return false;
-    }
   }
 
   private static class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
