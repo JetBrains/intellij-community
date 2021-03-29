@@ -527,8 +527,12 @@ public class PythonSdkUtil {
     if (homeDirectory == null) {
       return null;
     }
-    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                         : homeDirectory.getParent().getParent();
-    return condaParent.findChild("conda-meta");
+    VirtualFile parentDirectory = homeDirectory.getParent();
+    if (parentDirectory == null) {
+      return null;
+    }
+    final VirtualFile condaParent = SystemInfo.isWindows ? parentDirectory
+                                                         : parentDirectory.getParent();
+    return condaParent != null ? condaParent.findChild("conda-meta") : null;
   }
 }
