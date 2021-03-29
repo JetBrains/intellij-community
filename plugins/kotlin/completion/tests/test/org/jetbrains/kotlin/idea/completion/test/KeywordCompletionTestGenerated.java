@@ -366,6 +366,16 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/NoFinalInParameterList.kt");
     }
 
+    @TestMetadata("NoValVarInFunctionParameters.kt")
+    public void testNoValVarInFunctionParameters() throws Exception {
+        runTest("testData/keywords/NoValVarInFunctionParameters.kt");
+    }
+
+    @TestMetadata("NoValVarInSecondaryConstructorParameters.kt")
+    public void testNoValVarInSecondaryConstructorParameters() throws Exception {
+        runTest("testData/keywords/NoValVarInSecondaryConstructorParameters.kt");
+    }
+
     @TestMetadata("NotInNotIs.kt")
     public void testNotInNotIs() throws Exception {
         runTest("testData/keywords/NotInNotIs.kt");

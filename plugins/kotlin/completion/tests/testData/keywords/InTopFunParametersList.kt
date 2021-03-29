@@ -6,6 +6,4 @@ fun test(<caret>) {
 // EXIST: noinline
 // EXIST: crossinline
 /* TODO: they all are not correct */
-// EXIST: val
-// EXIST: var
 // NOTHING_ELSE

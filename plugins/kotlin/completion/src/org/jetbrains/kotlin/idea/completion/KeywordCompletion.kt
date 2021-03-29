@@ -29,6 +29,7 @@ import com.intellij.psi.filters.position.LeftNeighbour
 import com.intellij.psi.filters.position.PositionElementFilter
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -433,6 +434,10 @@ object KeywordCompletion {
                 isErrorElementBefore(elementAt) -> return false
 
                 !isModifierSupportedAtLanguageLevel(keywordTokenType, languageVersionSettings) -> return false
+
+                (keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD) &&
+                        elementAt.parent is KtParameter &&
+                        elementAt.parentOfTypes(KtNamedFunction::class, KtSecondaryConstructor::class) != null -> return false
 
                 keywordTokenType !is KtModifierKeywordToken -> return true
 
