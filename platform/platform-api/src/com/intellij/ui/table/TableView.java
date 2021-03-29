@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
+public class TableView<Item> extends BaseTableView implements SelectionProvider {
 
   private boolean myInStopEditing = false;
 
@@ -256,7 +256,6 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     return editor == null ? super.getCellEditor(row, column) : editor;
   }
 
-  @Override
   public List<Item> getItems() {
     return getListTableModel().getItems();
   }
