@@ -26,7 +26,7 @@ import static org.jetbrains.plugins.textmate.Constants.*;
 import static org.jetbrains.plugins.textmate.plist.PListValue.*;
 
 public class VSCBundle extends Bundle {
-  private final Map<String, Collection<String>> grammarToExtensions = new HashMap<>();
+  private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final MultiMap<String, String> configToScopes = new MultiMap<>();
 
   public VSCBundle(@NotNull String name,
@@ -40,7 +40,6 @@ public class VSCBundle extends Bundle {
     loadExtensions();
     //noinspection SSBasedInspection
     return grammarToExtensions.keySet().stream().map((path) -> new File(bundleFile, path)).collect(Collectors.toList());
-
   }
 
   @Override
@@ -85,7 +84,7 @@ public class VSCBundle extends Bundle {
                 }
               }
             }
-            Map<String, Collection<String>> grammarExtensions = new HashMap<>();
+            Map<String, Collection<String>> grammarExtensions = new LinkedHashMap<>();
             MultiMap<String, String> scopeConfig = new MultiMap<>();
             for (Object grammar : (ArrayList)grammars) {
               if (grammar instanceof Map) {

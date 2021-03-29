@@ -33,6 +33,7 @@ public class TestUtil {
   @NonNls public static final String PYTHON = "python";
   @NonNls public static final String RUBY = "ruby";
   @NonNls public static final String PHP = "php";
+  @NonNls public static final String PHP_VSC = "php_vsc";
   @NonNls public static final String SMARTY = "smarty";
   @NonNls public static final String TURTLE = "turtle";
 
