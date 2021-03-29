@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.codeWithMe.ClientIdKt.isThinClient;
+import static com.intellij.codeWithMe.ClientIdKt.isOnGuest;
 
 /**
  * @author peter
@@ -83,6 +83,6 @@ final class ActionTracker {
     return myActionsHappened || myIsDumb != DumbService.getInstance(myProject).isDumb() ||
            myEditor.isDisposed() ||
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
-           (hasDocumentOrCaretChanged && !isThinClient()); //do not track speculative changes on thin client
+           (hasDocumentOrCaretChanged && !isOnGuest()); //do not track speculative changes on thin client
   }
 }

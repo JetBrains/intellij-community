@@ -231,7 +231,7 @@ fun isForeignClientOnServer(): Boolean {
     return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
 }
 
-fun isThinClient(): Boolean {
+fun isOnGuest(): Boolean {
     return ClientId.localId != ClientId.defaultLocalId
 }
 
