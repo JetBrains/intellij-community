@@ -1118,6 +1118,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
             model("quickfix/addInitializer", pattern = pattern)
+            model("quickfix/addPropertyAccessors", pattern = pattern)
         }
 
         testClass<AbstractHLInspectionTest> {
