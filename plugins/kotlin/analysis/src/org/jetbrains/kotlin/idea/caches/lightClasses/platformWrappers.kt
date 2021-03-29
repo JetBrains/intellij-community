@@ -104,6 +104,24 @@ class KtLightMutabilityPlatformWrapper(
             return listOf(finalBridgeForJava, abstractKotlinGetter)
         }
 
+        /*
+            For some Java functions Kotlin introduces "improved siblings" - the ones with generic parameters (specialized signature).
+            For instance, java.util.Map.remove(java.lang.Object) is paired with kotlin.collections.Map.remove(K).
+            To provide Java developers with a proper experience compiled class is supplied with both options considering type erasure.
+            It means that remove(java.lang.Object) and remove(K) is an invalid pair, whereas remove(java.lang.Object) and, say,
+            remove(java.lang.String) is ok.
+            Java-version method delegates to Kotlin one, it's generated as final and gets 'instanceOf' check inside. Kotlin method becomes
+            abstract.
+
+            The logic is a part of compiler's backend unavailable for UltraLightClasses. 'methodsWithSpecializedSignature'
+            (the function below) therefore tries to mirror it here.
+
+            For performance reasons Kotlin's specialized signature is searched in the nearest class/interface only. For example, we generate
+            UltraLightClass for some classX and classX --<extends>--> kotlin.collections.MutableMap --<extends>--> kotlin.collections.Map.
+            Algorithm considers MutableMap.remove(K, V) and skips getOrDefault(K, V) defined in Map. See implementation of
+            KtLightMutabilityPlatformWrapper.isInKotlinInterface.
+         */
+
         if (!method.isInKotlinInterface()) {
             // compiler generates stub override
             return listOf(method.openBridge())

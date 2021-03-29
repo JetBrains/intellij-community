@@ -27,9 +27,9 @@ abstract class ASet : Set<A> by emptySet<A>()
 
 // kotlin.collections.Iterator
 interface IIterator<Elem> : Iterator<Elem>
-abstract class CIterator<Elem> : Iterator<Elem> by emptyList<Elem>().iterator()
-abstract class SIterator : Iterator<String> by emptyList<String>().iterator()
-abstract class AIterator : Iterator<A> by emptyList<A>().iterator()
+open class CIterator<Elem> : Iterator<Elem> by emptyList<Elem>().iterator()
+open class SIterator : Iterator<String> by emptyList<String>().iterator()
+open class AIterator : Iterator<A> by emptyList<A>().iterator()
 
 // kotlin.collections.Map
 interface IMap<KElem, VElem> : Map<KElem, VElem>
@@ -39,6 +39,6 @@ abstract class ABMap : Map<A, B> by emptyMap<A, B>()
 
 // kotlin.collections.Map.Entry
 interface IMapEntry<KElem, VElem> : Map.Entry<KElem, VElem>
-abstract class CMapEntry<KElem, VElem> : Map.Entry<KElem, VElem> by emptyMap<KElem, VElem>().entries.first()
-abstract class SMapEntry<VElem> : Map.Entry<String, VElem> by emptyMap<String, VElem>().entries.first()
-abstract class ABMapEntry : Map.Entry<A, B> by emptyMap<A, B>().entries.first()
+open class CMapEntry<KElem, VElem> : Map.Entry<KElem, VElem> by emptyMap<KElem, VElem>().entries.first()
+open class SMapEntry<VElem> : Map.Entry<String, VElem> by emptyMap<String, VElem>().entries.first()
+open class ABMapEntry : Map.Entry<A, B> by emptyMap<A, B>().entries.first()
