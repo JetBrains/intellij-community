@@ -27,11 +27,16 @@ import java.util.concurrent.TimeUnit
  *  for example invokeLater { refreshProject(project, spec) }
  * @throws java.lang.AssertionError if import is failed or isn't started
  */
-fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R {
-  val promise = getProjectDataLoadPromise()
+fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R =
+  waitForTask(getProjectDataLoadPromise(), action)
+
+fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R =
+  waitForTask(getExecutionTaskFinishPromise(), action)
+
+private fun <R> waitForTask(finishTaskPromise: Promise<*>, action: ThrowableComputable<R, Throwable>): R {
   val result = action.compute()
   invokeAndWaitIfNeeded {
-    PlatformTestUtil.waitForPromise(promise, TimeUnit.MINUTES.toMillis(1))
+    PlatformTestUtil.waitForPromise(finishTaskPromise, TimeUnit.MINUTES.toMillis(1))
   }
   return result
 }
@@ -62,27 +67,35 @@ private fun getProjectDataLoadPromise(): Promise<Project> {
     .thenAsync(::getProjectDataLoadPromise)
 }
 
+private fun getExecutionTaskFinishPromise(): Promise<Project> {
+  return getExternalSystemTaskFinishPromise { it.type == ExternalSystemTaskType.EXECUTE_TASK }
+}
+
 private fun getResolveTaskFinishPromise(): Promise<Project> {
+  return getExternalSystemTaskFinishPromise(::isResolveTask)
+}
+
+private fun getExternalSystemTaskFinishPromise(isRelevantTask: (ExternalSystemTaskId) -> Boolean): Promise<Project> {
   val promise = AsyncPromise<Project>()
   val parentDisposable = Disposer.newDisposable()
   ExternalSystemProgressNotificationManager.getInstance()
     .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onSuccess(id: ExternalSystemTaskId) {
-        if (isResolveTask(id)) {
+        if (isRelevantTask(id)) {
           Disposer.dispose(parentDisposable)
           promise.setResult(id.findProject()!!)
         }
       }
 
       override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-        if (isResolveTask(id)) {
+        if (isRelevantTask(id)) {
           Disposer.dispose(parentDisposable)
           promise.setError(e)
         }
       }
 
       override fun onCancel(id: ExternalSystemTaskId) {
-        if (isResolveTask(id)) {
+        if (isRelevantTask(id)) {
           Disposer.dispose(parentDisposable)
           promise.cancel()
         }
