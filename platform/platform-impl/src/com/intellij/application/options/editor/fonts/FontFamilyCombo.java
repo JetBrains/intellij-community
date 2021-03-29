@@ -108,7 +108,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     final static MyWarningItem INSTANCE = new MyWarningItem();
 
     private MyWarningItem() {
-      super("<Custom font missing>", false);
+      super(ApplicationBundle.message("settings.editor.font.missing.custom.font"), false);
     }
   }
 
