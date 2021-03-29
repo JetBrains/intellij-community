@@ -11,7 +11,10 @@ import com.intellij.ide.*;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.idea.*;
+import com.intellij.idea.ApplicationLoader;
+import com.intellij.idea.Main;
+import com.intellij.idea.MutedErrorLogger;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -41,7 +44,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -348,28 +350,21 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
     registerComponents(plugins, null);
     ApplicationLoader.initConfigurationStore(this);
-    Executor executor = ApplicationLoader.createExecutorToPreloadServices();
-    preloadServices(plugins, executor, false).getSyncPreloadedServices().join();
+    preloadServices(plugins, "", false).getSyncPreloadedServices().join();
     loadComponents(null);
-    ApplicationLoader.callAppInitialized(this, executor).join();
+    ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
 
   @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");  // NON-NLS (not observable)
-    try {
-      if (indicator == null) {
-        // no splash, no need to to use progress manager
-        createComponents(null);
-      }
-      else {
-        ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
-      }
-      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
+    if (indicator == null) {
+      // no splash, no need to to use progress manager
+      createComponents(null);
     }
-    finally {
-      token.finish();
+    else {
+      ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
     }
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
   }
 
   @Override

@@ -170,10 +170,14 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
   override fun init(preloadServices: Boolean, indicator: ProgressIndicator?) {
     val app = ApplicationManager.getApplication()
 
-    // for light project preload only services that are essential (await means "project component loading activity is completed only when all such services are completed")
-    val servicePreloadingFuture = if (preloadServices) preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this,
-                                                                       activityPrefix = "project ",
-                                                                       onlyIfAwait = isLight) else null
+    // for light project preload only services that are essential
+    // (await means "project component loading activity is completed only when all such services are completed")
+    val servicePreloadingFuture = if (preloadServices) {
+      preloadServices(PluginManagerCore.getLoadedPlugins(null), container = this, activityPrefix = "project ", onlyIfAwait = isLight)
+    }
+    else {
+      null
+    }
     createComponents(indicator)
     servicePreloadingFuture?.join()
 

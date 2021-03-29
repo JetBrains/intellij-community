@@ -54,8 +54,4 @@ final class DescriptorLoadingContext implements AutoCloseable {
       }
     }
   }
-
-  public @NotNull DescriptorLoadingContext copy(boolean isEssential) {
-    return new DescriptorLoadingContext(parentContext, isBundled, isEssential);
-  }
 }

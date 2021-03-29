@@ -275,6 +275,7 @@ public final class PluginDescriptorLoader {
   private static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource,
                                                                                @NotNull String pathName,
                                                                                @NotNull DescriptorLoadingContext loadingContext,
+                                                                               boolean isEssential,
                                                                                @NotNull PathResolver pathResolver) {
     try {
       Path file;
@@ -302,7 +303,7 @@ public final class PluginDescriptorLoader {
       }
     }
     catch (Throwable e) {
-      if (loadingContext.isEssential) {
+      if (isEssential) {
         ExceptionUtilRt.rethrowUnchecked(e);
         throw new RuntimeException(e);
       }
@@ -391,35 +392,19 @@ public final class PluginDescriptorLoader {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     URL platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath);
     ClassPathXmlPathResolver pathResolver = new ClassPathXmlPathResolver(classLoader);
-    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, /* isBundled = */ true, /* isEssential, doesn't matter = */ true)) {
-      loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, platformPluginURL, pathResolver);
-    }
+    loadDescriptorsFromClassPath(urlsFromClassPath, context, platformPluginURL, pathResolver);
 
     ForkJoinPool.commonPool().invoke(new LoadDescriptorsFromDirAction(customPluginDir, context, false));
-
     if (bundledPluginDir != null) {
       ForkJoinPool.commonPool().invoke(new LoadDescriptorsFromDirAction(bundledPluginDir, context, true));
     }
   }
 
   static void loadDescriptorsFromClassPath(@NotNull Map<URL, String> urls,
-                                           @NotNull DescriptorLoadingContext context,
+                                           @NotNull DescriptorListLoadingContext context,
                                            @Nullable URL platformPluginURL,
                                            @NotNull PathResolver pathResolver) {
     if (urls.isEmpty()) {
-      return;
-    }
-
-    if (urls.size() == 1) {
-      Map.Entry<URL, String> entry = urls.entrySet().iterator().next();
-      IdeaPluginDescriptorImpl descriptor =
-        loadDescriptorFromResource(entry.getKey(), entry.getValue(), context.copy(entry.getKey().equals(platformPluginURL)), pathResolver);
-      if (descriptor != null) {
-        if (!PluginManagerCore.usePluginClassLoader) {
-          descriptor.setUseCoreClassLoader();
-        }
-        context.parentContext.result.add(descriptor, /* overrideUseIfCompatible = */ false);
-      }
       return;
     }
 
@@ -432,12 +417,13 @@ public final class PluginDescriptorLoader {
             @Override
             protected IdeaPluginDescriptorImpl compute() {
               URL url = entry.getKey();
-              return loadDescriptorFromResource(url, entry.getValue(), context.copy(url.equals(platformPluginURL)), pathResolver);
+              boolean isEssential = url.equals(platformPluginURL);
+              return loadDescriptorFromResource(url, entry.getValue(), new DescriptorLoadingContext(context, true, isEssential), isEssential, pathResolver);
             }
           });
         }
 
-        PluginLoadingResult result = context.parentContext.result;
+        PluginLoadingResult result = context.result;
         ForkJoinTask.invokeAll(tasks);
         for (RecursiveTask<IdeaPluginDescriptorImpl> task : tasks) {
           IdeaPluginDescriptorImpl descriptor = task.getRawResult();

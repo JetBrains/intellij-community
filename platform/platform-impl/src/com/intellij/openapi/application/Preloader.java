@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ExecutorService;
 
 final class Preloader implements ApplicationInitializedListener {
-  private static final ExtensionPointName<PreloadingActivity> EP_NAME = new ExtensionPointName<>("com.intellij.preloadingActivity");
   private static final Logger LOG = Logger.getInstance(Preloader.class);
 
   private static void checkHeavyProcessRunning() {
@@ -36,15 +34,16 @@ final class Preloader implements ApplicationInitializedListener {
   @Override
   public void componentsInitialized() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !RegistryManager.getInstance().is("enable.activity.preloading")) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment() ||
+        !Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
       return;
     }
 
-    EP_NAME.processWithPluginDescriptor(Preloader::preload);
+    new ExtensionPointName<PreloadingActivity>("com.intellij.preloadingActivity").processWithPluginDescriptor(Preloader::preload);
   }
 
   private static void preload(@NotNull PreloadingActivity activity, @Nullable PluginDescriptor descriptor) {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Preloader Pool", 1);
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Preloader Pool", 1, false);
 
     ProgressIndicator indicator = new ProgressIndicatorBase();
     Disposer.register(ApplicationManager.getApplication(), indicator::cancel);

@@ -23,7 +23,6 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
     super(EdtExecutorServiceImpl.INSTANCE, ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).delayQueue);
   }
 
-
   @NotNull
   @Override
   public ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {

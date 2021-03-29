@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -17,10 +17,7 @@ import com.intellij.ui.IconManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.EventQueue
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.*
 import java.util.function.Supplier
 
 fun loadHeadlessAppInUnitTestMode() {
@@ -63,14 +60,12 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     plugins = registerRegistryAndInitStore(registerAppComponents(loadedPluginFuture, app), app)
       .get(40, TimeUnit.SECONDS)
 
-    val boundedExecutor = createExecutorToPreloadServices()
-
     Registry.getInstance().markAsLoaded()
-    val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "", executor = boundedExecutor)
+    val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
     app.loadComponents(null)
 
     preloadServiceFuture
-      .thenCompose { callAppInitialized(app, boundedExecutor) }
+      .thenRun { ForkJoinTask.invokeAll(callAppInitialized(app)) }
       .get(40, TimeUnit.SECONDS)
 
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()

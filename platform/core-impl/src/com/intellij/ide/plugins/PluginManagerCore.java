@@ -29,7 +29,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
@@ -48,6 +47,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -784,9 +784,7 @@ public final class PluginManagerCore {
     PluginDescriptorLoader.collectPluginFilesInClassPath(loader, urlsFromClassPath);
     BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, false));
-    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true)) {
-      PluginDescriptorLoader.loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null, new ClassPathXmlPathResolver(loader));
-    }
+    PluginDescriptorLoader.loadDescriptorsFromClassPath(urlsFromClassPath, context, null, new ClassPathXmlPathResolver(loader));
 
     context.result.finishLoading();
     return context.result.getEnabledPlugins();
@@ -807,7 +805,7 @@ public final class PluginManagerCore {
       DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors();
       activity.end();
       return context;
-    }, AppExecutorUtil.getAppExecutorService());
+    }, ForkJoinPool.commonPool());
     descriptorListFuture = future;
     return future;
   }
@@ -817,6 +815,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull List<IdeaPluginDescriptorImpl> getEnabledPluginRawList() {
+    //noinspection resource
     return getOrScheduleLoading().join().result.getEnabledPlugins();
   }
 

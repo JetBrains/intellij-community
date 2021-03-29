@@ -37,8 +37,6 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
@@ -118,12 +116,12 @@ public final class StartupUtil {
     return ourShellEnvLoaded;
   }
 
-  private static @NotNull Future<@Nullable Object> loadEuaDocument(@NotNull ExecutorService executorService) {
+  private static @Nullable Future<@Nullable Object> loadEuaDocument() {
     if (Main.isHeadless()) {
-      return CompletableFuture.completedFuture(null);
+      return null;
     }
 
-    return executorService.submit(() -> {
+    return ForkJoinPool.commonPool().submit(() -> {
       if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
         return null;
       }
@@ -179,9 +177,8 @@ public final class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
     activity = activity.endAndStart("main class loading scheduling");
-    ExecutorService executorService = AppExecutorUtil.getAppExecutorService();
 
-    Future<AppStarter> appStarterFuture = executorService.submit(() -> {
+    Future<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("main class loading");
       @SuppressWarnings("unchecked")
       Class<AppStarter> aClass = (Class<AppStarter>)StartupUtil.class.getClassLoader().loadClass(mainClass);
@@ -194,11 +191,11 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
-    Future<Object> euaDocument = loadEuaDocument(executorService);
+    Future<Object> euaDocument = loadEuaDocument();
     if (Main.isHeadless()) {
       enableHeadlessAwtGuard();
     }
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument)
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, euaDocument)
       .exceptionally(e -> {
         StartupAbortedException.processException(new StartupAbortedException("UI initialization failed", e));
         return null;
@@ -237,7 +234,7 @@ public final class StartupUtil {
       PluginManagerCore.scheduleDescriptorLoading();
     }
 
-    NonUrgentExecutor.getInstance().execute(() -> {
+    ForkJoinPool.commonPool().execute(() -> {
       setupSystemLibraries();
       logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance());
       loadSystemLibraries(log);
@@ -275,10 +272,10 @@ public final class StartupUtil {
                                @NotNull Logger log,
                                boolean configImportNeeded,
                                @NotNull Future<? extends AppStarter> appStarterFuture,
-                               @NotNull Future<@Nullable Object> euaDocument) throws Exception {
+                               @Nullable Future<@Nullable Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");
-      Object document = euaDocument.get();
+      Object document = euaDocument == null ? null : euaDocument.get();
       boolean agreementDialogWasShown = document != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, (EndUserAgreement.Document)document);
 
       if (configImportNeeded) {
@@ -341,12 +338,13 @@ public final class StartupUtil {
     AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
   }
 
-  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull Executor executor, @NotNull Future<@Nullable Object> eulaDocument) {
+  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args,
+                                                              @Nullable Future<@Nullable Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     CompletableFuture<Void> initUiFuture = new CompletableFuture<>();
-    executor.execute(() -> {
+    ForkJoinPool.commonPool().execute(() -> {
       try {
         checkHiDPISettings();
 
@@ -386,7 +384,7 @@ public final class StartupUtil {
               Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
               boolean isEulaAccepted;
               try {
-                EndUserAgreement.Document document = (EndUserAgreement.Document)eulaDocument.get();
+                EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.get();
                 isEulaAccepted = document == null || document.isAccepted();
               }
               catch (InterruptedException | ExecutionException ignore) {
@@ -411,12 +409,12 @@ public final class StartupUtil {
 
     if (!Main.isHeadless()) {
       // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, executor);
+      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon);
     }
 
     CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
     if (isUsingSeparateWriteThread()) {
-      executor.execute(() -> {
+      ForkJoinPool.commonPool().execute(() -> {
         Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
         try {
           WriteIntentLockInstrumenter.instrument();

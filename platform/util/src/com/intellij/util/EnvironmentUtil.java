@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
@@ -23,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,7 +118,7 @@ public final class EnvironmentUtil {
         callback.run();
         state.complete(result);
       }
-    }, AppExecutorUtil.getAppExecutorService()));
+    }, ForkJoinPool.commonPool()));
     return state;
   }
 
@@ -487,7 +487,7 @@ public final class EnvironmentUtil {
     }
   }
 
-  private static class StreamGobbler extends BaseOutputReader {
+  private static final class StreamGobbler extends BaseOutputReader {
     private static final Options OPTIONS = new Options() {
       @Override
       public SleepingPolicy policy() {
@@ -510,7 +510,7 @@ public final class EnvironmentUtil {
 
     @Override
     protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return AppExecutorUtil.getAppExecutorService().submit(runnable);
+      return ForkJoinPool.commonPool().submit(runnable);
     }
 
     @Override

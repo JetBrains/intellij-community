@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -19,12 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
-import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvider, SearchTopHitProvider {
@@ -163,7 +163,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
     Activity() {
-      if (ApplicationManager.getApplication().isUnitTestMode() || 
+      if (ApplicationManager.getApplication().isUnitTestMode() ||
           ApplicationManager.getApplication().isHeadlessEnvironment()) {
         throw ExtensionNotApplicableException.INSTANCE;
       }
@@ -171,13 +171,14 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     @Override
     public void preload(@NotNull ProgressIndicator indicator) {
-      cacheAll(indicator, null); // for application
+      // for application
+      cacheAll(indicator, null);
     }
 
     @Override
     public void runActivity(@NotNull Project project) {
       // for given project
-      NonUrgentExecutor.getInstance().execute(() -> {
+      ForkJoinPool.commonPool().execute(() -> {
         if (project.isDisposed()) {
           return;
         }

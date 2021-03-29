@@ -2,10 +2,7 @@
 @file:Suppress("DeprecatedCallableAddReplaceWith")
 package com.intellij.serviceContainer
 
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
@@ -44,10 +41,7 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.Executor
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 
 internal val LOG = logger<ComponentManagerImpl>()
@@ -882,9 +876,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
                                      val syncPreloadedServices: CompletableFuture<Void?>)
 
   @ApiStatus.Internal
-  fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>, executor: Executor, onlyIfAwait: Boolean = false): ServicePreloadingResult {
-    val asyncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
-    val syncPreloadedServices = mutableListOf<CompletableFuture<Void>>()
+  fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
+                      activityPrefix: String,
+                      onlyIfAwait: Boolean = false): ServicePreloadingResult {
+    val asyncPreloadedServices = mutableListOf<RecursiveAction>()
+    val syncPreloadedServices = mutableListOf<RecursiveAction>()
     for (plugin in plugins) {
       serviceLoop@
       for (service in getContainerDescriptor(plugin).services) {
@@ -913,18 +909,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
               asyncPreloadedServices
             }
           }
-          PreloadMode.AWAIT -> {
-            syncPreloadedServices
-          }
+          PreloadMode.AWAIT -> syncPreloadedServices
           PreloadMode.FALSE -> continue@serviceLoop
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
-        val future = CompletableFuture.runAsync(Runnable {
-          if (!isServicePreloadingCancelled && !isDisposed) {
-            val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return@Runnable
+        list.add(object : RecursiveAction() {
+          override fun compute() {
+            if (isServicePreloadingCancelled || isDisposed) {
+              return
+            }
+
+            val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
             try {
-              adapter.getInstance<Any>(this, null)
+              adapter.getInstance<Any>(this@ComponentManagerImpl, null)
             }
             catch (ignore: AlreadyDisposedException) {
             }
@@ -933,13 +931,22 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
               throw e
             }
           }
-        }, executor)
-
-        list.add(future)
+        })
       }
     }
-    return ServicePreloadingResult(asyncPreloadedServices = CompletableFuture.allOf(*asyncPreloadedServices.toTypedArray()),
-                                   syncPreloadedServices = CompletableFuture.allOf(*syncPreloadedServices.toTypedArray()))
+
+    return ServicePreloadingResult(
+      asyncPreloadedServices = CompletableFuture.runAsync({
+                                                            runActivity("${activityPrefix}service async preloading") {
+                                                              ForkJoinTask.invokeAll(asyncPreloadedServices)
+                                                            }
+                                                          }, ForkJoinPool.commonPool()),
+      syncPreloadedServices = CompletableFuture.runAsync({
+                                                           runActivity("${activityPrefix}service sync preloading") {
+                                                             ForkJoinTask.invokeAll(syncPreloadedServices)
+                                                           }
+                                                         }, ForkJoinPool.commonPool())
+    )
   }
 
   override fun isDisposed(): Boolean {
