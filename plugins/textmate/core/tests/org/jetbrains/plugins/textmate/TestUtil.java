@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.textmate;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.textmate.bundles.Bundle;
 import org.jetbrains.plugins.textmate.bundles.BundleFactory;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 
 import java.io.File;
@@ -47,5 +49,13 @@ public class TestUtil {
 
   public static Bundle getBundle(String bundleName) throws IOException {
     return new BundleFactory(new CompositePlistReader()).fromDirectory(getBundleDirectory(bundleName));
+  }
+
+  public static TextMateScope scopeFromString(String scopeString) {
+    TextMateScope scope = TextMateScope.EMPTY;
+    for (String scopeName : StringUtil.split(scopeString, " ")) {
+      scope = scope.add(scopeName);
+    }
+    return scope;
   }
 }

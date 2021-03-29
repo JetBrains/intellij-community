@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 /**
  * User: zolotov
@@ -23,5 +24,5 @@ public interface TextMateSelectorWeigher {
    * @param scope scope selector of target element.
    * @return relative score (nonnegative int)
    */
-  TextMateWeigh weigh(@NotNull CharSequence scopeSelector, @NotNull CharSequence scope);
+  TextMateWeigh weigh(@NotNull CharSequence scopeSelector, @NotNull TextMateScope scope);
 }

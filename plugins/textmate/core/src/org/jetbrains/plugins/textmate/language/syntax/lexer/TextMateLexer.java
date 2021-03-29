@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 
 public final class TextMateLexer {
   /**
-   * Count of {@link this#lastSuccessState} that can be occurred again without offset changing.
-   * If {@link this#lastSuccessStateOccursCount} reaches {@link this#MAX_LOOPS_COUNT}
+   * Count of {@link #lastSuccessState} that can be occurred again without offset changing.
+   * If {@link #lastSuccessStateOccursCount} reaches {@link #MAX_LOOPS_COUNT}
    * then lexing of current line stops and lexer moved to the EOL.
    */
   private static final int MAX_LOOPS_COUNT = 10;
@@ -32,15 +32,18 @@ public final class TextMateLexer {
   private ArrayList<TextMateLexerState> lastSuccessState;
 
   /**
-   * How many times the {@link this#lastSuccessState} repeated since last offset changing.
+   * How many times the {@link #lastSuccessState} repeated since last offset changing.
    */
   private int lastSuccessStateOccursCount;
 
   private int myCurrentOffset = 0;
 
-  private CharSequence myText ="";
+  private CharSequence myText = "";
+
+  @NotNull
+  private TextMateScope myCurrentScope = TextMateScope.EMPTY;
+
   private final Deque<TextMateLexerState> myStates = new LinkedList<>();
-  private final Deque<CharSequence> openedTags = new LinkedList<>();
 
   private final CharSequence myLanguageScopeName;
   private final int myLineLimit;
@@ -60,8 +63,7 @@ public final class TextMateLexer {
 
     myStates.clear();
     myStates.push(myLanguageInitialState);
-    openedTags.clear();
-    openedTags.offer(myLanguageScopeName);
+    myCurrentScope = new TextMateScope(myLanguageScopeName, null);
     setLastSuccessState(null);
   }
 
@@ -91,8 +93,6 @@ public final class TextMateLexer {
   }
 
   private void parseLine(@NotNull CharSequence lineCharSequence, @NotNull Queue<Token> output) {
-    restoreValidStateBeforeNewLine();
-
     int startLineOffset = myCurrentOffset;
     int linePosition = 0;
     int lineByteOffset = 0;
@@ -119,9 +119,8 @@ public final class TextMateLexer {
       TextMateLexerState lastState = myStates.element();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
-      String currentScope = SyntaxMatchUtils.selectorsToScope(openedTags);
       TextMateLexerState currentState =
-        SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, TextMateWeigh.Priority.NORMAL, currentScope);
+        SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, TextMateWeigh.Priority.NORMAL, myCurrentScope);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
@@ -144,7 +143,7 @@ public final class TextMateLexer {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endRange.end;
         }
-        closeScopeSelector(output, endPosition  + startLineOffset); // closing basic scope
+        closeScopeSelector(output, endPosition + startLineOffset); // closing basic scope
       }
       else if (currentMatch.matched()) {
         TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
@@ -253,52 +252,35 @@ public final class TextMateLexer {
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
-    openedTags.offer(name);
+    myCurrentScope = myCurrentScope.add(name);
   }
 
   private void closeScopeSelector(@NotNull Queue<Token> output, int position) {
-    if (!openedTags.isEmpty()) {
-      CharSequence lastOpened = openedTags.peekLast();
-      if (lastOpened != null && lastOpened.length() > 0) {
-        addToken(output, position);
-      }
+    CharSequence lastOpenedName = myCurrentScope.getScopeName();
+    if (lastOpenedName != null && lastOpenedName.length() > 0) {
+      addToken(output, position);
     }
-    openedTags.pollLast();
+    myCurrentScope = myCurrentScope.getParentOrSelf();
   }
 
 
   private void addToken(@NotNull Queue<Token> output, int position) {
     if (position > myCurrentOffset) {
-      /*
-       * normal state is 0, openedTags stack should contains at least one state with language scopeName,
-       * so we decrement count of openedTags in order to 0
-       */
-      final boolean newState = openedTags.size() <= 1;
-      output.offer(new Token(SyntaxMatchUtils.selectorsToScope(openedTags), myCurrentOffset, position, newState));
+      final boolean newState = myCurrentScope.getParent() == null;
+      output.offer(new Token(myCurrentScope, myCurrentOffset, position, newState));
       myCurrentOffset = position;
       setLastSuccessState(new ArrayList<>(myStates));
     }
   }
 
-  /**
-   * not really needed when lexer works fine,
-   * but when lexer fails and remove language scope tag from stack,
-   * we want to restore valid state in order to parse following line properly.
-   */
-  private void restoreValidStateBeforeNewLine() {
-    if (openedTags.isEmpty()) {
-      openedTags.offer(myLanguageScopeName);
-    }
-  }
-
   public static final class Token {
-    public final String selector;
+    public final TextMateScope scope;
     public final int startOffset;
     public final int endOffset;
     public final boolean restartable;
 
-    private Token(String selector, int startOffset, int endOffset, boolean restartable) {
-      this.selector = selector;
+    private Token(TextMateScope scope, int startOffset, int endOffset, boolean restartable) {
+      this.scope = scope;
       this.startOffset = startOffset;
       this.endOffset = endOffset;
       this.restartable = restartable;

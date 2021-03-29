@@ -19,14 +19,15 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
 
 public final class SyntaxMatchUtils {
   private static final ConcurrentMap<MatchKey, TextMateLexerState> CACHE = ContainerUtil.createConcurrentSoftKeySoftValueMap();
-  private static final Map<List<CharSequence>, String> MY_SCOPES_INTERNER = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   private static Runnable ourCheckCancelledCallback = null;
@@ -44,7 +45,7 @@ public final class SyntaxMatchUtils {
                                               @NotNull StringWithId string,
                                               int byteOffset,
                                               @NotNull TextMateWeigh.Priority priority,
-                                              @NotNull String currentScope) {
+                                              @NotNull TextMateScope currentScope) {
     return CACHE.computeIfAbsent(new MatchKey(syntaxNodeDescriptor, string, byteOffset, priority, currentScope),
                                  SyntaxMatchUtils::matchFirstUncached);
   }
@@ -58,7 +59,7 @@ public final class SyntaxMatchUtils {
                                                        @NotNull StringWithId string,
                                                        int byteOffset,
                                                        @NotNull TextMateWeigh.Priority priority,
-                                                       @NotNull String currentScope) {
+                                                       @NotNull TextMateScope currentScope) {
     TextMateLexerState resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor);
     List<SyntaxNodeDescriptor> children = syntaxNodeDescriptor.getChildren();
     for (SyntaxNodeDescriptor child : children) {
@@ -75,7 +76,7 @@ public final class SyntaxMatchUtils {
   private static TextMateLexerState matchInjections(@NotNull SyntaxNodeDescriptor syntaxNodeDescriptor,
                                                     @NotNull StringWithId string,
                                                     int byteOffset,
-                                                    @NotNull String currentScope) {
+                                                    @NotNull TextMateScope currentScope) {
     TextMateLexerState resultState = TextMateLexerState.notMatched(syntaxNodeDescriptor);
     List<InjectionNodeDescriptor> injections = syntaxNodeDescriptor.getInjections();
 
@@ -117,7 +118,7 @@ public final class SyntaxMatchUtils {
                                                     @NotNull StringWithId string,
                                                     int byteOffset,
                                                     @NotNull TextMateWeigh.Priority priority,
-                                                    @NotNull String currentScope) {
+                                                    @NotNull TextMateScope currentScope) {
     CharSequence match = syntaxNodeDescriptor.getStringAttribute(Constants.StringKey.MATCH);
     if (match != null) {
       RegexFacade regex = regex(match.toString());
@@ -207,27 +208,18 @@ public final class SyntaxMatchUtils {
     return result.toString();
   }
 
-  @NotNull
-  public static String selectorsToScope(@NotNull Collection<CharSequence> selectors) {
-    return MY_SCOPES_INTERNER.computeIfAbsent(ContainerUtil.skipNulls(selectors), SyntaxMatchUtils::joinSelectors);
-  }
-
-  private static String joinSelectors(@NotNull List<CharSequence> selectors) {
-    return StringUtil.join(selectors, " ");
-  }
-
   private static final class MatchKey {
     final SyntaxNodeDescriptor descriptor;
     final StringWithId string;
     final int byteOffset;
     private final TextMateWeigh.Priority priority;
-    final String currentScope;
+    final TextMateScope currentScope;
 
     private MatchKey(SyntaxNodeDescriptor descriptor,
                      StringWithId string,
                      int byteOffset,
                      TextMateWeigh.Priority priority,
-                     String currentScope) {
+                     TextMateScope currentScope) {
       this.descriptor = descriptor;
       this.string = string;
       this.byteOffset = byteOffset;

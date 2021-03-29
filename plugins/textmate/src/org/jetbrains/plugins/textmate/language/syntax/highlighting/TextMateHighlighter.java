@@ -39,7 +39,7 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     Map<CharSequence, TextMateTextAttributesAdapter> customHighlightingColors = service.getCustomHighlightingColors();
 
     Set<CharSequence> highlightingRules = ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules());
-    return ContainerUtil.map2Array(new TextMateScopeComparator<>(tokenType.toString(), Function.identity())
+    return ContainerUtil.map2Array(new TextMateScopeComparator<>(((TextMateElementType)tokenType).getScope(), Function.identity())
                                      .sortAndFilter(highlightingRules), TextAttributesKey.class, rule -> {
       TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule);
       return customTextAttributes != null ? customTextAttributes.getTextAttributesKey(TextMateTheme.INSTANCE)

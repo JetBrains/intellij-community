@@ -97,7 +97,7 @@ public class TextMateHighlightingLexer extends LexerBase {
 
   protected void updateState(@Nullable TextMateLexer.Token token, int fallbackOffset) {
     if (token != null) {
-      myTokenType = new TextMateElementType(token.selector);
+      myTokenType = new TextMateElementType(token.scope);
       myTokenStart = token.startOffset;
       myTokenEnd = Math.min(token.endOffset, myEndOffset);
       myCurrentOffset = token.endOffset;

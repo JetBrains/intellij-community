@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector;
 
+import org.jetbrains.plugins.textmate.TestUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -217,8 +218,8 @@ abstract public class TextMateSelectorWeigherTestCase {
     assertEquals(0, getWeigh(selector, "foo text.html bar source"));
   }
 
-  private int getWeigh(String selector, String scope) {
-    return weigher.weigh(selector, scope).weigh;
+  private int getWeigh(String selector, String scopeString) {
+    return weigher.weigh(selector, TestUtil.scopeFromString(scopeString)).weigh;
   }
 
   private static void assertGreaterThan(int firstValue, int secondValue) {
