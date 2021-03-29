@@ -274,6 +274,11 @@ public final class EnvironmentUtil {
       }
     }
 
+    /**
+     * @throws IOException if the process fails to start, exits with a non-zero
+     *   code, produces no output or the file used to store the output can't be
+     *   read.
+     */
     protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                               @Nullable Path workingDir,
                                                                                               @Nullable Map<String, String> scriptEnvironment,
@@ -295,7 +300,7 @@ public final class EnvironmentUtil {
 
       String lines = new String(Files.readAllBytes(envFile), StandardCharsets.UTF_8);
       if (exitCode != 0 || lines.isEmpty()) {
-        throw new RuntimeException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + gobbler.getText().trim());
+        throw new IOException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + gobbler.getText().trim());
       }
       return new Pair<>(gobbler.getText(), parseEnv(lines));
     }
