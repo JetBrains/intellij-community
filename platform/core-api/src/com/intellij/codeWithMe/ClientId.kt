@@ -231,6 +231,10 @@ fun isForeignClientOnServer(): Boolean {
     return !ClientId.isCurrentlyUnderLocalId && ClientId.localId == ClientId.defaultLocalId
 }
 
+fun isThinClient(): Boolean {
+    return ClientId.localId != ClientId.defaultLocalId
+}
+
 fun getStackTrace(): String {
     val builder = StringBuilder()
     val trace = Thread.currentThread().stackTrace
