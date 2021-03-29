@@ -22,12 +22,14 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
         String errorText = validateTextOnChange(myField.getText(), e);
-        highlightState(StringUtil.isEmpty(errorText));
-        if (StringUtil.isNotEmpty(errorText)) {
-          setErrorText(errorText);
-        }
+        highlightState(!isShowError(errorText));
+        setErrorText(errorText);
       }
     });
+  }
+
+  protected boolean isShowError(@Nullable String errorText) {
+    return errorText != null && StringUtil.isNotEmpty(errorText);
   }
 
   @SuppressWarnings("unused")
@@ -46,8 +48,7 @@ public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
     myField.putClientProperty("JComponent.outline", isValid ? null : "error");
   }
 
-  @SuppressWarnings("unused")
-  protected void setErrorText(@NotNull String errorText) {
+  protected void setErrorText(@Nullable String errorText) {
     // TODO: to be implemented later
   }
 

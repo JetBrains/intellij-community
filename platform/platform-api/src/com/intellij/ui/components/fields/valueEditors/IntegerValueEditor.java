@@ -75,4 +75,12 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
   public void setCanBeEmpty(boolean canBeEmpty) {
     myCanBeEmpty = canBeEmpty;
   }
+
+  @Override
+  protected boolean isShowError(@Nullable String errorText) {
+    if (StringUtil.isEmpty(getValueText())) {
+      return false;
+    }
+    return super.isShowError(errorText);
+  }
 }
