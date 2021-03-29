@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
 import java.awt.*;
@@ -121,6 +122,10 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
     int varCount = 0;
 
     Icon sortIcon = UIManager.getIcon("Table.ascendingSortIcon");
+    Border border = UIManager.getBorder("Table.cellNoFocusBorder");
+    Insets borderInsets = border == null ? null : border.getBorderInsets(this);
+    int borderWidth = borderInsets == null ? 0 : borderInsets.left + borderInsets.right;
+    if (getShowVerticalLines()) borderWidth += 2;
 
     // calculate
     for (int i = 0; i < visibleColumnCount; i++) {
@@ -159,6 +164,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
         widths[i] = getFontMetrics(getFont()).stringWidth(preferredValue) + columnInfo.getAdditionalWidth();
         varCount ++;
       }
+      widths[i] += borderWidth;
       allColumnWidth += widths[i];
       allColumnCurrent += column.getPreferredWidth();
     }
