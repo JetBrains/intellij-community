@@ -46,7 +46,9 @@ public final class GradleContainerUtil {
     if (paths.isEmpty()) return Collections.emptySet();
     LinkedHashSet<File> files = new LinkedHashSet<File>(paths.size());
     for (String path : paths) {
-      files.add(new File(path));
+      if (path != null) {
+        files.add(new File(path));
+      }
     }
     return Collections.unmodifiableSet(files);
   }
@@ -57,7 +59,9 @@ public final class GradleContainerUtil {
     if (files.isEmpty()) return Collections.emptySet();
     LinkedHashSet<String> paths = new LinkedHashSet<String>(files.size());
     for (File file : files) {
-      paths.add(file.getPath());
+      if (file != null) {
+        paths.add(file.getPath());
+      }
     }
     return Collections.unmodifiableSet(paths);
   }
