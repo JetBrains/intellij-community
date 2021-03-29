@@ -489,6 +489,10 @@ public final class Switcher extends BaseSwitcherAction {
       keymap.put(onKeyRelease.getForbiddenMnemonic(), null);
       addForbiddenMnemonics(keymap, "SwitcherForward");
       addForbiddenMnemonics(keymap, "SwitcherBackward");
+      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT);
+      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
       final List<SwitcherToolWindow> otherTW = new ArrayList<>();
       for (SwitcherToolWindow window : windows) {
         int index = ActivateToolWindowAction.getMnemonicForToolWindow(window.getWindow().getId());
@@ -509,16 +513,13 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    private static void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
+    private void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       if (action == null) return;
       for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-          int code = keyboardShortcut.getFirstKeyStroke().getKeyCode();
-          if ('0' <= code && code <= '9' || 'A' <= code && code <= 'Z') {
-            keymap.put(String.valueOf((char)code), null);
-          }
+          keymap.put(onKeyRelease.getForbiddenMnemonic(keyboardShortcut.getFirstKeyStroke()), null);
         }
       }
     }
