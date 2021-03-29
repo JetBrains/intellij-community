@@ -13,15 +13,12 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -47,14 +44,8 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
 
   }
 
-  private inline fun debug(message: () -> String) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug(message())
-    }
-  }
-
   private fun logMarkers(title: String) {
-    debug { "logMarkers('$title'):${markers.size}\n" + markers.joinToString("\n", transform = ::markerString) }
+    LOG.debug { "logMarkers('$title'):${markers.size}\n" + markers.joinToString("\n", transform = ::markerString) }
   }
 
   override fun commitToOriginal(e: DocumentEvent) {
@@ -80,7 +71,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
     val markersToRemove = SmartList<MarkersMapping>()
     val distributeTextToMarkers = distributeTextToMarkers(affectedMarkers, affectedRange, e.offset + e.newLength).let(
       this::promoteLinesEnds)
-    debug {
+    LOG.debug {
       "distributeTextToMarkers:\n  ${distributeTextToMarkers.joinToString("\n  ") { (m, t) -> "${markerString(m)} <<< '${t.esclbr()}'" }}"
     }
     for ((affectedMarker, markerText) in distributeTextToMarkers.reversed()) {
@@ -90,14 +81,14 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       val newText0 = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
         preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
           if (r != newText) {
-            debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
+            LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
           }
         }
       }
 
       val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)
       val newText = indentHeuristically(indent, newText0, newText0 != markerText)
-      debug { "newTextIndentAware:'${newText.esclbr()}' markerText:'${markerText.esclbr()}'" }
+      LOG.debug { "newTextIndentAware:'${newText.esclbr()}' markerText:'${markerText.esclbr()}'" }
 
       //TODO: cover additional clauses with tests (multiple languages injected into one host)
       if (newText.isEmpty() && affectedMarker.fragmentRange !in guardedRanges && affectedMarker.host?.contentRange == rangeInHost) {
@@ -112,7 +103,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
         }
       }
 
-      debug { "replacing: '${oldText.toString().esclbr()}' <<< '${newText.esclbr()}'" }
+      LOG.debug { "replacing: '${oldText.toString().esclbr()}' <<< '${newText.esclbr()}'" }
       myHostDocument.replaceString(rangeInHost.startOffset, rangeInHost.endOffset, newText)
       workingRange = workingRange union TextRange.from(rangeInHost.startOffset, newText.length)
     }
@@ -174,45 +165,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       ?: false
     }
   }
-
-  private fun rebuildMarkers(contextRange: TextRange) {
-    val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
-    psiDocumentManager.commitDocument(myHostDocument)
-
-    val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument")
-    val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
-
-    val newInjectedFile = getInjectionHostAtRange(hostPsiFile, contextRange)?.let { host ->
-
-      val injectionRange = run {
-        val hostRange = host.textRange
-        val contextRangeTrimmed = hostRange.intersection(contextRange) ?: hostRange
-        contextRangeTrimmed.shiftLeft(hostRange.startOffset)
-      }
-
-      injectedLanguageManager.getInjectedPsiFiles(host)
-        .orEmpty()
-        .asSequence()
-        .filter { (_, range) -> range.length > 0 && injectionRange.intersects(range) }
-        .mapNotNull { it.first as? PsiFile }
-        .firstOrNull()
-    }
-    debug { "newInjectedFile = $newInjectedFile" }
-
-    myInjectedFile = newInjectedFile ?: myInjectedFile
-
-    markers.forEach { it.dispose() }
-    markers.clear()
-
-    //some hostless shreds could exist for keeping guarded values
-    if (myInjectedFile.isValid) {
-      val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
-      val markersFromShreds = getMarkersFromShreds(hostfulShreds)
-      markers.addAll(markersFromShreds)
-    }
-  }
-
-
+  
   private val guardedBlocks get() = (myFragmentDocument as DocumentEx).guardedBlocks
 
   private fun promoteLinesEnds(mapping: List<Pair<MarkersMapping, String>>): Iterable<Pair<MarkersMapping, String>> {

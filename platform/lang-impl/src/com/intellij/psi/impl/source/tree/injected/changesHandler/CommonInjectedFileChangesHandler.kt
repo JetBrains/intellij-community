@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.util.ProperTextRange
-import com.intellij.openapi.util.Segment
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -18,6 +18,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
+import kotlin.Pair
 import kotlin.math.max
 import kotlin.math.min
 
@@ -62,6 +63,43 @@ open class CommonInjectedFileChangesHandler(
     return result
   }
 
+  protected open fun rebuildMarkers(contextRange: TextRange) {
+    val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
+    psiDocumentManager.commitDocument(myHostDocument)
+
+    val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument")
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(myProject)
+
+    val newInjectedFile = getInjectionHostAtRange(hostPsiFile, contextRange)?.let { host ->
+
+      val injectionRange = run {
+        val hostRange = host.textRange
+        val contextRangeTrimmed = hostRange.intersection(contextRange) ?: hostRange
+        contextRangeTrimmed.shiftLeft(hostRange.startOffset)
+      }
+
+      injectedLanguageManager.getInjectedPsiFiles(host)
+        .orEmpty()
+        .asSequence()
+        .filter { (_, range) -> range.length > 0 && injectionRange.intersects(range) }
+        .mapNotNull { it.first as? PsiFile }
+        .firstOrNull()
+    }
+    LOG.debug { "newInjectedFile = $newInjectedFile" }
+
+    val injectedFileChanged = newInjectedFile !== myInjectedFile
+    myInjectedFile = newInjectedFile ?: myInjectedFile
+
+    //some hostless shreds could exist for keeping guarded values
+    if (injectedFileChanged && myInjectedFile.isValid) {
+      markers.forEach { it.dispose() }
+      markers.clear()
+
+      val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
+      val markersFromShreds = getMarkersFromShreds(hostfulShreds)
+      markers.addAll(markersFromShreds)
+    }
+  }
 
   override fun isValid(): Boolean = myInjectedFile.isValid && markers.all { it.isValid() }
 
@@ -96,13 +134,8 @@ open class CommonInjectedFileChangesHandler(
     }
     
     if (!markers.all { it.isValid() }) {
-      // marker reanimation attempt
-      val hostfulShreds = InjectedLanguageUtil.getShreds(myInjectedFile).filter { it.host != null }
-      val markersFromShreds = getMarkersFromShreds(hostfulShreds)
-      if (markersFromShreds.isNotEmpty()) {
-        markers.forEach(MarkersMapping::dispose)
-        markers.clear()
-        markers.addAll(markersFromShreds)
+      markers.asSequence().mapNotNull { it.hostMarker.range }.reduceOrNull(TextRange::union)?.let { workingRange ->
+        rebuildMarkers(workingRange)
       }
     }
   }
@@ -129,8 +162,7 @@ open class CommonInjectedFileChangesHandler(
 
   protected fun fragmentMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker {
     if (!shred.innerRange.run { 0 <= startOffset && startOffset <= endOffset && endOffset <= myFragmentDocument.textLength }) {
-      logger<CommonInjectedFileChangesHandler>()
-        .error("fragment and host diverged: startOffset = ${shred.innerRange.startOffset}," +
+      LOG.error("fragment and host diverged: startOffset = ${shred.innerRange.startOffset}," +
                " endOffset = ${shred.innerRange.endOffset}," +
                " textLength = ${myFragmentDocument.textLength}",
                Attachment("host", shred.host?.text ?: "<null>"),
@@ -224,6 +256,14 @@ open class CommonInjectedFileChangesHandler(
   }
 
 }
+
+inline fun Logger.debug(message: () -> String) {
+  if (isDebugEnabled) {
+    debug(message())
+  }
+}
+
+private val LOG = logger<CommonInjectedFileChangesHandler>()
 
 
 data class MarkersMapping(val hostMarker: RangeMarker,

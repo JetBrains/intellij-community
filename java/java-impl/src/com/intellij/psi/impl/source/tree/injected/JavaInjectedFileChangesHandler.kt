@@ -124,7 +124,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     }
   }
 
-  private fun rebuildMarkers(contextRange: TextRange) {
+  override fun rebuildMarkers(contextRange: TextRange) {
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     psiDocumentManager.commitDocument(myHostDocument)
 
