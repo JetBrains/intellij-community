@@ -190,8 +190,6 @@ public class _LastInSuiteTest extends TestCase {
   public void testLanguagesHaveDifferentDisplayNames() throws ClassNotFoundException {
     Collection<Language> languages = Language.getRegisteredLanguages();
     Map<String, Language> displayNames = new HashMap<>();
-    System.out.println("Registered langs: "+languages.size());
-    //assertTrue("Must run test under ultimate classpath to test all languages", languages.size() >= 99);
     for (Language language : languages) {
       System.out.println(language);
       Language prev = displayNames.put(language.getDisplayName(), language);
