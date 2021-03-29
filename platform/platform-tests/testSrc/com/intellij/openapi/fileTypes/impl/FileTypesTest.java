@@ -68,6 +68,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
@@ -386,7 +387,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(fileType, newExtension));
         WriteAction.run(() -> myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher(newExtension), oldFileType.getName(), true));
       }
-      WriteAction.run(() -> myFileTypeManager.associatePattern(fileType, "*." + newExtension));
+      WriteAction.run(() -> myFileTypeManager.associateExtension(fileType, newExtension));
 
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + newExtension));
 
@@ -399,7 +400,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       assertEquals(fileType, myFileTypeManager.getFileTypeByFileName("foo." + newExtension));
     }
     finally {
-      WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(fileType, "*." + newExtension));
+      WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(fileType, newExtension));
       if (oldFileType != FileTypes.UNKNOWN) {
         WriteAction.run(() -> {
           myFileTypeManager.associateExtension(fileType, newExtension);
@@ -478,7 +479,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors()),
                         myFileTypeManager.getExtensionMap().copy()));
-    assertEquals(0, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
+    assertEmpty(myFileTypeManager.getRemovedMappingTracker().getRemovedMappings());
   }
 
   public void testPreserveRemovedMappingForUnknownFileType() {
@@ -549,8 +550,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testRegisterConflictingExtensionMustBeReported() throws WriteExternalException, InvalidDataException {
     String myWeirdExtension = "fromPlugin";
-    WriteAction.run(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*." + myWeirdExtension));
+    WriteAction.run(() -> myFileTypeManager.associateExtension(PlainTextFileType.INSTANCE, myWeirdExtension));
 
+    Disposable disposable = Disposer.newDisposable();
     try {
       FileType myType = new FakeFileType() {
         @Override
@@ -573,12 +575,15 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         public void createFileTypes(@NotNull FileTypeConsumer consumer) {
           consumer.consume(myType, myWeirdExtension);
         }
-      }, getTestRootDisposable());
+      }, disposable);
       myFileTypeManager.getRegisteredFileTypes();
       assertThrows(AssertionError.class, () -> initStandardFileTypes());
+      myFileTypeManager.unregisterFileType(myType);
     }
     finally {
-      WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(PlainTextFileType.INSTANCE, "*." + myWeirdExtension));
+      Disposer.dispose(disposable);
+
+      WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(PlainTextFileType.INSTANCE, myWeirdExtension));
     }
   }
 
@@ -952,12 +957,13 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  public void testDefaultIgnoredIsSorted() {
+  public void testDEFAULT_IGNOREDIsSorted() {
     List<String> strings = StringUtil.split(FileTypeManagerImpl.DEFAULT_IGNORED, ";");
+    String sorted = strings.stream().sorted().collect(Collectors.joining(";"));
     for (int i = 0; i < strings.size(); i++) {
       String string = strings.get(i);
       String prev = i == 0 ? "" : strings.get(i - 1);
-      assertTrue("DEFAULT_IGNORED must be sorted, but got: '" + prev + "' >= '" + string + "'", prev.compareTo(string) < 0);
+      assertTrue("FileTypeManagerImpl.DEFAULT_IGNORED must be sorted, but got: '" + prev + "' >= '" + string + "'. This would be better:\n" + sorted, prev.compareTo(string) < 0);
     }
   }
 
