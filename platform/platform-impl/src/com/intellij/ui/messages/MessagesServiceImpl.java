@@ -59,7 +59,7 @@ public class MessagesServiceImpl implements MessagesService {
         if (windowManager != null) {
           Window parentWindow = windowManager.suggestParentWindow(project);
           return MacMessages.getInstance()
-            .showMessageDialog(title, message, options, false, parentWindow, defaultOptionIndex, focusedOptionIndex, doNotAskOption);
+            .showMessageDialog(title, message, options, parentWindow, defaultOptionIndex, focusedOptionIndex, doNotAskOption, icon, null);
         }
       }
     }
@@ -89,8 +89,8 @@ public class MessagesServiceImpl implements MessagesService {
     try {
       if (canShowMacSheetPanel() && moreInfo == null) {
         return MacMessages.getInstance()
-          .showMessageDialog(title, message, options, false, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex,
-                             focusedOptionIndex, null);
+          .showMessageDialog(title, message, options, WindowManager.getInstance().suggestParentWindow(project), defaultOptionIndex,
+                             focusedOptionIndex, null, icon, null);
       }
     }
     catch (MessageException ignored) {/*rollback the message and show a dialog*/}

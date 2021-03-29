@@ -200,14 +200,15 @@ private class NativeMacMessageManager : MacMessages() {
   override fun showMessageDialog(title: String,
                                  message: String?,
                                  buttons: Array<String>,
-                                 errorStyle: Boolean,
                                  window: Window?,
                                  defaultOptionIndex: Int,
                                  focusedOptionIndex: Int,
-                                 doNotAskDialogOption: DoNotAskOption?): Int {
-    return showMessageDialog(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption) {
-      getJBMessages().showMessageDialog(title, message, buttons, errorStyle, window, defaultOptionIndex, focusedOptionIndex,
-                                        doNotAskDialogOption)
+                                 doNotAskDialogOption: DoNotAskOption?,
+                                 icon: Icon?,
+                                 helpId: String?): Int {
+    return showMessageDialog(title, message, buttons, false, window, defaultOptionIndex, doNotAskDialogOption) {
+      getJBMessages().showMessageDialog(title, message, buttons, window, defaultOptionIndex, focusedOptionIndex,
+                                        doNotAskDialogOption, icon, helpId)
     }
   }
 

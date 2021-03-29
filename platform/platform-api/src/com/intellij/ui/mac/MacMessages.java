@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,9 +52,26 @@ public abstract class MacMessages {
    */
   public abstract int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
                                         @NlsContexts.DialogMessage String message,
-                                        @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,
-                                        @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
-                                        @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
+                                        @NlsContexts.Button String @NotNull [] buttons,
+                                        @Nullable Window window,
+                                        int defaultOptionIndex,
+                                        int focusedOptionIndex,
+                                        @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                                        @Nullable Icon icon,
+                                        @Nullable String helpId);
+
+  /**
+   * @deprecated Use {@link #showMessageDialog(String, String, String[], Window, int, int, DialogWrapper.DoNotAskOption, Icon, String)}
+   */
+  @Deprecated
+  public int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
+                               @NlsContexts.DialogMessage String message,
+                               @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,
+                               @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+    return showMessageDialog(title, message, buttons, window, defaultOptionIndex, focusedOptionIndex, doNotAskDialogOption,
+                             errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon(), null);
+  }
 
   public abstract void showOkMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
                                            @NlsContexts.DialogMessage String message,

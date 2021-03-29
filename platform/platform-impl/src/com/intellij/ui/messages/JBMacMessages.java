@@ -5,6 +5,7 @@ import com.intellij.BundleBase;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -58,17 +59,17 @@ public final class JBMacMessages extends MacMessages {
   @Override
   public int showMessageDialog(@NotNull String title,
                                String message,
-                               String @NotNull [] buttons,
-                               boolean errorStyle,
+                               @NlsContexts.Button String @NotNull [] buttons,
                                @Nullable Window window,
                                int defaultOptionIndex,
                                int focusedOptionIndex,
-                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+                               @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption,
+                               @Nullable Icon icon,
+                               @Nullable String helpId) {
+
     if (window == null) {
       window = getForemostWindow();
     }
-
-    Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
     final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[defaultOptionIndex] : null;
     final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[focusedOptionIndex] : null;
