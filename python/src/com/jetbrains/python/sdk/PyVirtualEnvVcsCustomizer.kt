@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtil
@@ -18,7 +19,7 @@ class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
     if (project == null || !PyVirtualEnvVcsSettings.getInstance(project).virtualEnvActivate) return
 
-    val sdk: Sdk = findSdk(project, context.root) ?: return
+    val sdk: Sdk = runReadAction { findSdk(project, context.root) } ?: return
     when {
       PythonSdkUtil.isRemote(sdk) -> return
       sdk.isWsl -> if (context.type != ExecutableType.WSL) return
