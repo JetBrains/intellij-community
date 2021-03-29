@@ -61,11 +61,11 @@ public final class PreferencesRegistry {
   }
 
   public boolean isPossibleLeftHighlightingBrace(char c) {
-    return myLeftHighlightingBraces.contains(c) || myLeftSmartTypingBraces.contains(c);
+    return myLeftHighlightingBraces.contains(c) || (c != ' ' && myLeftSmartTypingBraces.contains(c));
   }
 
   public boolean isPossibleRightHighlightingBrace(char c) {
-    return myRightHighlightingBraces.contains(c) || myRightSmartTypingBraces.contains(c);
+    return myRightHighlightingBraces.contains(c) || (c != ' ' && myRightSmartTypingBraces.contains(c));
   }
 
   public boolean isPossibleLeftSmartTypingBrace(char c) {
