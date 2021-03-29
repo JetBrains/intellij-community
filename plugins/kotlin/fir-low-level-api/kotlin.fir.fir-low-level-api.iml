@@ -25,5 +25,6 @@
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
   </component>
 </module>
