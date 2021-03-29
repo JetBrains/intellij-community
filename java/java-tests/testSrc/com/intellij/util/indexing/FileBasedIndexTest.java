@@ -2,18 +2,16 @@
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.FilenameIndexImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.text.CharArrayCharSequence;
 
 /**
  * @author Dmitry Avdeev
@@ -23,8 +21,11 @@ public class FileBasedIndexTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSurviveOnFileTypeChange() {
     myFixture.configureByText("Foo.java", "class Foo { String bar; }");
     myFixture.testHighlighting();
-    FileType foo = FileTypeIndexTest.registerFakeFileType();
-    FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
+    Disposable disposable = Disposer.newDisposable();
+    FileType foo = FileTypeIndexTest.registerFakeFileType(getTestName(false), disposable);
+    String fooName = foo.getName();
+    Disposer.dispose(disposable);
+    assertNull(FileTypeManager.getInstance().findFileTypeByName(fooName));
     myFixture.configureByText("Bar.java", "class Bar { String bar; }");
     myFixture.testHighlighting();
   }
