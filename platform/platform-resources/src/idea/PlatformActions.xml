@@ -17,7 +17,9 @@
   <actions>
     <action id="QuickActionPopup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
     <action id="RunConfigurationTemplatesForNewProjects"
-            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
+            class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction">
+      <override-text place="MainMenu"/>
+    </action>
 
     <group id="Other.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
@@ -456,7 +458,9 @@
           <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
-          <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+          <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction">
+            <override-text place="MainMenu"/>
+          </action>
           <reference ref="RunConfigurationTemplatesForNewProjects"/>
           <group id="FileSettingsGroup"/>
         </group>
