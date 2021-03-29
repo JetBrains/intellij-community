@@ -5,8 +5,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SafeJdomFactory
 import org.jdom.Element
 
-internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader) : PathBasedJdomXIncluder.PathResolver {
-  override fun isFlat() = true
+internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader) : PathResolver {
+  override val isFlat: Boolean
+    get() = true
 
   override fun loadXIncludeReference(dataLoader: DataLoader,
                                      base: String?,

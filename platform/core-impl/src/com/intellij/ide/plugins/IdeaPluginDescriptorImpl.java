@@ -131,10 +131,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   boolean readExternal(@NotNull Element element,
-                           @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
-                           @NotNull DescriptorListLoadingContext context,
-                           @NotNull IdeaPluginDescriptorImpl mainDescriptor,
-                           @NotNull DataLoader dataLoader) throws IOException, JDOMException {
+                       @NotNull PathResolver pathResolver,
+                       @NotNull DescriptorListLoadingContext context,
+                       @NotNull IdeaPluginDescriptorImpl mainDescriptor,
+                       @NotNull DataLoader dataLoader) throws IOException, JDOMException {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {

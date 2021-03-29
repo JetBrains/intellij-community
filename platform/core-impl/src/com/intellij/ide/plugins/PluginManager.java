@@ -71,7 +71,7 @@ public final class PluginManager {
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                                   @NotNull Set<PluginId> disabledPlugins,
                                                                   boolean bundled,
-                                                                  PathBasedJdomXIncluder.PathResolver pathResolver) {
+                                                                  @NotNull PathResolver pathResolver) {
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
       return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
@@ -168,7 +168,7 @@ public final class PluginManager {
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
-    descriptor.readExternal(JDOMUtil.load(file, factory), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, parentContext, descriptor,
+    descriptor.readExternal(JDOMUtil.load(file, factory), PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, parentContext, descriptor,
                             new LocalFsDataLoader(basePath));
   }
 

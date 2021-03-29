@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.*;
 
 final class XmlReader {
-  @SuppressWarnings("SSBasedInspection")
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
 
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
@@ -235,12 +234,12 @@ final class XmlReader {
     }
   }
 
-  static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                   @NotNull IdeaPluginDescriptorImpl descriptor,
-                                   @NotNull DescriptorListLoadingContext context,
-                                   @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
-                                   @NotNull List<PluginDependency> dependencies,
-                                   @NotNull DataLoader dataLoader) throws IOException, JDOMException {
+  static void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                               @NotNull IdeaPluginDescriptorImpl descriptor,
+                               @NotNull DescriptorListLoadingContext context,
+                               @NotNull PathResolver pathResolver,
+                               @NotNull List<PluginDependency> dependencies,
+                               @NotNull DataLoader dataLoader) throws IOException, JDOMException {
     List<String> visitedFiles = null;
     for (PluginDependency dependency : dependencies) {
       if (dependency.isDisabledOrBroken) {

@@ -356,7 +356,7 @@ public final class PluginInstaller {
     IdeaPluginDescriptorImpl targetDescriptor = PluginManager.loadDescriptor(targetFile,
                                                                              DisabledPluginsState.disabledPlugins(),
                                                                              false,
-                                                                             PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
+                                                                             PluginXmlPathResolver.DEFAULT_PATH_RESOLVER);
     if (targetDescriptor == null) {
       return false;
     }

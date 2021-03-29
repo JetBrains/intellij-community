@@ -1354,12 +1354,12 @@ public final class PluginManagerCore {
     IdeaPluginDescriptorImpl descriptor;
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(
       DisabledPluginsState.disabledPlugins());
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, true, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, true, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)) {
       if (Files.isDirectory(pluginRoot)) {
         descriptor = PluginDescriptorLoader.loadDescriptorFromDir(pluginRoot, META_INF + fileName, null, context);
       }
       else {
-        descriptor = PluginDescriptorLoader.loadDescriptorFromJar(pluginRoot, fileName, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, context, null);
+        descriptor = PluginDescriptorLoader.loadDescriptorFromJar(pluginRoot, fileName, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, context, null);
       }
     }
 

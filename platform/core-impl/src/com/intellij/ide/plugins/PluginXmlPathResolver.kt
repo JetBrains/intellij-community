@@ -10,8 +10,11 @@ import java.nio.file.Path
 import java.util.zip.ZipFile
 
 @Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
-internal class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathBasedJdomXIncluder.PathResolver {
+class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
   companion object {
+    @JvmField
+    val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(emptyList())
+
     @JvmStatic
     private fun loadUsingZipFile(jarFile: Path, relativePath: String, jdomFactory: SafeJdomFactory): Element? {
       val zipFile = ZipFile(jarFile.toFile())

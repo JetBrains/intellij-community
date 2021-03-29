@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
@@ -22,10 +22,10 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
   val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true,
-                                        PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
-    PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
-  }
+  val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
+    .use { context ->
+      PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
+    }
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty

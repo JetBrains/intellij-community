@@ -223,7 +223,12 @@ public class PluginManagerTest {
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
     Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
-    PathBasedJdomXIncluder.PathResolver pathResolver = new PathBasedJdomXIncluder.PathResolver() {
+    PathResolver pathResolver = new PathResolver() {
+      @Override
+      public boolean isFlat() {
+        return false;
+      }
+
       @Override
       public @NotNull Element loadXIncludeReference(@NotNull DataLoader dataLoader,
                                                     @Nullable String base,

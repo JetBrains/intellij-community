@@ -18,7 +18,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
   final boolean isBundled;
   final boolean isEssential;
 
-  final PathBasedJdomXIncluder.PathResolver pathResolver;
+  final PathResolver pathResolver;
 
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
@@ -26,7 +26,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
   DescriptorLoadingContext(@NotNull DescriptorListLoadingContext parentContext,
                            boolean isBundled,
                            boolean isEssential,
-                           @NotNull PathBasedJdomXIncluder.PathResolver pathResolver) {
+                           @NotNull PathResolver pathResolver) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;

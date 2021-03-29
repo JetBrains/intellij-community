@@ -1,230 +1,173 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SafeJdomFactory;
-import org.jdom.Content;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.Namespace;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SafeJdomFactory
+import org.jdom.Element
+import org.jdom.JDOMException
+import org.jdom.Namespace
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.regex.Matcher;
+interface PathResolver {
+  val isFlat: Boolean
+    get() = false
 
-@SuppressWarnings("DuplicatedCode")
-final class PathBasedJdomXIncluder {
-  private static final Logger LOG = Logger.getInstance(PathBasedJdomXIncluder.class);
+  @Throws(IOException::class, JDOMException::class)
+  fun loadXIncludeReference(dataLoader: DataLoader,
+                            base: String?,
+                            relativePath: String,
+                            jdomFactory: SafeJdomFactory): Element?
 
-  public static final PathResolver DEFAULT_PATH_RESOLVER = new PluginXmlPathResolver(Collections.emptyList());
+  @Throws(IOException::class, JDOMException::class)
+  fun resolvePath(dataLoader: DataLoader, relativePath: String, jdomFactory: SafeJdomFactory): Element?
+}
 
-  private static final @NonNls String INCLUDE = "include";
-  private static final @NonNls String HREF = "href";
-  private static final @NonNls String BASE = "base";
-  private static final @NonNls String PARSE = "parse";
-  private static final @NonNls String XML = "xml";
-  private static final @NonNls String XPOINTER = "xpointer";
-
-  private final DescriptorListLoadingContext context;
-  private final PathResolver pathResolver;
-
-  PathBasedJdomXIncluder(@NotNull DescriptorListLoadingContext context, @NotNull PathResolver pathResolver) {
-    this.context = context;
-    this.pathResolver = pathResolver;
-  }
-
-  private static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(JDOMUtil.XINCLUDE_NAMESPACE);
-  }
-
-  private @NotNull List<Element> resolveXIncludeElement(@NotNull DataLoader dataLoader,
-                                                        @NotNull Element linkElement,
-                                                        @Nullable String base,
-                                                        @Nullable ArrayList<Element> result) throws JDOMException {
-    String relativePath = linkElement.getAttributeValue(HREF);
-    if (relativePath == null) {
-      throw new RuntimeException("Missing href attribute");
+internal class PathBasedJdomXIncluder(private val context: DescriptorListLoadingContext, private val pathResolver: PathResolver) {
+  @Throws(JDOMException::class)
+  private fun resolveXIncludeElement(dataLoader: DataLoader,
+                                     linkElement: Element,
+                                     base: String?,
+                                     result: ArrayList<Element>?): List<Element?> {
+    val relativePath = linkElement.getAttributeValue(HREF) ?: throw RuntimeException("Missing href attribute")
+    linkElement.getAttributeValue(PARSE)?.let {
+      LOG.assertTrue(it == XML, "$it is not a legal value for the parse attribute")
     }
 
-    String parseAttribute = linkElement.getAttributeValue(PARSE);
-    if (parseAttribute != null) {
-      LOG.assertTrue(parseAttribute.equals(XML), parseAttribute + " is not a legal value for the parse attribute");
-    }
-
-    Element remoteParsed = loadXIncludeReference(dataLoader, base, relativePath, linkElement);
+    var remoteParsed = loadXIncludeReference(dataLoader, base, relativePath, linkElement)
     if (remoteParsed != null) {
-      String xpointer = linkElement.getAttributeValue(XPOINTER);
+      val xpointer = linkElement.getAttributeValue(XPOINTER)
       if (xpointer != null) {
-        remoteParsed = extractNeededChildren(remoteParsed, xpointer);
+        remoteParsed = extractNeededChildren(remoteParsed, xpointer)
       }
     }
     if (remoteParsed == null) {
-      return result == null ? Collections.emptyList() : result;
+      return result ?: emptyList()
     }
 
-    if (result == null) {
-      result = new ArrayList<>(remoteParsed.getContentSize());
+    var newResult = result
+    if (newResult == null) {
+      newResult = ArrayList(remoteParsed.contentSize)
     }
     else {
-      result.ensureCapacity(result.size() + remoteParsed.getContentSize());
+      newResult.ensureCapacity(newResult.size + remoteParsed.contentSize)
     }
 
-    String childBase = getChildBase(base, relativePath);
-    Iterator<Content> iterator = remoteParsed.getContent().iterator();
+    val childBase = getChildBase(base, relativePath)
+    val iterator = remoteParsed.content.iterator()
     while (iterator.hasNext()) {
-      Content content = iterator.next();
-      if (!(content instanceof Element)) {
-        continue;
-      }
-
-      iterator.remove();
-
-      Element element = (Element)content;
-      if (isIncludeElement(element)) {
-        resolveXIncludeElement(dataLoader, element, childBase, result);
+      val content = iterator.next() as? Element ?: continue
+      iterator.remove()
+      if (isIncludeElement(content)) {
+        resolveXIncludeElement(dataLoader, content, childBase, newResult)
       }
       else {
-        resolveNonXIncludeElement(dataLoader, element, childBase);
-        result.add(element);
+        resolveNonXIncludeElement(dataLoader, content, childBase)
+        newResult.add(content)
       }
     }
-    return result;
+    return newResult
   }
 
-  private static @Nullable String getChildBase(@Nullable String base, @NotNull String relativePath) {
-    String childBase;
-    int end = relativePath.lastIndexOf('/');
-    if (end > 0) {
-      if (relativePath.startsWith("/META-INF/")) {
-        return base;
+  @Throws(JDOMException::class)
+  private fun loadXIncludeReference(dataLoader: DataLoader,
+                                    base: String?,
+                                    relativePath: String,
+                                    referrerElement: Element): Element? {
+    var root: Element?
+    var readError: IOException? = null
+    try {
+      referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE)?.let {
+        // to simplify implementation, no need to support obscure and not used base attribute
+        LOG.error("Do not use xml:base attribute: $it")
+      }
+      root = pathResolver.loadXIncludeReference(dataLoader, base, relativePath, context.xmlFactory)
+    }
+    catch (e: IOException) {
+      readError = e
+      root = null
+    }
+
+    if (root == null) {
+      referrerElement.getChild("fallback", referrerElement.namespace)?.let {
+        // we don't have fallback elements with content ATM
+        return null
       }
 
-      childBase = relativePath.substring(0, end);
-      if (base != null) {
-        childBase = base + "/" + childBase;
+      if (context.ignoreMissingInclude) {
+        LOG.info("$relativePath include ignored (dataLoader=$dataLoader)", readError)
+        return null
       }
+      else {
+        throw RuntimeException("Cannot resolve $relativePath (dataLoader=$dataLoader)", readError)
+      }
+    }
+    else if (isIncludeElement(root)) {
+      throw UnsupportedOperationException("root tag of remote cannot be include")
     }
     else {
-      childBase = base;
-    }
-    return childBase;
-  }
-
-  private static @Nullable Element extractNeededChildren(@NotNull Element remoteElement, @NotNull String xpointer) {
-    Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer);
-    if (!matcher.matches()) {
-      throw new RuntimeException("Unsupported XPointer: " + xpointer);
-    }
-
-    String pointer = matcher.group(1);
-    matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer);
-    if (!matcher.matches()) {
-      throw new RuntimeException("Unsupported pointer: " + pointer);
-    }
-
-    Element result = remoteElement;
-    if (!result.getName().equals(matcher.group(1))) {
-      return null;
-    }
-
-    String subTagName = matcher.group(2);
-    if (subTagName != null) {
-      // cut off the slash
-      result = result.getChild(subTagName.substring(1));
-      assert result != null;
-    }
-    return result;
-  }
-
-  private @Nullable Element loadXIncludeReference(@NotNull DataLoader dataLoader,
-                                                  @Nullable String base,
-                                                  @NotNull String relativePath,
-                                                  @NotNull Element referrerElement) throws JDOMException {
-    try {
-      String explicitBase = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
-      if (explicitBase != null) {
-        // to simplify implementation, no need to support obscure and not used base attribute
-        LOG.error("Do not use xml:base attribute: " + explicitBase);
-      }
-
-      Element root = pathResolver.loadXIncludeReference(dataLoader, base, relativePath, context.getXmlFactory());
-      if (root == null) {
-        Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
-        if (fallbackElement != null) {
-          return null;
-        }
-
-        if (context.ignoreMissingInclude) {
-          LOG.info(relativePath + " include ignored (dataLoader=" + dataLoader + ")");
-          return null;
-        }
-        else {
-          throw new RuntimeException("Cannot resolve " + relativePath + " (dataLoader=" + dataLoader + ")");
-        }
-      }
-
-      if (isIncludeElement(root)) {
-        throw new UnsupportedOperationException("root tag of remote cannot be include");
-      }
-      else {
-        resolveNonXIncludeElement(dataLoader, root, getChildBase(base, relativePath));
-      }
-      return root;
-    }
-    catch (IOException e) {
-      Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
-      if (fallbackElement != null) {
-        // we don't have fallback elements with content ATM
-        return null;
-      }
-      else if (context.ignoreMissingInclude) {
-        LOG.info(relativePath + " include ignored: " + e.getMessage());
-        return null;
-      }
-      else {
-        throw new RuntimeException(e);
-      }
+      resolveNonXIncludeElement(dataLoader, root, getChildBase(base, relativePath))
+      return root
     }
   }
 
-  public void resolveNonXIncludeElement(@NotNull DataLoader dataLoader, @NotNull Element original, @Nullable String base)
-    throws JDOMException {
-    List<Content> contentList = original.getContent();
-    for (int i = contentList.size() - 1; i >= 0; i--) {
-      Content content = contentList.get(i);
-      if (!(content instanceof Element)) {
-        continue;
-      }
-
-      Element element = (Element)content;
-      if (isIncludeElement(element)) {
-        original.setContent(i, resolveXIncludeElement(dataLoader, element, base, null));
+  @Throws(JDOMException::class)
+  fun resolveNonXIncludeElement(dataLoader: DataLoader, original: Element, base: String?) {
+    val contentList = original.content
+    for (i in contentList.indices.reversed()) {
+      val content = contentList[i] as? Element ?: continue
+      if (isIncludeElement(content)) {
+        original.setContent(i, resolveXIncludeElement(dataLoader, content, base, null))
       }
       else {
         // process child element to resolve possible includes
-        resolveNonXIncludeElement(dataLoader, element, base);
+        resolveNonXIncludeElement(dataLoader, content, base)
       }
     }
   }
+}
 
-  interface PathResolver {
-    default boolean isFlat() {
-      return false;
-    }
+private const val INCLUDE = "include"
+private const val HREF = "href"
+private const val BASE = "base"
+private const val PARSE = "parse"
+private const val XML = "xml"
+private const val XPOINTER = "xpointer"
 
-    @Nullable Element loadXIncludeReference(@NotNull DataLoader dataLoader,
-                                            @Nullable String base,
-                                            @NotNull String relativePath,
-                                            @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+private val LOG = Logger.getInstance(PathBasedJdomXIncluder::class.java)
 
-    @Nullable Element resolvePath(@NotNull DataLoader dataLoader, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory)
-      throws IOException, JDOMException;
+private fun isIncludeElement(element: Element): Boolean {
+  return element.name == INCLUDE && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
+}
+
+private fun getChildBase(base: String?, relativePath: String): String? {
+  val end = relativePath.lastIndexOf('/')
+  if (end <= 0 || relativePath.startsWith("/META-INF/")) {
+    return base
   }
+
+  val childBase = relativePath.substring(0, end)
+  return if (base == null) childBase else "$base/$childBase"
+}
+
+private fun extractNeededChildren(remoteElement: Element, xpointer: String): Element? {
+  var matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported XPointer: $xpointer")
+  }
+
+  val pointer = matcher.group(1)
+  matcher = JDOMUtil.CHILDREN_PATTERN.matcher(pointer)
+  if (!matcher.matches()) {
+    throw RuntimeException("Unsupported pointer: $pointer")
+  }
+
+  val result = remoteElement
+  if (result.name != matcher.group(1)) {
+    return null
+  }
+
+  val subTagName = matcher.group(2) ?: return result
+  // cut off the slash
+  return result.getChild(subTagName.substring(1))!!
 }

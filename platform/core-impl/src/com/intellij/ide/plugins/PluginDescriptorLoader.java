@@ -39,7 +39,7 @@ public final class PluginDescriptorLoader {
                                                                   boolean isBundled,
                                                                   @NotNull DescriptorListLoadingContext parentContext) {
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ false,
-                                                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+                                                                         PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)) {
       return loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(file));
     }
   }
@@ -76,7 +76,7 @@ public final class PluginDescriptorLoader {
 
   static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull Path file,
                                                                   @NotNull String fileName,
-                                                                  @NotNull PathBasedJdomXIncluder.PathResolver pathResolver,
+                                                                  @NotNull PathResolver pathResolver,
                                                                   @NotNull DescriptorLoadingContext context,
                                                                   @Nullable Path pluginPath) {
     SafeJdomFactory factory = context.parentContext.getXmlFactory();
@@ -507,7 +507,7 @@ public final class PluginDescriptorLoader {
                                                                                   DisabledPluginsState.disabledPlugins(),
                                                                                   PluginManagerCore.createLoadingResult(buildNumber));
     Path outputDir = null;
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
       if (descriptor != null || !file.toString().endsWith(".zip")) {
         return descriptor;
@@ -540,8 +540,7 @@ public final class PluginDescriptorLoader {
                                                                           createPathResolverForPlugin(descriptor, false));
   }
 
-  static @NotNull PathBasedJdomXIncluder.PathResolver createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                                  boolean checkPluginJarFiles) {
+  static @NotNull PathResolver createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor, boolean checkPluginJarFiles) {
     if (PluginManagerCore.isRunningFromSources() &&
         descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
         descriptor.getPluginPath().toString().contains("out/classes")) {
@@ -555,7 +554,7 @@ public final class PluginDescriptorLoader {
         return new PluginXmlPathResolver(pluginJarFiles);
       }
     }
-    return PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
+    return PluginXmlPathResolver.DEFAULT_PATH_RESOLVER;
   }
 
   public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
