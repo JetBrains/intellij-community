@@ -18,42 +18,46 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Set;
+
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiableFileSet;
+import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiablePathSet;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ClasspathEntryModelImpl implements ClasspathEntryModel, Serializable {
   @NotNull
-  private final Set<String> classes;
+  private final Set<File> classes;
   @NotNull
-  private final Set<String> sources;
+  private final Set<File> sources;
   @NotNull
-  private final Set<String> javadoc;
+  private final Set<File> javadoc;
 
   public ClasspathEntryModelImpl(@NotNull Set<String> classes, @NotNull Set<String> sources, @NotNull Set<String> javadoc) {
-    this.classes = classes;
-    this.sources = sources;
-    this.javadoc = javadoc;
+    this.classes = unmodifiableFileSet(classes);
+    this.sources = unmodifiableFileSet(sources);
+    this.javadoc = unmodifiableFileSet(javadoc);
   }
 
   @NotNull
   @Override
   public Set<String> getClasses() {
-    return classes;
+    return unmodifiablePathSet(classes);
   }
 
   @NotNull
   @Override
   public Set<String> getSources() {
-    return sources;
+    return unmodifiablePathSet(sources);
   }
 
   @NotNull
   @Override
   public Set<String> getJavadoc() {
-    return javadoc;
+    return unmodifiablePathSet(javadoc);
   }
 
   @Override
