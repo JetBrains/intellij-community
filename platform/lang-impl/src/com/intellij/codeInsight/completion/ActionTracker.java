@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.codeWithMe.ClientIdKt.isThinClient;
+
 /**
  * @author peter
  */
@@ -76,10 +78,11 @@ final class ActionTracker {
   }
 
   boolean hasAnythingHappened() {
+    boolean hasDocumentOrCaretChanged = myStartDocStamp != docStamp() ||
+                !myCaretOffsets.equals(caretOffsets());
     return myActionsHappened || myIsDumb != DumbService.getInstance(myProject).isDumb() ||
            myEditor.isDisposed() ||
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
-           myStartDocStamp != docStamp() ||
-           !myCaretOffsets.equals(caretOffsets());
+           (hasDocumentOrCaretChanged && !isThinClient()); //do not track speculative changes on thin client
   }
 }
