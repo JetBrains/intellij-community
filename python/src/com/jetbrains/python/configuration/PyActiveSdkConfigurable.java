@@ -217,7 +217,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     refreshPackages(sdk);
   }
 
-  protected void refreshPackages(Sdk sdk) {
+  protected void refreshPackages(@Nullable Sdk sdk) {
     final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
     myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
     myPackagesPanel.updateNotifications(sdk);
@@ -311,7 +311,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     updateSdkListAndSelect(sdk);
   }
 
-  protected List<Sdk> getAvailableSdks() {
+  protected @NotNull List<Sdk> getAvailableSdks() {
     return myInterpreterList.getAllPythonSdks(myProject);
   }
 
@@ -337,7 +337,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    final Sdk selection = getSelectionFromSdk(selectedSdk);
+    final Sdk selection = getEditableSdkUsingOriginal(selectedSdk);
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
     // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
@@ -346,7 +346,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   @Nullable
-  protected Sdk getSelectionFromSdk(Sdk sdk) {
+  protected Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
     return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
   }
 
