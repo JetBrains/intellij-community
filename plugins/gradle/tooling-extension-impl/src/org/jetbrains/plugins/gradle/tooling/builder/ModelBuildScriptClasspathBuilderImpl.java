@@ -19,7 +19,10 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -87,9 +90,9 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
       else if (dependency instanceof ExternalLibraryDependency) {
         final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          Collections.singletonList(libraryDep.getFile()),
-          Collections.singletonList(libraryDep.getSource()),
-          Collections.singletonList(libraryDep.getJavadoc())
+          singletonListOrEmpty(libraryDep.getFile()),
+          singletonListOrEmpty(libraryDep.getSource()),
+          singletonListOrEmpty(libraryDep.getJavadoc())
         ));
       }
       else if (dependency instanceof ExternalMultiLibraryDependency) {
@@ -122,20 +125,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     ).withDescription("Unable to resolve additional buildscript classpath dependencies");
   }
 
-  private static Set<String> pathSet(Collection<File> files) {
-    if (files.isEmpty()) return Collections.emptySet();
-    Set<String> set = new HashSet<String>(files.size());
-    for (File file : files) {
-      if(file != null) {
-        set.add(file.getPath());
-      }
-    }
-    if (set.isEmpty()) return Collections.emptySet();
-    if (set.size() == 1) return Collections.singleton(set.iterator().next());
-    return set;
-  }
-
-  private static Set<String> pathSet(File... files) {
-    return pathSet(Arrays.asList(files));
+  @NotNull
+  private static List<File> singletonListOrEmpty(@Nullable File file) {
+    return file == null ? Collections.<File>emptyList() : Collections.singletonList(file);
   }
 }
