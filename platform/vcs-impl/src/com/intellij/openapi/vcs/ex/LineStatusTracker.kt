@@ -135,20 +135,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
       if (blocks.isEmpty() && isOperational()) {
-        fireFileUnchanged()
-      }
-    }
-
-    @RequiresEdt
-    private fun fireFileUnchanged() {
-      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
-        // Override ANY modality (that is abused by LineStatusTrackerManager) to prevent errors in TransactionGuard.
-        var modalityState = ModalityState.defaultModalityState()
-        if (modalityState == ModalityState.any()) modalityState = ModalityState.NON_MODAL
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          FileDocumentManager.getInstance().saveDocument(document)
-        }, modalityState, project.disposed)
+        saveDocumentWhenUnchanged(project, document)
       }
     }
   }
@@ -182,5 +169,17 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+}
+
+fun saveDocumentWhenUnchanged(project: Project, document: Document) {
+  if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+    // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
+    // Override ANY modality (that is abused by LineStatusTrackerManager) to prevent errors in TransactionGuard.
+    var modalityState = ModalityState.defaultModalityState()
+    if (modalityState == ModalityState.any()) modalityState = ModalityState.NON_MODAL
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      FileDocumentManager.getInstance().saveDocument(document)
+    }, modalityState, project.disposed)
   }
 }
