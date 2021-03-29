@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -169,7 +168,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   fun `test junit tests - run all`() {
     val runConfiguration = createJUnitConfiguration(JUnitConfiguration.TEST_PACKAGE)
 
-    doTestJUnitRunConfiguration(runConfiguration = runConfiguration, runWithConnectInUnitTestMode = true,
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"2\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
@@ -236,7 +235,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
     }
 
     @Suppress("SpellCheckingInspection", "GrazieInspection")
-    doTestJUnitRunConfiguration(runConfiguration = runConfiguration, runWithConnectInUnitTestMode = true,
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"2\" />\n" +
                                                               "  <count name=\"failed\" value=\"1\" />\n" +
@@ -272,7 +271,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
     }
 
     @Suppress("SpellCheckingInspection", "GrazieInspection")
-    doTestJUnitRunConfiguration(runConfiguration = runConfiguration, runWithConnectInUnitTestMode = true,
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"passed\" value=\"1\" />\n" +
@@ -291,7 +290,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setPatterns(LinkedHashSet(listOf("SomeTest,testSomething")))
     }
 
-    doTestJUnitRunConfiguration(runConfiguration = runConfiguration, runWithConnectInUnitTestMode = true,
+    doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
                                                               "  <count name=\"passed\" value=\"1\" />\n" +

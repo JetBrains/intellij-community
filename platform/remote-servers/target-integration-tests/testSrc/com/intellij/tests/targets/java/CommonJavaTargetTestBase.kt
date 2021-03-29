@@ -143,9 +143,8 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
     }
 
   protected fun doTestJUnitRunConfiguration(runConfiguration: JUnitConfiguration,
-                                            expectedTestsResultExported: String,
-                                            runWithConnectInUnitTestMode: Boolean = false) {
-    val execute = {
+                                            expectedTestsResultExported: String) {
+    runWithConnectInUnitTestMode {
       runBlocking {
         val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
           ExecutionEnvironmentBuilder(project, getExecutor()).runProfile(runConfiguration).build()
@@ -251,12 +250,6 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
         }
         assertEquals(output, expectedText, JDOMUtil.write(testrun))
       }
-    }
-    if (true) {
-      runWithConnectInUnitTestMode(execute)
-    }
-    else {
-      execute.invoke()
     }
   }
 

@@ -54,8 +54,7 @@ abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : Com
                                                               "      <output type=\"stdout\">Debugger: testSomething() reached</output>\n" +
                                                               "    </test>\n" +
                                                               "  </suite>\n" +
-                                                              "</testrun>",
-                                runWithConnectInUnitTestMode = true)
+                                                              "</testrun>")
   }
 
   private fun createJUnitConfiguration(testObject: String) = JUnitConfiguration("JUnit tests Run Configuration", project).also { conf ->
