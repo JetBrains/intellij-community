@@ -250,13 +250,13 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     });
 
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+      MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
     });
 
     StartupManager.getInstance(myProject).runAfterOpened(() -> {
       DumbService.getInstance(myProject).runWhenSmart(() -> {
-        MavenProjectsManager.getInstance(myProject).checkWslJdkAndShowNotification();
+        MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       });
     });
   }

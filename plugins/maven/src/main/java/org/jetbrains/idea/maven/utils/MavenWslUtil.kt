@@ -4,12 +4,34 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JdkFinder
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.navigation.Place
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -17,6 +39,7 @@ import org.jetbrains.idea.maven.server.WslMavenDistribution
 import java.io.File
 import java.util.function.Function
 import java.util.function.Supplier
+import javax.swing.event.HyperlinkEvent
 
 internal object MavenWslUtil : MavenUtil() {
   @JvmStatic
@@ -212,5 +235,106 @@ internal object MavenWslUtil : MavenUtil() {
         }
 
       }, SyncBundle.message("maven.sync.restarting"), false, project)
+  }
+
+  @JvmStatic
+  fun checkWslJdkAndShowNotification(project: Project?) {
+    val projectWslDistr = tryGetWslDistribution(project!!)
+    val sdk = ProjectRootManager.getInstance(project).projectSdk
+    if (sdk == null) return;
+    val jdkWslDistr = tryGetWslDistributionForPath(sdk.homePath)
+    val FIX_STR = "FIX"
+    val OPEN_STR = "OPEN"
+
+    if (sameDistributions(projectWslDistr, jdkWslDistr)) return
+    val listener = object : NotificationListener {
+      override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
+        if (event.description == OPEN_STR) {
+          val configurable = ProjectStructureConfigurable.getInstance(
+            project)
+          ShowSettingsUtil.getInstance().editConfigurable(project, configurable) {
+            val place = Place().putPath(
+              ProjectStructureConfigurable.CATEGORY, configurable.projectConfig)
+            configurable.navigateTo(place, true)
+          }
+        }
+        else {
+          if (trySetUpExistingJdk(project, projectWslDistr, notification)) return
+          ApplicationManager.getApplication().invokeLater {
+            findOrDownloadNewJdk(project, projectWslDistr, sdk, notification, this)
+          }
+        }
+      }
+    }
+    if (projectWslDistr != null && jdkWslDistr == null) {
+      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl"),
+                                            MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl.descr", OPEN_STR, FIX_STR),
+                                            NotificationType.WARNING,
+                                            listener), project)
+    }
+    else if (projectWslDistr == null && jdkWslDistr != null) {
+      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows"),
+                                            MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows.descr", OPEN_STR, FIX_STR),
+                                            NotificationType.WARNING,
+                                            listener), project)
+    }
+    else if (projectWslDistr != null && jdkWslDistr != null) {
+      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.different.wsl.jdk.used"),
+                                            MavenProjectBundle.message("wsl.different.wsl.jdk.used.descr", OPEN_STR, FIX_STR),
+                                            NotificationType.WARNING,
+                                            listener), project)
+    }
+  }
+
+  private fun trySetUpExistingJdk(project: Project, projectWslDistr: WSLDistribution?, notification: Notification): Boolean {
+    val sdk = service<ProjectJdkTable>().allJdks.filter {
+      sameDistributions(projectWslDistr, it.homePath?.let(WslPath::getDistributionByWindowsUncPath))
+    }.maxWithOrNull(compareBy(VersionComparatorUtil.COMPARATOR) { it.versionString })
+    if (sdk == null) return false;
+    WriteAction.runAndWait<RuntimeException> {
+      ProjectRootManagerEx.getInstance(project).projectSdk = sdk
+      notification.hideBalloon()
+    }
+    return true
+  }
+
+  private fun findOrDownloadNewJdk(project: Project, projectWslDistr: WSLDistribution?, sdk: Sdk, notification: Notification, listener: NotificationListener) {
+    val jdkTask = object : Task.Backgroundable(null, MavenProjectBundle.message("wsl.jdk.searching"), false) {
+      override fun run(indicator: ProgressIndicator) {
+        val sdkPath = service<JdkFinder>().suggestHomePaths().filter {
+          sameDistributions(projectWslDistr, WslPath.getDistributionByWindowsUncPath(it))
+        }.firstOrNull()
+        if (sdkPath != null) {
+          WriteAction.runAndWait<RuntimeException> {
+            val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
+                                                                   ProjectJdkTable.getInstance().allJdks.toList())
+            val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
+            ProjectJdkTable.getInstance().addJdk(newJdk)
+            ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
+            notification.hideBalloon()
+          }
+          return
+        }
+        val installer = JdkInstaller.getInstance()
+        val jdkPredicate = when {
+          projectWslDistr != null -> JdkPredicate.forWSL()
+          else -> JdkPredicate.default()
+        }
+        val model = JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
+        if (model.isEmpty()) {
+          Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
+                                                MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
+                                                NotificationType.ERROR, listener), project)
+
+        }
+        else {
+          val homeDir = installer.defaultInstallDir(model[0], projectWslDistr)
+          val request = installer.prepareJdkInstallation(model[0], homeDir)
+          installer.installJdk(request, indicator, project)
+          notification.hideBalloon()
+        }
+      }
+    }
+    ProgressManager.getInstance().run(jdkTask)
   }
 }

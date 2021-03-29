@@ -1436,35 +1436,5 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     }
   }
 
-  public void checkWslJdkAndShowNotification() {
-    WSLDistribution projectWslDistr = MavenWslUtil.tryGetWslDistribution(myProject);
-    Sdk sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    WSLDistribution jdkWslDistr = MavenWslUtil.tryGetWslDistributionForPath(sdk == null ? null : sdk.getHomePath());
-    if (MavenWslUtil.sameDistributions(projectWslDistr, jdkWslDistr)) return;
 
-    NotificationListener listener = new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject);
-        ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable, () -> {
-          Place place = new Place().putPath(ProjectStructureConfigurable.CATEGORY, configurable.getProjectConfig());
-          configurable.navigateTo(place, true);
-        });
-      }
-    };
-    if (projectWslDistr != null && jdkWslDistr == null) {
-      Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl"),
-                                                MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl.descr"), NotificationType.WARNING,
-                                                listener), myProject);
-    }
-    else if (projectWslDistr == null && jdkWslDistr != null) {
-      Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows"),
-                                                MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows.descr"), NotificationType.WARNING,
-                                                listener), myProject);
-    } else if(projectWslDistr == null && jdkWslDistr != null) {
-      Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.different.wsl.jdk.used"),
-                                                MavenProjectBundle.message("wsl.different.wsl.jdk.used.descr"), NotificationType.WARNING,
-                                                listener), myProject);
-    }
-  }
 }
