@@ -31,7 +31,7 @@ data class DefaultRepository(val type: Type) : Repository {
 
 interface CustomMavenRepository : Repository
 
-data class BintrayRepository(val repository: String, val base: String = "https://dl.bintray.com") : CustomMavenRepository {
+data class CustomMavenRepositoryImpl(val repository: String, val base: String) : CustomMavenRepository {
     override val url: String = "$base/$repository"
 
     override val idForMaven: String
