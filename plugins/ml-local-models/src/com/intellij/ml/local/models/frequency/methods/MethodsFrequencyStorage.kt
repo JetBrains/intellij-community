@@ -17,10 +17,9 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     private const val STORAGE_NAME = "methods_frequency"
     private const val VERSION = 1
 
-    fun getStorage(baseDirectory: Path): MethodsFrequencyStorage {
+    fun getStorage(baseDirectory: Path): MethodsFrequencyStorage? {
       val storageDirectory = baseDirectory.resolve(STORAGE_NAME)
-      StorageUtil.prepareStorage(storageDirectory, VERSION)
-      return MethodsFrequencyStorage(storageDirectory)
+      return StorageUtil.getStorage(storageDirectory, VERSION) { path -> MethodsFrequencyStorage(path) }
     }
   }
   private var isValid: Boolean = true

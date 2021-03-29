@@ -15,7 +15,7 @@ abstract class ClassesFrequencyModelFactory : FrequencyModelFactory<ClassesUsage
 
   override fun modelBuilder(project: Project, language: Language): LocalModelBuilder {
     val storagesPath = StorageUtil.storagePath(project, language)
-    val storage = ClassesFrequencyStorage.getStorage(storagesPath)
+    val storage = ClassesFrequencyStorage.getStorage(storagesPath) ?: return LocalModelBuilder.DUMB_BUILDER
 
     return object : LocalModelBuilder {
 

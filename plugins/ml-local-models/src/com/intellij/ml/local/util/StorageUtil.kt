@@ -47,10 +47,25 @@ object StorageUtil {
     }
   }
 
-  fun prepareStorage(storageDirectory: Path, version: Int) {
+  fun <T> getStorage(storageDirectory: Path, version: Int, factory: (Path) -> T): T? {
+    try {
+      prepareStorage(storageDirectory, version)
+      return factory(storageDirectory)
+    } catch (t: Throwable) {
+      try {
+        prepareStorage(storageDirectory, version, forceDelete = true)
+        return factory(storageDirectory)
+      } catch (t: Throwable) {
+        LOG.error(t)
+        return null
+      }
+    }
+  }
+
+  private fun prepareStorage(storageDirectory: Path, version: Int, forceDelete: Boolean = false) {
     if (storageDirectory.exists()) {
       val info = readInfo(storageDirectory)
-      if (info == null || !info.isValid || info.version != version) {
+      if (forceDelete || info == null || !info.isValid || info.version != version) {
         storageDirectory.delete()
       }
     }

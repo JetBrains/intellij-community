@@ -14,12 +14,11 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
   companion object {
     private const val STORAGE_NAME = "classes_frequency"
     private const val VERSION = 1
-    private const val CLASS_FREQUENCY_THRESHOLD = 5
+    private const val MAX_CLASSES_IN_MEMORY = 1500
 
-    fun getStorage(baseDirectory: Path): ClassesFrequencyStorage {
+    fun getStorage(baseDirectory: Path): ClassesFrequencyStorage? {
       val storageDirectory = baseDirectory.resolve(STORAGE_NAME)
-      StorageUtil.prepareStorage(storageDirectory, VERSION)
-      return ClassesFrequencyStorage(storageDirectory)
+      return StorageUtil.getStorage(storageDirectory, VERSION) { path -> ClassesFrequencyStorage(path) }
     }
   }
   private var isValid: Boolean = true
@@ -73,15 +72,23 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     memoryStorage.clear()
     totalClasses = 0
     totalClassesUsages = 0
+    val sortedClasses = sortedSetOf<Pair<String, Int>>(compareBy({ it.second }, { it.first }))
     persistentStorage.processKeys(Processor {
       val count = persistentStorage.get(it) ?: return@Processor true
       totalClasses++
       totalClassesUsages += count
-      if (count >= CLASS_FREQUENCY_THRESHOLD) {
-        memoryStorage[it] = count
+      if (totalClasses > MAX_CLASSES_IN_MEMORY) {
+        val first = sortedClasses.first()
+        if (first.second < count) {
+          sortedClasses.remove(first)
+          sortedClasses.add(Pair(it, count))
+        }
+      } else {
+        sortedClasses.add(Pair(it, count))
       }
       return@Processor true
     })
+    sortedClasses.forEach { memoryStorage[it.first] = it.second }
     persistentStorage.force()
   }
 }
