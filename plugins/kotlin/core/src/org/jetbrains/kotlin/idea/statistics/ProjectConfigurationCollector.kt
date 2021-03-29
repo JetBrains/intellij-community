@@ -32,9 +32,6 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getGroup() = GROUP
 
     override fun getMetrics(project: Project): Set<MetricEvent> {
-        if (PlatformVersion.isAndroidStudio()) {
-            return emptySet()
-        }
         val metrics = mutableSetOf<MetricEvent>()
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
         val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
