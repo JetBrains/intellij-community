@@ -10,7 +10,6 @@ import com.intellij.diff.contents.DiffContent
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.util.*
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -26,7 +25,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -312,30 +310,22 @@ class GitStageLineStatusTracker(
 
       updateHighlighters()
 
-      if (unstaged) {
-        if (unstagedTracker.blocks.isEmpty()) {
-          fireFileUnchanged(document)
+      if (isOperational()) {
+        if (unstaged) {
+          if (unstagedTracker.blocks.isEmpty()) {
+            saveDocumentWhenUnchanged(project, document)
+          }
         }
-      }
-      else {
-        if (stagedTracker.blocks.isEmpty()) {
-          fireFileUnchanged(stagedDocument)
+        else {
+          if (stagedTracker.blocks.isEmpty()) {
+            saveDocumentWhenUnchanged(project, stagedDocument)
+          }
         }
       }
     }
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
-    }
-
-    @RequiresEdt
-    private fun fireFileUnchanged(documentToSave: Document) {
-      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // later to avoid saving inside document change event processing and deadlock with CLM.
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          FileDocumentManager.getInstance().saveDocument(documentToSave)
-        }, project.disposed)
-      }
     }
   }
 
