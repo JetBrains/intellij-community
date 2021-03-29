@@ -2,15 +2,47 @@
 <body>
 Reports common usage patterns of <code>java.util.Map</code>, and suggests replacing them with:
 <code>getOrDefault()</code>, <code>computeIfAbsent()</code>, <code>putIfAbsent()</code>, <code>merge()</code>, or <code>replaceAll()</code>.
-This simplifies the code.
 <p>Example:</p>
 <pre>
   map.containsKey(key) ? map.get(key) : "default";
 </pre>
-<p>After the quick fix is applied the result looks like:</p>
+<p>Can be replaced with:</p>
 <pre>
   map.getOrDefault(key, "default");
 </pre>
+<p>Example:</p>
+<pre>
+  List&lt;String&gt; list = map.get(key);
+  if (list == null) {
+    list = new ArrayList&lt;&gt;();
+    map.put(key, list);
+  }
+</pre>
+<p>Can be replaced with:</p>
+<pre>
+  map.computeIfAbsent(key, localKey -> new ArrayList&lt;&gt;());
+</pre>
+<p>Example:</p>
+<pre>
+  Integer val = map.get(key);
+  if (val == null) map.put(key, 1);
+  else map.put(key, val + 1);
+</pre>
+<p>Can be replaced with:</p>
+<pre>
+  map.merge(key, 1, (localKey, localValue) -> localValue + 1);
+</pre>
+<p>Example:</p>
+<pre>
+  for (Map.Entry&lt;String, String&gt; entry : map.entrySet()) {
+    map.put(entry.getKey(), transform(entry.getValue()));
+  }
+</pre>
+<p>Can be replaced with:</p>
+<pre>
+  map.replaceAll((localKey, localValue) -> transform(localValue));
+</pre>
+
 <!-- tooltip end -->
 <p>Note that the replacement with <code>computeIfAbsent()</code> or <code>merge()</code> might work incorrectly for some <code>Map</code>
   implementations if the code extracted to the lambda expression modifies the same <code>Map</code>. By default,

@@ -1,8 +1,8 @@
 <html>
 <body>
 Reports JUnit 4 <code>@Before</code> or <code>@After</code> methods which are not declared <code>public</code>, do not return
-<code>void</code>, or take arguments, and suggests removing them. Such methods are easy to create inadvertently, but will not be executed
-by JUnit tests runners.
+<code>void</code>, or take arguments, and suggests fixing the method signature. Such methods are easy to create inadvertently, but will not
+be executed by JUnit tests runners.
 <p>Example:</p>
 <pre>
   @Before private int foo(int arg) { ... }

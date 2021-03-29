@@ -1,6 +1,6 @@
 <html>
 <body>
-Reports unnecessary close of resource in the end of try-with-resources block, and suggests removing it.
+Reports unnecessary calls to <code>close()</code> at the end of a try-with-resources block, and suggests removing it.
 <p>Example:</p>
 <pre>
   try(MyAutoCloseable ac = new MyAutoCloseable()) {
