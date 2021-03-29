@@ -1,5 +1,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.module.Module
@@ -8,6 +10,7 @@ import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
@@ -161,6 +165,19 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     private inline fun <reified T : OrderEntry> collectModuleDeps(moduleName: String, depName: String): List<T> {
         return getRootManager(moduleName).orderEntries.asList().filterIsInstanceWithChecker { it.presentableName == depName }
+    }
+
+    protected fun linkProject(projectFilePath: String) {
+        val localFileSystem = LocalFileSystem.getInstance()
+        val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
+        ExternalSystemUtil.linkExternalProject(
+            GradleConstants.SYSTEM_ID,
+            createLinkSettings(projectFile!!.toNioPath(), myProject),
+            myProject,
+            null,
+            false,
+            ProgressExecutionMode.MODAL_SYNC
+        )
     }
 
     companion object {

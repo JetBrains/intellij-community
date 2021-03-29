@@ -10,9 +10,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import org.jetbrains.kotlin.checkers.diagnostics.ActualDiagnostic
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerRenderConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.editor.fixers.end
 import org.jetbrains.kotlin.idea.editor.fixers.start
 
@@ -36,7 +36,7 @@ class DiagnosticCodeMetaInfo(
 
     override fun asString() = renderConfiguration.asString(this)
 
-    override fun getTag() = (renderConfiguration as DiagnosticCodeMetaInfoRenderConfiguration).getTag(this)
+    override fun getTag() = (renderConfiguration as DiagnosticCodeMetaInfoConfiguration).getTag(this)
 }
 
 class LineMarkerCodeMetaInfo(
@@ -51,7 +51,7 @@ class LineMarkerCodeMetaInfo(
 
     override fun asString() = renderConfiguration.asString(this)
 
-    override fun getTag() = (renderConfiguration as LineMarkerRenderConfiguration).getTag()
+    override fun getTag() = (renderConfiguration as LineMarkerConfiguration).getTag()
 }
 
 class HighlightingCodeMetaInfo(
@@ -66,18 +66,19 @@ class HighlightingCodeMetaInfo(
 
     override fun asString() = renderConfiguration.asString(this)
 
-    override fun getTag() = (renderConfiguration as HighlightingRenderConfiguration).getTag()
+    override fun getTag() = (renderConfiguration as HighlightingConfiguration).getTag()
 }
 
 class ParsedCodeMetaInfo(
     override val start: Int,
     override val end: Int,
     override val platforms: MutableList<String>,
-    private val tag: String
+    private val tag: String,
+    val params: String? = null
 ) : CodeMetaInfo {
     override val renderConfiguration = object : AbstractCodeMetaInfoRenderConfiguration(false) {}
 
-    override fun asString() = renderConfiguration.asString(this)
+    override fun asString() = renderConfiguration.asString(this) + params?: ""
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is CodeMetaInfo) return false
@@ -91,19 +92,19 @@ fun createCodeMetaInfo(obj: Any, renderConfiguration: AbstractCodeMetaInfoRender
     fun errorMessage() = "Unexpected render configuration for object $obj"
     return when (obj) {
         is Diagnostic -> {
-            require(renderConfiguration is DiagnosticCodeMetaInfoRenderConfiguration, ::errorMessage)
+            require(renderConfiguration is DiagnosticCodeMetaInfoConfiguration, ::errorMessage)
             obj.textRanges.map { DiagnosticCodeMetaInfo(it.start, it.end, renderConfiguration, obj) }
         }
         is ActualDiagnostic -> {
-            require(renderConfiguration is DiagnosticCodeMetaInfoRenderConfiguration, ::errorMessage)
+            require(renderConfiguration is DiagnosticCodeMetaInfoConfiguration, ::errorMessage)
             obj.diagnostic.textRanges.map { DiagnosticCodeMetaInfo(it.start, it.end, renderConfiguration, obj.diagnostic) }
         }
         is HighlightInfo -> {
-            require(renderConfiguration is HighlightingRenderConfiguration, ::errorMessage)
+            require(renderConfiguration is HighlightingConfiguration, ::errorMessage)
             listOf(HighlightingCodeMetaInfo(renderConfiguration, obj))
         }
         is LineMarkerInfo<*> -> {
-            require(renderConfiguration is LineMarkerRenderConfiguration, ::errorMessage)
+            require(renderConfiguration is LineMarkerConfiguration, ::errorMessage)
             listOf(LineMarkerCodeMetaInfo(renderConfiguration, obj))
         }
         else -> throw IllegalArgumentException("Unknown type for creating CodeMetaInfo object $obj")

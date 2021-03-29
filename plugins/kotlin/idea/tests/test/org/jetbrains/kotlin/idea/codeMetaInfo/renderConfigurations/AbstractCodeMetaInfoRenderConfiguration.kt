@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory1
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.LineMarkerCodeMetaInfo
 
 
 abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean = true) {
-    private val clickOrPressRegex = "Click or press (.*)to navigate".toRegex() //We have different hotkeys on different platforms
+    private val clickOrPressRegex = "(Click or press|Press).*(to navigate)".toRegex() //We have different hotkeys on different platforms
     open fun asString(codeMetaInfo: CodeMetaInfo) = codeMetaInfo.getTag() + getPlatformsString(codeMetaInfo)
 
     open fun getAdditionalParams(codeMetaInfo: CodeMetaInfo) = ""
@@ -26,7 +27,7 @@ abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean
         if (originalText == null) return "null"
         val noHtmlTags = StringUtil.removeHtmlTags(originalText)
             .replace(" ", "")
-            .replace(clickOrPressRegex, "")
+            .replace(clickOrPressRegex, "$1 ... $2")
             .trim()
         return sanitizeLineBreaks(noHtmlTags)
     }
@@ -45,7 +46,7 @@ abstract class AbstractCodeMetaInfoRenderConfiguration(var renderParams: Boolean
     }
 }
 
-open class DiagnosticCodeMetaInfoRenderConfiguration(
+open class DiagnosticCodeMetaInfoConfiguration(
     val withNewInference: Boolean = true,
     val renderSeverity: Boolean = false
 ) : AbstractCodeMetaInfoRenderConfiguration() {
@@ -86,10 +87,10 @@ open class DiagnosticCodeMetaInfoRenderConfiguration(
     }
 }
 
-open class LineMarkerRenderConfiguration(var renderDescription: Boolean = true) : AbstractCodeMetaInfoRenderConfiguration() {
+open class LineMarkerConfiguration(var renderDescription: Boolean = true) : AbstractCodeMetaInfoRenderConfiguration() {
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is LineMarkerCodeMetaInfo) return ""
-        return getTag() + getParamsString(codeMetaInfo)
+        return getTag() + getPlatformsString(codeMetaInfo) + getParamsString(codeMetaInfo)
     }
 
     fun getTag() = "LINE_MARKER"
@@ -98,8 +99,16 @@ open class LineMarkerRenderConfiguration(var renderDescription: Boolean = true) 
         if (!renderParams) return ""
         val params = mutableListOf<String>()
 
-        if (renderDescription)
-            params.add("descr='${sanitizeLineMarkerTooltip(lineMarkerCodeMetaInfo.lineMarker.lineMarkerTooltip)}'")
+        try {
+            if (renderDescription)
+                lineMarkerCodeMetaInfo.lineMarker.lineMarkerTooltip?.apply {
+                    params.add("descr='${sanitizeLineMarkerTooltip(this)}'")
+                }
+        } catch (e: Exception) {
+            //Sometimes got exception caused by `ModuleDescriptor?.getPlatformName()` in HasActualMarker.kt
+            // when calling `single()` method, but platform collection has more than one element
+            // Going to fix it
+        }
 
         params.add(getAdditionalParams(lineMarkerCodeMetaInfo))
 
@@ -108,15 +117,17 @@ open class LineMarkerRenderConfiguration(var renderDescription: Boolean = true) 
     }
 }
 
-open class HighlightingRenderConfiguration(
+open class HighlightingConfiguration(
     val renderDescription: Boolean = true,
     val renderTextAttributesKey: Boolean = true,
-    val renderSeverity: Boolean = true
+    val renderSeverity: Boolean = true,
+    val severityLevel: HighlightSeverity = HighlightSeverity.INFORMATION,
+    val checkNoError: Boolean = false
 ) : AbstractCodeMetaInfoRenderConfiguration() {
 
     override fun asString(codeMetaInfo: CodeMetaInfo): String {
         if (codeMetaInfo !is HighlightingCodeMetaInfo) return ""
-        return getTag() + getParamsString(codeMetaInfo)
+        return getTag() + getPlatformsString(codeMetaInfo) + getParamsString(codeMetaInfo)
     }
 
     fun getTag() = "HIGHLIGHTING"
@@ -130,8 +141,9 @@ open class HighlightingRenderConfiguration(
         if (renderDescription)
             params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
         if (renderTextAttributesKey)
-            params.add("textAttributesKey='${highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey}'")
-
+            highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
+                params.add("textAttributesKey='${this}'")
+            }
         params.add(getAdditionalParams(highlightingCodeMetaInfo))
         val paramsString = params.filter { it.isNotEmpty() }.joinToString("; ")
 

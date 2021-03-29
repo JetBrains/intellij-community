@@ -48,14 +48,19 @@ object CodeMetaInfoParser {
         while (!openingMatchResults.isEmpty()) {
             val openingMatchResult = openingMatchResults.pop()
             val closingMatchResult = closingMatchResults.pop()
-            val metaInfoWithoutParams = openingMatchResult.groups[2]!!.value.replace(descriptionRegex, "")
+            val metaInfoWithParams = openingMatchResult.groups[2]!!.value
+            val metaInfoWithoutParams = metaInfoWithParams.replace(descriptionRegex, "")
             metaInfoWithoutParams.split(",").forEach {
                 val tag = platformRegex.replace(it, "").trim()
                 val platforms =
                     if (platformRegex.containsMatchIn(it)) platformRegex.find(it)!!.destructured.component1().split(";") else listOf()
                 result.add(
                     ParsedCodeMetaInfo(
-                        openingMatchResult.range.first, closingMatchResult.range.first, platforms.toMutableList(), tag,
+                        openingMatchResult.range.first,
+                        closingMatchResult.range.first,
+                        platforms.toMutableList(),
+                        tag,
+                        descriptionRegex.find(metaInfoWithParams)?.value
                     )
                 )
             }

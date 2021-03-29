@@ -44,9 +44,9 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.DiagnosticCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.getCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerRenderConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
+import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Ignore
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @Ignore
@@ -66,7 +67,7 @@ class CodeMetaInfoTestCase(
 ) : DaemonAnalyzerTestCase() {
 
     fun getDiagnosticCodeMetaInfos(
-        configuration: DiagnosticCodeMetaInfoRenderConfiguration = DiagnosticCodeMetaInfoRenderConfiguration(),
+        configuration: DiagnosticCodeMetaInfoConfiguration = DiagnosticCodeMetaInfoConfiguration(),
         parseDirective: Boolean = true
     ): List<CodeMetaInfo> {
         val tempSourceKtFile = PsiManager.getInstance(project).findFile(file.virtualFile) as KtFile
@@ -91,7 +92,7 @@ class CodeMetaInfoTestCase(
         return getCodeMetaInfo(diagnostics, configuration)
     }
 
-    fun getLineMarkerCodeMetaInfos(configuration: LineMarkerRenderConfiguration): Collection<CodeMetaInfo> {
+    fun getLineMarkerCodeMetaInfos(configuration: LineMarkerConfiguration): Collection<CodeMetaInfo> {
         if ("!CHECK_HIGHLIGHTING" in file.text)
             return emptyList()
 
@@ -100,10 +101,22 @@ class CodeMetaInfoTestCase(
         return getCodeMetaInfo(lineMarkers, configuration)
     }
 
-    fun getHighlightingCodeMetaInfos(configuration: HighlightingRenderConfiguration): Collection<CodeMetaInfo> {
-        val infos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, TIntArrayList().toNativeArray(), false)
+    private fun getHighlightingCodeMetaInfos(configuration: HighlightingConfiguration): Collection<CodeMetaInfo> {
+        if ("!CHECK_HIGHLIGHTING" in file.text)
+            return emptyList()
 
-        return getCodeMetaInfo(infos, configuration)
+        val highlightingInfos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, TIntArrayList().toNativeArray(), false)
+            .filterNot { it.severity < configuration.severityLevel }
+
+        if (configuration.checkNoError) {
+            val errorHighlights = highlightingInfos.filter { it.severity >= HighlightSeverity.ERROR }
+            assert(!errorHighlights.any()) {
+                "Highlighting errors were found in file: ${file.name}.\n" +
+                        errorHighlights.joinToString("\n")
+            }
+        }
+
+        return getCodeMetaInfo(highlightingInfos, configuration)
     }
 
     fun checkFile(expectedFile: File, project: Project, editor: Editor) {
@@ -141,23 +154,23 @@ class CodeMetaInfoTestCase(
 
         for (configuration in codeMetaInfoTypes) {
             when (configuration) {
-                is DiagnosticCodeMetaInfoRenderConfiguration -> {
+                is DiagnosticCodeMetaInfoConfiguration -> {
                     codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
                 }
-                is HighlightingRenderConfiguration -> {
+                is HighlightingConfiguration -> {
                     codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
                 }
-                is LineMarkerRenderConfiguration -> {
+                is LineMarkerConfiguration -> {
                     codeMetaInfoForCheck.addAll(getLineMarkerCodeMetaInfos(configuration))
                 }
                 else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
             }
         }
-        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
-            !codeMetaInfoTypes.any { it is HighlightingRenderConfiguration }
+        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoConfiguration } &&
+            !codeMetaInfoTypes.any { it is HighlightingConfiguration }
         ) {
             checkHighlightErrorItemsInDiagnostics(
-                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoRenderConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
+                getDiagnosticCodeMetaInfos(DiagnosticCodeMetaInfoConfiguration(), false).filterIsInstance<DiagnosticCodeMetaInfo>()
             )
         }
         val parsedMetaInfo = CodeMetaInfoParser.getCodeMetaInfoFromText(expectedFile.readText()).toMutableList()
@@ -171,9 +184,8 @@ class CodeMetaInfoTestCase(
             }
         }
         parsedMetaInfo.forEach {
-            if (it.platforms.isNotEmpty() && OSKind.current.toString() !in it.platforms) codeMetaInfoForCheck.add(
-                it
-            )
+            if (it.platforms.isNotEmpty() && OSKind.current.toString() !in it.platforms)
+                codeMetaInfoForCheck.add(it)
         }
         val textWithCodeMetaInfo = CodeMetaInfoRenderer.renderTagsToText(codeMetaInfoForCheck, myEditor.document.text)
         KotlinTestUtils.assertEqualsToFile(
@@ -195,7 +207,7 @@ class CodeMetaInfoTestCase(
         diagnostics: Collection<DiagnosticCodeMetaInfo>
     ) {
         val highlightItems: List<CodeMetaInfo> =
-            getHighlightingCodeMetaInfos(HighlightingRenderConfiguration()).filter { (it as HighlightingCodeMetaInfo).highlightingInfo.severity == HighlightSeverity.ERROR }
+            getHighlightingCodeMetaInfos(HighlightingConfiguration()).filter { (it as HighlightingCodeMetaInfo).highlightingInfo.severity == HighlightSeverity.ERROR }
 
         highlightItems.forEach { highlightingCodeMetaInfo ->
             assert(
@@ -225,28 +237,28 @@ class CodeMetaInfoTestCase(
 
 abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoRenderConfiguration()
+        DiagnosticCodeMetaInfoConfiguration()
     )
 }
 
 abstract class AbstractLineMarkerCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        LineMarkerRenderConfiguration()
+        LineMarkerConfiguration()
     )
 }
 
 abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
     override fun getConfigurations() = listOf(
-        HighlightingRenderConfiguration()
+        HighlightingConfiguration()
     )
 }
 
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
     open val checkNoDiagnosticError get() = false
     open fun getConfigurations() = listOf(
-        DiagnosticCodeMetaInfoRenderConfiguration(),
-        LineMarkerRenderConfiguration(),
-        HighlightingRenderConfiguration()
+        DiagnosticCodeMetaInfoConfiguration(),
+        LineMarkerConfiguration(),
+        HighlightingConfiguration()
     )
 
     protected open fun setupProject(testDataRoot: File) {
@@ -267,25 +279,30 @@ abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
             for (sourceRoot in module.sourceRoots) {
                 VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
                     if (file.isDirectory) return@processFilesRecursively true
-
-                    checker.checkFile(file, file.findCorrespondingFileInTestDir(sourceRoot, testRoot), project)
+                    runInEdtAndWait {
+                        checker.checkFile(file, file.findCorrespondingFileInTestDir(sourceRoot, testRoot), project)
+                    }
                     true
                 }
             }
         }
     }
+}
 
-    private fun VirtualFile.findCorrespondingFileInTestDir(containingRoot: VirtualFile, testDir: File): File {
-        val tempRootPath = Paths.get(containingRoot.path)
-        val tempProjectDirPath = tempRootPath.parent
-        val tempSourcePath = Paths.get(path)
-        val relativeToProjectRootPath = tempProjectDirPath.relativize(tempSourcePath)
-        val testSourcesProjectDirPath = testDir.toPath()
-        val testSourcePath = testSourcesProjectDirPath.resolve(relativeToProjectRootPath)
+fun VirtualFile.findCorrespondingFileInTestDir(containingRoot: VirtualFile, testDir: File): File {
+    val tempRootPath = Paths.get(containingRoot.path)
+    val tempProjectDirPath = tempRootPath.parent
+    return findCorrespondingFileInTestDir(tempProjectDirPath, testDir)
+}
 
-        require(testSourcePath.exists()) {
-            "Can't find file in testdata for copied file $this: checked at path ${testSourcePath.toAbsolutePath()}"
-        }
-        return testSourcePath.toFile()
+fun VirtualFile.findCorrespondingFileInTestDir(tempProjectDirPath: Path, testDir: File, correspondingFilePostfix: String = ""): File {
+    val tempSourcePath = Paths.get(path)
+    val relativeToProjectRootPath = tempProjectDirPath.relativize(tempSourcePath)
+    val testSourcesProjectDirPath = testDir.toPath()
+    val testSourcePath = testSourcesProjectDirPath.resolve("$relativeToProjectRootPath$correspondingFilePostfix")
+
+    require(testSourcePath.exists()) {
+        "Can't find file in testdata for copied file $this: checked at path ${testSourcePath.toAbsolutePath()}"
     }
+    return testSourcePath.toFile()
 }
