@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
@@ -141,10 +142,13 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     @RequiresEdt
     private fun fireFileUnchanged() {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // later to avoid saving inside document change event processing and deadlock with CLM.
+        // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
+        // Override ANY modality (that is abused by LineStatusTrackerManager) to prevent errors in TransactionGuard.
+        var modalityState = ModalityState.defaultModalityState()
+        if (modalityState == ModalityState.any()) modalityState = ModalityState.NON_MODAL
         ApplicationManager.getApplication().invokeLater(Runnable {
           FileDocumentManager.getInstance().saveDocument(document)
-        }, project.disposed)
+        }, modalityState, project.disposed)
       }
     }
   }
