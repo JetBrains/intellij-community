@@ -447,7 +447,7 @@ internal class FilteringBranchesTree(project: Project,
 
   private fun getRootNodeDescriptors() =
     mutableListOf<BranchNodeDescriptor>().apply {
-      add(headBranchesNode.getNodeDescriptor())
+      if (localNodeExist || remoteNodeExist) add(headBranchesNode.getNodeDescriptor())
       if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
       if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
     }
