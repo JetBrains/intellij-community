@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.packaging.impl.jlink;
+package org.jetbrains.jps.packaging.jlink;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
@@ -35,7 +35,7 @@ final class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties> {
     FIRST(1),
     SECOND(2);
 
-    public final int myValue;
+    final int myValue;
     CompressionLevel(int value) {
       this.myValue = value;
     }

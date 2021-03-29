@@ -18,7 +18,7 @@ import static com.intellij.packaging.jlink.JLinkArtifactProperties.CompressionLe
 final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JLinkArtifactProperties myProperties;
 
-  private ComboBox<Integer> myCompressionLevel;
+  private ComboBox<String> myCompressionLevel;
   private JCheckBox myVerbose;
 
   JLinkArtifactPropertiesEditor(@NotNull JLinkArtifactProperties properties) {
@@ -35,8 +35,12 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public @Nullable JComponent createComponent() {
     final FormBuilder builder = new FormBuilder();
 
-    myCompressionLevel = new ComboBox<>(EnumSet.allOf(CompressionLevel.class).stream().map(level -> level.myValue).toArray(Integer[]::new));
-    myCompressionLevel.setItem(myProperties.compressionLevel.myValue);
+    myCompressionLevel = new ComboBox<>(EnumSet.allOf(CompressionLevel.class).stream().map(level -> level.myText).toArray(String[]::new));
+    CompressionLevel compressionLevel = myProperties.compressionLevel;
+    if (compressionLevel == null) {
+      compressionLevel = CompressionLevel.ZERO;
+    }
+    myCompressionLevel.setItem(compressionLevel.myText);
     builder.addLabeledComponent(JavaBundle.message("packaging.jlink.compression.level"), myCompressionLevel);
 
     myVerbose = new JCheckBox(JavaBundle.message("packaging.jlink.verbose.tracing"), myProperties.verbose);
@@ -47,7 +51,7 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   @Override
   public boolean isModified() {
-    if (myProperties.compressionLevel != CompressionLevel.getLevelByValue(myCompressionLevel.getItem())) return true;
+    if (myProperties.compressionLevel != CompressionLevel.getLevelByText(myCompressionLevel.getItem())) return true;
     if (myProperties.verbose != myVerbose.isSelected()) return true;
     return false;
   }
@@ -55,7 +59,7 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   @Override
   public void apply() {
     myProperties.compressionLevel = Optional.ofNullable(myCompressionLevel.getItem())
-      .map(i -> CompressionLevel.getLevelByValue(i))
+      .map(i -> CompressionLevel.getLevelByText(i))
       .orElse(CompressionLevel.ZERO);
     myProperties.verbose = myVerbose.isSelected();
   }

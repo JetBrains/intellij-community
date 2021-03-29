@@ -269,8 +269,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <compileServer.plugin classpath="platform-core.jar;java-compiler.jar;java-compiler-impl.jar"/>
-
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
                        displayType="TOOL_WINDOW"

@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.jlink;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +32,19 @@ final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProp
   }
 
   enum CompressionLevel {
-    ZERO(0),
-    FIRST(1),
-    SECOND(2);
+    ZERO("packaging.jlink.compression.zero.level"),
+    FIRST("packaging.jlink.compression.first.level"),
+    SECOND("packaging.jlink.compression.second.level");
 
-    public final int myValue;
-    CompressionLevel(int value) {
-      this.myValue = value;
+    @Nls
+    final String myText;
+    CompressionLevel(@NotNull String textKey) {
+      myText = JavaBundle.message(textKey);
     }
 
     @Nullable
-    public static CompressionLevel getLevelByValue(int value) {
-      return Stream.of(values()).filter(v -> v.myValue == value).findFirst().orElse(null);
+    static CompressionLevel getLevelByText(@NotNull String text) {
+      return Stream.of(values()).filter(v -> v.myText.equals(text)).findFirst().orElse(null);
     }
   }
 }
