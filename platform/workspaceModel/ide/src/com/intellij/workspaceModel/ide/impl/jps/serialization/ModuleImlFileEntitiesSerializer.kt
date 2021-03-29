@@ -40,6 +40,10 @@ private val STANDARD_MODULE_OPTIONS = setOf(
   "type", "external.system.id", "external.system.module.version", "external.linked.project.path", "external.linked.project.id",
   "external.root.project.path", "external.system.module.group", "external.system.module.type"
 )
+private val MODULE_OPTIONS_TO_CHECK = setOf(
+  "external.system.module.version", "external.linked.project.path", "external.linked.project.id",
+  "external.root.project.path", "external.system.module.group", "external.system.module.type"
+)
 
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
@@ -149,7 +153,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensions().forEach {
       it.loadComponent(builder, moduleEntity, reader, fileUrl, errorReporter, virtualFileManager)
     }
-    // Don't forget to load external system options even if custome root serializer exist
+    // Don't forget to load external system options even if custom root serializer exist
     loadExternalSystemOptions(builder, moduleEntity, reader, externalSystemOptions, externalSystemId, entitySource)
     if (customRootsSerializer != null) {
       customRootsSerializer.loadRoots(builder, moduleEntity, reader, customDir, fileUrl, internalModuleListSerializer, errorReporter, virtualFileManager)
@@ -186,7 +190,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                externalSystemOptions: Map<String?, String?>,
                                                externalSystemId: String?,
                                                entitySource: EntitySource) {
-
+    if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
     val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
     builder.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, optionsEntity) {
       externalSystem = externalSystemId
@@ -197,6 +201,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       externalSystemModuleGroup = externalSystemOptions["external.system.module.group"]
       externalSystemModuleType = externalSystemOptions["external.system.module.type"]
     }
+  }
+
+  internal fun shouldCreateExternalSystemModuleOptions(externalSystemId: String?,
+                                                      externalSystemOptions: Map<String?, String?>,
+                                                      moduleOptionsToCheck: Set<String>): Boolean {
+    if (externalSystemId != null) return true
+    return externalSystemOptions.any { (key, value) -> value != null && key in moduleOptionsToCheck }
   }
 
   private fun loadRootManager(rootManagerElement: Element,

@@ -16,6 +16,11 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.util.JpsPathUtil
 
+private val MODULE_OPTIONS_TO_CHECK = setOf(
+  "externalSystemModuleVersion", "linkedProjectPath", "linkedProjectId", "rootProjectPath", "externalSystemModuleGroup",
+  "externalSystemModuleType"
+)
+
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        virtualFileManager: VirtualFileUrlManager,
@@ -48,6 +53,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,
                                          entitySource: EntitySource) {
+    if (!shouldCreateExternalSystemModuleOptions(externalSystemId, externalSystemOptions, MODULE_OPTIONS_TO_CHECK)) return
     val optionsEntity = builder.getOrCreateExternalSystemModuleOptions(module, entitySource)
     builder.modifyEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, optionsEntity) {
       externalSystem = externalSystemId
