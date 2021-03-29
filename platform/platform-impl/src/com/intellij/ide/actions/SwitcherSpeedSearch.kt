@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
@@ -72,7 +73,8 @@ internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<Sw
   }
 
   init {
-    comparator = SpeedSearchComparator(false, true)
+    comparator = SpeedSearchComparator(Registry.`is`("ide.recent.files.speed.search.beginning"),
+                                       Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
         myComponent.myPopup.cancel()
