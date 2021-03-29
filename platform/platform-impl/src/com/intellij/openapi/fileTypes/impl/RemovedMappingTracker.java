@@ -81,14 +81,18 @@ final class RemovedMappingTracker {
   RemovedMapping add(@NotNull FileNameMatcher matcher, @NotNull String fileTypeName, boolean approved) {
     RemovedMapping mapping = new RemovedMapping(matcher, fileTypeName, approved);
     List<RemovedMapping> mappings = (List<RemovedMapping>)myRemovedMappings.getModifiable(matcher);
+    boolean found = false;
     for (int i = 0; i < mappings.size(); i++) {
       RemovedMapping removedMapping = mappings.get(i);
       if (removedMapping.getFileTypeName().equals(fileTypeName)) {
         mappings.set(i, mapping);
-        return mapping;
+        found = true;
+        break;
       }
     }
-    mappings.add(mapping);
+    if (!found) {
+      mappings.add(mapping);
+    }
     return mapping;
   }
 
@@ -138,7 +142,10 @@ final class RemovedMappingTracker {
     }
   }
 
-  void saveRemovedMappingsForFileType(@NotNull Element map, @NotNull String fileTypeName, @NotNull Collection<? extends FileNameMatcher> associations, boolean specifyTypeName) {
+  void saveRemovedMappingsForFileType(@NotNull Element map,
+                                      @NotNull String fileTypeName,
+                                      @NotNull Collection<? extends FileNameMatcher> associations,
+                                      boolean specifyTypeName) {
     for (FileNameMatcher matcher : associations) {
       Element content = writeRemovedMapping(fileTypeName, matcher, specifyTypeName, isApproved(matcher, fileTypeName));
       if (content != null) {

@@ -355,6 +355,6 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   @Override
   public String toString() {
-    return "AbstractFileType "+mySyntaxTable;
+    return "AbstractFileType "+(getName().isEmpty() ? "" : getName()+"; ") +mySyntaxTable;
   }
 }
