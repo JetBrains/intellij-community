@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
+import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -151,7 +152,6 @@ interface WorkspaceEntityStorage {
   fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
   fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E>
-  fun getConsistencyCheckingMode(): ConsistencyCheckingMode
 }
 
 /**
@@ -185,7 +185,7 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
     fun create(consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(consistencyCheckingMode)
 
     @JvmStatic
-    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage, storage.getConsistencyCheckingMode())
+    fun from(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.from(storage, (storage as AbstractEntityStorage).consistencyCheckingMode)
   }
 }
 
