@@ -9,7 +9,7 @@ object VisibleForTestingTest {
 
   fun main() {
     foobar
-    <warning descr ="Test-only method is called in production code">VisibleForTestingTestApi.foo</warning>
-    <warning descr ="Test-only method is called in production code">VisibleForTestingTestApi.bar()</warning>
+    VisibleForTestingTestApi.<warning descr="Test-only method is called in production code">foo</warning>
+    VisibleForTestingTestApi.<warning descr="Test-only method is called in production code">bar</warning>()
   }
 }

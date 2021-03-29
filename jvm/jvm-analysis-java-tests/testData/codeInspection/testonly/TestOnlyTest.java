@@ -24,11 +24,20 @@ public class TestOnlyTest {
   }
 
   public static void main(String[] args) {
-    TestOnlyTest foo = <warning descr="Test-only class is referenced in production code">new TestOnlyTest()</warning>;
+    TestOnlyTest foo = new <warning descr="Test-only class is referenced in production code">TestOnlyTest</warning>();
     Bar bar = new Bar();
-    int aField = <warning descr="Test-only field is referenced in production code">bar.aField</warning>;
-    <warning descr="Test-only method is called in production code">bar.aMethod()</warning>;
-    Function<String, String> methodRef = <warning descr="Test-only method is called in production code">TestOnlyTest::someString</warning>;
+    int aField = bar.<warning descr="Test-only field is referenced in production code">aField</warning>;
+    bar.<warning descr="Test-only method is called in production code">aMethod</warning>();
+    Function<String, String> methodRef = TestOnlyTest::<warning descr="Test-only method is called in production code">someString</warning>;
+  }
+
+  @TestOnly
+  public static void testOnly() {
+    TestOnlyTest foo = new TestOnlyTest();
+    Bar bar = new Bar();
+    int aField = bar.aField;
+    bar.aMethod();
+    Function<String, String> methodRef = TestOnlyTest::someString;
   }
 }
 

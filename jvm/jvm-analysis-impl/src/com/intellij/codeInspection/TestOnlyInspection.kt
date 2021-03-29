@@ -4,94 +4,94 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.TestFrameworks
+import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
+import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastVisitorAdapter
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.uast.*
-import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import kotlin.math.min
 
 class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    UastVisitorAdapter(TestOnlyVisitor(holder), true)
+    UastVisitorAdapter(TestOnlyApiUsageVisitor(TestOnlyApiUsageProcessor(holder), holder), true)
 
-  class TestOnlyVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
-    override fun visitCallExpression(node: UCallExpression): Boolean {
-      val parent = node.uastParent
-      if (parent is UQualifiedReferenceExpression) {
-        val parentRecResolved = parent.receiver.tryResolve()
-        if (parentRecResolved is PsiPackage || parentRecResolved is PsiVariable || parentRecResolved is PsiClass) return true
-      }
-      val method = node.resolve() ?: return true
-      val sourcePsi = node.sourcePsi ?: return true
-      return validate(sourcePsi, method, holder)
-    }
-
-    override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
-      if (node.uastParent is UQualifiedReferenceExpression) return true
-      val resolve = node.resolveToUElement()
-      val resolvedJava = resolve?.javaPsi ?: return true
-      if (resolvedJava !is PsiMember) return true
-      val sourcePsi = node.sourcePsi ?: return true
-      return when (resolve) {
-        is UField -> validate(sourcePsi, resolvedJava, holder)
-        is UMethod -> if (node.javaPsi !is PsiReferenceExpression) validate(sourcePsi, resolvedJava, holder) else true
-        else -> true
-      }
-    }
-
-    override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
-      val resolve = node.resolveToUElement()
-      val resolvedJava = resolve?.javaPsi ?: return true
-      if (resolvedJava !is PsiMember) return true
-      val sourcePsi = node.sourcePsi ?: return true
-      return validate(sourcePsi, resolvedJava, holder)
-    }
-
-    override fun visitElement(node: UElement): Boolean {
-      val javaPsi = node.javaPsi ?: return true
-      if (javaPsi is PsiMember && node is UDeclaration) {
-        val vft = findVisibleForTestingAnnotation(javaPsi)
-        if (vft != null && isDirectlyTestOnly(javaPsi)) {
-          val toHighlight = node.uastAnchor.sourcePsiElement ?: return true
-          holder.registerProblem(
-            toHighlight,
-            JvmAnalysisBundle.message("jvm.inspections.testonly.visiblefortesting"),
-            RemoveAnnotationQuickFix(vft, javaPsi as PsiModifierListOwner)
-          )
-          return true
-        }
-      }
-      return true
-    }
-
-    private fun validate(place: PsiElement, member: PsiMember, holder: ProblemsHolder): Boolean {
-      val vft = findVisibleForTestingAnnotation(member)
-      if (vft == null && !isAnnotatedAsTestOnly(member)) return true
-      if (isInsideTestOnlyMethod(place) || isInsideTestOnlyField(place) || isInsideTestOnlyClass(place) || isInsideTestClass(place) ||
-          isUnderTestSources(place)
-      ) return false
-      if (vft != null) {
-        var modifier = getAccessModifierWithoutTesting(vft)
-        if (modifier == null) modifier = getNextLowerAccessLevel(member)
-        val modList = LightModifierList(member.manager, JavaLanguage.INSTANCE, modifier)
-        if (JavaResolveUtil.isAccessible(member, member.containingClass, modList, place, null, null)) return true
-      }
-      reportProblem(place, member, holder)
+  inner class TestOnlyApiUsageVisitor(
+    processor: TestOnlyApiUsageProcessor,
+    private val holder: ProblemsHolder
+  ) : ApiUsageUastVisitor(processor) {
+    override fun visitMethod(node: UMethod): Boolean {
+      super.visitMethod(node)
+      checkDoubleAnnotation(node)
       return false
     }
 
-    private fun getNextLowerAccessLevel(member: PsiMember): String {
-      val methodModifier = ContainerUtil.indexOf(modifierPriority) { name: String -> member.hasModifierProperty(name) }
+    override fun visitField(node: UField): Boolean {
+      super.visitField(node)
+      checkDoubleAnnotation(node)
+      return false
+    }
+
+    private fun checkDoubleAnnotation(elem: UDeclaration) {
+      val javaPsi = elem.javaPsi
+      if (javaPsi !is PsiMember) return
+      val vft = findVisibleForTestingAnnotation(javaPsi)
+      if (vft != null && isDirectlyTestOnly(javaPsi)) {
+        val toHighlight = elem.uastAnchor.sourcePsiElement ?: return
+        holder.registerProblem(
+          toHighlight,
+          JvmAnalysisBundle.message("jvm.inspections.testonly.visiblefortesting"),
+          RemoveAnnotationQuickFix(vft, javaPsi as PsiModifierListOwner)
+        )
+        return
+      }
+      return
+    }
+  }
+
+  inner class TestOnlyApiUsageProcessor(private val holder: ProblemsHolder) : ApiUsageProcessor {
+    override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
+      if (target is PsiMember) validate(sourceNode, target, holder)
+    }
+
+    override fun processConstructorInvocation(
+      sourceNode: UElement,
+      instantiatedClass: PsiClass,
+      constructor: PsiMethod?,
+      subclassDeclaration: UClass?
+    ) {
+      constructor?.let { validate(sourceNode, it, holder) }
+    }
+
+    private fun validate(place: UElement, member: PsiModifierListOwner, holder: ProblemsHolder) {
+      val sourcePsi = place.sourcePsi ?: return
+      val uMember = member.toUElement() ?: return
+      if (uMember !is UDeclaration) return
+      val vft = findVisibleForTestingAnnotation(member)
+      if (vft == null && !isAnnotatedAsTestOnly(uMember)) return
+      if (isInsideTestOnlyMethod(place)) return
+      if (isInsideTestOnlyField(place)) return
+      if (isInsideTestOnlyClass(place)) return
+      if (isInsideTestClass(place)) return
+      if (isUnderTestSources(sourcePsi)) return
+      if (vft != null && member is PsiMember) {
+        var modifier = getAccessModifierWithoutTesting(vft)
+        if (modifier == null) modifier = getNextLowerAccessLevel(member)
+        val modList = LightModifierList(member.manager, JavaLanguage.INSTANCE, modifier)
+        if (JavaResolveUtil.isAccessible(member, member.containingClass, modList, sourcePsi, null, null)) return
+      }
+      reportProblem(sourcePsi, member, holder)
+    }
+
+    private fun getNextLowerAccessLevel(member: PsiModifierListOwner): String {
+      val methodModifier = modifierPriority.indexOfFirst { name -> member.hasModifierProperty(name) }
       var minModifier = modifierPriority.size - 1
       if (member is PsiMethod) {
         for (superMethod in member.findSuperMethods()) {
-          minModifier = min(minModifier, ContainerUtil.indexOf(modifierPriority) { name: String -> superMethod.hasModifierProperty(name) })
+          minModifier = min(minModifier, modifierPriority.indexOfFirst { name -> superMethod.hasModifierProperty(name) })
         }
       }
       return modifierPriority[min(minModifier, methodModifier + 1)]
@@ -112,30 +112,27 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       return null
     }
 
-    private fun findVisibleForTestingAnnotation(member: PsiMember) = AnnotationUtil.findAnnotation(member, visibleForTestingAnnotations)
+    private fun isInsideTestOnlyMethod(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UMethod::class.java))
 
-    private fun isInsideTestOnlyMethod(elem: PsiElement) = isAnnotatedAsTestOnly(getTopLevelParentOfType(elem, PsiMethod::class.java))
+    private fun isInsideTestOnlyField(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UField::class.java))
 
-    private fun isInsideTestOnlyField(elem: PsiElement) = isAnnotatedAsTestOnly(getTopLevelParentOfType(elem, PsiField::class.java))
+    private fun isInsideTestOnlyClass(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UClass::class.java))
 
-    private fun isInsideTestOnlyClass(elem: PsiElement) = isAnnotatedAsTestOnly(getTopLevelParentOfType(elem, PsiClass::class.java))
-
-    private fun isAnnotatedAsTestOnly(member: PsiMember?): Boolean =
-      if (member == null) false else isDirectlyTestOnly(member) || isAnnotatedAsTestOnly(member.containingClass)
-
-    private fun isDirectlyTestOnly(member: PsiMember) =
-      AnnotationUtil.isAnnotated(member, AnnotationUtil.TEST_ONLY, AnnotationUtil.CHECK_EXTERNAL)
-
-    private fun isInsideTestClass(elem: PsiElement): Boolean {
-      val parent = getTopLevelParentOfType(elem, PsiClass::class.java)
-      return parent != null && TestFrameworks.getInstance().isTestClass(parent)
+    private fun isAnnotatedAsTestOnly(member: UDeclaration?): Boolean {
+      val javaPsi = member?.javaPsi ?: return false
+      return javaPsi is PsiModifierListOwner && (isDirectlyTestOnly(javaPsi) || isAnnotatedAsTestOnly(member.getContainingUClass()))
     }
 
-    private fun <T : PsiElement?> getTopLevelParentOfType(e: PsiElement, c: Class<T>): T? {
-      var parent = PsiTreeUtil.getParentOfType(e, c) ?: return null
+    private fun isInsideTestClass(elem: UElement): Boolean {
+      val parent = elem.getTopLevelParentOfType(UClass::class.java)
+      val javaPsi = parent?.javaPsi ?: return false
+      return TestFrameworks.getInstance().isTestClass(javaPsi)
+    }
+
+    private fun <T : UElement> UElement.getTopLevelParentOfType(c: Class<out T>): T? {
+      var parent = getParentOfType(c) ?: return null
       do {
-        val next = PsiTreeUtil.getParentOfType(parent, c) ?: return parent
-        parent = next
+        parent = parent.getParentOfType(c) ?: return parent
       }
       while (true)
     }
@@ -146,7 +143,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       return file != null && rootManger.fileIndex.isInTestSourceContent(file)
     }
 
-    private fun reportProblem(elem: PsiElement, target: PsiMember, holder: ProblemsHolder) {
+    private fun reportProblem(elem: PsiElement, target: PsiModifierListOwner, holder: ProblemsHolder) {
       val message = JvmAnalysisBundle.message(
         when {
           target is PsiMethod && target.isConstructor -> "jvm.inspections.testonly.class.reference"
@@ -157,6 +154,12 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       holder.registerProblem(elem, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
     }
   }
+
+  private fun findVisibleForTestingAnnotation(member: PsiModifierListOwner) =
+    AnnotationUtil.findAnnotation(member, visibleForTestingAnnotations)
+
+  private fun isDirectlyTestOnly(member: PsiModifierListOwner) =
+    AnnotationUtil.isAnnotated(member, AnnotationUtil.TEST_ONLY, AnnotationUtil.CHECK_EXTERNAL)
 
   companion object {
     private val visibleForTestingAnnotations = listOf(

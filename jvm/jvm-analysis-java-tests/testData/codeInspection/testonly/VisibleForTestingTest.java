@@ -9,8 +9,8 @@ public class VisibleForTestingTest {
 
   public static void main(String[] args) {
     System.out.println(fooBar);
-    System.out.println(<warning descr="Test-only field is referenced in production code">VisibleForTestingTestApi.foo</warning>);
-    <warning descr="Test-only method is called in production code">VisibleForTestingTestApi.bar()</warning>;
+    System.out.println(VisibleForTestingTestApi.<warning descr="Test-only field is referenced in production code">foo</warning>);
+    VisibleForTestingTestApi.<warning descr="Test-only method is called in production code">bar</warning>();
   }
 }
 
