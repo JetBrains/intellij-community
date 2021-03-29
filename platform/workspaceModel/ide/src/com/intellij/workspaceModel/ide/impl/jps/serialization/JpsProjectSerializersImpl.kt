@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.impl.ModulePath
-import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -53,7 +52,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                 private val entityTypeSerializers: List<JpsFileEntityTypeSerializer<*>>,
                                 private val configLocation: JpsProjectConfigLocation,
                                 private val externalStorageMapping: JpsExternalStorageMapping,
-                                enableExternalStorage: Boolean,
+                                private val enableExternalStorage: Boolean,
                                 private val virtualFileManager: VirtualFileUrlManager,
                                 fileInDirectorySourceNames: FileInDirectorySourceNames) : JpsProjectSerializers {
   val moduleSerializers = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsModuleListSerializer>()
@@ -249,7 +248,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
       val res = ConcurrencyUtil.invokeAll(tasks, service)
       val builders = res.map { it.get() }
-      val sourcesToUpdate = checkUniqueModules(builders, serializers, project)
+      val sourcesToUpdate = if (enableExternalStorage) {
+        checkUniqueModules(builders, serializers, project)
+      }
+      else emptyList()
       val squashedBuilder = squash(builders)
       builder.addDiff(squashedBuilder)
       return sourcesToUpdate
@@ -292,13 +294,11 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     val sourcesToUpdate = mutableListOf<EntitySource>()
-    val isExternalSystem = ExternalStorageConfigurationManager.getInstance(project).isEnabled
     for ((moduleId, buildersWithModule) in modules) {
       if (buildersWithModule.size <= 1) continue
 
       var correctModuleFound = false
 
-      var counter = 0
       var leftModuleId = 0
 
       // Leave only first module with "correct" entity source
@@ -307,11 +307,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val originalExternal = moduleSerializerToExternalSourceBool[ser] ?: return@forEachIndexed
         val moduleEntity = builder.resolve(moduleId)!!
         if (index != buildersWithModule.lastIndex) {
-          if (!correctModuleFound &&
-              (isExternalSystem && originalExternal ||
-               !isExternalSystem && !originalExternal)) {
+          if (!correctModuleFound && originalExternal) {
             correctModuleFound = true
-            leftModuleId = counter
+            leftModuleId = index
           }
           else {
             sourcesToUpdate += moduleEntity.entitySource
@@ -324,10 +322,9 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
             builder.removeEntity(moduleEntity)
           }
           else {
-            leftModuleId = counter
+            leftModuleId = index
           }
         }
-        counter += 1
       }
       reportIssue(project, moduleId, buildersWithModule.map { it.second }, leftModuleId)
     }
