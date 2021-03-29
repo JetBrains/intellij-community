@@ -36,6 +36,7 @@ import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -360,6 +361,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
   private final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameParameterValueInspection myGlobal;
+    private final Object VALUE_VARARGS = ObjectUtils.sentinel("VALUE_VARARGS");
 
     private LocalSameParameterValueInspection(SameParameterValueInspection global) {
       myGlobal = global;
@@ -396,22 +398,27 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
           if (javaMethod.hasModifierProperty(PsiModifier.NATIVE)) return true;
 
-          List<UParameter> parameters = method.getUastParameters();
+          List<UParameter> parameters = ContainerUtil.filter(method.getUastParameters(), param -> !isReceiver(method, param));
           if (parameters.isEmpty()) return true;
 
           if (myDeadCodeTool.isEntryPoint(javaMethod)) return true;
           if (!javaMethod.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return true;
 
-          UParameter lastParameter = parameters.get(parameters.size() - 1);
-          final Object[] paramValues;
-          final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
-          if (hasVarArg) {
-            if (parameters.size() == 1) return true;
-            paramValues = new Object[parameters.size() - 1];
-          } else {
-            paramValues = new Object[parameters.size()];
-          }
+          final Object[] paramValues = new Object[parameters.size()];
           Arrays.fill(paramValues, VALUE_UNDEFINED);
+
+          boolean hasVarArg = false;
+          for (int i = 0; i < parameters.size(); i++) {
+            UParameter parameter = parameters.get(i);
+            PsiElement parameterPsi = parameter.getSourcePsi();
+            if (parameter instanceof PsiEllipsisType || (parameterPsi != null && parameterPsi.getFirstChild().textMatches("vararg"))) {
+              hasVarArg = true;
+              paramValues[i] = VALUE_VARARGS;
+              break;
+            }
+          }
+
+          if (hasVarArg && parameters.size() == 1) return true;
 
           int[] usageCount = {0};
           if (UnusedSymbolUtil.processUsages(holder.getProject(), holder.getFile(), javaMethod, new EmptyProgressIndicator(), null, info -> {
@@ -430,13 +437,23 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
               }
               UCallExpression methodCall = (UCallExpression) parent;
               List<UExpression> arguments = methodCall.getValueArguments();
-              if (arguments.size() < paramValues.length) return false;
+              int argumentSize = arguments.size();
+              if (argumentSize < paramValues.length) return false;
 
+              int varargCount = 0;
               boolean needFurtherProcess = false;
               for (int i = 0; i < paramValues.length; i++) {
                 Object value = paramValues[i];
-                final Object currentArg = getArgValue(arguments.get(i), method.getPsi());
-                if (value == VALUE_UNDEFINED) {
+                int argumentIndex = i + varargCount;
+                if (argumentIndex >= argumentSize) {
+                  break;
+                }
+
+                final Object currentArg = getArgValue(arguments.get(argumentIndex), method.getPsi());
+                if (value == VALUE_VARARGS) {
+                  varargCount = argumentSize - paramValues.length;
+                  needFurtherProcess = true;
+                } else if (value == VALUE_UNDEFINED) {
                   paramValues[i] = currentArg;
                   if (currentArg != VALUE_IS_NOT_CONST) {
                     needFurtherProcess = true;
@@ -455,7 +472,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             if (minimalUsageCount != 0 && usageCount[0] < minimalUsageCount) return true;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
-              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
+              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST && value != VALUE_VARARGS) {
                 holder.registerProblem(registerProblem(holder.getManager(), parameters.get(i), value, false));
               }
             }
@@ -463,6 +480,10 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           return true;
         }
       }, new Class[]{UMethod.class});
+    }
+
+    private boolean isReceiver(UMethod method, UParameter param) {
+      return Objects.equals(param.getName(), "$receiver") || Objects.equals(param.getName(), "$this$" + method.getName());
     }
 
     private Object getArgValue(UExpression arg, PsiMethod method) {

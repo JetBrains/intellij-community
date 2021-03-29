@@ -4,7 +4,7 @@
     <file>Test.kt</file>
     <line>23</line>
     <problem_class>Actual method parameter is the same constant</problem_class>
-    <description>Actual value of parameter 'args' is always 'foo'</description>
+    <description>Actual value of parameter 'i' is always '1'</description>
   </problem>
 </problems>
 
