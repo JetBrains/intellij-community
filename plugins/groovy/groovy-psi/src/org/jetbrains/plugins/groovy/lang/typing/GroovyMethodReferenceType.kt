@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.CallSignature
 import org.jetbrains.plugins.groovy.lang.resolve.impl.MethodSignature
 import org.jetbrains.plugins.groovy.lang.resolve.impl.argumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
+import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
 
 internal class GroovyMethodReferenceType(
   private val myMethodReference: GrReferenceExpression
@@ -43,6 +44,10 @@ internal class GroovyMethodReferenceType(
     }
 
     return methodSignatures.map { methodSignature ->
+      val originalMethod = methodSignature.originalMethod()
+      if (originalMethod.isStatic() || originalMethod.isConstructor) {
+        return@map methodSignature
+      }
       object : CallSignature<CallParameter> by methodSignature {
 
         override val parameterCount: Int
