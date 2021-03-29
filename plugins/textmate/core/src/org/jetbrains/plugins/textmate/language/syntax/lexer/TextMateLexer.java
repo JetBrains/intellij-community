@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
+import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -14,7 +15,10 @@ import org.jetbrains.plugins.textmate.regex.RegexUtil;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
 import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.stream.Collectors;
 
 public final class TextMateLexer {
@@ -29,7 +33,7 @@ public final class TextMateLexer {
    * State of the moment when currentOffset had been changed last time.
    * Becomes null on each new line.
    */
-  private ArrayList<TextMateLexerState> lastSuccessState;
+  private List<TextMateLexerState> lastSuccessState;
 
   /**
    * How many times the {@link #lastSuccessState} repeated since last offset changing.
@@ -42,8 +46,7 @@ public final class TextMateLexer {
 
   @NotNull
   private TextMateScope myCurrentScope = TextMateScope.EMPTY;
-
-  private final Deque<TextMateLexerState> myStates = new LinkedList<>();
+  private FList<TextMateLexerState> myStates = FList.emptyList();
 
   private final CharSequence myLanguageScopeName;
   private final int myLineLimit;
@@ -61,8 +64,7 @@ public final class TextMateLexer {
     myText = text;
     myCurrentOffset = startOffset;
 
-    myStates.clear();
-    myStates.push(myLanguageInitialState);
+    myStates = FList.<TextMateLexerState>emptyList().prepend(myLanguageInitialState);
     myCurrentScope = new TextMateScope(myLanguageScopeName, null);
     setLastSuccessState(null);
   }
@@ -102,12 +104,12 @@ public final class TextMateLexer {
 
     StringWithId string = new StringWithId(line);
     while (true) {
-      final TextMateLexerState lexerState = myStates.element();
+      final TextMateLexerState lexerState = myStates.getHead();
       if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
           && !SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, lexerState).matched()) {
         closeScopeSelector(output, linePosition + startLineOffset);
         closeScopeSelector(output, linePosition + startLineOffset);
-        myStates.pop();
+        myStates = myStates.getTail();
       }
       else {
         break;
@@ -116,7 +118,7 @@ public final class TextMateLexer {
 
     final Object2IntMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
     while (true) {
-      TextMateLexerState lastState = myStates.element();
+      TextMateLexerState lastState = myStates.getHead();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
       TextMateLexerState currentState =
@@ -129,7 +131,7 @@ public final class TextMateLexer {
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
-        myStates.pop();
+        myStates = myStates.getTail();
         TextMateRange endRange = endMatch.charRange(line, string.bytes);
         int startPosition = endPosition = endRange.start;
         closeScopeSelector(output, startPosition + startLineOffset); // closing content scope
@@ -154,7 +156,7 @@ public final class TextMateLexer {
           parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
           openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), endPosition + startLineOffset);
-          myStates.push(currentState);
+          myStates = myStates.prepend(currentState);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
           openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
@@ -168,7 +170,7 @@ public final class TextMateLexer {
       }
 
       // global looping protection
-      ArrayList<TextMateLexerState> currentStateSnapshot = new ArrayList<>(myStates);
+      List<TextMateLexerState> currentStateSnapshot = myStates;
       if (lastSuccessState != null) {
         if (currentStateSnapshot.equals(lastSuccessState)) {
           lastSuccessStateOccursCount++;
@@ -202,7 +204,7 @@ public final class TextMateLexer {
     }
   }
 
-  private void setLastSuccessState(@Nullable ArrayList<TextMateLexerState> state) {
+  private void setLastSuccessState(@Nullable List<TextMateLexerState> state) {
     lastSuccessState = state;
     lastSuccessStateOccursCount = 0;
   }
@@ -269,7 +271,7 @@ public final class TextMateLexer {
       final boolean newState = myCurrentScope.getParent() == null;
       output.offer(new Token(myCurrentScope, myCurrentOffset, position, newState));
       myCurrentOffset = position;
-      setLastSuccessState(new ArrayList<>(myStates));
+      setLastSuccessState(myStates);
     }
   }
 
