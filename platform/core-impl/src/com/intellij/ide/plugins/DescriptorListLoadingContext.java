@@ -4,11 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSetInterner;
-import com.intellij.util.containers.Interner;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
 import org.jetbrains.annotations.NonNls;
@@ -22,28 +18,20 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
-  static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
   static final int IGNORE_MISSING_SUB_DESCRIPTOR = 4;
   static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 8;
 
   static final Logger LOG = PluginManagerCore.getLogger();
 
-  private final @NotNull ExecutorService executorService;
-
   private final ConcurrentLinkedQueue<SafeJdomFactory[]> toDispose;
 
-  // synchronization will ruin parallel loading, so, string pool is local per thread
-  private final Supplier<PluginXmlFactory> xmlFactorySupplier;
-  private final @Nullable ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
-  private final int maxThreads;
+  private final ThreadLocal<PluginXmlFactory[]> threadLocalXmlFactory;
 
   final @NotNull PluginLoadingResult result;
 
@@ -71,26 +59,15 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
     optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
 
-    maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
-    if (maxThreads > 1) {
-      executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PluginManager Loader", maxThreads, false);
-      toDispose = new ConcurrentLinkedQueue<>();
+    toDispose = new ConcurrentLinkedQueue<>();
 
-      threadLocalXmlFactory = ThreadLocal.withInitial(() -> {
-        PluginXmlFactory factory = new PluginXmlFactory();
-        PluginXmlFactory[] ref = {factory};
-        toDispose.add(ref);
-        return ref;
-      });
-      xmlFactorySupplier = () -> threadLocalXmlFactory.get()[0];
-    }
-    else {
-      executorService = ConcurrencyUtil.newSameThreadExecutorService();
-      toDispose = null;
-      threadLocalXmlFactory = null;
+    // synchronization will ruin parallel loading, so, string pool is local for thread
+    threadLocalXmlFactory = ThreadLocal.withInitial(() -> {
       PluginXmlFactory factory = new PluginXmlFactory();
-      xmlFactorySupplier = () -> factory;
-    }
+      PluginXmlFactory[] ref = {factory};
+      toDispose.add(ref);
+      return ref;
+    });
   }
 
   FileSystemProvider getZipFsProvider() {
@@ -119,35 +96,19 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
   }
 
-  @NotNull ExecutorService getExecutorService() {
-    return executorService;
-  }
-
   @NotNull SafeJdomFactory getXmlFactory() {
-    return xmlFactorySupplier.get();
+    return threadLocalXmlFactory.get()[0];
   }
 
   @Override
   public void close() {
-    if (threadLocalXmlFactory == null) {
-      return;
+    for (SafeJdomFactory[] ref : toDispose) {
+      ref[0] = null;
     }
-
-    if (maxThreads <= 1) {
-      threadLocalXmlFactory.remove();
-      return;
-    }
-
-    executorService.execute(() -> {
-      for (SafeJdomFactory[] ref : toDispose) {
-        ref[0] = null;
-      }
-    });
-    executorService.shutdown();
   }
 
   public @NotNull String internString(@NotNull String string) {
-    return xmlFactorySupplier.get().intern(string);
+    return threadLocalXmlFactory.get()[0].intern(string);
   }
 
   public @NotNull String getDefaultVersion() {
@@ -160,20 +121,22 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   }
 
   public @NotNull DateFormat getDateParser() {
-    return xmlFactorySupplier.get().releaseDateFormat;
+    return threadLocalXmlFactory.get()[0].releaseDateFormat;
   }
 
   public @NotNull List<String> getVisitedFiles() {
-    return xmlFactorySupplier.get().visitedFiles;
+    return threadLocalXmlFactory.get()[0].visitedFiles;
   }
 
-  boolean checkOptionalConfigShortName(@NotNull String configFile, @NotNull IdeaPluginDescriptor descriptor, @NotNull IdeaPluginDescriptor rootDescriptor) {
+  boolean checkOptionalConfigShortName(@NotNull String configFile,
+                                       @NotNull IdeaPluginDescriptor descriptor,
+                                       @NotNull IdeaPluginDescriptor rootDescriptor) {
     PluginId pluginId = descriptor.getPluginId();
     if (pluginId == null) {
       return false;
     }
 
-    Map<String, PluginId> configNames = this.optionalConfigNames;
+    Map<String, PluginId> configNames = optionalConfigNames;
     if (configNames == null || configFile.startsWith("intellij.")) {
       return false;
     }
@@ -183,10 +146,9 @@ final class DescriptorListLoadingContext implements AutoCloseable {
       return false;
     }
 
-    LOG.error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId +
-                      "'. " +
-                      "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
-                      "Current plugin: '" + rootDescriptor + "'. ");
+    LOG.error("Optional config file with name '" + configFile + "' already registered by '" + oldPluginId + "'. " +
+              "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
+              "Current plugin: '" + rootDescriptor + "'. ");
     return true;
   }
 }
@@ -210,17 +172,20 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
                                                                   XmlReader.APPLICATION_SERVICE,
                                                                   XmlReader.PROJECT_SERVICE,
                                                                   XmlReader.MODULE_SERVICE);
-  private final Interner<String> strings = new HashSetInterner<>(ContainerUtil.union(CLASS_NAMES, EXTRA_STRINGS));
+  @SuppressWarnings("SSBasedInspection")
+  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>(CLASS_NAMES.size() + EXTRA_STRINGS.size());
 
   final DateFormat releaseDateFormat = new SimpleDateFormat("yyyyMMdd", Locale.US);
   final List<String> visitedFiles = new ArrayList<>(3);
 
   PluginXmlFactory() {
+    strings.addAll(CLASS_NAMES);
+    strings.addAll(EXTRA_STRINGS);
   }
 
   @NotNull String intern(@NotNull String string) {
     // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)
-    return string.length() < 64 ? strings.intern(string) : string;
+    return string.length() < 64 ? strings.addOrGet(string) : string;
   }
 
   @Override

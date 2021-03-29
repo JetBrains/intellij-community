@@ -784,8 +784,8 @@ public final class PluginManagerCore {
     PluginDescriptorLoader.collectPluginFilesInClassPath(loader, urlsFromClassPath);
     BuildNumber buildNumber = BuildNumber.fromString("2042.42");
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, false));
-    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
-      PluginDescriptorLoader.loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null);
+    try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true)) {
+      PluginDescriptorLoader.loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null, new ClassPathXmlPathResolver(loader));
     }
 
     context.result.finishLoading();
@@ -1352,14 +1352,17 @@ public final class PluginManagerCore {
    */
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor;
-    DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(
-      DisabledPluginsState.disabledPlugins());
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, true, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)) {
+    DescriptorListLoadingContext parentContext =
+      DescriptorListLoadingContext.createSingleDescriptorContext(DisabledPluginsState.disabledPlugins());
+    PathResolver pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER;
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, true, true)) {
       if (Files.isDirectory(pluginRoot)) {
-        descriptor = PluginDescriptorLoader.loadDescriptorFromDir(pluginRoot, META_INF + fileName, null, context);
+        descriptor = PluginDescriptorLoader
+          .loadDescriptorFromDir(pluginRoot, META_INF + fileName, null, context.parentContext, context.isEssential, context.isBundled,
+                                 pathResolver);
       }
       else {
-        descriptor = PluginDescriptorLoader.loadDescriptorFromJar(pluginRoot, fileName, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, context, null);
+        descriptor = PluginDescriptorLoader.loadDescriptorFromJar(pluginRoot, fileName, pathResolver, context, null);
       }
     }
 

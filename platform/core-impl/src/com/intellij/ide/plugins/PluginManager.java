@@ -73,10 +73,11 @@ public final class PluginManager {
                                                                   boolean bundled,
                                                                   @NotNull PathResolver pathResolver) {
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
-    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false)) {
       return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file,
                                                                 PluginManagerCore.PLUGIN_XML,
                                                                 context,
+                                                                pathResolver,
                                                                 Files.isDirectory(file));
     }
   }

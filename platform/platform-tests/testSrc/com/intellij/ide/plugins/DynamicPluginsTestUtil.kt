@@ -22,10 +22,10 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   PluginManagerCore.getAndClearPluginLoadingErrors()
   val buildNumber = BuildNumber.fromString("2042.42")
   val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true, PluginXmlPathResolver.DEFAULT_PATH_RESOLVER)
-    .use { context ->
-      PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
-    }
+  val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true).use { context ->
+    PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context,
+                                                       PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, Files.isDirectory(dir))
+  }
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty

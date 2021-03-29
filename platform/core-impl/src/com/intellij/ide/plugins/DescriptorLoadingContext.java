@@ -18,19 +18,13 @@ final class DescriptorLoadingContext implements AutoCloseable {
   final boolean isBundled;
   final boolean isEssential;
 
-  final PathResolver pathResolver;
-
   /**
    * parentContext is null only for CoreApplicationEnvironment - it is not valid otherwise because in this case XML is not interned.
    */
-  DescriptorLoadingContext(@NotNull DescriptorListLoadingContext parentContext,
-                           boolean isBundled,
-                           boolean isEssential,
-                           @NotNull PathResolver pathResolver) {
+  DescriptorLoadingContext(@NotNull DescriptorListLoadingContext parentContext, boolean isBundled, boolean isEssential) {
     this.parentContext = parentContext;
     this.isBundled = isBundled;
     this.isEssential = isEssential;
-    this.pathResolver = pathResolver;
   }
 
   @NotNull FileSystem open(@NotNull Path file) {
@@ -62,6 +56,6 @@ final class DescriptorLoadingContext implements AutoCloseable {
   }
 
   public @NotNull DescriptorLoadingContext copy(boolean isEssential) {
-    return new DescriptorLoadingContext(parentContext, isBundled, isEssential, pathResolver);
+    return new DescriptorLoadingContext(parentContext, isBundled, isEssential);
   }
 }
