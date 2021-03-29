@@ -129,7 +129,7 @@ public final class JBCefApp {
       throw new IllegalStateException("CefApp failed to start");
     }
     CefSettings settings = config.getCefSettings();
-    settings.windowless_rendering_enabled = isOffScreenRenderingMode();
+    settings.windowless_rendering_enabled = isOffScreenRenderingModeEnabled();
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
@@ -325,11 +325,21 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns true if JCEF is run in off-screen rendering mode.
+   * Returns true if the off-screen rendering mode is enabled.
+   * <p></p>
+   * This mode allows for browser creation in either windowed or off-screen rendering mode.
+   *
+   * @see JBCefOsrHandlerBrowser
+   * @see JBCefBrowser#createDefaultOsrBrowser(JBCefClient, String)
    */
-  @ApiStatus.Experimental
-  public static boolean isOffScreenRenderingMode() {
+  public static boolean isOffScreenRenderingModeEnabled() {
     return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
+  }
+
+  static void checkOffScreenRenderingModeEnabled() {
+    if (!isOffScreenRenderingModeEnabled()) {
+      throw new IllegalStateException("off-screen rendering mode is disabled: 'ide.browser.jcef.osr.enabled=false'");
+    }
   }
 
   /**

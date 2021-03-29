@@ -7,16 +7,20 @@ import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 /**
- * A wrapper over {@link CefBrowser} that forwards everything to {@link CefRenderHandler} so you can render everything
- * and send events back using {@link CefBrowser#sendKeyEvent(KeyEvent)}
- * <p>
+ * A wrapper over {@link CefBrowser} that forwards paint requests and notifications to a custom {@link CefRenderHandler}.
+ * Key and mouse events are to be sent back to the {@link CefBrowser} via the callbacks: {@link CefBrowser#sendKeyEvent(KeyEvent)},
+ * {@link CefBrowser#sendMouseEvent(MouseEvent)}, {@link CefBrowser#sendMouseWheelEvent(MouseWheelEvent)}.
+ * <p></p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
  * <p>
- * If you need to render to be done by CEDF, see {@link JBCefBrowser}
+ * For window-based rendering use {@link JBCefBrowser}.
  *
  * @see JBCefBrowser
+ * @see JBCefBrowser#getCefBrowser
  */
 public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
   /**
@@ -77,6 +81,7 @@ public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
                                                boolean isDefaultClient,
                                                boolean createImmediately)
   {
+    JBCefApp.checkOffScreenRenderingModeEnabled();
     var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
     if (createImmediately) cefBrowser.createImmediately();
     return new JBCefOsrHandlerBrowser(client, cefBrowser, true, isDefaultClient);
@@ -85,5 +90,6 @@ public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
   private JBCefOsrHandlerBrowser(@NotNull JBCefClient cefClient,
                                  @NotNull CefBrowser cefBrowser, boolean newBrowserCreated, boolean isDefaultClient) {
     super(cefClient, cefBrowser, newBrowserCreated, isDefaultClient);
+    setProperty(Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
   }
 }

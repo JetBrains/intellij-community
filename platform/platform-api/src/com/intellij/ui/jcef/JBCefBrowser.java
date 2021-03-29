@@ -9,12 +9,15 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.browser.CefRendering;
 import org.cef.handler.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,15 +138,15 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
-    this(cefBrowser, client, false, null);
+    this(cefBrowser, false, client, false, null);
   }
 
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
-    this(null, client, isDefaultClient, url);
+    this(createBrowser(client.getCefClient(), url, CefRendering.DEFAULT), true, client, isDefaultClient, url);
   }
 
-  private JBCefBrowser(@Nullable CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
-    super(client, createBrowser(cefBrowser, client.getCefClient(), url), cefBrowser == null, isDefaultClient);
+  private JBCefBrowser(@NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, @NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
+    super(client, cefBrowser, isNewBrowserCreated, isDefaultClient);
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
@@ -155,8 +158,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();
-        boolean focusOnNavigation = (myFirstShow && myPropertiesHelper.is(Properties.FOCUS_ON_SHOW) ||
-                                     myPropertiesHelper.is(Properties.FOCUS_ON_NAVIGATION)) ||
+        boolean focusOnNavigation = (myFirstShow && isProperty(Properties.FOCUS_ON_SHOW) ||
+                                     isProperty(Properties.FOCUS_ON_NAVIGATION)) ||
                                     componentFocused;
         myFirstShow = false;
 
@@ -196,16 +199,24 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
-  // New API is not available in JBR yet
-  @SuppressWarnings("deprecation")
-  private static @NotNull CefBrowser createBrowser(@Nullable CefBrowser cefBrowser, @NotNull CefClient client, @Nullable String url) {
-   // Uncomment when new JBR would arrive
-   // CefRendering mode = JBCefApp.isOffScreenRenderingMode() ? CefRendering.OFFSCREEN : CefRendering.DEFAULT;
-    boolean mode = JBCefApp.isOffScreenRenderingMode();
-    return cefBrowser != null
-           ?
-           cefBrowser
-           : client.createBrowser(url != null ? url : BLANK_URI, mode, false, null);
+  /**
+   * Creates a browser with default OGL off-screen renderer.
+   *
+   * @return default OSR browser
+   * @see JBCefOsrHandlerBrowser
+   */
+  @ApiStatus.Experimental
+  public static @NotNull JBCefBrowser createDefaultOsrBrowser(@Nullable JBCefClient client, @Nullable String url) {
+    JBCefApp.checkOffScreenRenderingModeEnabled();
+    boolean isDefaultClient = (client == null);
+    if (isDefaultClient) {
+      client = JBCefApp.getInstance().createClient();
+    }
+    return new JBCefBrowser(createBrowser(client.getCefClient(), url, CefRendering.OFFSCREEN), true, client, isDefaultClient, url);
+  }
+
+  private static @NotNull CefBrowser createBrowser(@NotNull CefClient client, @Nullable String url, @NotNull CefRendering cefRendering) {
+    return client.createBrowser(ObjectUtils.notNull(url, BLANK_URI), cefRendering, false, null);
   }
 
   private @NotNull JPanel createComponent() {

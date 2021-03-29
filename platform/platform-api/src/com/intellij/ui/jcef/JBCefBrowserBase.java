@@ -68,9 +68,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
      */
     public static final @NotNull String NO_CONTEXT_MENU = "JBCefBrowserBase.noContextMenu";
 
+    /**
+     * Whether the browser is represented by a lightweight component.
+     * <p></p>
+     * Accepts {@link Boolean} values. By default the browser is rendered in the windowed mode and is represented
+     * by a heavyweight component. However, when the browser is rendered in the off-screen mode via a software (buffered)
+     * renderer it is normally represented by lightweight (Swing) component.
+     *
+     * @see JBCefOsrHandlerBrowser
+     */
+    public static final @NotNull String IS_LIGHTWEIGHT = "JBCefBrowserBase.isLightweight";
+
     static {
       PropertiesHelper.putType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
       PropertiesHelper.putType(NO_CONTEXT_MENU, Boolean.class);
+      PropertiesHelper.putType(IS_LIGHTWEIGHT, Boolean.class);
     }
   }
 
@@ -203,7 +215,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                           String realm,
                                           String scheme, CefAuthCallback callback)
         {
-          if (isProxy && !myPropertiesHelper.is(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
+          if (isProxy && !isProperty(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
             Credentials credentials = JBCefProxyAuthenticator.getCredentials(JBCefBrowserBase.this, host, port);
             if (credentials != null) {
               callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
@@ -488,6 +500,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
+   * @return the passed boolean property value or {@code false} if it is not set or is not boolean
+   */
+  public boolean isProperty(@NotNull String name) {
+    return myPropertiesHelper.is(name);
+  }
+
+  /**
    * @see #setProperty(String, Object)
    */
   void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
@@ -515,7 +534,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     @Override
     public void onBeforeContextMenu(CefBrowser browser, CefFrame frame, CefContextMenuParams params, CefMenuModel model) {
-      if (myPropertiesHelper.is(Properties.NO_CONTEXT_MENU)) {
+      if (isProperty(Properties.NO_CONTEXT_MENU)) {
         model.clear();
         return;
       }
@@ -526,7 +545,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     @Override
     public boolean onContextMenuCommand(CefBrowser browser, CefFrame frame, CefContextMenuParams params, int commandId, int eventFlags) {
-      if (myPropertiesHelper.is(Properties.NO_CONTEXT_MENU)) {
+      if (isProperty(Properties.NO_CONTEXT_MENU)) {
         return false;
       }
       if (commandId == DEBUG_COMMAND_ID) {

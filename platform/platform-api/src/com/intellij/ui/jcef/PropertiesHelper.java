@@ -51,6 +51,7 @@ final class PropertiesHelper {
     return Boolean.TRUE.equals(myProperties.get(name));
   }
 
+  @SuppressWarnings("SameParameterValue")
   int intValue(@NotNull String name, int defaultValue) {
     Object value = getProperty(name);
     return value instanceof Integer ? (int)value : defaultValue;

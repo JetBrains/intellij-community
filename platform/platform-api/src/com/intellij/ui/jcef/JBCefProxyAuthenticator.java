@@ -40,7 +40,7 @@ class JBCefProxyAuthenticator {
       }
     }
     // then ask the user for credentials
-    if (!GraphicsEnvironment.isHeadless() && !JBCefApp.isOffScreenRenderingMode()) {
+    if (!GraphicsEnvironment.isHeadless()) {
       String proxy = proxyServer + ":" + proxyPort;
       Runnable runnable = () -> {
         // 3) finally ask the user for credentials

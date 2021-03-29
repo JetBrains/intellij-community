@@ -29,7 +29,6 @@ import java.util.List;
  */
 public class WebBrowser extends AnAction implements DumbAware {
   private static final String URL = "https://maps.google.com";
-  private static final String myTitle = "Web Browser - JCEF";
   private static final String myCookieManagerText = "Cookie Manager";
 
   @Override
@@ -46,15 +45,22 @@ public class WebBrowser extends AnAction implements DumbAware {
       return;
     }
 
+    showBrowser(false);
+  }
+
+  private static void showBrowser(boolean isOffScreenRenderingMode) {
+    Window activeFrame = IdeFrameImpl.getActiveFrame();
+    if (activeFrame == null) return;
+
     Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
 
     final JFrame frame = new IdeFrameImpl();
-    frame.setTitle(myTitle);
+    frame.setTitle("Web Browser" + (isOffScreenRenderingMode ? " (OSR) " : " ") + "- JCEF");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
     frame.setLayout(new BorderLayout());
 
-    final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
+    final JBCefBrowser myJBCefBrowser = isOffScreenRenderingMode ? JBCefBrowser.createDefaultOsrBrowser(null, URL) : new JBCefBrowser(URL);
     myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
     myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
 
@@ -160,6 +166,16 @@ public class WebBrowser extends AnAction implements DumbAware {
       }
     });
 
+    if (JBCefApp.isOffScreenRenderingModeEnabled()) {
+      JMenuItem menuItemOSR = new JMenuItem("Create OSR browser");
+      menu.add(menuItemOSR);
+      menuItemOSR.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          showBrowser(true);
+        }
+      });
+    }
     frame.setVisible(true);
   }
 }
