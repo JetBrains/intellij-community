@@ -24,8 +24,8 @@ import training.util.learningProgressString
 import training.util.rigid
 import training.util.scaledRigid
 import java.awt.*
-import java.awt.Cursor
-import java.awt.event.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 
@@ -192,7 +192,7 @@ class LearningItems : JPanel() {
   }
 
   private fun mouseAlreadyInside(c: Component): Boolean {
-    val mousePos: Point = MouseInfo.getPointerInfo().location
+    val mousePos: Point = MouseInfo.getPointerInfo()?.location ?: return false
     val bounds: Rectangle = c.bounds
     bounds.location = c.locationOnScreen
     return bounds.contains(mousePos)
