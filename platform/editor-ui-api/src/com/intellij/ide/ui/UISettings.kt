@@ -673,6 +673,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.ideAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForIDE()) {
       state.ideAAType = AntialiasingType.GREYSCALE
     }
+    if (state.editorAAType == AntialiasingType.SUBPIXEL && !AntialiasingType.canUseSubpixelAAForEditor()) {
+      state.editorAAType = AntialiasingType.GREYSCALE
+    }
     if (state.moveMouseOnDefaultButton) {
       Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
       state.moveMouseOnDefaultButton = false
