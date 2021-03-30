@@ -380,7 +380,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
     JComponent result = action.createCustomComponent(presentation, myPlace, getDataContext());
-    GotItTooltip.followToolbarComponent(presentation, result, getComponent());
+    ToolbarActionTracker.followToolbarComponent(presentation, result, getComponent());
     return result;
   }
 
@@ -429,7 +429,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     actionButton.setLook(look);
     actionButton.setBorder(myOrientation == SwingConstants.VERTICAL ? JBUI.Borders.empty(2, 1) : JBUI.Borders.empty(1, 2));
 
-    GotItTooltip.followToolbarComponent(presentation, actionButton, getComponent());
+    ToolbarActionTracker.followToolbarComponent(presentation, actionButton, getComponent());
     return actionButton;
   }
 
