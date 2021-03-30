@@ -61,7 +61,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     presentation.setIcon(getActionIcon());
 
     for (AnAction child : getTemplateActions()) {
-      child.update(e);
+      child.update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), e.getPlace(), e.getDataContext()));
     }
   }
 
