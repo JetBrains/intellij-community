@@ -52,6 +52,10 @@ public class CodeStyleConfigurableWrapper
     return myPanel;
   }
 
+  public void setSchemesPanelVisible(boolean isVisible) {
+    if (myPanel != null) myPanel.setSchemesPanelVisible(isVisible);
+  }
+
   protected boolean canBeShared() {
     return true;
   }
