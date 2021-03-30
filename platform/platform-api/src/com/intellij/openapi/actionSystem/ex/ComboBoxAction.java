@@ -222,20 +222,17 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
     }
 
-    @NotNull
-    private Runnable setForcePressed() {
-      myForcePressed = true;
+    private void setForcePressed(boolean forcePressed) {
+      if (myForcePressed == forcePressed) return;
+      myForcePressed = forcePressed;
       repaint();
+    }
 
-      return () -> {
-        // give the button a chance to handle action listener
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myForcePressed = false;
-          repaint();
-        }, ModalityState.any());
-        repaint();
-        fireStateChanged();
-      };
+    private void releaseForcePressed() {
+      // give the button a chance to handle action listener
+      ApplicationManager.getApplication().invokeLater(() -> setForcePressed(false), ModalityState.any());
+      repaint();
+      fireStateChanged();
     }
 
     @Nullable
@@ -245,7 +242,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     public void showPopup() {
-      JBPopup popup = createPopup(setForcePressed());
+      JBPopup popup = createPopup(this::releaseForcePressed);
+      setForcePressed(true);
       if (Registry.is("ide.helptooltip.enabled")) {
         HelpTooltip.setMasterPopup(this, popup);
       }
