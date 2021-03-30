@@ -70,7 +70,7 @@ public class FirHighlightingTestGenerated extends AbstractFirHighlightingTest {
 
         @TestMetadata("InaccessibleExpression.kt")
         public void testInaccessibleExpression() throws Exception {
-            runTest("idea/testData/highlighter/InaccessibleExpression.kt");
+            runTest("../idea/testData/highlighter/InaccessibleExpression.kt");
         }
 
         @TestMetadata("InvokeCall.kt")
