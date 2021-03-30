@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.externalComponents.ExternalComponentSource
@@ -106,7 +107,7 @@ object UpdateChecker {
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
     val callback = ActionCallback()
-    ApplicationManager.getApplication().executeOnPooledThread {
+    ProcessIOExecutorService.INSTANCE.execute {
       doUpdateAndShowResult(null, UpdateSettings.getInstance(), false, false, true, null, callback)
     }
     return callback

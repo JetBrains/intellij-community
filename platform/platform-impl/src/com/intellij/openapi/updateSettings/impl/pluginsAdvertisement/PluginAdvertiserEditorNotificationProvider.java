@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -8,7 +9,6 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.advertiser.PluginData;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
+public final class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
 
@@ -49,7 +49,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
 
     Set<String> jbPluginsIds = MarketplaceRequests.getInstance().getJetBrainsPluginsIds();
     if (extensionsData == null || jbPluginsIds == null) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProcessIOExecutorService.INSTANCE.execute(() -> {
         MarketplaceRequests.getInstance().loadJetBrainsPluginsIds();
         boolean shouldUpdateNotifications = extensionsStateService.updateCache(file.getName());
         String fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file);
