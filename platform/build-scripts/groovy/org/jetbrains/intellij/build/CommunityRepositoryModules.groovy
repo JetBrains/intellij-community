@@ -345,6 +345,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.profilersAndroid", "android.jar")
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
+      withModule("intellij.android.kotlin.idea.common", "android-kotlin.jar")
       withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
       withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar")
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
