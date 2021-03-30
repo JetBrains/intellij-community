@@ -99,7 +99,7 @@ public final class CustomMethodHandlers {
       return dfType == TOP ? null : factory.fromDfType(dfType);
     }
   }
-  
+
   private static CustomMethodHandler toValue(DfTypeCustomMethodHandler handler) {
     return handler;
   }
@@ -118,7 +118,7 @@ public final class CustomMethodHandlers {
     .register(OptionalUtil.OPTIONAL_OF_NULLABLE,
               toValue((args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]))))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
-              toValue((args, memState, factory, method) -> calendarGet(args.myArguments, memState)))
+              toValue((args, memState, factory, method) -> calendarGet(args, memState, factory)))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
               toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
@@ -371,14 +371,23 @@ public final class CustomMethodHandlers {
     return isLong ? longRange(range.abs(true)) : intRange(range.abs(false));
   }
 
-  private static @NotNull DfType calendarGet(DfaValue[] arguments, DfaMemoryState state) {
-    if (arguments.length != 1) return TOP;
-    Integer val = state.getDfType(arguments[0]).getConstantOfType(Integer.class);
+  private static @NotNull DfType calendarGet(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory) {
+    if (arguments.myArguments.length != 1) return TOP;
+    Integer val = state.getDfType(arguments.myArguments[0]).getConstantOfType(Integer.class);
     if (val == null) return TOP;
     LongRangeSet range = null;
     switch (val) {
       case Calendar.DATE: range = LongRangeSet.range(1, 31); break;
-      case Calendar.MONTH: range = LongRangeSet.range(0, 12); break;
+      case Calendar.MONTH: {
+        PsiType type = TypeConstraint.fromDfType(state.getDfType(arguments.myQualifier)).getPsiType(factory.getProject());
+        if (TypeUtils.typeEquals("java.util.GregorianCalendar", type)) {
+          range = LongRangeSet.range(0, 11);
+        } else {
+          // Could be lunar calendar
+          range = LongRangeSet.range(0, 12);
+        }
+        break;
+      }
       case Calendar.AM_PM: range = LongRangeSet.range(0, 1); break;
       case Calendar.DAY_OF_YEAR: range = LongRangeSet.range(1, 366); break;
       case Calendar.HOUR: range = LongRangeSet.range(0, 11); break;
@@ -500,7 +509,7 @@ public final class CustomMethodHandlers {
   }
 
   private static @NotNull DfaValue collectionToArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
-    DfType result = NOT_NULL_OBJECT;
+    DfType result = TOP;
     DfaValue collection = arguments.myQualifier;
     DfaValue collectionSize = COLLECTION_SIZE.createValue(factory, collection);
     LongRangeSet collectionSizeRange = DfIntType.extractRange(state.getDfType(collectionSize));
@@ -510,7 +519,7 @@ public final class CustomMethodHandlers {
       DfType arrType = state.getDfType(array);
       TypeConstraint constraint = TypeConstraint.fromDfType(arrType);
       if (constraint.isExact()) {
-        result = constraint.asDfType().meet(NOT_NULL_OBJECT);
+        result = constraint.asDfType();
       }
       // Array size is max of collection size and argument array size
       DfaValue arrayLength = ARRAY_LENGTH.createValue(factory, array);
@@ -523,10 +532,19 @@ public final class CustomMethodHandlers {
         }
       }
     }
-    return factory.getWrapperFactory().createWrapper(result, ARRAY_LENGTH, finalSize);
+    else if (arguments.myArguments.length == 0) {
+      PsiType type = method.getReturnType();
+      if (type instanceof PsiArrayType) {
+        // Assume that collection.toArray() always returns Object[] exactly.
+        // it may be different (e.g. Arrays.asList().toArray() returned more precise type in older JDK)
+        // but it violates the spec.
+        result = TypeConstraints.exact(type).asDfType();
+      }
+    }
+    return factory.getWrapperFactory().createWrapper(result.meet(NOT_NULL_OBJECT), ARRAY_LENGTH, finalSize);
   }
 
-  private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, 
+  private static @NotNull DfaValue stringToCharArray(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory,
                                                    PsiMethod method) {
     DfaValue string = arguments.myQualifier;
     DfaValue stringLength = STRING_LENGTH.createValue(factory, string);

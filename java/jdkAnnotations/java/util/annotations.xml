@@ -2575,20 +2575,36 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getDay()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="6"/>
     </annotation>
   </item>
   <item name='java.util.Date int getHours()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getMinutes()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
     </annotation>
   </item>
   <item name="java.util.Date int getMonth()">
@@ -2598,10 +2614,18 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
   </item>
   <item name='java.util.Date int getSeconds()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
     </annotation>
   </item>
   <item name='java.util.Date int getYear()'>
@@ -2640,14 +2664,32 @@
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Date void setDate(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
   <item name='java.util.Date void setHours(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
+  <item name='java.util.Date void setHours(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
   <item name='java.util.Date void setMinutes(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setMinutes(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="60"/>
     </annotation>
   </item>
   <item name='java.util.Date void setMonth(int)'>
@@ -2659,10 +2701,20 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
   </item>
   <item name='java.util.Date void setSeconds(int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Date void setSeconds(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
     </annotation>
   </item>
   <item name='java.util.Date void setTime(long)'>
@@ -2739,15 +2791,75 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
   </item>
   <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
   </item>
   <item name="java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.util.Calendar.JANUARY, java.util.Calendar.FEBRUARY, java.util.Calendar.MARCH, java.util.Calendar.APRIL, java.util.Calendar.MAY, java.util.Calendar.JUNE, java.util.Calendar.JULY, java.util.Calendar.AUGUST, java.util.Calendar.SEPTEMBER, java.util.Calendar.OCTOBER, java.util.Calendar.NOVEMBER, java.util.Calendar.DECEMBER}" />
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="11"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 2'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="31"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 3'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="23"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 4'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="59"/>
+    </annotation>
+  </item>
+  <item name='java.util.GregorianCalendar GregorianCalendar(int, int, int, int, int, int) 5'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="61"/>
     </annotation>
   </item>
   <item name='java.util.HashMap HashMap(int) 0'>
