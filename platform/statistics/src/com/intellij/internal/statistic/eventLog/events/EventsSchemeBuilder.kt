@@ -25,7 +25,7 @@ object EventsSchemeBuilder {
                              val version: Int,
                              val schema: Set<EventDescriptor>,
                              val className: String)
-  data class EventsScheme(val commitHash: String?, val scheme: List<GroupDescriptor>)
+  data class EventsScheme(val commitHash: String?, val buildNumber:String?, val scheme: List<GroupDescriptor>)
 
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
     if (field.name.contains(".")) {
@@ -122,6 +122,7 @@ class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val outputFile = args.getOrNull(1)
     val pluginsFile = args.getOrNull(2)
     val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+                                                        System.getenv("IDEA_BUILD_NUMBER"),
                                                         EventsSchemeBuilder.buildEventsScheme())
     val text = GsonBuilder()
       .registerTypeAdapter(EventsSchemeBuilder.FieldDataType::class.java, FieldDataTypeSerializer)
