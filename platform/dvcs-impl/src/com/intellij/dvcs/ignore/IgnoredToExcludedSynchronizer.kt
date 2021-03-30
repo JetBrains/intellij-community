@@ -69,19 +69,21 @@ class IgnoredToExcludedSynchronizer(project: Project) : VcsIgnoredHolderUpdateLi
     // in case if the project roots changed (e.g. by build tools) then the directories shown in notification can be outdated.
     // filter directories which excluded or containing source roots and expire notification if needed.
 
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    val sourceRoots = getProjectSourceRoots(project)
+    ChangeListManager.getInstance(project).invokeAfterUpdate(false) {
+      val fileIndex = ProjectFileIndex.getInstance(project)
+      val sourceRoots = getProjectSourceRoots(project)
 
-    val acquiredFiles = acquireValidFiles()
-    LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
-    val filesToRemove = acquiredFiles
-      .asSequence()
-      .filter { file -> fileIndex.isExcluded(file) || sourceRoots.contains(file) }
-      .toList()
-    LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
+      val acquiredFiles = acquireValidFiles()
+      LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
+      val filesToRemove = acquiredFiles
+        .asSequence()
+        .filter { file -> runReadAction { fileIndex.isExcluded(file) } || sourceRoots.contains(file) }
+        .toList()
+      LOG.debug("updateNotificationState, filesToRemove", filesToRemove)
 
-    if (removeFiles(filesToRemove)) {
-      EditorNotifications.getInstance(project).updateAllNotifications()
+      if (removeFiles(filesToRemove)) {
+        EditorNotifications.getInstance(project).updateAllNotifications()
+      }
     }
   }
 
