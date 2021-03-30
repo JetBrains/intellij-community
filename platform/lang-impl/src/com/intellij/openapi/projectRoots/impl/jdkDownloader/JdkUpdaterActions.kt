@@ -44,7 +44,7 @@ class JdkUpdaterNotifications : SimplePersistentStateComponent<JdkSettingsAction
           state.knownActions.addAll(ids)
           state.intIncrementModificationCount()
 
-          SettingsEntryPointAction.IconState.ApplicationUpdate
+          SettingsEntryPointAction.IconState.ApplicationComponentUpdate
         } else {
           SettingsEntryPointAction.IconState.Current
         }
