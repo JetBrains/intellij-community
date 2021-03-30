@@ -193,6 +193,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.Toolbar");
     myToolbar = ActionManager.getInstance().createActionToolbar(getClass().getName(), group, false);
+    myToolbar.setTargetComponent(myTree);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
     UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
 
@@ -222,6 +223,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     }
     Node node = getSelectedNode();
     if (node != null) {
+      if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) return node;
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {

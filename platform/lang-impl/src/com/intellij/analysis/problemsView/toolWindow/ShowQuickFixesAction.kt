@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionListStep
-import com.intellij.openapi.actionSystem.ActionPlaces.isMainMenuOrShortcut
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
-import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
+import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEM
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.editor.Editor
@@ -20,14 +20,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil.isAncestor
-import com.intellij.util.ui.tree.TreeUtil.getLastUserObject
 import java.awt.event.MouseEvent
-import javax.swing.JTree
 
-internal class ShowQuickFixesAction : AnAction() {
+internal class ShowQuickFixesAction : UpdateInBackground, AnAction() {
 
   override fun update(event: AnActionEvent) {
-    val problem = getProblem(getTree(event))
+    val node = event.getData(SELECTED_ITEM) as? ProblemNode
+    val problem = node?.problem
     with(event.presentation) {
       isVisible = getApplication().isInternal || ProblemsView.getSelectedPanel(event.project) is HighlightingPanel
       isEnabled = isVisible && when (problem) {
@@ -38,22 +37,12 @@ internal class ShowQuickFixesAction : AnAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    when (val problem = getProblem(getTree(event))) {
+    val node = event.getData(SELECTED_ITEM) as? ProblemNode
+    when (val problem = node?.problem) {
       is HighlightingProblem -> actionPerformed(event, problem)
     }
   }
 
-
-  private fun getTree(event: AnActionEvent) = when {
-    isMainMenuOrShortcut(event.place) -> event.getData(CONTEXT_COMPONENT) as? JTree
-    else -> ProblemsView.getSelectedPanel(event.project)?.tree
-  }
-
-  private fun getProblem(tree: JTree?) = tree?.let {
-    getLastUserObject(ProblemNode::class.java, it.selectionPath)?.problem
-  }
-
-  private fun getPsiFile(event: AnActionEvent) = event.getData(PSI_FILE)
 
   private fun getEditor(psi: PsiFile, showEditor: Boolean): Editor? {
     val panel = ProblemsView.getSelectedPanel(psi.project) ?: return null
@@ -101,7 +90,7 @@ internal class ShowQuickFixesAction : AnAction() {
   }
 
   private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
-    val psi = getPsiFile(event) ?: return null
+    val psi = event.getData(PSI_FILE) ?: return null
     val editor = getEditor(psi, showEditor) ?: return null
     val markers = problem.info?.quickFixActionMarkers ?: return null
 
