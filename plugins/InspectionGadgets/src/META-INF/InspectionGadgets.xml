@@ -245,6 +245,10 @@
                      key="result.of.method.call.ignored.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.IgnoreResultOfCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="WriteOnlyObject" bundle="messages.InspectionGadgetsBundle"
+                     key="write.only.object.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.WriteOnlyObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ImplicitArrayToString" bundle="messages.InspectionGadgetsBundle"
                      key="implicit.array.to.string.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -1739,7 +1743,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StandardVariableNames" bundle="messages.InspectionGadgetsBundle" key="standard.variable.names.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.StandardVariableNamesInspection"/>
-   
+
     <localInspection groupPath="Java" language="JAVA" suppressId="NonConstantFieldWithUpperCaseName" shortName="UpperCaseFieldNameNotConstant"
                      bundle="messages.InspectionGadgetsBundle" key="upper.case.field.name.not.constant.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
