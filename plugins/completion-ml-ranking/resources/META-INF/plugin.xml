@@ -29,6 +29,8 @@
       <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.completion.ml.elementIdProvider" dynamic="true" interface="com.intellij.completion.ml.util.LookupElementIdProvider" />
+
+    <extensionPoint qualifiedName="com.intellij.completion.ml.localModelProvider" dynamic="true" interface="com.intellij.completion.ml.ranker.local.LocalZipModelProvider" />
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -98,7 +100,8 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
-
+    <completion.ml.localModelProvider implementation="com.intellij.completion.ml.ranker.local.randomforest.LocalRandomForestProvider" />
+    <completion.ml.localModelProvider implementation="com.intellij.completion.ml.ranker.local.catboost.LocalCatBoostModelProvider" />
   </extensions>
 
   <projectListeners>
