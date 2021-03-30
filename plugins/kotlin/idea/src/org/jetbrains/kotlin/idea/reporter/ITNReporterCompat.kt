@@ -27,7 +27,6 @@ abstract class ITNReporterCompat : ITNReporter() {
         parentComponent: Component?,
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
-        @Suppress("IncompatibleAPI")
         return super.submit(events, additionalInfo, parentComponent ?: error("Should never happen in Intellij Idea"), consumer)
     }
 }

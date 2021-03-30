@@ -3,11 +3,10 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("unused", "IncompatibleAPI", "PropertyName")
+@file:Suppress("unused", "PropertyName")
 
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.kotlin.test.KotlinTestUtils.*
 import java.io.File
 
