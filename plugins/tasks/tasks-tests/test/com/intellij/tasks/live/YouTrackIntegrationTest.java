@@ -218,6 +218,6 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
     List<String> variants = ContainerUtil.map(completionItems, item -> item.getOption());
     assertContainsElements(variants,"Bug", "Task", "Feature");
     CompletionItem bugState = ContainerUtil.find(completionItems, item -> item.getOption().equals("Bug"));
-    assertTrue(bugState.getDescription().contains("Type in TEST"));
+    assertTrue(bugState.getDescription().contains("Type in"));
   }
 }
