@@ -65,10 +65,10 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
-                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"), 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
+                                       "getMethod", "getDeclaredMethod", "getConstructor", "getDeclaredConstructor"),
               "java.lang.NoSuchMethodException")
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, 
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS,
                                        "getField", "getDeclaredField"), "java.lang.NoSuchFieldException");
   private static final CallMatcher MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS =
     CallMatcher.anyOf(
@@ -116,6 +116,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.Map", "of|ofEntries|entry")
       .add("java.util.Set", "of")
       .add("java.util.UUID",".*")
+      .add("java.util.concurrent.BlockingQueue", "offer|remove")
       .add("java.util.concurrent.CountDownLatch","await|getCount")
       .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
       .add("java.util.concurrent.ForkJoinPool","awaitQuiescence")
