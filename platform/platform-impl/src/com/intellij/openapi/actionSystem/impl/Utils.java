@@ -59,8 +59,7 @@ public final class Utils {
     EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));
   }
 
-  @NotNull
-  public static DataContext wrapDataContext(@NotNull DataContext dataContext) {
+  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
     if (dataContext instanceof DataManagerImpl.MyDataContext &&
         Registry.is("actionSystem.update.actions.async")) {
       return new PreCachedDataContext(dataContext);
@@ -69,8 +68,7 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
+  public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
     return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
   }
 
@@ -81,11 +79,12 @@ public final class Utils {
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
+  //TODO to remove when Utils.ActionGroupVisitor is dropped
   public static List<AnAction> expandActionGroup(boolean isInModalContext,
                                                  @NotNull ActionGroup group,
                                                  @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
-                                                 @NotNull String place){
+                                                 @NotNull String place) {
     return expandActionGroup(isInModalContext, group, presentationFactory, context, place, false, null);
   }
 
@@ -100,41 +99,40 @@ public final class Utils {
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
+  @ApiStatus.Internal
   public static List<AnAction> expandActionGroupWithTimeout(boolean isInModalContext,
-                                                 @NotNull ActionGroup group,
-                                                 @NotNull PresentationFactory presentationFactory,
-                                                 @NotNull DataContext context,
-                                                 @NotNull String place,
-                                                 @Nullable ActionGroupVisitor visitor,
-                                                 int timeoutMs) {
+                                                            @NotNull ActionGroup group,
+                                                            @NotNull PresentationFactory presentationFactory,
+                                                            @NotNull DataContext context,
+                                                            @NotNull String place,
+                                                            @Nullable ActionGroupVisitor visitor,
+                                                            int timeoutMs) {
     return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
   private static final boolean DO_FULL_EXPAND = Boolean.getBoolean("actionSystem.use.full.group.expand"); // for tests and debug
 
-  @NotNull
-  public static List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                 @NotNull ActionGroup group,
-                                                 @NotNull PresentationFactory presentationFactory,
-                                                 @NotNull DataContext context,
-                                                 @NotNull String place,
-                                                 boolean isContextMenu,
-                                                 @Nullable ActionGroupVisitor visitor) {
+  public static @NotNull List<AnAction> expandActionGroup(boolean isInModalContext,
+                                                          @NotNull ActionGroup group,
+                                                          @NotNull PresentationFactory presentationFactory,
+                                                          @NotNull DataContext context,
+                                                          @NotNull String place,
+                                                          boolean isContextMenu,
+                                                          @Nullable ActionGroupVisitor visitor) {
     return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
                                  place, isContextMenu, visitor, null);
 
   }
 
-  @NotNull
-  private static List<AnAction> expandActionGroupImpl(boolean isInModalContext,
-                                                      @NotNull ActionGroup group,
-                                                      @NotNull PresentationFactory presentationFactory,
-                                                      @NotNull DataContext context,
-                                                      @NotNull String place,
-                                                      boolean isContextMenu,
-                                                      @Nullable ActionGroupVisitor visitor,
-                                                      @Nullable Runnable onProcessed) {
+  private static @NotNull List<AnAction> expandActionGroupImpl(boolean isInModalContext,
+                                                               @NotNull ActionGroup group,
+                                                               @NotNull PresentationFactory presentationFactory,
+                                                               @NotNull DataContext context,
+                                                               @NotNull String place,
+                                                               boolean isContextMenu,
+                                                               @Nullable ActionGroupVisitor visitor,
+                                                               @Nullable Runnable onProcessed) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
@@ -307,8 +305,7 @@ public final class Utils {
     }
   }
 
-  @NotNull
-  private static JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
+  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
     return new JPopupMenu.Separator() {
       private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
 
@@ -371,8 +368,7 @@ public final class Utils {
     return icon != null && icon != ActionMenuItem.EMPTY_ICON;
   }
 
-  @NotNull
-  public static UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
+  public static @NotNull UpdateSession getOrCreateUpdateSession(@NotNull AnActionEvent e) {
     UpdateSession updater = e.getUpdateSession();
     if (updater == null) {
       ActionUpdater actionUpdater = new ActionUpdater(
@@ -384,14 +380,13 @@ public final class Utils {
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
-                                                    @NotNull DataContext dataContext,
-                                                    @NotNull String place,
-                                                    @NotNull ActionProcessor actionProcessor,
-                                                    @NotNull PresentationFactory factory,
-                                                    @Nullable Consumer<? super AnActionEvent> eventTracker,
-                                                    @NotNull Function<? super UpdateSession, ? extends T> function) {
+  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
+                                                              @NotNull DataContext dataContext,
+                                                              @NotNull String place,
+                                                              @NotNull ActionProcessor actionProcessor,
+                                                              @NotNull PresentationFactory factory,
+                                                              @Nullable Consumer<? super AnActionEvent> eventTracker,
+                                                              @NotNull Function<? super UpdateSession, ? extends T> function) {
     long start = System.currentTimeMillis();
     boolean async = isAsyncDataContext(dataContext);
     // we will manually process "invokeLater" calls using a queue for performance reasons:
