@@ -2,6 +2,8 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -378,21 +380,26 @@ object PluginDescriptorLoader {
                                                   isRunningFromSources: Boolean) {
     val classLoader = PluginDescriptorLoader::class.java.classLoader
     val urlsFromClassPath = LinkedHashMap<URL, String>()
+    var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.APP_INIT)
     val platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, isRunningFromSources)
 
     val pool = ForkJoinPool.commonPool()
 
-    if (!urlsFromClassPath.isEmpty()) {
+    if (urlsFromClassPath.isNotEmpty()) {
+      activity = activity.endAndStart("plugin from classpath loading")
       pool.invoke(LoadDescriptorsFromClassPathAction(urls = urlsFromClassPath,
                                                      context = context,
                                                      platformPluginURL = platformPluginURL,
                                                      pathResolver = ClassPathXmlPathResolver(classLoader)))
     }
 
+    activity = activity.endAndStart("plugin from user dir loading")
     pool.invoke(LoadDescriptorsFromDirAction(customPluginDir, context, false))
     if (bundledPluginDir != null) {
+      activity = activity.endAndStart("plugin from bundled dir loading")
       pool.invoke(LoadDescriptorsFromDirAction(bundledPluginDir, context, true))
     }
+    activity.end()
   }
 
   private fun computePlatformPluginUrlAndCollectPluginUrls(loader: ClassLoader,
