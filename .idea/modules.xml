@@ -476,6 +476,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/intellij.ant.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/intellij.c.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangd/intellij.c.clangd.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangd/intellij.c.clangd.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/intellij.c.dfa.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" />

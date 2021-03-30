@@ -57,6 +57,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
       "intellij.c.clangd",
+      "intellij.c.clangdBridge",
       "intellij.c.plugin",
       "intellij.cidr.debugger.plugin",
       "intellij.cidr.base.plugin"
