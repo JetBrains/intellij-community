@@ -13,7 +13,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
   private val diffLog = diff.changeLog.changeLog
 
   // Initial storage is required in case something will fail and we need to send a report
-  private val initialStorage = target.toStorage()
+  private val initialStorage = if (target.consistencyCheckingMode != ConsistencyCheckingMode.DISABLED) target.toStorage() else null
 
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
@@ -120,7 +120,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         if (target.entityDataById(sourceParentId) != null) sourceParentId
         else {
           if (!connectionId.canRemoveParent()) {
-            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff, target)
+            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceParentId", initialStorage, diff)
           }
           null
         }
@@ -156,7 +156,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
             targetChildrenIds += sourceChildId
           }
           else if (!connectionId.canRemoveChild()) {
-            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff, target)
+            target.addDiffAndReport("Cannot restore dependency. $connectionId, $sourceChildId", initialStorage, diff)
           }
         }
       }
@@ -297,8 +297,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
         if (newParent == null) {
           // target child doesn't have a parent anymore
           if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                       initialStorage,
-                                                                       diff, target)
+                                                                       initialStorage, diff)
           else target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
         }
         else {
@@ -316,8 +315,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
             }
             else {
               if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
-                                                                           initialStorage,
-                                                                           diff, target)
+                                                                           initialStorage, diff)
               target.refs.removeParentToChildRef(connectionId, existingParent, newEntityId)
             }
           }
@@ -362,7 +360,7 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
                         Entity Source: ${existingEntity.entitySource}
                         Existing entity data: $existingEntity
                         New entity data: $entityData
-                        """.trimIndent(), initialStorage, diff, target)
+                        """.trimIndent(), initialStorage, diff)
         }
       }
     }
