@@ -14,6 +14,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.findInvalidCommas
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper.lineBreakIsMissing
@@ -29,11 +30,17 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class TrailingCommaPostFormatProcessor : PostFormatProcessor {
-    override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement =
-        TrailingCommaPostFormatVisitor(settings).process(source)
+    override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
+        if (source.language != KotlinLanguage.INSTANCE) return source
 
-    override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange =
-        TrailingCommaPostFormatVisitor(settings).processText(source, rangeToReformat)
+        return TrailingCommaPostFormatVisitor(settings).process(source)
+    }
+
+    override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
+        if (source.language != KotlinLanguage.INSTANCE) return rangeToReformat
+
+        return TrailingCommaPostFormatVisitor(settings).processText(source, rangeToReformat)
+    }
 }
 
 private class TrailingCommaPostFormatVisitor(private val settings: CodeStyleSettings) : TrailingCommaVisitor() {
