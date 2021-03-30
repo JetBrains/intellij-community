@@ -295,14 +295,20 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "  public static final String S = \"\";\n" +
            "}\n" +
            "enum E { A, B }\n" +
-           // can properly test when LanguageLevel.HIGHEST == LanguageLevel.JDK_16
-           //"record R(int i) {" +
-           //"  private static final int X = 1;" +
-           //"}" +
+           "record R(int i) {" +
+           "  private static final int X = 1;" +
+           "}" +
            "class C extends ThreadLocal {\n" +
            "  private int i = 0;\n" +
            "}\n",
            "private int i = 0;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.records")),
+           "class X {}" +
+           "interface I {}" +
+           "record R1(int i, int j) {}" +
+           "record R2(double a, double b) {}",
+           "record R1(int i, int j) {}",
+           "record R2(double a, double b) {}");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

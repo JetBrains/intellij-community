@@ -5,8 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyConfiguration;
-import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyNonRecursiveConfiguration;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.*;
 
 /**
  * @author Bas Leijdekkers
@@ -154,6 +153,9 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.enums"), "enums",
                                 "enum 'Enum {}",
                                 getClassType(), JavaFileType.INSTANCE),
+      createConfiguration(SSRBundle.message("predefined.configuration.records"), "Records",
+                          "record 'Record('_Type '_component*) {}",
+                          getClassType(), JavaFileType.INSTANCE),
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
                                 "classes with parameterless constructors",
                                 "class 'Class {\n  '_Method{0,0}('_ParameterType '_Parameter+);\n}",

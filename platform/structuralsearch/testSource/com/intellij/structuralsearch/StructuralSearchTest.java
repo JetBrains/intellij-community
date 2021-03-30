@@ -24,7 +24,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_14);
+    setLanguageLevel(LanguageLevel.JDK_16);
   }
 
   @Override
@@ -3481,5 +3481,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find methods with explicit receiver parameter", 1, findMatchesCount(in, "'_RT '_m('_T this);"));
     assertEquals("find methods without receiver parameter", 2, findMatchesCount(in, "'_RT '_m('_T '_this{0,0}:(\\w*\\.)?this );"));
     assertEquals("find methods with receiver parameter 2", 1, findMatchesCount(in, "'_RT '_m('_T '_this:(\\w*\\.)?this );"));
+  }
+
+  public void testRecords() {
+    String in = "class X {}" +
+                "class Y {}" +
+                "class Z {}" +
+                "record R() {}" +
+                "record T(int i, int j) {}" +
+                "record S(double x, double y) {}";
+    assertEquals("find empty record", 1, findMatchesCount(in, "record '_X() {}"));
+    assertEquals("find two component records", 2, findMatchesCount(in, "record '_X('_T '_t{2,2}) {}"));
+    assertEquals("find all classes including records", 6, findMatchesCount(in, "class '_X {}"));
   }
 }
