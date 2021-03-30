@@ -591,8 +591,8 @@ class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentRea
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
-    val content = fileContentCache.computeIfAbsent(fileUrl) {
-      loadComponents(it, customModuleFilePath)
+    val content = fileContentCache.computeIfAbsent(fileUrl + customModuleFilePath) {
+      loadComponents(fileUrl, customModuleFilePath)
     }
     return content[componentName]
   }
