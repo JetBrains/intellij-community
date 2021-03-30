@@ -35,6 +35,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -159,6 +160,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                               @Nullable String jvmParametersSetup,
                                               @NotNull GradleExecutionSettings effectiveSettings) {
     final List<String> initScripts = new ArrayList<>();
+    String gradleVersion = StringUtil.notNullize(GradleInstallationManager.getGradleVersion(effectiveSettings.getGradleHome()));
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
     for (GradleProjectResolverExtension resolverExtension : extensions) {
       final String resolverClassName = resolverExtension.getClass().getName();
@@ -174,6 +176,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
       Map<String, String> enhancementParameters = new HashMap<>();
       enhancementParameters.put(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY, jvmParametersSetup);
+      enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
 
       String isTestExecution = String.valueOf(Boolean.TRUE == effectiveSettings.getUserData(GradleConstants.RUN_TASK_AS_TEST));
       enhancementParameters.put(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY, isTestExecution);
