@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../completion/testData/handlers/runtimeCast")
+@TestMetadata("../../completion/tests/testData/handlers/runtimeCast")
 public class CodeFragmentCompletionHandlerTestGenerated extends AbstractCodeFragmentCompletionHandlerTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -28,31 +28,31 @@ public class CodeFragmentCompletionHandlerTestGenerated extends AbstractCodeFrag
 
     @TestMetadata("CastPrivateFun.kt")
     public void testCastPrivateFun() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/CastPrivateFun.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/CastPrivateFun.kt");
     }
 
     @TestMetadata("CastPropertyWithSmartCast.kt")
     public void testCastPropertyWithSmartCast() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/CastPropertyWithSmartCast.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/CastPropertyWithSmartCast.kt");
     }
 
     @TestMetadata("InsertExtFunction.kt")
     public void testInsertExtFunction() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/InsertExtFunction.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/InsertExtFunction.kt");
     }
 
     @TestMetadata("InsertFunction.kt")
     public void testInsertFunction() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/InsertFunction.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/InsertFunction.kt");
     }
 
     @TestMetadata("InsertImport.kt")
     public void testInsertImport() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/InsertImport.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/InsertImport.kt");
     }
 
     @TestMetadata("NotImportedExtension.kt")
     public void testNotImportedExtension() throws Exception {
-        runTest("../completion/testData/handlers/runtimeCast/NotImportedExtension.kt");
+        runTest("../../completion/tests/testData/handlers/runtimeCast/NotImportedExtension.kt");
     }
 }

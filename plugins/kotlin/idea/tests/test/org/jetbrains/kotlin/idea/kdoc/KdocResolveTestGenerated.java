@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/kdoc/resolve")
