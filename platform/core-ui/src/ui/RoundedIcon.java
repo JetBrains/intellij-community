@@ -60,6 +60,7 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
       double scale = (double)bufferedImage.getWidth() / width;
       AffineTransform transform = g.getTransform();
       transform.concatenate(AffineTransform.getScaleInstance(1d/scale, 1d/scale));
+      transform.concatenate(AffineTransform.getTranslateInstance(x * scale, y * scale));
       g.setTransform(transform);
       g.setPaint(new TexturePaint(bufferedImage, new Rectangle(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight())));
       double actualArc = myArcRatio * Math.min(width, height) * scale;

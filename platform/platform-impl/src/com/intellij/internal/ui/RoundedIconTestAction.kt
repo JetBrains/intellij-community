@@ -30,7 +30,10 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {
 
-      private val myLabel = JBLabel()
+      private val myLabel = JBLabel("Some text").apply {
+        horizontalAlignment = SwingConstants.CENTER
+        horizontalTextPosition = SwingConstants.LEFT
+      }
       private val iconChooser = JCheckBox("Splash", true).apply { isOpaque = false }
       val slider = JSlider(0, 100).apply {
         value = 33
