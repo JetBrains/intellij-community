@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -206,25 +207,27 @@ object UpdateChecker {
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  fun loadProductData(indicator: ProgressIndicator?): Product? =
+  fun loadProductData(indicator: ProgressIndicator?): Product? {
     productDataLock.withLock {
-      val cached = SoftReference.dereference(productDataCache)
-      if (cached != null) return@withLock cached.getOrThrow()
+      SoftReference.dereference(productDataCache)?.let {
+        return it.getOrThrow()
+      }
 
       val result = runCatching {
         var url = Urls.newFromEncoded(updateUrl)
         if (url.scheme != URLUtil.FILE_PROTOCOL) {
           url = UpdateRequestParameters.amendUpdateRequest(url)
         }
-        if (LOG.isDebugEnabled) LOG.debug("loading ${url}")
+        LOG.debug { "loading ${url}" }
         val updates = HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.getReader(indicator))) }
-        updates[ApplicationInfo.getInstance().build.productCode]
+        updates.get(ApplicationInfo.getInstance().build.productCode)
       }
 
       productDataCache = SoftReference(result)
       AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
-      return@withLock result.getOrThrow()
+      return result.getOrThrow()
     }
+  }
 
   private fun clearProductDataCache() {
     if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing

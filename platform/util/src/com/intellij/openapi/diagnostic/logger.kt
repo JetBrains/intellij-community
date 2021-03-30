@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
 
-
 inline fun <reified T : Any> @Suppress("unused") T.thisLogger() = Logger.getInstance(T::class.java)
 
 inline fun <reified T : Any> logger() = Logger.getInstance(T::class.java)

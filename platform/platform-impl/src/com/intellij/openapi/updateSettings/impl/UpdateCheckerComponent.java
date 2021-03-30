@@ -134,25 +134,29 @@ final class UpdateCheckerComponent {
 
     MyActivity() {
       Application app = ApplicationManager.getApplication();
-      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) throw ExtensionNotApplicableException.INSTANCE;
+      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) {
+        throw ExtensionNotApplicableException.INSTANCE;
+      }
     }
 
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ourWaiting.getAndSet(false)) {
-        checkIfPreviousUpdateFailed();
-
-        PropertiesComponent properties = PropertiesComponent.getInstance();
-        BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
-        BuildNumber current = ApplicationInfo.getInstance().getBuild();
-        properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
-        showWhatsNew(project, previous, current);
-        showSnapUpdateNotification(project, previous, current);
-
-        showUpdatedPluginsNotification(project);
-
-        ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
+      if (!ourWaiting.getAndSet(false)) {
+        return;
       }
+
+      checkIfPreviousUpdateFailed();
+
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      BuildNumber previous = BuildNumber.fromString(properties.getValue(PREVIOUS_BUILD_NUMBER_PROPERTY));
+      BuildNumber current = ApplicationInfo.getInstance().getBuild();
+      properties.setValue(PREVIOUS_BUILD_NUMBER_PROPERTY, current.asString());
+      showWhatsNew(project, previous, current);
+      showSnapUpdateNotification(project, previous, current);
+
+      showUpdatedPluginsNotification(project);
+
+      ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
     }
   }
 
