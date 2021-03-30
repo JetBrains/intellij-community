@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,7 +260,7 @@ val Module.platform: TargetPlatform?
     get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.targetPlatform ?: project.platform
 
 val Module.isHMPPEnabled: Boolean
-    get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.isHmppEnabled ?: false
+    get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.mppVersion?.isHmpp ?: false
 
 // FIXME(dsavvinov): this logic is clearly wrong in MPP environment; review and fix
 val Project.platform: TargetPlatform?

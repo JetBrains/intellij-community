@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15,6 +15,7 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.createArguments
+import org.jetbrains.kotlin.config.isHmpp
 import org.jetbrains.kotlin.config.splitArgumentString
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.*
@@ -82,7 +83,7 @@ class KotlinFacetEditorGeneralTab(
         private lateinit var projectSettingsLink: HoverHyperlinkLabel
 
         private fun FormBuilder.addTargetPlatformComponents(): FormBuilder {
-            return if (configuration?.settings?.isHmppEnabled == true) {
+            return if (configuration?.settings?.mppVersion?.isHmpp == true) {
                 targetPlatformLabel.toolTipText =
                     KotlinBundle.message("facet.label.text.the.project.is.imported.from.external.build.system.and.could.not.be.edited")
                 this.addLabeledComponent(
@@ -217,7 +218,7 @@ class KotlinFacetEditorGeneralTab(
         }
 
         fun getChosenPlatform(): TargetPlatform? {
-            return if (configuration?.settings?.isHmppEnabled == true) {
+            return if (configuration?.settings?.mppVersion?.isHmpp == true) {
                 targetPlatformsCurrentlySelected
             } else {
                 targetPlatformSelectSingleCombobox.selectedItemTyped?.targetPlatform
@@ -368,7 +369,7 @@ class KotlinFacetEditorGeneralTab(
         if (chosenPlatform != configuration.settings.targetPlatform) return true
 
         // work-around for hacked equals in JvmPlatform
-        if (!configuration.settings.isHmppEnabled) {
+        if (!configuration.settings.mppVersion.isHmpp) {
             if (configuration.settings.targetPlatform?.let { TargetPlatformWrapper(it) } != editor.targetPlatformSelectSingleCombobox
                     .selectedItemTyped) {
                 return true
