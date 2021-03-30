@@ -14,7 +14,11 @@ import kotlin.system.measureNanoTime
 
 /**
  * Asynchronous adapter for synchronous process callers. Intended for usage in cases when blocking calls like [ProcessBuilder.start]
- * are called in EDT and it's uneasy to refactor. Anyway, better to not call blocking methods in EDT rather than use this class.
+ * are called in EDT and it's uneasy to refactor. **Anyway, better to not call blocking methods in EDT rather than use this class.**
+ *
+ * **Beware!** Note that [DeferredRemoteProcess] is created even if underlying one fails to. Take care to make sure that such cases really
+ * look to users like underlying process not started, not like it started and died silently (see IDEA-265188). It would help a lot with
+ * future troubleshooting, reporting and investigation.
  */
 class DeferredRemoteProcess(private val promise: Promise<RemoteProcess>) : RemoteProcess() {
   override fun getOutputStream(): OutputStream =
