@@ -158,7 +158,9 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         Library.ModifiableModel modifiableModel = entry.getValue();
         // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
         // the modifiable model of such library shouldn't be committed
-        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+
+        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) ||
+            (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
           Disposer.dispose(modifiableModel);
         }
         else {

@@ -62,6 +62,9 @@
                  description="Invalidate caches invalidates the cache data imported from external systems"/>
     <registryKey key="external.system.remote.debugger.dispatch.host" defaultValue="0"
                  description="Set binding address for server socket listening incoming requests for debugger clients. 0 means address of the first found remote network interface will be used."/>
+    <registryKey key="external.system.map.jps.to.gav" defaultValue="false"
+                 description="Provide assignment of groupId/artifactId/version for JPS modules"/>
+
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
@@ -106,6 +109,10 @@
 
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemJdkProvider"/>
+
+    <!--Experimental-->
+    <externalSystemWorkspaceContributor implementation="com.intellij.openapi.externalSystem.importing.JpsDependencyContributor"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.importing.GAVStateComponent"/>
 
     <statistics.counterUsagesCollector groupId="external.project.task" version="1"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
