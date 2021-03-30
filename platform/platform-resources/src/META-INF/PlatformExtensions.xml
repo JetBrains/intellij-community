@@ -832,8 +832,9 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
-    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
+    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
 
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.impl.FontFamilyService"

@@ -6,12 +6,11 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.clearCachesForAllProjects
 import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
@@ -107,8 +106,9 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
     try {
       if (!cacheFile.exists()) return null
 
-      if (invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
-        LOG.info("Skipping project model cache since '$invalidateProjectCacheMarkerFile' is present and newer than cache file '$cacheFile'")
+      if (invalidateCachesMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateCachesMarkerFile.lastModified() ||
+          invalidateProjectCacheMarkerFile.exists() && cacheFile.lastModified().toMillis() < invalidateProjectCacheMarkerFile.lastModified()) {
+        LOG.info("Skipping project model cache since '$invalidateCachesMarkerFile' is present and newer than cache file '$cacheFile'")
         FileUtil.delete(cacheFile)
         return null
       }
@@ -182,16 +182,25 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   companion object {
     private val LOG = logger<WorkspaceModelCacheImpl>()
-    private const val DATA_DIR_NAME = "project-model-cache"
+    internal const val DATA_DIR_NAME = "project-model-cache"
 
     @TestOnly
     var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
+    internal val invalidateCachesMarkerFile = File(projectsDataDir.toFile(), ".invalidate")
 
     fun invalidateCaches() {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        clearCachesForAllProjects(DATA_DIR_NAME)
+      LOG.info("Invalidating caches by creating $invalidateCachesMarkerFile")
+
+      cachesInvalidated.set(true)
+
+      try {
+        FileUtil.createParentDirs(invalidateCachesMarkerFile)
+        FileUtil.writeToFile(invalidateCachesMarkerFile, System.currentTimeMillis().toString())
+      }
+      catch (t: Throwable) {
+        LOG.warn("Cannot update the invalidation marker file", t)
       }
     }
   }
