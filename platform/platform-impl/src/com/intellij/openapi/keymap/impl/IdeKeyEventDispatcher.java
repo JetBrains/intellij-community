@@ -159,8 +159,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myIgnoreNextKeyTypedEvent = false;
     }
 
-    if (isSpeedSearchEditing(e)) {
-      return false;
+    if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && focusOwner instanceof JComponent) {
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)focusOwner);
+      if (supply != null && supply.isPopupActive()) {
+        return false;
+      }
     }
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
@@ -190,12 +193,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    if (id == KeyEvent.KEY_PRESSED &&
-        focusOwner instanceof JTextComponent &&
-        ((JTextComponent)focusOwner).isEditable() &&
-        e.getKeyChar() != KeyEvent.CHAR_UNDEFINED &&
-        e.getKeyCode() != KeyEvent.VK_ESCAPE) {
-      MacUIUtil.hideCursor();
+    if (getState() == KeyState.STATE_INIT && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED &&
+        focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
+      if (id == KeyEvent.KEY_PRESSED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
+        MacUIUtil.hideCursor();
+      }
+      if (e.getModifiersEx() == 0 && Character.isLetterOrDigit(e.getKeyCode())) {
+        return false;
+      }
     }
 
     MenuSelectionManager menuSelectionManager=MenuSelectionManager.defaultManager();
@@ -260,18 +265,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if ((mods & ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK) != 0) return;
 
     KeyboardLayoutUtil.storeAsciiForChar(e.getKeyCode(), aChar, KeyEvent.VK_A, KeyEvent.VK_Z);
-  }
-
-  private static boolean isSpeedSearchEditing(@NotNull KeyEvent e) {
-    int keyCode = e.getKeyCode();
-    if (keyCode == KeyEvent.VK_BACK_SPACE) {
-      Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      if (owner instanceof JComponent) {
-        SpeedSearchSupply supply = SpeedSearchSupply.getSupply((JComponent)owner);
-        return supply != null && supply.isPopupActive();
-      }
-    }
-    return false;
   }
 
   /**
