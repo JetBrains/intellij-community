@@ -129,9 +129,11 @@ final class PluginLoadingResult {
 
     if (!descriptor.isBundled()) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
-        PluginLoadingError.create(descriptor,
-                                  () -> CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.getName()),
-                                  () -> CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only")).register(pluginErrors);
+        PluginLoadingError error = PluginLoadingError.create(
+          descriptor,
+          () -> CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.getName()),
+          () -> CoreBundle.message("plugin.loading.error.short.compatible.with.intellij.idea.only"));
+        addIncompletePlugin(descriptor, error);
         return false;
       }
     }
