@@ -131,7 +131,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
       boolean hadScalarInSequenceLookups = addValueCompletions(insertedScalar, metaType, result, siblingValues, params);
-      if (hadScalarInSequenceLookups) {
+      if (hadScalarInSequenceLookups && !(metaType instanceof YamlAnyOfType)) {
         return;
       }
     }
