@@ -75,17 +75,17 @@ public class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaA
 
     @TestMetadata("ExtendInterfaceWithDefaultMethodAndCompatibilityAll.kt")
     public void testExtendInterfaceWithDefaultMethodAndCompatibilityAll() throws Exception {
-        runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityAll.kt");
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityAll.kt");
     }
 
     @TestMetadata("ExtendInterfaceWithDefaultMethodAndCompatibilityAllCompatibility.kt")
     public void testExtendInterfaceWithDefaultMethodAndCompatibilityAllCompatibility() throws Exception {
-        runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityAllCompatibility.kt");
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityAllCompatibility.kt");
     }
 
     @TestMetadata("ExtendInterfaceWithDefaultMethodAndCompatibilityDisabled.kt")
     public void testExtendInterfaceWithDefaultMethodAndCompatibilityDisabled() throws Exception {
-        runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityDisabled.kt");
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithDefaultMethodAndCompatibilityDisabled.kt");
     }
 
     @TestMetadata("ExtendingMutableInterfaces.kt")
