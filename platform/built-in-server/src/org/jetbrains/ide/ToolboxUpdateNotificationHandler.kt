@@ -4,6 +4,7 @@ package org.jetbrains.ide
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -42,6 +43,8 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
     val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
+    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
+                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-02-update-${request.build}", action)
   }
 }
@@ -78,6 +81,8 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
     val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version)
     val action = DumbAwareAction.create(title, actionHandler)
     action.templatePresentation.description = description
+    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
+                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
 
     service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-01-restart-${request.build}", action)
   }
