@@ -2730,6 +2730,11 @@
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Enumeration boolean hasMoreElements()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Formatter Formatter(java.io.File) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
