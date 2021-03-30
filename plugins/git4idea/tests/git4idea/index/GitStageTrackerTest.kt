@@ -3,6 +3,7 @@ package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.idea.Bombed
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -15,9 +16,11 @@ import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import org.apache.commons.lang.RandomStringUtils
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
+@Bombed(year = 2021, month = Calendar.APRIL, day = 30, user = "Julia Beliaeva")
 class GitStageTrackerTest : GitSingleRepoTest() {
   private var _tracker: GitStageTracker? = null
 
