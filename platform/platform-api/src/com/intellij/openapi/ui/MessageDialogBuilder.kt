@@ -179,6 +179,46 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
       })
     }
   }
+
+  @ApiStatus.Experimental
+  class Message(title: String, message: String) : MessageDialogBuilder<Message>(title, message) {
+    private lateinit var buttons: List<String>
+    private var defaultButton: String? = null
+    private var focusedButton: String? = null
+
+    override fun getThis() = this
+
+    fun buttons(vararg buttonNames: String): Message {
+      buttons = buttonNames.toList()
+      return this
+    }
+
+    fun defaultButton(defaultButtonName: String): Message {
+      defaultButton = defaultButtonName
+      return this
+    }
+
+    fun focusedButton(focusedButtonName: String): Message {
+      focusedButton = focusedButtonName
+      return this
+    }
+
+    fun show(project: Project? = null, parentComponent: Component? = null): String? {
+      val options = buttons.toTypedArray()
+      val defaultOptionIndex = buttons.indexOf(defaultButton)
+      val focusedOptionIndex = buttons.indexOf(focusedButton)
+      val result = showMessage(project, parentComponent, mac = { window ->
+        MacMessages.getInstance().showMessageDialog(title, message, options, window, defaultOptionIndex, focusedOptionIndex,
+                                                    doNotAskOption, icon, helpId)
+      }, other = {
+        MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent, message = message,
+                                                        title = title, options = options,
+                                                        defaultOptionIndex = defaultOptionIndex, focusedOptionIndex = focusedOptionIndex,
+                                                        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId)
+      })
+      return if (result < 0) null else buttons[result]
+    }
+  }
 }
 
 class OkCancelDialogBuilder internal constructor(title: String, message: String) : MessageDialogBuilder<OkCancelDialogBuilder>(title, message) {

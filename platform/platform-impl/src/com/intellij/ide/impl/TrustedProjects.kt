@@ -55,19 +55,19 @@ fun confirmOpeningUntrustedProject(
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val choice = MessageDialogBuilder.yesNoCancel(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-    .cancelText(cancelButtonText)
+  val choice = MessageDialogBuilder.Message(title, message)
+    .buttons(trustButtonText, distrustButtonText, cancelButtonText)
+    .defaultButton(trustButtonText)
+    .focusedButton(distrustButtonText)
     .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
     .asWarning()
     .help(TRUSTED_PROJECTS_HELP_TOPIC)
-    .show(project = null)
+    .show()
 
   val openChoice = when (choice) {
-    Messages.YES -> OpenUntrustedProjectChoice.IMPORT
-    Messages.NO -> OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING
-    Messages.CANCEL -> OpenUntrustedProjectChoice.CANCEL
+    trustButtonText -> OpenUntrustedProjectChoice.IMPORT
+    distrustButtonText -> OpenUntrustedProjectChoice.OPEN_WITHOUT_IMPORTING
+    cancelButtonText, null -> OpenUntrustedProjectChoice.CANCEL
     else -> {
       LOG.error("Illegal choice $choice")
       return OpenUntrustedProjectChoice.CANCEL
