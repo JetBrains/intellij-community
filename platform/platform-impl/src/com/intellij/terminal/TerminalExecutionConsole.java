@@ -247,7 +247,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       Process process = ((BaseProcessHandler<?>)processHandler).getProcess();
       return !(process instanceof PtyProcess);
     }
-    return false;
+    return true;
   }
 
   @Override
