@@ -346,20 +346,20 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val externalModuleListSerializerUrl = it.externalModuleListSerializer?.fileUrl
 
       if (externalFileUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(externalFileUrl.url))) {
-        attachments[externalFileUrl.url] = AttachmentFactory.createAttachment(externalFileUrl.toPath(), false).apply { isIncluded = true }
+        attachments[externalFileUrl.url] = AttachmentFactory.createAttachment(externalFileUrl.toPath(), false)
       }
       if (FileUtil.exists(JpsPathUtil.urlToPath(fileUrl.url))) {
-        attachments[fileUrl.url] = AttachmentFactory.createAttachment(fileUrl.toPath(), false).apply { isIncluded = true }
+        attachments[fileUrl.url] = AttachmentFactory.createAttachment(fileUrl.toPath(), false)
       }
       if (internalModuleListSerializerUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(internalModuleListSerializerUrl))) {
         attachments[internalModuleListSerializerUrl] = AttachmentFactory.createAttachment(
           Path.of(JpsPathUtil.urlToPath(internalModuleListSerializerUrl)
-          ), false).apply { isIncluded = true }
+          ), false)
       }
       if (externalModuleListSerializerUrl != null && FileUtil.exists(JpsPathUtil.urlToPath(externalModuleListSerializerUrl))) {
         attachments[externalModuleListSerializerUrl] = AttachmentFactory.createAttachment(
           Path.of(JpsPathUtil.urlToPath(externalModuleListSerializerUrl)), false
-        ).apply { isIncluded = true }
+        )
       }
       """
         Serializer info #$serializerCounter:

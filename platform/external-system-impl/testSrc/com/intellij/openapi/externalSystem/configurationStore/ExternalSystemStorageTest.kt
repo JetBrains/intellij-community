@@ -704,6 +704,8 @@ class ExternalSystemStorageTest {
     try {
       LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
         override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {
+          if (message?.contains("Trying to load multiple modules with the same name.") == true) return
+          super.processError(message, t, details, logger)
         }
       })
 
