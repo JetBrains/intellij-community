@@ -16,10 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.configLocation
-import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase

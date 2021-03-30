@@ -264,7 +264,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage) {
     replaceWith as AbstractEntityStorage
 
-    val initialStore = this.toStorage()
+    val initialStore = if (consistencyCheckingMode != ConsistencyCheckingMode.DISABLED) this.toStorage() else null
 
     LOG.debug { "Performing replace by source" }
 
@@ -441,7 +441,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
+              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith)
             }
           }
         }
@@ -470,7 +470,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
           if (!connectionId.canRemoveParent()) rbsFailedAndReport("Cannot restore connection to $parentId; $connectionId", sourceFilter,
-                                                                  initialStore, replaceWith, this)
+                                                                  initialStore, replaceWith)
         }
 
         // ----------------- Update children references -----------------------
@@ -497,7 +497,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     for (entityId in lostChildren) {
       if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
         rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child",
-                           sourceFilter, initialStore, replaceWith, this)
+                           sourceFilter, initialStore, replaceWith)
       }
       removeEntity(entityId)
     }
@@ -511,7 +511,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val localParent = this.entityDataById(parentId)
             if (localParent == null) rbsFailedAndReport(
               "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
-              replaceWith, this)
+              replaceWith)
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -566,17 +566,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   private fun rbsFailedAndReport(message: String,
                                  sourceFilter: (EntitySource) -> Boolean,
-                                 left: WorkspaceEntityStorage,
-                                 right: WorkspaceEntityStorage,
-                                 resulting: WorkspaceEntityStorageBuilder) {
-    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting)
+                                 left: WorkspaceEntityStorage?,
+                                 right: WorkspaceEntityStorage) {
+    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, this)
   }
 
   internal fun addDiffAndReport(message: String,
-                                left: WorkspaceEntityStorage,
-                                right: WorkspaceEntityStorage,
-                                resulting: WorkspaceEntityStorageBuilder) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting)
+                                left: WorkspaceEntityStorage?,
+                                right: WorkspaceEntityStorage) {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
   }
 
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
@@ -1005,9 +1003,13 @@ internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode
     var _message = "$message\n\nEntity source filter: $entitySourceFilter"
     _message += "\n\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 
-    val dumpDirectory = getStoreDumpDirectory()
-    _message += "\nSaving store content at: $dumpDirectory"
-    val zipFile = serializeContentToFolder(dumpDirectory, left, right, resulting)
+    val zipFile = if (consistencyCheckingMode != ConsistencyCheckingMode.DISABLED) {
+      val dumpDirectory = getStoreDumpDirectory()
+      _message += "\nSaving store content at: $dumpDirectory"
+      serializeContentToFolder(dumpDirectory, left, right, resulting)
+    }
+    else null
+
     if (zipFile != null) {
       val attachment = Attachment("workspaceModelDump.zip", zipFile.readBytes(), "Zip of workspace model store")
       attachment.isIncluded = true

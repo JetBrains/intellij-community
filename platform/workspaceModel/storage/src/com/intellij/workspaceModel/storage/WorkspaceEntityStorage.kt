@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImp
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -182,6 +183,7 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
     fun create(): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(ConsistencyCheckingMode.default(true))
 
     @JvmStatic
+    @ApiStatus.Internal
     fun create(consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilderImpl.create(consistencyCheckingMode)
 
     @JvmStatic
