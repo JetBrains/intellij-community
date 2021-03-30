@@ -23,6 +23,7 @@ import java.awt.Dimension
 import java.awt.Font
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.nio.file.Path
 import javax.swing.*
 import javax.swing.border.MatteBorder
 
@@ -31,7 +32,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
 
   override fun needToHideSingleProject(path: String): Boolean {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return false
-    return LangManager.getInstance().getLearningProjectPath(langSupport) == path
+    val learningProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    return Path.of(learningProjectPath) == Path.of(path)
   }
 
   override fun getPromotionForInitialState(): JPanel? {
