@@ -39,7 +39,7 @@ val scriptConfigurationsNeedToBeUpdatedBalloon
     get() = Registry.`is`("kotlin.gradle.scripts.scriptConfigurationsNeedToBeUpdatedFloatingNotification", true)
 
 fun runPartialGradleImportForAllRoots(project: Project) {
-    GradleBuildRootsManager.getInstance(project).getAllRoots().forEach { root ->
+    GradleBuildRootsManager.getInstance(project)?.getAllRoots()?.forEach { root ->
         runPartialGradleImport(project, root)
     }
 }
@@ -69,7 +69,7 @@ fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean
 
 fun scriptConfigurationsNeedToBeUpdated(project: Project, file: VirtualFile) {
     if (autoReloadScriptConfigurations(project, file)) {
-        GradleBuildRootsManager.getInstance(project).getScriptInfo(file)?.buildRoot?.let {
+        GradleBuildRootsManager.getInstance(project)?.getScriptInfo(file)?.buildRoot?.let {
             runPartialGradleImport(project, it)
         }
     } else {
@@ -88,7 +88,7 @@ class LoadConfigurationAction : AnAction(
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val file = getKotlinScriptFile(editor) ?: return
-        val root = GradleBuildRootsManager.getInstance(project).getScriptInfo(file)?.buildRoot ?: return
+        val root = GradleBuildRootsManager.getInstance(project)?.getScriptInfo(file)?.buildRoot ?: return
 
         runPartialGradleImport(project, root)
     }
@@ -109,7 +109,7 @@ class LoadConfigurationAction : AnAction(
 
         val project = editor.project ?: return false
 
-        // prevent services initializtion
+        // prevent services initialization
         // (all services actually initialized under the ScriptDefinitionProvider during startup activity)
         if (ScriptDefinitionProvider.getServiceIfCreated(project) == null) return false
 
@@ -119,7 +119,7 @@ class LoadConfigurationAction : AnAction(
             return false
         }
 
-        return GradleBuildRootsManager.getInstance(project).isConfigurationOutOfDate(file)
+        return GradleBuildRootsManager.getInstance(project)?.isConfigurationOutOfDate(file) ?: false
     }
 
     private fun getKotlinScriptFile(editor: Editor): VirtualFile? {

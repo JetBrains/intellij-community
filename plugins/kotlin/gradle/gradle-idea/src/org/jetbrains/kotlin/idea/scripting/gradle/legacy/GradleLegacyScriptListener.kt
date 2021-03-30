@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
 // todo(gradle6): remove
 class GradleLegacyScriptListener(project: Project) : ScriptChangeListener(project) {
     private val buildRootsManager
-        get() = GradleBuildRootsManager.getInstance(project)
+        get() = GradleBuildRootsManager.getInstanceSafe(project)
 
     override fun isApplicable(vFile: VirtualFile) =
         isGradleKotlinScript(vFile)

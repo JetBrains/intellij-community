@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport.Companion.EPN
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
@@ -465,7 +464,10 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     }
 
     companion object {
-        fun getInstance(project: Project): GradleBuildRootsManager =
+        fun getInstanceSafe(project: Project): GradleBuildRootsManager =
             ScriptingSupport.EPN.findExtensionOrFail(GradleBuildRootsManager::class.java, project)
+
+        fun getInstance(project: Project): GradleBuildRootsManager? =
+            ScriptingSupport.EPN.findExtension(GradleBuildRootsManager::class.java, project)
     }
 }

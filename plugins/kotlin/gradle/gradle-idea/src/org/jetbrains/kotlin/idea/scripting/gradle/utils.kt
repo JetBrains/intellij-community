@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -61,7 +60,7 @@ fun getGradleScriptInputsStamp(
                 }
             }
 
-        val buildRoot = GradleBuildRootsManager.getInstance(project).findScriptBuildRoot(file)?.nearest as? GradleBuildRoot
+        val buildRoot = GradleBuildRootsManager.getInstance(project)?.findScriptBuildRoot(file)?.nearest
         GradleKotlinScriptConfigurationInputs(result.toString(), givenTimeStamp, buildRoot?.pathPrefix)
     }
 }

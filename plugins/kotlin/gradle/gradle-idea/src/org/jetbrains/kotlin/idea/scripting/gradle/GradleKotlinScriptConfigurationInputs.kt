@@ -34,7 +34,7 @@ data class GradleKotlinScriptConfigurationInputs(
 
             return buildRoot == null ||
                     GradleBuildRootsManager.getInstance(project)
-                        .getBuildRootByWorkingDir(buildRoot)
+                        ?.getBuildRootByWorkingDir(buildRoot)
                         ?.areRelatedFilesChangedBefore(file, lastModifiedTs) ?: false
         } catch (cancel: ProcessCanceledException) {
             return false

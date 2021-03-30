@@ -161,6 +161,6 @@ fun saveScriptModels(project: Project, build: KotlinDslGradleBuildSync) {
         // todo: use real info about projects
         build.projectRoots.addAll(build.models.map { toSystemIndependentName(File(it.file).parent) })
 
-        GradleBuildRootsManager.getInstance(project).update(build)
+        GradleBuildRootsManager.getInstance(project)?.update(build)
     }
 }

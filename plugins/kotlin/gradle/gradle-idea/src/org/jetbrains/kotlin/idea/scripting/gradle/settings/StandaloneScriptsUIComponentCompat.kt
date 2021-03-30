@@ -31,7 +31,7 @@ abstract class StandaloneScriptsUIComponentCompat(private val project: Project) 
     ) {
         override fun isFileSelectable(file: VirtualFile): Boolean {
             val rootsManager = GradleBuildRootsManager.getInstance(project)
-            val scriptUnderRoot = rootsManager.findScriptBuildRoot(file)
+            val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file)
             val notificationKind = scriptUnderRoot?.notificationKind
             return notificationKind == GradleBuildRootsLocator.NotificationKind.legacyOutside || notificationKind == GradleBuildRootsLocator.NotificationKind.notEvaluatedInLastImport
         }
@@ -62,7 +62,7 @@ abstract class StandaloneScriptsUIComponentCompat(private val project: Project) 
     }
 
     override fun apply() {
-        GradleBuildRootsManager.getInstance(project).updateStandaloneScripts {
+        GradleBuildRootsManager.getInstance(project)?.updateStandaloneScripts {
             val previousScripts = scriptsFromStorage
 
             scriptsInTable

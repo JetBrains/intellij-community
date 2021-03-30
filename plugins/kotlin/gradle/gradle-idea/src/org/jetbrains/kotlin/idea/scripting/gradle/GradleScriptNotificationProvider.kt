@@ -38,7 +38,7 @@ class GradleScriptNotificationProvider(private val project: Project) :
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
         val rootsManager = GradleBuildRootsManager.getInstance(project)
-        val scriptUnderRoot = rootsManager.findScriptBuildRoot(file) ?: return null
+        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return null
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {

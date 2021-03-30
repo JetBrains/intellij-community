@@ -1,10 +1,7 @@
 package org.jetbrains.kotlin.idea.scripting.gradle
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
-import junit.framework.TestCase
-import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
 import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.scripting.gradle.settings.StandaloneScriptsStorage

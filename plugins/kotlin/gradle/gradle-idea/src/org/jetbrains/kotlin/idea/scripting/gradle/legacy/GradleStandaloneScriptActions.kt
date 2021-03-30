@@ -48,7 +48,7 @@ class GradleStandaloneScriptActions(
     }
 
     fun updateNotification() {
-        GradleBuildRootsManager.getInstance(project).updateNotifications(false) {
+        GradleBuildRootsManager.getInstance(project)?.updateNotifications(false) {
             it == file.path
         }
     }

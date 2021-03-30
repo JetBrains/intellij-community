@@ -60,6 +60,8 @@ inline fun isUnitTestMode(): Boolean = ApplicationManager.getApplication().isUni
 
 inline fun isApplicationInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
 
+inline fun <reified T : Any> ComponentManager.getService(): T? = this.getService(T::class.java)
+
 inline fun <reified T : Any> ComponentManager.getServiceSafe(): T =
     this.getService(T::class.java) ?: error("Unable to locate service ${T::class.java.name}")
 

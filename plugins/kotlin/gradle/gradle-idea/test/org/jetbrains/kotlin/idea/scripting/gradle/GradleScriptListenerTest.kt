@@ -232,7 +232,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     }
 
     private fun markFileChanged(virtualFile: VirtualFile, ts: Long) {
-        GradleBuildRootsManager.getInstance(project).fileChanged(virtualFile.path, ts)
+        GradleBuildRootsManager.getInstance(project)!!.fileChanged(virtualFile.path, ts)
     }
 
     fun testLoadedConfigurationWhenExternalFileChanged() {

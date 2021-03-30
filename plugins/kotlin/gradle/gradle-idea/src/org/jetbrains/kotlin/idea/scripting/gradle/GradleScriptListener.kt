@@ -20,8 +20,8 @@ class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
     // todo(gradle6): remove
     private val legacy = GradleLegacyScriptListener(project)
 
-    private val buildRootsManager
-        get() = GradleBuildRootsManager.getInstance(project)
+    private val buildRootsManager: GradleBuildRootsManager
+        get() = GradleBuildRootsManager.getInstance(project) ?: error("GradleBuildRootsManager not found")
 
     init {
         // listen changes using VFS events, including gradle-configuration related files

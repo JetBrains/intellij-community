@@ -43,7 +43,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
         // project may be null in case of new project
         val project = id.findProject() ?: return
         task.project = project
-        GradleBuildRootsManager.getInstance(project).markImportingInProgress(workingDir)
+        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(workingDir)
     }
 
     override fun onEnd(id: ExternalSystemTaskId) {
@@ -103,7 +103,7 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
         // project may be null in case of new project
         val project = id.findProject() ?: return
         if (cancelled != null) {
-            GradleBuildRootsManager.getInstance(project).markImportingInProgress(cancelled.workingDir, false)
+            GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(cancelled.workingDir, false)
         }
     }
 

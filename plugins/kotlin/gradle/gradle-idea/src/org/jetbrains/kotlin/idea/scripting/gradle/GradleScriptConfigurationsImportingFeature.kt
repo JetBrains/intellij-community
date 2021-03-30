@@ -21,7 +21,7 @@ object GradleScriptConfigurationsImportingFeature : ExperimentalFeature() {
             if (field != value) {
                 field = value
                 ProjectManager.getInstance().openProjects.forEach {
-                    GradleBuildRootsManager.getInstance(it).enabled = field
+                    GradleBuildRootsManager.getInstanceSafe(it).enabled = field
                 }
             }
         }

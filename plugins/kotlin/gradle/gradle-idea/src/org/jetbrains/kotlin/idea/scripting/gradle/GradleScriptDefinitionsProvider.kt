@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
-import com.intellij.execution.configurations.CommandLineTokenizer
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
@@ -37,9 +36,7 @@ import kotlin.script.dependencies.ScriptContents
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.DependenciesResolver
 import kotlin.script.experimental.dependencies.DependenciesResolver.ResolveResult
-import kotlin.script.experimental.dependencies.ScriptDependencies
 import kotlin.script.experimental.dependencies.ScriptReport
-import kotlin.script.experimental.dependencies.asSuccess
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
@@ -337,7 +334,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             if (definitionsByRoots.isEmpty()) {
                 // can be empty in case when import wasn't done from IDE start up,
                 // otherwise KotlinDslSyncListener should run reloadIfNeeded for valid roots
-                GradleBuildRootsManager.getInstance(project).getAllRoots().forEach {
+                GradleBuildRootsManager.getInstance(project)?.getAllRoots()?.forEach {
                     val workingDir = it.pathPrefix
                     val (gradleHome, javaHome) = when (it) {
                         is Imported -> {

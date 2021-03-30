@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.scripting.gradle.settings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
+import org.jetbrains.kotlin.idea.util.application.getService
 
 @State(
     name = "StandaloneScriptsStorage",
@@ -18,16 +19,13 @@ class StandaloneScriptsStorage : PersistentStateComponent<StandaloneScriptsStora
 
     fun getScripts(): List<String> = files.toList()
 
-    override fun getState(): StandaloneScriptsStorage? {
-        return this
-    }
+    override fun getState(): StandaloneScriptsStorage = this
 
     override fun loadState(state: StandaloneScriptsStorage) {
         XmlSerializerUtil.copyBean(state, this)
     }
 
     companion object {
-        fun getInstance(project: Project): StandaloneScriptsStorage? =
-            ServiceManager.getService(project, StandaloneScriptsStorage::class.java)
+        fun getInstance(project: Project): StandaloneScriptsStorage? = project.getService()
     }
 }
