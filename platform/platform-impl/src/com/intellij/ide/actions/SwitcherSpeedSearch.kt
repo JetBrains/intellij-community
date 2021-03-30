@@ -10,6 +10,19 @@ import com.intellij.ui.speedSearch.NameFilteringListModel
 import javax.swing.ListModel
 
 internal class SwitcherSpeedSearch(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher) {
+  fun updateEnteredPrefix() = searchField?.let {
+    val text = it.text ?: ""
+    when (text.length > 1) {
+      true -> {
+        it.text = text.dropLast(1)
+        fireStateChanged()
+      }
+      else -> {
+        it.text = ""
+        hidePopup()
+      }
+    }
+  }
 
   fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,

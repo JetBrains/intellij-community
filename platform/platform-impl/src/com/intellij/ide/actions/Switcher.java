@@ -550,14 +550,7 @@ public final class Switcher extends BaseSwitcherAction {
 
     private void closeTabOrToolWindow(@Nullable InputEvent event) {
       if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
-        JTextField field = mySpeedSearch.getSearchField();
-        if (field != null) {
-          String text = field.getText();
-          int length = text == null ? 0 : text.length() - 1;
-          boolean empty = length <= 0;
-          field.setText(empty ? "" : text.substring(0, length));
-          if (empty) mySpeedSearch.hidePopup();
-        }
+        mySpeedSearch.updateEnteredPrefix();
         return;
       }
       JList<? extends SwitcherListItem> selectedList = getSelectedList();
