@@ -198,7 +198,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     if (!myAttachedToProcess.compareAndSet(false, true)) {
       return;
     }
-    boolean convertLfToCrlf = myConvertLfToCrlfForNonPtyProcess && isNonPtyProcess(processHandler);
     myTerminalWidget.createTerminalSession(new ProcessHandlerTtyConnector(
       processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
     );
@@ -218,7 +217,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
             if (outputType == ProcessOutputTypes.SYSTEM) {
               text = StringUtil.convertLineSeparators(text, LineSeparator.CRLF.getSeparatorString());
             }
-            else if (convertLfToCrlf) {
+            else if (shouldConvertLfToCrlf(processHandler)) {
               text = convertTextToCRLF(text);
             }
             printText(text, contentType);
@@ -237,6 +236,10 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
         }, ModalityState.any());
       }
     });
+  }
+
+  private boolean shouldConvertLfToCrlf(@NotNull ProcessHandler processHandler) {
+    return myConvertLfToCrlfForNonPtyProcess && isNonPtyProcess(processHandler);
   }
 
   private static boolean isNonPtyProcess(@NotNull ProcessHandler processHandler) {
