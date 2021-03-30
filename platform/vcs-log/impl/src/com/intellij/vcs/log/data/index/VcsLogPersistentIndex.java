@@ -351,28 +351,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
                                              Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(timestamps::close));
-
-        checkConsistency();
       }
       catch (Throwable t) {
         Disposer.dispose(this);
         throw t;
-      }
-    }
-
-    private void checkConsistency() throws IOException {
-      if (!commits.isEmpty()) {
-        boolean trigramsEmpty = trigrams.isEmpty();
-        boolean usersEmpty = users.isEmpty();
-        boolean pathsEmpty = paths.isEmpty();
-        if (trigramsEmpty || usersEmpty || pathsEmpty) {
-          IOException exception = new IOException("Broken index maps:\n" +
-                                                  "trigrams empty " + trigramsEmpty + "\n" +
-                                                  "users empty " + usersEmpty + "\n" +
-                                                  "paths empty " + pathsEmpty);
-          LOG.error(exception);
-          throw exception;
-        }
       }
     }
 
