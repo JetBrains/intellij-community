@@ -278,6 +278,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/OnMethodUsageWithTypeParameter.kt");
     }
 
+    @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
+    public void testRenderAnnotatedExtensionFunctionType() throws Exception {
+        runTest("idea/testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
+    }
+
     @TestMetadata("Samples.kt")
     public void testSamples() throws Exception {
         runTest("testData/editor/quickDoc/Samples.kt");
