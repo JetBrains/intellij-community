@@ -25,10 +25,9 @@ import org.junit.runners.Parameterized;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
+import static org.jetbrains.plugins.gradle.frameworkSupport.GradleBuildScriptBuilder.IDEA_EXT_PLUGIN_VERSION;
 
 public abstract class GradleSettingsImportingTestCase extends GradleImportingTestCase {
-  public static final String IDEA_EXT_PLUGIN_VERSION = "0.10";
-
   @Override
   public void setUp() throws Exception {
     super.setUp();

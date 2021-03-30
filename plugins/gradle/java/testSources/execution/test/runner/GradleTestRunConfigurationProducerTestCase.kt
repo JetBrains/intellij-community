@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.importing.buildscript
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized

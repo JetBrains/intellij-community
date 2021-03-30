@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskD
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test

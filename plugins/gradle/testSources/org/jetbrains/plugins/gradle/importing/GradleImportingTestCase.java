@@ -44,6 +44,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;

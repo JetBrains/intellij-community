@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.junit.runners.Parameterized
 

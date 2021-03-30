@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.importing
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.gradle.frameworkSupport
 
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleSettingsImportingTestCase.IDEA_EXT_PLUGIN_VERSION
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder.Companion.groovy
 import java.io.File
 import java.util.function.Consumer
 
@@ -310,6 +309,8 @@ class GradleBuildScriptBuilder(val gradleVersion: GradleVersion) {
   }
 
   companion object {
+    const val IDEA_EXT_PLUGIN_VERSION = "0.10"
+
     @JvmStatic
     fun buildscript(
       gradleVersion: GradleVersion,

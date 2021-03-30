@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder;
 import org.junit.Test;
 
 import java.io.IOException;

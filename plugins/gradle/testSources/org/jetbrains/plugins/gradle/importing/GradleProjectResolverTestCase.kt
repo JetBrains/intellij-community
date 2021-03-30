@@ -23,7 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.setRegistryPropertyForTest
-import org.jetbrains.plugins.gradle.importing.GroovyBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.jetbrains.plugins.gradle.util.waitForProjectReload

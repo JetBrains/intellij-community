@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleBuildScriptBuilder.Companion.buildscript
 import org.junit.Test
 
 class GradleBuildScriptBuilderTest {
