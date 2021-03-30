@@ -415,6 +415,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     return true;
   }
 
+  public static void forgetPreProcessedCursor(@NotNull JComponent component) {
+    component.putClientProperty(PREPROCESSED_CURSOR_KEY, null);
+  }
+
   @Override
   public void setCursor(Cursor cursor, @NotNull Object requestor) {
     if (cursor == null) {
