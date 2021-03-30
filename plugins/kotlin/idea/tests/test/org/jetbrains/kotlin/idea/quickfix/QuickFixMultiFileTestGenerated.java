@@ -1795,6 +1795,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
+        @TestMetadata("notRemoveImportsForResolvedImportAndUnresolvedReference.before.Main.kt")
+        public void testNotRemoveImportsForResolvedImportAndUnresolvedReference() throws Exception {
+            runTest("testData/quickfix/optimizeImports/notRemoveImportsForResolvedImportAndUnresolvedReference.before.Main.kt");
+        }
+
         @TestMetadata("notRemoveImportsForTypeAliases.before.Main.kt")
         public void testNotRemoveImportsForTypeAliases() throws Exception {
             runTest("testData/quickfix/optimizeImports/notRemoveImportsForTypeAliases.before.Main.kt");

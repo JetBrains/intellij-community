@@ -99,9 +99,7 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
                 val importPath = directive.importPath ?: continue
 
                 val isUsed = when {
-                    importPath.importedName in optimizerData.unresolvedNames &&
-                            directive.targetDescriptors(resolutionFacade).isEmpty() -> true
-
+                    importPath.importedName in optimizerData.unresolvedNames -> true
                     !importPaths.add(importPath) -> false
                     importPath.isAllUnder -> optimizerData.unresolvedNames.isNotEmpty() || importPath.fqName in parentFqNames
                     importPath.fqName in fqNames -> importPath.importedName?.let { it in fqNames.getValue(importPath.fqName) } ?: false
