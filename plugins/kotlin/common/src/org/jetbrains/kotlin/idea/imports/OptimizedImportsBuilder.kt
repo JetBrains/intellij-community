@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.analysis.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -95,10 +94,9 @@ class OptimizedImportsBuilder(
     private val importMapper get() = ImportMapper.getInstance(file.project)
 
     fun buildOptimizedImports(): List<ImportPath>? {
-        val facade = file.getResolutionFacade()
         file.importDirectives
             .asSequence()
-            .filter { it.mayReferToSomeUnresolvedName() || it.isExistedUnresolvedName(facade) }
+            .filter { it.mayReferToSomeUnresolvedName() || it.isExistedUnresolvedName() }
             .mapNotNull { it.importPath }
             .mapNotNullTo(importRules) { ImportRule.Add(it) }
 
@@ -113,8 +111,7 @@ class OptimizedImportsBuilder(
 
     private fun KtImportDirective.mayReferToSomeUnresolvedName() = isAllUnder && data.unresolvedNames.isNotEmpty()
 
-    private fun KtImportDirective.isExistedUnresolvedName(facade: ResolutionFacade) =
-        importedName in data.unresolvedNames && !canResolve(facade)
+    private fun KtImportDirective.isExistedUnresolvedName() = importedName in data.unresolvedNames
 
     private tailrec fun getExpressionToAnalyze(element: KtElement): KtExpression? {
         val parent = element.parent

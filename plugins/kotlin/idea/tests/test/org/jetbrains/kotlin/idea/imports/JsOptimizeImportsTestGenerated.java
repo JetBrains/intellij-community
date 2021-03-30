@@ -216,6 +216,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             runTest("testData/editor/optimizeImports/common/ProvideDelegate2.kt");
         }
 
+        @TestMetadata("ResolvedImportAndUnresolvedReference.kt")
+        public void testResolvedImportAndUnresolvedReference() throws Exception {
+            runTest("testData/editor/optimizeImports/common/ResolvedImportAndUnresolvedReference.kt");
+        }
+
         @TestMetadata("SeveralClasses.kt")
         public void testSeveralClasses() throws Exception {
             runTest("testData/editor/optimizeImports/common/SeveralClasses.kt");
