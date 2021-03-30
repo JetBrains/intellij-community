@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -474,7 +475,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     synchronized (ApplicationInfoImpl.class) {
       result = instance;
       if (result == null) {
-        Activity activity = StartUpMeasurer.startActivity("app info loading");
+        Activity activity = StartUpMeasurer.startActivity("app info loading", ActivityCategory.APP_INIT);
         try {
           result = new ApplicationInfoImpl(ApplicationNamesInfo.initAndGetRawData());
           instance = result;

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.conversion.impl;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.conversion.*;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
@@ -116,7 +117,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   public @NotNull Object2LongMap<String> getAllProjectFiles() throws CannotConvertException {
-    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting");
+    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting", ActivityCategory.APP_INIT);
 
     if (myStorageScheme == StorageScheme.DEFAULT) {
       List<Path> moduleFiles = getModulePaths();

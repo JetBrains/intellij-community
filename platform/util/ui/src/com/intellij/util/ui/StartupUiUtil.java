@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -70,7 +71,7 @@ public final class StartupUiUtil {
 
     blockATKWrapper();
 
-    Activity activity = StartUpMeasurer.startActivity("LaF initialization");
+    Activity activity = StartUpMeasurer.startActivity("LaF initialization", ActivityCategory.APP_INIT);
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
@@ -80,7 +81,7 @@ public final class StartupUiUtil {
       return;
     }
 
-    Activity activity = StartUpMeasurer.startActivity("html kit configuration");
+    Activity activity = StartUpMeasurer.startActivity("html kit configuration", ActivityCategory.APP_INIT);
 
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -39,7 +40,7 @@ public final class SplashManager {
       }
     }
 
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization");
+    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.APP_INIT);
     try {
       PROJECT_FRAME = createFrameIfPossible();
     }
@@ -56,7 +57,7 @@ public final class SplashManager {
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization");
+    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.APP_INIT);
     SPLASH_WINDOW = new Splash(appInfo);
     EventQueue.invokeLater(() -> {
       Splash splash = SPLASH_WINDOW;
@@ -108,7 +109,7 @@ public final class SplashManager {
     }
 
     StartUpMeasurer.addInstantEvent("frame shown");
-    Activity activity = StartUpMeasurer.startActivity("frame set visible");
+    Activity activity = StartUpMeasurer.startActivity("frame set visible", ActivityCategory.APP_INIT);
     frame.setVisible(true);
     activity.end();
     return frame;

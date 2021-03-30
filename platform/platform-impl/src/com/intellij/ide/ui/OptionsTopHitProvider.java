@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
@@ -190,7 +191,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       String name = project == null ? "application" : "project";
-      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name);
+      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.APP_INIT);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
           OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;

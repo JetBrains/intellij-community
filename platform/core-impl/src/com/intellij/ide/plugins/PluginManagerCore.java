@@ -2,10 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diagnostic.*;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -787,7 +784,7 @@ public final class PluginManagerCore {
     }
 
     future = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading");
+      Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.APP_INIT);
       DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       activity.end();
       return context;
@@ -1361,7 +1358,7 @@ public final class PluginManagerCore {
       if (context == null) {
         context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       }
-      Activity activity = StartUpMeasurer.startActivity("plugin initialization");
+      Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.APP_INIT);
       PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);
 
       ourPlugins = initResult.sortedPlugins;

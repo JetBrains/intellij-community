@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
@@ -103,7 +104,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
 
   private final SynchronizedClearableLazy<List<UIManager.LookAndFeelInfo>> myLaFs = new SynchronizedClearableLazy<>(() -> {
-    Activity activity = StartUpMeasurer.startActivity("compute LaF list");
+    Activity activity = StartUpMeasurer.startActivity("compute LaF list", ActivityCategory.APP_INIT);
     List<UIManager.LookAndFeelInfo> infos = computeLafList();
     activity.end();
     return infos;

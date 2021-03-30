@@ -3,7 +3,8 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.Disposable
@@ -202,7 +203,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     recordModuleLoadingActivity()
-    val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
+    val activity = startActivity("(wm) Load initial project", ActivityCategory.APP_INIT)
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val serializers = prepareSerializers()
     registerListener()

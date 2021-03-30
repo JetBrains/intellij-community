@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,8 +13,8 @@ public final class ActivityImpl implements Activity {
   private final String name;
   private String description;
 
-  private final String threadName;
-  private final long threadId;
+  private String threadName;
+  private long threadId;
 
   private final long start;
   private long end;
@@ -22,7 +22,7 @@ public final class ActivityImpl implements Activity {
   // null doesn't mean root - not obligated to set parent, only as hint
   private final ActivityImpl parent;
 
-  private @Nullable ActivityCategory category;
+  private @Nullable final ActivityCategory category;
 
   private final @Nullable String pluginId;
 
@@ -41,9 +41,7 @@ public final class ActivityImpl implements Activity {
     this.pluginId = pluginId;
     this.category = category;
 
-    Thread thread = Thread.currentThread();
-    threadId = thread.getId();
-    threadName = thread.getName();
+    updateThreadName();
 
     Consumer<ActivityImpl> listener = ActivityImpl.listener;
     if (listener != null) {
@@ -53,6 +51,14 @@ public final class ActivityImpl implements Activity {
 
   public @NotNull String getThreadName() {
     return threadName;
+  }
+
+  // Not clear - should we always set it on end of activity or not. Method maybe called in a such rare cases.
+  @Override
+  public void updateThreadName() {
+    Thread thread = Thread.currentThread();
+    threadId = thread.getId();
+    threadName = thread.getName();
   }
 
   public long getThreadId() {
@@ -65,10 +71,6 @@ public final class ActivityImpl implements Activity {
 
   public @Nullable ActivityCategory getCategory() {
     return category;
-  }
-
-  void setCategory(@Nullable ActivityCategory value) {
-    category = value;
   }
 
   // and how do we can sort correctly, when parent item equals to child (start and end), also there is another child with start equals to end?
@@ -138,6 +140,9 @@ public final class ActivityImpl implements Activity {
   }
 
   private static void nanoToString(long start, @NotNull StringBuilder builder) {
-    builder.append(TimeUnit.NANOSECONDS.toMillis(start - StartUpMeasurer.getStartTime())).append("ms (").append(TimeUnit.NANOSECONDS.toMicros(start - StartUpMeasurer.getStartTime())).append("μs)");
+    //noinspection NonAsciiCharacters
+    builder
+      .append(TimeUnit.NANOSECONDS.toMillis(start - StartUpMeasurer.getStartTime())).append("ms (")
+      .append(TimeUnit.NANOSECONDS.toMicros(start - StartUpMeasurer.getStartTime())).append("μs)");
   }
 }

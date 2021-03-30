@@ -139,7 +139,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       Disposer.register(this, uiRootDisposable, "ui");
     }
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.APP_INIT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     Runnable runnable = () -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die

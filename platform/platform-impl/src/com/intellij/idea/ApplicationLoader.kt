@@ -6,7 +6,10 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -301,7 +304,7 @@ private fun addActivateAndWindowsCliListeners() {
     result.future
   }
 
-  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
+  StartupUtil.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
     if (args.isEmpty()) {
       return@BiFunction 0
@@ -314,7 +317,7 @@ private fun addActivateAndWindowsCliListeners() {
   ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
       StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+      StartupUtil.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
     }
   })
 }
@@ -344,7 +347,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
 }
 
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
-  val initAppActivity = MainRunner.startupStart.endAndStart(Activities.INIT_APP)
+  val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   initUiTask.thenRunAsync(Runnable {
     val args = processProgramArguments(rawArgs)
@@ -369,7 +372,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
 
   try {
     val activity = initAppActivity.startChild("plugin descriptor init waiting")
-    PluginManagerCore.initPlugins(MainRunner::class.java.classLoader)
+    PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
       .whenComplete { result, error ->
         activity.end()
         if (error == null) {

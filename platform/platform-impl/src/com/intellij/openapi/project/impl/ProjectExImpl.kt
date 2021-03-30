@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.preloadServices
@@ -181,7 +183,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     createComponents(indicator)
     servicePreloadingFuture?.join()
 
-    var activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity("projectComponentCreated event handling") else null
+    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.APP_INIT) else null
     @Suppress("DEPRECATION")
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 

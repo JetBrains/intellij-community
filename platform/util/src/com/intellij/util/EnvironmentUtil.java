@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -95,7 +96,7 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Future<@Nullable Boolean> loadEnvironment(@NotNull Path reader, @NotNull Runnable callback) {
+  public static @NotNull Future<@Nullable Boolean> loadEnvironment(@NotNull Path reader, @NotNull Activity activity) {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       return CompletableFuture.completedFuture(null);
@@ -115,7 +116,8 @@ public final class EnvironmentUtil {
         return getSystemEnv();
       }
       finally {
-        callback.run();
+        activity.end();
+        activity.updateThreadName();
         state.complete(result);
       }
     }, ForkJoinPool.commonPool()));
@@ -126,17 +128,23 @@ public final class EnvironmentUtil {
     if (!SystemInfoRt.isMac) {
       return false;
     }
+
     // The method is called too early when the IDE starts up, at this point the registry values have not been loaded yet from the service.
     // Using a system property is a good alternative.
     if (!Boolean.parseBoolean(System.getProperty("ij.load.shell.env", "true"))) {
       LOG.info("loading shell env is turned off");
       return false;
     }
+
     // On macOS, login shell session is not run when a user logs in, thus "SHLVL > 0" likely means that IDE is run from a terminal.
     String shLvl = System.getenv(SHLVL);
-    if (StringUtilRt.parseInt(shLvl, 0) > 0) {
-      LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + "=" + shLvl + ")");
-      return false;
+    try {
+      if (Integer.parseInt(shLvl, 0) > 0) {
+        LOG.info("loading shell env is skipped: IDE has been launched from a terminal (" + SHLVL + "=" + shLvl + ")");
+        return false;
+      }
+    }
+    catch (NumberFormatException ignore) {
     }
     return true;
   }

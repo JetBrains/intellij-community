@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
@@ -43,7 +44,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     val projectEntities = when {
       initialContent != null -> initialContent
       cache != null -> {
-        val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
+        val activity = startActivity("(wm) Loading cache", ActivityCategory.APP_INIT)
         val previousStorage: WorkspaceEntityStorage?
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()

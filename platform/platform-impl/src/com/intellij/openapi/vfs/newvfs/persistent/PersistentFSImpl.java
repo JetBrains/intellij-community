@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -100,7 +101,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
       }
     });
-    Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
+    Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.APP_INIT);
     FSRecords.connect();
     activity.end();
   }

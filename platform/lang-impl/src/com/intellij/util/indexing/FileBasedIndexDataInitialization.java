@@ -2,6 +2,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -58,7 +59,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   @NotNull
   private Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
-    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
+    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.APP_INIT);
     Iterator<FileBasedIndexExtension<?, ?>> extensions =
       IndexInfrastructure.hasIndices() ?
       ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :

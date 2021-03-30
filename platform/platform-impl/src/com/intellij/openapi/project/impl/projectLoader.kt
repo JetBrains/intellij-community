@@ -4,9 +4,11 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.Activities
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +35,7 @@ internal fun registerComponents(project: ProjectImpl) {
 }
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else StartUpMeasurer.startActivity(message())
+  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.APP_INIT)
 }
 
 internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {
