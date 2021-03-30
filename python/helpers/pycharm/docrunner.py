@@ -84,8 +84,8 @@ class DocTestRunner(doctest.DocTestRunner):
   Special runner for doctests,
   overrides __run method to report results using TeamcityDocTestResult
   """
-  def __init__(self, verbose=None, optionflags=0):
-    doctest.DocTestRunner.__init__(self, verbose, optionflags)
+  def __init__(self, checker=None, verbose=None, optionflags=0):
+    doctest.DocTestRunner.__init__(self, checker=checker, verbose=verbose, optionflags=optionflags)
     self.stream = sys.stdout
     self.result = TeamcityDocTestResult(self.stream)
     #self.result.messages.testMatrixEntered()
