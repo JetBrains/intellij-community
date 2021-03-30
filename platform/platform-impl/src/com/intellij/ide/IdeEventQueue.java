@@ -558,8 +558,8 @@ public final class IdeEventQueue extends EventQueue {
           try {
             r.run();
           }
-          catch (Exception e) {
-            LOG.error(e);
+          catch (Throwable e) {
+            processException(e);
           }
         }
       }
