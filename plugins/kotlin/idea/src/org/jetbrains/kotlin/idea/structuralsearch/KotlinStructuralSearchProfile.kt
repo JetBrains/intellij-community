@@ -347,6 +347,7 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
         val searchElements = try {
             createPatternTree(pattern, PatternTreeContext.Block, fileType, dialect, null, project, false)
         } catch (e: Exception) { return false }
+        if (searchElements.isEmpty()) return false
         return searchElements[0] is KtDeclaration
     }
 
