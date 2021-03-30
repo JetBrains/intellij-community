@@ -516,6 +516,16 @@
   <item name='java.util.concurrent.ScheduledThreadPoolExecutor void execute(java.lang.Runnable) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.concurrent.Semaphore Semaphore(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.Semaphore Semaphore(int, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
