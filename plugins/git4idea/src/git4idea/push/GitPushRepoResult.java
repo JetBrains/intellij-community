@@ -54,9 +54,8 @@ public final class GitPushRepoResult {
                                              @NotNull GitLocalBranch source,
                                              @NotNull GitRemoteBranch target) {
     List<String> tags = ContainerUtil.map(tagResults, result1 -> result1.getSourceRef());
-    String error = result.getType() == GitPushNativeResult.Type.ERROR ? result.getReason() : null;
     return new GitPushRepoResult(convertType(result), commits, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), tags, error, null);
+                                 target.getRemote().getName(), tags, result.getReason(), null);
   }
 
   @NotNull
