@@ -397,6 +397,15 @@ final class JavaPredefinedConfigurations {
                                 "methods \\& constructors with final parameters",
                                 "'_ReturnType? '_Method('_BeforeType '_BeforeParameter*, final '_ParameterType '_Parameter, '_AfterType '_AfterParameter*);",
                                 getInterestingType(), JavaFileType.INSTANCE, JavaStructuralSearchProfile.MEMBER_CONTEXT),
+      createConfiguration(SSRBundle.message("predefined.configuration.double.checked.locking"), "double-checked locking",
+                          "if ('_condition) {\n" +
+                          "  synchronized ('_lock) {\n" +
+                          "    if ('_condition) {\n" +
+                          "      '_statement+;\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}",
+                          getInterestingType(), JavaFileType.INSTANCE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),

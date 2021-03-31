@@ -309,6 +309,26 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "record R2(double a, double b) {}",
            "record R1(int i, int j) {}",
            "record R2(double a, double b) {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.double.checked.locking")),
+           "class X {" +
+           "  private static Object o =  null;" +
+           "  static Object get() {" +
+           "    if (o == null) {" +
+           "      synchronized (X.class) {" +
+           "        if (o == null) {" +
+           "          return o;" +
+           "        }" +
+           "      }" +
+           "    }" +
+           "  }" +
+           "}",
+           "if (o == null) {" +
+           "      synchronized (X.class) {" +
+           "        if (o == null) {" +
+           "          return o;" +
+           "        }" +
+           "      }" +
+           "    }");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }
