@@ -84,7 +84,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
                                       FileChooserDescriptorFactory.createSingleFolderDescriptor())
     val ok = DialogBuilder(parent)
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
-      .centerPanel(pathField)
+      .setNorthPanel(pathField)
       .showAndGet()
     return if (ok) pathField.text else null
   }
