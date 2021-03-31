@@ -6,7 +6,7 @@ import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class JobProgress(private val job: Job) : Progress {
+class JobProgress(internal val job: Job) : Progress {
 
   override fun isCancelled(): Boolean = job.isCancelled
 
