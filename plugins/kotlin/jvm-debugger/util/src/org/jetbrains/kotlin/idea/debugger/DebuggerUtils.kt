@@ -16,13 +16,11 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
-import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.search.GlobalSearchScope
 import com.sun.jdi.Location
-import com.sun.jdi.Method
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
@@ -32,8 +30,6 @@ import org.jetbrains.kotlin.idea.stubindex.StaticFacadeIndexUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.org.objectweb.asm.MethodVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes
 
 object DebuggerUtils {
     @get:TestOnly
@@ -103,36 +99,5 @@ object DebuggerUtils {
     fun isKotlinSourceFile(fileName: String): Boolean {
         val extension = FileUtilRt.getExtension(fileName).toLowerCase()
         return extension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
-    }
-
-    fun isSimpleGetter(method: Method): Boolean {
-        if (method.bytecodes().size != 5) {
-            return false
-        }
-
-        var processedOpcodes = 0
-        var result = true
-        MethodBytecodeUtil.visit(method, object : MethodVisitor(Opcodes.API_VERSION) {
-            private fun verify(opcode: Int, position: Int) =
-                when(position) {
-                    0 -> opcode == Opcodes.ALOAD
-                    1 -> opcode == Opcodes.GETFIELD
-                    2 -> opcode in Opcodes.IRETURN..Opcodes.ARETURN
-                    else -> false
-                }
-
-            private fun visitOpcode(opcode: Int) {
-                if (!verify(opcode, processedOpcodes)) {
-                    result = false
-                }
-                processedOpcodes += 1
-            }
-
-            override fun visitVarInsn(opcode: Int, variable: Int) = visitOpcode(opcode)
-            override fun visitFieldInsn(opcode: Int, owner: String?, name: String?, descriptor: String?) = visitOpcode(opcode)
-            override fun visitInsn(opcode: Int) = visitOpcode(opcode)
-        }, false)
-
-        return result && processedOpcodes == 3
     }
 }

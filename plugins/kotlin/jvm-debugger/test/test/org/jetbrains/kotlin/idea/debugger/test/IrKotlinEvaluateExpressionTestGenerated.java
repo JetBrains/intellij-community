@@ -1003,6 +1003,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/frame/nestedInlineFun2.kt");
             }
 
+            @TestMetadata("objectFields.kt")
+            public void testObjectFields() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/objectFields.kt");
+            }
+
             @TestMetadata("remapThis.kt")
             public void testRemapThis() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");

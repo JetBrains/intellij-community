@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.settings.NodeRendererSettings
@@ -18,6 +19,7 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
+import org.jetbrains.kotlin.idea.debugger.KotlinSimpleGetterDetector.isSimpleGetter
 import java.util.*
 
 class KotlinClassRenderer : ClassRenderer() {
@@ -64,6 +66,17 @@ class KotlinClassRenderer : ClassRenderer() {
     override fun isApplicable(type: Type?): Boolean =
         type is ReferenceType && type !is ArrayType && type.isInKotlinSources()
 
+    override fun shouldDisplay(context: EvaluationContext?, objInstance: ObjectReference, field: Field): Boolean {
+        val referenceType = objInstance.referenceType()
+        if (field.isStatic && referenceType.isKotlinObjectType()) {
+            if (field.isInstanceFieldOfType(referenceType)) {
+                return false
+            }
+            return true
+        }
+        return super.shouldDisplay(context, objInstance, field)
+    }
+
     private fun mergeNodesLists(fieldNodes: List<DebuggerTreeNode>, getterNodes: List<DebuggerTreeNode>): List<DebuggerTreeNode> {
         val namesToIndex = getterNodes.withIndex().associate { it.value.descriptor.name to it.index }
 
@@ -91,7 +104,7 @@ class KotlinClassRenderer : ClassRenderer() {
             method.name() != "getClass" &&
             !method.name().endsWith("\$annotations") &&
             method.declaringType().isInKotlinSources() &&
-            !DebuggerUtils.isSimpleGetter(method)
+            !method.isSimpleGetter()
         }
         .distinctBy { it.name() }
         .toList()
@@ -102,4 +115,18 @@ class KotlinClassRenderer : ClassRenderer() {
         evaluationContext: EvaluationContext,
         nodeManager: NodeManager
     ) = map { nodeManager.createNode(GetterDescriptor(parentObject, it, project), evaluationContext) }
+
+    private fun ReferenceType.isKotlinObjectType() =
+        containsInstanceField() && hasPrivateConstructor()
+
+    private fun ReferenceType.containsInstanceField() =
+        safeFields().any { it.isInstanceFieldOfType(this) }
+
+    private fun ReferenceType.hasPrivateConstructor(): Boolean {
+        val constructor = methodsByName(JVMNameUtil.CONSTRUCTOR_NAME).singleOrNull() ?: return false
+        return constructor.isPrivate && constructor.argumentTypeNames().isEmpty()
+    }
+
+    private fun Field.isInstanceFieldOfType(type: Type) =
+        isStatic && isFinal && name() == "INSTANCE" && safeType() == type
 }
