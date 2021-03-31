@@ -13,6 +13,13 @@ public enum LoopDirection {
   ASCENDING,
   DESCENDING;
 
+  /**
+   * @param counter loop counter variable
+   * @param updateStatement statement which changes the counter
+   * @return {@link LoopDirection#ASCENDING} if counter increases in the loop e.g. for (int i = 0; i < 10; i++) {}<br>
+   *         {@link LoopDirection#DESCENDING} if counter decreases in the loop e.g. for (int i = 10; i >= 0; i--) {}<br>
+   *         null if current loop is uncountable
+   */
   @Nullable
   public static LoopDirection evaluateLoopDirection(@NotNull PsiVariable counter, @Nullable PsiStatement updateStatement) {
     PsiExpressionStatement expressionStatement = tryCast(updateStatement, PsiExpressionStatement.class);
