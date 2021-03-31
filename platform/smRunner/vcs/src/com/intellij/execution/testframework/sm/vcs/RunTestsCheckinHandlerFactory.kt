@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.vcs
 
-import com.intellij.CommonBundle
 import com.intellij.build.BuildView
 import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
@@ -11,14 +10,12 @@ import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.testframework.TestRunnerBundle
 import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
-import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
@@ -30,21 +27,14 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
@@ -55,15 +45,14 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.ExceptionUtil
-import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.commit.isBackgroundCommitChecks
+import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -86,8 +75,9 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
 }
 
 class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    RunTestsBeforeCheckinHandler(panel)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    return if (isBackgroundCommitChecks() && panel.isNonModalCommit) RunTestsBeforeCheckinHandler(panel) else CheckinHandler.DUMMY
+  }
 }
 
 class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitProblem {
@@ -118,7 +108,6 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
 }
 
 data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?)
-private val canceledDescription = FailureDescription("", 0, 0, null)
 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
@@ -313,33 +302,6 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     }
   }
 
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>) : ReturnResult {
-    if (!isEnabled()) return ReturnResult.COMMIT
-    val runConfiguration = getConfiguredRunConfiguration()?: return ReturnResult.COMMIT
-    val failedTests = RunTask(runConfiguration).getFailedTests()
-    if (failedTests == null) return ReturnResult.COMMIT
-    if (failedTests.problems.contains(canceledDescription)) return ReturnResult.CANCEL
-    val commitActionText = StringUtil.removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
-    return when (askToReview(failedTests, commitActionText)) {
-      Messages.YES -> {
-        showDetails(failedTests)
-        ReturnResult.CLOSE_WINDOW
-      }
-      Messages.NO -> ReturnResult.COMMIT
-      else -> ReturnResult.CANCEL
-    }
-
-  }
-
-  private fun askToReview(failedTests: FailedTestCommitProblem,
-                          @Nls commitActionText: String) =
-    MessageDialogBuilder.yesNoCancel(SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration"), failedTests.text)
-      .icon(UIUtil.getWarningIcon())
-      .yesText(VcsBundle.message("code.smells.review.button"))
-      .noText(commitActionText)
-      .cancelText(CommonBundle.getCancelButtonText())
-      .show(project)
-
   @NlsContexts.DialogTitle
   private fun getOptionTitle(name: String): String {
     return SmRunnerBundle.message("checkbox.run.tests.before.commit", name)
@@ -348,102 +310,6 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   private fun disposeConsole(executionConsole: ExecutionConsole) {
     UIUtil.invokeLaterIfNeeded {
       Disposer.dispose(executionConsole)
-    }
-  }
-
-  inner class RunTask(private val runConfiguration : RunnerAndConfigurationSettings) 
-    : Task.WithResult<FailedTestCommitProblem?, Exception>(project, getOptionTitle(runConfiguration.name), true) {
-
-    fun getFailedTests(): FailedTestCommitProblem? {
-      queue()
-
-      return try {
-        result
-      }
-      catch (e : ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        ExceptionUtil.rethrowUnchecked(e)
-        throw RuntimeException(e)
-      }
-    }
-    
-    override fun compute(indicator: ProgressIndicator): FailedTestCommitProblem? {
-      val problems = ArrayList<FailureDescription>()
-      val executor = DefaultRunExecutor.getRunExecutorInstance()
-      val configuration = runConfiguration.configuration
-      if (configuration is CompoundRunConfiguration) {
-        val runManager = RunManagerImpl.getInstanceImpl(project)
-        configuration.getConfigurationsWithTargets(runManager)
-          .map { runManager.findSettings(it.key) }
-          .filterNotNull()
-          .all {
-            startConfiguration(executor, problems, indicator, it)
-          }
-      }
-      else {
-        startConfiguration(executor, problems, indicator, runConfiguration)
-      }
-
-      return createCommitProblem(problems)
-    }
-
-    private fun startConfiguration(executor: Executor,
-                                   problems: ArrayList<FailureDescription>,
-                                   indicator: ProgressIndicator,
-                                   configuration: RunnerAndConfigurationSettings) : Boolean {
-      val environment = ExecutionUtil.createEnvironment(executor, configuration)?.build()
-      val runner = ProgramRunner.getRunner(executor.id, configuration.configuration) ?: return false
-      val executionResult = environment?.state?.execute(executor, runner) ?: return false
-      val handler = executionResult.processHandler ?: return false
-      val executionConsole = executionResult.executionConsole ?: return false
-      val resultsForm = executionConsole.component as? SMTestRunnerResultsForm ?: return false
-
-      resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
-        override fun onTestingFinished(sender: TestResultsViewer) {
-          reportProblem(resultsForm, problems, configuration)
-        }
-
-        override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) {
-          indicator.text = SmRunnerBundle.message("progress.text.running.tests", getPresentableName(test))
-          try {
-            indicator.checkCanceled()
-          }
-          catch (e: ProcessCanceledException) {
-            handler.destroyProcess()
-            problems.add(canceledDescription)
-          }
-        }
-
-        private fun getPresentableName(test: SMTestProxy): String {
-          val presentableName = test.presentableName
-          val parent = test.parent
-          return if (parent != null && parent !is SMTestProxy.SMRootTestProxy) {
-            getPresentableName(parent) + "." + presentableName
-          }
-          else presentableName
-        }
-      })
-
-      if (!handler.isStartNotified) {
-        handler.startNotify()
-      }
-
-      val canceled = problems.contains(canceledDescription)
-      if (!canceled) {
-        val threshold = System.currentTimeMillis() + 60000
-        while (getHistoryFile(resultsForm.historyFileName).second == null) {
-          Thread.sleep(500)
-          if (System.currentTimeMillis() > threshold) {
-            break
-          }
-        }
-      }
-
-      disposeConsole(executionConsole)
-      return !canceled
     }
   }
 

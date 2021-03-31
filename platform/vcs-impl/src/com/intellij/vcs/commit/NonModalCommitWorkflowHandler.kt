@@ -33,7 +33,7 @@ import kotlin.properties.Delegates.observable
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
 
 private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("vcs.background.commit.checks")
-internal fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
+fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>(),
