@@ -179,7 +179,8 @@ class PythonOnboardingTour :
     toggleBreakpointTask(sample, { logicalPosition }, checkLine = false) {
       text(PythonLessonsBundle.message("python.onboarding.balloon.click.here"),
            LearningBalloonConfig(Balloon.Position.below, width = 0, duplicateMessage = false))
-      text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1", code("find_average")))
+      text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.1",
+                                       code("6.5"), code("find_average"), code("26")))
       text(PythonLessonsBundle.message("python.onboarding.toggle.breakpoint.2"))
     }
 
