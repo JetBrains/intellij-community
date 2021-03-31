@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class EnvReader extends EnvironmentUtil.ShellEnvReader {
@@ -36,14 +37,29 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     return readBatOutputAndEnv(batchFile, args).second;
   }
 
-  public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile, List<String> args) throws IOException {
+  /**
+   * @see #readBatOutputAndEnv(Path, List, Consumer)
+   */
+  public final @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile, @Nullable List<@NotNull String> args) throws IOException {
+    return readBatOutputAndEnv(batchFile, args, (it) -> {});
+  }
+
+  /**
+   * @param scriptEnvironmentProcessor the block which accepts the environment
+   *                                   of the new process, allowing to add and
+   *                                   remove environment variables.
+   * @see #readBatOutputAndEnv(Path, List)
+   */
+  public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile,
+                                                                        @Nullable List<@NotNull String> args,
+                                                                        @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
     if (batchFile != null && !Files.exists(batchFile)) {
       throw new NoSuchFileException(batchFile.toString());
     }
 
-    Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp");
+    final Path envFile = Files.createTempFile("intellij-cmd-env.", ".tmp"); // NON-NLS
     try {
-      List<String> callArgs = new ArrayList<>();
+      final List<String> callArgs = new ArrayList<>();
       if (batchFile != null) {
         callArgs.add("call");
         callArgs.add(batchFile.toString());
@@ -53,31 +69,30 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
         callArgs.add("&&");
       }
 
-      callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar));
-      callArgs.add("-cp");
+      callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar)); // NON-NLS
+      callArgs.add("-cp"); // NON-NLS
       callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
       callArgs.add(ReadEnv.class.getCanonicalName());
 
       callArgs.add(envFile.toString());
       callArgs.add("||");
-      callArgs.add("exit");
-      callArgs.add("/B");
-      //noinspection SpellCheckingInspection
-      callArgs.add("%ERRORLEVEL%");
+      callArgs.add("exit"); // NON-NLS
+      callArgs.add("/B"); // NON-NLS
+      callArgs.add("%ERRORLEVEL%"); // NON-NLS
 
-      List<@NonNls String> cl = new ArrayList<>();
+      final List<@NonNls String> cl = new ArrayList<>();
       cl.add("cmd.exe");
       cl.add("/c");
       cl.add(prepareCallArgs(callArgs));
-      return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, null, envFile);
+      return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor, envFile);
     }
     finally {
       try {
         Files.delete(envFile);
       }
-      catch (NoSuchFileException ignore) {
+      catch (final NoSuchFileException ignore) {
       }
-      catch (IOException e) {
+      catch (final IOException e) {
         Logger.getInstance(EnvironmentUtil.class).warn("Cannot delete temporary file", e);
       }
     }
