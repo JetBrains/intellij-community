@@ -36,7 +36,6 @@ internal class GroovyMethodReferenceType(
                               ?.resolve(false)
                               ?.singleOrNull()
                               ?.element as? PsiClass ?: return null
-    // todo: generic qualifier
     val instanceParameter = object : CallParameter {
       override val type: PsiType = resolvedQualifier.type()
       override val parameterName: String = "_instance"
