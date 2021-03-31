@@ -217,7 +217,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
+  private void readEssentialPluginInformation(@NotNull Element element,
+                                              @NotNull DescriptorListLoadingContext context) {
+    XmlReader.readMetaInfo(this, element);
     if (descriptionChildText == null) {
       descriptionChildText = element.getChildTextTrim("description");
     }
