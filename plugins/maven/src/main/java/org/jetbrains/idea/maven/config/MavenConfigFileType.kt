@@ -13,9 +13,8 @@ class MavenConfigFileType private constructor(): LanguageFileType(PlainTextLangu
     return "MavenConfig"
   }
 
-  override fun getDescription(): String {
-    return MavenProjectBundle.message("filetype.maven.config.description")
-  }
+  override fun getDescription(): String = MavenProjectBundle.message("filetype.maven.config.description")
+  override fun getDisplayName(): String = MavenProjectBundle.message("filetype.maven.config.display.name")
 
   override fun getDefaultExtension(): String {
     return "config"

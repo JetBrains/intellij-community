@@ -14,7 +14,7 @@ public class QtUIFileType extends QtFileType implements FileType {
   public static final QtUIFileType INSTANCE = new QtUIFileType();
 
   private QtUIFileType() {
-    super("Qt UI file", PyBundle.message("qt.ui.designer.form.filetype.description"), "ui");
+    super("Qt UI file", PyBundle.message("qt.ui.designer.form.filetype.display.name"), PyBundle.message("qt.ui.designer.form.filetype.description"), "ui");
   }
 
   @Override

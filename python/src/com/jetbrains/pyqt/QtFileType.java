@@ -19,6 +19,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +32,14 @@ import java.util.List;
  */
 public abstract class QtFileType extends LanguageFileType implements INativeFileType {
   private final String myName;
+  private final String myDisplayName;
   private final @Label String myDescription;
   private final String myDefaultExtension;
 
-  QtFileType(@NonNls String name, @Label String description, String defaultExtension) {
+  QtFileType(@NonNls String name, @NotNull @Nls String displayName, @Label String description, String defaultExtension) {
     super(XMLLanguage.INSTANCE, true);
     myName = name;
+    myDisplayName = displayName;
     myDescription = description;
     myDefaultExtension = defaultExtension;
   }
@@ -53,6 +56,12 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
   @Override
   public String getDescription() {
     return myDescription;
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    return myDisplayName;
   }
 
   @NotNull
