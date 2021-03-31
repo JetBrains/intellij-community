@@ -101,7 +101,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     synchronized (inspectionEP != null ? inspectionEP : WRITER_LOCK) {
       Path file = InspectionsResultUtil.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
       boolean exists = Files.exists(file);
-      Files.createDirectories(file.getParent());
+      if (!exists && !Files.isDirectory(file.getParent())) {
+        Files.createDirectories(file.getParent());
+      }
       try (Writer writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
         if (!exists) {
           writer.write('<');
@@ -115,7 +117,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           writer.write('>');
           writer.write('\n');
         }
-  
+
         exportResults(descriptions, refElement, p -> {
           try {
             JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
@@ -124,7 +126,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
             LOG.error(e);
           }
         });
-  
+
         writer.write('\n');
       }
     }
