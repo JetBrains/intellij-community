@@ -38,20 +38,35 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
   }
 
   /**
-   * @see #readBatOutputAndEnv(Path, List, Consumer)
+   * @see #readBatOutputAndEnv(Path, List, String)
+   * @see #readBatOutputAndEnv(Path, List, String, Consumer)
    */
   public final @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile, @Nullable List<@NotNull String> args) throws IOException {
-    return readBatOutputAndEnv(batchFile, args, (it) -> {});
+    return readBatOutputAndEnv(batchFile, args, "cmd.exe"); // NON-NLS
   }
 
   /**
+   * @param cmdExePath the path (either a full or a short one) to {@code cmd.exe}.
+   * @see #readBatOutputAndEnv(Path, List)
+   * @see #readBatOutputAndEnv(Path, List, String, Consumer)
+   */
+  public final @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile,
+                                                                              @Nullable List<@NotNull String> args,
+                                                                              @NotNull String cmdExePath) throws IOException {
+    return readBatOutputAndEnv(batchFile, args, cmdExePath, (it) -> {});
+  }
+
+  /**
+   * @param cmdExePath the path (either a full or a short one) to {@code cmd.exe}.
    * @param scriptEnvironmentProcessor the block which accepts the environment
    *                                   of the new process, allowing to add and
    *                                   remove environment variables.
    * @see #readBatOutputAndEnv(Path, List)
+   * @see #readBatOutputAndEnv(Path, List, String)
    */
   public @NotNull Pair<String, Map<String, String>> readBatOutputAndEnv(@Nullable Path batchFile,
                                                                         @Nullable List<@NotNull String> args,
+                                                                        @NotNull String cmdExePath,
                                                                         @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor) throws IOException {
     if (batchFile != null && !Files.exists(batchFile)) {
       throw new NoSuchFileException(batchFile.toString());
@@ -81,7 +96,7 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
       callArgs.add("%ERRORLEVEL%"); // NON-NLS
 
       final List<@NonNls String> cl = new ArrayList<>();
-      cl.add("cmd.exe");
+      cl.add(cmdExePath);
       cl.add("/c");
       cl.add(prepareCallArgs(callArgs));
       return runProcessAndReadOutputAndEnvs(cl, batchFile != null ? batchFile.getParent() : null, scriptEnvironmentProcessor, envFile);
