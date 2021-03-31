@@ -656,22 +656,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       runnable.run();
     }
 
-    if (mayRunActionsWhenAllCommitted()) {
-      if (!app.isDispatchThread()) {
-        app.invokeLater(() -> {
-          if (mayRunActionsWhenAllCommitted()) {
-            runActionsWhenAllCommitted();
-          }
-        }, myProject.getDisposed());
-      }
-      else {
+    if (app.isDispatchThread()) {
+      runActionsWhenAllCommitted();
+    }
+    else {
+      app.invokeLater(() -> {
         runActionsWhenAllCommitted();
-      }
+      }, myProject.getDisposed());
     }
   }
 
   private void runActionsWhenAllCommitted() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!mayRunActionsWhenAllCommitted()) return;
     List<Runnable> actions = new ArrayList<>(actionsWhenAllDocumentsAreCommitted.values());
     beforeCommitHandler();
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
@@ -712,6 +709,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private void beforeCommitHandler() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, EmptyRunnable.getInstance()); // to prevent listeners from registering new actions during firing
   }
   private void checkWeAreOutsideAfterCommitHandler() {
@@ -721,6 +719,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean isInsideCommitHandler() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return actionsWhenAllDocumentsAreCommitted.get(PERFORM_ALWAYS_KEY) == EmptyRunnable.getInstance();
   }
 
