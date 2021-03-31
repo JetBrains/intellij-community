@@ -14,4 +14,4 @@ internal class SortBySeverity : ProblemsViewToggleAction({ it.sortBySeverity })
 internal class SortByName : ProblemsViewToggleAction({ it.sortByName })
 
 internal abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel) -> Option?)
-  : DumbAware, ToggleOptionAction(Function { event: AnActionEvent -> ProblemsView.getSelectedPanel(event.project)?.let(optionSupplier) })
+  : DumbAware, ToggleOptionAction(Function { event: AnActionEvent -> event.getData(ProblemsViewPanel.SELECTED)?.let(optionSupplier) })

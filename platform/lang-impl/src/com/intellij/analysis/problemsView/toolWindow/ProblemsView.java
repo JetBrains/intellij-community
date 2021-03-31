@@ -67,10 +67,6 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return item instanceof PsiFile ? PsiDocumentManager.getInstance(project).getDocument((PsiFile)item) : null;
   }
 
-  static @Nullable ProblemsViewPanel getSelectedPanel(@Nullable Project project) {
-    return get(ProblemsViewPanel.class, getSelectedContent(project));
-  }
-
   private static @Nullable Content getSelectedContent(@Nullable Project project) {
     ToolWindow window = getToolWindow(project);
     ContentManager manager = window == null ? null : window.getContentManagerIfCreated();

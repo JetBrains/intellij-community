@@ -22,13 +22,13 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil.isAncestor
 import java.awt.event.MouseEvent
 
-internal class ShowQuickFixesAction : UpdateInBackground, AnAction() {
+internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
 
   override fun update(event: AnActionEvent) {
     val node = event.getData(SELECTED_ITEM) as? ProblemNode
     val problem = node?.problem
     with(event.presentation) {
-      isVisible = getApplication().isInternal || ProblemsView.getSelectedPanel(event.project) is HighlightingPanel
+      isVisible = getApplication().isInternal || event.getData(ProblemsViewPanel.SELECTED) is HighlightingPanel
       isEnabled = isVisible && when (problem) {
         is HighlightingProblem -> isEnabled(event, problem)
         else -> false
@@ -45,10 +45,6 @@ internal class ShowQuickFixesAction : UpdateInBackground, AnAction() {
 
 
   private fun getEditor(psi: PsiFile, showEditor: Boolean): Editor? {
-    val panel = ProblemsView.getSelectedPanel(psi.project) ?: return null
-    if (!panel.isShowing) return null
-    val preview = panel.preview.preview
-    if (preview != null) return preview
     val file = psi.virtualFile ?: return null
     val document = PsiDocumentManager.getInstance(psi.project).getDocument(psi) ?: return null
     val editors = EditorFactory.getInstance().editors(document, psi.project).filter { !it.isViewer }
@@ -63,7 +59,7 @@ internal class ShowQuickFixesAction : UpdateInBackground, AnAction() {
   private fun show(event: AnActionEvent, popup: JBPopup) {
     val mouse = event.inputEvent as? MouseEvent ?: return popup.showInBestPositionFor(event.dataContext)
     val point = mouse.locationOnScreen
-    val panel = ProblemsView.getSelectedPanel(event.project)
+    val panel = event.getData(ProblemsViewPanel.SELECTED)
     val button = mouse.source as? ActionButton
     if (panel != null && button != null) {
       point.translate(-mouse.x, -mouse.y)
@@ -91,7 +87,9 @@ internal class ShowQuickFixesAction : UpdateInBackground, AnAction() {
 
   private fun getCachedIntentions(event: AnActionEvent, problem: HighlightingProblem, showEditor: Boolean): CachedIntentions? {
     val psi = event.getData(PSI_FILE) ?: return null
-    val editor = getEditor(psi, showEditor) ?: return null
+    val panel = event.getData(ProblemsViewPanel.SELECTED) ?: return null
+    if (!panel.isShowing) return null
+    val editor = panel.preview.preview ?: getEditor(psi, showEditor) ?: return null
     val markers = problem.info?.quickFixActionMarkers ?: return null
 
     val info = ShowIntentionsPass.IntentionsInfo()
