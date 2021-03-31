@@ -26,6 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+import static java.util.Collections.emptyMap;
 
 public final class EnvironmentUtil {
   public static final String READER_FILE_NAME = "printenv.py";
@@ -265,27 +268,69 @@ public final class EnvironmentUtil {
      * @throws IOException if the process fails to start, exits with a non-zero
      *   code, produces no output or the file used to store the output can't be
      *   read.
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
+     */
+    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                              @Nullable Path workingDir,
+                                                                                              @NotNull Path envFile) throws IOException {
+      return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap(), envFile);
+    }
+
+    /**
+     * @param scriptEnvironment the extra environment to be added to the
+     *                          environment of the new process. If {@code null},
+     *                          the process environment won't be modified.
+     * @throws IOException if the process fails to start, exits with a non-zero
+     *   code, produces no output or the file used to store the output can't be
+     *   read.
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
     protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                               @Nullable Path workingDir,
                                                                                               @Nullable Map<String, String> scriptEnvironment,
                                                                                               @NotNull Path envFile) throws IOException {
-      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
-      if (scriptEnvironment != null) {
-        // we might need default environment for the process to launch correctly
-        builder.environment().putAll(scriptEnvironment);
-      }
+      return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
+        if (scriptEnvironment != null) {
+          // we might need default environment for the process to launch correctly
+          it.putAll(scriptEnvironment);
+        }
+      }, envFile);
+    }
+
+    /**
+     * @param scriptEnvironmentProcessor the block which accepts the environment
+     *                                   of the new process, allowing to add and
+     *                                   remove environment variables.
+     * @throws IOException if the process fails to start, exits with a non-zero
+     *   code, produces no output or the file used to store the output can't be
+     *   read.
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
+     * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
+     */
+    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                              @Nullable Path workingDir,
+                                                                                              @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor,
+                                                                                              @NotNull Path envFile) throws IOException {
+      final ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+
+      /*
+       * Add, remove or change the environment variables.
+       */
+      scriptEnvironmentProcessor.accept(builder.environment());
+
       if (workingDir != null) {
         builder.directory(workingDir.toFile());
       }
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
-      Process process = builder.start();
-      StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
+      final Process process = builder.start();
+      final StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
       gobbler.stop();
 
-      String lines = new String(Files.readAllBytes(envFile), StandardCharsets.UTF_8);
+      final String lines = new String(Files.readAllBytes(envFile), StandardCharsets.UTF_8);
       if (exitCode != 0 || lines.isEmpty()) {
         throw new IOException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + gobbler.getText().trim());
       }
