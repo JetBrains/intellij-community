@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.*
@@ -10,10 +10,6 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 class ProgressCoroutineTest : LightPlatformTestCase() {
-
-  private inline fun <reified T : Throwable> assertThrows(noinline action: () -> Unit) {
-    assertThrows(T::class.java, action)
-  }
 
   private fun backgroundActivity(indicator: ProgressIndicator, action: () -> Unit): Future<*> {
     return AppExecutorUtil.getAppExecutorService().submit {
@@ -36,7 +32,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    lock.waitFor()
+    assertTrue(lock.waitFor(2000))
     indicator.cancel()
     future.get(2000, TimeUnit.MILLISECONDS)
   }
@@ -49,11 +45,11 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         lock.up()
         while (true) { // never-ending blocking action
           ProgressManager.checkCanceled()
-          Thread.sleep(500)
+          Thread.sleep(1)
         }
       }
     }
-    lock.waitFor()
+    assertTrue(lock.waitFor(2000))
     withTimeout(2000) {
       job.cancelAndJoin()
     }
@@ -68,7 +64,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
           throw ProcessCanceledException()
         }
       }
-      lock.waitFor()
+      assertTrue(lock.waitFor(2000))
       try {
         deferred.await()
         fail("PCE expected")
