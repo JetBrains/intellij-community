@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr
 
 import com.intellij.ide.IdeBundle
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -22,7 +23,7 @@ import javax.swing.border.CompoundBorder
 import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
 
-class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean) {
+class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean, val useRtfPane: Boolean = true) {
 
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
@@ -57,8 +58,17 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
       override fun createCenterPanel(): JComponent? {
         val centerPanel = JPanel(BorderLayout(0, 0))
-        htmlRtfPane = HtmlRtfPane()
-        viewer = htmlRtfPane?.create(htmlText)
+        if (useRtfPane) {
+          htmlRtfPane = HtmlRtfPane()
+          viewer = htmlRtfPane?.create(htmlText)
+        }
+        else {
+          viewer = JTextPane().apply {
+            contentType = "text/html"
+            text = htmlText
+            addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+          }
+        }
         viewer!!.background = Color.WHITE
         viewer!!.caretPosition = 0
         viewer!!.isEditable = false
@@ -155,8 +165,14 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
   }
 
   fun setText(newHtmlText: String): AgreementUi {
-    val pane = htmlRtfPane?.replaceText(newHtmlText)
-    pane?.caretPosition = 0
+    val htmlRtfPane = htmlRtfPane
+    if (htmlRtfPane != null) {
+      val pane = htmlRtfPane.replaceText(newHtmlText)
+      pane.caretPosition = 0
+    }
+    else {
+      viewer!!.text = newHtmlText
+    }
     return this
   }
 
@@ -222,8 +238,8 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
   }
 
   companion object {
-    fun create(htmlText: String = "", exitOnCancel: Boolean = true): AgreementUi {
-      return AgreementUi(htmlText, exitOnCancel).createDialog()
+    fun create(htmlText: String = "", exitOnCancel: Boolean = true, useRtfPane: Boolean = true): AgreementUi {
+      return AgreementUi(htmlText, exitOnCancel, useRtfPane).createDialog()
     }
   }
 
