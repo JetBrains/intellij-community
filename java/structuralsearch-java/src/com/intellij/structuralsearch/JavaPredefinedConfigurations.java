@@ -51,6 +51,9 @@ final class JavaPredefinedConfigurations {
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.deprecated.method.calls"), "method calls to deprecated methods",
                                 "'_Instance?.'MethodCall:[ref( deprecated methods )]('_Parameter*)",
                                 getExpressionType(), JavaFileType.INSTANCE),
+      createConfiguration(SSRBundle.message("predefined.configuration.pattern.matching.instanceof"), "Pattern matching instanceof",
+                          "$operand$ instanceof $Type$ $var$",
+                          getExpressionType(), JavaFileType.INSTANCE),
 
       // Operators
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.block.dcls"), "block dcls",

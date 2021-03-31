@@ -3494,4 +3494,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find two component records", 2, findMatchesCount(in, "record '_X('_T '_t{2,2}) {}"));
     assertEquals("find all classes including records", 6, findMatchesCount(in, "class '_X {}"));
   }
+
+  public void testPatternMatchingInstanceof() {
+    String in = "class X {" +
+                "  void x(Object o) {" +
+                "    if (o instanceof String) {}" +
+                "    if (o instanceof String s) {}" +
+                "    if (o instanceof String s) {}" +
+                "  }" +
+                "}";
+    assertEquals("find instanceof", 3, findMatchesCount(in, "'_operand instanceof '_Type"));
+    assertEquals("find pattern matching instanceof", 2, findMatchesCount(in, "'_operand instanceof '_Type '_var"));
+    assertEquals("find plain instanceof", 1, findMatchesCount(in, "'_operand instanceof '_Type '_var{0,0}"));
+  }
 }

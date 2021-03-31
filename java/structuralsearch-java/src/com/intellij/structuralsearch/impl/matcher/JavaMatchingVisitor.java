@@ -1577,7 +1577,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class, expression);
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()));
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
+    myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getPattern(), other.getPattern()));
+  }
+
+  @Override
+  public void visitTypeTestPattern(PsiTypeTestPattern pattern) {
+    final PsiTypeTestPattern other = myMatchingVisitor.getElement(PsiTypeTestPattern.class);
+    final PsiPatternVariable variable = pattern.getPatternVariable();
+    myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(variable, other.getPatternVariable()));
   }
 
   @Override
