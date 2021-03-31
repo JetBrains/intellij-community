@@ -20,6 +20,7 @@ public class LombokConfigChangeListener implements BulkFileListener {
       VirtualFile eventFile = event.getFile();
       if (null != eventFile && LombokConfigFileType.INSTANCE.equals(eventFile.getFileType())) {
         CONFIG_CHANGE_COUNTER.incrementAndGet();
+        break;
       }
     }
   }
