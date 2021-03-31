@@ -9,7 +9,7 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.Messages.showInputDialog
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
@@ -80,6 +80,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
 
   private fun getPathFromUser(parent: Component): String? {
     val pathField = TextFieldWithBrowseButton(null, disposable)
+    pathField.textField.columns = Messages.InputDialog.INPUT_DIALOG_COLUMNS
     pathField.addBrowseFolderListener(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title"), null, null,
                                       FileChooserDescriptorFactory.createSingleFolderDescriptor())
     val ok = DialogBuilder(parent)
