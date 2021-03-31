@@ -24,11 +24,15 @@ public class ConfigDiscovery {
     return ApplicationManager.getApplication().getService(ConfigDiscovery.class);
   }
 
+  public @NotNull Collection<String> getMultipleValueLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
+    return getConfigProperty(configKey, psiClass);
+  }
+
   @NotNull
   public String getStringLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
-    @Nullable PsiFile psiFile = calculatePsiFile(psiClass);
-    if (null != psiFile) {
-      return discoverPropertyWithCache(configKey, psiFile);
+    Collection<String> result = getConfigProperty(configKey, psiClass);
+    if (!result.isEmpty()) {
+      return result.iterator().next();
     }
     return configKey.getConfigDefaultValue();
   }
@@ -38,10 +42,11 @@ public class ConfigDiscovery {
     return Boolean.parseBoolean(configProperty);
   }
 
-  public @NotNull Collection<String> getMultipleValueLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
+  @NotNull
+  private Collection<String> getConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
     @Nullable PsiFile psiFile = calculatePsiFile(psiClass);
     if (psiFile != null) {
-      return discoverPropertiesWithCache(configKey, psiFile);
+      return discoverPropertyWithCache(configKey, psiFile);
     }
     return Collections.singletonList(configKey.getConfigDefaultValue());
   }
@@ -56,16 +61,25 @@ public class ConfigDiscovery {
   }
 
   @NotNull
-  protected String discoverPropertyWithCache(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
+  protected Collection<String> discoverPropertyWithCache(@NotNull ConfigKey configKey,
+                                                         @NotNull PsiFile psiFile) {
     return CachedValuesManager.getCachedValue(psiFile, () -> {
-      Map<ConfigKey, String> result =
+      Map<ConfigKey, Collection<String>> result =
         ConcurrentFactoryMap.createMap(configKeyInner -> discoverProperty(configKeyInner, psiFile));
-      return CachedValueProvider.Result.create(result, LombokConfigIndex.CONFIG_CHANGE_TRACKER);
+      return CachedValueProvider.Result.create(result, LombokConfigChangeListener.CONFIG_CHANGE_TRACKER);
     }).get(configKey);
   }
 
   @NotNull
-  protected String discoverProperty(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
+  protected Collection<String> discoverProperty(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
+    if (configKey.isConfigScalarValue()) {
+      return discoverScalarProperty(configKey, psiFile);
+    }
+    return discoverCollectionProperty(configKey, psiFile);
+  }
+
+  @NotNull
+  private Collection<String> discoverScalarProperty(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
     @Nullable VirtualFile currentFile = psiFile.getVirtualFile();
     while (currentFile != null) {
       ConfigValue configValue = readProperty(configKey, psiFile.getProject(), currentFile);
@@ -76,14 +90,14 @@ public class ConfigDiscovery {
           }
         }
         else {
-          return configValue.getValue();
+          return Collections.singletonList(configValue.getValue());
         }
       }
 
       currentFile = currentFile.getParent();
     }
 
-    return configKey.getConfigDefaultValue();
+    return Collections.singletonList(configKey.getConfigDefaultValue());
   }
 
   @VisibleForTesting
@@ -102,15 +116,7 @@ public class ConfigDiscovery {
   }
 
   @NotNull
-  protected Collection<String> discoverPropertiesWithCache(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
-    return CachedValuesManager.getCachedValue(psiFile, () -> {
-      Map<ConfigKey, Collection<String>> result = ConcurrentFactoryMap.createMap(configKeyInner -> discoverProperties(configKeyInner, psiFile));
-      return CachedValueProvider.Result.create(result, LombokConfigIndex.CONFIG_CHANGE_TRACKER);
-    }).get(configKey);
-  }
-
-  @NotNull
-  protected Collection<String> discoverProperties(@NotNull ConfigKey configKey, @NotNull PsiFile file) {
+  private Collection<String> discoverCollectionProperty(@NotNull ConfigKey configKey, @NotNull PsiFile file) {
     List<String> properties = new ArrayList<>();
 
     @Nullable VirtualFile currentFile = file.getVirtualFile();

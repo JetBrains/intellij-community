@@ -51,22 +51,16 @@ public class ConfigDiscoveryTest {
   @Before
   public void setUp() {
     TestApplicationManager.getInstance();
-    discovery = new ConfigDiscovery(){
+    discovery = new ConfigDiscovery() {
       @Override
       protected FileBasedIndex getFileBasedIndex() {
         return fileBasedIndex;
       }
 
       @Override
-      protected @NotNull String discoverPropertyWithCache(@NotNull ConfigKey configKey,
-                                                          @NotNull PsiFile psiFile) {
+      protected @NotNull Collection<String> discoverPropertyWithCache(@NotNull ConfigKey configKey,
+                                                                      @NotNull PsiFile psiFile) {
         return super.discoverProperty(configKey, psiFile);
-      }
-
-      @Override
-      protected @NotNull Collection<String> discoverPropertiesWithCache(@NotNull ConfigKey configKey,
-                                                                  @NotNull PsiFile psiFile) {
-        return super.discoverProperties(configKey, psiFile);
       }
     };
 
