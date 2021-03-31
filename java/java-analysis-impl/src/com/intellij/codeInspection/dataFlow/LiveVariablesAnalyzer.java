@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * @author peter
@@ -128,27 +129,31 @@ public final class LiveVariablesAnalyzer {
 
       DfaVariableValue written = getWrittenVariable(instruction);
       if (written != null) {
-        liveVars = (BitSet)liveVars.clone();
-        liveVars.clear(written.getID());
+        BitSet newVars = (BitSet)liveVars.clone();
+        newVars.clear(written.getID());
         for (DfaVariableValue var : written.getDependentVariables()) {
-          liveVars.clear(var.getID());
+          newVars.clear(var.getID());
         }
+        return newVars;
       } else {
-        boolean cloned = false;
-        StreamEx<DfaVariableValue> possiblyReadVars =
-          getReadVariables(instruction).flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
-        for (DfaVariableValue value : possiblyReadVars) {
-          if (!liveVars.get(value.getID())) {
-            if (!cloned) {
-              liveVars = (BitSet)liveVars.clone();
-              cloned = true;
-            }
-            liveVars.set(value.getID());
-          }
-        }
-      }
+        var processor = new Consumer<DfaVariableValue>() {
+          boolean cloned = false;
+          BitSet newVars = liveVars;
 
-      return liveVars;
+          @Override
+          public void accept(DfaVariableValue value) {
+            if (!newVars.get(value.getID())) {
+              if (!cloned) {
+                newVars = (BitSet)newVars.clone();
+                cloned = true;
+              }
+              newVars.set(value.getID());
+            }
+          }
+        };
+        getReadVariables(instruction).flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct().forEach(processor);
+        return processor.newVars;
+      }
     });
     return ok ? result : null;
   }
