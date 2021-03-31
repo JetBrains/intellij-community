@@ -122,7 +122,7 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
-    <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="false"
+    <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="false" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
