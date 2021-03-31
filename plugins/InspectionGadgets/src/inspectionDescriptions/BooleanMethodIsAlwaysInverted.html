@@ -1,35 +1,36 @@
 <html>
 <body>
 Reports methods with a <code>boolean</code> return type, which are only used in a negated context.
+The quick-fix makes it possible to rename and invert the method.
 Due to performance reasons some methods might not be reported during in-editor highlighting.
 <p>Example:</p>
 <pre>
   class C {
-    boolean alwaysInverted() {
+    boolean alwaysTrue() {
       return true;
     }
 
     void f() {
-      if (!alwaysInverted()) {
+      if (!alwaysTrue()) {
         return;
       }
     }
-    boolean member = !alwaysInverted();
+    boolean member = !alwaysTrue();
   }
 </pre>
-<p>After the quick-fix is applied (the function name can be changed), the result looks like this:</p>
+<p>After the quick-fix is applied, the result looks like this:</p>
 <pre>
   class C {
-    boolean notInvertedAnymore() {
+    boolean alwaysFalse() {
       return false;
     }
 
     void f() {
-      if (notInvertedAnymore()) {
+      if (alwaysFalse()) {
         return;
       }
     }
-    boolean member = notInvertedAnymore();
+    boolean member = alwaysFalse();
   }
 </pre>
 <!-- tooltip end -->

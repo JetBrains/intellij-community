@@ -24,7 +24,7 @@ Reports parameterized tests which have malformed sources:
 <pre>
   class Test {
     private static Stream&lt;Arguments&gt; parameters() {
-        return null;
+        return Stream.empty();
     }
 
     @MethodSource("parameters")
