@@ -549,6 +549,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected void onSearchFieldUpdated(String pattern) {
+    if (StringUtil.isEmpty(pattern)) hidePopup();
   }
 
   protected class SearchField extends ExtendableTextField {
