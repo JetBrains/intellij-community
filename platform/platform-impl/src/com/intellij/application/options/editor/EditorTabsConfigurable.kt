@@ -23,7 +23,6 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
 ), EditorOptionsProvider {
   private lateinit var myEditorTabPlacement: JComboBox<Int>
   private lateinit var myOneRowCheckbox: JCheckBox
-  //private lateinit var myMultipleRowsRadio: JRadioButton
 
   override fun createPanel(): DialogPanel {
     return panel {
