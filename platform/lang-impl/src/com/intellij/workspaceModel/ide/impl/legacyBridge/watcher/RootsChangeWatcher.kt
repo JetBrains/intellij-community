@@ -16,10 +16,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.project.stateStore
@@ -80,18 +77,19 @@ internal class RootsChangeWatcher(val project: Project) {
               val parentUrl = event.parent.url
               val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
               val url = if (protocolEnd != -1) {
-                // For .jar files we should change schema from "file://" to "jar://"
-                if (event.path.endsWith(".jar")) {
-                  URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + event.path + URLUtil.JAR_SEPARATOR
-                }
-                else {
-                  parentUrl.substring(0, protocolEnd) + URLUtil.SCHEME_SEPARATOR + event.path
-                }
+                parentUrl.substring(0, protocolEnd) + URLUtil.SCHEME_SEPARATOR + event.path
               } else {
                 VfsUtilCore.pathToUrl(event.path)
               }
               val virtualFileUrl = virtualFileManager.fromUrl(url)
               calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+              if (url.startsWith(URLUtil.FILE_PROTOCOL) && (event.isDirectory || event.childName.endsWith(".jar"))) {
+                //if a new directory or a new jar file is created, we may have roots pointing to files under it with jar protocol
+                val suffix = if (event.isDirectory) "" else URLUtil.JAR_SEPARATOR
+                val jarFileUrl = URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + VfsUtil.urlToPath(url) + suffix
+                val jarVirtualFileUrl = virtualFileManager.fromUrl(jarFileUrl)
+                calculateRootsChangeTypeIfNeeded(entityStorage, jarVirtualFileUrl, ProjectRootManagerImpl.RootsChangeType.ROOTS_ADDED)
+              }
             }
             is VFileCopyEvent -> calculateRootsChangeTypeIfNeeded(entityStorage,
                                                                   virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(event.path)),
