@@ -314,6 +314,9 @@ private class NativeMacMessageManager : MacMessages() {
       if (ownerWindow != null) {
         info.dialog.setHandler(alertWindow.toLong())
       }
+      else {
+        Foundation.invoke(alertWindow, "setBackgroundColor:", Foundation.invoke(info.menuWindow, "backgroundColor"))
+      }
 
       Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
       Foundation.invoke(alert, "setInformativeText:", Foundation.nsString(info.message))
