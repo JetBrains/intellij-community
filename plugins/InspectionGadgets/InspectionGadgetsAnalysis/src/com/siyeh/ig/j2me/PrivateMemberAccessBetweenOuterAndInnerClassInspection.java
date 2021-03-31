@@ -47,11 +47,6 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
     return "PrivateMemberAccessBetweenOuterAndInnerClass";
   }
 
-  //@Override
-  //public @NotNull String getShortName() {
-  //  return "SyntheticAccessorCall";
-  //}
-
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
