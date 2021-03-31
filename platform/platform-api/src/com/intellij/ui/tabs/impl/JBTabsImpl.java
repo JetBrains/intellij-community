@@ -638,6 +638,9 @@ public class JBTabsImpl extends JComponent
 
   private void updateRowLayout() {
     mySingleRowLayout = createSingleRowLayout();
+    if (getTabsPosition() != JBTabsPosition.top) {
+      mySingleRow = true;
+    }
     boolean useTableLayout = !isSingleRow();
      useTableLayout |= getTabsPosition() == JBTabsPosition.top
                 && supportsTableLayoutAsSingleRow()
