@@ -18,7 +18,6 @@ package com.intellij.psi.formatter.java;
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public class CallChunkBlockBuilder {
                       int relativeIndentSize) {
     final ArrayList<Block> subBlocks = new ArrayList<>();
     final ASTNode firstNode = subNodes.get(0);
-    if (firstNode.getElementType() == JavaTokenType.DOT) {
+    if (JavaFormatterUtil.isStartOfCallChunk(mySettings, firstNode)) {
       AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
       Indent indent = relativeIndentSize > 0 ? Indent.getSpaceIndent(relativeIndentSize) : Indent.getNoneIndent();
       Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, indent, null, strategy, myFormattingMode);

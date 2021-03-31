@@ -167,12 +167,12 @@ class ChainMethodCallsBlockBuilder {
   }
 
   @NotNull
-  private static List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
+  private List<ChainedCallChunk> splitMethodCallOnChunksByDots(@NotNull List<? extends ASTNode> nodes) {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
     for (ASTNode node : nodes) {
-      if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
+      if (JavaFormatterUtil.isStartOfCallChunk(mySettings, node) || node.getPsi() instanceof PsiComment) {
         if (!current.isEmpty()) {
           result.add(new ChainedCallChunk(current));
         }
