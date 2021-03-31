@@ -1,9 +1,11 @@
+# 29
+* Add `splash preparation (in queue)` and `splash initialization (in queue)`.
+
 # 28
 * Add `platform plugin collecting`, `plugin from classpath loading`, `plugin from user dir loading`, `plugin from bundled dir loading`.
 * Add `appStarter set`, `appStarter start-up`, `appStarter about`.
 
 # 27
-
  * `classLoading` changed — `time` includes class define time, `defineTime` and `searchTime` added. `searchTime` it is property that computed for convenience, — not measured but computed as `time - defineTime`. 
  * `resourceLoading` with the same schema as `classLoading` added (except `searchTime`).
 

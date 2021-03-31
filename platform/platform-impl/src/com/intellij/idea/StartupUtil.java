@@ -424,7 +424,9 @@ public final class StartupUtil {
 
           if (!Main.isLightEdit() && !Boolean.getBoolean(CommandLineArgs.NO_SPLASH)) {
             Activity prepareSplashActivity = activity.endAndStart("splash preparation");
+            Activity prepareSplashQueueActivity = prepareSplashActivity.startChild("splash preparation (in queue)");
             EventQueue.invokeLater(() -> {
+              prepareSplashQueueActivity.end();
               Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
               boolean isEulaAccepted;
               try {

@@ -59,7 +59,9 @@ public final class SplashManager {
     assert SPLASH_WINDOW == null;
     Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.APP_INIT);
     SPLASH_WINDOW = new Splash(appInfo);
+    Activity queueActivity = activity.startChild("splash initialization (in queue)");
     EventQueue.invokeLater(() -> {
+      queueActivity.end();
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
       if (splash != null) {
