@@ -122,20 +122,36 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     Point point = new Point(x, y);
     myComponent.validate();
 
-    if (!myForceShowAsPopup && !hintHint.isPopupForced() &&
-        (myForceLightweightPopup ||
-         fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, point), hintHint))) {
-      if (hintHint.isAwtTooltip()) {
-        showAwtTooltip(hintHint);
-      }
-      else {
-        showLayeredPaneTooltip(parentComponent, point, layeredPane);
-      }
+    boolean fitsLayeredPane = fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, point), hintHint);
+
+    HintMode mode;
+    if (myForceShowAsPopup || hintHint.isPopupForced()) {
+      mode = HintMode.REAL_POPUP;
+    }
+    else if (!myForceLightweightPopup && !fitsLayeredPane) {
+      mode = HintMode.REAL_POPUP;
+    }
+    else if (hintHint.isAwtTooltip()) {
+      mode = HintMode.AWT_TOOLTIP;
     }
     else {
-      showRealPopup(point, hintHint);
+      mode = HintMode.LAYERED_PANE;
+    }
+
+    switch (mode) {
+      case AWT_TOOLTIP:
+        showAwtTooltip(hintHint);
+        break;
+      case LAYERED_PANE:
+        showLayeredPaneTooltip(parentComponent, point, layeredPane);
+        break;
+      case REAL_POPUP:
+        showRealPopup(point, hintHint);
+        break;
     }
   }
+
+  private enum HintMode {AWT_TOOLTIP, LAYERED_PANE, REAL_POPUP}
 
   private void showAwtTooltip(@NotNull HintHint hintHint) {
     beforeShow();
