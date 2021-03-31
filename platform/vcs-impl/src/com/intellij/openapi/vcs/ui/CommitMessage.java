@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.CommitMessageI;
@@ -35,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
@@ -42,11 +42,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,7 +64,7 @@ import static javax.swing.BorderFactory.createEmptyBorder;
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageUi, CommitMessageI, LafManagerListener {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
 
-  private final @NotNull LoadingDecorator myLoadingDecorator;
+  private final @NotNull JBLoadingPanel myLoadingPanel;
 
   private final @Nullable @Nls String myMessagePlaceholder;
 
@@ -113,8 +109,10 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField.getDocument().putUserData(DATA_KEY, this);
     myEditorField.setPlaceholder(myMessagePlaceholder);
 
-    myLoadingDecorator = new LoadingDecorator(myEditorField, this, 0);
-    add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 0);
+    myLoadingPanel.add(myEditorField, BorderLayout.CENTER);
+
+    add(myLoadingPanel, BorderLayout.CENTER);
 
     if (withSeparator) {
       mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
@@ -140,7 +138,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Override
   public void stopLoading() {
-    myLoadingDecorator.stopLoading();
+    myLoadingPanel.stopLoading();
     myEditorField.setEnabled(true);
     myEditorField.setPlaceholder(myMessagePlaceholder);
   }
@@ -149,7 +147,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   public void startLoading() {
     myEditorField.setEnabled(false);
     myEditorField.setPlaceholder(null);
-    myLoadingDecorator.startLoading(false);
+    myLoadingPanel.startLoading();
   }
 
   private void updateOnInspectionProfileChanged(@NotNull Project project) {
