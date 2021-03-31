@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
@@ -17,10 +18,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockableContent;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.JBTabsEx;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.update.Activatable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -160,8 +159,8 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     }
 
     Boolean dropInBetweenPinnedTabs = null;
+    Boolean dropInPinnedRow = false;
     if (myCurrentOver != null) {
-
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
@@ -171,12 +170,28 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         else {
           dropInBetweenPinnedTabs = tabInfo != null ? tabInfo.isPinned() : null;
         }
+        if (tabInfo != null && index > 0 ) {
+          Component previousLabel = myCurrentOver.getTabLabel(myCurrentOver.getTabAt(index - 1));
+          Rectangle bounds = previousLabel.getBounds();
+          Point dropPoint = dropTarget.getPoint(previousLabel);
+          dropInPinnedRow =
+            myCurrentOver instanceof JBTabsImpl
+            && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow()
+            && ((JBTabsImpl)myCurrentOver).getTabsPosition() == JBTabsPosition.top
+            && myCurrentOver.getTabAt(index - 1).isPinned()
+            && bounds.y < dropPoint.y && bounds.getMaxY() > dropPoint.y;
+        }
       }
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
       boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
         file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs);
+      }
+      if (dropInPinnedRow) {
+        file.putUserData(EditorWindow.DRAG_START_INDEX_KEY, index + 1);
+        file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, Boolean.TRUE);
+        dropInBetweenPinnedTabs = true;
       }
     }
     recordDragStats(dropIntoNewlyCreatedWindow? -1  : CENTER, sameWindow);

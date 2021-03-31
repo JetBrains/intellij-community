@@ -17,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 public class TableLayout extends TabLayout implements MorePopupAware {
@@ -327,11 +326,18 @@ public class TableLayout extends TabLayout implements MorePopupAware {
     int result = -1;
 
     Component c = myTabs.getComponentAt(point);
+    Set<TabInfo> lastInRow = new HashSet<>();
+    for (int i = 0; i < myLastTableLayout.table.size(); i++) {
+      List<TabInfo> columns = myLastTableLayout.table.get(i).myColumns;
+      lastInRow.add(columns.get(columns.size() - 1));
+    }
 
     if (c instanceof JBTabsImpl) {
       for (int i = 0; i < myLastTableLayout.myVisibleInfos.size() - 1; i++) {
-        TabLabel first = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i));
-        TabLabel second = myTabs.myInfo2Label.get(myLastTableLayout.myVisibleInfos.get(i + 1));
+        TabInfo firstInfo = myLastTableLayout.myVisibleInfos.get(i);
+        TabInfo secondInfo = myLastTableLayout.myVisibleInfos.get(i + 1);
+        TabLabel first = myTabs.myInfo2Label.get(firstInfo);
+        TabLabel second = myTabs.myInfo2Label.get(secondInfo);
 
         Rectangle firstBounds = first.getBounds();
         Rectangle secondBounds = second.getBounds();
@@ -343,6 +349,13 @@ public class TableLayout extends TabLayout implements MorePopupAware {
 
         if (between) {
           c = first;
+          break;
+        }
+        if (lastInRow.contains(firstInfo)
+            && firstBounds.y <= point.y
+            && firstBounds.getMaxY() >= point.y
+            && firstBounds.getMaxX() <= point.x) {
+          c = second;
           break;
         }
       }
