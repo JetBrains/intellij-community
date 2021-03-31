@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -115,12 +116,18 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   private boolean isNewExpression(PsiExpression initializer) {
-    return initializer != null && ExpressionUtils.nonStructuralChildren(initializer).allMatch(
+    if (initializer == null) return false;
+    return ExpressionUtils.nonStructuralChildren(initializer).allMatch(
       expr -> {
         if (expr instanceof PsiNewExpression ||
             expr instanceof PsiMethodCallExpression &&
             ContractReturnValue.returnNew().equals(JavaMethodContractUtil.getNonFailingReturnValue(
               JavaMethodContractUtil.getMethodCallContracts((PsiMethodCallExpression)expr)))) {
+          PsiMethod method = ((PsiCallExpression)expr).resolveMethod();
+          if (method != null && Mutability.getMutability(method).isUnmodifiable()) {
+            // Probably we are expecting some exception when calling the modification method
+            return false;
+          }
           if (ignoreImpureConstructors) {
             return MutationSignature.fromCall((PsiCallExpression)expr).isPure();
           }

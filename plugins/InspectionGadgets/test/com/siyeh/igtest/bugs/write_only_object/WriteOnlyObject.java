@@ -1,3 +1,5 @@
+import java.util.*;
+
 public class WriteOnlyObject {
   void testRef() {
     Ref<String> <warning descr="Write-only object">ref</warning> = new Ref<>();
@@ -23,6 +25,22 @@ public class WriteOnlyObject {
     MyBuilder <warning descr="Write-only object">builder</warning> = new MyBuilder();
     builder.firstName("John").lastName("Doe");
     new <warning descr="Write-only object">MyBuilder</warning>().firstName("John").lastName("Doe");
+  }
+
+  void testUnmodifiable() {
+    getList().add("1");
+  }
+
+  void testModifiable() {
+    <warning descr="Write-only object">getList2</warning>().add("1");
+  }
+
+  private List<String> getList() {
+    return Collections.emptyList();
+  }
+
+  private List<String> getList2() {
+    return new ArrayList<>();
   }
 }
 final class Ref<T> {
