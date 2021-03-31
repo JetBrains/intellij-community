@@ -5,7 +5,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -17,8 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isTrait
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
-import org.jetbrains.plugins.groovy.lang.resolve.api.ExplicitRuntimeTypeArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.ExpectedType
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.TypeConstraint
@@ -94,7 +92,7 @@ internal fun processSAMConversion(targetType: PsiType,
   val (sam, classResolveResult) = pair
 
   val groundClass = classResolveResult.element ?: return constraints
-  val groundType = groundTypeForClosure(sam, groundClass, closureType, targetType, context)
+  val groundType = groundTypeForClosure(sam, groundClass, closureType, classResolveResult.substitutor, context)
 
   if (groundType != null) {
     constraints.add(TypeConstraint(targetType, groundType, context))
@@ -119,7 +117,7 @@ private fun returnTypeConstraint(samReturnType: PsiType?,
 private fun groundTypeForClosure(sam: PsiMethod,
                                  groundClass: PsiClass,
                                  closureType: GroovyClosureType,
-                                 targetType: PsiType,
+                                 resultTypeSubstitutor : PsiSubstitutor,
                                  context: PsiElement): PsiClassType? {
   if (!Registry.`is`("groovy.use.explicitly.typed.closure.in.inference", true)) return null
 
@@ -141,9 +139,10 @@ private fun groundTypeForClosure(sam: PsiMethod,
 
   val samSession = GroovyInferenceSession(typeParameters, PsiSubstitutor.EMPTY, context, false)
   argumentMapping.expectedTypes.forEach { (expectedType, argument) ->
-    val leftType = samSession.substituteWithInferenceVariables(groundClassSubstitutor.substitute(expectedType))
+    val adjustedExpectedType = adjustUntypedParameter(argument, argumentMapping.targetParameter(argument), resultTypeSubstitutor) ?: expectedType
+    val leftType = samSession.substituteWithInferenceVariables(groundClassSubstitutor.substitute(adjustedExpectedType))
     samSession.addConstraint(
-      TypePositionConstraint(ExpectedType(leftType, GrTypeConverter.Position.METHOD_PARAMETER), argument.type, context))
+      TypePositionConstraint(ExpectedType(leftType, GrTypeConverter.Position.METHOD_PARAMETER), samSession.substituteWithInferenceVariables(argument.type), context))
   }
 
   val returnTypeConstraint = returnTypeConstraint(sam.returnType, closureType.returnType(arguments), context)
@@ -152,28 +151,17 @@ private fun groundTypeForClosure(sam: PsiMethod,
   if (!samSession.repeatInferencePhases()) {
     return null
   }
-  val resultSubstitutor = relaxUnboundTypeParameters(samSession.result(), samSession, targetType)
+  val resultSubstitutor = samSession.result()
 
   val elementFactory = JavaPsiFacade.getElementFactory(context.project)
   return elementFactory.createType(groundClass, resultSubstitutor)
 }
 
-fun relaxUnboundTypeParameters(substitutor: PsiSubstitutor,
-                               samSession: GroovyInferenceSession,
-                               targetType : PsiType) : PsiSubstitutor {
-  // Untyped parameters of functional expressions may turn into any type, not just Object.
-  // In that case, we just replace unknown type parameter with the type we are expected to compare with
-  val targetTypeSubstitutor = (targetType as? PsiClassType)?.resolveGenerics() ?: return substitutor
-  val map = mutableMapOf<PsiTypeParameter, PsiType?>()
-  for (inferenceVariable in samSession.inferenceVariables) {
-    val typeParameter = inferenceVariable.delegate
-    if (inferenceVariable.getBounds(InferenceBound.LOWER).isNullOrEmpty() &&
-        inferenceVariable.getBounds(InferenceBound.EQ).isNullOrEmpty() &&
-        inferenceVariable.getBounds(InferenceBound.UPPER).size == 1) {
-      map[typeParameter] = targetTypeSubstitutor.substitutor.substitute(typeParameter) ?: substitutor.substitute(typeParameter)
-    } else {
-      map[typeParameter] = substitutor.substitute(typeParameter)
-    }
+private fun adjustUntypedParameter(argument : Argument, parameter : CallParameter?, resultTypeSubstitutor: PsiSubstitutor) : PsiType? {
+  val psi = (parameter as? PsiCallParameter)?.psi?.takeIf { it.typeElement == null } ?: return null
+  return if (psi.typeElement == null) {
+    resultTypeSubstitutor.substitute(argument.type)
+  } else {
+    null
   }
-  return PsiSubstitutor.createSubstitutor(map)
 }
