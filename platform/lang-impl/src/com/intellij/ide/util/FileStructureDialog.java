@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -33,8 +33,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.docking.DockManager;
@@ -471,18 +469,7 @@ public class FileStructureDialog extends DialogWrapper {
     }
   }
 
-  private static SpeedSearchComparator createSpeedSearchComparator() {
-    return new SpeedSearchComparator(false) {
-      @NotNull
-      @Override
-      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return createFileStructureMatcher(pattern);
-      }
-    };
-  }
-
-  @NotNull
-  public static MinusculeMatcher createFileStructureMatcher(@NotNull String pattern) {
-    return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
+  public static @NotNull SpeedSearchComparator createSpeedSearchComparator() {
+    return new SpeedSearchComparator(false, false, " ()");
   }
 }

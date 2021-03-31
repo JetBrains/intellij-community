@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -50,8 +50,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -246,13 +244,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     mySpeedSearch = new MyTreeSpeedSearch();
-    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true) {
-      @NotNull
-      @Override
-      protected MinusculeMatcher createMatcher(@NotNull String pattern) {
-        return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
-      }
-    });
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, true, " ()"));
 
     myTreeExpander = new DefaultTreeExpander(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree);
