@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Roman.Chernyatchik
@@ -66,13 +67,13 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
-    final long startMs = System.currentTimeMillis();
+    final long startNs = System.nanoTime();
     final ProjectData projectData = suite.getCoverageData();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
     final File tempFile = FileUtil.createTempFile("temp", "");
     tempFile.deleteOnExit();
     new SaveHook(tempFile, true, new IdeaClassFinder(project, suite), ReportFormat.BINARY).save(projectData);
-    final long generationStartMs = System.currentTimeMillis();
+    final long generationStartNs = System.nanoTime();
     final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
     builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
     final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
@@ -106,10 +107,10 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
         return classes;
       }
     });
-    final long endMs = System.currentTimeMillis();
-    final long timeMs = endMs - startMs;
-    final long generationTimeMs = endMs - generationStartMs;
-    CoverageLogger.logHTMLReport(timeMs, generationTimeMs);
+    final long endNs = System.nanoTime();
+    final long timeMs = TimeUnit.NANOSECONDS.toMillis(endNs - startNs);
+    final long generationTimeMs = TimeUnit.NANOSECONDS.toMillis(endNs - generationStartNs);
+    CoverageLogger.logHTMLReport(project, timeMs, generationTimeMs);
   }
 
   @Nullable

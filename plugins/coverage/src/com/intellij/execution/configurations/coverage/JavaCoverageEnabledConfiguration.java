@@ -85,9 +85,9 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
         final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
         final String[] patterns = getPatterns();
         final String[] excludePatterns = getExcludePatterns();
-        CoverageLogger.logRunner(javaCoverageRunner, isSampling(), isTrackPerTestCoverage());
-        CoverageLogger.logPatterns(patterns == null ? 0 : patterns.length,
-                                   excludePatterns == null ? 0 : excludePatterns.length);
+        CoverageLogger.logStarted(javaCoverageRunner, isSampling(), isTrackPerTestCoverage(),
+                                  patterns == null ? 0 : patterns.length,
+                                  excludePatterns == null ? 0 : excludePatterns.length);
         javaCoverageRunner.appendCoverageArgument(new File(path).getCanonicalPath(),
                                                   patterns,
                                                   excludePatterns,

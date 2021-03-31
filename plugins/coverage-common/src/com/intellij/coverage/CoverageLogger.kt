@@ -4,6 +4,7 @@ package com.intellij.coverage
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 
 enum class RunnerType {
   IJCSampling, IJCTracing, IJCTracingTestTracking, JaCoCo, Emma
@@ -11,17 +12,21 @@ enum class RunnerType {
 
 class CoverageLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("coverage.idea", 1)
+    private val GROUP = EventLogGroup("coverage", 1)
 
     private val RUNNER_NAME = EventFields.String("runner", listOf("emma", "jacoco", "idea"))
 
-    private val RUNNER = GROUP.registerEvent("runner", EventFields.Enum("runner", RunnerType::class.java))
-    private val PATTERNS = GROUP.registerEvent("patterns", EventFields.Int("includes"), EventFields.Int("excludes"))
-    private val REPORT_LOADING = GROUP.registerEvent("report_loading", RUNNER_NAME, EventFields.DurationMs)
-    private val HTML = GROUP.registerEvent("html", EventFields.DurationMs, EventFields.Long("generation_ms"))
+    private val START = GROUP.registerEvent("started", EventFields.Enum("runner", RunnerType::class.java),
+                                            EventFields.Int("includes"), EventFields.Int("excludes"))
+    private val REPORT_LOADING = GROUP.registerEvent("report.loaded", RUNNER_NAME, EventFields.DurationMs)
+    private val HTML = GROUP.registerEvent("html.generated", EventFields.DurationMs, EventFields.Long("generation_ms"))
 
     @JvmStatic
-    fun logRunner(coverageRunner: CoverageRunner, isSampling: Boolean, isTrackRepTestEnabled: Boolean) {
+    fun logStarted(coverageRunner: CoverageRunner,
+                   isSampling: Boolean,
+                   isTrackRepTestEnabled: Boolean,
+                   includePatterns: Int,
+                   excludePatterns: Int) {
       val type = when (coverageRunner.id) {
         "emma" -> RunnerType.Emma
         "jacoco" -> RunnerType.JaCoCo
@@ -32,17 +37,15 @@ class CoverageLogger : CounterUsagesCollector() {
         }
         else -> return
       }
-      RUNNER.log(type)
+      START.log(type, includePatterns, excludePatterns)
     }
 
     @JvmStatic
-    fun logPatterns(includePatterns: Int, excludePatterns: Int) = PATTERNS.log(includePatterns, excludePatterns)
+    fun logReportLoading(project: Project, coverageRunner: CoverageRunner, timeMs: Long) =
+      REPORT_LOADING.log(project, coverageRunner.id, timeMs)
 
     @JvmStatic
-    fun logReportLoading(coverageRunner: CoverageRunner, timeMs: Long) = REPORT_LOADING.log(coverageRunner.id, timeMs)
-
-    @JvmStatic
-    fun logHTMLReport(timeMs: Long, generationTimeMs: Long) = HTML.log(timeMs, generationTimeMs)
+    fun logHTMLReport(project: Project, timeMs: Long, generationTimeMs: Long) = HTML.log(project, timeMs, generationTimeMs)
   }
 
   override fun getGroup() = GROUP
