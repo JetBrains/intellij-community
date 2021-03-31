@@ -108,14 +108,8 @@
         <reference ref="ProblemsView.SortByName"/>
       </group>
       <reference ref="ProblemsView.ShowPreview"/>
-      <action id="ProblemsView.ExpandAll"
-              icon="AllIcons.Actions.Expandall"
-              use-shortcut-of="ExpandAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeExpandAllAction"/>
-      <action id="ProblemsView.CollapseAll"
-              icon="AllIcons.Actions.Collapseall"
-              use-shortcut-of="CollapseAll"
-              class="com.intellij.analysis.problemsView.toolWindow.TreeCollapseAllAction"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
