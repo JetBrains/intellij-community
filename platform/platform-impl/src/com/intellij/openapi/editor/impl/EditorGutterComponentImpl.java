@@ -1759,7 +1759,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       TooltipRenderer tr =
         ((EditorMarkupModel)myEditor.getMarkupModel()).getErrorStripTooltipRendererProvider().calcTooltipRenderer(toolTip);
       HintHint hint =
-        new HintHint(this, location).setAwtTooltip(true).setPreferredPosition(relativePosition).setRequestFocus(ScreenReader.isActive());
+        new HintHint(this, location)
+          .setAwtTooltip(true)
+          .setPreferredPosition(relativePosition)
+          .setRequestFocus(ScreenReader.isActive());
       if (myEditor.getComponent().getRootPane() != null) {
         controller.showTooltipByMouseMove(myEditor, showPoint, tr, false, GUTTER_TOOLTIP_GROUP, hint);
       }

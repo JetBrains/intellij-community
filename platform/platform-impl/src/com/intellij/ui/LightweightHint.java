@@ -122,20 +122,19 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     Point point = new Point(x, y);
     myComponent.validate();
 
-    boolean fitsLayeredPane = fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, point), hintHint);
-
     HintMode mode;
     if (myForceShowAsPopup || hintHint.isPopupForced()) {
-      mode = HintMode.REAL_POPUP;
-    }
-    else if (!myForceLightweightPopup && !fitsLayeredPane) {
       mode = HintMode.REAL_POPUP;
     }
     else if (hintHint.isAwtTooltip()) {
       mode = HintMode.AWT_TOOLTIP;
     }
-    else {
+    else if (myForceLightweightPopup) {
       mode = HintMode.LAYERED_PANE;
+    }
+    else {
+      boolean fitsLayeredPane = fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, point), hintHint);
+      mode = fitsLayeredPane ? HintMode.LAYERED_PANE : HintMode.REAL_POPUP;
     }
 
     switch (mode) {

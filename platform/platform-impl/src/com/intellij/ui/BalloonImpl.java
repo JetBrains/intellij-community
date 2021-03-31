@@ -1178,7 +1178,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                          : new Point(point.x - preferredSize.width / 2, point.y - preferredSize.height / 2);
         bounds = new Rectangle(location.x, location.y, preferredSize.width, preferredSize.height);
 
-        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets);
+        ScreenUtil.moveToFit(bounds, new Rectangle(0, 0, layeredPaneSize.width, layeredPaneSize.height), balloon.myContainerInsets, true);
       }
 
       return bounds;
