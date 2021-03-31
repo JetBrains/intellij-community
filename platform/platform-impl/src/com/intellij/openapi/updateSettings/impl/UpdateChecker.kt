@@ -379,7 +379,7 @@ object UpdateChecker {
   }
 
   private fun prepareDownloader(state: InstalledPluginsState,
-                                descriptor: IdeaPluginDescriptor,
+                                descriptor: PluginNode,
                                 buildNumber: BuildNumber?,
                                 toUpdate: MutableMap<PluginId, PluginDownloader>,
                                 toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,
