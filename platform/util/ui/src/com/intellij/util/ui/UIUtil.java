@@ -63,6 +63,7 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -3442,6 +3443,16 @@ public final class UIUtil {
         runnable.run();
       }
     };
+  }
+
+  public static void runWhenChanged(@NotNull Component component, @NotNull String property, @NotNull Runnable runnable) {
+    component.addPropertyChangeListener(property, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        component.removePropertyChangeListener(property, this);
+        runnable.run();
+      }
+    });
   }
 
   public static Font getLabelFont() {
