@@ -495,6 +495,8 @@ public final class PerformanceWatcher implements Disposable {
         //TODO always true for some reason
         //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
         getPublisher().uiFreezeStarted();
+        FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> p.start(new File(myLogDir, myFreezeFolder)));
+
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
           protected void dumpedThreads(ThreadInfo[] infos) {

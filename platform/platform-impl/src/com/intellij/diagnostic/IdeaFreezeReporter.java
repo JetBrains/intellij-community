@@ -90,6 +90,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                 else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
                   dumps.add(text);
                 }
+                FreezeProfiler.EP_NAME.extensions()
+                  .map(l -> l.createAttachment(file))
+                  .filter(Objects::nonNull)
+                  .forEach(attachments::add);
               }
 
               addDumpsAttachments(dumps, Function.identity(), attachments);
@@ -196,6 +200,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
     myDumpTask.stop();
 
+    List<Attachment> extraAttachments = new ArrayList<>();
+    FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.stop(reportDir)));
+
     cleanup(reportDir);
 
     if (Registry.is("freeze.reporter.enabled")) {
@@ -209,6 +216,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
         List<Attachment> attachments = new ArrayList<>();
         addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
+        attachments.addAll(extraAttachments);
 
         report(createEvent(lengthInSeconds, attachments, myDumpTask, reportDir, true));
       }
