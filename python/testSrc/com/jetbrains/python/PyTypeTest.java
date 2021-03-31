@@ -3793,7 +3793,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("Optional[int]",
+        doTest("int | None",
                "from typing import TypedDict\n" +
                "class A(TypedDict, total=False):\n" +
                "    x: int\n" +
@@ -3823,7 +3823,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("Union[int, str]",
+        doTest("int | str",
                "from typing import TypedDict\n" +
                "class A(TypedDict, total=False):\n" +
                "    x: int\n" +

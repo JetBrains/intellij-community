@@ -17,7 +17,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-6702
   public void testYieldFromType() {
-    doTest("Union[str, int, float]",
+    doTest("str | int | float",
            "def subgen():\n" +
            "    for i in [1, 2, 3]:\n" +
            "        yield i\n" +
@@ -75,7 +75,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromHeterogeneousTuple() {
-    doTest("Union[int, str]",
+    doTest("int | str",
            "import typing\n" +
            "def get_tuple() -> typing.Tuple[int, int, str]:\n" +
            "    pass\n" +
@@ -440,7 +440,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20757
   public void testMinElseNone() {
-    doTest("Optional[Any]",
+    doTest("Any | None",
            "def get_value(v):\n" +
            "    if v:\n" +
            "        return min(v)\n" +
@@ -473,7 +473,7 @@ public class Py3TypeTest extends PyTestCase {
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("Union[D1, D2]",
+    doTest("D1 | D2",
            "class D1(object):\n" +
            "    pass\n" +
            "class D2(object):\n" +
@@ -540,7 +540,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-22513
   public void testGenericKwargs() {
-    doTest("dict[str, Union[int, str]]",
+    doTest("dict[str, int | str]",
            "from typing import Any, Dict, TypeVar\n" +
            "\n" +
            "T = TypeVar('T')\n" +

@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -736,6 +737,45 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  private static Ref<PyType> getTypeFromBitwiseOrOperator(@NotNull PyBinaryExpression expression, @NotNull Context context) {
+    if (expression.getOperator() != PyTokenTypes.OR) return null;
+    PyExpression left = expression.getLeftExpression();
+    PyExpression right = expression.getRightExpression();
+    if (left != null && right != null) {
+      Ref<PyType> leftType = getType(left, context);
+      Ref<PyType> rightType = getType(right, context);
+      PyType union = null;
+      if (leftType != null && rightType != null) {
+        union = PyUnionType.union(leftType.get(), rightType.get());
+      }
+      else if (leftType != null) {
+        union = leftType.get();
+      }
+      else if (rightType != null) {
+        union = rightType.get();
+      }
+      return union != null ? Ref.create(union) : null;
+    }
+    return null;
+  }
+
+  public static boolean isBitwiseOrUnionAvailable(@NotNull TypeEvalContext context) {
+    final PsiFile originFile = context.getOrigin();
+    return originFile == null || isBitwiseOrUnionAvailable(originFile);
+  }
+
+  public static boolean isBitwiseOrUnionAvailable(@NotNull PsiElement element) {
+    if (LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON310)) return true;
+
+    PsiFile file = element.getContainingFile();
+    if (file instanceof PyFile && ((PyFile)file).hasImportFromFuture(FutureFeature.ANNOTATIONS)) {
+      return file == element || PsiTreeUtil.getParentOfType(element, PyAnnotation.class, false, ScopeOwner.class) != null;
+    }
+
+    return false;
+  }
+
+  @Nullable
   private static Ref<PyType> getTypeForResolvedElement(@Nullable PyTargetExpression alias,
                                                        @NotNull PsiElement resolved,
                                                        @NotNull Context context) {
@@ -747,6 +787,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       context.getExpressionCache().add(alias);
     }
     try {
+      final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
+      if (typeFromParenthesizedExpression != null) {
+        return typeFromParenthesizedExpression;
+      }
       final PyType unionType = getUnionType(resolved, context);
       if (unionType != null) {
         return Ref.create(unionType);
@@ -816,6 +860,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (classType != null) {
         return classType;
       }
+      final Ref<PyType> unionTypeFromBinaryOr = getTypeFromBinaryExpression(resolved, context);
+      if (unionTypeFromBinaryOr != null) {
+        return unionTypeFromBinaryOr;
+      }
       return null;
     }
     finally {
@@ -823,6 +871,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         context.getExpressionCache().remove(alias);
       }
     }
+  }
+
+  @Nullable
+  private static Ref<PyType> getTypeFromBinaryExpression(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyBinaryExpression) {
+      return getTypeFromBitwiseOrOperator((PyBinaryExpression)resolved, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getTypeFromParenthesizedExpression(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyParenthesizedExpression) {
+      final PyExpression containedExpression = PyPsiUtils.flattenParens((PyExpression)resolved);
+      return containedExpression != null ? getType(containedExpression, context) : null;
+    }
+    return null;
   }
 
   @Nullable
