@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -666,7 +668,13 @@ public class WSLDistribution {
     String markerText = prefixText + LineSeparator.LF.getSeparatorString();
     int index = stdout.indexOf(markerText);
     if (index < 0) {
-      LOG.error("Cannot find '" + prefixText + "' in stdout");
+      Application application = ApplicationManager.getApplication();
+      if (application == null || application.isInternal() || application.isUnitTestMode()) {
+        LOG.error("Cannot find '" + prefixText + "' in stdout: " + output);
+      }
+      else {
+        LOG.info("Cannot find '" + prefixText + "' in stdout");
+      }
       return output;
     }
     return new ProcessOutput(stdout.substring(index + markerText.length()),
