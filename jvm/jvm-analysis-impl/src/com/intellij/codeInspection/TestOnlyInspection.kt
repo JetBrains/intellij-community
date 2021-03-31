@@ -26,13 +26,13 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitMethod(node: UMethod): Boolean {
       super.visitMethod(node)
       checkDoubleAnnotation(node)
-      return false
+      return true
     }
 
     override fun visitField(node: UField): Boolean {
       super.visitField(node)
       checkDoubleAnnotation(node)
-      return false
+      return true
     }
 
     private fun checkDoubleAnnotation(elem: UDeclaration) {
