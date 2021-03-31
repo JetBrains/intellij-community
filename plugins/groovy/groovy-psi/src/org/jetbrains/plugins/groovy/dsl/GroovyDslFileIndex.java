@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -265,6 +266,9 @@ public final class GroovyDslFileIndex {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
     for (VirtualFile vfile : FileTypeIndex.getFiles(GdslFileType.INSTANCE, scope)) {
+      if (FileTypeRegistry.getInstance().getFileTypeByFileName(vfile.getNameSequence()) != GdslFileType.INSTANCE) {
+        continue;
+      }
       if (!vfile.isValid()) {
         continue;
       }
