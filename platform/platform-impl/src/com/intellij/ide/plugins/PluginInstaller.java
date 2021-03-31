@@ -72,7 +72,7 @@ public final class PluginInstaller {
           LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
-          boolean needRestart = !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
+          boolean needRestart = pluginDescriptor.isEnabled() && !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
           if (needRestart) {
             uninstallAfterRestart(pluginDescriptor.getPluginPath());
           }
@@ -92,13 +92,16 @@ public final class PluginInstaller {
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                boolean isUpdate) {
-    DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
-      .withUpdate(isUpdate)
-      .withWaitForClassloaderUnload(true);
+    boolean uninstalledWithoutRestart = true;
+    if (pluginDescriptor.isEnabled()) {
+      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
+        .withUpdate(isUpdate)
+        .withWaitForClassloaderUnload(true);
 
-    boolean uninstalledWithoutRestart = parentComponent != null ?
-                                        DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
-                                        DynamicPlugins.unloadPlugin(pluginDescriptor, options);
+      uninstalledWithoutRestart = parentComponent != null ?
+                                  DynamicPlugins.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+                                  DynamicPlugins.unloadPlugin(pluginDescriptor, options);
+    }
 
     Path pluginPath = pluginDescriptor.getPluginPath();
     if (uninstalledWithoutRestart) {
