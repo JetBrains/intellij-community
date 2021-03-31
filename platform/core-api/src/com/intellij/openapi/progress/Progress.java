@@ -20,5 +20,9 @@ public interface Progress {
    *
    * @throws CancellationException if this progress has been canceled, i.e. {@link #isCancelled()} returns true.
    */
-  void checkCancelled() throws CancellationException;
+  default void checkCancelled() throws CancellationException {
+    if (isCancelled()) {
+      throw new CancellationException();
+    }
+  }
 }
