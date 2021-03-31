@@ -156,7 +156,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * which will be the same for all elements in the specified file.
    * When this method returns false, {@link #buildVisitor()} will not be called.
    */
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return true;
   }
 

@@ -57,7 +57,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
   @Deprecated
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
-    this(project, LanguageUtil.getFileTypeLanguage(fileType), true, parent);
+    this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }
 
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable Language language, @NotNull Disposable parent) {

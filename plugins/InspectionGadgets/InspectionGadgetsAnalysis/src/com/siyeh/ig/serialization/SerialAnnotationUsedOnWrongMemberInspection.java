@@ -23,7 +23,7 @@ public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection 
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return PsiUtil.isLanguageLevel14OrHigher(file);
   }
 

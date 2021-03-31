@@ -85,7 +85,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !onlyReportSwitchExpressions || HighlightingFeature.ENHANCED_SWITCH.isAvailable(file);
   }
 

@@ -40,7 +40,7 @@ public class SamePackageImportInspection extends BaseInspection implements Clean
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return !FileTypeUtils.isInServerPageFile(file);
   }
 

@@ -35,7 +35,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     return HighlightingFeature.RECORDS.isAvailable(file);
   }
 

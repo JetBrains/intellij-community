@@ -40,7 +40,7 @@ public class SystemRunFinalizersOnExitInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
+  public boolean shouldInspect(@NotNull PsiFile file) {
     // The method was removed in JDK 11
     return PsiUtil.getLanguageLevel(file).isLessThan(LanguageLevel.JDK_11);
   }
