@@ -206,6 +206,7 @@ public final class CaptureAgent {
     private final List<? extends InstrumentPoint> myInstrumentPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
+    private boolean myIsInterface;
 
     CaptureInstrumentor(int api, ClassVisitor cv, List<? extends InstrumentPoint> instrumentPoints) {
       super(api, cv);
@@ -223,6 +224,7 @@ public final class CaptureAgent {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
       mySuperName = superName;
+      myIsInterface = (access & Opcodes.ACC_INTERFACE) != 0;
       super.visit(version, access, name, signature, superName, interfaces);
     }
 
@@ -313,7 +315,7 @@ public final class CaptureAgent {
       }
       // original call
       mv.visitMethodInsn(isStatic ? Opcodes.INVOKESTATIC : Opcodes.INVOKESPECIAL,
-                         insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, false);
+                         insertPoint.myClassName, getNewName(insertPoint.myMethodName), desc, myIsInterface);
 
       Label end = new Label();
       mv.visitLabel(end);
