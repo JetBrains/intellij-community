@@ -23,7 +23,6 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.XCoroutineView
@@ -40,7 +39,7 @@ class DebuggerConnection(
     private val log by logger
 
     init {
-        if (configuration !is MavenRunConfiguration && params is JavaParameters && modifyArgs) {
+        if (params is JavaParameters && modifyArgs) {
             // gradle related logic in KotlinGradleCoroutineDebugProjectResolver
             coroutineAgentAttached = CoroutineAgentConnector.attachCoroutineAgent(project, params)
         } else {

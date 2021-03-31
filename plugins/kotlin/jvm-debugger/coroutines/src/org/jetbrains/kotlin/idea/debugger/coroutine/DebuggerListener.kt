@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.DebuggingRunnerData
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManagerListener
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
@@ -31,16 +30,26 @@ class CoroutineDebuggerListener(val project: Project) : DebuggerListener {
         params: JavaParameters?,
         runnerSettings: RunnerSettings?
     ): DebuggerConnection? {
-        val isExternalSystemRunConfiguration = configuration is ExternalSystemRunConfiguration
-        val isGradleConfiguration = gradleConfiguration(configuration.type.id)
         val disableCoroutineAgent = KotlinDebuggerSettings.getInstance().debugDisableCoroutineAgent
         if (!disableCoroutineAgent && runnerSettings is DebuggingRunnerData) {
-            val modifyArgs = !(isExternalSystemRunConfiguration && isGradleConfiguration)
-            return DebuggerConnection(project, configuration, params, modifyArgs)
+            return DebuggerConnection(
+                project,
+                configuration,
+                params,
+                argumentsShouldBeModified(configuration)
+            )
         }
         return null
     }
 
-    private fun gradleConfiguration(configurationName: String) =
-        "GradleRunConfiguration" == configurationName || "KotlinGradleRunConfiguration" == configurationName
+    private fun RunConfigurationBase<*>.isGradleConfiguration(): Boolean {
+        val name = type.id
+        return name == "GradleRunConfiguration" || name == "KotlinGradleRunConfiguration"
+    }
+
+    private fun RunConfigurationBase<*>.isMavenConfiguration() =
+        type.id == "MavenRunConfiguration"
+
+    private fun argumentsShouldBeModified(configuration: RunConfigurationBase<*>) =
+        !configuration.isGradleConfiguration() && !configuration.isMavenConfiguration()
 }
