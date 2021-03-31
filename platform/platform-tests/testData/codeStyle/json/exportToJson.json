@@ -3,6 +3,7 @@
   "version": "1.0",
   "codeStyle": {
     "all": {
+      "continuation_indent_size": 8,
       "formatter_off_tag": "@formatter:off",
       "formatter_on_tag": "@formatter:on",
       "formatter_tags_accept_regexp": false,
