@@ -84,7 +84,7 @@ final class MacDmgBuilder {
       FileUtil.delete(fullPath)
       String fileName = fullPath.fileName.toString()
       sshExec("$remoteDir/signbin.sh \"$fileName\" ${macHostProperties.userName}" +
-              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\"", "signbin.log")
+              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\"", "signbin-${fileName}.log")
 
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: signedFilesDir.toString()) {
@@ -244,7 +244,7 @@ final class MacDmgBuilder {
       }
     }
 
-    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg.log")
+    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg-${targetFileName}.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "**/${targetFileName}.dmg")
@@ -308,7 +308,7 @@ final class MacDmgBuilder {
         }
       }
 
-      sshExec("$env$remoteDir/signapp.sh ${args.join(" ")}", "signapp.log")
+      sshExec("$env$remoteDir/signapp.sh ${args.join(" ")}", "signapp-${targetFile.name}.log")
 
       buildContext.messages.progress("Downloading signed ${targetFile.name} from ${macHostProperties.host}")
       ant.delete(file: targetFile.path)
