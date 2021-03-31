@@ -70,6 +70,13 @@ public final class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotati
   }
 
   @Override
+  public boolean hasQualifiedName(@NotNull String qualifiedName) {
+    String text = getStub().getText();
+    return text.startsWith(qualifiedName, 1) &&
+           (text.length() == qualifiedName.length() + 1 || text.charAt(qualifiedName.length() + 1) == '(');
+  }
+
+  @Override
   public @NotNull String getQualifiedName() {
     return myReferenceElement.getValue().getCanonicalText();
   }
