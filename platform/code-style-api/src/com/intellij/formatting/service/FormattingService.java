@@ -19,5 +19,5 @@ public interface FormattingService {
 
   PsiElement formatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhiteSpaceOnly);
 
-  void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo);
+  void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly);
 }

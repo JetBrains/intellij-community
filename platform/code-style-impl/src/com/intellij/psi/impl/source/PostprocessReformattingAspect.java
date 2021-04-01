@@ -34,12 +34,10 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.util.Function;
@@ -689,18 +687,6 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myDisabledCounter > 0;
   }
 
-  @NotNull
-  private CodeFormatterFacade getFormatterFacade(@NotNull FileViewProvider viewProvider) {
-    CodeStyleSettings styleSettings = CodeStyle.getSettings(viewProvider.getPsi(viewProvider.getBaseLanguage()));
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    Document document = viewProvider.getDocument();
-    assert document != null;
-    CodeFormatterFacade codeFormatter = new CodeFormatterFacade(styleSettings, viewProvider.getBaseLanguage());
-
-    documentManager.commitDocument(document);
-    return codeFormatter;
-  }
-
   private abstract static class PostprocessFormattingTask implements Comparable<PostprocessFormattingTask>, Segment, Disposable {
     @NotNull private final RangeMarker myRange;
 
@@ -785,16 +771,25 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     @Override
     public void execute(@NotNull FileViewProvider viewProvider) {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
-      final FormatTextRanges textRanges = myRanges.ensureNonEmpty();
-      textRanges.setExtendToContext(true);
       FormattingService formattingService = FormattingServiceUtil.findService(file);
+      commitDocument(viewProvider);
+      SlowOperations.allowSlowOperations(() -> formattingService.formatRanges(file, getRanges(formattingService), true));
+    }
+
+    private void commitDocument(@NotNull FileViewProvider viewProvider) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+      Document document = viewProvider.getDocument();
+      assert document != null;
+      documentManager.commitDocument(document);
+    }
+
+    private FormatTextRanges getRanges(@NotNull FormattingService formattingService) {
       if (formattingService instanceof ExternalFormatProcessorAdapter) {
-        ((ExternalFormatProcessorAdapter)formattingService).formatCollectedRanges(file, myRanges);
+        return myRanges;
       }
-      else {
-        final CodeFormatterFacade codeFormatter = getFormatterFacade(viewProvider);
-        SlowOperations.allowSlowOperations(() -> codeFormatter.processText(file, textRanges, false));
-      }
+      FormatTextRanges textRanges = myRanges.ensureNonEmpty();
+      textRanges.setExtendToContext(true);
+      return textRanges;
     }
 
     @Override

@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.service;
 
-import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -36,13 +35,9 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   @Override
-  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo) {
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     CoreCodeStyleUtil.postProcessRanges(
       file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
-  }
-
-  public void formatCollectedRanges(@NotNull PsiFile file, @NotNull FormatTextRanges ranges) {
-    formatRanges(file, ranges);
   }
 }

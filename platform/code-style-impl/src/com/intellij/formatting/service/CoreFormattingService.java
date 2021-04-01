@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public final class CoreFormattingService implements FormattingService {
   private final static Logger LOG =Logger.getInstance(CoreFormattingService.class);
@@ -50,11 +49,14 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo) {
-    List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
+    List<CoreCodeStyleUtil.RangeFormatInfo> infos =
+      canChangeWhiteSpaceOnly ? null : CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
-    codeFormatter.processText(file, (FormatTextRanges)rangesInfo, true);
-    CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
+    codeFormatter.processText(file, (FormatTextRanges)rangesInfo, !canChangeWhiteSpaceOnly);
+    if (infos != null) {
+      CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
+    }
   }
 
   private static CodeStyleSettings getSettings(@NotNull PsiFile file) {
