@@ -8,6 +8,12 @@ import com.intellij.psi.*
 class JavaMethodsFrequencyModelFactory : MethodsFrequencyModelFactory() {
   override fun fileVisitor(usagesTracker: MethodsUsagesTracker): PsiElementVisitor = object : JavaRecursiveElementWalkingVisitor() {
 
+    override fun visitFile(file: PsiFile) {
+      usagesTracker.clear()
+      super.visitFile(file)
+      usagesTracker.dump()
+    }
+
     override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
       expression.resolveMethod()?.let { method ->
         JavaLocalModelsUtil.getMethodName(method)?.let { methodName ->

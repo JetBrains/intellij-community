@@ -2,15 +2,15 @@ package com.intellij.ml.local.models.frequency.classes
 
 import com.intellij.ml.local.models.api.LocalModelStorage
 import com.intellij.ml.local.util.StorageUtil
-import com.intellij.ml.local.util.StorageUtil.clear
 import com.intellij.ml.local.util.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.IntInlineKeyDescriptor
-import com.intellij.util.io.PersistentHashMap
+import com.intellij.util.io.PersistentMapBuilder
 import java.nio.file.Path
 
-class ClassesFrequencyStorage internal constructor(private val storageDirectory: Path) : LocalModelStorage {
+class ClassesFrequencyStorage internal constructor(private val storageDirectory: Path,
+                                                   private var isValid: Boolean) : LocalModelStorage {
   companion object {
     private const val STORAGE_NAME = "classes_frequency"
     private const val VERSION = 1
@@ -18,13 +18,12 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
 
     fun getStorage(baseDirectory: Path): ClassesFrequencyStorage? {
       val storageDirectory = baseDirectory.resolve(STORAGE_NAME)
-      return StorageUtil.getStorage(storageDirectory, VERSION) { path -> ClassesFrequencyStorage(path) }
+      return StorageUtil.getStorage(storageDirectory, VERSION) { path, isValid -> ClassesFrequencyStorage(path, isValid) }
     }
   }
-  private var isValid: Boolean = true
-  private val persistentStorage = PersistentHashMap(storageDirectory.resolve(STORAGE_NAME),
-                                                    EnumeratorStringDescriptor(),
-                                                    IntInlineKeyDescriptor())
+  private val persistentStorage =  PersistentMapBuilder.newBuilder(storageDirectory.resolve(STORAGE_NAME),
+                                                                   EnumeratorStringDescriptor(),
+                                                                   IntInlineKeyDescriptor()).compactOnClose().build()
   private val memoryStorage = mutableMapOf<String, Int>()
 
   @Volatile var totalClasses = 0
@@ -34,7 +33,9 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     private set
 
   init {
-    toMemoryStorage()
+    if (isValid) {
+      toMemoryStorage()
+    }
   }
 
   override fun name(): String = STORAGE_NAME
@@ -49,8 +50,8 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     if (isValid) {
       toMemoryStorage()
     } else {
-      persistentStorage.clear()
       memoryStorage.clear()
+      persistentStorage.closeAndClean()
     }
     this.isValid = isValid
     StorageUtil.saveInfo(VERSION, isValid, storageDirectory)

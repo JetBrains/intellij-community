@@ -36,25 +36,14 @@ object StorageUtil {
 
   fun <K> PersistentHashMap<K, *>.isEmpty(): Boolean = this.processKeysWithExistingMapping { false }
 
-  fun<K> PersistentHashMap<K, *>.clear() {
-    val existing = HashSet<K>()
-    this.processKeysWithExistingMapping {
-      existing.add(it)
-      true
-    }
-    existing.forEach { fileId ->
-      this.remove(fileId)
-    }
-  }
-
-  fun <T> getStorage(storageDirectory: Path, version: Int, factory: (Path) -> T): T? {
+  fun <T> getStorage(storageDirectory: Path, version: Int, factory: (Path, Boolean) -> T): T? {
     try {
-      prepareStorage(storageDirectory, version)
-      return factory(storageDirectory)
+      val isValid = prepareStorage(storageDirectory, version)
+      return factory(storageDirectory, isValid)
     } catch (t: Throwable) {
       try {
         prepareStorage(storageDirectory, version, forceDelete = true)
-        return factory(storageDirectory)
+        return factory(storageDirectory, false)
       } catch (t: Throwable) {
         LOG.error(t)
         return null
@@ -62,15 +51,19 @@ object StorageUtil {
     }
   }
 
-  private fun prepareStorage(storageDirectory: Path, version: Int, forceDelete: Boolean = false) {
+  private fun prepareStorage(storageDirectory: Path, version: Int, forceDelete: Boolean = false): Boolean {
+    var isValid = false
     if (storageDirectory.exists()) {
       val info = readInfo(storageDirectory)
       if (forceDelete || info == null || !info.isValid || info.version != version) {
         storageDirectory.delete()
+      } else {
+        isValid = true
       }
     }
     storageDirectory.createDirectories()
-    saveInfo(version, true, storageDirectory)
+    saveInfo(version, isValid, storageDirectory)
+    return isValid
   }
 
   private data class StorageInfo(val version: Int, val isValid: Boolean, val timestamp: Long)

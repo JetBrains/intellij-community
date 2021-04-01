@@ -20,13 +20,9 @@ abstract class MethodsFrequencyModelFactory : FrequencyModelFactory<MethodsUsage
 
     return object : LocalModelBuilder {
 
-      override fun onStarted() {
-        storage.setValid(false)
-      }
+      override fun onStarted() = Unit
 
-      override fun onFinished() {
-        storage.setValid(true)
-      }
+      override fun onFinished(success: Boolean) = storage.setValid(success)
 
       override fun fileVisitor(): PsiElementVisitor = fileVisitor(MethodsUsagesTracker(storage))
 
