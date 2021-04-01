@@ -124,6 +124,7 @@ public final class FilePageCache {
     }
   }
 
+  @NotNull("Seems accessed storage has been closed")
   private PagedFileStorage getRegisteredPagedFileStorageByIndex(int index) {
     return myIndex2Storage.get(index);
   }
@@ -215,7 +216,6 @@ public final class FilePageCache {
   private DirectBufferWrapper createValue(Integer key, boolean read, boolean readOnly) {
     final int storageIndex = key & FILE_INDEX_MASK;
     PagedFileStorage owner = getRegisteredPagedFileStorageByIndex(storageIndex);
-    assert owner != null: "No storage for index " + storageIndex;
     owner.getStorageLockContext().checkThreadAccess(read);
     long off = (long)(key & MAX_PAGES_COUNT) * owner.myPageSize;
     long ownerLength = owner.length();
