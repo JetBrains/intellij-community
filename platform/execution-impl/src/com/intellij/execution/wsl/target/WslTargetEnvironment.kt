@@ -131,6 +131,7 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
       // Synchronization may be slow -- let us wait until file size does not change
       // in a reasonable amount of time
+      // (see https://github.com/microsoft/WSL/issues/4197)
       val path = localRoot.resolve(relativePath)
       var previousSize = -2L  // sizeOrNull returns -1 if file does not exist
       var newSize = path.sizeOrNull()
