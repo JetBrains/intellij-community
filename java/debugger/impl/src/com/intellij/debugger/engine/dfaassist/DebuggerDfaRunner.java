@@ -59,13 +59,13 @@ class DebuggerDfaRunner extends DataFlowRunner {
     myStartingState = getStartingState(proxy);
     myModificationStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
-  
+
   boolean isValid() {
     return myStartingState != null;
   }
 
   RunnerResult interpret(InstructionVisitor visitor) {
-    if (myFlow == null || myStartingState == null || 
+    if (myFlow == null || myStartingState == null ||
         PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return RunnerResult.ABORTED;
     }
@@ -90,13 +90,6 @@ class DebuggerDfaRunner extends DataFlowRunner {
       return new DfaInstructionState(myFlow.getInstruction(offset), state);
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  protected DataFlowRunner.TimeStats createStatistics() {
-    // Do not track time for DFA assist
-    return new TimeStats(false);
   }
 
   private static Value wrap(Value value) {
@@ -187,7 +180,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       if (psi instanceof PsiLocalVariable || psi instanceof PsiParameter) {
         String varName = ((PsiVariable)psi).getName();
         if (varName == null || PsiResolveHelper.SERVICE.getInstance(myProject).resolveReferencedVariable(varName, myAnchor) != psi) {
-          // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location 
+          // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
           return null;
         }
         LocalVariableProxy variable = myProxy.visibleVariableByName(varName);

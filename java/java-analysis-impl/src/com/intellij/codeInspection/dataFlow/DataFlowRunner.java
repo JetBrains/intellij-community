@@ -10,7 +10,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -33,16 +32,13 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
-  // Default complexity limit (maximum allowed attempts to process instruction). 
+  // Default complexity limit (maximum allowed attempts to process instruction).
   // Fail as too complex to process if certain instruction is executed more than this limit times.
   // Also used to calculate a threshold when states are forcibly merged.
   protected static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
@@ -54,7 +50,6 @@ public class DataFlowRunner {
   private boolean myInlining = true;
   private boolean myCancelled = false;
   private boolean myWasForciblyMerged = false;
-  private final TimeStats myStats = createStatistics();
 
   public DataFlowRunner(@NotNull Project project) {
     this(project, null);
@@ -185,14 +180,10 @@ public class DataFlowRunner {
   protected final @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock) {
     ControlFlow flow = null;
     try {
-      myStats.reset();
       flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myInlining).buildControlFlow();
-      myStats.endFlow();
-
       if (flow != null) {
         new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
       }
-      myStats.endLVA();
     }
     catch (ProcessCanceledException ex) {
       throw ex;
@@ -227,9 +218,7 @@ public class DataFlowRunner {
       int stateLimit = Registry.intValue("ide.dfa.state.limit");
       int count = 0;
       while (!queue.isEmpty()) {
-        myStats.startMerge();
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
-        myStats.endMerge();
         if (states.size() > getComplexityLimit()) {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
@@ -256,9 +245,7 @@ public class DataFlowRunner {
               continue;
             }
             if (processed.size() > getComplexityLimit() / 6) {
-              myStats.startMerge();
               instructionState = mergeBackBranches(instructionState, processed);
-              myStats.endMerge();
               if (containsState(processed, instructionState)) {
                 continue;
               }
@@ -301,7 +288,7 @@ public class DataFlowRunner {
                 incomingStates.putValue(branching, state.getMemoryState().createCopy());
               }
             }
-            if (nextInstruction.getIndex() < instruction.getIndex() && 
+            if (nextInstruction.getIndex() < instruction.getIndex() &&
                 (!(instruction instanceof GotoInstruction) || ((GotoInstruction)instruction).shouldWidenBackBranch())) {
               state.getMemoryState().widen();
             }
@@ -315,12 +302,6 @@ public class DataFlowRunner {
       }
 
       myWasForciblyMerged |= queue.wasForciblyMerged();
-      myStats.endProcess();
-      if (myStats.isTooSlow()) {
-        String message = "Too slow DFA\nIf you report this problem, please consider including the attachments\n" + myStats +
-                         "\nControl flow size: " + flow.getInstructionCount();
-        reportDfaProblem(psiBlock, flow, null, new RuntimeException(message));
-      }
       return RunnerResult.OK;
     }
     catch (ProcessCanceledException ex) {
@@ -595,10 +576,6 @@ public class DataFlowRunner {
     myNestedClosures.putValue(anchor, state.createClosureState());
   }
 
-  protected @NotNull TimeStats createStatistics() {
-    return new TimeStats();
-  }
-
   protected @NotNull DfaMemoryState createMemoryState() {
     return new DfaMemoryStateImpl(myValueFactory);
   }
@@ -629,77 +606,6 @@ public class DataFlowRunner {
         states = StateQueue.mergeGroup(stateList);
       }
       consumer.accept(closure, states);
-    }
-  }
-
-  protected static class TimeStats {
-    private static final long DFA_EXECUTION_TIME_TO_REPORT_NANOS = TimeUnit.SECONDS.toNanos(30);
-    private final @Nullable ThreadMXBean myMxBean;
-    private long myStart;
-    private long myMergeStart, myFlowTime, myLVATime, myMergeTime, myProcessTime;
-
-    TimeStats() {
-      this(ApplicationManager.getApplication().isInternal());
-    }
-
-    public TimeStats(boolean record) {
-      myMxBean = record ? ManagementFactory.getThreadMXBean() : null;
-      reset();
-    }
-
-    void reset() {
-      if (myMxBean == null) {
-        myStart = 0;
-      }
-      else {
-        myStart = myMxBean.getCurrentThreadCpuTime();
-      }
-      myMergeStart = myFlowTime = myLVATime = myMergeTime = myProcessTime = 0;
-    }
-
-    void endFlow() {
-      if (myMxBean != null) {
-        myFlowTime = myMxBean.getCurrentThreadCpuTime() - myStart;
-      }
-    }
-
-    void endLVA() {
-      if (myMxBean != null) {
-        myLVATime = myMxBean.getCurrentThreadCpuTime() - myStart - myFlowTime;
-      }
-    }
-
-    void startMerge() {
-      if (myMxBean != null) {
-        myMergeStart = System.nanoTime();
-      }
-    }
-
-    void endMerge() {
-      if (myMxBean != null) {
-        myMergeTime += System.nanoTime() - myMergeStart;
-      }
-    }
-
-    void endProcess() {
-      if (myMxBean != null) {
-        myProcessTime = myMxBean.getCurrentThreadCpuTime() - myStart;
-      }
-    }
-
-    boolean isTooSlow() {
-      return myProcessTime > DFA_EXECUTION_TIME_TO_REPORT_NANOS;
-    }
-
-    @Override
-    public String toString() {
-      double flowTime = myFlowTime/1e9;
-      double lvaTime = myLVATime / 1e9;
-      double mergeTime = myMergeTime/1e9;
-      double interpretTime = (myProcessTime - myFlowTime - myLVATime - myMergeTime)/1e9;
-      double totalTime = myProcessTime/1e9;
-      String format = "Building ControlFlow: %.2fs\nLiveVariableAnalyzer: %.2fs\nMerging states: %.2fs\nInterpreting: %.2fs\nTotal: %.2fs";
-      return String.format(Locale.ENGLISH, format, flowTime, lvaTime, mergeTime, interpretTime, totalTime);
     }
   }
 }
