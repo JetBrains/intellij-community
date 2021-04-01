@@ -1004,12 +1004,12 @@ internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode
     }
   }
 
-  internal fun reportConsistencyIssue(message: String,
-                                      e: Throwable,
-                                      sourceFilter: ((EntitySource) -> Boolean)?,
-                                      left: WorkspaceEntityStorage?,
-                                      right: WorkspaceEntityStorage?,
-                                      resulting: WorkspaceEntityStorage) {
+  fun reportConsistencyIssue(message: String,
+                             e: Throwable,
+                             sourceFilter: ((EntitySource) -> Boolean)?,
+                             left: WorkspaceEntityStorage?,
+                             right: WorkspaceEntityStorage?,
+                             resulting: WorkspaceEntityStorage) {
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries()?.toHashSet() ?: hashSetOf()
       allEntitySources.addAll((right as? AbstractEntityStorage)?.indexes?.entitySourceIndex?.entries() ?: emptySet())

@@ -32,6 +32,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleGroupPathEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
+import com.intellij.workspaceModel.storage.impl.reportErrorAndAttachStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -543,7 +544,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       directorySerializerFactoriesByUrl.values.forEach { factory ->
         val added = entitiesMap[factory.entityClass]
         if (added != null) {
-          val newSerializers = createSerializersForDirectoryEntities(factory, added)
+          val newSerializers = createSerializersForDirectoryEntities(factory, added, storage)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.key] = factory
             fileSerializersByUrl.put(it.key.fileUrl.url, it.key)
@@ -682,18 +683,40 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun <E : WorkspaceEntity> createSerializersForDirectoryEntities(factory: JpsDirectoryEntitiesSerializerFactory<E>,
-                                                                          entities: List<WorkspaceEntity>)
+                                                                          entities: List<WorkspaceEntity>,
+                                                                          storage: WorkspaceEntityStorage)
     : Map<JpsFileEntitiesSerializer<*>, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
-    val nameGenerator = UniqueNameGenerator(serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList(), Function {
+    val serializers = serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList()
+    val nameGenerator = UniqueNameGenerator(serializers, Function {
       PathUtil.getFileName(it.fileUrl.url)
     })
     return entities.asSequence()
       .filter { @Suppress("UNCHECKED_CAST") factory.entityFilter(it as E) }
-      .associate {
+      .associate { entity ->
         @Suppress("UNCHECKED_CAST")
-        val fileName = nameGenerator.generateUniqueName(FileUtil.sanitizeFileName(factory.getDefaultFileName(it as E)), "", ".xml")
-        val entityMap = mapOf<Class<out WorkspaceEntity>, List<WorkspaceEntity>>(factory.entityClass to listOf(it))
-        val currentSource = it.entitySource as? JpsFileEntitySource.FileInDirectory
+        val rawDefaultFileName = factory.getDefaultFileName(entity as E)
+        val defaultFileName = FileUtil.sanitizeFileName(rawDefaultFileName)
+        val fileName = nameGenerator.generateUniqueName(defaultFileName, "", ".xml")
+        val entityMap = mapOf<Class<out WorkspaceEntity>, List<WorkspaceEntity>>(factory.entityClass to listOf(entity))
+        val currentSource = entity.entitySource as? JpsFileEntitySource.FileInDirectory
+        if (fileName != "$defaultFileName.xml") {
+          val oldSerializer = serializers.find { PathUtil.getFileName(it.fileUrl.url) == "$defaultFileName.xml" }
+          val oldSource = oldSerializer?.internalEntitySource
+          val entitiesWithOldSource = oldSource?.let { s -> storage.entitiesBySource { it == s }[s] }
+          val entitiesByName = storage.entities(factory.entityClass).filter { factory.getDefaultFileName(it) == rawDefaultFileName }.toList()
+          //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
+          // as error for now to find real cause of IDEA-265327
+          val message = """
+             |Cannot save $entity to $defaultFileName because a different entity is stored to the file;
+             |Current entity source: $currentSource
+             |Old serializer: $oldSerializer
+             |Its entity source: $oldSource
+             |Entities with this source in the storage: $entitiesWithOldSource
+             |Entities with the same name in the storage: $entitiesByName
+            """.trimMargin()
+          reportErrorAndAttachStorage(message, storage)
+        }
+
         val source =
           if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
           else createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName)
