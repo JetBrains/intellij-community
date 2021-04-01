@@ -55,17 +55,10 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
         return;
       }
       ifStatement = (PsiIfStatement)parent;
-      final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
-      if (!(thenBranch instanceof PsiSynchronizedStatement)) {
+      final PsiIfStatement innerIfStatement = getDoubleCheckedLockingInnerIf(ifStatement);
+      if (innerIfStatement == null) {
         return;
       }
-      final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)thenBranch;
-      final PsiCodeBlock body = synchronizedStatement.getBody();
-      final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
-      if (!(statement instanceof PsiIfStatement)) {
-        return;
-      }
-      final PsiIfStatement innerIfStatement = (PsiIfStatement)statement;
       final PsiStatement thenBranch2 = ControlFlowUtils.stripBraces(innerIfStatement.getThenBranch());
       if (!(thenBranch2 instanceof PsiExpressionStatement)) {
         return;
@@ -86,6 +79,17 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
       ifStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiIfStatement.class);
     }
     replaceWithStaticHolder(referenceExpression, ifStatement);
+  }
+
+  public static PsiIfStatement getDoubleCheckedLockingInnerIf(PsiIfStatement ifStatement) {
+    final PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+    if (!(thenBranch instanceof PsiSynchronizedStatement)) {
+      return null;
+    }
+    final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)thenBranch;
+    final PsiCodeBlock body = synchronizedStatement.getBody();
+    final PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock(body);
+    return (statement instanceof PsiIfStatement) ? (PsiIfStatement)statement : null;
   }
 
   private void replaceWithStaticHolder(PsiReferenceExpression referenceExpression, PsiIfStatement ifStatement) {

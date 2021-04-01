@@ -27,7 +27,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceHolderFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
@@ -157,23 +156,13 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
       final PsiExpression outerCondition = statement.getCondition();
-      if (outerCondition == null) {
+      if (outerCondition == null || SideEffectChecker.mayHaveSideEffects(outerCondition)) {
         return;
       }
-      if (SideEffectChecker.mayHaveSideEffects(outerCondition)) {
+      final PsiIfStatement innerIf = IntroduceHolderFix.getDoubleCheckedLockingInnerIf(statement);
+      if (innerIf == null) {
         return;
       }
-      final PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
-      if (!(thenBranch instanceof PsiSynchronizedStatement)) {
-        return;
-      }
-      final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)thenBranch;
-      final PsiCodeBlock body = synchronizedStatement.getBody();
-      final PsiStatement firstStatement = ControlFlowUtils.getOnlyStatementInBlock(body);
-      if (!(firstStatement instanceof PsiIfStatement)) {
-        return;
-      }
-      final PsiIfStatement innerIf = (PsiIfStatement)firstStatement;
       final PsiExpression innerCondition = innerIf.getCondition();
       if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(innerCondition, outerCondition)) {
         return;
