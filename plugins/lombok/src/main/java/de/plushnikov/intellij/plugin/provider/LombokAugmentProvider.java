@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.provider;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -81,6 +82,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
 
     final PsiClass psiClass = (PsiClass) element;
+    if (!psiClass.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+      return emptyResult;
+    }
     // Skip processing of Annotations and Interfaces
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       return emptyResult;
