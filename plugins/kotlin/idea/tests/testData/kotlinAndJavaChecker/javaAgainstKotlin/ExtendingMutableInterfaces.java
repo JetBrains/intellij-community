@@ -1,10 +1,10 @@
 public class EtendingMutableInterfaces {
     public static class Lists {
-        <error descr="Class 'ExtendIList1' must either be declared abstract or implement abstract method 'size()' in 'List'">public static class ExtendIList1 implements IMutableList<String></error> {
+        <error>public static class ExtendIList1 implements IMutableList<String></error> {
 
         }
 
-        <error descr="Class 'ExtendIList2' must either be declared abstract or implement abstract method 'size()' in 'List'">public static class ExtendIList2<E> implements IMutableList<E></error> {
+        <error>public static class ExtendIList2<E> implements IMutableList<E></error> {
 
         }
 
@@ -27,11 +27,11 @@ public class EtendingMutableInterfaces {
     }
 
     public static class Collections {
-        <error descr="Class 'ExtendICollection1' must either be declared abstract or implement abstract method 'size()' in 'Collection'">public static class ExtendICollection1 implements IMutableCollection<String></error> {
+        <error>public static class ExtendICollection1 implements IMutableCollection<String></error> {
 
         }
 
-        <error descr="Class 'ExtendICollection2' must either be declared abstract or implement abstract method 'size()' in 'Collection'">public static class ExtendICollection2<E> implements IMutableCollection<E></error> {
+        <error>public static class ExtendICollection2<E> implements IMutableCollection<E></error> {
 
         }
 
@@ -53,11 +53,11 @@ public class EtendingMutableInterfaces {
     }
 
     public static class Sets {
-        <error descr="Class 'ExtendISet1' must either be declared abstract or implement abstract method 'size()' in 'Set'">public static class ExtendISet1 implements IMutableSet<String></error> {
+        <error>public static class ExtendISet1 implements IMutableSet<String></error> {
 
         }
 
-        <error descr="Class 'ExtendISet2' must either be declared abstract or implement abstract method 'size()' in 'Set'">public static class ExtendISet2<E> implements IMutableSet<E></error> {
+        <error>public static class ExtendISet2<E> implements IMutableSet<E></error> {
 
         }
 
@@ -105,11 +105,11 @@ public class EtendingMutableInterfaces {
     }
 
     public static class Iterators {
-        <error descr="Class 'ExtendIIterator1' must either be declared abstract or implement abstract method 'hasNext()' in 'Iterator'">public static class ExtendIIterator1 implements IMutableIterator<String></error> {
+        <error descr="Class 'ExtendIIterator1' must either be declared abstract or implement abstract method 'remove()' in 'MutableIterator'">public static class ExtendIIterator1 implements IMutableIterator<String></error> {
 
         }
 
-        <error descr="Class 'ExtendIIterator2' must either be declared abstract or implement abstract method 'hasNext()' in 'Iterator'">public static class ExtendIIterator2<E> implements IMutableIterator<E></error> {
+        <error descr="Class 'ExtendIIterator2' must either be declared abstract or implement abstract method 'remove()' in 'MutableIterator'">public static class ExtendIIterator2<E> implements IMutableIterator<E></error> {
 
         }
 
@@ -131,11 +131,11 @@ public class EtendingMutableInterfaces {
     }
 
     public static class Maps {
-        <error descr="Class 'ExtendIMap1' must either be declared abstract or implement abstract method 'size()' in 'Map'">public static class ExtendIMap1 implements IMutableMap<String, Integer></error> {
+        <error>public static class ExtendIMap1 implements IMutableMap<String, Integer></error> {
 
         }
 
-        <error descr="Class 'ExtendIMap2' must either be declared abstract or implement abstract method 'size()' in 'Map'">public static class ExtendIMap2<E> implements IMutableMap<String, E></error> {
+        <error>public static class ExtendIMap2<E> implements IMutableMap<String, E></error> {
 
         }
 
