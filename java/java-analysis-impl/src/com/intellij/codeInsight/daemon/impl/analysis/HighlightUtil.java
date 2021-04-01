@@ -65,15 +65,14 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class HighlightUtil {
   public static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
@@ -553,7 +552,7 @@ public final class HighlightUtil {
     if (parent instanceof PsiCodeFragment || parent instanceof PsiLambdaExpression) {
       return null;
     }
-    PsiMethod method = ObjectUtils.tryCast(parent, PsiMethod.class);
+    PsiMethod method = tryCast(parent, PsiMethod.class);
     String description;
     HighlightInfo errorResult = null;
     if (method == null && !(parent instanceof ServerPageFile)) {
@@ -1690,7 +1689,7 @@ public final class HighlightUtil {
   }
 
   public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
-    PsiTypeTestPattern pattern = ObjectUtils.tryCast(expression.getPattern(), PsiTypeTestPattern.class);
+    PsiTypeTestPattern pattern = tryCast(expression.getPattern(), PsiTypeTestPattern.class);
     if (pattern == null) return null;
     PsiPatternVariable variable = pattern.getPatternVariable();
     if (variable == null) return null;
@@ -2270,7 +2269,7 @@ public final class HighlightUtil {
           // the expression and throw statements are fine, only the block statement could be an issue
           if (ruleBody instanceof PsiBlockStatement) {
             if (ControlFlowUtils.statementMayCompleteNormally(ruleBody)) {
-              PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
+              PsiElement target = ObjectUtils.notNull(tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
               String message = JavaErrorBundle.message("switch.expr.rule.should.produce.result");
               results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message).create());
             }
@@ -2287,7 +2286,7 @@ public final class HighlightUtil {
         // previous statements may have no result as well, but in that case they fall through to the last one, which needs to be checked anyway
         if (lastStatement != null && ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
           PsiElement target =
-            ObjectUtils.notNull(ObjectUtils.tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
+            ObjectUtils.notNull(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
           String message = JavaErrorBundle.message("switch.expr.should.produce.result");
           return Collections
             .singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message).create());
@@ -2295,7 +2294,7 @@ public final class HighlightUtil {
         hasResult = hasYield(switchExpression, switchBody);
       }
       if (!hasResult) {
-        PsiElement target = ObjectUtils.notNull(ObjectUtils.tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
+        PsiElement target = ObjectUtils.notNull(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
         return Collections.singletonList(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
                                            .descriptionAndTooltip(JavaErrorBundle.message("switch.expr.no.result")).create());
       }
@@ -3208,6 +3207,10 @@ public final class HighlightUtil {
       if (info != null) {
         UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, new QuickFixActionRegistrarImpl(info));
       }
+      if (isCallToStaticMember(outerParent)) {
+        QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(outerParent));
+      }
+
       return info;
     }
 
@@ -3264,6 +3267,41 @@ public final class HighlightUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Checks if the element of the {@link PsiNewExpression} type can be a reference to a static member of the class,
+   * which is the qualifier of the reference element of {@link PsiNewExpression}.
+   * The element is split into two parts: the qualifier and the reference element.
+   * If the qualifier is a class and the reference element text matches either a field name or a method name of the class
+   * then the method returns true
+   *
+   * @param element an element to examine
+   * @return true if the new expression can actually be a call to a class member (field or method), false otherwise.
+   */
+  @Contract(value = "null -> false", pure = true)
+  static boolean isCallToStaticMember(@Nullable PsiElement element) {
+    if (!(element instanceof PsiNewExpression)) return false;
+
+    final PsiNewExpression newExpression = (PsiNewExpression)element;
+    final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+    if (reference == null) return false;
+
+    final PsiElement qualifier = reference.getQualifier();
+    final PsiElement memberName = reference.getReferenceNameElement();
+    if (!(qualifier instanceof PsiReference) || memberName == null) return false;
+
+    final PsiReference psiReference = (PsiReference)qualifier;
+    final PsiElement maybeClass = psiReference.resolve();
+    if (!(maybeClass instanceof PsiClass)) return false;
+
+    final PsiClass clazz = (PsiClass)maybeClass;
+    final PsiField field = clazz.findFieldByName(memberName.getText(), false);
+
+    if (field != null) return true;
+    final PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), false);
+
+    return methods.length != 0;
   }
 
   @NotNull

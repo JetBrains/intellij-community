@@ -1294,7 +1294,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         resolved instanceof PsiNamedElement &&
         ((PsiNewExpression)parent).getClassOrAnonymousClassReference() == ref) {
       String text = JavaErrorBundle.message("cannot.resolve.symbol", ((PsiNamedElement)resolved).getName());
-      myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create());
+      final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
+
+      if (HighlightUtil.isCallToStaticMember(parent)) {
+        QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(parent));
+      }
+
+      myHolder.add(info);
     }
 
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) {
