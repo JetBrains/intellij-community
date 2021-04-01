@@ -74,7 +74,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
     if (viewRow > -1) {
       // keep selection as is
     }
-    else if (prev != null && prev.row > -1) {
+    else if (prev != null && prev.row > -1 && prev.row < myComponent.getRowCount()) {
       myComponent.setRowSelectionInterval(prev.row, prev.row);
       myComponent.setColumnSelectionInterval(prev.column, prev.column);
     }
