@@ -39,7 +39,7 @@ class DoubleCheck {
   }
   public static void getNonVolatileInstance()
   {
-    <warning descr="Double-checked locking">if</warning> (n_instance == null)
+    <warning descr="Double-checked locking"><caret>if</warning> (n_instance == null)
     {
       // thread safe singleton
       synchronized (DoubleCheck.class)
@@ -60,19 +60,5 @@ class DoubleCheck {
   public static void assignNonVolatile(Integer value)
   {
     n_instance = value;
-  }
-}
-class Simple {
-  private static Object INSTANCE;
-
-  public static Object getInstance() {
-    <warning descr="Double-checked locking"><caret>if</warning> (INSTANCE == null) {
-      synchronized (Simple.class) {
-        if (INSTANCE == null) {
-          INSTANCE = new Object();
-        }
-      }
-    }
-    return INSTANCE;
   }
 }

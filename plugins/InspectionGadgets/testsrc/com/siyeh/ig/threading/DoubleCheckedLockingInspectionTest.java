@@ -14,7 +14,17 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
 
   public void testDoubleCheckedLocking() {
     doTest();
+    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+  }
+
+  public void testQuickFix() {
+    doTest();
     checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+  }
+
+  public void testQuickFixNotAvailable() {
+    doTest();
+    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
   public void testSimple() {
