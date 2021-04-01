@@ -8,7 +8,6 @@ import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.actionSystem.impl.Utils.ActionGroupVisitor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -72,11 +71,8 @@ final class BuildUtils {
     result.setDefaultOptionalContextName(defaultOptCtx);
     final Customizer customizer = new Customizer() {
       @Override
-      public void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
-        super.process(ni, butt);
-        if (defaultOptCtx.equals(ni.getParentGroupID())) {
-          butt.myOptionalContextName = defaultOptCtx;
-        }
+      public void process(@NotNull TBItemAnActionButton butt) {
+        super.process(butt);
       }
     };
     addActionGroupButtons(result, customizedGroup, filterPrefix, customizer);
@@ -118,7 +114,9 @@ final class BuildUtils {
     GroupVisitor visitor = new GroupVisitor(out, filterGroupPrefix, customizer, out.getStats(), false);
 
     DataContext dctx = Utils.wrapDataContext(DataManager.getInstance().getDataContext(getCurrentFocusComponent()));
-    Utils.expandActionGroup(false, actionGroup, out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, false, visitor);
+    out.softClear();
+    List<AnAction> acts = Utils.expandActionGroup(false, prepareGroup(filterGroupPrefix, actionGroup), out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, false);
+    visitor.fillTB(acts);
     if (customizer != null) {
       customizer.finish();
     }
@@ -221,13 +219,10 @@ final class BuildUtils {
       ) {
         final Customizer customizer = new Customizer(groupDesc, ms) {
           @Override
-          public void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
-            super.process(ni, butt);
+          public void process(@NotNull TBItemAnActionButton butt) {
+            super.process(butt);
             butt.setPriority(--prio[0]);
             butt.myOptionalContextName = DIALOG_ACTIONS_CONTEXT;
-            if (ni.getParentDesc() != null && !ni.getParentDesc().isShowImage()) {
-              butt.setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
-            }
           }
         };
         addActionGroup(out, ag, customizer);
@@ -421,18 +416,12 @@ final class BuildUtils {
     return tb;
   }
 
-  static class GroupVisitor implements INodeInfo, ActionGroupVisitor {
+  static class GroupVisitor {
     private final @NotNull TouchBar myOut;
     private final @Nullable String myFilterByPrefix;
     private final @Nullable Customizer myCustomizer;
-    private final boolean myAllowSkipSlowUpdates;
 
     private int mySeparatorCounter = 0;
-    private final LinkedList<InternalNode> myNodePath = new LinkedList<>();
-    private final List<InternalNode> myVisitedNodes = new ArrayList<>();
-    private InternalNodeWithContainer myRoot;
-
-    private final Map<AnAction, Long> myAct2StartUpdateNs = new ConcurrentHashMap<>();
 
     private final @Nullable TouchBarStats myStats;
 
@@ -445,71 +434,36 @@ final class BuildUtils {
       this.myFilterByPrefix = filterByPrefix;
       this.myCustomizer = customizer;
       this.myStats = stats;
-      myAllowSkipSlowUpdates = allowSkipSlowUpdates;
-    }
-
-    @Override
-    public Component getCustomComponent(@NotNull AnAction action) {
-      final TouchbarDataKeys.ActionDesc actionDesc =
-        action.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-      return actionDesc != null ? actionDesc.getContextComponent() : null;
     }
 
     private @Nullable TouchBarStats.AnActionStats getActionStats(@NotNull String actId) {
       return myStats == null ? null : myStats.getActionStats(actId);
     }
 
-    @Override
     public void begin() {
       myOut.softClear();
     }
 
-    @Override
-    public boolean enterNode(@NotNull ActionGroup groupNode) {
-      final @NotNull String groupId = getActionId(groupNode);
-      if (myFilterByPrefix != null && groupId.startsWith(myFilterByPrefix)) {
-        return false;
+    void fillTB(List<AnAction> acts) {
+      if (acts == null)
+        return;
+      for (AnAction act: acts) {
+        processAct(act);
       }
-
-      if (myRoot == null) {
-        myRoot = new InternalNodeWithContainer(myOut.getItemsContainer(), groupNode, groupId, null, getActionStats(groupId));
-      }
-
-      final TouchbarDataKeys.ActionDesc groupDesc =
-        groupNode.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-      InternalNode node = null;
-      if (groupDesc != null && groupDesc.isMainGroup()) {
-        @NotNull InternalNodeWithContainer currNode = _getCurrentNodeContainer();
-        final TBItemGroup group = myOut.createGroup();
-        currNode.container.addItem(group);
-        myOut.setPrincipal(group);
-        node = new InternalNodeWithContainer(group.getContainer(), groupNode, groupId, groupDesc, getActionStats(groupId));
-      }
-
-      if (node == null) {
-        node = new InternalNode(groupNode, groupId, groupDesc, getActionStats(groupId));
-      }
-      myNodePath.add(node);
-      myVisitedNodes.add(node);
-      return true;
     }
-
-    @Override
-    public void visitLeaf(@NotNull AnAction act) {
-      @NotNull InternalNodeWithContainer currNode = _getCurrentNodeContainer();
-
+    void processAct(@NotNull AnAction act) {
       if (act instanceof Separator) {
         final Separator sep = (Separator)act;
         int increment = 1;
         if (sep.getText() != null) {
           if (sep.getText().equals(ourSmallSeparatorText)) {
-            currNode.container.addSpacing(false);
+            myOut.getItemsContainer().addSpacing(false);
           }
           else if (sep.getText().equals(ourLargeSeparatorText)) {
-            currNode.container.addSpacing(true);
+            myOut.getItemsContainer().addSpacing(true);
           }
           else if (sep.getText().equals(ourFlexibleSeparatorText)) {
-            currNode.container.addFlexibleSpacing();
+            myOut.getItemsContainer().addFlexibleSpacing();
           }
         }
         else {
@@ -521,137 +475,24 @@ final class BuildUtils {
 
       if (mySeparatorCounter > 0) {
         if (mySeparatorCounter == 1) {
-          currNode.container.addSpacing(false);
+          myOut.getItemsContainer().addSpacing(false);
         }
         else if (mySeparatorCounter == 2) {
-          currNode.container.addSpacing(true);
+          myOut.getItemsContainer().addSpacing(true);
         }
         else {
-          currNode.container.addFlexibleSpacing();
+          myOut.getItemsContainer().addFlexibleSpacing();
         }
         mySeparatorCounter = 0;
       }
 
       final TBItemAnActionButton butt = myOut.createActionButton(act);
-      currNode.container.addItem(butt);
+      myOut.getItemsContainer().addItem(butt);
 
       if (myCustomizer != null) {
-        myCustomizer.process(this, butt);
+        myCustomizer.process(butt);
       }
     }
-
-    @Override
-    public void leaveNode() {
-      final InternalNode leaved = myNodePath.removeLast();
-      leaved.leaveTimeNs = System.nanoTime();
-    }
-
-    @Override
-    public boolean beginUpdate(@NotNull AnAction action, AnActionEvent e) {
-      if (SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && isSlowUpdateAction(action)) {
-        // make such action always enabled and visible
-        e.getPresentation().setEnabledAndVisible(true);
-        if (action instanceof Toggleable) {
-          Toggleable.setSelected(e.getPresentation(), false);
-        }
-        return false;
-      }
-      myAct2StartUpdateNs.put(action, System.nanoTime());
-      return true;
-    }
-
-    @Override
-    public void endUpdate(@NotNull AnAction action) {
-      // check whether update is too slow
-      final long updateDurationNs = System.nanoTime() - myAct2StartUpdateNs.getOrDefault(action, 0L);
-      final boolean isEDT = ApplicationManager.getApplication().isDispatchThread();
-      if (isEDT && SKIP_UPDATE_SLOW_ACTIONS && myAllowSkipSlowUpdates && updateDurationNs > 30 * 1000000L) { // 30 ms threshold
-        // disable update for this action
-        addSlowUpdateAction(action);
-      }
-
-      if (myStats != null) {
-        final TouchBarStats.AnActionStats stats = myStats.getActionStats(action);
-        stats.onUpdate(updateDurationNs);
-      }
-    }
-
-    @Override
-    public boolean isParentCompact() { return !myNodePath.isEmpty() && myNodePath.getLast().group instanceof CompactActionGroup; }
-
-    @Override
-    public String getParentGroupID() {
-      if (myNodePath.isEmpty()) {
-        return null;
-      }
-      return myNodePath.getLast().groupID;
-    }
-
-    @Override
-    public TouchbarDataKeys.ActionDesc getParentDesc() {
-      if (myNodePath.isEmpty()) {
-        return null;
-      }
-      return myNodePath.getLast().groupDesc;
-    }
-
-    private @NotNull InternalNodeWithContainer _getCurrentNodeContainer() {
-      if (myNodePath.isEmpty()) {
-        return myRoot;
-      }
-
-      Iterator<InternalNode> di = myNodePath.descendingIterator();
-      while (di.hasNext()) {
-        InternalNode in = di.next();
-        if (in instanceof InternalNodeWithContainer) {
-          return (InternalNodeWithContainer)in;
-        }
-      }
-      return myRoot;
-    }
-
-    private static class InternalNode {
-      final @NotNull ActionGroup group;
-      final @NotNull String groupID;
-      final @Nullable TouchbarDataKeys.ActionDesc groupDesc;
-      final @Nullable TouchBarStats.AnActionStats myActionStats;
-
-      final long bornTimeNs;
-      long leaveTimeNs;
-
-      InternalNode(@NotNull ActionGroup group,
-                   @NotNull String groupID,
-                   @Nullable TouchbarDataKeys.ActionDesc groupDesc,
-                   @Nullable TouchBarStats.AnActionStats stats) {
-        this.group = group;
-        this.groupID = groupID;
-        this.groupDesc = groupDesc;
-        this.myActionStats = stats;
-
-        bornTimeNs = System.nanoTime();
-      }
-    }
-  }
-
-  private static final class InternalNodeWithContainer extends GroupVisitor.InternalNode {
-    final @NotNull ItemsContainer container;
-
-    InternalNodeWithContainer(@NotNull ItemsContainer container,
-                              @NotNull ActionGroup group,
-                              @NotNull String groupID,
-                              @Nullable TouchbarDataKeys.ActionDesc groupDesc,
-                              @Nullable TouchBarStats.AnActionStats stats) {
-      super(group, groupID, groupDesc, stats);
-      this.container = container;
-    }
-  }
-
-  interface INodeInfo {
-    boolean isParentCompact();
-
-    String getParentGroupID();
-
-    TouchbarDataKeys.ActionDesc getParentDesc();
   }
 
   static class Customizer {
@@ -678,18 +519,14 @@ final class BuildUtils {
       myModality = null;
     }
 
-    void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+    void process(@NotNull TBItemAnActionButton butt) {
       final @NotNull String actId = getActionId(butt.getAnAction());
 
       final boolean isRunConfigPopover = "RunConfiguration".equals(actId);
       final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
-      final TouchbarDataKeys.ActionDesc pd = ni.getParentDesc();
-      final int nodeMode = pd != null && pd.isShowText() ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : myShowMode;
+      final int nodeMode = myShowMode;
       final int mode = isRunConfigPopover || isOpenInTerminalAction ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : nodeMode;
       butt.setShowMode(mode).setModality(myModality);
-      if (ni.isParentCompact()) {
-        butt.setHiddenWhenDisabled(true);
-      }
 
       if (isRunConfigPopover) {
         myRunConfigurationButton = butt;
@@ -697,7 +534,7 @@ final class BuildUtils {
       else if (butt.getAnAction() instanceof WelcomePopupAction) {
         butt.setHasArrowIcon(true);
       }
-      else if ("RunnerActionsTouchbar".equals(ni.getParentGroupID()) || "Stop".equals(actId)) {
+      else if ("Run".equals(actId) || "Debug".equals(actId) || "Stop".equals(actId)) {
         if (myRunnerButtons == null) {
           myRunnerButtons = new ArrayList<>();
         }
@@ -869,5 +706,29 @@ final class BuildUtils {
     initSlowActions();
     ourSlowActions.add(actId);
     saveSlowActions();
+  }
+
+  static void prepareGroup(String filterPrefix, ActionGroup in, DefaultActionGroup out) {
+    if (filterPrefix == null || filterPrefix.isEmpty())
+      return;
+
+    for (AnAction act: in.getChildren(null)) {
+      if (act instanceof ActionGroup) {
+        final @NotNull String groupId = getActionId(act);
+        if (groupId.startsWith(filterPrefix)) {
+          continue;
+        }
+
+        prepareGroup(filterPrefix, (ActionGroup)act, out);
+      } else {
+        out.add(act);
+      }
+    }
+  }
+
+  static ActionGroup prepareGroup(String filterPrefix, ActionGroup group) {
+    DefaultActionGroup out = new DefaultActionGroup();
+    prepareGroup(filterPrefix, group, out);
+    return out;
   }
 }

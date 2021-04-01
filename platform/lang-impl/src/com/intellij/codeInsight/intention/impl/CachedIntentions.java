@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -166,7 +165,7 @@ public final class CachedIntentions {
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       false, new DefaultActionGroup(myGuttersRaw), presentationFactory,
-      dataContext, ActionPlaces.INTENTION_MENU, true, null);
+      dataContext, ActionPlaces.INTENTION_MENU, true);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     for (AnAction action : actions) {

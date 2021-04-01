@@ -259,8 +259,8 @@ final class TouchBar implements NSTLibrary.ItemCreator {
       this, actions, null,
       new BuildUtils.Customizer() {
         @Override
-        public void process(@NotNull BuildUtils.INodeInfo ni, @NotNull TBItemAnActionButton butt) {
-          super.process(ni, butt);
+        public void process(@NotNull TBItemAnActionButton butt) {
+          super.process(butt);
           butt.myOptionalContextName = contextName;
         }
       });
@@ -341,6 +341,11 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
   private void _applyPresentationChanges(List<AnAction> actions) {
     final long startNs = System.nanoTime();
+    if (actions != null) {
+      BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
+      softClear();
+      visitor.fillTB(actions);
+    }
     if (myLastUpdateNativePeers != null && !myLastUpdateNativePeers.isDone()) {
       myLastUpdateNativePeers.cancel(false);
     }
@@ -445,20 +450,19 @@ final class TouchBar implements NSTLibrary.ItemCreator {
 
     if (myActionGroup != null) {
       DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(BuildUtils.getCurrentFocusComponent()));
-      BuildUtils.GroupVisitor visitor = new BuildUtils.GroupVisitor(this, mySkipSubgroupsPrefix, null, myStats, myAllowSkipSlowUpdates);
       if (Utils.isAsyncDataContext(dataContext)) {
         if (myLastUpdate != null) myLastUpdate.cancel();
-        myLastUpdate = Utils.expandActionGroupAsync(LaterInvocator.isInModalContext(), myActionGroup, myFactory,
-                                                    dataContext, ActionPlaces.TOUCHBAR_GENERAL, visitor);
+        myLastUpdate = Utils.expandActionGroupAsync(LaterInvocator.isInModalContext(), BuildUtils.prepareGroup(mySkipSubgroupsPrefix, myActionGroup), myFactory,
+                                                    dataContext, ActionPlaces.TOUCHBAR_GENERAL);
         myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
       }
       else {
         List<AnAction> actions = Utils.expandActionGroupWithTimeout(
           LaterInvocator.isInModalContext(),
-          myActionGroup,
+          BuildUtils.prepareGroup(mySkipSubgroupsPrefix, myActionGroup),
           myFactory, dataContext,
           ActionPlaces.TOUCHBAR_GENERAL,
-          visitor, Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
+          Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
         _applyPresentationChanges(actions);
       }
     }

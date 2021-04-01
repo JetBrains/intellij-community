@@ -85,7 +85,7 @@ public final class Utils {
                                                  @NotNull PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  @NotNull String place) {
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, false, null);
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, false);
   }
 
   @ApiStatus.Internal
@@ -93,9 +93,8 @@ public final class Utils {
                                                                           @NotNull ActionGroup group,
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
-                                                                          @NotNull String place,
-                                                                          @Nullable Utils.ActionGroupVisitor visitor) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
+                                                                          @NotNull String place) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
       .expandActionGroupAsync(group, group instanceof CompactActionGroup);
   }
 
@@ -105,9 +104,8 @@ public final class Utils {
                                                             @NotNull PresentationFactory presentationFactory,
                                                             @NotNull DataContext context,
                                                             @NotNull String place,
-                                                            @Nullable ActionGroupVisitor visitor,
                                                             int timeoutMs) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, visitor)
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false)
       .expandActionGroupWithTimeout(group, group instanceof CompactActionGroup, timeoutMs);
   }
 
@@ -118,10 +116,9 @@ public final class Utils {
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
                                                           @NotNull String place,
-                                                          boolean isContextMenu,
-                                                          @Nullable ActionGroupVisitor visitor) {
+                                                          boolean isContextMenu) {
     return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, isContextMenu, visitor, null);
+                                 place, isContextMenu, null);
 
   }
 
@@ -131,13 +128,12 @@ public final class Utils {
                                                                @NotNull DataContext context,
                                                                @NotNull String place,
                                                                boolean isContextMenu,
-                                                               @Nullable ActionGroupVisitor visitor,
                                                                @Nullable Runnable onProcessed) {
     boolean async = isAsyncDataContext(context);
     boolean asyncUI = async && Registry.is("actionSystem.update.actions.async.ui");
     BlockingQueue<Runnable> queue0 = async && !asyncUI ? new LinkedBlockingQueue<>() : null;
     ActionUpdater updater = new ActionUpdater(
-      isInModalContext, presentationFactory, context, place, isContextMenu, false, visitor, null, queue0 != null ? queue0::offer : null);
+      isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
     List<AnAction> list;
     if (async) {
       IdeEventQueue queue = IdeEventQueue.getInstance();
@@ -180,7 +176,7 @@ public final class Utils {
                        boolean useDarkIcons,
                        @Nullable RelativePoint relativePoint) {
     Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
-    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, null, removeIcon);
+    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
@@ -395,7 +391,7 @@ public final class Utils {
     BlockingQueue<Runnable> queue = async ? new LinkedBlockingQueue<>() : null;
     ActionUpdater actionUpdater = new ActionUpdater(
       LaterInvocator.isInModalContext(), factory, dataContext,
-      place, false, false, null, event -> {
+      place, false, false, event -> {
         AnActionEvent transformed = actionProcessor.createEvent(
           inputEvent, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager());
         if (eventTracker != null) eventTracker.accept(transformed);
@@ -475,17 +471,5 @@ public final class Utils {
       }
     }
     return defValue;
-  }
-
-  public interface ActionGroupVisitor {
-    void begin();
-
-    boolean enterNode(@NotNull ActionGroup groupNode);
-    void visitLeaf(@NotNull AnAction act);
-    void leaveNode();
-    @Nullable Component getCustomComponent(@NotNull AnAction action);
-
-    boolean beginUpdate(@NotNull AnAction action, AnActionEvent e);
-    void endUpdate(@NotNull AnAction action);
   }
 }

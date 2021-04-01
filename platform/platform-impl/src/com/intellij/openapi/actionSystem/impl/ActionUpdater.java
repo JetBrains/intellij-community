@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.injected.editor.EditorWindow;
@@ -78,7 +77,6 @@ final class ActionUpdater {
   private final Map<ActionGroup, Boolean> myCanBePerformedCache = new ConcurrentHashMap<>();
   private final UpdateStrategy myRealUpdateStrategy;
   private final UpdateStrategy myCheapStrategy;
-  private final Utils.ActionGroupVisitor myVisitor;
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
@@ -90,8 +88,9 @@ final class ActionUpdater {
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
                 String place,
-                boolean isContextMenuAction, boolean isToolbarAction) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null);
+                boolean isContextMenuAction,
+                boolean isToolbarAction) {
+    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
   }
 
   ActionUpdater(boolean isInModalContext,
@@ -100,24 +99,12 @@ final class ActionUpdater {
                 String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
-                Utils.ActionGroupVisitor visitor) {
-    this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, visitor, null, null);
-  }
-
-  ActionUpdater(boolean isInModalContext,
-                PresentationFactory presentationFactory,
-                DataContext dataContext,
-                String place,
-                boolean isContextMenuAction,
-                boolean isToolbarAction,
-                @Nullable Utils.ActionGroupVisitor visitor,
                 @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
                 @Nullable Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
     myDataContext = dataContext;
-    myVisitor = visitor;
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
@@ -127,7 +114,7 @@ final class ActionUpdater {
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, Op.update),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
-      group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(getDataContext(group))));
+      group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) ||
@@ -143,7 +130,7 @@ final class ActionUpdater {
     Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!isBeforePerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
-    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), myVisitor, isBeforePerformed);
+    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), isBeforePerformed);
     boolean success = callAction(action, operation, doUpdate);
     return success ? presentation : null;
   }
@@ -168,19 +155,6 @@ final class ActionUpdater {
       orig.copyFrom(copy);
       reflectSubsequentChangesInOriginalPresentation(orig, copy);
     }
-  }
-
-  private DataContext getDataContext(@NotNull AnAction action) {
-    if (myVisitor == null) {
-      return myDataContext;
-    }
-    // it's very expensive to create async-context for each custom component
-    // and such actions (with custom components, i.e. buttons from dialogs) updates synchronously now
-    if (Utils.isAsyncDataContext(myDataContext)) {
-      return myDataContext;
-    }
-    Component component = myVisitor.getCustomComponent(action);
-    return component != null ? DataManager.getInstance().getDataContext(component) : myDataContext;
   }
 
   // some actions remember the presentation passed to "update" and modify it later, in hope that menu will change accordingly
@@ -261,9 +235,6 @@ final class ActionUpdater {
   }
 
   private List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
-    if (myVisitor != null) {
-      myVisitor.begin();
-    }
     return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, strategy));
   }
 
@@ -383,27 +354,17 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-    if (myVisitor != null && !myVisitor.enterNode(group)) {
+
+    Presentation presentation = update(group, strategy);
+    if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
     }
 
-    try {
-      Presentation presentation = update(group, strategy);
-      if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
-        return Collections.emptyList();
-      }
-
-      List<AnAction> children = getGroupChildren(group, strategy);
-      List<AnAction> result = ContainerUtil.concat(children, child -> TimeoutUtil.compute(
-        () -> expandGroupChild(child, hideDisabled, strategy),
-        1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
-      return group.afterExpandGroup(result, asUpdateSession(strategy));
-    }
-    finally {
-      if (myVisitor != null) {
-        myVisitor.leaveNode();
-      }
-    }
+    List<AnAction> children = getGroupChildren(group, strategy);
+    List<AnAction> result = ContainerUtil.concat(children, child -> TimeoutUtil.compute(
+      () -> expandGroupChild(child, hideDisabled, strategy),
+      1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
+    return group.afterExpandGroup(result, asUpdateSession(strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {
@@ -467,9 +428,6 @@ final class ActionUpdater {
           }
         }
 
-        if (myVisitor != null) {
-          myVisitor.visitLeaf(child);
-        }
         if (hideDisabled && !(child instanceof CompactActionGroup)) {
           return Collections.singletonList(new EmptyAction.DelegatingCompactActionGroup((ActionGroup)child));
         }
@@ -479,9 +437,6 @@ final class ActionUpdater {
       return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, strategy);
     }
 
-    if (myVisitor != null) {
-      myVisitor.visitLeaf(child);
-    }
     return Collections.singletonList(child);
   }
 
@@ -509,7 +464,7 @@ final class ActionUpdater {
 
   private AnActionEvent createActionEvent(AnAction action, Presentation presentation) {
     AnActionEvent event = new AnActionEvent(
-      null, getDataContext(action), myPlace, presentation,
+      null, myDataContext, myPlace, presentation,
       ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
     if (myEventTransform != null) {
       event = myEventTransform.apply(event);
@@ -537,7 +492,7 @@ final class ActionUpdater {
     }
     else {
       updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
-                                  myVisitor, myEventTransform, myLaterInvocator);
+                                  myEventTransform, myLaterInvocator);
       updater.myPreCacheSlowDataKeys = false;
     }
     return updater.asUpdateSession(new UpdateStrategy(
@@ -603,13 +558,8 @@ final class ActionUpdater {
   static boolean doUpdate(boolean isInModalContext,
                           AnAction action,
                           AnActionEvent e,
-                          Utils.ActionGroupVisitor visitor,
                           boolean beforeActionPerformed) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
-
-    if (visitor != null && !visitor.beginUpdate(action, e)) {
-      return true;
-    }
 
     long startTime = System.currentTimeMillis();
     final boolean result;
@@ -622,11 +572,6 @@ final class ActionUpdater {
     catch (Throwable exc) {
       handleUpdateException(action, e.getPresentation(), exc);
       return false;
-    }
-    finally {
-      if (visitor != null) {
-        visitor.endUpdate(action);
-      }
     }
     long endTime = System.currentTimeMillis();
     if (endTime - startTime > 10 && LOG.isDebugEnabled()) {
