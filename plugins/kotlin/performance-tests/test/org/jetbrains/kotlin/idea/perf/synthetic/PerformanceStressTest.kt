@@ -6,7 +6,11 @@
 package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.usages.Usage
+import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.perf.Parameter
 import org.jetbrains.kotlin.idea.perf.util.DefaultProfile
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
@@ -17,6 +21,99 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
 class PerformanceStressTest : UsefulTestCase() {
+
+    override fun setUp() {
+        super.setUp()
+
+        ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({ description ->
+                                                                 throw RuntimeException(description.description)
+                                                             }, testRootDisposable)
+    }
+
+    fun testFindUsages() {
+        val numberOfFuns = 50
+        val numberOfPackagesWithCandidates = 50
+
+        val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates"
+        suite(
+            suiteName = name,
+            config = PerformanceSuite.StatsScopeConfig(name = name)
+        ) {
+            app {
+                //warmUpProject()
+
+                project {
+
+                    descriptor {
+                        name(name)
+                        buildGradle("idea/testData/perfTest/simpleTemplate/")
+
+                        for (index in 1..2) {
+                            kotlinFile("DataClass") {
+                                pkg("pkg$index")
+
+                                topClass("DataClass") {
+                                    dataClass()
+
+                                    ctorParameter(Parameter("name", "String"))
+                                    ctorParameter(Parameter("value", "Int"))
+                                }
+                            }
+                        }
+
+                        for (pkgIndex in 1..numberOfPackagesWithCandidates) {
+                            kotlinFile("SomeService") {
+                                pkg("pkgX$pkgIndex")
+                                // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
+                                import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
+
+                                topClass("SomeService") {
+                                    for (index in 1..numberOfFuns) {
+                                        function("foo$index") {
+                                            returnType("DataClass")
+                                            param("data", "DataClass")
+
+                                            body("return DataClass(data.name, data.value + $index)")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    fixture("src/main/java/pkg1/DataClass.kt").use { fixture ->
+                        val typingConfig = PerformanceSuite.CursorConfig(fixture, marker = "DataClass")
+
+                        with(config) {
+                            warmup = 8
+                            iterations = 15
+                        }
+
+                        measure<Set<Usage>>("findUsages", fixture = fixture) {
+                            before = {
+                                moveCursor(typingConfig)
+                            }
+                            test = {
+                                val findUsages = findUsages(typingConfig)
+                                // 1 from import
+                                //   + numberOfUsages as function argument
+                                //   + numberOfUsages as return type functions
+                                //   + numberOfUsages as new instance in a body of function
+                                // in a SomeService
+                                TestCase.assertEquals(1 + 3 * numberOfFuns, findUsages.size)
+                                findUsages
+                            }
+                            after = {
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     fun testLotsOfOverloadedMethods() {
         // KT-35135

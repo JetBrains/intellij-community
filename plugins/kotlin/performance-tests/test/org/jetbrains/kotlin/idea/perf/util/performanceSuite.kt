@@ -22,12 +22,15 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.usages.Usage
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.UnindexedFilesUpdater
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.perf.ProjectBuilder
@@ -44,6 +47,8 @@ import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 class PerformanceSuite {
@@ -97,6 +102,15 @@ class PerformanceSuite {
         fun logStatValue(name: String, value: Any) {
             logMessage { "buildStatisticValue key='${stats.name}: $name' value='$value'" }
             TeamCity.statValue("${stats.name}: $name", value)
+        }
+    }
+
+    data class CursorConfig(
+        val fixture: Fixture,
+        val marker: String
+    ) : AutoCloseable {
+        override fun close() {
+            fixture.close()
         }
     }
 
@@ -161,7 +175,15 @@ class PerformanceSuite {
         fun gradleProject(path: String, refresh: Boolean = false, block: ProjectScope.() -> Unit) =
             ProjectScope(ProjectScopeConfig(path, ProjectOpenAction.GRADLE_PROJECT, refresh), this).use(block)
 
-        fun warmUpProject() = project {
+        fun warmUpProject() = warmUpProject1()
+
+        fun warmUpProject2() = project("/Users/vladimir.dolzhenko/workspace/test/findUsages") {
+            fixture("src/main/java/hello.kt").use {
+                highlight(it)
+            }
+        }
+
+        fun warmUpProject1() = project {
             descriptor {
                 name("helloWorld")
 
@@ -241,6 +263,19 @@ class PerformanceSuite {
         fun highlight(editorFile: PsiFile?, toIgnore: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY) =
             editorFile?.highlightFile(toIgnore) ?: error("editor isn't ready for highlight")
 
+        fun moveCursor(config: CursorConfig) {
+            val fixture = config.fixture
+            val editor = fixture.editor
+            updateScriptDependenciesIfNeeded(fixture)
+
+            val marker = config.marker
+            val tasksIdx = fixture.text.indexOf(marker)
+            check(tasksIdx > 0) {
+                "marker '$marker' not found in ${fixture.fileName}"
+            }
+            editor.caretModel.moveToOffset(tasksIdx)
+        }
+
         fun moveCursor(config: TypingConfig) {
             val fixture = config.fixture
             val editor = fixture.editor
@@ -280,6 +315,15 @@ class PerformanceSuite {
             return config.fixture.doHighlighting()
         }
 
+        fun findUsages(config: CursorConfig): Set<Usage> {
+            val offset = config.fixture.editor.caretModel.offset
+            val psiFile = config.fixture.psiFile
+            val psiElement = psiFile.findElementAt(offset) ?: error("psi element not found at ${psiFile.virtualFile} : $offset")
+            val ktDeclaration = PsiTreeUtil.getParentOfType(psiElement, KtDeclaration::class.java)
+                ?: error("KtDeclaration not found at ${psiFile.virtualFile} : $offset")
+            return config.fixture.findUsages(ktDeclaration)
+        }
+
         fun updateScriptDependenciesIfNeeded(fixture: Fixture) {
             val path = fixture.vFile.path
             if (Fixture.isAKotlinScriptFile(path)) {
@@ -303,6 +347,11 @@ class PerformanceSuite {
             openFiles.add(fixture.vFile)
             if (Fixture.isAKotlinScriptFile(path)) {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
+            }
+            if (path.endsWith(KotlinFileType.EXTENSION)) {
+                assert(fixture.psiFile is KtFile) {
+                    "$path expected to be a Kotlin file"
+                }
             }
             return fixture
         }

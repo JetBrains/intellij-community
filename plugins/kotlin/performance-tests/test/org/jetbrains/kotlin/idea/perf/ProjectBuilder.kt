@@ -47,9 +47,25 @@ class CompanionObjectSource : AbstractClassSource("") {
     override fun toString(): String = "companion object {\n$body}"
 }
 
+enum class Visibility {
+    PUBLIC,
+    PRIVATE,
+    INTERNAL
+}
+
+data class Parameter(val name: String, val type: String, val mutable: Boolean = false, val visibility: Visibility = Visibility.PUBLIC, val defaultValueExpression: String? = null) {
+    override fun toString(): String {
+        val visibilityString = if (visibility == Visibility.PUBLIC) "" else visibility.name.toLowerCase() + " "
+        val valueExpression = defaultValueExpression?.let { " = $it" } ?: ""
+        return "$visibilityString${if (mutable) "var" else "val"} $name: $type$valueExpression"
+    }
+}
+
 class ClassSource(name: String, private val topLevel: Boolean = true) : AbstractClassSource(name) {
 
+    private var dataClass: Boolean = false
     private var openClass: Boolean = false
+    private val ctorParameters = mutableListOf<Parameter>()
 
     private var superClass: String? = null
     private val interfaces = mutableListOf<String>()
@@ -71,13 +87,29 @@ class ClassSource(name: String, private val topLevel: Boolean = true) : Abstract
         this.openClass = openClass
     }
 
+    fun dataClass() {
+        dataClass(true)
+    }
+
+    fun dataClass(dataClass: Boolean) {
+        this.dataClass = dataClass
+    }
+
+    fun ctorParameter(parameter: Parameter) {
+        ctorParameters.add(parameter)
+    }
+
     fun companionObject(companionObjectSource: CompanionObjectSource.() -> Unit) {
         check(topLevel) { "companion object is allowed only in top-level classes, wrong class: $name" }
         val source = CompanionObjectSource().apply(companionObjectSource)
         super.body(source)
     }
 
-    private fun openPrefix(): String = if (!openClass) "" else "open "
+    private fun classModifier(): String {
+        val open = if (!openClass) "" else "open "
+        val data = if (!dataClass) "" else "data "
+        return open + data
+    }
 
     private fun superAndInterfaces(): String {
         val superStr = if (superClass != null) {
@@ -91,7 +123,13 @@ class ClassSource(name: String, private val topLevel: Boolean = true) : Abstract
         }
     }
 
-    override fun toString(): String = "${openPrefix()}class $name ${superAndInterfaces()} {\n$body}"
+    private fun constructorParameters(): String = if (ctorParameters.isEmpty()) {
+        ""
+    } else {
+        "(" + ctorParameters.joinToString(", ") + ")"
+    }
+
+    override fun toString(): String = "${classModifier()}class $name ${constructorParameters()} ${superAndInterfaces()} {\n$body}"
 }
 
 class FunSource(val name: String) : AbstractSource() {
@@ -135,6 +173,14 @@ class KotlinFileSource : AbstractSource() {
         check(this.pkg == null) { "package directive is already specified: ${this.pkg}" }
         this.pkg = pkg
         super.body("package $pkg\n")
+    }
+
+    fun import(fqName: String) {
+        super.body("import $fqName\n")
+    }
+
+    fun importStar(pkgName: String) {
+        super.body("import $pkgName.*\n")
     }
 
     fun topClass(name: String, clsSource: ClassSource.() -> Unit) {

@@ -11,6 +11,8 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.find.FindManager
+import com.intellij.find.impl.FindManagerImpl
 import com.intellij.lang.ExternalAnnotatorsFilter
 import com.intellij.lang.LanguageAnnotators
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -28,6 +30,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.search.IndexPatternBuilder
@@ -38,6 +41,7 @@ import com.intellij.psi.xml.XmlFileNSInfoProvider
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.usages.Usage
 import com.intellij.xml.XmlSchemaProvider
 import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -67,7 +71,13 @@ class Fixture(
         storeText()
     }
 
-    fun doHighlighting(): List<HighlightInfo> = delegate.doHighlighting() ?: emptyList()
+    fun doHighlighting(): List<HighlightInfo> = delegate.doHighlighting()
+
+    fun findUsages(psiElement: PsiElement): Set<Usage> {
+        val findUsagesManager = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager
+        val handler = findUsagesManager.getNewFindUsagesHandler(psiElement, false) ?: error("unable to find FindUsagesHandler")
+        return findUsagesManager.doFindUsages(arrayOf(psiElement), emptyArray(), handler, handler.findUsagesOptions, false).usages
+    }
 
     fun type(s: String) {
         delegate.type(s)
@@ -197,9 +207,8 @@ class Fixture(
         private fun projectFileByName(project: Project, name: String): PsiFile {
             val fileManager = VirtualFileManager.getInstance()
             val url = "${project.guessProjectDir()}/$name"
-            val virtualFile = fileManager.refreshAndFindFileByUrl(url)
-            if (virtualFile != null) {
-                return virtualFile!!.toPsiFile(project)!!
+            fileManager.refreshAndFindFileByUrl(url)?.let {
+                return it.toPsiFile(project)!!
             }
 
             val baseFileName = baseName(name)

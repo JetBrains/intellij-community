@@ -6,8 +6,11 @@
 package org.jetbrains.kotlin.idea.testFramework
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.TrustedProjectSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleTypeId
@@ -19,9 +22,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertTrue
+import com.intellij.util.ThreeState
 import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
@@ -40,8 +45,9 @@ enum class ProjectOpenAction {
         override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
             val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectPath)!!
 
-            val modulePath = "$projectPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
             val projectFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath))!!
+
+            val modulePath = "$projectPath/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}"
             val srcFile = projectFile.findChild("src")!!
 
             val module = runWriteAction {
@@ -63,7 +69,12 @@ enum class ProjectOpenAction {
         override fun openProject(projectPath: String, projectName: String, jdk: Sdk): Project {
             val projectManagerEx = ProjectManagerEx.getInstanceEx()
 
-            val project = loadProjectWithName(projectPath, projectName)
+            val project =
+                ProjectManagerEx.getInstanceEx()
+                    .openProject(
+                        Paths.get(projectPath),
+                        OpenProjectTask(projectName = projectName, showWelcomeScreen = false)
+                    )
                 ?: error("project $projectName at $projectPath is not loaded")
 
             runWriteAction {
@@ -81,11 +92,18 @@ enum class ProjectOpenAction {
             check(System.getProperty("org.gradle.native") == "false") {
                 "Please specify -Dorg.gradle.native=false due to known Gradle native issue"
             }
-            val project = ProjectManagerEx.getInstanceEx().loadAndOpenProject(projectPath)!!
+            val project =
+                ProjectManagerEx.getInstanceEx()
+                    .openProject(
+                        Paths.get(projectPath),
+                        OpenProjectTask(projectName = projectName, isNewProject = true, showWelcomeScreen = false)
+                    ) ?: error("project $projectName at $projectPath is not loaded")
             assertTrue(
                 !project.isDisposed,
                 "Gradle project $projectName at $projectPath is accidentally disposed immediately after import"
             )
+
+            project.service<TrustedProjectSettings>().trustedState = ThreeState.YES
 
             runWriteAction {
                 ProjectRootManager.getInstance(project).projectSdk = jdk
@@ -138,6 +156,9 @@ enum class ProjectOpenAction {
         assertTrue("project ${openProject.projectName} has to have at least one module", modules.isNotEmpty())
 
         logMessage { "modules of ${openProject.projectName}: ${modules.map { m -> m.name }}" }
+        project.projectFile?.parent?.let { parent ->
+            VfsUtil.markDirtyAndRefresh(false, true, true, parent)
+        }
 
         VirtualFileManager.getInstance().syncRefresh()
 
