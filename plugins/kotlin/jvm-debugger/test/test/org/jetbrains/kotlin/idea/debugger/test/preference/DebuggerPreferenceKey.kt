@@ -9,18 +9,13 @@ package org.jetbrains.kotlin.idea.debugger.test.preference
 
 import java.lang.reflect.ParameterizedType
 import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaType
 
 class DebuggerPreferenceKey<T : Any>(val name: String, val type: Class<*>, val defaultValue: T)
 
 private inline fun <reified T : Any> debuggerPreferenceKey(defaultValue: T): ReadOnlyProperty<Any, DebuggerPreferenceKey<T>> {
-    val clazz = T::class.java
-
-    return object : ReadOnlyProperty<Any, DebuggerPreferenceKey<T>> {
-        override fun getValue(thisRef: Any, property: KProperty<*>) = DebuggerPreferenceKey(property.name, clazz, defaultValue)
-    }
+    return ReadOnlyProperty { _, property -> DebuggerPreferenceKey(property.name, T::class.java, defaultValue) }
 }
 
 internal object DebuggerPreferenceKeys {
