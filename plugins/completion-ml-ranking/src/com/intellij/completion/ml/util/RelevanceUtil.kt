@@ -25,7 +25,7 @@ object RelevanceUtil {
   /*
   * First map contains only features affecting default elements ordering
   * */
-  fun asRelevanceMaps(relevanceObjects: List<Pair<String, Any?>>): kotlin.Pair<Map<String, Any>, MutableMap<String, Any>> {
+  fun asRelevanceMaps(relevanceObjects: List<Pair<String, Any?>>): kotlin.Pair<MutableMap<String, Any>, MutableMap<String, Any>> {
     val relevanceMap = mutableMapOf<String, Any>()
     val additionalMap = mutableMapOf<String, Any>()
     for (pair in relevanceObjects) {

@@ -15,4 +15,8 @@ interface RankingFeaturesOverrides {
   }
 
   fun getMlElementFeaturesOverrides(features: Map<String, Any>): Map<String, Any>
+
+  fun getDefaultWeigherFeaturesOverrides(features: Map<String, Any>): Map<String, Any> {
+    return emptyMap()
+  }
 }

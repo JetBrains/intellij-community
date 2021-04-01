@@ -170,6 +170,11 @@ class MLSorter : CompletionFinalSorter() {
       elementFeatures.additional.putAll(overrides)
       if (overrides.isNotEmpty())
         LOG.debug("The next ML features was overridden: [${overrides.map { it.key }.joinToString()}]")
+
+      val relevanceOverrides = it.getDefaultWeigherFeaturesOverrides(elementFeatures.relevance)
+      elementFeatures.relevance.putAll(relevanceOverrides)
+      if (relevanceOverrides.isNotEmpty())
+        LOG.debug("The next default weigher features was overridden: [${relevanceOverrides.map { it.key }.joinToString()}]")
     }
     return elementFeatures
   }
