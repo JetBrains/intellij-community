@@ -460,6 +460,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected class SearchPopup extends JPanel {
     protected final SearchField mySearchField;
+    private String myLastPattern = "";
 
     protected SearchPopup(String initialString) {
       mySearchField = new SearchField();
@@ -490,9 +491,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       add(mySearchField, BorderLayout.CENTER);
       mySearchField.setText(initialString);
 
-      onSearchFieldUpdated(initialString);
+      updateLastPattern();
       Object element = findElement(mySearchField.getText());
       updateSelection(element);
+    }
+
+    private void updateLastPattern() {
+      String pattern = StringUtil.notNullize(mySearchField.getText());
+      if (!pattern.equals(myLastPattern)) {
+        myLastPattern = pattern;
+        onSearchFieldUpdated(pattern);
+      }
     }
 
     protected void handleInsert(String newText) {
@@ -508,8 +517,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public void processKeyEvent(KeyEvent e) {
       mySearchField.processKeyEvent(e);
       if (e.isConsumed()) {
+        updateLastPattern();
         String s = mySearchField.getText();
-        onSearchFieldUpdated(s);
         int keyCode = e.getKeyCode();
         Object element;
         if (isUpDownHomeEnd(keyCode)) {
