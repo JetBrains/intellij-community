@@ -45,7 +45,7 @@ object ClassNameCalculator {
 }
 
 fun ClassNameCalculator.getClassNameCompat(element: KtElement): String? {
-    return if (Registry.`is`("kotlin.debugger.enable.class.name.oracle")) {
+    return if (Registry.`is`("kotlin.debugger.enable.class.name.calculator")) {
         getClassName(element)
     } else {
         @Suppress("DEPRECATION")
