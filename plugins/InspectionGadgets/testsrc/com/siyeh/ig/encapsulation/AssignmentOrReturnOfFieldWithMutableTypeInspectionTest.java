@@ -29,7 +29,7 @@ public class AssignmentOrReturnOfFieldWithMutableTypeInspectionTest extends Ligh
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return JAVA_11_ANNOTATED;
   }
 
   public void testAssignmentOrReturnOfFieldWithMutableType() {
