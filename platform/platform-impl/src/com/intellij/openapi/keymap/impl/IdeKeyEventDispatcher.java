@@ -198,7 +198,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (id == KeyEvent.KEY_PRESSED && e.getKeyCode() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }
-      if (e.getModifiersEx() == 0 && Character.isLetterOrDigit(e.getKeyCode())) {
+      if (e.getModifiersEx() == 0 && Character.isLetterOrDigit(e.getKeyChar())) {
         return false;
       }
     }
