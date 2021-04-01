@@ -36,9 +36,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -756,6 +759,30 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
       return false;
+    }
+
+    @Override
+    protected ListCellRenderer<?> getListElementRenderer() {
+      return new PopupListElementRenderer<>(this){
+        @Override
+        protected JComponent createIconBar(JList<?> list, Object value, boolean selected) {
+          JPanel res = new JPanel(new GridBagLayout());
+          res.setOpaque(false);
+          res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+
+          GridBag gbc = new GridBag()
+            .setDefaultAnchor(GridBagConstraints.CENTER)
+            .setDefaultWeightX(1)
+            .setDefaultInsets(0, 0, 0, 0)
+            .setDefaultFill(GridBagConstraints.BOTH);
+
+          res.add(myMnemonicLabel, gbc.next());
+          res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.MNEMONIC_ICON_GAP), gbc.next());
+          res.add(myIconLabel, gbc.next());
+
+          return res;
+        }
+      };
     }
 
     @Override

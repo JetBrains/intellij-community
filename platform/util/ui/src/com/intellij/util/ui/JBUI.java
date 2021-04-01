@@ -421,6 +421,7 @@ public class JBUI {
 
     public static final class ActionsList {
       public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+      public static final int MNEMONIC_ICON_GAP = scale(4);
 
       @NotNull
       public static Insets numberMnemonicInsets() {
@@ -434,7 +435,7 @@ public class JBUI {
 
       @NotNull
       public static int elementIconGap() {
-        return new JBValue.UIInteger("ActionsList.icon.gap", scale(8)).get();
+        return new JBValue.UIInteger("ActionsList.icon.gap", scale(6)).get();
       }
 
       @NotNull

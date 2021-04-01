@@ -50,9 +50,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
     AccessibleContextUtil.setName(myRendererComponent, myTextLabel);
     AccessibleContextUtil.setDescription(myRendererComponent, myTextLabel);
 
-    myTextLabel.setIcon(icon);
-    myTextLabel.setDisabledIcon(disabledIcon);
-    myTextLabel.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
+    setComponentIcon(icon, disabledIcon);
 
     setSelected(myComponent, isSelected);
     setSelected(myTextLabel, isSelected);
@@ -60,6 +58,12 @@ public abstract class GroupedElementsRenderer implements Accessible {
     myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
     return myRendererComponent;
+  }
+
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myTextLabel.setIcon(icon);
+    myTextLabel.setDisabledIcon(disabledIcon);
+    myTextLabel.setIconTextGap(JBUI.CurrentTheme.ActionsList.elementIconGap());
   }
 
   protected final void setSelected(JComponent aComponent) {

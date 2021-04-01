@@ -33,10 +33,12 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   private JLabel myShortcutLabel;
   private @Nullable JLabel myValueLabel;
   protected JLabel myMnemonicLabel;
+  protected JLabel myIconLabel;
 
-  protected JComponent myRightPart;
-  protected JComponent myLeftPart;
+  protected JComponent myButtonPane;
+  protected JComponent myMainPane;
   protected JComponent myNextStepButtonSeparator;
+  protected JComponent myIconBar;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<>() {
@@ -117,6 +119,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
 
+    myIconLabel = new JLabel();
+
     return layoutComponent(panel);
   }
 
@@ -157,10 +161,16 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     result.add(left, gbc.next());
     result.add(right, gbc.next());
 
-    myLeftPart = left;
-    myRightPart = right;
+    myMainPane = left;
+    myButtonPane = right;
 
     return result;
+  }
+
+  @Override
+  protected void setComponentIcon(Icon icon, Icon disabledIcon) {
+    myIconLabel.setIcon(icon);
+    myIconLabel.setDisabledIcon(disabledIcon);
   }
 
   @NotNull
@@ -194,8 +204,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     setSelected(myComponent, isSelected && isSelectable);
     setSelected(myTextLabel, isSelected && isSelectable);
-    myLeftPart.setOpaque(false);
-    myRightPart.setOpaque(false);
+    myMainPane.setOpaque(false);
+    myButtonPane.setOpaque(false);
     myNextStepButtonSeparator.setVisible(false);
 
     boolean nextStepButtonSelected = false;
@@ -203,14 +213,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myNextStepLabel.setVisible(isSelectable);
 
       if (Registry.is("ide.list.popup.separate.next.step.button") && step.isFinal(value)) {
-        myLeftPart.setOpaque(true);
-        myRightPart.setOpaque(true);
+        myMainPane.setOpaque(true);
+        myButtonPane.setOpaque(true);
         setSelected(myComponent, false, isSelected);
 
         nextStepButtonSelected = isNextStepButtonSelected(list);
-        setSelected(myLeftPart, isSelected && !nextStepButtonSelected, isSelected);
+        setSelected(myMainPane, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
-        setSelected(myRightPart, isSelected && nextStepButtonSelected, isSelected);
+        setSelected(myButtonPane, isSelected && nextStepButtonSelected, isSelected);
         myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
         myNextStepButtonSeparator.setVisible(!isSelected);
       }
@@ -240,7 +250,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
-      myLeftPart.add(myMnemonicLabel, BorderLayout.WEST);
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
@@ -287,6 +296,24 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       myValueLabel.setText(step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null);
       setSelected(myValueLabel, isSelected && isSelectable  && !nextStepButtonSelected, isSelected);
     }
+
+    if (myIconBar != null) myMainPane.remove(myIconBar);
+    myIconBar = createIconBar(list, value, isSelected);
+    if (myIconBar != null) myMainPane.add(myIconBar, BorderLayout.WEST);
+  }
+
+  @Nullable
+  protected JComponent createIconBar(JList<? extends E> list, E value, boolean selected) {
+    boolean mnemonicShown = value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled();
+    boolean iconShown = myIconLabel.getIcon() != null;
+    if (!mnemonicShown && !iconShown) return null;
+
+    Box res = Box.createHorizontalBox();
+    res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+    if (iconShown) res.add(myIconLabel);
+    if (mnemonicShown) res.add(myMnemonicLabel);
+
+    return res;
   }
 
   private void setSelected(JComponent component, boolean selected, boolean hovered) {
