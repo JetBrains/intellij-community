@@ -474,7 +474,10 @@ public class ChangesViewManager implements ChangesViewEx,
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
         protected String getCurrentName() {
-          return changeProcessor.getCurrentChangeName();
+          String changeName = changeProcessor.getCurrentChangeName();
+          return changeName != null
+                 ? VcsBundle.message("commit.editor.diff.preview.title", changeName)
+                 : VcsBundle.message("commit.editor.diff.preview.empty.title");
         }
 
         @Override
