@@ -61,7 +61,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" />
     <orderEntry type="module" module-name="kotlin.scripting" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" />
+    <orderEntry type="module" module-name="kotlin.line-indent-provider" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />

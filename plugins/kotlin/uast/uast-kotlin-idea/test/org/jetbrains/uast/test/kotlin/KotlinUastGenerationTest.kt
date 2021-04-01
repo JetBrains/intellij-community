@@ -296,7 +296,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val file = myFixture.configureByText(
             "test.kt", """
             fun f(a: Any){}
-            
+
             fun main(){
                 f(a)
             }
@@ -498,7 +498,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
             class A {
                 fun <T> method(): List<T> { TODO() }
             }
-            
+
             fun main(){
                val a = A()
                println(a)
@@ -699,7 +699,7 @@ class KotlinUastGenerationTest : KotlinLightCodeInsightFixtureTestCase() {
         val file = myFixture.configureByText(
             "file.kt", """
             fun foo(call: (Int) -> String): String = call.invoke(2)
-        
+
             fun main() {
                 foo {
                         println(it)

@@ -148,7 +148,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         ).run()
     }
 
-    private fun RunConfiguration.toXmlString(): @NotNull String {
+    private fun RunConfiguration.toXmlString(): String {
         val element = Element("temp")
         writeExternal(element)
         return JDOMUtil.writeElement(element)
