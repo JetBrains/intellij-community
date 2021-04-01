@@ -48,6 +48,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 
 /**
  * Created by Nikita.Skvortsov

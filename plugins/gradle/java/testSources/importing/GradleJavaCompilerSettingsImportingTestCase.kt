@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.frameworkSupport.GroovyBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
 import org.junit.runners.Parameterized
 
@@ -19,9 +19,9 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   fun createGradleSettingsFile(vararg moduleNames: String) {
     createSettingsFile(
       groovy {
-        assign("rootProject.name", "'project'")
+        assign("rootProject.name", str("project"))
         for (moduleName in moduleNames) {
-          call("include", "'$moduleName'")
+          call("include", str(moduleName))
         }
       }
     )
@@ -49,14 +49,14 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)
           if (mainSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", "'--enable-preview'")
+            call("options.compilerArgs.add", str("--enable-preview"))
           }
         }
         block("compileTestJava") {
           assignIfNotNull("sourceCompatibility", testSourceCompatibility)
           assignIfNotNull("targetCompatibility", testTargetCompatibility)
           if (testSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", "'--enable-preview'")
+            call("options.compilerArgs.add", str("--enable-preview"))
           }
         }
       }

@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +24,6 @@ import org.junit.runners.Parameterized;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.service.project.settings.ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED;
-import static org.jetbrains.plugins.gradle.frameworkSupport.GradleBuildScriptBuilder.IDEA_EXT_PLUGIN_VERSION;
 
 public abstract class GradleSettingsImportingTestCase extends GradleImportingTestCase {
   @Override
@@ -68,10 +66,6 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
     }
   }
 
-  protected boolean extPluginVersionIsAtLeast(@NotNull final String version) {
-    return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION).compareTo(Version.parseVersion(version)) >= 0;
-  }
-
   @NotNull
   @Override
   protected String injectRepo(String config) {
@@ -80,11 +74,10 @@ public abstract class GradleSettingsImportingTestCase extends GradleImportingTes
 
   @NotNull
   protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
-    return
-      "plugins {\n" +
-      "  id \"org.jetbrains.gradle.plugin.idea-ext\" version \"" + IDEA_EXT_PLUGIN_VERSION + "\"\n" +
-      "}\n" +
-      script;
+    return createBuildScriptBuilder()
+      .withGradleIdeaExtPlugin()
+      .addPostfix(script)
+      .generate();
   }
 
   protected void assertSourceNotExists(@NotNull String moduleName, @NotNull String sourcePath) {
