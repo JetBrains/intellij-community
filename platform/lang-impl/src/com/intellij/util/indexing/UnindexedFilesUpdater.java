@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -207,26 +208,28 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
 
     for (int index = 0; index < orderedProviders.size(); ) {
       List<VirtualFile> files = new ArrayList<>();
-      String indexingProgressText = "";
-      StringBuilder providerDebugName = new StringBuilder();
+      List<Pair<IndexableFilesIterator, Integer>> takenProviders = new ArrayList<>();
       while (files.size() < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
         IndexableFilesIterator provider = orderedProviders.get(index++);
         List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
         files.addAll(providerFiles);
-
-        indexingProgressText = provider.getIndexingProgressText();
-        if (providerDebugName.length() > 0) {
-          providerDebugName.append(", ");
-        }
-        providerDebugName.append(provider.getDebugName());
+        takenProviders.add(Pair.create(provider, providerFiles.size()));
       }
+      var sortedProviders = takenProviders.stream().sorted((p1, p2) -> Integer.compare(p2.second, p1.second)).collect(Collectors.toList());
+      var indexingProgressText = sortedProviders.get(0).first.getIndexingProgressText();
+      var fileSetName = sortedProviders.size() == 1
+                        ? sortedProviders.get(0).first.getDebugName()
+                        : sortedProviders.stream()
+                          .map(p -> p.getFirst().getDebugName() + ": " + StringUtil.pluralize("file", p.getSecond()))
+                          .collect(Collectors.joining("\n"));
+
       concurrentTasksProgressManager.setText(indexingProgressText);
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(files.size());
       try {
         IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, providerDebugName.toString(), files, subTaskIndicator);
+          statistics = indexUpdateRunner.indexFiles(myProject, fileSetName, files, subTaskIndicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
@@ -237,7 +240,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
           projectIndexingHistory.addProviderStatistics(statistics);
         }
         catch (Exception e) {
-          LOG.error("Failed to add indexing statistics for " + providerDebugName, e);
+          LOG.error("Failed to add indexing statistics for " + fileSetName, e);
         }
 
         if (exception != null) {
