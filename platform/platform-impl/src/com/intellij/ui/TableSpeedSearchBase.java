@@ -69,7 +69,6 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
   public void hidePopup() {
     super.hidePopup();
     if (!myFilteringMode) return;
-    onSearchFieldUpdated("");
     Cell prev = UIUtil.getClientProperty(myComponent, SELECTION_BEFORE_KEY);
     int viewRow = myComponent.getSelectedRow(); // will be -1 if there is no matching elements (not filtered by rowFilter)
     if (viewRow > -1) {
