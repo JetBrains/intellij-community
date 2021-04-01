@@ -3,16 +3,21 @@ package com.intellij.ide.gdpr
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.Main
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.JBColor
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.event.ActionListener
@@ -30,7 +35,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
   private var bottomPanel: JPanel? = null
   private var htmlRtfPane: HtmlRtfPane? = null
-  private var viewer: JTextPane? = null
+  private var viewer: JEditorPane? = null
 
   private var declineButton: JButton? = null
   private var acceptButton: JButton? = null
@@ -61,15 +66,11 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
         if (useRtfPane) {
           htmlRtfPane = HtmlRtfPane()
           viewer = htmlRtfPane?.create(htmlText)
+          viewer!!.background = Color.WHITE
         }
         else {
-          viewer = JTextPane().apply {
-            contentType = "text/html"
-            text = htmlText
-            addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-          }
+          viewer = createHtmlEditorPane()
         }
-        viewer!!.background = Color.WHITE
         viewer!!.caretPosition = 0
         viewer!!.isEditable = false
         viewer!!.border = JBUI.Borders.empty(30, 30, 30, 60)
@@ -123,6 +124,26 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     }
     dialog = dialogWrapper
     return this
+  }
+
+  private fun createHtmlEditorPane(): JTextPane {
+    return JTextPane().apply {
+      contentType = "text/html"
+      addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+
+      //use Darcula styles for JEditorPane until IDEA-256700 is fixed
+      val kit = JBHtmlEditorKit(false)
+      val resource = DarculaLaf::class.java.getResource(if (JBUIScale.isUsrHiDPI()) "darcula@2x.css" else "darcula.css")
+      kit.styleSheet.addStyleSheet(UIUtil.loadStyleSheet(resource))
+      editorKit = kit
+      text = htmlText
+
+      val styleSheet = (document as HTMLDocument).styleSheet
+      styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}")
+      styleSheet.addRule("body {font-size:${JBUI.Fonts.label()}pt;}")
+      foreground = JBColor.BLACK
+      background = JBColor.WHITE
+    }
   }
 
   fun setTitle(@NlsContexts.DialogTitle title: String): AgreementUi {
