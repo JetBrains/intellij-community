@@ -43,6 +43,12 @@ public final class SlowOperations {
    * it's better to admit that the EP semantic as a whole requires index access,
    * and then move the iteration over all extensions to the background on the platform-side.
    * <p/>
+   * Action Subsystem<br><br>
+   * {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
+   * or moved to background thread using {@link com.intellij.openapi.actionSystem.UpdateInBackground} marker interface.
+   * {@code com.intellij.openapi.actionSystem.impl.ActionUpdater} implements that logic.
+   * {@code AnAction#actionPerformed} should be explicitly coded not to block the UI thread.
+   * <p/>
    * In cases when it's impossible to do so, the computation should be wrapped into {@code allowSlowOperations} explicitly.
    * This way it's possible to find all such operations by searching usages of {@code allowSlowOperations}.
    *
