@@ -24,7 +24,7 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
 
   companion object {
     private val GROUP = EventLogGroup("build.tools.actions", 4)
-    private val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
+    val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
     private val ACTION_EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
     private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 

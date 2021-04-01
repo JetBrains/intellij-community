@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
@@ -32,6 +33,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenTask;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -138,9 +140,9 @@ public class MavenProjectsProcessor {
         indicator.setFraction(counter / (double)(counter + remained));
 
         MavenProjectsProcessorTask finalTask = task;
-        IdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, data -> {
-          data.addData("task_class", finalTask.getClass().getName());
-        });
+        StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
+          Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(finalTask.getClass()))
+        );
 
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();

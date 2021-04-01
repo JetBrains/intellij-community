@@ -25,7 +25,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
@@ -390,8 +390,7 @@ public final class ExternalSystemUtil {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-        IdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, data -> {
-        });
+        StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(project, externalSystemId, null);
         try {
           DumbService.getInstance(project).suspendIndexingAndRun(title, () -> executeImpl(indicator));
         }
