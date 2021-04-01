@@ -1,0 +1,20 @@
+package pkg;
+
+public class TestMethodParametersAttrNameless {
+   public void foo(int var1, int var2) {
+      int var3 = var1 + var2;
+      System.out.println(var3);
+   }
+}
+
+class 'pkg/TestMethodParametersAttrNameless' {
+   method 'foo (II)V' {
+      2      4
+      3      4
+      4      5
+      8      5
+      b      6
+   }
+}
+
+Lines mapping:

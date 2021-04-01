@@ -116,6 +116,9 @@ public class SingleClassesTest {
   @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
   @Test public void testFieldSingleAccess() { doTest("pkg/TestFieldSingleAccess"); }
   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  @Test public void testMethodParametersAttrNoDebugInfo() { doTest("pkg/TestMethodParametersAttrNoDebugInfo"); }
+  @Test public void testMethodParametersAttrStaticNoDebugInfo() { doTest("pkg/TestMethodParametersAttrStaticNoDebugInfo"); }
+  @Test public void testMethodParametersAttrNameless() { doTest("pkg/TestMethodParametersAttrNameless"); }
 
   // TODO: fix all below
   //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}

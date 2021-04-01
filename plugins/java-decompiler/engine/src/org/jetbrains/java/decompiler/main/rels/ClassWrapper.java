@@ -14,13 +14,17 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructMethodParametersAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ClassWrapper {
@@ -141,10 +145,26 @@ public class ClassWrapper {
 
         // if debug information present and should be used
         if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+          Map<Integer, String>  paramNames = new HashMap<>();
+
+          // First process MethodParameters attribute.
+          if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
+            StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
+
+            if (attr != null) {
+              int index = mt.hasModifier(CodeConstants.ACC_STATIC) ? 0 : 1;
+              for (StructMethodParametersAttribute.Entry entry : attr.getEntries()) {
+                paramNames.put(index++, entry.myName);
+              }
+            }
+          }
+
           StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
           if (attr != null) {
             // only param names here
-            varProc.setDebugVarNames(attr.getMapParamNames());
+            for (Map.Entry<Integer, String> entry : attr.getMapParamNames().entrySet()) {
+              paramNames.putIfAbsent(entry.getKey(), entry.getValue());
+            }
 
             // the rest is here
             methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
@@ -161,6 +181,10 @@ public class ClassWrapper {
                 });
               return 0;
             });
+          }
+
+          if (!paramNames.isEmpty()) {
+            varProc.setDebugVarNames(paramNames);
           }
         }
       }
