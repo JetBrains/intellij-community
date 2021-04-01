@@ -110,7 +110,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         if (StringUtil.isEmpty(text)) return;
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myComponent.hasFocus()) {
-            showPopup(text);
+            manageSearchPopup(createPopup(text)); // keep selection
           }
         });
       }
@@ -367,6 +367,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public void showPopup(String searchText) {
     manageSearchPopup(createPopup(searchText));
+    if (mySearchPopup != null && myComponent.isDisplayable()) {
+      mySearchPopup.refreshSelection();
+    }
   }
 
   public void showPopup() {
@@ -392,7 +395,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       char c = e.getKeyChar();
       if (Character.isLetterOrDigit(c) || !Character.isWhitespace(c) && SpeedSearch.PUNCTUATION_MARKS.indexOf(c) != -1) {
-        manageSearchPopup(createPopup(String.valueOf(c)));
+        showPopup(String.valueOf(c));
         e.consume();
       }
     }
@@ -492,8 +495,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       mySearchField.setText(initialString);
 
       updateLastPattern();
-      Object element = findElement(mySearchField.getText());
-      updateSelection(element);
     }
 
     private void updateLastPattern() {
@@ -702,8 +703,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
-
-    mySearchPopup.refreshSelection();
   }
 
   private void moveSearchPopup() {
