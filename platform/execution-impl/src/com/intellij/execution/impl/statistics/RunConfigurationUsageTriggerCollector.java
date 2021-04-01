@@ -10,12 +10,14 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
-import com.intellij.internal.statistic.IdeActivity;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.IdeActivityGroup;
+import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ReadAction;
@@ -25,36 +27,53 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.createFeatureUsageData;
 
-public final class RunConfigurationUsageTriggerCollector {
-  public static final String GROUP = "run.configuration.exec";
-  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
+public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCollector {
+  public static final String GROUP_NAME = "run.configuration.exec";
+  private static final EventLogGroup GROUP = new EventLogGroup(GROUP_NAME, 61);
+  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP_NAME, "started");
   private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
   private static final StringEventField TARGET =
     EventFields.StringValidatedByCustomRule("target", RunConfigurationUsageTriggerCollector.RunTargetValidator.RULE_ID);
+  private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
+    EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  @NotNull
-  public static IdeActivity trigger(@NotNull Project project,
-                                    @NotNull ConfigurationFactory factory,
-                                    @NotNull Executor executor,
-                                    @Nullable RunConfiguration runConfiguration) {
-    return new IdeActivity(project, GROUP).startedWithDataAsync(data -> {
-      return ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration, data))
-        .expireWith(project)
-        .submit(NonUrgentExecutor.getInstance());
-    });
+  private static final IdeActivityGroup ACTIVITY_GROUP = new IdeActivityGroup(GROUP, null,
+                                                                              new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
+                                                                                TARGET,
+                                                                                RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
+                                                                                RunConfigurationTypeUsagesCollector.ID_FIELD,
+                                                                                EventFields.PluginInfo},
+                                                                              new EventField<?>[]{FINISH_TYPE});
+
+  public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
-  private static @NotNull FeatureUsageData buildContext(@NotNull Project project,
-                                                        @NotNull ConfigurationFactory factory,
-                                                        @NotNull Executor executor,
-                                                        @Nullable RunConfiguration runConfiguration,
-                                                        @NotNull FeatureUsageData data) {
+  @NotNull
+  public static StructuredIdeActivity trigger(@NotNull Project project,
+                                              @NotNull ConfigurationFactory factory,
+                                              @NotNull Executor executor,
+                                              @Nullable RunConfiguration runConfiguration) {
+    return new StructuredIdeActivity(project, ACTIVITY_GROUP)
+      .startedAsync(() -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
+        .expireWith(project)
+        .submit(NonUrgentExecutor.getInstance()));
+  }
+
+  private static @NotNull List<EventPair<?>> buildContext(@NotNull Project project,
+                                                          @NotNull ConfigurationFactory factory,
+                                                          @NotNull Executor executor,
+                                                          @Nullable RunConfiguration runConfiguration) {
     final ConfigurationType configurationType = factory.getType();
-    List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
+    List<EventPair<?>> eventPairs = createFeatureUsageData(configurationType, factory);
     ExecutorGroup<?> group = ExecutorGroup.getGroupIfProxy(executor);
     eventPairs.add(EXECUTOR.with(group != null ? group.getId() : executor.getId()));
     if (runConfiguration instanceof FusAwareRunConfiguration) {
@@ -71,14 +90,13 @@ public final class RunConfigurationUsageTriggerCollector {
         }
       }
     }
-    eventPairs.forEach(pair -> pair.addData(data));
-    return data;
+    return eventPairs;
   }
 
-  public static void logProcessFinished(@Nullable IdeActivity activity,
+  public static void logProcessFinished(@Nullable StructuredIdeActivity activity,
                                         RunConfigurationFinishType finishType) {
     if (activity != null) {
-      activity.finished(data -> data.addData("finish_type", finishType.name()));
+      activity.finished(() -> Collections.singletonList(FINISH_TYPE.with(finishType)));
     }
   }
 

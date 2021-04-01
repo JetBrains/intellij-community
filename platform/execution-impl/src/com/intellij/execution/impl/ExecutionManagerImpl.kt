@@ -14,6 +14,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.DELEGATED_RUN_PROFILE_KEY
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.RunConfigurationFinishType
+import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector.UI_SHOWN_STAGE
 import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
@@ -25,7 +26,7 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.internal.statistic.IdeActivity
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -153,7 +154,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
-  private fun processNotStarted(environment: ExecutionEnvironment, activity: IdeActivity?) {
+  private fun processNotStarted(environment: ExecutionEnvironment, activity: StructuredIdeActivity?) {
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
@@ -242,7 +243,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
               if (!descriptor.isHiddenContent && !environment.isHeadless) {
                 RunContentManager.getInstance(project).showRunContent(executor, descriptor, environment.contentToReuse)
               }
-              activity?.stageStarted("ui.shown")
+              activity?.stageStarted(UI_SHOWN_STAGE)
               environment.contentToReuse = descriptor
 
               val processHandler = descriptor.processHandler
@@ -817,7 +818,7 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
   return false
 }
 
-private fun triggerUsage(environment: ExecutionEnvironment): IdeActivity? {
+private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivity? {
   val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
   val configurationFactory = runConfiguration?.factory ?: return null
   return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor, runConfiguration)
@@ -920,7 +921,7 @@ private class ProcessExecutionListener(private val project: Project,
                                        private val environment: ExecutionEnvironment,
                                        private val processHandler: ProcessHandler,
                                        private val descriptor: RunContentDescriptor,
-                                       private val activity: IdeActivity?) : ProcessAdapter() {
+                                       private val activity: StructuredIdeActivity?) : ProcessAdapter() {
   private val willTerminateNotified = AtomicBoolean()
   private val terminateNotified = AtomicBoolean()
 
