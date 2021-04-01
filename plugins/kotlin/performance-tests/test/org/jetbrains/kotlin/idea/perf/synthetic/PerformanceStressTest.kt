@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
 import junit.framework.TestCase
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.idea.perf.Parameter
 import org.jetbrains.kotlin.idea.perf.util.DefaultProfile
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
+import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.perf.util.suite
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
@@ -25,12 +25,16 @@ class PerformanceStressTest : UsefulTestCase() {
     override fun setUp() {
         super.setUp()
 
-        ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({ description ->
-                                                                 throw RuntimeException(description.description)
-                                                             }, testRootDisposable)
+        testRootDisposable.registerLoadingErrorsHeadlessNotifier()
     }
 
     fun testFindUsages() {
+        // 1. Create 2 classes with the same name, but in a different packages
+        // 2. Create 50 packages with a class that uses 50 times one of class from p.1
+        // 3. Use one of the classes from p.1 in the only one class at p.2
+        // 4. Run find usages of class that has limited usages
+        //
+        // Find usages have to resolve each reference due to the fact they have same names
         val numberOfFuns = 50
         val numberOfPackagesWithCandidates = 50
 
@@ -40,7 +44,7 @@ class PerformanceStressTest : UsefulTestCase() {
             config = PerformanceSuite.StatsScopeConfig(name = name)
         ) {
             app {
-                //warmUpProject()
+                warmUpProject()
 
                 project {
 

@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.idea.perf.util
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
 class ExternalProject(val path: String, val openWith: ProjectOpenAction) {
@@ -24,4 +26,11 @@ class ExternalProject(val path: String, val openWith: ProjectOpenAction) {
                 ProjectOpenAction.GRADLE_PROJECT.apply { println("Opening $path in Gradle mode.") }
         }
     }
+}
+
+internal fun Disposable.registerLoadingErrorsHeadlessNotifier() {
+    ProjectLoadingErrorsHeadlessNotifier.setErrorHandler({ description ->
+                                                             throw RuntimeException(description.description)
+                                                         }, this)
+
 }
