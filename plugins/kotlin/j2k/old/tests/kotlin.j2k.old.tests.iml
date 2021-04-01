@@ -9,20 +9,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
     <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="module" module-name="kotlin.j2k.old.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.new" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.j2k.old" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.old" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
   </component>
 </module>

@@ -34,7 +34,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" />
-    <orderEntry type="module" module-name="kotlin.j2k.old" />
+    <orderEntry type="module" module-name="kotlin.j2k.old.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.new.tests" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-fir" scope="TEST" />
