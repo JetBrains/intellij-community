@@ -147,13 +147,33 @@ private fun navigateByPath(project: Project, parameters: Map<String, String>, pa
     path = File(project.basePath, path).absolutePath
   }
 
-  val virtualFile = VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + path) ?: return
-  FileEditorManager.getInstance(project).openFile(virtualFile, true)
-    .filterIsInstance<TextEditor>().first().let { textEditor ->
-      val editor = textEditor.editor
-      editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
-      setSelections(parameters, project)
+  runNavigateTask(pathText, project) {
+    var virtualFile = JBProtocolNavigateResolver.processEnhancers(path!!, project, parameters)
+    if (virtualFile == null) {
+      virtualFile = VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + path) ?: return@runNavigateTask
     }
+
+    ApplicationManager.getApplication().invokeLater {
+      FileEditorManager.getInstance(project).openFile(virtualFile, true)
+        .filterIsInstance<TextEditor>().first().let { textEditor ->
+          val editor = textEditor.editor
+          editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+          setSelections(parameters, project)
+        }
+    }
+  }
+}
+
+private fun runNavigateTask(reference: String, project: Project, task: (indicator: ProgressIndicator) -> Unit) {
+  ProgressManager.getInstance().run(
+    object : Task.Backgroundable(project, IdeBundle.message("navigate.command.search.reference.progress.title", reference), true) {
+      override fun run(indicator: ProgressIndicator) {
+        task.invoke(indicator)
+      }
+
+      override fun shouldStartInBackground(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
+      override fun isConditionalModal(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
+    })
 }
 
 private fun navigateByFqn(project: Project, parameters: Map<String, String>, reference: String) {
@@ -161,24 +181,19 @@ private fun navigateByFqn(project: Project, parameters: Map<String, String>, ref
   // multiple references are encoded and decoded properly
   val fqn = parameters[FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
 
-  ProgressManager.getInstance().run(
-    object : Task.Backgroundable(project, IdeBundle.message("navigate.command.search.reference.progress.title", fqn), true) {
-      override fun run(indicator: ProgressIndicator) {
-        val dataContext = SimpleDataContext.getProjectContext(project)
-        SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
-          .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
-          .filterIsInstance<PsiElement>()
-          .forEach {
-            ApplicationManager.getApplication().invokeLater {
-              PsiNavigateUtil.navigate(it)
-              setSelections(parameters, project)
-            }
-          }
+  runNavigateTask(reference, project) {
+    val dataContext = SimpleDataContext.getProjectContext(project)
+    SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
+      .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
+      .filterIsInstance<PsiElement>()
+      .forEach {
+        ApplicationManager.getApplication().invokeLater {
+          PsiNavigateUtil.navigate(it)
+          setSelections(parameters, project)
+        }
       }
+  }
 
-      override fun shouldStartInBackground(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-      override fun isConditionalModal(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-    })
 }
 
 private fun setSelections(parameters: Map<String, String>, project: Project) {
