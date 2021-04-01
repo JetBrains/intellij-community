@@ -115,7 +115,7 @@ final class BuildUtils {
 
     DataContext dctx = Utils.wrapDataContext(DataManager.getInstance().getDataContext(getCurrentFocusComponent()));
     out.softClear();
-    List<AnAction> acts = Utils.expandActionGroup(false, prepareGroup(filterGroupPrefix, actionGroup), out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL, false);
+    List<AnAction> acts = Utils.expandActionGroup(false, prepareGroup(filterGroupPrefix, actionGroup), out.getFactory(), dctx, ActionPlaces.TOUCHBAR_GENERAL);
     visitor.fillTB(acts);
     if (customizer != null) {
       customizer.finish();

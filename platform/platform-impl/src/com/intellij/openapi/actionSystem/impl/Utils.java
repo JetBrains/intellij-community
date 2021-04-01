@@ -76,18 +76,6 @@ public final class Utils {
     return dataContext instanceof PreCachedDataContext;
   }
 
-  /**
-   * @return actions from the given and nested non-popup groups that are visible after updating
-   */
-  //TODO to remove when Utils.ActionGroupVisitor is dropped
-  public static List<AnAction> expandActionGroup(boolean isInModalContext,
-                                                 @NotNull ActionGroup group,
-                                                 @NotNull PresentationFactory presentationFactory,
-                                                 @NotNull DataContext context,
-                                                 @NotNull String place) {
-    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, false);
-  }
-
   @ApiStatus.Internal
   public static CancellablePromise<List<AnAction>> expandActionGroupAsync(boolean isInModalContext,
                                                                           @NotNull ActionGroup group,
@@ -115,10 +103,9 @@ public final class Utils {
                                                           @NotNull ActionGroup group,
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
-                                                          @NotNull String place,
-                                                          boolean isContextMenu) {
+                                                          @NotNull String place) {
     return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, isContextMenu, null);
+                                 place, ActionPlaces.isPopupPlace(place), null);
 
   }
 

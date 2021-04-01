@@ -4,6 +4,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
@@ -22,6 +23,8 @@ import java.util.function.Supplier;
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>,
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
+  private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
+
   private final List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle String myTitle;
   private final Supplier<? extends DataContext> myContext;
@@ -53,6 +56,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myPreselectActionCondition = preselectActionCondition;
     myAutoSelectionEnabled = autoSelection;
     myShowDisabledActions = showDisabledActions;
+    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
+      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+    }
   }
 
   private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
@@ -108,6 +114,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                                                     boolean honorActionMnemonics,
                                                                     @Nullable String actionPlace,
                                                                     @Nullable PresentationFactory presentationFactory) {
+    if (actionPlace != null && !ActionPlaces.isPopupPlace(actionPlace)) {
+      LOG.error("ActionPlaces.isPopupPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
+    }
     ActionStepBuilder builder = new ActionStepBuilder(
       dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
     builder.buildGroup(actionGroup);
