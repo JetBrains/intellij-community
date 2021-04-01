@@ -105,11 +105,11 @@ public class EtendingMutableInterfaces {
     }
 
     public static class Iterators {
-        <error descr="Class 'ExtendIIterator1' must either be declared abstract or implement abstract method 'remove()' in 'MutableIterator'">public static class ExtendIIterator1 implements IMutableIterator<String></error> {
+        <error>public static class ExtendIIterator1 implements IMutableIterator<String></error> {
 
         }
 
-        <error descr="Class 'ExtendIIterator2' must either be declared abstract or implement abstract method 'remove()' in 'MutableIterator'">public static class ExtendIIterator2<E> implements IMutableIterator<E></error> {
+        <error>public static class ExtendIIterator2<E> implements IMutableIterator<E></error> {
 
         }
 
