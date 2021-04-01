@@ -311,11 +311,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         InstanceofInstruction instanceOf = (InstanceofInstruction)instruction;
         if (visitor.isInstanceofRedundant(instanceOf)) {
           PsiExpression expression = instanceOf.getExpression();
-          if (expression != null && 
-              (!JavaPsiPatternUtil.getExposedPatternVariables(expression).isEmpty() || shouldBeSuppressed(expression))) continue;
+          if (expression == null || shouldBeSuppressed(expression)) continue;
+          if (JavaPsiPatternUtil.getExposedPatternVariables(expression).stream()
+            .anyMatch(var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) continue;
           reporter.registerProblem(expression,
                                    JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
-                                   new RedundantInstanceofFix());
+                                   new RedundantInstanceofFix(expression));
         }
       }
     }
@@ -881,6 +882,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     if (expression instanceof PsiInstanceOfExpression) {
       PsiType type = ((PsiInstanceOfExpression)expression).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;
+      PsiPattern pattern = ((PsiInstanceOfExpression)expression).getPattern();
+      if (pattern instanceof PsiTypeTestPattern && ((PsiTypeTestPattern)pattern).getPatternVariable() != null) {
+        if (((PsiTypeTestPattern)pattern).getCheckType().getType().isAssignableFrom(type)) {
+          // Reported as compilation error
+          return true;
+        }
+      }
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyways reported as "always true"

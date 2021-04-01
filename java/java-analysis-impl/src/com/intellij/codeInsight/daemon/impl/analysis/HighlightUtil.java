@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -63,6 +64,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1689,7 +1691,9 @@ public final class HighlightUtil {
 
   public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
     PsiTypeTestPattern pattern = ObjectUtils.tryCast(expression.getPattern(), PsiTypeTestPattern.class);
-    if (pattern == null || pattern.getPatternVariable() == null) return null;
+    if (pattern == null) return null;
+    PsiPatternVariable variable = pattern.getPatternVariable();
+    if (variable == null) return null;
     PsiTypeElement typeElement = pattern.getCheckType();
     PsiType checkType = typeElement.getType();
     PsiType expressionType = expression.getOperand().getType();
@@ -1698,7 +1702,12 @@ public final class HighlightUtil {
         checkType.equals(expressionType) ?
         JavaErrorBundle.message("instanceof.pattern.equals", checkType.getPresentableText()) :
         JavaErrorBundle.message("instanceof.pattern.supertype", checkType.getPresentableText(), expressionType.getPresentableText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
+      if (!VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+        QuickFixAction.registerQuickFixAction(info, new RedundantInstanceofFix(expression));
+      }
+      return info;
     }
     return null;
   }
