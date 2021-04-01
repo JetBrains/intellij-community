@@ -17,7 +17,9 @@ data class UnifiedDependency(
     buildString {
       append(coordinates.displayName)
       if (scope != null) {
-        append(":$scope")
+        append(" [scope=")
+        append(scope)
+        append("]")
       }
     }
   }

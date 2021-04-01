@@ -16,15 +16,17 @@ import com.intellij.psi.util.PsiUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType.GRADLE_GROOVY
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private val logger by lazy { Logger.getInstance(GradleProjectModuleProvider::class.java) }
 
-open class GradleProjectModuleProvider : ProjectModuleProvider {
+internal open class GradleProjectModuleProvider : ProjectModuleProvider {
 
     companion object {
+
         fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
             var index = file.text.indexOf(groupId)
             while (index >= 0) {
@@ -52,17 +54,10 @@ open class GradleProjectModuleProvider : ProjectModuleProvider {
         }
     }.distinct()
 
-    private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) = { groupId: String, artifactId: String, _: String ->
-        PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
-            val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
-            return@let dependencyElement as Navigatable
-        }
-    }
-
     private fun obtainProjectModulesFor(project: Project, module: Module): ProjectModule? {
         val externalRootProject = findExternalProject(project, module) ?: return null
         val buildFile = externalRootProject.buildFile ?: return null
-        val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.canonicalPath) ?: return null
+        val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return null
         val nativeModule = ModuleUtilCore.findModuleForFile(buildVirtualFile, project) ?: return null
 
         return ProjectModule(
@@ -72,10 +67,9 @@ open class GradleProjectModuleProvider : ProjectModuleProvider {
             buildFile = buildVirtualFile,
             buildSystemType = GRADLE_GROOVY,
             moduleType = GradleProjectModuleType
-        )
-            .apply {
-                getNavigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
-            }
+        ).apply {
+            getNavigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
+        }
     }
 
     private fun getAllSubmodules(rootModule: ProjectModule, project: Project): Sequence<ProjectModule> {
@@ -114,13 +108,11 @@ open class GradleProjectModuleProvider : ProjectModuleProvider {
     ) {
         val localFileSystem = LocalFileSystem.getInstance()
 
-        childProjects.values.forEach { externalProject ->
-            // TODO: reuse code from the above
-            // TODO: make it use sequence instead
-            val projectBuildFile = externalProject.buildFile?.canonicalPath?.let(localFileSystem::findFileByPath)
-                ?: return@forEach
+        for (externalProject in childProjects.values) {
+            val projectBuildFile = externalProject.buildFile?.absolutePath?.let(localFileSystem::findFileByPath)
+                ?: continue
             val nativeModule = ModuleUtilCore.findModuleForFile(projectBuildFile, project)
-                ?: return@forEach
+                ?: continue
 
             val projectModule = ProjectModule(
                 name = externalProject.name,
@@ -130,12 +122,19 @@ open class GradleProjectModuleProvider : ProjectModuleProvider {
                 buildSystemType = GRADLE_GROOVY,
                 moduleType = GradleProjectModuleType
             )
-                .apply {
-                    getNavigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile)
-                }
+
+            projectModule.getNavigatableDependency = createNavigatableDependencyCallback(project, projectBuildFile)
 
             modules += projectModule
             externalProject.addChildrenToListRecursive(modules, projectModule, project)
         }
     }
+
+    private fun createNavigatableDependencyCallback(project: Project, file: VirtualFile) =
+        { groupId: String, artifactId: String, _: PackageVersion ->
+            PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
+                val dependencyElement = findDependencyElement(psiFile, groupId, artifactId) ?: return@let null
+                return@let dependencyElement as Navigatable
+            }
+        }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.version
 
-// NOTE: This file was copied from com.jetbrains.kpm.maven.wanderer.maven.index.version
+// NOTE: This file was copied from com.jetbrains.packagesearch.indexing.pipeline.maven.version, in the PKGS repo
+// TODO extract to a jar we can depend on
 
 import com.jetbrains.packagesearch.intellij.plugin.version.VersionTokenMatcher.Companion.regex
 import com.jetbrains.packagesearch.intellij.plugin.version.VersionTokenMatcher.Companion.substring
@@ -49,31 +50,32 @@ private fun Char.isTokenBoundary(previousChar: Char): Boolean = when {
 }
 
 private val unstableTokens = listOf(
-        substring("alpha"),
-        substring("beta"),
-        substring("bate"),
-        substring("commit"),
-        substring("unofficial"),
-        substring("exp"),
-        substring("experiment"),
-        substring("experimental"),
-        substring("milestone"),
-        substring("deprecated"),
-        substring("rc"),
-        substring("rctest"),
-        substring("cr"),
-        substring("draft"),
-        substring("ignored"),
-        substring("test"),
-        substring("placeholder"),
-        substring("incubating"),
-        substring("nightly"),
-        substring("weekly"),
-        regex("\\b(rel(ease)?[.\\-_]?)?candidate\\b".toRegex(RegexOption.IGNORE_CASE)),
-        regex("\\br?dev(elop(ment)?)?\\b".toRegex(RegexOption.IGNORE_CASE)),
-        regex("\\beap?\\b".toRegex(RegexOption.IGNORE_CASE)),
-        regex("pre(view)?\\b".toRegex(RegexOption.IGNORE_CASE)),
-        regex("\\bsnap(s?shot)?\\b".toRegex(RegexOption.IGNORE_CASE))
+    substring("alpha"),
+    substring("beta"),
+    substring("bate"),
+    substring("commit"),
+    substring("unofficial"),
+    substring("exp"),
+    substring("experiment"),
+    substring("experimental"),
+    substring("milestone"),
+    substring("deprecated"),
+    substring("rc"),
+    substring("rctest"),
+    substring("cr"),
+    substring("draft"),
+    substring("ignored"),
+    substring("test"),
+    substring("placeholder"),
+    substring("incubating"),
+    substring("nightly"),
+    substring("weekly"),
+    substring("master"),
+    regex("\\b(rel(ease)?[.\\-_]?)?candidate\\b".toRegex(RegexOption.IGNORE_CASE)),
+    regex("\\br?dev(elop(ment)?)?\\b".toRegex(RegexOption.IGNORE_CASE)),
+    regex("\\beap?\\b".toRegex(RegexOption.IGNORE_CASE)),
+    regex("pre(view)?\\b".toRegex(RegexOption.IGNORE_CASE)),
+    regex("\\bsnap(s?shot)?\\b".toRegex(RegexOption.IGNORE_CASE))
 )
 
 private sealed class VersionTokenMatcher {

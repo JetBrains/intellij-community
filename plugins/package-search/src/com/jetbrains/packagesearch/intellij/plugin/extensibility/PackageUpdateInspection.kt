@@ -17,7 +17,9 @@ import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.version.looksLikeStableVersion
 
-abstract class PackageUpdateInspection : LocalInspectionTool() {
+internal abstract class PackageUpdateInspection : LocalInspectionTool() {
+
+    @JvmField var stableOnly: Boolean = true
 
     abstract fun shouldCheckFile(file: PsiFile): Boolean
 
@@ -28,31 +30,35 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             return null
         }
 
-        val project = file.project
-        val model = project.getUserData(PackageSearchToolWindowFactory.ToolWindowModelKey) ?: return null
-        val module = ProjectModuleProvider.obtainAllProjectModulesFor(project).toList().find {
-            it.buildFile == file.virtualFile
-        } ?: return null
+//        val project = file.project
+//        val rootModel = project.rootModel()
+//        val module = ProjectModuleProvider.obtainAllProjectModulesFor(project).toList().find {
+//            it.buildFile == file.virtualFile
+//        } ?: return null
         val problemsHolder = ProblemsHolder(manager, file, isOnTheFly)
 
-        model.preparePackageOperationTargetsFor(listOf(module), null).forEach { target ->
-            val dependency = target.packageSearchDependency.remoteInfo ?: return@forEach
-            val highestVersion = (dependency.versions?.map(StandardV2Version::version) ?: emptyList())
-                .filter { it.isNotBlank() && !looksLikeGradleVariable(it) && (looksLikeStableVersion(it)) }
-                .distinct()
-                .sortedWith(Comparator { o1, o2 -> VersionComparatorUtil.compare(o2, o1) }).firstOrNull() ?: return@forEach
-
-            val semVerHighest = SemVer.parseFromText(highestVersion)
-            val semVerTarget = SemVer.parseFromText(target.version)
-            if (semVerHighest != null && semVerTarget != null && semVerHighest > semVerTarget) {
-                val versionElement = getVersionElement(file, dependency) ?: return@forEach
-                problemsHolder.registerProblem(
-                    versionElement,
-                    PackageSearchBundle.message("packagesearch.inspection.update.description", highestVersion),
-                    PackageUpdateQuickFix(versionElement, target, dependency, highestVersion)
-                )
-            }
-        }
+//        TODO replace this with a service access (also note the getVersionElement() signature has changed since)
+//        rootModel.preparePackageOperationTargetsFor(listOf(module)).forEach { target ->
+//            val dependency = target.dependencyModel.remoteInfo ?: return@forEach
+//            val highestVersion = (dependency.versions?.map(StandardV2Version::version) ?: emptyList())
+//                .asSequence()
+//                .filter { it.isNotBlank() && !looksLikeGradleVariable(it) }
+//                .filter { !stableOnly || looksLikeStableVersion(it) }
+//                .distinct()
+//                .sortedWith(Comparator { o1, o2 -> VersionComparatorUtil.compare(o2, o1) })
+//                .firstOrNull() ?: return@forEach
+//
+//            val semVerHighest = SemVer.parseFromText(highestVersion) ?: return@forEach
+//            val semVerTarget = SemVer.parseFromText(target.version) ?: return@forEach
+//            if (semVerHighest <= semVerTarget) return@forEach
+//            val versionElement = getVersionElement(file, dependency) ?: return@forEach
+//
+//            problemsHolder.registerProblem(
+//                versionElement,
+//                PackageSearchBundle.message("packagesearch.inspection.update.description", highestVersion),
+//                PackageUpdateQuickFix(versionElement, target, dependency, highestVersion)
+//            )
+//        }
 
         return problemsHolder.resultsArray
     }

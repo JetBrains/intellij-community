@@ -91,9 +91,9 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     if (element.exists()) {
       return
     }
-    val rootTag = psiFile.rootTag;
+    val rootTag = psiFile.rootTag
     if (rootTag == null) {
-      element.ensureTagExists();
+      element.ensureTagExists()
       return
     }
     val children = rootTag.children
@@ -115,7 +115,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       "maven.project.not.found.for", module.name))
 
     return ReadAction.compute<Pair<MavenDomProjectModel, MavenDomDependency?>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       val managedDependency = MavenDependencyCompletionUtil.findManagedDependency(model, myProject, groupId, artifactId)
       return@compute Pair(model, managedDependency)
@@ -136,11 +136,11 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
     val psiFile = DomUtil.getFile(model)
     WriteCommandAction.writeCommandAction(myProject, psiFile).compute<Unit, Throwable> {
-      addDependenciesTagIfNotExists(psiFile, model);
+      addDependenciesTagIfNotExists(psiFile, model)
       val dependency = MavenDomUtil.createDomDependency(model, null)
       dependency.groupId.stringValue = mavenId.groupId
       dependency.artifactId.stringValue = mavenId.artifactId
-      val scope = toMavenScope(descriptor.scope, managedDependency?.scope?.stringValue);
+      val scope = toMavenScope(descriptor.scope, managedDependency?.scope?.stringValue)
       scope?.let { dependency.scope.stringValue = it }
       if (managedDependency == null || managedDependency.version.stringValue != mavenId.version) {
         dependency.version.stringValue = mavenId.version
@@ -198,7 +198,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
         }
       }
       if (model.dependencies.dependencies.isEmpty()) {
-        model.dependencies.xmlTag?.delete();
+        model.dependencies.xmlTag?.delete()
       }
       saveFile(psiFile)
     }
@@ -208,12 +208,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     val project: MavenProject = myProjectsManager.findProject(module) ?: throw IllegalArgumentException(MavenProjectBundle.message(
       "maven.project.not.found.for", module.name))
     val model = ReadAction.compute<MavenDomProjectModel, Throwable> {
-      MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
+      MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
     }
     for (repo in model.repositories.repositories) {
-      if (repo.url.stringValue?.trimLastSlash() == repository.url.trimLastSlash()) {
-        return;
+      if (repo.url.stringValue?.trimLastSlash() == repository.url?.trimLastSlash()) {
+        return
       }
     }
 
@@ -232,16 +232,16 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     val project: MavenProject = myProjectsManager.findProject(module) ?: throw IllegalArgumentException(MavenProjectBundle.message(
       "maven.project.not.found.for", module.name))
     val (model, repo) = ReadAction.compute<Pair<MavenDomProjectModel, MavenDomRepository?>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       for (repo in model.repositories.repositories) {
-        if (repo.url.stringValue?.trimLastSlash() == repository.url.trimLastSlash()) {
+        if (repo.url.stringValue?.trimLastSlash() == repository.url?.trimLastSlash()) {
           return@compute Pair(model, repo)
         }
       }
-      return@compute null;
+      return@compute null
     }
-    if (repo == null) return;
+    if (repo == null) return
     val psiFile = DomUtil.getFile(repo)
     WriteCommandAction.writeCommandAction(myProject, psiFile).compute<Unit, Throwable> {
       repo.xmlTag?.delete()
@@ -255,7 +255,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
   private fun saveFile(psiFile: @NotNull XmlFile) {
     val document = myDocumentManager.getDocument(psiFile) ?: throw IllegalStateException(MavenProjectBundle.message(
-      "maven.model.error", psiFile));
+      "maven.model.error", psiFile))
     myDocumentManager.doPostponedOperationsAndUnblockDocument(document)
     FileDocumentManager.getInstance().saveDocument(document)
   }
@@ -265,7 +265,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
                                     newValue: String) {
     val rawText = domValue.rawText?.trim()
     if (rawText != null && rawText.startsWith("${'$'}{") && rawText.endsWith("}")) {
-      val propertyName = rawText.substring(2, rawText.length - 1);
+      val propertyName = rawText.substring(2, rawText.length - 1)
       val subTags = model.properties.xmlTag?.subTags ?: emptyArray()
       for (subTag in subTags) {
         if (subTag.name == propertyName) {
@@ -284,7 +284,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   private fun toMavenScope(scope: String?, managedScope: String?): String? {
     if (managedScope == null) {
       if (scope == null || scope == SCOPE_COMPILE) return null
-      return scope;
+      return scope
     }
     if (scope == managedScope) return null
     return scope
@@ -296,10 +296,10 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
 
     return ReadAction.compute<List<DeclaredDependency>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       model.dependencies.dependencies.map {
-        var scope = it.scope.stringValue;
+        var scope = it.scope.stringValue
         if (scope == SCOPE_COMPILE) scope = null
         val dataContext = object: DataContext {
           override fun getData(dataId: String): Any? {
@@ -318,7 +318,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   override fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
     return ReadAction.compute<List<UnifiedDependencyRepository>, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.getFile()) ?: throw IllegalStateException(
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, project.file) ?: throw IllegalStateException(
         MavenProjectBundle.message("maven.model.error", module.name))
       model.repositories.repositories.map {
         UnifiedDependencyRepository(it.id.stringValue, it.name.stringValue, it.url.stringValue ?: "")
@@ -329,7 +329,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 }
 
 private fun String.trimLastSlash(): String {
-  return trimEnd('/');
+  return trimEnd('/')
 }
 
 private fun UnifiedCoordinates.toMavenId(): MavenId {

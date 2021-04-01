@@ -7,9 +7,9 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageUpdateIn
 import org.jetbrains.plugins.gradle.util.GradleConstants.DEFAULT_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 
-class GradlePackageUpdateInspection : PackageUpdateInspection() {
+internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
 
-    override fun getStaticDescription(): String? = PackageSearchBundle.getMessage("packagesearch.inspection.update.description.gradle")
+    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.update.description.gradle")
 
     override fun shouldCheckFile(file: PsiFile): Boolean = file.name.let { it == DEFAULT_SCRIPT_NAME || it == KOTLIN_DSL_SCRIPT_NAME }
 

@@ -4,7 +4,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
@@ -18,6 +18,7 @@ import javax.swing.event.ChangeListener
 class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurable {
 
     companion object {
+
         const val ID = "preferences.packagesearch.PackageSearchGeneralConfigurable"
     }
 
@@ -35,12 +36,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
     private val checkboxFieldChangeListener = ChangeListener { modified = true }
 
     private val builder = FormBuilder.createFormBuilder()
-
-    private val refreshProjectEditor =
-        JCheckBox(PackageSearchBundle.message("packagesearch.configuration.refresh.project"))
-            .apply {
-                addChangeListener(checkboxFieldChangeListener)
-            }
 
     private val allowCheckForPackageUpgradesEditor =
         JCheckBox(PackageSearchBundle.message("packagesearch.configuration.allow.check.upgrades"))
@@ -60,9 +55,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             0
         )
 
-        // Refresh project?
-        builder.addComponent(refreshProjectEditor)
-
         // Allow checking for package upgrades?
         builder.addComponent(allowCheckForPackageUpgradesEditor)
         builder.addComponent(
@@ -73,9 +65,12 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
 
         // Reset defaults
         builder.addComponent(JLabel())
-        builder.addComponent(ActionLink(PackageSearchBundle.message("packagesearch.configuration.restore.defaults")) {
-          restoreDefaults()
-        })
+        builder.addComponent(
+            LinkLabel<Any>(
+                PackageSearchBundle.message("packagesearch.configuration.restore.defaults"),
+                null
+            ) { _, _ -> restoreDefaults() }
+        )
 
         builder.addComponentFillVertically(JPanel(), 0)
 
@@ -89,7 +84,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             it.reset()
         }
 
-        refreshProjectEditor.isSelected = configuration.refreshProject
         allowCheckForPackageUpgradesEditor.isSelected = configuration.allowCheckForPackageUpgrades
 
         modified = false
@@ -100,7 +94,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             it.restoreDefaults()
         }
 
-        refreshProjectEditor.isSelected = true
         allowCheckForPackageUpgradesEditor.isSelected = true
 
         modified = true
@@ -111,7 +104,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             it.apply()
         }
 
-        configuration.refreshProject = refreshProjectEditor.isSelected
         configuration.allowCheckForPackageUpgrades = allowCheckForPackageUpgradesEditor.isSelected
     }
 }

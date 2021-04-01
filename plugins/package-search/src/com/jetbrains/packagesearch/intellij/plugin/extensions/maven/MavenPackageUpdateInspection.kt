@@ -9,9 +9,9 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageUpdateIn
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
 
-class MavenPackageUpdateInspection : PackageUpdateInspection() {
+internal class MavenPackageUpdateInspection : PackageUpdateInspection() {
 
-    override fun getStaticDescription(): String? = PackageSearchBundle.getMessage("packagesearch.inspection.update.description.maven")
+    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.update.description.maven")
 
     override fun shouldCheckFile(file: PsiFile) = MavenDomUtil.isProjectFile(file)
 

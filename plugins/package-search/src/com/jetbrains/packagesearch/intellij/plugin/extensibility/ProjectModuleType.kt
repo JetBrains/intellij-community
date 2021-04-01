@@ -8,7 +8,8 @@ enum class ProjectModuleTypeTerm {
     SCOPE
 }
 
-interface ProjectModuleType {
+internal interface ProjectModuleType {
+
     val icon: Icon?
     val packageIcon: Icon?
     fun terminologyFor(term: ProjectModuleTypeTerm): String

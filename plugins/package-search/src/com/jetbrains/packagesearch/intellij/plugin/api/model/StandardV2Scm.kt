@@ -1,9 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.api.model
 
 import com.google.gson.annotations.SerializedName
+import com.intellij.openapi.util.NlsSafe
 
-data class StandardV2Scm(
+internal data class StandardV2Scm(
 
     @SerializedName("url")
-    val url: String?
+    @NlsSafe
+    val url: String
 )

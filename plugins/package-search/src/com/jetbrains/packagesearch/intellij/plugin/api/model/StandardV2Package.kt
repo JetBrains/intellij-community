@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.api.RequiresWhitespaceCleanup
 
-data class StandardV2Package(
+internal data class StandardV2Package(
 
     @SerializedName("group_id")
     val groupId: String,
@@ -12,14 +12,14 @@ data class StandardV2Package(
     @SerializedName("artifact_id")
     val artifactId: String,
 
-    @NlsSafe
     @RequiresWhitespaceCleanup
     @SerializedName("name")
-    val name: String,
-
     @NlsSafe
+    val name: String?,
+
     @RequiresWhitespaceCleanup
     @SerializedName("description")
+    @NlsSafe
     val description: String?,
 
     @SerializedName("url")
@@ -44,7 +44,7 @@ data class StandardV2Package(
     val latestVersion: StandardV2Version,
 
     @SerializedName("versions")
-    val versions: List<StandardV2Version>?,
+    val versions: List<StandardV2Version>,
 
     @SerializedName("dependency_rating")
     val dependencyRating: Double,
@@ -54,7 +54,4 @@ data class StandardV2Package(
 
     @SerializedName("stackoverflow")
     val stackOverflowTags: StandardV2StackOverflowTags?
-) {
-
-    fun toSimpleIdentifier(): String = "$groupId:$artifactId".toLowerCase()
-}
+)

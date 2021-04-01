@@ -10,11 +10,12 @@ import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuratio
 import icons.OpenapiIcons
 import javax.swing.Icon
 
-object MavenProjectModuleType : ProjectModuleType {
-    override val icon: Icon?
+internal object MavenProjectModuleType : ProjectModuleType {
+
+    override val icon: Icon
         get() = OpenapiIcons.RepositoryLibraryLogo
 
-    override val packageIcon: Icon?
+    override val packageIcon: Icon
         get() = icon
 
     override fun terminologyFor(term: ProjectModuleTypeTerm): String =

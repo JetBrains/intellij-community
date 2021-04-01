@@ -10,11 +10,12 @@ import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configurati
 import icons.GradleIcons
 import javax.swing.Icon
 
-object GradleProjectModuleType : ProjectModuleType {
-    override val icon: Icon?
+internal object GradleProjectModuleType : ProjectModuleType {
+
+    override val icon: Icon
         get() = GradleIcons.Gradle // TODO use KotlinIcons.MPP if it's a K/MP module
 
-    override val packageIcon: Icon?
+    override val packageIcon: Icon
         get() = GradleIcons.GradleFile // TODO use KotlinIcons.MPP if it's a K/MP module
 
     override fun terminologyFor(term: ProjectModuleTypeTerm): String =

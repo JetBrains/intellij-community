@@ -9,7 +9,7 @@ import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 
-interface ProjectModuleOperationProvider {
+internal interface ProjectModuleOperationProvider {
 
     companion object {
 
@@ -29,13 +29,19 @@ interface ProjectModuleOperationProvider {
 
     fun hasSupportFor(projectModuleType: ProjectModuleType): Boolean
 
-    fun addDependenciesToProject(
+    fun addDependencyToProject(
         operationMetadata: DependencyOperationMetadata,
         project: Project,
         virtualFile: VirtualFile
     ): List<OperationFailure<out OperationItem>>
 
-    fun removeDependenciesFromProject(
+    fun removeDependencyFromProject(
+        operationMetadata: DependencyOperationMetadata,
+        project: Project,
+        virtualFile: VirtualFile
+    ): List<OperationFailure<out OperationItem>>
+
+    fun updateDependencyInProject(
         operationMetadata: DependencyOperationMetadata,
         project: Project,
         virtualFile: VirtualFile
@@ -46,7 +52,13 @@ interface ProjectModuleOperationProvider {
         virtualFile: VirtualFile
     ): Collection<UnifiedDependency>
 
-    fun addRepositoriesToProject(
+    fun addRepositoryToProject(
+        repository: UnifiedDependencyRepository,
+        project: Project,
+        virtualFile: VirtualFile
+    ): List<OperationFailure<out OperationItem>>
+
+    fun removeRepositoryFromProject(
         repository: UnifiedDependencyRepository,
         project: Project,
         virtualFile: VirtualFile

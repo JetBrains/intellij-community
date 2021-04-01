@@ -5,7 +5,7 @@ This directory contains the IJ plugin for Package Search.
 ## Testing against non-prod backend
 By default, the plugin will use the REST endpoints located at`https://package-search.services.jetbrains.com/api`. If you ever needed to
 test against a different deployment of the APIs, you can temporarily change the `ServerURLs.base` property value in the
-[`SearchClient.kt`](src/com/jetbrains/packagesearch/intellij/plugin/api/SearchClient.kt) file, for example pointing it to a local
+[`PackageSearchApiClient.kt`](src/com/jetbrains/packagesearch/intellij/plugin/api/PackageSearchApiClient.kt) file, for example pointing it to a local
 instance of the backend such as `http://localhost:7676`, or a staging environment.
 
 Please note that some of the tests in the project are not unit tests but rather integration tests that hit the backend. By default, those

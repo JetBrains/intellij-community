@@ -10,17 +10,18 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.util.dataService
 import icons.PackageSearchIcons
 
 class AddDependencyAction : AnAction(
-  PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
-  PackageSearchBundle.message("packagesearch.actions.addDependency.description"),
-  PackageSearchIcons.Artifact
+    PackageSearchBundle.message("packagesearch.actions.addDependency.text"),
+    PackageSearchBundle.message("packagesearch.actions.addDependency.description"),
+    PackageSearchIcons.Artifact
 ) {
 
     override fun update(e: AnActionEvent) {
@@ -35,26 +36,28 @@ class AddDependencyAction : AnAction(
                 return@run false
             }
 
-            findSelectedModule(e, ProjectModuleProvider.obtainAllProjectModulesFor(project)) != null
+            val rootModel = project.dataService()
+            val modules = rootModel.data.value.projectModules
+            findSelectedModule(e, modules) != null
         }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        val modules = ProjectModuleProvider.obtainAllProjectModulesFor(project).toList()
+        val rootModel = project.dataService()
+        val modules = rootModel.data.value.projectModules
         if (modules.isEmpty()) return
 
-        val selectedModule = findSelectedModule(e, modules.asSequence()) ?: return
+        val selectedModule = findSelectedModule(e, modules) ?: return
 
         PackageSearchEventsLogger.onProjectInfo(project, ModuleManager.getInstance(project).modules, modules)
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            val model = project.getUserData(PackageSearchToolWindowFactory.ToolWindowModelKey)
-            model?.selectedProjectModule?.set(selectedModule)
+            rootModel.setTargetModules(TargetModules.One(selectedModule))
         }
     }
 
-    private fun findSelectedModule(e: AnActionEvent, modules: Sequence<ProjectModule>): ProjectModule? {
+    private fun findSelectedModule(e: AnActionEvent, modules: List<ModuleModel>): ModuleModel? {
         val project = e.project ?: return null
         val file = obtainSelectedProjectDirIfSingle(e)?.virtualFile ?: return null
         val selectedModule = ModuleUtilCore.findModuleForFile(file, project) ?: return null
@@ -63,7 +66,7 @@ class AddDependencyAction : AnAction(
         ModuleManager.getInstance(project).findModuleByName(selectedModule.name)
             ?: return null
 
-        return modules.firstOrNull { projectModule -> projectModule.nativeModule == selectedModule }
+        return modules.firstOrNull { module -> module.projectModule.nativeModule == selectedModule }
     }
 
     private fun obtainSelectedProjectDirIfSingle(e: AnActionEvent): PsiDirectory? {

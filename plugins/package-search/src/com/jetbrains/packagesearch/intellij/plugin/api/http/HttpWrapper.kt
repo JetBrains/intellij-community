@@ -1,19 +1,32 @@
 package com.jetbrains.packagesearch.intellij.plugin.api.http
 
-import arrow.core.Either
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
+import java.net.HttpURLConnection
 
-fun requestString(url: String, acceptContentType: String, timeoutInSeconds: Int = 10, headers: List<Pair<String, String>>): Either<String, String> =
+internal fun requestJsonObject(
+    url: String,
+    acceptContentType: String,
+    timeoutInSeconds: Int = 10,
+    headers: List<Pair<String, String>>
+): ApiResult<JsonObject> {
+    val response = requestString(url, acceptContentType, timeoutInSeconds, headers)
+
+    return response.mapSuccess { it.asJSONObject() }
+}
+
+@Suppress("TooGenericExceptionCaught") // Putting any potential issues in an Either.Left
+private fun requestString(
+    url: String,
+    acceptContentType: String,
+    timeoutInSeconds: Int = 10,
+    headers: List<Pair<String, String>>
+): ApiResult<String> =
     try {
-        val responseText = HttpRequests.request(url)
+        val builder = HttpRequests.request(url)
             .productNameAsUserAgent()
             .accept(acceptContentType)
             .connectTimeout(timeoutInSeconds * 1000)
@@ -23,55 +36,44 @@ fun requestString(url: String, acceptContentType: String, timeoutInSeconds: Int 
                     connection.setRequestProperty(it.first, it.second)
                 }
             }
-            .readString()
+        val statusCode = builder.tryConnect()
+        val responseText = builder.readString()
+
+        if (statusCode != HttpURLConnection.HTTP_OK) {
+            Logger.getInstance("HttpWrapper").debug(
+                """
+                    |
+                    |<-- HTTP GET $url
+                    |    Accept: $acceptContentType
+                    |${headers.joinToString("\n") { "    ${it.first}: ${it.second}" }}
+                    |
+                    |--> RESPONSE HTTP $statusCode
+                    |$responseText
+                    |
+                """.trimMargin()
+            )
+        }
 
         when {
-            responseText.isEmpty() -> Either.left(PackageSearchBundle.message("packagesearch.search.client.response.body.is.empty"))
-            else -> Either.right(responseText)
+            responseText.isEmpty() -> ApiResult.Failure(EmptyBodyException())
+            else -> ApiResult.Success(responseText)
         }
-    } catch (e: HttpRequests.HttpStatusException) {
-        Either.left(e.logAndReturnMessage())
-    } catch (e: SocketTimeoutException) {
-        Either.left(e.logAndReturnMessage())
-    } catch (e: UnknownHostException) {
-        Either.left(e.logAndReturnMessage())
-    } catch (e: IOException) {
-        Either.left(e.logAndReturnMessage())
+    } catch (t: Throwable) {
+        t.log()
+        ApiResult.Failure(t.log())
     }
 
-fun requestJsonObject(
-    url: String,
-    acceptContentType: String,
-    timeoutInSeconds: Int = 10,
-    headers: List<Pair<String, String>>
-): Either<String, JsonObject> {
-    val response = requestString(url, acceptContentType, timeoutInSeconds, headers)
+private fun String.asJSONObject(): JsonObject = JsonParser.parseString(this).asJsonObject
 
-    return response.fold(
-        { Either.left(it) },
-        { Either.right(it.asJSONObject()) })
-}
-
-fun requestJsonArray(
-    url: String,
-    acceptContentType: String,
-    timeoutInSeconds: Int = 10,
-    headers: List<Pair<String, String>>
-): Either<String, JsonArray> =
-    requestString(url, acceptContentType, timeoutInSeconds, headers).fold(
-        { Either.left(it) },
-        { Either.right(it.asJSONArray()) })
-
-private fun String.asJSONObject(): JsonObject = JsonParser().parse(this).asJsonObject
-private fun String.asJSONArray(): JsonArray = JsonParser().parse(this).asJsonArray
-
-private fun Throwable.logAndReturnMessage(): String {
+private fun Throwable.log() = apply {
     @Suppress("TooGenericExceptionCaught") // Guarding against random runtime failures
     try {
-        Logger.getInstance(this.javaClass).error(this)
+        Logger.getInstance(this.javaClass).warn("Error occurred while performing a request", this)
     } catch (t: Throwable) {
         // IntelliJ logger rethrows logged exception
     }
-
-    return this.message!!
 }
+
+internal class EmptyBodyException: RuntimeException(
+    PackageSearchBundle.message("packagesearch.search.client.response.body.is.empty")
+)

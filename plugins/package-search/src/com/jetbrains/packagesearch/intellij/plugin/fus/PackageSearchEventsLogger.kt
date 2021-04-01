@@ -6,9 +6,10 @@ import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.tryDoing
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 
 // See the documentation at https://confluence.jetbrains.com/display/FUS/IntelliJ+Reporting+API
-object PackageSearchEventsLogger {
+internal object PackageSearchEventsLogger {
 
     private val loggerProvider by lazy { PackageSearchEventsLoggerProviderFactory.create() }
 
@@ -32,9 +33,9 @@ object PackageSearchEventsLogger {
     fun onProjectInfo(
         project: Project,
         ideaModules: Array<Module>,
-        modules: List<ProjectModule>
+        modules: Collection<ModuleModel>
     ) = tryDoing {
-        val countPerBuildSystem: Array<Pair<String, Int>> = modules
+        val countPerBuildSystem: Array<Pair<String, Int>> = modules.map { it.projectModule }
             .groupBy { it.buildSystemType.statisticsKey }
             .map { it.key to it.value.size }
             .toTypedArray()
@@ -76,7 +77,7 @@ object PackageSearchEventsLogger {
         )
     }
 
-    private fun queryStats(query: String): Array<Pair<String, Any>> {
+    private fun queryStats(query: String): Array<Pair<String, out Any>> {
         val tokens = query.split(Regex("[\\s\\r\\n]+"))
         val wordsCount = tokens.size
         val querySize = query.length
@@ -111,7 +112,7 @@ object PackageSearchEventsLogger {
         project: Project,
         event: String,
         @Suppress("SameParameterValue") version: String,
-        vararg extras: Pair<String, Any>
+        vararg extras: Pair<String, out Any>
     ) = tryDoing {
         loggerProvider.logEvent(
             project = project,

@@ -2,27 +2,26 @@ package com.jetbrains.packagesearch.intellij.plugin.api.model
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.NonNls
 
-data class StandardV2LinkedFile(
+internal data class StandardV2LinkedFile(
 
-    @NlsSafe
     @SerializedName("name")
+    @NlsSafe
     val name: String?,
 
-    @NlsSafe
     @SerializedName("url")
-    val url: String?,
-
     @NlsSafe
+    val url: String,
+
     @SerializedName("html_url")
+    @NlsSafe
     val htmlUrl: String?,
 
-    @NonNls
     @SerializedName("spdx_id")
+    @NlsSafe
     val spdxId: String?,
 
-    @NonNls
     @SerializedName("key")
+    @NlsSafe
     val key: String?
 )

@@ -5,29 +5,29 @@ import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.gson.DeserializationFallback
 
 // Note: any parameter that is typed as an enum class and deserialized with Gson must be nullable
-data class V2Repository(
+internal data class V2Repository(
 
-    @NlsSafe
     @SerializedName("id")
+    @NlsSafe
     val id: String,
 
-    @NlsSafe
     @SerializedName("url")
-    val url: String,
+    @NlsSafe
+    val url: String?,
 
     @SerializedName("type")
     val type: V2RepositoryType?,
 
-    @NlsSafe
     @SerializedName("alternate_urls")
+    @NlsSafe
     val alternateUrls: List<String>?,
 
-    @NlsSafe
     @SerializedName("friendly_name")
-    val friendlyName: String
+    @NlsSafe
+    val friendlyName: String?
 )
 
-enum class V2RepositoryType {
+internal enum class V2RepositoryType {
 
     @SerializedName("maven")
     MAVEN,
