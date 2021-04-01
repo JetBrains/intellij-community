@@ -5,7 +5,7 @@ redundant <code>sorted</code> or <code>distinct</code>.
 <!-- tooltip end -->
 <p>Note that a mapping operation in code like <code>streamOfIntegers.map(Integer::valueOf)</code>
   works as <code>requireNonNull</code> check:
-  if stream contains a <code>null</code>, it will throw <code>NullPointerException</code>, thus it's not absolutely redundant.
+  if the stream contains <code>null</code>, it will throw a <code>NullPointerException</code>, thus it's not absolutely redundant.
   Uncheck the checkbox below if you don't want such cases to be reported.</p>
 <p>This inspection only reports if the language level of the project or module is 8 or higher</p>
 <p><small>New in 2017.1</small></p>

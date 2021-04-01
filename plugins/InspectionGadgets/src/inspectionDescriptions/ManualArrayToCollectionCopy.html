@@ -2,9 +2,9 @@
 <body>
 Reports copying array content into collection in a loop instead of using
 <code>Collection.addAll(Arrays.asList())</code> or <code>Collections.addAll()</code> methods.
-Replacing loops make your code shorter and potentially faster depending on collection implementation
+Replacing loops make your code shorter and potentially faster depending on the collection implementation
 <p>
-Note that only loops that do not have any additional statements inside are reported.
+Note that only loops that don't have any additional statements inside are reported.
 <p>Example:</p>
 <pre>
   void addAll(List&lt;String&gt; list, String[] arr) {

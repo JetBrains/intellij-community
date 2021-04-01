@@ -3,7 +3,7 @@
 Reports method calls that accept a non-trivial expression and can be replaced with an equivalent method call
 which accepts lambda instead.
 <p>
-Converting an expression to lambda ensures that expression will not be evaluated
+Converting an expression to lambda ensures that the expression won't be evaluated
 if it happens to be unused inside the method. E.g. <code>optional.orElse(createDefaultValue())</code> could be converted
 to <code>optional.orElseGet(this::createDefaultValue)</code>.
 <!-- tooltip end -->
