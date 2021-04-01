@@ -10,6 +10,8 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -92,8 +94,10 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
       return;
     }
     final PsiField field = (PsiField)resolved;
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     final String fieldName = field.getName();
-    @NonNls final String holderName = StringUtil.capitalize(fieldName) + "Holder";
+    @NonNls final String holderName =
+      StringUtil.capitalize(codeStyleManager.variableNameToPropertyName(fieldName, VariableKind.STATIC_FINAL_FIELD)) + "Holder";
     final PsiElement expressionParent = referenceExpression.getParent();
     if (!(expressionParent instanceof PsiAssignmentExpression)) {
       return;
@@ -115,7 +119,7 @@ public class IntroduceHolderFix extends InspectionGadgetsFix {
     final PsiModifierList modifierList = newField.getModifierList();
     assert modifierList != null;
     modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    if (PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
+    if (!PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     }
     newField.setInitializer(rhs);
