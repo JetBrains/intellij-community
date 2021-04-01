@@ -8,9 +8,8 @@ package com.intellij.lang.psi
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiLanguageInjectionHost
-import java.lang.StringBuilder
 
-/** See [com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper] */
+/** See `com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper` */
 abstract class LiteralTextEscaperBase<T : PsiLanguageInjectionHost>(host: T) : LiteralTextEscaper<T>(host) {
 
     private var outSourceOffsets: IntArray? = null
