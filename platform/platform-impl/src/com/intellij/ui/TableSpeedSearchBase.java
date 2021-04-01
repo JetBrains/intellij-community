@@ -37,6 +37,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
 
   @Override
   protected void onSearchFieldUpdated(String pattern) {
+    super.onSearchFieldUpdated(pattern);
     if (!myFilteringMode) return;
     RowSorter<? extends TableModel> sorter0 = myComponent.getRowSorter();
     if (!(sorter0 instanceof TableRowSorter)) return;

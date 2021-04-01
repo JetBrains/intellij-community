@@ -166,7 +166,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     SpeedSearchSupply supply = new TreeSpeedSearch(myTree, p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent()))), true) {
       @Override
       protected void onSearchFieldUpdated(String pattern) {
-        if (StringUtil.isEmpty(pattern)) hidePopup();
+        super.onSearchFieldUpdated(pattern);
         //constructor of popup
         if (StringUtil.isNotEmpty(pattern) && !isPopupActive()) SwingUtilities.invokeLater(() -> {
           getSearchModel().refilter();

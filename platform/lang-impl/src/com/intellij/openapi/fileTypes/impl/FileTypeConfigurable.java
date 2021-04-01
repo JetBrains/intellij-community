@@ -514,6 +514,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       @Override
       protected void onSearchFieldUpdated(String s) {
+        super.onSearchFieldUpdated(s);
         if (myTempPatternsTable == null) return;
         int index = s.lastIndexOf('.');
         if (index < 0) {
