@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
-import static com.intellij.psi.PsiModifier.*;
 
 public final class SerializationUtils {
 
@@ -122,7 +120,9 @@ public final class SerializationUtils {
   }
 
   public static boolean isSerialVersionUid(@NotNull PsiField field) {
-    return isConstant(field) && field.getName().equals(SERIAL_VERSION_UID_FIELD_NAME) && field.getType().equals(PsiType.LONG);
+    return isConstant(field)
+           && field.getName().equals(CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME)
+           && field.getType().equals(PsiType.LONG);
   }
 
   public static boolean isSerialPersistentFields(@NotNull PsiField field) {
@@ -131,14 +131,13 @@ public final class SerializationUtils {
   }
 
   private static boolean isConstant(@NotNull PsiField field) {
-    return field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(STATIC) && field.hasModifierProperty(FINAL);
+    return field.hasModifierProperty(PsiModifier.PRIVATE)
+           && field.hasModifierProperty(PsiModifier.STATIC)
+           && field.hasModifierProperty(PsiModifier.FINAL);
   }
 
   public static boolean isProbablySerializable(PsiType type) {
-    if (type instanceof PsiWildcardType) {
-      return true;
-    }
-    if (type instanceof PsiPrimitiveType) {
+    if (type instanceof PsiWildcardType || type instanceof PsiPrimitiveType) {
       return true;
     }
     if (type instanceof PsiArrayType) {
@@ -148,26 +147,22 @@ public final class SerializationUtils {
     }
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
-      final PsiClass psiClass = classType.resolve();
-      if (psiClass == null || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      final PsiClass aClass = classType.resolve();
+      if (aClass instanceof PsiTypeParameter) {
+        final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+        final PsiReferenceList extendsList = typeParameter.getExtendsList();
+        return ContainerUtil.and(extendsList.getReferencedTypes(), SerializationUtils::isProbablySerializable);
+      }
+      if (aClass == null || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         // to avoid false positives
         return true;
       }
-      if (isSerializable(psiClass)) {
+      if (isSerializable(aClass) || isExternalizable(aClass)) {
         return true;
       }
-      if (isExternalizable(psiClass)) {
-        return true;
-      }
-      if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
-          InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_MAP)) {
-        final PsiType[] parameters = classType.getParameters();
-        for (PsiType parameter : parameters) {
-          if (!isProbablySerializable(parameter)) {
-            return false;
-          }
-        }
-        return true;
+      if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+          InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_MAP)) {
+        return ContainerUtil.and(classType.getParameters(), SerializationUtils::isProbablySerializable);
       }
       return false;
     }
