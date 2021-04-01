@@ -25,7 +25,7 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) {
+  public @NotNull PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) {
     ASTNode treeElement = element.getNode();
     PsiFile file = element.getContainingFile();
     final PsiElement formatted =
@@ -38,9 +38,9 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public PsiElement formatElement(@NotNull PsiElement element,
-                                  @NotNull TextRange range,
-                                  boolean canChangeWhiteSpacesOnly) {
+  public @NotNull PsiElement formatElement(@NotNull PsiElement element,
+                                           @NotNull TextRange range,
+                                           boolean canChangeWhiteSpacesOnly) {
     ASTNode treeElement = element.getNode();
     PsiFile file = element.getContainingFile();
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());

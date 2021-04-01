@@ -15,8 +15,10 @@ public interface FormattingService {
 
   boolean canFormat(@NotNull PsiFile file, boolean isExplicit);
 
+  @NotNull
   PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly);
 
+  @NotNull
   PsiElement formatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhiteSpaceOnly);
 
   void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly);

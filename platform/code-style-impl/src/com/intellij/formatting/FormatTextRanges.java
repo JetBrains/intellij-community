@@ -120,10 +120,7 @@ public class FormatTextRanges implements FormattingRangesInfo {
     return myExtendedRanges.isEmpty() ? getTextRanges() : myExtendedRanges;
   }
 
-
-  /**
-   * @return A range containing all ranges or null if no ranges.
-   */
+  @Override
   @Nullable
   public TextRange getBoundRange() {
     List<TextRange> ranges = getTextRanges();

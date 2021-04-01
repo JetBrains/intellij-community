@@ -23,14 +23,14 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   @Override
-  public PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) {
+  public @NotNull PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpacesOnly) {
     return ExternalFormatProcessor.formatElement(element, element.getTextRange(), canChangeWhiteSpacesOnly);
   }
 
   @Override
-  public PsiElement formatElement(@NotNull PsiElement element,
-                                  @NotNull TextRange range,
-                                  boolean canChangeWhiteSpacesOnly) {
+  public @NotNull PsiElement formatElement(@NotNull PsiElement element,
+                                           @NotNull TextRange range,
+                                           boolean canChangeWhiteSpacesOnly) {
     return ExternalFormatProcessor.formatElement(element, range, canChangeWhiteSpacesOnly);
   }
 

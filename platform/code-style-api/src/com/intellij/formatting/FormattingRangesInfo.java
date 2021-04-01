@@ -3,6 +3,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,4 +16,10 @@ public interface FormattingRangesInfo {
 
   @NotNull
   List<TextRange> getTextRanges();
+
+  /**
+   * @return A range containing all ranges or null if no ranges.
+   */
+  @Nullable
+  TextRange getBoundRange();
 }
