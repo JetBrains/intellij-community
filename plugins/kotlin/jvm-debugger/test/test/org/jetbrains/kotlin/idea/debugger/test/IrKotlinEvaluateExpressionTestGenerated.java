@@ -214,6 +214,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             runTest("testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
         }
 
+        @TestMetadata("inlineFunInRootPackage.kt")
+        public void testInlineFunInRootPackage() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/inlineFunInRootPackage.kt");
+        }
+
         @TestMetadata("inlineFunction.kt")
         public void testInlineFunction() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/inlineFunction.kt");

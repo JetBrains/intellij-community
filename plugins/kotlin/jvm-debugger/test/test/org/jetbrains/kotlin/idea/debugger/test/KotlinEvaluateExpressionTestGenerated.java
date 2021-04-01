@@ -213,6 +213,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             runTest("testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
         }
 
+        @TestMetadata("inlineFunInRootPackage.kt")
+        public void testInlineFunInRootPackage() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/inlineFunInRootPackage.kt");
+        }
+
         @TestMetadata("inlineFunction.kt")
         public void testInlineFunction() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/inlineFunction.kt");
