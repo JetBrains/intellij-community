@@ -164,21 +164,22 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
+        TabInfo previousInfo = myCurrentOver.getTabAt(index - 1);
         if (file.getUserData(EditorWindow.DRAG_START_PINNED_KEY) == Boolean.TRUE) {
-          dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || myCurrentOver.getTabAt(index - 1).isPinned();
+          dropInBetweenPinnedTabs = index == 0 || (tabInfo != null && tabInfo.isPinned()) || previousInfo.isPinned();
         }
         else {
           dropInBetweenPinnedTabs = tabInfo != null ? tabInfo.isPinned() : null;
         }
-        if (tabInfo != null && index > 0 ) {
-          Component previousLabel = myCurrentOver.getTabLabel(myCurrentOver.getTabAt(index - 1));
+        if (index > 0) {
+          Component previousLabel = myCurrentOver.getTabLabel(previousInfo);
           Rectangle bounds = previousLabel.getBounds();
           Point dropPoint = dropTarget.getPoint(previousLabel);
           dropInPinnedRow =
             myCurrentOver instanceof JBTabsImpl
             && UISettings.getInstance().getState().getShowPinnedTabsInASeparateRow()
             && ((JBTabsImpl)myCurrentOver).getTabsPosition() == JBTabsPosition.top
-            && myCurrentOver.getTabAt(index - 1).isPinned()
+            && previousInfo.isPinned()
             && bounds.y < dropPoint.y && bounds.getMaxY() > dropPoint.y;
         }
       }
