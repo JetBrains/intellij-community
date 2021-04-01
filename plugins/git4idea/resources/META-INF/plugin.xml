@@ -633,6 +633,7 @@
 
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
+    <jbProtocolNavigateResolver implementation="git4idea.GitProtocolNavigateResolver"/>
   </extensions>
 
   <extensionPoints>
