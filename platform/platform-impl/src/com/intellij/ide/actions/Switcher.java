@@ -603,9 +603,6 @@ public final class Switcher extends BaseSwitcherAction {
       }
       else {
         mySpeedSearch.hidePopup();
-        if (mySpeedSearch.getElementCount() > 0) {
-          mySpeedSearch.selectElement(mySpeedSearch.getElementAt(0), "");
-        }
       }
     }
 
