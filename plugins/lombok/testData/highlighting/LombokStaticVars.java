@@ -1,10 +1,4 @@
-package org.slf4j;
-
 import lombok.extern.slf4j.Slf4j;
-
-interface <warning descr="Interface 'Logger' is never used">Logger</warning> {
-  void info(String msg);
-}
 
 @Slf4j
 public class LombokStaticVars {
