@@ -18,7 +18,7 @@ import java.util.List;
 @ApiStatus.Internal
 public final class ExternalFormatProcessorAdapter implements FormattingService {
   @Override
-  public boolean canFormat(@NotNull PsiFile file) {
+  public boolean canFormat(@NotNull PsiFile file, boolean isExplicit) {
     return ExternalFormatProcessor.useExternalFormatter(file);
   }
 

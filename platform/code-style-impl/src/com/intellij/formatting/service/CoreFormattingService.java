@@ -20,7 +20,7 @@ public final class CoreFormattingService implements FormattingService {
   private final static Logger LOG =Logger.getInstance(CoreFormattingService.class);
 
   @Override
-  public boolean canFormat(@NotNull PsiFile file) {
+  public boolean canFormat(@NotNull PsiFile file, boolean isExplicit) {
     return true;
   }
 

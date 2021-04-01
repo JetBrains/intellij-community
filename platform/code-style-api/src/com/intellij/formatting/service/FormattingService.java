@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FormattingService {
   ExtensionPointName<FormattingService> EP_NAME = ExtensionPointName.create("com.intellij.formattingService");
 
-  boolean canFormat(@NotNull PsiFile file);
+  boolean canFormat(@NotNull PsiFile file, boolean isExplicit);
 
   PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly);
 

@@ -12,8 +12,8 @@ public class FormattingServiceUtil {
   private FormattingServiceUtil() {
   }
 
-  public static @NotNull FormattingService findService(@NotNull PsiFile file) {
-    FormattingService formattingService = ContainerUtil.find(FormattingService.EP_NAME.getExtensionList(), s -> s.canFormat(file));
+  public static @NotNull FormattingService findService(@NotNull PsiFile file, boolean isExplicit) {
+    FormattingService formattingService = ContainerUtil.find(FormattingService.EP_NAME.getExtensionList(), s -> s.canFormat(file, isExplicit));
     LOG.assertTrue(formattingService != null,
                    "At least 1 formatting service which can handle PsiFile " + file.getName() + " should be registered.");
     return formattingService;
