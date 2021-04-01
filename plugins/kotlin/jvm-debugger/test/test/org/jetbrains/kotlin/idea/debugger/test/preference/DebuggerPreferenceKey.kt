@@ -43,6 +43,8 @@ internal object DebuggerPreferenceKeys {
 
     val JVM_TARGET by debuggerPreferenceKey("1.8")
 
+    val REFLECTION_PATCHING by debuggerPreferenceKey(true)
+
     val values: List<DebuggerPreferenceKey<*>> by lazy {
         DebuggerPreferenceKeys::class.declaredMemberProperties
             .filter { (it.returnType.javaType as? ParameterizedType)?.rawType == DebuggerPreferenceKey::class.java }

@@ -18,8 +18,8 @@ import kotlin.jvm.internal.Ref
 
 @Suppress("SpellCheckingInspection")
 class EvaluatorValueConverter(val context: ExecutionContext) {
-    private companion object {
-        private val UNBOXING_METHOD_NAMES = mapOf(
+    companion object {
+        val UNBOXING_METHOD_NAMES = mapOf(
             "java/lang/Boolean" to "booleanValue",
             "java/lang/Character" to "charValue",
             "java/lang/Byte" to "byteValue",
@@ -214,7 +214,7 @@ private fun unbox(type: AsmType): AsmType {
     return type
 }
 
-private fun box(type: AsmType): AsmType {
+internal fun box(type: AsmType): AsmType {
     if (type.isPrimitiveType) {
         return PRIMITIVE_TO_BOXED[type] ?: type
     }

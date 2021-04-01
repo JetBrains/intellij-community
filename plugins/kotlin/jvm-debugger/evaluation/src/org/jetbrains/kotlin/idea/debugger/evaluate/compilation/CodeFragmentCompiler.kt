@@ -6,6 +6,9 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.debugger.evaluate.EvaluationStatus
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
@@ -105,21 +109,38 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
 
-            val classes = generationState.factory.asList()
-                .filterCodeFragmentClassFiles()
-                .map { ClassToLoad(it.internalClassName, it.relativePath, it.asByteArray()) }
-
+            val classes = collectGeneratedClasses(generationState)
             val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
             val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.parameters, generationState.typeMapper)
 
             generationState.destroy()
 
             return CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature)
+        } catch (e: ProcessCanceledException) {
+            throw e
         } catch (e: Exception) {
             throw CodeFragmentCodegenException(e)
         } finally {
             CodeFragmentCodegen.clearCodeFragmentInfo(codeFragment)
         }
+    }
+
+    private fun collectGeneratedClasses(generationState: GenerationState): List<ClassToLoad> {
+        val project = generationState.project
+
+        val useBytecodePatcher = ReflectionCallClassPatcher.isEnabled
+        val scope = when (val module = (generationState.module.moduleInfo as? ModuleSourceInfo)?.module) {
+            null -> GlobalSearchScope.allScope(project)
+            else -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true)
+        }
+
+        return generationState.factory.asList()
+            .filterCodeFragmentClassFiles()
+            .map {
+                val rawBytes = it.asByteArray()
+                val bytes = if (useBytecodePatcher) ReflectionCallClassPatcher.patch(rawBytes, project, scope) else rawBytes
+                ClassToLoad(it.internalClassName, it.relativePath, bytes)
+            }
     }
 
     private fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {

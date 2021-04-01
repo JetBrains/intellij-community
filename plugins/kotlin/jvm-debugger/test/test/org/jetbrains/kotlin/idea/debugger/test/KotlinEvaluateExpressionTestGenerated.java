@@ -550,19 +550,9 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClass.kt");
             }
 
-            @TestMetadata("ceLocalClassMembers.kt")
-            public void testCeLocalClassMembers() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClassMembers.kt");
-            }
-
             @TestMetadata("ceLocalClassWithSuperClass.kt")
             public void testCeLocalClassWithSuperClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClassWithSuperClass.kt");
-            }
-
-            @TestMetadata("ceMembers.kt")
-            public void testCeMembers() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceMembers.kt");
             }
 
             @TestMetadata("ceObject.kt")
@@ -575,9 +565,87 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
             }
 
-            @TestMetadata("ceSuperAccess.kt")
-            public void testCeSuperAccess() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSuperAccess.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
+            public static class InaccessibleMembers extends AbstractKotlinEvaluateExpressionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inaccessibleMembers.kt")
+                public void testInaccessibleMembers() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/inaccessibleMembers.kt");
+                }
+
+                @TestMetadata("inaccessibleMembersNoReflection.kt")
+                public void testInaccessibleMembersNoReflection() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/inaccessibleMembersNoReflection.kt");
+                }
+
+                @TestMetadata("inaccessibleTypes.kt")
+                public void testInaccessibleTypes() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/inaccessibleTypes.kt");
+                }
+
+                @TestMetadata("javaFields.kt")
+                public void testJavaFields() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/javaFields.kt");
+                }
+
+                @TestMetadata("javaMethods.kt")
+                public void testJavaMethods() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/javaMethods.kt");
+                }
+
+                @TestMetadata("kotlinFields.kt")
+                public void testKotlinFields() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/kotlinFields.kt");
+                }
+
+                @TestMetadata("kotlinMethods.kt")
+                public void testKotlinMethods() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/kotlinMethods.kt");
+                }
+
+                @TestMetadata("membersFromLocalClass.kt")
+                public void testMembersFromLocalClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/membersFromLocalClass.kt");
+                }
+
+                @TestMetadata("membersFromLocalClassNoReflection.kt")
+                public void testMembersFromLocalClassNoReflection() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/membersFromLocalClassNoReflection.kt");
+                }
+
+                @TestMetadata("outerMembers.kt")
+                public void testOuterMembers() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/outerMembers.kt");
+                }
+
+                @TestMetadata("outerMembersNoReflection.kt")
+                public void testOuterMembersNoReflection() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/outerMembersNoReflection.kt");
+                }
+
+                @TestMetadata("selfMembers.kt")
+                public void testSelfMembers() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/selfMembers.kt");
+                }
+
+                @TestMetadata("selfMembersNoReflection.kt")
+                public void testSelfMembersNoReflection() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/selfMembersNoReflection.kt");
+                }
+
+                @TestMetadata("superMembers.kt")
+                public void testSuperMembers() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/superMembers.kt");
+                }
+
+                @TestMetadata("superMembersNoReflection.kt")
+                public void testSuperMembersNoReflection() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/superMembersNoReflection.kt");
+                }
             }
         }
 

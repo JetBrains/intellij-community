@@ -23,6 +23,7 @@ import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
 import org.jetbrains.kotlin.idea.debugger.isDexDebug
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
@@ -86,6 +87,10 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
         }
 
         fun useMagicAccessor(context: ExecutionContext): Boolean {
+            if (ReflectionCallClassPatcher.isEnabled) {
+                return false
+            }
+
             val rawVersion = context.vm.version()?.substringBefore('_') ?: return false
             val javaVersion = JavaSdkVersion.fromVersionString(rawVersion) ?: return false
             return !javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9)
