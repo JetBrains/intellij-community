@@ -6,7 +6,6 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
@@ -46,7 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.*
 import java.util.function.BiFunction
-import java.util.function.Function
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
@@ -101,7 +99,7 @@ private fun executeInitAppInEdt(args: List<String>,
 
 @ApiStatus.Internal
 fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
-                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
+                          app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
   return pluginFuture.thenApply {
     runMainActivity("app component registration") {
       app.registerComponents(it, null)
@@ -113,7 +111,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
                      initAppActivity: Activity,
-                     registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
+                     registerFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
                      args: List<String>) {
   // this code is here for one simple reason - here we have application,
   // and after plugin loading we don't have - ApplicationManager.getApplication() can be used, but it doesn't matter
@@ -141,7 +139,7 @@ private fun startApp(app: ApplicationImpl,
 
   // preload services only after icon activation
   val preloadSyncServiceFuture = registerRegistryAndInitStoreFuture
-    .thenComposeAsync<Void?>(Function {
+    .thenComposeAsync({
       preloadServices(it, app, activityPrefix = "")
     }, nonEdtExecutor)
 
@@ -186,26 +184,25 @@ private fun startApp(app: ApplicationImpl,
     }
   }
 
-  val edtExecutor = Executor { ApplicationManager.getApplication().invokeLater(it) }
-
   @Suppress("RemoveExplicitTypeArguments")
   CompletableFuture.allOf(registerRegistryAndInitStoreFuture, StartupUtil.getServerFuture())
     .thenCompose {
       // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
 
-      val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
-        placeOnEventQueueActivity.end()
+      val loadComponentInEdtFuture = CompletableFuture.runAsync({
+                                                                  placeOnEventQueueActivity.end()
 
-        app.loadComponents(if (SplashManager.SPLASH_WINDOW == null) {
-          null
-        }
-        else object : EmptyProgressIndicator() {
-          override fun setFraction(fraction: Double) {
-            SplashManager.SPLASH_WINDOW.showProgress(fraction)
-          }
-        })
-      }, edtExecutor)
+                                                                  val indicator = if (SplashManager.SPLASH_WINDOW == null) {
+                                                                    null
+                                                                  }
+                                                                  else object : EmptyProgressIndicator() {
+                                                                    override fun setFraction(fraction: Double) {
+                                                                      SplashManager.SPLASH_WINDOW.showProgress(fraction)
+                                                                    }
+                                                                  }
+                                                                  app.loadComponents(indicator)
+                                                                }, Executor { ApplicationManager.getApplication().invokeLater(it) })
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
     }
@@ -276,23 +273,24 @@ fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
 }
 
 @ApiStatus.Internal
-fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptor>>,
+fun registerRegistryAndInitStore(registerFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
                                  app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
-  return registerFuture.thenCompose { plugins ->
-    val future = CompletableFuture.runAsync(Runnable {
-      runActivity("add registry keys") {
-        RegistryKeyBean.addKeysFromPlugins()
-      }
-    }, ForkJoinPool.commonPool())
+  // async because register task is executed in EDT - force execution in a pooled thread
+  return registerFuture.thenComposeAsync({ plugins ->
+                                           val future = CompletableFuture.runAsync({
+                                                                                     runActivity("add registry keys") {
+                                                                                       RegistryKeyBean.addKeysFromPlugins()
+                                                                                     }
+                                                                                   }, ForkJoinPool.commonPool())
 
-    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed, but it doesn't affect because not used
-    initConfigurationStore(app)
+                                           // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
+                                           // but it is ok because registry is not and should be not used
+                                           initConfigurationStore(app)
 
-    future.thenApply {
-      @Suppress("UNCHECKED_CAST")
-      plugins as List<IdeaPluginDescriptorImpl>
-    }
-  }
+                                           future.thenApply {
+                                             plugins
+                                           }
+                                         }, ForkJoinPool.commonPool())
 }
 
 private fun addActivateAndWindowsCliListeners() {
