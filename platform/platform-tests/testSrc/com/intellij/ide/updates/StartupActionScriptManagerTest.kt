@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createDirectories
@@ -18,8 +19,10 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.ObjectOutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.streams.toList
 
 class StartupActionScriptManagerTest {
   @Rule
@@ -112,5 +115,17 @@ class StartupActionScriptManagerTest {
     assertTrue(deleteInOld.exists())
     assertFalse(deleteInNew.exists())
     assertTrue(scriptFile.exists())
+  }
+
+  @Test fun `backward compatibility`() {
+    val dataDir = Path.of(PlatformTestUtil.getPlatformTestDataPath(), "updates/startupActionScript")
+    Files.list(dataDir).use { it.toList() }.forEach { script ->
+      val actions = StartupActionScriptManager.loadActionScript(script).map { it.toString() }
+      assertThat(actions).describedAs("script: ${script.fileName}").containsExactly(
+        "copy[/copy/src,/copy/dst]",
+        "unzip[/unzip/src,/unzip/dst,null]",
+        "unzip[/unzip/src,/unzip/dst,ImportSettingsFilenameFilter[f1,f2]]",
+        "delete[/delete/src]")
+    }
   }
 }

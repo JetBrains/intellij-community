@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
@@ -124,9 +124,9 @@ public final class StartupActionScriptManager {
 
   private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
-      Path destination = mapPath(((CopyCommand)command).destination, oldTarget, newTarget);
+      Path destination = mapPath(((CopyCommand)command)._destination(), oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(Paths.get(((CopyCommand)command).source), destination);
+        return new CopyCommand(Paths.get(((CopyCommand)command)._source()), destination);
       }
     }
     else if (command instanceof UnzipCommand) {
@@ -167,12 +167,14 @@ public final class StartupActionScriptManager {
   public static final class CopyCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
-    private final String source;
-    private final String destination;
+    private final String mySource;
+    private final String myDestination;
+    @SuppressWarnings("FieldMayBeStatic") private final String source = null;
+    @SuppressWarnings("FieldMayBeStatic") private final String destination = null;
 
     public CopyCommand(@NotNull Path source, @NotNull Path destination) {
-      this.source = source.toAbsolutePath().toString();
-      this.destination = destination.toAbsolutePath().toString();
+      mySource = source.toAbsolutePath().toString();
+      myDestination = destination.toAbsolutePath().toString();
     }
 
     /**
@@ -181,26 +183,38 @@ public final class StartupActionScriptManager {
     @Deprecated
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
     public CopyCommand(@NotNull File source, @NotNull File destination) {
-      this.source = source.getAbsolutePath();
-      this.destination = destination.getAbsolutePath();
+      mySource = source.getAbsolutePath();
+      myDestination = destination.getAbsolutePath();
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private String _source() {
+      return mySource != null ? mySource : source;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private String _destination() {
+      return myDestination != null ? myDestination : destination;
     }
 
     @Override
     public void execute() throws IOException {
-      Path destination = Paths.get(this.destination);
-      Path destDir = destination.getParent();
-      Files.createDirectories(destDir);
-      Files.copy(Paths.get(source), destination);
+      Path source = Path.of(_source()), destination = Path.of(_destination());
+      if (!Files.isRegularFile(source)) {
+        throw new IOException("Source file missing: " + source);
+      }
+      Files.createDirectories(destination.getParent());
+      Files.copy(source, destination);
     }
 
     @Override
     @NonNls
     public String toString() {
-      return "copy[" + source + "," + destination + "]";
+      return "copy[" + _source() + ',' + _destination() + ']';
     }
 
     public String getSource() {
-      return source;
+      return _source();
     }
   }
 
@@ -245,7 +259,7 @@ public final class StartupActionScriptManager {
     @Override
     @NonNls
     public String toString() {
-      return "unzip[" + mySource + "," + myDestination + "]";
+      return "unzip[" + mySource + ',' + myDestination + ',' + myFilenameFilter + ']';
     }
 
     public String getSource() {
@@ -280,7 +294,7 @@ public final class StartupActionScriptManager {
     @Override
     @NonNls
     public String toString() {
-      return "delete[" + mySource + "]";
+      return "delete[" + mySource + ']';
     }
   }
 }
