@@ -11,7 +11,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
@@ -606,7 +606,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
-      IdeActivity activity = IdeActivity.started(myProject, "indexing");
+      StructuredIdeActivity activity = new StructuredIdeActivity(myProject, IndexingStatisticsCollector.INDEXING_ACTIVITY).started();
+
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
       final Thread self = Thread.currentThread();
       try {

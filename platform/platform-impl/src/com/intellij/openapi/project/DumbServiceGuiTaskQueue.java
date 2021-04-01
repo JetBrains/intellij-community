@@ -2,7 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -31,7 +31,7 @@ final class DumbServiceGuiTaskQueue {
     myTaskQueue = queue;
   }
 
-  void processTasksWithProgress(@NotNull IdeActivity activity,
+  void processTasksWithProgress(@NotNull StructuredIdeActivity activity,
                                 @NotNull Consumer<? super ProgressIndicatorEx> bindProgress,
                                 @NotNull Consumer<? super ProgressIndicatorEx> unbindProgress) {
     while (true) {
