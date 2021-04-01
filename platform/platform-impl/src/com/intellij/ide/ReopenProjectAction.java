@@ -85,11 +85,6 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myProjectName;
   }
 
-  @NlsSafe
-  public String getProjectOrigin() {
-    return "";
-  }
-
   @NlsActions.ActionText
   @Nullable
   @Override
