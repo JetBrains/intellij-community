@@ -7,7 +7,7 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
+import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
@@ -333,7 +334,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
-      IdeActivity activity = IdeActivity.started(myProject, "vcs", "update");
+      StructuredIdeActivity activity = new StructuredIdeActivity(myProject, UPDATE_ACTIVITY).started();
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;

@@ -2,7 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.ide.util.DelegatingProgressIndicator
-import com.intellij.internal.statistic.IdeActivity
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.Companion.COMMIT_ACTIVITY
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
 import org.jetbrains.annotations.Nls
@@ -49,7 +50,7 @@ abstract class AbstractCommitter(
     val task = object : Task.Backgroundable(project, taskName, true, configuration.commitOption) {
       override fun run(indicator: ProgressIndicator) {
         val vcsManager = ProjectLevelVcsManager.getInstance(project)
-        val activity = IdeActivity.started(myProject, "vcs", "commit") // NON-NLS
+        val activity = StructuredIdeActivity(myProject, COMMIT_ACTIVITY).started() // NON-NLS
         vcsManager.startBackgroundVcsOperation()
         try {
           delegateCommitToVcsThread()

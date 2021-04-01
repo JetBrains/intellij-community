@@ -15,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.openapi.vcs.changes.actions.VcsActionUsagesCollectorKt.logRefreshActionPerformed;
-
 /**
  * @author yole
  */
@@ -71,7 +69,9 @@ public class RefreshAction extends AnAction implements DumbAware {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
-      logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
+      VcsStatisticsCollector
+        .logRefreshActionPerformed(project, changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter,
+                                   wasUpdatingBefore);
     });
   }
 }

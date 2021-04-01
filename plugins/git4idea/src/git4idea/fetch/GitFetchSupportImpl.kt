@@ -3,7 +3,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
-import com.intellij.internal.statistic.IdeActivity
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitUtil.findRemoteByName
 import git4idea.GitUtil.mention
@@ -99,7 +100,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     try {
       fetchRequestCounter.incrementAndGet()
       return withIndicator {
-        val activity = IdeActivity.started(project, "vcs", "fetch")
+        val activity = StructuredIdeActivity(project, VcsStatisticsCollector.FETCH_ACTIVITY).started()
 
         val tasks = fetchInParallel(arguments)
         val results = waitForFetchTasks(tasks)
