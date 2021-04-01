@@ -27,7 +27,7 @@ class TomlColorSettingsPage : ColorSettingsPage {
 
     override fun getDisplayName(): String = TomlLanguage.displayName
     override fun getHighlighter(): SyntaxHighlighter = TomlHighlighter()
-    override fun getIcon(): Icon? = TomlIcons.TOML_FILE
+    override fun getIcon(): Icon = TomlIcons.TOML_FILE
     override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = tagToDescriptorMap
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> = attributesDescriptors
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY

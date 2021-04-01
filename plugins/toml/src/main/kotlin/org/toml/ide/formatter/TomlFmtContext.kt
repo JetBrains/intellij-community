@@ -11,7 +11,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.toml.ide.formatter.impl.createSpacingBuilder
 import org.toml.lang.TomlLanguage
 
-data class TomlFmtContext private constructor(
+data class TomlFmtContext(
     val commonSettings: CommonCodeStyleSettings,
     val spacingBuilder: SpacingBuilder
 ) {

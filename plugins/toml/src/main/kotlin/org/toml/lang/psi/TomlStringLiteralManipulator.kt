@@ -11,7 +11,7 @@ import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 
 class TomlStringLiteralManipulator : AbstractElementManipulator<TomlLiteral>() {
-    override fun handleContentChange(element: TomlLiteral, range: TextRange, newContent: String?): TomlLiteral? {
+    override fun handleContentChange(element: TomlLiteral, range: TextRange, newContent: String?): TomlLiteral {
         val oldText = element.text
         val newText = "${oldText.substring(0, range.startOffset)}$newContent${oldText.substring(range.endOffset)}"
 

@@ -13,8 +13,8 @@ import org.toml.ide.formatter.TomlFmtContext
 import org.toml.lang.psi.TomlElementTypes.*
 import com.intellij.psi.tree.TokenSet.create as ts
 
-fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings): SpacingBuilder {
-    val builder = SpacingBuilder(commonSettings)
+fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings): SpacingBuilder =
+    SpacingBuilder(commonSettings)
         // ,
         .after(COMMA).spacing(1, 1, 0, true, 0)
         .before(COMMA).spaceIf(false)
@@ -28,9 +28,6 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings): SpacingBuilde
         .before(R_CURLY).spaceIf(true)
         // .
         .aroundInside(DOT, ts(KEY, TABLE_HEADER)).spaceIf(false)
-
-    return builder
-}
 
 fun Block.computeSpacing(child1: Block?, child2: Block, ctx: TomlFmtContext): Spacing? {
     return ctx.spacingBuilder.getSpacing(this, child1, child2)

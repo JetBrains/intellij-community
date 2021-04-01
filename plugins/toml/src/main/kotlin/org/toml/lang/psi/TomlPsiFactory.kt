@@ -12,7 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.LocalTimeCounter
 
 class TomlPsiFactory(private val project: Project, private val markGenerated: Boolean = true) {
-    fun createFile(text: CharSequence): TomlFile =
+
+    private fun createFile(text: CharSequence): TomlFile =
         PsiFileFactory.getInstance(project)
             .createFileFromText(
                 "DUMMY.toml",

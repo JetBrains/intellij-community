@@ -11,7 +11,7 @@ import org.toml.TomlTestBase
 
 abstract class TomlAnnotationTestBase : TomlTestBase() {
 
-    protected lateinit var annotationFixture: TomlAnnotationTestFixture
+    private lateinit var annotationFixture: TomlAnnotationTestFixture
 
     override fun setUp() {
         super.setUp()

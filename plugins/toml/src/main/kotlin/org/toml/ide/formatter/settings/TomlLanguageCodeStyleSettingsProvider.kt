@@ -38,7 +38,7 @@ class TomlLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider(
             else -> ""
         }
 
-    override fun getIndentOptionsEditor(): IndentOptionsEditor? = SmartIndentOptionsEditor()
+    override fun getIndentOptionsEditor(): IndentOptionsEditor = SmartIndentOptionsEditor()
 }
 
 private fun sample(@org.intellij.lang.annotations.Language("TOML") code: String) = code.trim()

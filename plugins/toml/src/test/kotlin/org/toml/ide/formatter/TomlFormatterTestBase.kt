@@ -7,7 +7,6 @@ package org.toml.ide.formatter
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.formatter.FormatterTestCase
 import org.intellij.lang.annotations.Language
 import org.toml.TomlTestBase
 
