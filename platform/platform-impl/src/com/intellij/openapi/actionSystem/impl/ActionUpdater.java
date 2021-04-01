@@ -265,11 +265,15 @@ final class ActionUpdater {
     AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
     ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
-      indicator.cancel();
-      computeOnEdt(() -> {
-        applyPresentationChanges();
-        return null;
-      });
+      try {
+        computeOnEdt(() -> {
+          applyPresentationChanges();
+          return null;
+        });
+      }
+      finally {
+        indicator.cancel();
+      }
     });
 
     Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
