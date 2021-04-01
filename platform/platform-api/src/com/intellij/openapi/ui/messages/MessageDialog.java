@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.ui.Messages.wrapToScrollPaneIfNeeded;
@@ -118,11 +120,11 @@ public class MessageDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    Action[] actions = new Action[myOptions.length + 1];
+    List<Action> actions = new ArrayList<>();
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];
       final int exitCode = i;
-      actions[i] = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
+      Action action = new AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         @Override
         public void actionPerformed(ActionEvent e) {
           close(exitCode, true);
@@ -130,18 +132,21 @@ public class MessageDialog extends DialogWrapper {
       };
 
       if (i == myDefaultOptionIndex) {
-        actions[i].putValue(DEFAULT_ACTION, Boolean.TRUE);
+        action.putValue(DEFAULT_ACTION, Boolean.TRUE);
       }
 
       if (i == myFocusedOptionIndex) {
-        actions[i].putValue(FOCUSED_ACTION, Boolean.TRUE);
+        action.putValue(FOCUSED_ACTION, Boolean.TRUE);
       }
 
-      UIUtil.assignMnemonic(option, actions[i]);
+      UIUtil.assignMnemonic(option, action);
+      actions.add(action);
     }
 
-    actions[myOptions.length] = getHelpAction();
-    return actions;
+    if (getHelpId() != null) {
+      actions.add(getHelpAction());
+    }
+    return actions.toArray(new Action[0]);
   }
 
   @Override
