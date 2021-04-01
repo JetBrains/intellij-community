@@ -15,7 +15,7 @@ public class LombokConfigChangeListener implements BulkFileListener {
   public static final ModificationTracker CONFIG_CHANGE_TRACKER = CONFIG_CHANGE_COUNTER::get;
 
   @Override
-  public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+  public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile eventFile = event.getFile();
       if (null != eventFile && LombokConfigFileType.INSTANCE.equals(eventFile.getFileType())) {
