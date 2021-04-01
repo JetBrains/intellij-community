@@ -61,7 +61,8 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
     public void build(@NotNull CompileContext context) throws ProjectBuildException {
       LOG.info("jlink task was started");
 
-      if (!isValidJdk(context)) {
+      JpsSdk<?> javaSdk = findValidSdk(context);
+      if (javaSdk == null) {
         error(context, JpsBuildBundle.message("packaging.jlink.build.task.wrong.java.version"));
         return;
       }
@@ -72,7 +73,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
         return;
       }
       Path runtimeImagePath = Paths.get(artifactOutputPath, "jdk");
-      List<String> commands = buildCommands(context, properties, artifactOutputPath, runtimeImagePath);
+      List<String> commands = buildCommands(context, properties, javaSdk, artifactOutputPath, runtimeImagePath);
       if (commands.isEmpty()) return;
       try {
         FileUtil.delete(runtimeImagePath);
@@ -90,7 +91,8 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
       LOG.info("jlink task was finished");
     }
 
-    private static boolean isValidJdk(@NotNull CompileContext context) {
+    @Nullable
+    private static JpsSdk<?> findValidSdk(@NotNull CompileContext context) {
       Set<JpsSdk<?>> sdks = context.getProjectDescriptor().getProjectJavaSdks();
       JpsSdk<?> javaSdk = null;
       for (JpsSdk<?> sdk : sdks) {
@@ -100,22 +102,20 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
           break;
         }
       }
-      return javaSdk != null;
+      return javaSdk;
     }
 
     @NotNull
     private static List<String> buildCommands(@NotNull CompileContext context,
                                               @NotNull JpsJLinkProperties properties,
+                                              @NotNull JpsSdk<?> javaSdk,
                                               @NotNull String artifactOutputPath,
                                               @NotNull Path runtimeImagePath) {
-      Set<JpsSdk<?>> sdks = context.getProjectDescriptor().getProjectJavaSdks();
-      if (sdks.isEmpty()) return Collections.emptyList();
       String modulesSequence = getModulesSequence(artifactOutputPath);
       if (StringUtil.isEmpty(modulesSequence)) {
         error(context, JpsBuildBundle.message("packaging.jlink.build.task.modules.not.found"));
         return Collections.emptyList();
       }
-      JpsSdk<?> javaSdk = sdks.iterator().next();
       String sdkHomePath = javaSdk.getHomePath();
       String jLinkPath = Paths.get(sdkHomePath, "bin", "jlink").toString();
       List<String> commands = new ArrayList<>();
