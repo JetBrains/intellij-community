@@ -10,7 +10,6 @@ class JavaClassesFrequencyModelFactory : ClassesFrequencyModelFactory() {
   override fun fileVisitor(usagesTracker: ClassesUsagesTracker): PsiElementVisitor = object : JavaRecursiveElementWalkingVisitor() {
 
     override fun visitFile(file: PsiFile) {
-      usagesTracker.clear()
       super.visitFile(file)
       usagesTracker.dump()
     }

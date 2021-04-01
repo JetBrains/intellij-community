@@ -22,7 +22,7 @@ abstract class MethodsFrequencyModelFactory : FrequencyModelFactory<MethodsUsage
 
       override fun onStarted() = Unit
 
-      override fun onFinished(success: Boolean) = storage.setValid(success)
+      override fun onFinished(reason: LocalModelBuilder.FinishReason) = storage.setValid(reason == LocalModelBuilder.FinishReason.SUCCESS)
 
       override fun fileVisitor(): PsiElementVisitor = fileVisitor(MethodsUsagesTracker(storage))
 

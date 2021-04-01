@@ -25,5 +25,9 @@ class LocalModelsManager private constructor(private val project: Project) {
     models.getOrPut(language.id, { mutableMapOf() })[model.id] = model
   }
 
+  fun unregisterModel(language: Language, modelId: String) {
+    models[language.id]?.remove(modelId)
+  }
+
   inline fun <reified T : LocalModel> getModel(language: Language): T? = getModels(language).filterIsInstance<T>().firstOrNull()
 }

@@ -3,8 +3,6 @@ package com.intellij.ml.local.models.frequency.classes
 class ClassesUsagesTracker(private val storage: ClassesFrequencyStorage) {
   private val usages = mutableListOf<String>()
 
-  fun clear() = usages.clear()
-
   fun classUsed(className: String) {
     usages.add(className)
   }

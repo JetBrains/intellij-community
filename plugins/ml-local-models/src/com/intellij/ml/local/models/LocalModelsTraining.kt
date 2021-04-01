@@ -37,12 +37,13 @@ object LocalModelsTraining {
   fun train(project: Project, language: Language) = ApplicationManager.getApplication().executeOnPooledThread {
     val fileType = language.associatedFileType ?: throw IllegalArgumentException("Unsupported language")
     if (isTraining) {
-      LOG.error("Local models training has already started.")
+      LOG.error("Training has already started.")
       return@executeOnPooledThread
     }
     isTraining = true
     val modelsManager = LocalModelsManager.getInstance(project)
     val factories = LocalModelFactory.forLanguage(language)
+    factories.forEach { modelsManager.unregisterModel(language, it.id) }
     val id2builder = factories.associate { it.id to it.modelBuilder(project, language) }
 
     val task = object : Task.Backgroundable(project, MlLocalModelsBundle.message("ml.local.models.training.title"), true) {
@@ -54,8 +55,8 @@ object LocalModelsTraining {
         val ms = measureTimeMillis {
           processFiles(files, id2builder, project, indicator)
         }
-        markModelsFinished(true)
-        LOG.info("Local models training finished for language ${language.id} and models: $ids. Duration: $ms ms")
+        markModelsFinished(LocalModelBuilder.FinishReason.SUCCESS)
+        LOG.info("Training finished for language ${language.id} and models: $ids. Duration: $ms ms")
         id2builder.forEach {
           it.value.build()?.let { model ->
             modelsManager.registerModel(language, model)
@@ -63,14 +64,14 @@ object LocalModelsTraining {
         }
       }
 
-      override fun onCancel() = markModelsFinished(false)
+      override fun onCancel() = markModelsFinished(LocalModelBuilder.FinishReason.CANCEL)
 
       override fun onThrowable(error: Throwable) {
-        markModelsFinished(false)
+        markModelsFinished(LocalModelBuilder.FinishReason.ERROR)
         super.onThrowable(error)
       }
 
-      private fun markModelsFinished(success: Boolean) = id2builder.forEach { it.value.onFinished(success) }
+      private fun markModelsFinished(reason: LocalModelBuilder.FinishReason) = id2builder.forEach { it.value.onFinished(reason) }
 
       override fun onFinished() {
         isTraining = false
@@ -101,7 +102,7 @@ object LocalModelsTraining {
           ProgressIndicatorUtils.yieldToPendingWriteActions(indicator)
         }
         if (retriesCount >= MAX_FILE_PROCESSING_RETRIES) {
-          LOG.warn("Local models training. Too much retries to process file with id: $fileId. Model: ${id2builder.key}")
+          LOG.warn("Too much retries to process file with id: $fileId. Model: ${id2builder.key}")
         }
       }
       resolveCache.clearCache(true)
@@ -120,7 +121,7 @@ object LocalModelsTraining {
             throw pce
           }
           catch (e: Throwable) {
-            LOG.warn("Local model training error. Model: $modelId. File: ${file.path}.", e)
+            LOG.warn("Model: $modelId. File: ${file.path}.", e)
           }
         }
       }
