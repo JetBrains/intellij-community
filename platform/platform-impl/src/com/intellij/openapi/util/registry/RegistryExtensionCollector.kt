@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -11,31 +11,33 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-private val EP_NAME = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
-
-// Since the XML parser removes all the '\n' chars joining indented lines together,
-// we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
-@NonNls
-private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
-
 /**
  * Registers custom key for [Registry].
  */
 class RegistryKeyBean : PluginAware {
   companion object {
+    // Since the XML parser removes all the '\n' chars joining indented lines together,
+    // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
+    @NonNls
+    @JvmStatic
+    private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
+
+    @JvmStatic
     private val pendingRemovalKeys = HashSet<String>()
 
     @JvmStatic
-    fun addKeysFromPlugins() {
-      Registry.addKeys(EP_NAME.iterable.map { createRegistryKeyDescriptor(it) })
+    internal fun addKeysFromPlugins() {
+      val epName = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
 
-      EP_NAME.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
+      Registry.addKeys(epName.iterable.map { createRegistryKeyDescriptor(it) })
+
+      epName.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
         override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
           Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)))
         }
       }, null)
 
-      EP_NAME.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
+      epName.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
         override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
           pendingRemovalKeys.add(extension.key)
         }
@@ -51,6 +53,7 @@ class RegistryKeyBean : PluginAware {
       })
     }
 
+    @JvmStatic
     private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
       val pluginId = extension.descriptor?.pluginId?.idString
       return RegistryKeyDescriptor(extension.key,
