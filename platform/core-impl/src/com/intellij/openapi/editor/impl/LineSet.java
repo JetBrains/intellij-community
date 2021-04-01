@@ -255,11 +255,11 @@ public final class LineSet {
     return index < myFlags.length ? myFlags[index] & SEPARATOR_MASK : 0;
   }
 
-  final int getLineCount() {
+  public final int getLineCount() {
     return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
 
-  int getLength() {
+  public int getLength() {
     return myLength;
   }
 }

@@ -12,14 +12,10 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
   private static final Logger LOG = Logger.getInstance(ErrorStripeMarkerImpl.class);
 
   private final RangeHighlighterEx myHighlighter;
-  private int myLine;
 
   ErrorStripeMarkerImpl(@NotNull DocumentEx document, @NotNull RangeHighlighterEx highlighter) {
     super(document, highlighter.getStartOffset(), highlighter.getEndOffset(), false, true);
     myHighlighter = highlighter;
-    if (highlighter.isPersistent()) {
-      myLine = document.getLineNumber(highlighter.getStartOffset());
-    }
   }
 
   @NotNull
@@ -30,7 +26,7 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (myHighlighter.isPersistent()) {
-      myLine = persistentHighlighterUpdate(e, myLine, myHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
+      persistentHighlighterUpdate(e, myHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
     }
     else {
       super.changedUpdateImpl(e);
@@ -48,9 +44,6 @@ class ErrorStripeMarkerImpl extends RangeMarkerImpl {
         LOG.error("Mirror highlighter " + this + " diverged from base one " + myHighlighter + " after " + e);
         setIntervalStart(myHighlighter.getStartOffset());
         setIntervalEnd(myHighlighter.getEndOffset());
-        if (myHighlighter.isPersistent()) {
-          myLine = getDocument().getLineNumber(intervalStart());
-        }
       }
     }
     else if (isValid()) {
