@@ -2,7 +2,7 @@
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -41,6 +41,8 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.BUILD_ACTIVITY;
+import static com.intellij.task.impl.ProjectTaskManagerStatisticsCollector.TASK_RUNNER;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Arrays.stream;
@@ -179,9 +181,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    IdeActivity activity = new IdeActivity(myProject, "build").startedWithData(data -> {
-      data.addData("task_runner_class", map(toRun, it -> it.first.getClass().getName()));
-    });
+    StructuredIdeActivity activity = new StructuredIdeActivity(myProject, BUILD_ACTIVITY).started(() ->
+      Collections.singletonList(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())))
+    );
 
     myEventPublisher.started(context);
 
@@ -357,7 +359,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
-    private final IdeActivity myActivity;
+    private final StructuredIdeActivity myActivity;
     private final AtomicBoolean myErrorsFlag;
     private final AtomicBoolean myAbortedFlag;
     private final Map<ProjectTask, ProjectTaskState> myTasksState = new ConcurrentHashMap<>();
@@ -365,7 +367,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ResultConsumer resultConsumer,
                                          int expectedResults,
-                                         @NotNull IdeActivity activity) {
+                                         @NotNull StructuredIdeActivity activity) {
       myContext = context;
       myResultConsumer = resultConsumer;
       myProgressCounter = new AtomicInteger(expectedResults);
