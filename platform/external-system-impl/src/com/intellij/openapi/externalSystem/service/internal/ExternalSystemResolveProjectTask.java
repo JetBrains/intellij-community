@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.internal;
 
-import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
@@ -110,7 +109,8 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
       throw e;
     }
 
-    IdeActivity activity = externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
+    StructuredIdeActivity activity =
+      externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
     try {
       DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy);
       if (project != null) {

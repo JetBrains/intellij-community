@@ -114,7 +114,7 @@
     <externalSystemWorkspaceContributor implementation="com.intellij.openapi.externalSystem.importing.JpsDependencyContributor"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.importing.GAVStateComponent"/>
 
-    <statistics.counterUsagesCollector groupId="external.project.task" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector"/>
