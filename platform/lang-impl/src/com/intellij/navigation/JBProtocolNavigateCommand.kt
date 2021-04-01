@@ -83,7 +83,6 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
     val actions = RecentProjectListActionProvider.getInstance().getActions()
     val recentProjectAction = actions.filterIsInstance(ReopenProjectAction::class.java).find {
       if (!projectName.isNullOrEmpty() && it.projectName == projectName) return@find true
-      if (isOriginsEqual(originUrl, it.projectOrigin)) return@find true
 
       isOriginsEqual(originUrl, getProjectOriginUrl(Paths.get(it.projectPath)))
     } ?: return
