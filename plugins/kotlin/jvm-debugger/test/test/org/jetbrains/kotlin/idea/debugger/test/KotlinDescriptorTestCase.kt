@@ -195,8 +195,26 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         val processHandler = debuggerSession.process.processHandler
         debuggerSession.process.addProcessListener(object : ProcessAdapter() {
+            private val errorOutput = StringBuilder()
+
             override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-                print(event.text, outputType)
+                if (outputType == ProcessOutputTypes.STDERR) {
+                    errorOutput.append(event.text)
+                }
+            }
+
+            override fun startNotified(event: ProcessEvent) {
+                print("Run Java\n", ProcessOutputTypes.SYSTEM)
+                print("Connected to the target VM\n", ProcessOutputTypes.SYSTEM)
+            }
+
+            override fun processTerminated(event: ProcessEvent) {
+                print("Disconnected from the target VM\n\n", ProcessOutputTypes.SYSTEM)
+                print("Process finished with exit code ${event.exitCode}\n", ProcessOutputTypes.SYSTEM)
+
+                if (event.exitCode != 0) {
+                    print(errorOutput.toString(), ProcessOutputTypes.STDERR)
+                }
             }
         })
 
