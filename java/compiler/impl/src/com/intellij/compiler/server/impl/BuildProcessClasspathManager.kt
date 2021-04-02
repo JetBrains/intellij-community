@@ -3,6 +3,7 @@ package com.intellij.compiler.server.impl
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.compiler.server.CompileServerPlugin
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
@@ -131,7 +132,7 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
         catch (ignored: IOException) {
         }
       }
-      LOG.error("Cannot add '" + relativePath + "' from '" + plugin.name + ' ' + plugin.version + "'" + " to compiler classpath")
+      LOG.error(PluginException("Cannot add '" + relativePath + "' from '" + plugin.name + ' ' + plugin.version + "'" + " to compiler classpath", plugin.pluginId))
       return null
     }
 
