@@ -16,6 +16,7 @@ import java.util.jar.JarFile;
 public final class CaptureAgent {
   public static final String AGENT_STORAGE_JAR = "debugger-agent-storage.jar";
   private static Instrumentation ourInstrumentation;
+  private static final Set<Class> mySkipped = new HashSet<Class>();
 
   private static final Map<String, List<InstrumentPoint>> myInstrumentPoints = new HashMap<String, List<InstrumentPoint>>();
 
@@ -32,6 +33,18 @@ public final class CaptureAgent {
       appendStorageJar(instrumentation);
 
       readSettings(args);
+
+      // remember already loaded and not instrumented classes to skip them during retransform
+      for (Class aClass : instrumentation.getAllLoadedClasses()) {
+        List<InstrumentPoint> points = myInstrumentPoints.get(Type.getInternalName(aClass));
+        if (points != null) {
+          for (InstrumentPoint point : points) {
+            if (!point.myCapture) {
+              mySkipped.add(aClass);
+            }
+          }
+        }
+      }
 
       instrumentation.addTransformer(new CaptureTransformer(), true);
 
@@ -165,7 +178,7 @@ public final class CaptureAgent {
                             Class<?> classBeingRedefined,
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
-      if (className != null && classBeingRedefined == null) { // we do not support redefinition or retransform
+      if (className != null && (classBeingRedefined == null || !mySkipped.contains(classBeingRedefined))) {
         List<InstrumentPoint> classPoints = myInstrumentPoints.get(className);
         if (classPoints != null) {
           try {
