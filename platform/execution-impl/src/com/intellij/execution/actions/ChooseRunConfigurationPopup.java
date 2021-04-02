@@ -776,8 +776,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
             .setDefaultInsets(0, 0, 0, 0)
             .setDefaultFill(GridBagConstraints.BOTH);
 
-          res.add(myMnemonicLabel, gbc.next());
-          res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.MNEMONIC_ICON_GAP), gbc.next());
+          if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
+            res.add(myMnemonicLabel, gbc.next().weightx(0));
+            res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.MNEMONIC_ICON_GAP), gbc.next());
+          }
           res.add(myIconLabel, gbc.next());
 
           return res;
