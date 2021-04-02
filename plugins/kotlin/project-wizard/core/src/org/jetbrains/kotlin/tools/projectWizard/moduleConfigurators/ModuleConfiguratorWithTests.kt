@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingReference
 import org.jetbrains.kotlin.tools.projectWizard.core.safeAs
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
@@ -30,21 +31,32 @@ interface ModuleConfiguratorWithTests : ModuleConfiguratorWithSettings {
             neededAtPhase = GenerationPhase.PROJECT_GENERATION
         ) {
             filter = filter@{ reference, kotlinTestFramework ->
-                if (reference !is ModuleConfiguratorSettingReference<*, *>) return@filter true
-
-                val moduleType = reference.module?.configurator?.safeAs<ModuleConfiguratorWithModuleType>()?.moduleType
-                moduleType in kotlinTestFramework.moduleTypes
+                val module = getModule(reference) ?: return@filter false
+                val configurator = module.configurator
+                when {
+                    kotlinTestFramework == KotlinTestFramework.NONE -> {
+                        val parent = module.parent
+                        module.kind != ModuleKind.target || (parent?.let { getTestFramework(it) } == KotlinTestFramework.NONE)
+                    }
+                    configurator == MppModuleConfigurator -> kotlinTestFramework == KotlinTestFramework.COMMON
+                    configurator is ModuleConfiguratorWithModuleType -> configurator.moduleType in kotlinTestFramework.moduleTypes
+                    else -> false
+                }
             }
             defaultValue = dynamic { reference ->
                 if (buildSystemType == BuildSystemType.Jps) return@dynamic KotlinTestFramework.NONE
-                reference
-                    .safeAs<ModuleConfiguratorSettingReference<*, *>>()
-                    ?.module
-                    ?.configurator
-                    ?.safeAs<ModuleConfiguratorWithTests>()
-                    ?.defaultTestFramework()
+                val module = getModule(reference) ?: return@dynamic KotlinTestFramework.NONE
+                module.configurator.safeAs<ModuleConfiguratorWithTests>()?.defaultTestFramework()
             }
         }
+
+        private fun getModule(reference: SettingReference<*, *>): Module? {
+            if (reference !is ModuleConfiguratorSettingReference<*, *>) return null
+            return reference.module
+        }
+
+        private fun Reader.getTestFramework(module: Module): KotlinTestFramework =
+            inContextOfModuleConfigurator(module) { testFramework.reference.settingValue }
     }
 
     fun defaultTestFramework(): KotlinTestFramework
@@ -54,19 +66,31 @@ interface ModuleConfiguratorWithTests : ModuleConfiguratorWithSettings {
         configurationData: ModulesToIrConversionData,
         module: Module
     ): List<BuildSystemIR> = irsList {
-        val testFramework = inContextOfModuleConfigurator(module) { reader { testFramework.reference.settingValue } }
+        reader {
+            if (buildSystemType.isGradle) {
+                val mppModule = module.parent
+                val testFramework = getTestFramework(
+                    if (module.configurator is CommonTargetConfigurator) mppModule!! else module
+                )
 
-        testFramework.dependencyNames.forEach { dependencyName ->
-            +KotlinArbitraryDependencyIR(
-                dependencyName,
-                isInMppModule = module.kind
-                    .let { it == ModuleKind.multiplatform || it == ModuleKind.target },
-                kotlinVersion = reader { KotlinPlugin.version.propertyValue },
-                dependencyType = DependencyType.TEST
-            )
+                if (testFramework != KotlinTestFramework.NONE) {
+                    if (module.configurator !is TargetConfigurator
+                        || module.configurator is CommonTargetConfigurator
+                        || mppModule?.subModules?.none { it.configurator is CommonTargetConfigurator } == true
+                    ) {
+                        +createTestFramework("test", module)
+                    }
+                }
+            } else {
+                val testFramework = getTestFramework(module)
+                testFramework.dependencyNames.forEach { dependencyName ->
+                    +createTestFramework(dependencyName, module)
+                }
+                testFramework.additionalDependencies.forEach { +it }
+            }
         }
-        testFramework.additionalDependencies.forEach { +it }
     }
+
 
     override fun createBuildFileIRs(reader: Reader, configurationData: ModulesToIrConversionData, module: Module) = irsList {
         val testFramework = inContextOfModuleConfigurator(module) { reader { testFramework.reference.settingValue } }
@@ -90,6 +114,14 @@ interface ModuleConfiguratorWithTests : ModuleConfiguratorWithSettings {
     }
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = listOf(testFramework)
+
+    private fun Reader.createTestFramework(name: String, module: Module) = KotlinArbitraryDependencyIR(
+        name = name,
+        isInMppModule = module.kind
+            .let { it == ModuleKind.multiplatform || it == ModuleKind.target },
+        kotlinVersion = KotlinPlugin.version.propertyValue,
+        dependencyType = DependencyType.TEST
+    )
 }
 
 enum class KotlinTestFramework(
@@ -132,13 +164,13 @@ enum class KotlinTestFramework(
         listOf("test-testng")
     ),
     JS(
-        KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework.js"),
+        KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework.kotlin.test"),
         listOf(ModuleType.js),
         usePlatform = null,
         listOf("test-js")
     ),
     COMMON(
-        KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework.common"),
+        KotlinNewProjectWizardBundle.message("module.configurator.tests.setting.framework.kotlin.test"),
         listOf(ModuleType.common),
         usePlatform = null,
         listOf("test-common", "test-annotations-common")

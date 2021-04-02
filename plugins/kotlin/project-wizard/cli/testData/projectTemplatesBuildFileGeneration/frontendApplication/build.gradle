@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-js'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }
 
 kotlin {
