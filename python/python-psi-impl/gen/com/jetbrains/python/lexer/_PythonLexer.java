@@ -822,6 +822,7 @@ class _PythonLexer implements FlexLexerEx {
   private boolean zzEOFDone;
 
   /* user code: */
+private final PythonLexerKind myKind;
 private final PyLexerFStringHelper fStringHelper = new PyLexerFStringHelper(this);
 
 private int getSpaceLength(CharSequence string) {
@@ -839,7 +840,8 @@ return yylength()-s.length();
    *
    * @param   in  the java.io.Reader to read input from.
    */
-  _PythonLexer(java.io.Reader in) {
+  _PythonLexer(java.io.Reader in, PythonLexerKind kind) {
+    this.myKind = kind;
     this.zzReader = in;
   }
 
@@ -1095,7 +1097,7 @@ return yylength()-s.length();
             // fall through
           case 124: break;
           case 4: 
-            { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT;
+            { if (zzCurrentPos == 0 && myKind != PythonLexerKind.CONSOLE) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT;
             } 
             // fall through
           case 125: break;
@@ -1110,7 +1112,7 @@ return yylength()-s.length();
             // fall through
           case 127: break;
           case 7: 
-            { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+            { if (zzInput == YYEOF && zzStartRead == 0 && myKind != PythonLexerKind.CONSOLE) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.SINGLE_QUOTED_STRING;
             } 
             // fall through
@@ -1141,7 +1143,7 @@ return yylength()-s.length();
             // fall through
           case 133: break;
           case 13: 
-            { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK;
+            { if (zzCurrentPos == 0 && myKind != PythonLexerKind.CONSOLE) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK;
             } 
             // fall through
           case 134: break;
@@ -1372,7 +1374,7 @@ return yylength()-s.length();
             // fall through
           case 179: break;
           case 59: 
-            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.SINGLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING;
             } 
             // fall through
@@ -1513,13 +1515,13 @@ return PyTokenTypes.DOCSTRING;
             // fall through
           case 207: break;
           case 87: 
-            { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+            { if (zzInput == YYEOF && zzStartRead == 0 && myKind != PythonLexerKind.CONSOLE) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.TRIPLE_QUOTED_STRING;
             } 
             // fall through
           case 208: break;
           case 88: 
-            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.SINGLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
@@ -1596,7 +1598,7 @@ return PyTokenTypes.DOCSTRING;
             // fall through
           case 223: break;
           case 103: 
-            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.TRIPLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING;
             } 
             // fall through
@@ -1677,7 +1679,7 @@ return PyTokenTypes.DOCSTRING;
             // fall through
           case 239: break;
           case 119: 
-            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+            { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.TRIPLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING;
             } 
             // fall through

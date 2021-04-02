@@ -30,6 +30,11 @@ public class PythonHighlightingLexer extends PythonLexer {
   private final LanguageLevel myLanguageLevel;
 
   public PythonHighlightingLexer(LanguageLevel languageLevel) {
+    this(languageLevel, PythonLexerKind.REGULAR);
+  }
+
+  public PythonHighlightingLexer(LanguageLevel languageLevel, @NotNull PythonLexerKind kind) {
+    super(kind);
     myLanguageLevel = languageLevel;
     hasUnicodeImport = false;
     hasPrintFunctionImport = false;

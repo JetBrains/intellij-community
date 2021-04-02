@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @TestDataPath("$CONTENT_ROOT/../testData/ipython/")
@@ -84,6 +85,40 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     assertFalse(PsiTreeUtil.hasErrorElements(psiFile));
   }
 
+  public void testConsoleSingleStringLiteral() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralTripleQuoted() throws IOException {
+    PsiFile psiFile = consoleFile("\"\"\"foo\"\"\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleBytesLiteral() throws IOException {
+    PsiFile psiFile = consoleFile("b\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleBytesLiteralTripleQuoted() throws IOException {
+    PsiFile psiFile = consoleFile("b\"\"\"foo\"\"\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralNewLineBefore() throws IOException {
+    PsiFile psiFile = consoleFile("\n\"foo\"");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralNewLineAfter() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"\n");
+    checkResult(getTestName(), psiFile);
+  }
+
+  public void testConsoleSingleStringLiteralWhitespaceAfter() throws IOException {
+    PsiFile psiFile = consoleFile("\"foo\"    ");
+    checkResult(getTestName(), psiFile);
+  }
 
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
@@ -97,7 +132,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   }
 
   private PsiFile consoleFile(String text) {
-    return createPsiFile("Console.py", text);
+    return createPsiFile("Console", text);
   }
 
   @Override

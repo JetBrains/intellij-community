@@ -9,6 +9,16 @@ import com.intellij.openapi.util.text.StringUtil;
 
 %class _PythonLexer
 %implements FlexLexerEx
+
+%{
+private final PythonLexerKind myKind;
+%}
+
+%ctorarg PythonLexerKind kind
+%init{
+  this.myKind = kind;
+%init}
+
 %unicode
 %function advance
 %type IElementType
@@ -154,26 +164,26 @@ return yylength()-s.length();
 "\\"                        { return PyTokenTypes.BACKSLASH; }
 
 <YYINITIAL> {
-[\n]                        { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
-{END_OF_LINE_COMMENT}       { if (zzCurrentPos == 0) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT; }
+[\n]                        { if (zzCurrentPos == 0 && myKind != PythonLexerKind.CONSOLE) yybegin(PENDING_DOCSTRING); return PyTokenTypes.LINE_BREAK; }
+{END_OF_LINE_COMMENT}       { if (zzCurrentPos == 0 && myKind != PythonLexerKind.CONSOLE) yybegin(PENDING_DOCSTRING); return PyTokenTypes.END_OF_LINE_COMMENT; }
 
-{SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+{SINGLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0 && myKind != PythonLexerKind.CONSOLE) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.SINGLE_QUOTED_STRING; }
-{TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0) return PyTokenTypes.DOCSTRING;
+{TRIPLE_QUOTED_STRING}          { if (zzInput == YYEOF && zzStartRead == 0 && myKind != PythonLexerKind.CONSOLE) return PyTokenTypes.DOCSTRING;
                                  else return PyTokenTypes.TRIPLE_QUOTED_STRING; }
 
-{SINGLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+{SINGLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.SINGLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING; }
 
-{TRIPLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+{TRIPLE_QUOTED_STRING}[\ \t]*[\n;]   { yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.TRIPLE_QUOTED_STRING;
 return PyTokenTypes.DOCSTRING; }
 
 {SINGLE_QUOTED_STRING}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.SINGLE_QUOTED_STRING;
+ yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.SINGLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
 
 {TRIPLE_QUOTED_STRING}[\ \t]*"\\"  {
- yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0) return PyTokenTypes.TRIPLE_QUOTED_STRING;
+ yypushback(getSpaceLength(yytext())); if (zzCurrentPos != 0 || myKind == PythonLexerKind.CONSOLE) return PyTokenTypes.TRIPLE_QUOTED_STRING;
  yybegin(PENDING_DOCSTRING); return PyTokenTypes.DOCSTRING; }
 
 }

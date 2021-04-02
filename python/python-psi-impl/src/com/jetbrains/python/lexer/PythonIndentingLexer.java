@@ -3,6 +3,7 @@ package com.jetbrains.python.lexer;
 
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -11,7 +12,11 @@ public class PythonIndentingLexer extends PythonIndentingProcessor {
   private static final TokenSet TOKENS_TO_MERGE = PyTokenTypes.FSTRING_TEXT_TOKENS;
 
   public PythonIndentingLexer() {
-    super(new _PythonLexer(null), TOKENS_TO_MERGE);
+    super(new _PythonLexer(null, PythonLexerKind.REGULAR), TOKENS_TO_MERGE);
+  }
+
+  public PythonIndentingLexer(@NotNull PythonLexerKind kind) {
+    super(new _PythonLexer(null, kind), TOKENS_TO_MERGE);
   }
 
   boolean addFinalBreak = true;

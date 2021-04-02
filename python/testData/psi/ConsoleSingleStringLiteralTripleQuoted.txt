@@ -1,0 +1,4 @@
+PyFile:Console.py
+  PyExpressionStatement
+    PyStringLiteralExpression: 
+      PsiElement(Py:TRIPLE_QUOTED_STRING)('"""foo"""')
