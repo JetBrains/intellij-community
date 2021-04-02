@@ -44,7 +44,7 @@ public class LombokProjectValidatorActivity implements StartupActivity.DumbAware
         for (Module module : moduleManager.getModules()) {
           String lombokVersion = Version.parseLombokVersion(findLombokEntry(ModuleRootManager.getInstance(module)));
 
-          if (null != lombokVersion && Version.compareVersionString(lombokVersion, Version.LAST_LOMBOK_VERSION) < 0) {
+          if (Version.isLessThan(lombokVersion, Version.LAST_LOMBOK_VERSION)) {
             return getNotificationGroup().createNotification(LombokBundle.message("config.warn.dependency.outdated.title"),
               LombokBundle.message("config.warn.dependency.outdated.message", project.getName(),
                 module.getName(), lombokVersion, Version.LAST_LOMBOK_VERSION),
