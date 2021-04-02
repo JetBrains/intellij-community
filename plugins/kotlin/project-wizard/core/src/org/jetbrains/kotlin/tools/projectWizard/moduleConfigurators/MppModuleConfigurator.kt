@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.Writer
 import org.jetbrains.kotlin.tools.projectWizard.core.compute
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
@@ -17,7 +18,17 @@ import java.nio.file.Path
 
 object MppModuleConfigurator : ModuleConfigurator,
     ModuleConfiguratorWithSettings,
+    ModuleConfiguratorWithTests,
     ModuleConfiguratorSettings() {
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = buildList {
+        addAll(super<ModuleConfiguratorWithTests>.getConfiguratorSettings())
+    }
+
+    override fun defaultTestFramework(): KotlinTestFramework {
+        return KotlinTestFramework.COMMON
+    }
 
     override val moduleKind = ModuleKind.multiplatform
 
