@@ -188,7 +188,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "batik", libraryName: "batik-transcoder", url: "https://xmlgraphics.apache.org/batik/").apache(),
     new LibraryLicense(name: "batik", libraryName: "batik-codec", url: "https://xmlgraphics.apache.org/batik/").apache(),
     new LibraryLicense(name: "blockmap", libraryName: "org.jetbrains.intellij:blockmap:1.0.2",
-                       url: "https://bintray.com/jetbrains/intellij-third-party-dependencies/blockmap-library").apache(),
+                       url: "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/blockmap/").apache(),
     new LibraryLicense(libraryName: "bouncy-castle-provider", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html").mit(),
     new LibraryLicense(name: "BridJ (NativeLibs4Java C/C++ Interop Layer)", libraryName: "com.nativelibs4java:bridj:0.7.0",
