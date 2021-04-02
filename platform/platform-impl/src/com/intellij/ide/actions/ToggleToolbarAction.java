@@ -185,9 +185,9 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      ContentManager contentManager = myToolWindow.getContentManager();
-      Content selectedContent = contentManager.getSelectedContent();
-      JComponent contentComponent = selectedContent != null ? selectedContent.getComponent() : null;
+      ContentManager contentManager = myToolWindow.getContentManagerIfCreated();
+      Content selectedContent = contentManager == null ? null : contentManager.getSelectedContent();
+      JComponent contentComponent = selectedContent == null ? null : selectedContent.getComponent();
       if (contentComponent == null || e == null) return EMPTY_ARRAY;
       UpdateSession session = Utils.getOrCreateUpdateSession(e);
       List<AnAction> result = new SmartList<>();
