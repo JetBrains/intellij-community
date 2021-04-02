@@ -2,6 +2,7 @@
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -40,6 +41,10 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     }
     buildDate += DateFormatUtil.formatAboutDialogDate(cal.getTime());
     output += ' ' + buildInfo + ' ' + buildDate;
+    output += '\n';
+
+    output += "Theme: ";
+    output += LafManager.getInstance().getCurrentLookAndFeel().getName();
     output += '\n';
 
     output += "Java version: ";
