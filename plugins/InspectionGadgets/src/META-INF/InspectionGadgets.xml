@@ -2306,7 +2306,7 @@
                      implementationClass="com.siyeh.ig.style.ControlFlowStatementWithoutBracesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SingleStatementInBlock" bundle="messages.InspectionGadgetsBundle"
                      key="single.statement.in.block.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.SingleStatementInBlockInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsCalledOnEnumConstant" bundle="messages.InspectionGadgetsBundle"
                      key="equals.called.on.enum.constant.display.name" groupBundle="messages.InspectionsBundle"
