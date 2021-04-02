@@ -62,7 +62,9 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       if (action != null) {
         action.update(e);
         if (splitButton != null) {
+          boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
           splitButton.actionEnabled = presentation.isEnabled();
+          if (shouldRepaint) splitButton.repaint();
         }
         presentation.setEnabledAndVisible(true);
       }
