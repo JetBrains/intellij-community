@@ -212,8 +212,13 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       while (files.size() < MINIMUM_NUMBER_OF_FILES_TO_RUN_CONCURRENT_INDEXING && index < orderedProviders.size()) {
         IndexableFilesIterator provider = orderedProviders.get(index++);
         List<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
-        files.addAll(providerFiles);
-        takenProviders.add(Pair.create(provider, providerFiles.size()));
+        if (!providerFiles.isEmpty()) {
+          files.addAll(providerFiles);
+          takenProviders.add(Pair.create(provider, providerFiles.size()));
+        }
+      }
+      if (takenProviders.isEmpty()) {
+        break;
       }
       var sortedProviders = takenProviders.stream().sorted((p1, p2) -> Integer.compare(p2.second, p1.second)).collect(Collectors.toList());
       var indexingProgressText = sortedProviders.get(0).first.getIndexingProgressText();
