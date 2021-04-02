@@ -317,7 +317,7 @@ public class ShelvedChangesViewManager implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myContent == null) return;
-    myPanel.openEditorPreview();
+    myPanel.openEditorPreview(false);
   }
 
   public void updateOnVcsMappingsChanged() {
@@ -635,7 +635,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
+  private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, DataProvider, Disposable {
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
@@ -718,7 +718,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }, this);
       myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, this);
 
-      DataManager.registerDataProvider(myRootPanel, myTree);
+      DataManager.registerDataProvider(myRootPanel, this);
 
       PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     }
@@ -834,11 +834,11 @@ public class ShelvedChangesViewManager implements Disposable {
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.SHELVE_DETAILS_PREVIEW_SHOWN;
     }
 
-    private void openEditorPreview() {
+    private void openEditorPreview(boolean focusEditor) {
       if (isSplitterPreview()) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(false);
+      ((EditorTabPreview)myDiffPreview).openPreview(focusEditor);
     }
 
     @Nullable
@@ -855,6 +855,13 @@ public class ShelvedChangesViewManager implements Disposable {
       String imageText = VcsBundle.message("unshelve.changes.action");
       Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
       return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      return EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)
+             ? (myDiffPreview instanceof EditorTabPreview) ? myDiffPreview : null
+             : myTree.getData(dataId);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {
