@@ -36,7 +36,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
         gitStashUi.setDiffPreviewInEditor(ChangesViewContentManager.isCommitToolWindowShown(project))
       }
     })
-    return gitStashUi.mainComponent
+    return gitStashUi
   }
 
   override fun disposeContent() {
