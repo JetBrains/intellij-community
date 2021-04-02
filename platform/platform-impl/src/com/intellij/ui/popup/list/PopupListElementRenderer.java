@@ -119,9 +119,13 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
 
-    myIconLabel = new JLabel();
-
     return layoutComponent(panel);
+  }
+
+  @Override
+  protected void createLabel() {
+    super.createLabel();
+    myIconLabel = new JLabel();
   }
 
   @Override

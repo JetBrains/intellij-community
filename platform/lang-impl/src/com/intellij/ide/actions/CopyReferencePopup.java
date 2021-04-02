@@ -11,11 +11,11 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,9 +52,10 @@ public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysP
           private JLabel myShortcutLabel;
 
           @Override
-          protected JComponent createItemComponent() {
-            myTextLabel = new ErrorLabel();
-            myTextLabel.setBorder(JBUI.Borders.empty(1));
+          protected void createLabel() {
+            super.createLabel();
+
+            myIconLabel.setBorder(JBUI.Borders.empty(1, 1, 1, JBUI.CurrentTheme.ActionsList.elementIconGap()));
 
             myInfoLabel = new JLabel();
             myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
@@ -62,15 +63,22 @@ public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysP
             myShortcutLabel = new JLabel();
             myShortcutLabel.setBorder(JBUI.Borders.emptyLeft(DEFAULT_HGAP));
             myShortcutLabel.setForeground(UIUtil.getContextHelpForeground());
+          }
 
-            JPanel textPanel = new JPanel(new BorderLayout());
-            JPanel titlePanel = new JPanel(new BorderLayout());
-            titlePanel.add(myTextLabel, BorderLayout.WEST);
-            titlePanel.add(myShortcutLabel, BorderLayout.CENTER);
+          @Override
+          protected JComponent createItemComponent() {
+            createLabel();
 
-            textPanel.add(titlePanel, BorderLayout.WEST);
-            textPanel.add(myInfoLabel, BorderLayout.CENTER);
-            return layoutComponent(textPanel);
+            JPanel panel = new JPanel(new GridBagLayout());
+
+            GridBag gbc = new GridBag();
+
+            panel.add(myIconLabel, gbc.next());
+            panel.add(myTextLabel, gbc.next());
+            panel.add(myShortcutLabel, gbc.next());
+            panel.add(myInfoLabel, gbc.next().weightx(1));
+
+            return layoutComponent(panel);
           }
 
           @Override
