@@ -32,7 +32,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
 
   override fun needToHideSingleProject(path: String): Boolean {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return false
-    val learningProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    val learningProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport) ?: return false
     return Path.of(learningProjectPath) == Path.of(path)
   }
 
