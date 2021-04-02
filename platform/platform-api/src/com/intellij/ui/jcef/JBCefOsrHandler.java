@@ -20,6 +20,7 @@ import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
 
@@ -34,6 +35,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private @Nullable JBHiDPIScaledImage myImage;
 
   private final @NotNull JComponent myComponent;
+  private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private volatile double myScale = 1.0;
 
   private final @NotNull Object myImageLock = new Object();
@@ -62,13 +64,10 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public Point getScreenPoint(CefBrowser browser, Point viewPoint) {
-    try {
-      Point pt = scaleUp(myComponent.getLocationOnScreen());
-      pt.translate(viewPoint.x, viewPoint.y);
-      return pt;
-    } catch (IllegalArgumentException e) {
-      return viewPoint;
-    }
+    Point pt = viewPoint.getLocation();
+    Point loc = myLocationOnScreenRef.get();
+    pt.translate(loc.x, loc.y);
+    return scaleUp(pt);
   }
 
   @Override
@@ -156,6 +155,19 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   public void updateScale(double scale) {
     myScale = scale;
+  }
+
+  void notifyMousePressed() {
+    updateLocation();
+  }
+
+  void notifyComponentShown() {
+    updateLocation();
+  }
+
+  private void updateLocation() {
+    // getLocationOnScreen() is an expensive op, so do not request it on every mouse move but cache
+    myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
   }
 
   private void updateImage(int width, int height) {

@@ -58,6 +58,13 @@ class JBCefOsrComponent extends JPanel {
 
   @SuppressWarnings("deprecation")
   @Override
+  public void show() {
+    super.show();
+    myRenderHandler.notifyComponentShown();
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     myAlarm.cancelAllRequests();
@@ -67,8 +74,10 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
+    boolean mousePressed = e.getID() == MouseEvent.MOUSE_PRESSED;
+    if (mousePressed) myRenderHandler.notifyMousePressed();
     myBrowser.getCefBrowser().sendMouseEvent(e);
-    if (e.getID() == MouseEvent.MOUSE_PRESSED) requestFocusInWindow();
+    if (mousePressed) requestFocusInWindow();
   }
 
   @Override
