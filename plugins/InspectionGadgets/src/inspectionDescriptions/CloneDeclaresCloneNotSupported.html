@@ -6,19 +6,18 @@ in the standard way. This inspection does not report <code>clone()</code> method
 and <code>clone()</code> methods on <code>final</code> classes.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to indicate if this inspection should only warn on <code>protected</code> methods.
-  You can disable warnings for <code>public</code> methods if you are following the recommendation given in <i>Effective Java, Second Edition</i>> to omit
-  the exception declaration for <code>public</code> methods to make them easier to use.
-<p>
+Use the checkbox below to indicate that this inspection should also warn on <code>public clone()</code> methods.
+<i>Effective Java</i> (second and third edition) recommends to omit the <code>CloneNotSupportedException</code>
+declaration on <code>public</code> methods, because methods that don't throw checked exceptions are easier to use.
 <p>Example</p>
 <pre><code>
-  public class Example implements Cloneable {
-    protected Object clone() { // method doesn't have 'throw CloneNotSupportedException' clause, so inheritors can't throw it
-        try {
-            return super.clone();
-        }
-        catch(CloneNotSupportedException e){
-            return null;
+  <b>public class</b> Example <b>implements</b> Cloneable {
+    // method doesn't declare 'throws CloneNotSupportedException'
+    <b>protected</b> Object clone() {
+        <b>try</b> {
+            <b>return</b> <b>super</b>.clone();
+        } <b>catch</b> (CloneNotSupportedException e) {
+            <b>return</b> null;
         }
     }
   }

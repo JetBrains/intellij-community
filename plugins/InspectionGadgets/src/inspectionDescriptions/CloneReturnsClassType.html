@@ -2,8 +2,20 @@
 <body>
 Reports <b>clone()</b> methods that have a return type different than the class they are contained in.
 Often a <b>clone()</b> method will have a return type of <b>java.lang.Object</b>, which makes it harder to use by its clients.
-<i>Effective Java, Second Edition</i> recommends for the return type of the <b>clone()</b> method to be
+<i>Effective Java</i> (second and third edition) recommends for the return type of the <b>clone()</b> method to be
 the class type of the object it returns.
+<p>Example:
+<pre><code>
+  <b>class</b> Foo <b>implements</b> Cloneable {
+    <b>public</b> Object clone() {
+      <b>try</b> {
+        super.clone();
+      } <b>catch</b> (CloneNotSupportedException e) {
+        <b>throw new</b> AssertionError();
+      }
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>
