@@ -580,14 +580,16 @@ public final class Switcher extends BaseSwitcherAction {
           item.close(this);
         }
       }
-      int size = files.getItemsCount();
-      if (size > 0) {
-        int index = Math.min(Math.max(selectedIndex, 0), size - 1);
-        files.setSelectedIndex(index);
-        files.ensureIndexIsVisible(index);
-      }
-      else {
-        toolWindows.requestFocusInWindow();
+      if (files == selectedList) {
+        int size = files.getItemsCount();
+        if (size > 0) {
+          int index = Math.min(Math.max(selectedIndex, 0), size - 1);
+          files.setSelectedIndex(index);
+          files.ensureIndexIsVisible(index);
+        }
+        else {
+          toolWindows.requestFocusInWindow();
+        }
       }
     }
 
