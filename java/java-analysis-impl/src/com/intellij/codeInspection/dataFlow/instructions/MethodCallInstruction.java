@@ -104,10 +104,24 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
 
+  private MethodCallInstruction(@NotNull MethodCallInstruction from, @NotNull DfaValue precalculatedReturnValue) {
+    super(from.getExpression());
+    myPrecalculatedReturnValue = precalculatedReturnValue;
+    myContext = from.myContext;
+    myContracts = from.myContracts;
+    myArgCount = from.myArgCount;
+    myMutation = from.myMutation;
+    myType = from.myType;
+    myTargetMethod = from.myTargetMethod;
+    myVarArgCall = from.myVarArgCall;
+    myArgRequiredNullability = from.myArgRequiredNullability;
+    myReturnNullability = from.myReturnNullability;
+  }
+
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myPrecalculatedReturnValue == null) return this;
-    var instruction = new MethodCallInstruction((PsiCall)myContext, myPrecalculatedReturnValue.bindToFactory(factory), myContracts);
+    var instruction = new MethodCallInstruction(this, myPrecalculatedReturnValue.bindToFactory(factory));
     instruction.setIndex(getIndex());
     return instruction;
   }

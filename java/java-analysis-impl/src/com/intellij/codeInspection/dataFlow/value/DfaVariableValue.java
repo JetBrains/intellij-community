@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 public final class DfaVariableValue extends DfaValue {
 
@@ -74,10 +75,18 @@ public final class DfaVariableValue extends DfaValue {
 
     @NotNull
     DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
+      return createVariableValue(descriptor, qualifier, VariableDescriptor::getType);
+    }
+
+    @NotNull
+    DfaVariableValue createVariableValue(
+      @NotNull VariableDescriptor descriptor,
+      @Nullable DfaVariableValue qualifier,
+      @NotNull BiFunction<? super @NotNull VariableDescriptor, ? super @Nullable DfaVariableValue, @Nullable PsiType> typeSupplier) {
       Pair<VariableDescriptor, DfaVariableValue> key = Pair.create(descriptor, qualifier);
       DfaVariableValue var = myExistingVars.get(key);
       if (var == null) {
-        var = new DfaVariableValue(descriptor, myFactory, qualifier);
+        var = new DfaVariableValue(descriptor, myFactory, qualifier, typeSupplier.apply(descriptor, qualifier));
         myExistingVars.put(key, var);
         while (qualifier != null) {
           qualifier.myDependents.add(var);
@@ -89,16 +98,19 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   @NotNull private final VariableDescriptor myDescriptor;
-  private final PsiType myVarType;
+  @Nullable private final PsiType myVarType;
   @Nullable private final DfaVariableValue myQualifier;
   private DfType myInherentType;
   private final List<DfaVariableValue> myDependents = new SmartList<>();
 
-  private DfaVariableValue(@NotNull VariableDescriptor descriptor, @NotNull DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
+  private DfaVariableValue(@NotNull VariableDescriptor descriptor,
+                           @NotNull DfaValueFactory factory,
+                           @Nullable DfaVariableValue qualifier,
+                           @Nullable PsiType type) {
     super(factory);
     myDescriptor = descriptor;
     myQualifier = qualifier;
-    myVarType = descriptor.getType(qualifier);
+    myVarType = type;
     if (myDescriptor instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
       myFactory.setAssertionDisabled(this);
     }
@@ -116,7 +128,8 @@ public final class DfaVariableValue extends DfaValue {
 
   @Override
   public DfaVariableValue bindToFactory(@NotNull DfaValueFactory factory) {
-    return factory.getVarFactory().createVariableValue(myDescriptor, myQualifier == null ? null : myQualifier.bindToFactory(factory));
+    return factory.getVarFactory().createVariableValue(myDescriptor, myQualifier == null ? null : myQualifier.bindToFactory(factory),
+                                                       (descriptor, value) -> myVarType);
   }
 
   @Override
