@@ -175,15 +175,7 @@ class PerformanceSuite {
         fun gradleProject(path: String, refresh: Boolean = false, block: ProjectScope.() -> Unit) =
             ProjectScope(ProjectScopeConfig(path, ProjectOpenAction.GRADLE_PROJECT, refresh), this).use(block)
 
-        fun warmUpProject() = warmUpProject1()
-
-        fun warmUpProject2() = project("/Users/vladimir.dolzhenko/workspace/test/findUsages") {
-            fixture("src/main/java/hello.kt").use {
-                highlight(it)
-            }
-        }
-
-        fun warmUpProject1() = project {
+        fun warmUpProject() = project {
             descriptor {
                 name("helloWorld")
 
