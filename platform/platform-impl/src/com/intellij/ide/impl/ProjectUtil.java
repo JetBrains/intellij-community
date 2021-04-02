@@ -607,12 +607,23 @@ public final class ProjectUtil {
       return;
     }
 
+    boolean appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null;
+
+    // On macOS 'toFront' restores the frame, if needed.
+    // On Linux restoring minimized frame can steal focus from active application, so we do it only if IDE is active.
+    if (SystemInfo.isWindows || SystemInfo.isXWindow && appIsActive) {
+      int state = frame.getExtendedState();
+      if ((state & Frame.ICONIFIED) != 0) {
+        frame.setExtendedState(state & ~Frame.ICONIFIED);
+      }
+    }
+
     if (stealFocusIfAppInactive) {
       AppIcon.getInstance().requestFocus((IdeFrame)frame);
     }
     else {
-      if (!SystemInfo.isXWindow || KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
-        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE application is not active
+      if (!SystemInfo.isXWindow || appIsActive) {
+        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE is not active
         frame.toFront();
       }
 
