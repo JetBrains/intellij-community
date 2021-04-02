@@ -72,7 +72,7 @@ class WorkspaceModelTopics : Disposable {
     sendToQueue = false
     val activityInQueue = activity.startChild("(wm) events sending (in queue)")
     val application = ApplicationManager.getApplication()
-    val runnable = {
+    application.invokeAndWait {
       application.runWriteAction {
         val innerActivity = activityInQueue.endAndStart("(wm) events sending")
         allEvents.forEach { queue ->
@@ -88,10 +88,6 @@ class WorkspaceModelTopics : Disposable {
         innerActivity.end()
       }
     }
-    if (application.isUnitTestMode)
-      application.invokeAndWait(runnable)
-    else
-      application.invokeLater(runnable)
     activity.end()
   }
 

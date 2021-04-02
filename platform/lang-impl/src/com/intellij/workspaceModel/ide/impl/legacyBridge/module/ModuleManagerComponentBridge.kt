@@ -348,17 +348,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     finally {
       service.shutdownNow()
     }
-
-    val runnable = Runnable {
-      (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
-    }
-
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode || areModulesLoaded()) {
-      WriteAction.runAndWait<RuntimeException> { runnable.run() }
-    } else {
-      application.invokeLater { application.runWriteAction(runnable) }
-    }
   }
 
   private fun fireModulesAdded() {

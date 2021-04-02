@@ -4,12 +4,14 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -17,6 +19,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -60,7 +63,6 @@ class ModuleBridgeLoaderService(private val project: Project) {
     val librariesActivity = StartUpMeasurer.startActivity("(wm) project libraries loading", ActivityCategory.DEFAULT)
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
     librariesActivity.end()
-    WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     activity?.end()
     activity = null
   }
@@ -70,14 +72,19 @@ class ModuleBridgeLoaderService(private val project: Project) {
       LOG.debug { "Project component initialized" }
       if (project.isDefault || !WorkspaceModel.isEnabled) return
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-      if (workspaceModel.loadedFromCache) return
-      val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
-      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-      if (projectModelSynchronizer == null) return
-      projectModelSynchronizer.applyLoadedStorage(moduleLoaderService.storeToEntitySources)
-      project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-      moduleLoaderService.storeToEntitySources = null
-      moduleLoaderService.loadModules()
+      if (!workspaceModel.loadedFromCache) {
+        val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
+        val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+        if (projectModelSynchronizer == null) return
+        projectModelSynchronizer.applyLoadedStorage(moduleLoaderService.storeToEntitySources)
+        project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
+        moduleLoaderService.storeToEntitySources = null
+        moduleLoaderService.loadModules()
+      }
+      WriteAction.runAndWait<RuntimeException> {
+        (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
+      }
+      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
 
     companion object {
