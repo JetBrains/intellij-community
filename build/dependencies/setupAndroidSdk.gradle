@@ -23,7 +23,6 @@ repositories {
   maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
   maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-eap' }
   maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-bootstrap' }
-  maven { url 'https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-third-party-dependencies/' }
 }
 
 configurations {
