@@ -263,7 +263,7 @@ public final class SocketLock {
       boolean result = ContainerUtil.intersects(paths, stringList);
       if (result) {
         // update property right now, without scheduling to EDT - in some cases, allows to avoid a splash flickering
-        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
+        System.setProperty(CommandLineArgs.SPLASH, "false");
         EventQueue.invokeLater(() -> {
           Runnable hideSplashTask = SplashManager.getHideTask();
           if (hideSplashTask != null) {
@@ -279,7 +279,7 @@ public final class SocketLock {
           if (currentDirectory == null) {
             currentDirectory = ".";
           }
-          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + Paths.get(currentDirectory).toAbsolutePath().toString() + '\0' + String.join("\0", args));
+          out.writeUTF(ACTIVATE_COMMAND + token + '\0' + Paths.get(currentDirectory).toAbsolutePath() + '\0' + String.join("\0", args));
           out.flush();
 
           socket.setSoTimeout(0);

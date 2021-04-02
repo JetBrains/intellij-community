@@ -398,6 +398,7 @@ public final class StartupUtil {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");
         }
 
+        //noinspection SpellCheckingInspection
         EventQueue.invokeLater(() -> {
           try {
             // it is required even if headless because some tests creates configurable, so, our LaF is expected
@@ -422,7 +423,13 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          if (!Main.isLightEdit() && !Boolean.getBoolean(CommandLineArgs.NO_SPLASH)) {
+          boolean showSplash = false;
+          // product specifies `slash` VM properties, `nosplash` is deprecated property,
+          // it should be checked first
+          if (!Boolean.getBoolean(CommandLineArgs.NO_SPLASH) && Boolean.getBoolean(CommandLineArgs.SPLASH)) {
+            showSplash = true;
+          }
+          if (showSplash && !Main.isLightEdit()) {
             Activity prepareSplashActivity = activity.endAndStart("splash preparation");
             Activity prepareSplashQueueActivity = prepareSplashActivity.startChild("splash preparation (in queue)");
             EventQueue.invokeLater(() -> {

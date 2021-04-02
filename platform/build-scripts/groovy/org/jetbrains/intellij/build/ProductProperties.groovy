@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -59,6 +59,11 @@ abstract class ProductProperties {
   boolean toolsJarRequired = false
 
   boolean isAntRequired = false
+
+  /**
+   * Whether to use splash for application start-up.
+   */
+  boolean useSplash = false
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems

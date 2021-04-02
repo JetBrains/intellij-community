@@ -34,8 +34,12 @@ public final class SplashManager {
 
   public static void show(String @NotNull [] args, boolean visible) {
     for (String arg : args) {
-      if (CommandLineArgs.NO_SPLASH.equals(arg)) {
-        System.setProperty(CommandLineArgs.NO_SPLASH, "true");
+      if (CommandLineArgs.SPLASH.equals(arg)) {
+        System.setProperty(CommandLineArgs.SPLASH, "true");
+        return;
+      }
+      else if (CommandLineArgs.NO_SPLASH.equals(arg)) {
+        System.setProperty(CommandLineArgs.SPLASH, "false");
         return;
       }
     }

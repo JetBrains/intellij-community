@@ -1,14 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.pycharm
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
-import org.jetbrains.intellij.build.ApplicationInfoProperties
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.JetBrainsProductProperties
+import org.jetbrains.intellij.build.*
 
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -23,6 +19,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
   PyCharmPropertiesBase() {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
+    useSplash = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.putAll("testFramework.jar",
                                                 "intellij.platform.testFramework.core",
