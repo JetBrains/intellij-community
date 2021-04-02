@@ -53,9 +53,9 @@ public class ShShellcheckUtil {
   static final String SHELLCHECK_VERSION = "0.7.1-1";
   private static final String SHELLCHECK_VERSION_FOR_UPDATE = "0.7.1";
   static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
-  static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
-                                       "intellij-third-party-dependencies/" +
-                                       "org/jetbrains/intellij/deps/shellcheck/";
+  static final String SHELLCHECK_URL = "https://cache-redirector.jetbrains.com/" +
+                                       "intellij-dependencies/" +
+                                       "org/jetbrains/intellij/deps/shellcheck/shellcheck/";
   private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
   public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
@@ -264,7 +264,7 @@ public class ShShellcheckUtil {
   private static String getShellcheckDistributionLink() {
     String platform = getPlatform();
     if (platform == null) return null;
-    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
+    return SHELLCHECK_URL + SHELLCHECK_VERSION + "/shellcheck-" + SHELLCHECK_VERSION + "-" + platform + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
   @Nullable
