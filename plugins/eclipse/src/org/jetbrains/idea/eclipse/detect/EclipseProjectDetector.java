@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl.welcomeScreen;
+package org.jetbrains.idea.eclipse.detect;
 
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -24,8 +25,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
-class EclipseProjectsDetector {
-  private final static Logger LOG = Logger.getInstance(EclipseProjectsDetector.class);
+class EclipseProjectDetector implements ProjectDetector {
+  private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
   protected void collectProjectPaths(List<String> projects) throws Exception {
     Path path = Path.of(System.getProperty("user.home"), ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
@@ -55,11 +56,12 @@ class EclipseProjectsDetector {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  public static void detectProjects(Runnable callback) {
+  @Override
+  public void detectProjects(Runnable callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         List<String> projects = new ArrayList<>();
-        new EclipseProjectsDetector().collectProjectPaths(projects);
+        new EclipseProjectDetector().collectProjectPaths(projects);
         if (projects.isEmpty()) return;
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         ProjectGroup group = new ProjectGroup("Eclipse Projects");

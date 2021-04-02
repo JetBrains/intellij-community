@@ -184,6 +184,7 @@
     <extensionPoint name="interactiveCourseFactory" interface="com.intellij.openapi.wm.InteractiveCourseFactory" dynamic="true"/>
     <extensionPoint name="startPagePromoter" interface="com.intellij.openapi.wm.StartPagePromoter" dynamic="true"/>
     <extensionPoint name="welcomeScreenCustomization" interface="com.intellij.openapi.wm.WelcomeScreenCustomization" dynamic="true"/>
+    <extensionPoint name="welcome.projectDetector" interface="com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector" dynamic="true"/>
 
     <extensionPoint name="statistic.eventLog.eventLoggerProvider" interface="com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider"/>
     <extensionPoint name="statistic.eventLog.fusStateEventTracker" interface="com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracker"/>
