@@ -56,7 +56,9 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       projectPath?.let {
         addMacroReplacement(it, PathMacroUtil.PROJECT_DIR_MACRO_NAME)
       }
-      addMacroReplacement(defaultVirtualEnvRoot, VIRTUALENV_ROOT_DIR_MACRO_NAME)
+      defaultVirtualEnvRoot?.let {
+        addMacroReplacement(it, VIRTUALENV_ROOT_DIR_MACRO_NAME)
+      }
     }
     val pathToSave = when {
       projectPath != null && FileUtil.isAncestor(projectPath, value, true) -> value.trimEnd { !it.isLetter() }
@@ -66,12 +68,13 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   }
 
   fun getPreferredVirtualEnvBasePath(projectPath: @SystemIndependent String?): @SystemIndependent String {
+    val defaultVirtualEnvRoot = defaultVirtualEnvRoot
     val pathMap = ExpandMacroToPathMap().apply {
       addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectPath ?: userHome)
-      addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultVirtualEnvRoot)
+      addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultVirtualEnvRoot ?: userHome)
     }
     val defaultPath = when {
-      defaultVirtualEnvRoot != userHome -> defaultVirtualEnvRoot
+      defaultVirtualEnvRoot != null -> defaultVirtualEnvRoot
       else -> "$${PathMacroUtil.PROJECT_DIR_MACRO_NAME}$/venv"
     }
     val rawSavedPath = state.PREFERRED_VIRTUALENV_BASE_PATH ?: defaultPath
@@ -101,8 +104,8 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
     var PREFERRED_VIRTUALENV_BASE_SDK: String? = null
   }
 
-  private val defaultVirtualEnvRoot: @SystemIndependent String
-    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path ?: userHome
+  private val defaultVirtualEnvRoot: @SystemIndependent String?
+    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path
 
   private val userHome: @SystemIndependent String
     get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
