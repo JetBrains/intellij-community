@@ -10,16 +10,28 @@ import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * To support legacy API
  */
 @ApiStatus.Internal
 public final class ExternalFormatProcessorAdapter implements FormattingService {
+
+
+  private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+                                                          Feature.FORMAT_FRAGMENTS);
+
   @Override
-  public boolean canFormat(@NotNull PsiFile file, boolean isExplicit) {
+  public boolean canFormat(@NotNull PsiFile file) {
     return ExternalFormatProcessor.useExternalFormatter(file);
+  }
+
+  @Override
+  public Set<Feature> getFeatures() {
+    return FEATURES;
   }
 
   @Override

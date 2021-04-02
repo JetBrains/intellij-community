@@ -9,11 +9,30 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 @ApiStatus.Experimental
 public interface FormattingService {
   ExtensionPointName<FormattingService> EP_NAME = ExtensionPointName.create("com.intellij.formattingService");
 
-  boolean canFormat(@NotNull PsiFile file, boolean isExplicit);
+  /**
+   * A feature supported by the service.
+   */
+  enum Feature {
+    /**
+     * The service can provide fast formatting of multiple collected ranges, for example, upon refactoring. It must also support
+     * {@link #FORMAT_FRAGMENTS} feature.
+     */
+    AD_HOC_FORMATTING,
+    /**
+     * The service can format multiple text ranges within the same document as opposed to complete file only.
+     */
+    FORMAT_FRAGMENTS
+  }
+
+  Set<Feature> getFeatures();
+
+  boolean canFormat(@NotNull PsiFile file);
 
   @NotNull
   PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly);

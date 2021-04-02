@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -14,14 +13,23 @@ import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public final class CoreFormattingService implements FormattingService {
-  private final static Logger LOG =Logger.getInstance(CoreFormattingService.class);
+
+  private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+                                                          Feature.FORMAT_FRAGMENTS);
 
   @Override
-  public boolean canFormat(@NotNull PsiFile file, boolean isExplicit) {
+  public boolean canFormat(@NotNull PsiFile file) {
     return true;
+  }
+
+  @Override
+  public Set<Feature> getFeatures() {
+    return FEATURES;
   }
 
   @Override

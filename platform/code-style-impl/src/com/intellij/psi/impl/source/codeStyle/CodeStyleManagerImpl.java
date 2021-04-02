@@ -77,7 +77,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (file == null)
       return element;
 
-    return FormattingServiceUtil.findService(file, true).formatElement(element, canChangeWhiteSpacesOnly);
+    return FormattingServiceUtil.findService(file, true, element.getTextRange().equals(file.getTextRange()))
+                                .formatElement(element, canChangeWhiteSpacesOnly);
   }
 
   @Override
@@ -161,7 +162,9 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       removeEndingWhiteSpaceFromEachRange(file, ranges);
     }
 
-    FormattingServiceUtil.findService(file, true).formatRanges(file, ranges, false);
+    boolean isFullRange = ranges.getRanges().size() == 1 && ranges.getRanges().get(0).getTextRange().equals(file.getTextRange());
+
+    FormattingServiceUtil.findService(file, true, isFullRange).formatRanges(file, ranges, false);
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
@@ -205,8 +208,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return element;
     }
 
-    return FormattingServiceUtil.findService(element.getContainingFile(), true)
-      .formatElement(element,TextRange.create(startOffset, endOffset), canChangeWhiteSpacesOnly);
+    PsiFile file = element.getContainingFile();
+    TextRange formattingRange = TextRange.create(startOffset, endOffset);
+    boolean isFullRange = formattingRange.equals(file.getTextRange());
+
+    return FormattingServiceUtil.findService(element.getContainingFile(), true, isFullRange)
+      .formatElement(element, formattingRange, canChangeWhiteSpacesOnly);
   }
 
 

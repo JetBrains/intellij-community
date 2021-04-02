@@ -771,7 +771,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     @Override
     public void execute(@NotNull FileViewProvider viewProvider) {
       final PsiFile file = viewProvider.getPsi(viewProvider.getBaseLanguage());
-      FormattingService formattingService = FormattingServiceUtil.findService(file, false);
+      FormattingService formattingService = FormattingServiceUtil.findService(file, false, false);
       commitDocument(viewProvider);
       SlowOperations.allowSlowOperations(() -> formattingService.formatRanges(file, getRanges(formattingService), true));
     }
