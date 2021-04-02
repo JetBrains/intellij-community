@@ -105,10 +105,8 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
   }
 
   private static class MyWarningItem extends MyFontItem {
-    final static MyWarningItem INSTANCE = new MyWarningItem();
-
-    private MyWarningItem() {
-      super(ApplicationBundle.message("settings.editor.font.missing.custom.font"), false);
+    private MyWarningItem(@NotNull String missingName) {
+      super(ApplicationBundle.message("settings.editor.font.missing.custom.font", missingName), false);
     }
   }
 
@@ -150,6 +148,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     private @Nullable MyFontItem mySelectedItem;
     private final MySeparatorItem myMonospacedSeparatorItem;
     private final MySeparatorItem myProportionalSeparatorItem;
+    private @Nullable MyWarningItem myWarningItem;
 
     private MyModel(boolean withNoneItem) {
       myMonospacedFamilies.addAll(Arrays.asList(KNOWN_MONOSPACED_FAMILIES));
@@ -180,6 +179,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       }
       else if (anItem instanceof String) {
         mySelectedItem = ContainerUtil.find(myItems, item -> item.isSelectable() && item.myFamilyName.equals(anItem));
+        if (mySelectedItem == null) {
+          myWarningItem = new MyWarningItem((String)anItem);
+        }
       }
       else if (anItem instanceof MySeparatorItem) {
         return;
@@ -192,7 +194,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
     @Override
     public @Nullable MyFontItem getSelectedItem() {
-      return mySelectedItem == null && myNoFontItem == null ? MyWarningItem.INSTANCE : mySelectedItem;
+      return mySelectedItem == null && myNoFontItem == null ? myWarningItem : mySelectedItem;
     }
 
     @Override
