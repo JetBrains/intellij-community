@@ -297,7 +297,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public void openEditorPreview() {
     if (myToolWindowPanel == null) return;
-    myToolWindowPanel.openEditorPreview();
+    myToolWindowPanel.openEditorPreview(false);
   }
 
   public void closeEditorPreview() {
@@ -556,11 +556,11 @@ public class ChangesViewManager implements ChangesViewEx,
       return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
 
-    private void openEditorPreview() {
+    private void openEditorPreview(boolean focusEditor) {
       if (isSplitterPreview()) return;
       if (!isEditorPreviewAllowed()) return;
 
-      ((EditorTabPreview)myDiffPreview).openPreview(false);
+      ((EditorTabPreview)myDiffPreview).openPreview(focusEditor);
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
@@ -645,6 +645,9 @@ public class ChangesViewManager implements ChangesViewEx,
     public Object getData(@NotNull String dataId) {
       Object data = super.getData(dataId);
       if (data != null) return data;
+      if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.is(dataId)) {
+        return (myDiffPreview instanceof EditorTabPreview) ? myDiffPreview : null;
+      }
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       return myCommitPanel != null ? myCommitPanel.getDataFromProviders(dataId) : null;
     }

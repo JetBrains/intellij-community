@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -15,11 +15,8 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesViewManager.createTextStatusFactory
-import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.checkin.CheckinHandler
@@ -198,6 +195,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   override fun getData(dataId: String): Any? {
     if (QuickActionProvider.KEY.`is`(dataId)) return toolbar
+    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
     return null
   }
 
