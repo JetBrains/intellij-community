@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.isFireStorageFileChangedEvent
+import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.highlighter.ModuleFileType
@@ -34,8 +35,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.ide.impl.finishModuleLoadingActivity
-import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -56,6 +55,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
   private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
+  private var activity: Activity? = null
+  private var childActivity: Activity? = null
 
   fun needToReloadProjectEntities(): Boolean {
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
@@ -186,41 +187,46 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    recordModuleLoadingActivity()
-    val activity = startActivity("(wm) Load initial project", ActivityCategory.DEFAULT)
-    var childActivity = activity.startChild("(wm) Prepare serializers")
+    activity = startActivity("(wm) project files loading", ActivityCategory.DEFAULT)
+    childActivity = activity?.startChild("(wm) serializers creation")
     val serializers = prepareSerializers()
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
-    childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
+    childActivity = childActivity?.endAndStart("(wm) unloaded modules loading")
     loadStateOfUnloadedModules(serializers)
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
-      childActivity = childActivity.endAndStart("(wm) Read serializers")
+      childActivity = childActivity?.endAndStart("(wm) entities loading")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
-      childActivity = childActivity.endAndStart("(wm) Add changes to store")
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
-      childActivity.end()
-      activity.end()
+      childActivity = childActivity?.endAndStart("(wm) changes to store (in queue)")
       return builder.toStorage() to sourcesToUpdate
+    } else {
+      childActivity?.end()
+      childActivity = null
+      activity?.end()
+      activity = null
+      return null
     }
-    activity.end()
-    finishModuleLoadingActivity()
-    return null
   }
 
   fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
     if (storeToEntitySources == null) return
     WriteAction.runAndWait<RuntimeException> {
+      childActivity = childActivity?.endAndStart("(wm) changes to store")
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
                                   || it is DummyParentEntitySource }, storeToEntitySources.first)
       }
+      childActivity?.end()
+      childActivity = null
     }
     sourcesToSave.clear()
     sourcesToSave.addAll(storeToEntitySources.second)
 
     fileContentReader.clearCache()
+    activity?.end()
+    activity = null
   }
 
   fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))

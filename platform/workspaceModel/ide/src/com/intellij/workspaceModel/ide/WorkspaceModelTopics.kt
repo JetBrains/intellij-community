@@ -68,12 +68,13 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded", ActivityCategory.DEFAULT)
+    val activity = StartUpMeasurer.startActivity("(wm) events sending after modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
+    val activityInQueue = activity.startChild("(wm) events sending (in queue)")
     val application = ApplicationManager.getApplication()
     val runnable = {
       application.runWriteAction {
-        val innerActivity = activity.startChild("(wm) WriteAction. After modules are loaded")
+        val innerActivity = activityInQueue.endAndStart("(wm) events sending")
         allEvents.forEach { queue ->
           queue.collectToQueue = false
           queue.events.forEach { (isBefore, event) ->

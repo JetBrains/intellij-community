@@ -70,7 +70,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(eventProject: Project) {
-          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened", ActivityCategory.DEFAULT)
+          val activity = StartUpMeasurer.startActivity("(wm) events modules added", ActivityCategory.DEFAULT)
           if (project == eventProject) {
             fireModulesAdded()
             for (module in modules()) {

@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
@@ -19,6 +23,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class ModuleBridgeLoaderService(private val project: Project) {
   private var storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>? = null
+  private var activity: Activity? = null
 
   init {
     if (WorkspaceModel.isEnabled) {
@@ -30,8 +35,11 @@ class ModuleBridgeLoaderService(private val project: Project) {
         if (projectModelSynchronizer != null) {
           if (projectModelSynchronizer.blockCidrDelayedUpdate()) workspaceModel.blockDelayedLoading()
           if (!workspaceModel.loadedFromCache) {
+            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
+            activity = StartUpMeasurer.startActivity("(wm) modules loading without cache", ActivityCategory.DEFAULT)
             storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
           } else {
+            activity = StartUpMeasurer.startActivity("(wm) modules loading with cache", ActivityCategory.DEFAULT)
             loadModules()
           }
         }
@@ -40,20 +48,26 @@ class ModuleBridgeLoaderService(private val project: Project) {
   }
 
   private fun loadModules() {
+    val childActivity = activity?.startChild("(wm) modules instantiation")
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
       .filter { !unloadedNames.contains(it.name) }
       .toList()
     moduleManager.loadModules(entities)
-    val librariesActivity = StartUpMeasurer.startMainActivity("(wm) project libraries loading")
+    childActivity?.setDescription("(wm) modules count: ${moduleManager.modules.size}")
+    childActivity?.end()
+    val librariesActivity = StartUpMeasurer.startActivity("(wm) project libraries loading", ActivityCategory.DEFAULT)
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
     librariesActivity.end()
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
+    activity?.end()
+    activity = null
   }
 
   class ModuleBridgeProjectServiceInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
+      LOG.debug { "Project component initialized" }
       if (project.isDefault || !WorkspaceModel.isEnabled) return
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
       if (workspaceModel.loadedFromCache) return
@@ -65,5 +79,13 @@ class ModuleBridgeLoaderService(private val project: Project) {
       moduleLoaderService.storeToEntitySources = null
       moduleLoaderService.loadModules()
     }
+
+    companion object {
+      private val LOG = logger<ModuleBridgeProjectServiceInitializedListener>()
+    }
+  }
+
+  companion object {
+    private val LOG = logger<ModuleBridgeLoaderService>()
   }
 }
