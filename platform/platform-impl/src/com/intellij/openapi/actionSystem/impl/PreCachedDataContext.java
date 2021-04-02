@@ -93,9 +93,18 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   public Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
-    if (answer != null && answer != NullResult.Initial || isInjectedIdWhenNoInjectionPresent(dataId)) {
+    if (answer != null && answer != NullResult.Initial) {
       return answer == NullResult.Final ? null : answer;
     }
+    else if (answer == null) {
+      if (dataId == AnActionEvent.uninjectedId(dataId)) {
+        return null; // a newly created data key => no data provider => no value
+      }
+      else if (!(myCachedData.get(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow)) {
+        return null; // no injected editor => no other injected values => no value
+      }
+    }
+
     if (myMissedKeysIfFrozen != null) {
       myMissedKeysIfFrozen.accept(dataId);
       return null;
@@ -112,15 +121,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     return answer;
   }
 
-  private boolean isInjectedIdWhenNoInjectionPresent(@NotNull String dataId) {
-    String uninjectedId = AnActionEvent.uninjectedId(dataId);
-    if (uninjectedId != dataId && !CommonDataKeys.EDITOR.is(uninjectedId) &&
-        !(myCachedData.get(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow)) {
-      return true;
-    }
-    return false;
-  }
-
   private static void preGetAllData(@NotNull Component component, @NotNull Map<String, Object> cachedData) {
     long start = System.currentTimeMillis();
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
@@ -131,8 +131,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
     cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
 
-    // ignore injected data keys, injections are slow,
-    // and slow parts must be in a slow provider anyway
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
     for (Component c = component; c != null; c = c.getParent()) {
@@ -140,13 +138,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
       if (dataProvider == null) continue;
       for (int i = 0; i < keys.length; i++) {
         DataKey<?> key = keys[i];
-        boolean alreadyComputed = computed.get(i);
         if (key == PlatformDataKeys.IS_MODAL_CONTEXT ||
             key == PlatformDataKeys.CONTEXT_COMPONENT ||
             key == PlatformDataKeys.MODALITY_STATE) {
-          if (!alreadyComputed) computed.set(i, true);
           continue;
         }
+        boolean alreadyComputed = computed.get(i);
         Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
                       dataManager.getDataFromProvider(dataProvider, key.getName(), null, null) : null;
         if (data instanceof Editor) data = validateEditor((Editor)data, component);
@@ -162,10 +159,21 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     }
     for (int i = 0; i < keys.length; i++) {
       DataKey<?> key = keys[i];
-      if (!computed.get(i)) {
-        cachedData.put(key.getName(), NullResult.Initial);
+      if (computed.get(i) ||
+          key == PlatformDataKeys.IS_MODAL_CONTEXT ||
+          key == PlatformDataKeys.CONTEXT_COMPONENT ||
+          key == PlatformDataKeys.MODALITY_STATE ||
+          key == PlatformDataKeys.SLOW_DATA_PROVIDERS) {
+        continue;
       }
+      cachedData.put(key.getName(), NullResult.Initial);
     }
+    if (cachedData.get(CommonDataKeys.PROJECT.getName()) == NullResult.Initial) {
+      cachedData.put(CommonDataKeys.PROJECT.getName(), NullResult.Final);
+    }
+    // Ignore injected data keys, injections are slow, and slow parts must be in slow providers.
+    // But make `injectedId(EDITOR)` known for `getData` and `ActionUpdater.ensureSlowDataKeysPreCached`.
+    cachedData.put(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()), NullResult.Initial);
     long time = System.currentTimeMillis() - start;
     if (time > 200) {
       // nothing
