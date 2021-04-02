@@ -417,10 +417,10 @@ class PythonOnboardingTour :
       }
     }
 
-    task("EditorChooseLookupItem") {
+    task {
       text(PythonLessonsBundle.message("python.onboarding.choose.len.item",
-                                       code("len(__obj)"), LessonUtil.rawEnter()))
-      trigger(it) {
+                                       code("len(__obj)"), action("EditorChooseLookupItem")))
+      stateCheck {
         checkEditorModification(completionPosition, "/len()")
       }
       restoreByUi()
@@ -438,10 +438,10 @@ class PythonOnboardingTour :
       restoreIfModifiedOrMoved()
     }
 
-    task("EditorChooseLookupItem") {
+    task {
       text(PythonLessonsBundle.message("python.onboarding.choose.values.item",
-                                       strong("val"), code("values"), LessonUtil.rawEnter()))
-      trigger(it) {
+                                       strong("val"), code("values"), action("EditorChooseLookupItem")))
+      stateCheck {
         checkEditorModification(completionPosition, "/len(values)")
       }
       restoreByUi()
