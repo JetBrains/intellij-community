@@ -4,7 +4,6 @@ import org.gradle.util.GradleVersion
 plugins {
   id "base"
   id "maven-publish"
-  id "com.jfrog.bintray" version "1.8.4"
 }
 
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
@@ -179,28 +178,18 @@ publishing {
       }
     }
   }
+  repositories {
+    maven {
+      url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"
+      credentials {
+        username = System.getenv('INTELLIJ_DEPENDENCIES_BOT')
+        password = System.getenv('INTELLIJ_DEPENDENCIES_TOKEN')
+      }
+    }
+  }
 }
 
 task publishGradleApiToMavenLocal
 publishGradleApiToMavenLocal.dependsOn tasks.withType(PublishToMavenLocal).matching { it.name.startsWith('publishGradle') }
 task publishGradleApiToMavenRepository
 publishGradleApiToMavenRepository.dependsOn tasks.withType(PublishToMavenRepository).matching { it.name.startsWith('publishGradle') }
-
-bintray {
-  user = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_USER')
-  key = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_API_KEY')
-
-  publish = true
-
-  pkg {
-    repo = 'intellij-third-party-dependencies'
-    name = 'gradle-api'
-    userOrg = 'jetbrains'
-
-    version {
-      name = patchedVersionName
-    }
-  }
-
-  publications = ['gradleApi', 'gradleApiImplDep', 'gradleWrapper', 'gradleLauncher']
-}
