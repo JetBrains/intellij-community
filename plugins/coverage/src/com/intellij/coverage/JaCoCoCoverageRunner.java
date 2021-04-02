@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jacoco.agent.AgentJar;
 import org.jacoco.core.analysis.*;
@@ -41,7 +42,6 @@ import java.util.HashSet;
 
 public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
-  private static final String CLASS_SUFFIX = ".class";
 
   @Override
   public ProjectData loadCoverageData(@NotNull File sessionDataFile, @Nullable CoverageSuite baseCoverageSuite) {
@@ -140,7 +140,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
-                vmClassName = removeClassSuffix(vmClassName);
+                vmClassName = StringUtil.trimEnd(vmClassName, ".class");
                 if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
                     !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
                   return FileVisitResult.CONTINUE;
@@ -231,10 +231,10 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
       .fixed("=destfile=")
       .resolved(sessionDataFilePath)
       .fixed(",append=false");
-    if (patterns != null && patterns.length > 0) {
+    if (!ArrayUtil.isEmpty(patterns)) {
       builder.fixed(",includes=").fixed(StringUtil.join(patterns, ":"));
     }
-    if (excludePatterns != null && excludePatterns.length > 0) {
+    if (!ArrayUtil.isEmpty(excludePatterns)) {
       builder.fixed(",excludes=").fixed(StringUtil.join(excludePatterns, ":"));
     }
     return builder.build();
@@ -293,13 +293,5 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
   @NotNull
   public String getDataFileExtension() {
     return "exec";
-  }
-
-  @NotNull
-  private static String removeClassSuffix(@NotNull String className) {
-    if (className.endsWith(CLASS_SUFFIX)) {
-      return className.substring(0, className.length() - CLASS_SUFFIX.length());
-    }
-    return className;
   }
 }
