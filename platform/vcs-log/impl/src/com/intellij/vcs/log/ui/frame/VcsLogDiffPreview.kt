@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.DiffPreviewProvider
 import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
@@ -92,13 +93,14 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
   }
 }
 
-abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
-                                 private val owner: Disposable) : DiffPreviewProvider {
+abstract class EditorDiffPreview(private val project: Project,
+                                 private val uiProperties: VcsLogUiProperties,
+                                 private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
   protected fun init(project: Project) {
     toggleDiffPreviewOnPropertyChange(uiProperties, owner) { state ->
       if (state) {
-        openPreviewInEditor(project, this, getOwnerComponent())
+        openPreviewInEditor(false)
       }
       else {
         //'equals' for such files is overridden and means the equality of its owner
@@ -109,8 +111,24 @@ abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
     @Suppress("LeakingThis")
     addSelectionListener {
       if (uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
-        openPreviewInEditor(project, this, getOwnerComponent())
+        openPreviewInEditor(false)
       }
+    }
+  }
+
+  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+    if (isPreviewVisible) openPreviewInEditor(focus)
+  }
+
+  fun openPreviewInEditor(focusEditor: Boolean) {
+    val escapeHandler = Runnable {
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
+      toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(getOwnerComponent(), true) }, false)
+    }
+
+    val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(this), focusEditor)
+    for (editor in editors) {
+      EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
     }
   }
 
@@ -122,7 +140,7 @@ abstract class EditorDiffPreview(private val uiProperties: VcsLogUiProperties,
 }
 
 class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val mainFrame: MainFrame) :
-  EditorDiffPreview(uiProperties, mainFrame.changesBrowser) {
+  EditorDiffPreview(project, uiProperties, mainFrame.changesBrowser) {
 
   init {
     init(project)
@@ -146,17 +164,5 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
         listener()
       }
     }, owner)
-  }
-}
-
-private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPreviewProvider, componentToFocus: JComponent) {
-  val escapeHandler = Runnable {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
-    toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
-  }
-
-  val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false)
-  for (editor in editors) {
-    EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
   }
 }

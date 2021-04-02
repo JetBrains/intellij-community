@@ -62,6 +62,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
     myMainFrame = createMainFrame(logData, uiProperties, filterUi);
 
+    createEditorDiffPreview();
+
     LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
     updateHighlighters();
 
@@ -73,15 +75,18 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
   }
 
+  private void createEditorDiffPreview() {
+    if (VcsLogUiUtil.isDiffPreviewInEditor()) {
+      VcsLogEditorDiffPreview editorDiffPreview = new VcsLogEditorDiffPreview(myProject, myUiProperties, myMainFrame);
+      myMainFrame.getChangesBrowser().setEditorDiffPreview(editorDiffPreview);
+    }
+  }
+
   @NotNull
   protected MainFrame createMainFrame(@NotNull VcsLogData logData,
                                       @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
     boolean isDiffPreviewAsEditor = VcsLogUiUtil.isDiffPreviewInEditor();
-    MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor, this);
-    if (isDiffPreviewAsEditor) {
-      new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);
-    }
-    return mainFrame;
+    return new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor, this);
   }
 
   @NotNull

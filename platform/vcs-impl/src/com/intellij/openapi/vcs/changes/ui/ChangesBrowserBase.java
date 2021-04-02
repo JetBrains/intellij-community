@@ -1,20 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.openapi.ListSelection;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -253,12 +255,24 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
+  @Nullable
+  protected DiffPreview getShowDiffActionPreview() {
+    return null;
+  }
+
   public void showDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
-    ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
-    DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
-    updateDiffContext(chain);
-    DiffManager.getInstance().showDiff(myProject, chain, new DiffDialogHints(null, this));
+    EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
+    DiffPreview diffPreview = getShowDiffActionPreview();
+    if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
+      previewManager.showDiffPreview(diffPreview);
+    }
+    else {
+      ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
+      ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
+      DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
+      updateDiffContext(chain);
+      DiffManager.getInstance().showDiff(myProject, chain, new DiffDialogHints(null, this));
+    }
   }
 
   protected void updateDiffContext(@NotNull DiffRequestChain chain) {

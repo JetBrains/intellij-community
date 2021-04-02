@@ -352,9 +352,6 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
-        if (isDiffPreviewInEditor()) {
-          VcsLogEditorDiffPreview(myProject, uiProperties, this)
-        }
       }
 
   override fun getMainComponent() = branchesUi.getMainComponent()

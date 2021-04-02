@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
@@ -75,6 +76,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull private Consumer<StatusText> myUpdateEmptyText = this::updateEmptyText;
   @NotNull private final Wrapper myToolbarWrapper;
   @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  @Nullable private DiffPreview myEditorDiffPreview;
 
   VcsLogChangesBrowser(@NotNull Project project,
                        @NotNull MainVcsLogUiProperties uiProperties,
@@ -393,6 +395,15 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     return ChangeDiffRequestProducer.create(project, change, context);
+  }
+
+  @Override
+  protected @Nullable DiffPreview getShowDiffActionPreview() {
+    return myEditorDiffPreview;
+  }
+
+  public void setEditorDiffPreview(@Nullable DiffPreview editorDiffPreview) {
+    myEditorDiffPreview = editorDiffPreview;
   }
 
   private void putRootTagIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
