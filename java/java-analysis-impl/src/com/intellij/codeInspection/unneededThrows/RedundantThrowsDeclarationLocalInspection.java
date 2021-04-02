@@ -95,16 +95,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     final PsiReferenceList throwsList = method.getThrowsList();
 
+    checkInconsistency(throwsList, method.getClass().getSimpleName());
+
     final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
-
-    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
-
-    if (referenceElements.length != referencedTypes.length) {
-      LOGGER.error("Stub-PSI inconsistency detected. " +
-                   "The number of elements in the throws list doesn't match the number of types in the throws list. " +
-                   "The method's class is " + method.getClass().getSimpleName(),
-                   new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
-    }
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return StreamEx.of(referenceElements)
@@ -253,17 +246,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
                                                                     @NotNull final PsiJavaCodeReferenceElement currentRef) {
         final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
 
-        final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
-
-        if (referenceElements.length != referencedTypes.length) {
-          final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
-          final String methodClass = method != null ? method.getClass().getSimpleName() : "null";
-
-          LOGGER.error("Stub-PSI inconsistency detected. " +
-                       "The number of elements in the throws list doesn't match the number of types in the throws list. " +
-                       "The method's class is " + methodClass,
-                       new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
-        }
+        checkInconsistency(throwsList);
 
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(throwsList.getProject());
         return StreamEx.of(referenceElements)
@@ -403,6 +386,40 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
           .filter(e -> ! ExceptionUtil.isGeneralExceptionType(e))
           .noneMatch(e -> e.isAssignableFrom(myType));
       }
+    }
+  }
+
+  /**
+   * See {@link #checkInconsistency(PsiReferenceList, String)}
+   * @param throwsList
+   */
+  private static void checkInconsistency(@NotNull PsiReferenceList throwsList) {
+    checkInconsistency(throwsList, null);
+  }
+
+  /**
+   * Check the weird inconsistencies when the length of {@link PsiReferenceList#getReferencedTypes} varies from
+   * {@link PsiReferenceList#getReferenceElements} in the throws list
+   * @param throwsList the throws list element to examine
+   * @param methodClassName the class of the method the throws list is from. If the value is null then calculate it with
+   * {@link PsiTreeUtil#getParentOfType}
+   */
+  private static void checkInconsistency(@NotNull PsiReferenceList throwsList, @Nullable String methodClassName) {
+    if (methodClassName == null) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
+
+      methodClassName = method != null ? method.getClass().getSimpleName() : "null";
+    }
+
+    final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
+
+    final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
+
+    if (referenceElements.length != referencedTypes.length) {
+      LOGGER.error("Stub-PSI inconsistency detected. " +
+                   "The number of elements in the throws list doesn't match the number of types in the throws list. " +
+                   "The method's class is " + methodClassName,
+                   new Attachment("throwsList.sourcePsi.txt", throwsList.isValid() ? throwsList.getText() : "<invalid>"));
     }
   }
 }
