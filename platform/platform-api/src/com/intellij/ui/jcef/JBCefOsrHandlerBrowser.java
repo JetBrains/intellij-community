@@ -81,15 +81,15 @@ public final class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
                                                boolean isDefaultClient,
                                                boolean createImmediately)
   {
-    JBCefApp.checkOffScreenRenderingModeEnabled();
     var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
     if (createImmediately) cefBrowser.createImmediately();
     return new JBCefOsrHandlerBrowser(client, cefBrowser, true, isDefaultClient);
   }
 
-  private JBCefOsrHandlerBrowser(@NotNull JBCefClient cefClient,
-                                 @NotNull CefBrowser cefBrowser, boolean newBrowserCreated, boolean isDefaultClient) {
+  JBCefOsrHandlerBrowser(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean newBrowserCreated, boolean isDefaultClient) {
     super(cefClient, cefBrowser, newBrowserCreated, isDefaultClient);
+
+    JBCefApp.checkOffScreenRenderingModeEnabled();
     setProperty(Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
   }
 }

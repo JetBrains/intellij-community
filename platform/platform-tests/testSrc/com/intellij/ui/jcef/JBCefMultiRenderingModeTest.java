@@ -13,6 +13,7 @@ import org.junit.Test;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.ui.jcef.JBCefBrowser.RenderingType.*;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
@@ -40,12 +41,13 @@ public class JBCefMultiRenderingModeTest {
 
   @Test
   public void test() {
-    show(new JBCefBrowser("chrome:version"));
-    show(JBCefBrowser.createDefaultOsrBrowser(null, "chrome:version"));
+    show(JBCefBrowser.create(EMBEDDED_WINDOW, null, "chrome:version", true));
+    show(JBCefBrowser.create(OGL_CANVAS, null, "chrome:version", true));
+    show(JBCefBrowser.create(BUFFERED_IMAGE, null, "chrome:version", true));
     Disposer.dispose(JBCefApp.getInstance().getDisposable());
   }
 
-  private void show(@NotNull JBCefBrowser browser) {
+  private static void show(@NotNull JBCefBrowser browser) {
     invokeAndWaitForLoad(browser, () -> SwingUtilities.invokeLater(() -> {
       JFrame frame = new JFrame(JBCefLoadHtmlTest.class.getName());
       frame.setSize(640, 480);

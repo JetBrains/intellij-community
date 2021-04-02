@@ -323,6 +323,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
+  /**
+   * Returns a component representing the browser in the UI hierarchy.
+   */
+  public @Nullable JComponent getComponent() {
+    return null;
+  }
+
   final boolean isCefBrowserCreated() {
     return myIsCefBrowserCreated;
   }

@@ -14,6 +14,7 @@ import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.ui.jcef.JBCefCookie;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.handler.CefLoadHandler;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +61,19 @@ public class WebBrowser extends AnAction implements DumbAware {
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
     frame.setLayout(new BorderLayout());
 
-    final JBCefBrowser myJBCefBrowser = isOffScreenRenderingMode ? JBCefBrowser.createDefaultOsrBrowser(null, URL) : new JBCefBrowser(URL);
-    myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
+    JBCefBrowser.RenderingType type = isOffScreenRenderingMode ? JBCefBrowser.RenderingType.BUFFERED_IMAGE : JBCefBrowser.RenderingType.EMBEDDED_WINDOW;
+    final JBCefBrowser myJBCefBrowser = JBCefBrowser.create(type, null, URL, true);
+
+    myJBCefBrowser.setErrorPage(new JBCefBrowserBase.ErrorPage() {
+      @Override
+      public @Nullable String create(@NotNull CefLoadHandler.ErrorCode errorCode,
+                                     @NotNull String errorText,
+                                     @NotNull String failedUrl)
+      {
+        return (errorCode == CefLoadHandler.ErrorCode.ERR_ABORTED) ?
+               null : JBCefBrowserBase.ErrorPage.DEFAULT.create(errorCode, errorText, failedUrl);
+      }
+    });
     myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
 
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
