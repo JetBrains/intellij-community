@@ -37,6 +37,12 @@ public abstract class DfaValue {
     return myFactory;
   }
 
+  /**
+   * @param factory target factory
+   * @return equivalent value registered in the supplied factory
+   */
+  public abstract DfaValue bindToFactory(@NotNull DfaValueFactory factory);
+
   public int getID() {
     return myID;
   }

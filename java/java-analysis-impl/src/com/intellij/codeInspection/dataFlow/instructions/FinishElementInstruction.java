@@ -5,8 +5,10 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +32,17 @@ public class FinishElementInstruction extends Instruction {
       }
     }
     return nextInstruction(runner, state);
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myVarsToFlush.isEmpty()) return this;
+    var instruction = new FinishElementInstruction(myElement);
+    for (DfaVariableValue var : myVarsToFlush) {
+      instruction.myVarsToFlush.add(var.bindToFactory(factory));
+    }
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Override

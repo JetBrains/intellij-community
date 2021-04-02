@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -28,6 +29,9 @@ public class DfaValueFactory {
   private final @NotNull FieldChecker myFieldChecker;
   private final @NotNull Project myProject;
   private @Nullable DfaVariableValue myAssertionDisabled;
+  private final @NotNull Map<PsiElement, List<DfaVariableValue>> myVariablesInBlock =
+    FactoryMap.create(block -> ContainerUtil.map(PsiTreeUtil.findChildrenOfType(block, PsiVariable.class),
+                                                 getVarFactory()::createVariableValue));
 
   /**
    * @param project a project in which context the analysis is performed
@@ -67,6 +71,10 @@ public class DfaValueFactory {
     return myValues.size() - 1;
   }
 
+  public @NotNull List<DfaVariableValue> getVariablesInBlock(@Nullable PsiElement block) {
+    return block == null ? Collections.emptyList() : myVariablesInBlock.get(block);
+  }
+
   public DfaValue getValue(int id) {
     return myValues.get(id);
   }
@@ -81,16 +89,16 @@ public class DfaValueFactory {
   public DfaTypeValue getInt(int value) {
     return fromDfType(DfTypes.intValue(value));
   }
-  
+
   @NotNull
   public DfaTypeValue getUnknown() {
     return fromDfType(DfTypes.TOP);
   }
 
   /**
-   * @return a special sentinel value that never equals to anything else (even unknown value) and 
-   * sometimes pushed on the stack as control flow implementation detail. 
-   * It's never assigned to the variable or merged with any other value.  
+   * @return a special sentinel value that never equals to anything else (even unknown value) and
+   * sometimes pushed on the stack as control flow implementation detail.
+   * It's never assigned to the variable or merged with any other value.
    */
   @NotNull
   public DfaValue getSentinel() {
@@ -111,9 +119,9 @@ public class DfaValueFactory {
   }
 
   /**
-   * Creates a constant of given type and given value. Constants are always unique 
+   * Creates a constant of given type and given value. Constants are always unique
    * (two different constants are not equal to each other).
-   * 
+   *
    * The following types of the objects are supported:
    * <ul>
    *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
@@ -200,6 +208,11 @@ public class DfaValueFactory {
   private final DfaTypeValue.Factory myTypeValueFactory;
   private final DfaValue mySentinelValue = new DfaValue(this) {
     @Override
+    public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
+      return factory.mySentinelValue;
+    }
+
+    @Override
     public String toString() {
       return "SENTINEL";
     }
@@ -240,7 +253,7 @@ public class DfaValueFactory {
   private static class ClassInitializationInfo {
     private static final CallMatcher SAFE_CALLS =
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNull");
-    
+
     final boolean myCanInstantiateItself;
     final boolean myCtorsCallMethods;
     final boolean mySuperCtorsCallMethods;

@@ -26,14 +26,14 @@ import java.util.function.Consumer;
 /**
  * @author peter
  */
-public final class LiveVariablesAnalyzer {
+final class LiveVariablesAnalyzer {
   private final DfaValueFactory myFactory;
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
 
-  public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
-    myFactory = factory;
+  LiveVariablesAnalyzer(ControlFlow flow) {
+    myFactory = flow.getFactory();
     myInstructions = flow.getInstructions();
     myForwardMap = calcForwardMap();
     myBackwardMap = calcBackwardMap();

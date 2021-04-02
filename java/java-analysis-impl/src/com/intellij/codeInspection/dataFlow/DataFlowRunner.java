@@ -178,20 +178,16 @@ public class DataFlowRunner {
   }
 
   protected final @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock) {
-    ControlFlow flow = null;
     try {
-      flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, myInlining).buildControlFlow();
-      if (flow != null) {
-        new LiveVariablesAnalyzer(flow, myValueFactory).flushDeadVariablesOnStatementFinish();
-      }
+      return ControlFlow.buildFlow(psiBlock, myValueFactory, myInlining);
     }
     catch (ProcessCanceledException ex) {
       throw ex;
     }
     catch (RuntimeException | AssertionError e) {
-      reportDfaProblem(psiBlock, flow, null, e);
+      reportDfaProblem(psiBlock, null, null, e);
     }
-    return flow;
+    return null;
   }
 
   protected final @NotNull RunnerResult interpret(@NotNull PsiElement psiBlock,

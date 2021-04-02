@@ -68,8 +68,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   /**
    * @param valueFactory factory to create values
    * @param codeFragment code fragment to analyze:
-   *                     normally a PsiCodeBlock or PsiExpression. 
-   *                     If PsiWhileStatement or PsiDoWhileStatement then only one loop iteration will be analyzed 
+   *                     normally a PsiCodeBlock or PsiExpression.
+   *                     If PsiWhileStatement or PsiDoWhileStatement then only one loop iteration will be analyzed
    *                     (similar to analyzing the loop body, but condition is analyzed as well).
    *                     If PsiClass then class initializers + field initializers will be analyzed
    * @param inlining if true inlining is performed for known method calls
@@ -106,7 +106,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new FlushFieldsInstruction());
   }
 
-  public @Nullable ControlFlow buildControlFlow() {
+  @Nullable ControlFlow buildControlFlow() {
     myCurrentFlow = new ControlFlow(myFactory);
     addInstruction(new FinishElementInstruction(null)); // to initialize LVA
     try {
@@ -153,7 +153,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private ControlFlowOffset getEndOffset(PsiElement element) {
-    assert !(element instanceof PsiExpression) || element instanceof PsiSwitchExpression; 
+    assert !(element instanceof PsiExpression) || element instanceof PsiSwitchExpression;
     return myCurrentFlow.getEndOffset(element);
   }
 
@@ -168,7 +168,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
-    if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) && 
+    if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {
       List<DfaVariableValue> synthetics = getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
@@ -414,7 +414,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   void addNullCheck(@Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
     if (problem != null) {
-      DfaControlTransferValue transfer = shouldHandleException() && problem.thrownException() != null 
+      DfaControlTransferValue transfer = shouldHandleException() && problem.thrownException() != null
                                          ? myFactory.controlTransfer(myExceptionCache.get(problem.thrownException()), myTrapStack) : null;
       addInstruction(new CheckNotNullInstruction(problem, transfer));
     }
@@ -422,7 +422,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void jumpOut(PsiElement exitedStatement) {
     if (exitedStatement != null && PsiTreeUtil.isAncestor(myCodeFragment, exitedStatement, false)) {
-      controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), getVariablesInside(exitedStatement)),
+      controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), exitedStatement),
                       getTrapsInsideElement(exitedStatement));
     } else {
       // Jumping out of analyzed code fragment
@@ -439,17 +439,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
   }
 
-  private @NotNull List<DfaVariableValue> getVariablesInside(PsiElement exitedStatement) {
-    return ContainerUtil.map(PsiTreeUtil.findChildrenOfType(exitedStatement, PsiVariable.class),
-                             myFactory.getVarFactory()::createVariableValue);
-  }
-
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, true)) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
-      controlTransfer(new InstructionTransfer(getEndOffset(body), getVariablesInside(body)), getTrapsInsideElement(body));
+      controlTransfer(new InstructionTransfer(getEndOffset(body), body), getTrapsInsideElement(body));
     } else {
       // Jumping out of analyzed code fragment
       controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
@@ -1090,7 +1085,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     processTryWithResources(resourceList, tryBlock);
 
-    InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), getVariablesInside(tryBlock));
+    InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), tryBlock);
     FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
     controlTransfer(gotoEnd, singleFinally);
 
@@ -1148,7 +1143,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (twrFinallyDescriptor != null) {
-      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), getVariablesInside(tryBlock));
+      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), tryBlock);
       controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
       popTrap(TwrFinally.class);
       pushTrap(new InsideFinally(resourceList));
@@ -1462,7 +1457,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalErrorThrow();
-      PsiType boxedType = TypeConversionUtil.isPrimitiveWrapper(expectedType) ? expectedType : 
+      PsiType boxedType = TypeConversionUtil.isPrimitiveWrapper(expectedType) ? expectedType :
                           ((PsiPrimitiveType)actualType).getBoxedType(context);
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(boxedType);
       if (unboxedType != null && !unboxedType.equals(actualType)) {
@@ -1710,7 +1705,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       anchor = reference;
     }
     else {
-      if (ExpressionUtils.isVoidContext(expression) && ContainerUtil.all(contracts, c -> 
+      if (ExpressionUtils.isVoidContext(expression) && ContainerUtil.all(contracts, c ->
         c.getReturnValue() != ContractReturnValue.fail() && !(c.getReturnValue() instanceof ContractReturnValue.ParameterReturnValue))) {
         // Do not track contracts if return value is not used
         contracts = Collections.emptyList();
@@ -1999,7 +1994,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaValue value = myFactory.createValue(expression);
     addInstruction(new PushInstruction(value == null ? myFactory.getUnknown() : value, expression, writing));
     addNullCheck(expression);
-    
+
     finishElement(expression);
   }
 
@@ -2041,7 +2036,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Contract("null -> false")
   final boolean wasAdded(PsiElement element) {
-    return element != null && 
+    return element != null &&
            myCurrentFlow.getStartOffset(element).getInstructionOffset() > -1 &&
            myCurrentFlow.getEndOffset(element).getInstructionOffset() > -1;
   }
@@ -2088,11 +2083,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   /**
-   * Register custom nullability problem for given expression or its subexpressions (e.g. ternary branches). 
+   * Register custom nullability problem for given expression or its subexpressions (e.g. ternary branches).
    * This would override default problem detection.
-   * 
+   *
    * @param expression an expression which nullness may cause the problem
-   * @param problem a problem to check. Use {@link NullabilityProblemKind#noProblem} to suppress the problem which 
+   * @param problem a problem to check. Use {@link NullabilityProblemKind#noProblem} to suppress the problem which
    *                would be detected by default.
    */
   void addCustomNullabilityProblem(@NotNull PsiExpression expression, @NotNull NullabilityProblemKind<? super PsiExpression> problem) {
@@ -2100,9 +2095,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   /**
-   * Unregister custom nullability problem previously registered via {@link #addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind)}. 
+   * Unregister custom nullability problem previously registered via {@link #addCustomNullabilityProblem(PsiExpression, NullabilityProblemKind)}.
    * Call this after given expression is fully analyzed.
-   * 
+   *
    * @param expression an expression to deregister.
    */
   void removeCustomNullabilityProblem(@NotNull PsiExpression expression) {
@@ -2190,7 +2185,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (returnValue != null) {
         analyzer.addInstruction(new PushInstruction(myTarget, null, true));
         if (!isSwitch()) {
-          analyzer.addCustomNullabilityProblem(returnValue, myForceNonNullBlockResult ? 
+          analyzer.addCustomNullabilityProblem(returnValue, myForceNonNullBlockResult ?
                                                             NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem);
         }
         returnValue.accept(analyzer);

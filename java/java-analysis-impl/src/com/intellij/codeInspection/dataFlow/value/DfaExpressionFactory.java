@@ -23,9 +23,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.rangeClamped;
@@ -36,7 +34,6 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.rangeClamped;
 public class DfaExpressionFactory {
 
   private final DfaValueFactory myFactory;
-  private final Map<Integer, ArrayElementDescriptor> myArrayIndices = new HashMap<>();
 
   DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -278,7 +275,7 @@ public class DfaExpressionFactory {
   @Contract("null, _ -> null")
   @Nullable
   public DfaValue getArrayElementValue(DfaValue array, int index) {
-    if (!(array instanceof DfaVariableValue)) return null;
+    if (!(array instanceof DfaVariableValue) || index < 0) return null;
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiType type = arrayDfaVar.getType();
     if (!(type instanceof PsiArrayType)) return null;
@@ -289,17 +286,7 @@ public class DfaExpressionFactory {
         return getAdvancedExpressionDfaValue(constantArrayElement, ((PsiArrayType)type).getComponentType());
       }
     }
-    ArrayElementDescriptor indexVariable = getArrayIndexVariable(index);
-    if (indexVariable == null) return null;
-    return indexVariable.createValue(myFactory, arrayDfaVar);
-  }
-
-  @Nullable
-  private ArrayElementDescriptor getArrayIndexVariable(int index) {
-    if (index >= 0) {
-      return myArrayIndices.computeIfAbsent(index, ArrayElementDescriptor::new);
-    }
-    return null;
+    return new ArrayElementDescriptor(index).createValue(myFactory, arrayDfaVar);
   }
 
   @NotNull
@@ -313,16 +300,16 @@ public class DfaExpressionFactory {
     }
     return PsiSubstitutor.EMPTY;
   }
-  
+
   public DfaVariableValue getAssertionsDisabledVariable() {
     return myFactory.getVarFactory().createVariableValue(AssertionDisabledDescriptor.INSTANCE);
   }
 
   public static final class AssertionDisabledDescriptor implements VariableDescriptor {
     static final AssertionDisabledDescriptor INSTANCE = new AssertionDisabledDescriptor();
-    
+
     private AssertionDisabledDescriptor() {}
-    
+
     @Override
     public boolean isStable() {
       return true;
@@ -369,7 +356,7 @@ public class DfaExpressionFactory {
 
     @Override
     public boolean isStable() {
-      return PsiUtil.isJvmLocalVariable(myVariable) || 
+      return PsiUtil.isJvmLocalVariable(myVariable) ||
              (myVariable.hasModifierProperty(PsiModifier.FINAL) && !DfaUtil.hasInitializationHacks(myVariable));
     }
 
@@ -406,7 +393,7 @@ public class DfaExpressionFactory {
       CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
       CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
       CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
-                               "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass", 
+                               "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass",
                                "getSimpleName", "getCanonicalName")
     );
     private final @NotNull PsiMethod myGetter;
@@ -498,6 +485,17 @@ public class DfaExpressionFactory {
     @Override
     public boolean isStable() {
       return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return myIndex + 1234567;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this ||
+             obj instanceof ArrayElementDescriptor && ((ArrayElementDescriptor)obj).myIndex == myIndex;
     }
   }
 

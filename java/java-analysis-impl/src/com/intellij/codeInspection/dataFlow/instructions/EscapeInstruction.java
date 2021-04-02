@@ -5,7 +5,10 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -19,6 +22,13 @@ public class EscapeInstruction extends Instruction {
 
   public Set<DfaVariableValue> getEscapedVars() {
     return myEscapedVars;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    var instruction = new EscapeInstruction(ContainerUtil.map2Set(myEscapedVars, var -> var.bindToFactory(factory)));
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Override

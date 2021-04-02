@@ -94,8 +94,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (type instanceof DfReferenceType) {
           DfReferenceType newType = ((DfReferenceType)type).dropLocality();
           if (newType.getMutability() == Mutability.MUST_NOT_MODIFY) {
-            // If we must not modify parameter inside the method body itself, 
-            // we may still be able to modify it inside nested closures, 
+            // If we must not modify parameter inside the method body itself,
+            // we may still be able to modify it inside nested closures,
             // as they could be executed later.
             newType = newType.dropMutability();
           }
@@ -197,6 +197,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void push(@NotNull DfaValue value) {
+    assert value.getFactory() == myFactory;
     myCachedHash = null;
     myStack.push(value);
   }
@@ -211,6 +212,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void setVarValue(DfaVariableValue var, DfaValue value) {
+    assert value.getFactory() == myFactory;
+    assert var.getFactory() == myFactory;
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);

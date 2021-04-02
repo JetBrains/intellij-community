@@ -28,6 +28,11 @@ public class DfaTypeValue extends DfaValue {
     return myType;
   }
 
+  @Override
+  public DfaTypeValue bindToFactory(@NotNull DfaValueFactory factory) {
+    return factory.fromDfType(myType);
+  }
+
   @Nullable
   @Override
   public PsiType getType() {
@@ -35,7 +40,7 @@ public class DfaTypeValue extends DfaValue {
   }
 
   public static boolean isUnknown(DfaValue value) {
-    return value instanceof DfaTypeValue && value.getDfType() == DfTypes.TOP; 
+    return value instanceof DfaTypeValue && value.getDfType() == DfTypes.TOP;
   }
 
   @Override

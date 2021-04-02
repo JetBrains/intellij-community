@@ -20,6 +20,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +102,14 @@ public class MethodCallInstruction extends ExpressionPushingInstruction<PsiExpre
     myMutation = MutationSignature.fromCall(call);
     myPrecalculatedReturnValue = DfaTypeValue.isUnknown(precalculatedReturnValue) ? null : precalculatedReturnValue;
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myPrecalculatedReturnValue == null) return this;
+    var instruction = new MethodCallInstruction((PsiCall)myContext, myPrecalculatedReturnValue.bindToFactory(factory), myContracts);
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   /**

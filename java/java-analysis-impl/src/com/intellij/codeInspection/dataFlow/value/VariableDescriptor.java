@@ -15,8 +15,10 @@ import org.jetbrains.annotations.Nullable;
  * Represents a descriptor of {@link DfaVariableValue}. Two variables are the same if they have the same descriptor and qualifier.
  * A descriptor could be a PsiVariable, getter method, array element with given index, this expression, etc.
  * <p>
- * Subclasses must have proper {@link Object#equals(Object)} and {@link Object#hashCode()} implementation or instantiation must be 
+ * Subclasses must have proper {@link Object#equals(Object)} and {@link Object#hashCode()} implementation or instantiation must be
  * controlled to prevent creating equal objects. Also {@link #toString()} must return sane representation of the descriptor.
+ * <p>
+ * VariableDescriptors must be independent from {@link DfaValueFactory} instance, as they could be reused with another factory.
  */
 public interface VariableDescriptor {
   /**

@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiArrayAccessExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,14 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction<PsiArra
     super(expression);
     myValue = value;
     myTransferValue = transferValue;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    DfaControlTransferValue newTransfer = myTransferValue == null ? null : myTransferValue.bindToFactory(factory);
+    var instruction = new ArrayAccessInstruction(myValue.bindToFactory(factory), Objects.requireNonNull(getExpression()), newTransfer);
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.ExceptionTransfer;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,14 @@ public class ReturnInstruction extends ControlTransferInstruction {
   public ReturnInstruction(@NotNull DfaControlTransferValue transfer, @Nullable PsiElement anchor) {
     super(transfer);
     myAnchor = anchor;
+  }
+
+  @NotNull
+  @Override
+  public Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    var instruction = new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor);
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Nullable

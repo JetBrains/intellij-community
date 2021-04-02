@@ -50,6 +50,11 @@ public final class DfaWrappedValue extends DfaValue {
     return mySpecialField;
   }
 
+  @Override
+  public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
+    return factory.getWrapperFactory().createWrapper(myType, mySpecialField, myWrappedValue.bindToFactory(factory));
+  }
+
   @Nullable
   @Override
   public PsiType getType() {

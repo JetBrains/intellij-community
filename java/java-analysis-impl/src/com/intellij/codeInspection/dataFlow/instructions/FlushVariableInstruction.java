@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,13 @@ public class FlushVariableInstruction extends Instruction {
     myVariable = variable;
   }
 
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    var instruction = new FlushVariableInstruction(myVariable.bindToFactory(factory));
+    instruction.setIndex(getIndex());
+    return instruction;
+  }
+
   @NotNull
   public DfaVariableValue getVariable() {
     return myVariable;
@@ -47,6 +55,6 @@ public class FlushVariableInstruction extends Instruction {
   }
 
   public String toString() {
-    return "FLUSH " + myVariable.toString();
+    return "FLUSH " + myVariable;
   }
 }

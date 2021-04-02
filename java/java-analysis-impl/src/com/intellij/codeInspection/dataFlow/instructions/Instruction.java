@@ -20,9 +20,11 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class Instruction {
-  private int myIndex;
+  private int myIndex = -1;
 
   protected final DfaInstructionState[] nextInstruction(DataFlowRunner runner, DfaMemoryState stateBefore) {
     return new DfaInstructionState[] {new DfaInstructionState(runner.getInstruction(getIndex() + 1), stateBefore)};
@@ -31,10 +33,23 @@ public abstract class Instruction {
   public abstract DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor);
 
   public void setIndex(int index) {
+    if (myIndex != -1) {
+      throw new IllegalStateException("Index is already set");
+    }
     myIndex = index;
   }
 
   public int getIndex() {
     return myIndex;
+  }
+
+  /**
+   * Copy instruction to another factory. May return itself if the instruction does not depend on the factory.
+   *
+   * @param factory factory to place the instruction
+   * @return copy that bound to the supplied factory, or itself if the instruction does not depend on the factory.
+   */
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    return this;
   }
 }

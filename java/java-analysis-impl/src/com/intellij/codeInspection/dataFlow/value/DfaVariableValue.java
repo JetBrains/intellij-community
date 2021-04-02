@@ -115,6 +115,11 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   @Override
+  public DfaVariableValue bindToFactory(@NotNull DfaValueFactory factory) {
+    return factory.getVarFactory().createVariableValue(myDescriptor, myQualifier == null ? null : myQualifier.bindToFactory(factory));
+  }
+
+  @Override
   @Nullable
   public PsiType getType() {
     return myVarType;

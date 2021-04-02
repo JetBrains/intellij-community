@@ -21,11 +21,13 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AssignInstruction extends ExpressionPushingInstruction<PsiAssignmentExpression> {
@@ -42,6 +44,14 @@ public class AssignInstruction extends ExpressionPushingInstruction<PsiAssignmen
     myLExpression = lExpression;
     myRExpression = rExpression;
     myAssignedValue = assignedValue;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myAssignedValue == null) return this;
+    var instruction = new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Override

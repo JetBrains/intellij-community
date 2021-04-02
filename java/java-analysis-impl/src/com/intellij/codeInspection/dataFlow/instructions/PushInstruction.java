@@ -39,6 +39,13 @@ public class PushInstruction extends EvalInstruction {
     myReferenceWrite = isReferenceWrite;
   }
 
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    var instruction = new PushInstruction(myValue.bindToFactory(factory), getExpression(), myReferenceWrite);
+    instruction.setIndex(getIndex());
+    return instruction;
+  }
+
   public boolean isReferenceWrite() {
     return myReferenceWrite;
   }

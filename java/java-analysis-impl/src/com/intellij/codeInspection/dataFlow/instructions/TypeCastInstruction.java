@@ -17,10 +17,12 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeCastInstruction extends ExpressionPushingInstruction<PsiTypeCastExpression> {
@@ -37,6 +39,15 @@ public class TypeCastInstruction extends ExpressionPushingInstruction<PsiTypeCas
     myCasted = casted;
     myCastTo = castTo;
     myTransferValue = value;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myTransferValue == null) return this;
+    var instruction = new TypeCastInstruction(getExpression(), myCasted, myCastTo,
+                                              myTransferValue.bindToFactory(factory));
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Nullable

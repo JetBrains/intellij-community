@@ -20,11 +20,8 @@ package com.intellij.codeInspection.dataFlow
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.*
 import com.intellij.util.containers.FList
-import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * @author peter
@@ -34,8 +31,10 @@ class DfaControlTransferValue(factory: DfaValueFactory,
                               val traps: FList<Trap>) : DfaValue(factory) {
   fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> = ControlTransferHandler(state, runner, this).dispatch()
   override fun toString(): String = target.toString() + (if (traps.isEmpty()) "" else " $traps")
+  override fun bindToFactory(factory: DfaValueFactory): DfaControlTransferValue = factory.controlTransfer(target, traps)
 }
 
+// TransferTarget should be reusable in another factory
 interface TransferTarget {
   /** @return list of possible instruction offsets for given target */
   fun getPossibleTargets() : Collection<Int> = emptyList()
@@ -45,15 +44,17 @@ interface TransferTarget {
 data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val toFlush: List<DfaVariableValue>) : TransferTarget {
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val block: PsiElement?) : TransferTarget {
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
-    toFlush.forEach(state::flushVariable)
+    runner.factory.getVariablesInBlock(block).forEach(state::flushVariable)
     return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
   }
 
   override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
-  override fun toString(): String = "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
+  override fun toString(): String = "-> $offset"
 }
+// ExitFinallyTransfer formally depends on enterFinally that has backLinks which are instructions bound to the DfaValueFactory
+// however, we actually use only instruction offsets from there, and binding to another factory does not change the offsets.
 data class ExitFinallyTransfer(private val enterFinally: Trap.EnterFinally) : TransferTarget {
   override fun getPossibleTargets(): Set<Int> = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
     .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()

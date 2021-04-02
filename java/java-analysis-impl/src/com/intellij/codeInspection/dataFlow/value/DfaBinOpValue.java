@@ -67,6 +67,11 @@ public final class DfaBinOpValue extends DfaValue {
   }
 
   @Override
+  public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
+    return factory.getBinOpFactory().doCreate(myLeft.bindToFactory(factory), myRight.bindToFactory(factory), myLong, myOp);
+  }
+
+  @Override
   public @NotNull PsiType getType() {
     return myLong ? PsiType.LONG : PsiType.INT;
   }
@@ -242,7 +247,7 @@ public final class DfaBinOpValue extends DfaValue {
                                               @NotNull LongRangeSet divisorRange) {
       if (divisorRange.min() > 0) {
         // a % b where 0 <= a < b
-        if (dividendRange.min() > -divisorRange.max() && 
+        if (dividendRange.min() > -divisorRange.max() &&
             (dividendRange.max() < divisorRange.min() || state.getRelation(dividend, divisor) == RelationType.LT)) {
           return true;
         }

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,14 @@ public class CheckNotNullInstruction extends Instruction {
                                  @Nullable DfaControlTransferValue transferValue) {
     myProblem = problem;
     myTransferValue = transferValue;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myTransferValue == null) return this;
+    var instruction = new CheckNotNullInstruction(myProblem, myTransferValue.bindToFactory(factory));
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   @Nullable

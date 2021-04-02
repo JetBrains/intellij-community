@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,14 @@ public class ArraySizeCheckInstruction extends Instruction {
                                    @Nullable DfaControlTransferValue value) {
     myExpression = expression;
     myTransferValue = value;
+  }
+
+  @Override
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+    if (myTransferValue == null) return this;
+    var instruction = new ArraySizeCheckInstruction(myExpression, myTransferValue.bindToFactory(factory));
+    instruction.setIndex(getIndex());
+    return instruction;
   }
 
   public @NotNull PsiExpression getExpression() {
@@ -31,7 +40,7 @@ public class ArraySizeCheckInstruction extends Instruction {
                                       InstructionVisitor visitor) {
     return visitor.visitArraySizeCheck(this, runner, stateBefore);
   }
-  
+
   @Override
   public String toString() {
     return "CHECK_ARRAY_SIZE";
