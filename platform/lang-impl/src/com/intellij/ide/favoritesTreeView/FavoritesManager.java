@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.IdeBundle;
@@ -571,6 +571,7 @@ public final class FavoritesManager implements PersistentStateComponent<Element>
     if (getListProvider(listName) != null) return Collections.emptyList();
     Collection<VirtualFile> result = new SmartList<>();
     final List<TreeItem<Pair<AbstractUrl, String>>> roots = myName2FavoritesRoots.get(listName);
+    if (roots == null || roots.isEmpty()) return result;
     if (!recursively) {
       for (TreeItem<Pair<AbstractUrl, String>> item : roots) {
         VirtualFile file = getVirtualFile(item);
