@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.resolve.ResolveCache
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
@@ -29,6 +31,7 @@ import kotlin.system.measureTimeMillis
 object LocalModelsTraining {
   private val LOG = logger<LocalModelsTraining>()
   private const val MAX_FILE_PROCESSING_RETRIES = 10
+  private const val DELAY_BETWEEN_RETRIES_IN_MS = 300L
 
   @Volatile private var isTraining = false
 
@@ -83,6 +86,7 @@ object LocalModelsTraining {
   private fun processFiles(files: Set<Int>, modelBuilders: Map<String, LocalModelBuilder>, project: Project,
                            indicator: ProgressIndicator) {
     val resolveCache = ResolveCache.getInstance(project)
+    val dumbService = DumbService.getInstance(project)
     indicator.isIndeterminate = false
     indicator.text = MlLocalModelsBundle.message("ml.local.models.training.files.processing")
     indicator.fraction = 0.0
@@ -98,6 +102,13 @@ object LocalModelsTraining {
           if (indicator.isCanceled) {
             throw ProcessCanceledException()
           }
+          if (dumbService.isDumb) {
+            dumbService.waitForSmartMode()
+          } else {
+            try {
+              TimeUnit.MILLISECONDS.sleep(DELAY_BETWEEN_RETRIES_IN_MS)
+            } catch (ignore: InterruptedException) { }
+          }
           retriesCount++
           ProgressIndicatorUtils.yieldToPendingWriteActions(indicator)
         }
@@ -112,6 +123,9 @@ object LocalModelsTraining {
 
   private fun tryProcessFile(fileId: Int, modelId: String, fileVisitor: PsiElementVisitor, project: Project): Boolean =
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
+      if (DumbService.isDumb(project)) {
+        throw ProcessCanceledException()
+      }
       VirtualFileManager.getInstance().findFileById(fileId)?.let { file ->
         PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
           try {
