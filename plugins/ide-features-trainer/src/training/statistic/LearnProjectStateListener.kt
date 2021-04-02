@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -17,6 +18,7 @@ internal class LearnProjectStateListener : ProjectManagerListener {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
     if (!isLearningProject(project, langSupport)) return
     CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
+    removeFromRecentProjects(project)
 
     val learnProjectState = LearnProjectState.instance
     val way = learnProjectState.firstTimeOpenedWay
@@ -38,7 +40,13 @@ internal class LearnProjectStateListener : ProjectManagerListener {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
     if (isLearningProject(project, langSupport)) {
       StatisticBase.isLearnProjectClosing = false
+      removeFromRecentProjects(project)
     }
+  }
+
+  private fun removeFromRecentProjects(project: Project) {
+    val manager = RecentProjectsManagerBase.instanceEx
+    manager.getProjectPath(project)?.let { manager.removePath(it) }
   }
 }
 
