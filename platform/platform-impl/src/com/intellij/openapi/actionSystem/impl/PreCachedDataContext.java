@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
@@ -38,7 +40,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
 
-  private Map<Key<?>, Object> myUserData;
+  private final AtomicReference<KeyFMap> myUserData;
   private final Map<String, Object> myCachedData;
   private final Consumer<? super String> myMissedKeysIfFrozen;
 
@@ -49,6 +51,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Component component = original.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     myMissedKeysIfFrozen = null;
+    myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
 
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = IdeEventQueue.getInstance().getEventCount();
@@ -77,7 +80,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   }
 
   private PreCachedDataContext(@NotNull Map<String, Object> cachedData,
-                               @NotNull Map<Key<?>, Object> userData,
+                               @NotNull AtomicReference<KeyFMap> userData,
                                @NotNull Consumer<? super String> missedKeys) {
     myCachedData = cachedData;
     myUserData = userData;
@@ -86,7 +89,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   @NotNull
   PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
-    return new PreCachedDataContext(myCachedData, getOrCreateMap(), missedKeys == null ? s -> {} : missedKeys);
+    return new PreCachedDataContext(myCachedData, myUserData, missedKeys == null ? s -> {} : missedKeys);
   }
 
   @Override
@@ -187,21 +190,18 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    //noinspection unchecked
-    return (T)getOrCreateMap().get(key);
+    return myUserData.get().get(key);
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    getOrCreateMap().put(key, value);
-  }
-
-  private @NotNull Map<Key<?>, Object> getOrCreateMap() {
-    Map<Key<?>, Object> userData = myUserData;
-    if (userData == null) {
-      myUserData = userData = ContainerUtil.createWeakValueMap();
+    while (true) {
+      KeyFMap map = myUserData.get();
+      KeyFMap newMap = value == null ? map.minus(key) : map.plus(key, value);
+      if (newMap == map || myUserData.compareAndSet(map, newMap)) {
+        break;
+      }
     }
-    return userData;
   }
 
   private enum NullResult {
