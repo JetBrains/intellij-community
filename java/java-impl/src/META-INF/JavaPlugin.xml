@@ -430,6 +430,7 @@
     <statistics.counterUsagesCollector groupId="java.find.usages" version="2"/>
     <statistics.counterUsagesCollector groupId="java.extract.method" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
 
