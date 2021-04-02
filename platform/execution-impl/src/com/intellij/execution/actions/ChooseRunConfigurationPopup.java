@@ -778,7 +778,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
           if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
             res.add(myMnemonicLabel, gbc.next().weightx(0));
-            res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.MNEMONIC_ICON_GAP), gbc.next());
+            res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.mnemonicIconGap()), gbc.next());
           }
           res.add(myIconLabel, gbc.next());
 
