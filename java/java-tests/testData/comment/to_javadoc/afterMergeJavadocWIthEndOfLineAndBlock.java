@@ -3,8 +3,8 @@
 class Main {
   /**
    * javadoc
-   * Goodbye
    * hello,     world
+   * Goodbye
    * he*&#47;llo
    * world
    */

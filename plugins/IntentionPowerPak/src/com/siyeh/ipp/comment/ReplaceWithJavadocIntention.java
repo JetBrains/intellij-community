@@ -1,19 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.comment;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,68 +21,66 @@ import java.util.stream.Stream;
  * Converts C-style block comments or end-of-line comments that belong to an element of the {@link PsiMember} type to javadoc.
  */
 public class ReplaceWithJavadocIntention extends Intention {
+  private static final Logger LOGGER = Logger.getInstance(ReplaceWithJavadocIntention.class.getName());
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {
-    ProgressManager.checkCanceled();
-
     if (!(element instanceof PsiComment)) return;
-    final PsiComment comment = (PsiComment)element;
+
+    final PsiElement method = element.getParent();
+    if (method == null) return;
+
+    final PsiElement child = method.getFirstChild();
+    if (!(child instanceof PsiComment)) return;
+    final PsiComment comment = (PsiComment)child;
 
     // a set will contain nodes to remove: all the right and left sibling nodes of the PsiComment type
-    final Set<PsiComment> toRemove = new HashSet<>();
-
-    // a queue of lines obtained from the content of all the left, current and right comment nodes
-    final Deque<String> commentContent = new ArrayDeque<>(getCommentTextLines(comment));
-
-    final List<String> leftSiblingsComments = siblingsComments(comment,
-                                                               toRemove,
-                                                               e -> PsiTreeUtil.getPrevSiblingOfType(e, PsiComment.class));
-    leftSiblingsComments.forEach(commentContent::addFirst);
-
-    final List<String> rightSiblingsComments = siblingsComments(comment,
-                                                               toRemove,
-                                                               e -> PsiTreeUtil.getNextSiblingOfType(e, PsiComment.class));
-    rightSiblingsComments.forEach(commentContent::addLast);
-
+    final Set<PsiComment> commentNodes = new HashSet<>();
+    final List<String> rightSiblingsComments = siblingsComments(comment, commentNodes);
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(element.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
 
-    final String javadoc = prepareJavadocComment(commentContent);
+    final String javadoc = prepareJavadocComment(rightSiblingsComments);
     final PsiDocComment docComment = factory.createDocCommentFromText(javadoc);
 
-    ProgressManager.checkCanceled();
+    if (commentNodes.isEmpty()) {
+      LOGGER.error("The set of visited node comments is empty");
+      return;
+    }
 
-    // remove all the left and right comment nodes if any
-    toRemove.forEach(PsiElement::delete);
+    if (commentNodes.size() > 1) {
+      // remove all the comment nodes except the first one
+      commentNodes.stream().skip(1).forEach(PsiElement::delete);
+    }
 
-    // replace the current node with the new one
-    element.replace(docComment);
+    final PsiComment item = ContainerUtil.getFirstItem(commentNodes);
+    item.replace(docComment);
   }
 
   /**
-   * Extracts the content of the comment nodes that are either left or right siblings of the comment.
+   * Extracts the content of the comment nodes that are right siblings to the comment node
    *
-   * @param comment a comment to get siblings for
+   * @param comment a comment node to get siblings for
    * @param visited a set of visited comment nodes
-   * @param siblingExtractor a function to extract siblings. Either left or right siblings.
    * @return the list of strings which consists of the content of the comment nodes that are either left or right siblings.
    */
+  @Contract(mutates = "param2")
   private static @NotNull List<@NotNull String> siblingsComments(@NotNull PsiComment comment,
-                                                                 @NotNull Set<? super @NotNull PsiComment> visited,
-                                                                 @NotNull Function<@NotNull PsiComment, @Nullable PsiComment> siblingExtractor) {
+                                                                 @NotNull Set<? super @NotNull PsiComment> visited) {
     final List<String> result = new ArrayList<>();
+    PsiElement node = comment;
+    do {
+      if (node instanceof PsiComment) {
+        final PsiComment commentNode = (PsiComment)node;
 
-    PsiComment commentNode = siblingExtractor.apply(comment);
-    while (commentNode != null) {
-      ProgressManager.checkCanceled();
-
-      visited.add(commentNode);
-      result.addAll(getCommentTextLines(commentNode));
-
-      commentNode = siblingExtractor.apply(commentNode);
+        visited.add(commentNode);
+        result.addAll(getCommentTextLines(commentNode));
+      }
+      node = node.getNextSibling();
     }
+    while (node != null && !(node instanceof PsiModifierList));
+
     return result;
   }
 
@@ -102,8 +99,6 @@ public class ReplaceWithJavadocIntention extends Intention {
     final StringBuilder sb = new StringBuilder("/**\n");
 
     for (String string : commentContent) {
-      ProgressManager.checkCanceled();
-
       final String line = string.trim();
       if (line.isEmpty()) continue;
       sb.append("* ");
@@ -173,14 +168,19 @@ public class ReplaceWithJavadocIntention extends Intention {
   @Override
   protected @NotNull PsiElementPredicate getElementPredicate() {
     return element -> {
-      ProgressManager.checkCanceled();
-
       if (!(element instanceof PsiComment)) return false;
       if (element instanceof PsiDocComment) return false;
 
       final PsiComment comment = (PsiComment)element;
 
-      return comment.getParent() instanceof PsiMember;
+      if (!(comment.getParent() instanceof PsiMember)) return false;
+
+      // the comment node might have a method as its parent,
+      // but the comment itself can be defined before/after the modifier list/type/name/parameters of the method
+      // Such comments are not candidates to be converted to javadoc
+      final PsiElement type = PsiTreeUtil.getPrevSiblingOfType(comment, PsiModifierList.class);
+
+      return type == null;
     };
   }
 }
