@@ -403,11 +403,15 @@ public final class Presentation implements Cloneable {
     putClientProperty(key.toString(), value);
   }
 
+  /** @deprecated Use {@link #getClientProperty(Key)} instead */
+  @Deprecated
   @Nullable
   public Object getClientProperty(@NonNls @NotNull String key) {
     return myUserMap.get(key);
   }
 
+  /** @deprecated Use {@link #putClientProperty(Key, Object)} instead */
+  @Deprecated
   public void putClientProperty(@NonNls @NotNull String key, @Nullable Object value) {
     Object oldValue;
     synchronized (this) {
