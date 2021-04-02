@@ -27,8 +27,10 @@ class WorkspaceBuilderChangeLog {
     val replaceEvent = ChangeEntry.ReplaceEntity(copiedData, addedChildren, removedChildren, parentsMapRes)
 
     val makeReplaceEvent = { replaceEntity: ChangeEntry.ReplaceEntity<*> ->
-      val newAddedChildren = (replaceEntity.newChildren.toSet() - removedChildren.toSet()).toList()
-      val newRemovedChildren = (replaceEntity.removedChildren.toSet() - addedChildren.toSet()).toList()
+      val removedChildrenSet = removedChildren.toSet()
+      val addedChildrenSet = addedChildren.toSet()
+      val newAddedChildren = (replaceEntity.newChildren.toSet() - removedChildrenSet + (addedChildrenSet - replaceEntity.removedChildren.toSet())).toList()
+      val newRemovedChildren = (replaceEntity.removedChildren.toSet() - addedChildrenSet + (removedChildrenSet - replaceEntity.newChildren.toSet())).toList()
       val newChangedParents = replaceEntity.modifiedParents + parentsMapRes
       ChangeEntry.ReplaceEntity(copiedData, newAddedChildren, newRemovedChildren, newChangedParents)
     }
