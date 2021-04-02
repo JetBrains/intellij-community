@@ -23,16 +23,15 @@ import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContextUtils
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
+import org.jetbrains.kotlin.synthetic.JavaSyntheticPropertiesScope.Companion.possibleGetMethodNames
 
 class KotlinSourcePositionProvider : SourcePositionProvider() {
     override fun computeSourcePosition(
@@ -44,16 +43,15 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         if (context.frameProxy == null) return null
 
         return when(descriptor) {
-            is FieldDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
-            is GetterDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
-            is LocalVariableDescriptor -> computeSourcePosition(descriptor, project, context, nearest)
+            is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)
+            is GetterDescriptor -> computeSourcePosition(descriptor, context, nearest)
+            is LocalVariableDescriptor -> computeSourcePosition(descriptor, context, nearest)
             else -> null
         }
     }
 
     private fun computeSourcePosition(
         descriptor: LocalVariableDescriptor,
-        project: Project,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
@@ -62,7 +60,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
 
         val contextElement = getContextElement(place) ?: return null
 
-        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment(descriptor.name, contextElement)
+        val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
         val expression = codeFragment.getContentElement()
         if (expression is KtSimpleNameExpression) {
             val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
@@ -83,12 +81,34 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
     private fun computeSourcePositionForDeclaration(
         name: String,
         declaringType: ReferenceType,
-        project: Project,
         context: DebuggerContextImpl,
         nearest: Boolean
+    ) = computeSourcePositionForDeclaration(declaringType, context, nearest) {
+        it.name == name
+    }
+
+    private fun computeSourcePositionForPropertyDeclaration(
+        name: String,
+        declaringType: ReferenceType,
+        context: DebuggerContextImpl,
+        nearest: Boolean
+    ) = computeSourcePositionForDeclaration(declaringType, context, nearest) {
+        it.name == name || it.name in name.getPropertyDeclarationNameVariations()
+    }
+
+    private fun String.getPropertyDeclarationNameVariations(): List<String> {
+        val name = Name.guessByFirstCharacter(this)
+        return possibleGetMethodNames(name).map(Name::asString)
+    }
+
+    private fun computeSourcePositionForDeclaration(
+        declaringType: ReferenceType,
+        context: DebuggerContextImpl,
+        nearest: Boolean,
+        declarationSelector: (KtDeclaration) -> Boolean
     ): SourcePosition? {
-        val myClass = findClassByType(project, declaringType, context)?.navigationElement as? KtClassOrObject ?: return null
-        val declaration = myClass.declarations.firstOrNull { name == it.name } ?: return null
+        val myClass = findClassByType(context.project, declaringType, context)?.navigationElement as? KtClassOrObject ?: return null
+        val declaration = myClass.declarations.firstOrNull(declarationSelector) ?: return null
 
         if (nearest) {
             return DebuggerContextUtil.findNearest(context, declaration, myClass.containingFile)
@@ -98,7 +118,6 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
 
     private fun computeSourcePosition(
         descriptor: FieldDescriptor,
-        project: Project,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
@@ -111,23 +130,22 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
             return null
         }
 
-        return computeSourcePositionForDeclaration(fieldName, descriptor.field.declaringType(), project, context, nearest)
+        return computeSourcePositionForDeclaration(fieldName, descriptor.field.declaringType(), context, nearest)
     }
 
     private fun computeSourcePosition(
         descriptor: GetterDescriptor,
-        project: Project,
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition?  {
         val name = descriptor.name
         val type = descriptor.getter.declaringType()
-        computeSourcePositionForDeclaration(name, type, project, context, nearest)?.let { return it }
+        computeSourcePositionForPropertyDeclaration(name, type, context, nearest)?.let { return it }
 
         if (type is ClassType) {
             val interfaces = type.safeAllInterfaces().distinct()
             for (intf in interfaces) {
-                computeSourcePositionForDeclaration(name, intf, project, context, nearest)?.let { return it }
+                computeSourcePositionForPropertyDeclaration(name, intf, context, nearest)?.let { return it }
             }
         }
         return null

@@ -1017,6 +1017,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
             }
 
+            @TestMetadata("showPropertiesFromMethods.kt")
+            public void testShowPropertiesFromMethods() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");
+            }
+
             @TestMetadata("sourcePositionForGetter.kt")
             public void testSourcePositionForGetter() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetter.kt");
