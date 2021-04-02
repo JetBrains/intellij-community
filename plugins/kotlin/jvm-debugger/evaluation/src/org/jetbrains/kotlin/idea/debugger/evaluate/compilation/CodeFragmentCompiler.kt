@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.application.ReadAction
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTI
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CompiledDataDescriptor.MethodSignature
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -59,7 +59,12 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
         bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
-        return runReadAction { doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor) }
+        val result = ReadAction.nonBlocking<Result<CompilationResult>> {
+            runCatching {
+                doCompile(codeFragment, filesToCompile, bindingContext, moduleDescriptor)
+            }
+        }.executeSynchronously()
+        return result.getOrThrow()
     }
 
     private fun doCompile(
