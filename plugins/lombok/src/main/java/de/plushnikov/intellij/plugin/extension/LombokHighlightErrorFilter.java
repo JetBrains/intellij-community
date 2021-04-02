@@ -11,7 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.*;
+import de.plushnikov.intellij.plugin.handler.BuilderHandler;
+import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
+import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
+import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
@@ -192,18 +195,6 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       public boolean accept(@NotNull PsiElement highlightedElement) {
         return !LazyGetterHandler.isLazyGetterHandled(highlightedElement)
           || !LazyGetterHandler.isInitializedInConstructors(highlightedElement);
-      }
-    },
-
-    REDUNDANT_DEFAULT_PARAMETER_VALUE_ASSIGNMENT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
-      @Override
-      public boolean descriptionCheck(@Nullable String description) {
-        return "Redundant default parameter value assignment".equals(description);
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !EqualsAndHashCodeCallSuperHandler.isEqualsAndHashCodeCallSuperDefault(highlightedElement);
       }
     },
 
