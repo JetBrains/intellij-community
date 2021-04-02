@@ -232,10 +232,9 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
     override fun throwExceptionsIfAny() {
         if (exceptions.isNotEmpty()) {
-            val isIgnored = InTextDirectivesUtils.isIgnoredTarget(
-                if (useIrBackend()) TargetBackend.JVM_IR else TargetBackend.JVM,
-                getExpectedOutputFile()
-            )
+            val currentBackend = if (useIrBackend()) TargetBackend.JVM_IR else TargetBackend.JVM
+            val outputFile = getExpectedOutputFile()
+            val isIgnored = outputFile.exists() && InTextDirectivesUtils.isIgnoredTarget(currentBackend, outputFile)
 
             if (!isIgnored) {
                 for (exc in exceptions.values) {
