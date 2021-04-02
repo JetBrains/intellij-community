@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -83,7 +84,24 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     super.processMouseWheelEvent(e);
-    myBrowser.getCefBrowser().sendMouseWheelEvent(e);
+
+    double val = e.getPreciseWheelRotation() *
+                 RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
+    myBrowser.getCefBrowser().sendMouseWheelEvent(new MouseWheelEvent(
+      e.getComponent(),
+      e.getID(),
+      e.getWhen(),
+      e.getModifiersEx(),
+      e.getX(),
+      e.getY(),
+      e.getXOnScreen(),
+      e.getYOnScreen(),
+      e.getClickCount(),
+      e.isPopupTrigger(),
+      e.getScrollType(),
+      e.getScrollAmount(),
+      (int)val,
+      val));
   }
 
   @Override
