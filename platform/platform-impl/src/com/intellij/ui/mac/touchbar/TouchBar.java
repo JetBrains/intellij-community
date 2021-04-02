@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Application;
@@ -490,7 +489,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
         );
 
         try {
-          ActionUtil.performFastUpdate(false, item.getAnAction(), e, false);
+          BuildUtils.performFastUpdate(false, item.getAnAction(), e, false);
         }
         catch (IndexNotReadyException e1) {
           presentation.setEnabledAndVisible(false);
