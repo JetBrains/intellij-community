@@ -1648,7 +1648,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void doTransientStateChangeForFile(int fileId, @NotNull VirtualFile file) {
-    waitUntilIndicesAreInitialized();
     clearUpToDateIndexesForUnsavedOrTransactedDocs();
 
     Document document = myFileDocumentManager.getCachedDocument(file);
@@ -1671,7 +1670,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void doInvalidateIndicesForFile(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
-    waitUntilIndicesAreInitialized();
     IndexingFlag.cleanProcessedFlagRecursively(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
