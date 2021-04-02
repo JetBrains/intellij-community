@@ -71,7 +71,7 @@ class WorkspaceModelTopics : Disposable {
     val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
     val application = ApplicationManager.getApplication()
-    application.invokeAndWait {
+    val runnable = {
       application.runWriteAction {
         val innerActivity = activity.startChild("(wm) WriteAction. After modules are loaded")
         allEvents.forEach { queue ->
@@ -82,11 +82,15 @@ class WorkspaceModelTopics : Disposable {
           }
           queue.events.clear()
         }
+        allEvents.clear()
+        modulesAreLoaded = true
         innerActivity.end()
       }
     }
-    allEvents.clear()
-    modulesAreLoaded = true
+    if (application.isUnitTestMode)
+      application.invokeAndWait(runnable)
+    else
+      application.invokeLater(runnable)
     activity.end()
   }
 

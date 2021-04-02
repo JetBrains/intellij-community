@@ -1,0 +1,69 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.workspaceModel.ide.impl.legacyBridge.module
+
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+
+class ModuleBridgeLoaderService(private val project: Project) {
+  private var storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>? = null
+
+  init {
+    if (WorkspaceModel.isEnabled) {
+      if (project.isDefault) {
+        loadModules()
+      } else {
+        val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+        val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+        if (projectModelSynchronizer != null) {
+          if (projectModelSynchronizer.blockCidrDelayedUpdate()) workspaceModel.blockDelayedLoading()
+          if (!workspaceModel.loadedFromCache) {
+            storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+          } else {
+            loadModules()
+          }
+        }
+      }
+    }
+  }
+
+  private fun loadModules() {
+    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+    val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
+    val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
+      .filter { !unloadedNames.contains(it.name) }
+      .toList()
+    moduleManager.loadModules(entities)
+    val librariesActivity = StartUpMeasurer.startMainActivity("(wm) project libraries loading")
+    (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
+    librariesActivity.end()
+    WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
+  }
+
+  class ModuleBridgeProjectServiceInitializedListener : ProjectServiceContainerInitializedListener {
+    override fun serviceCreated(project: Project) {
+      if (project.isDefault || !WorkspaceModel.isEnabled) return
+      val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+      if (workspaceModel.loadedFromCache) return
+      val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)
+      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+      if (projectModelSynchronizer == null) return
+      projectModelSynchronizer.applyLoadedStorage(moduleLoaderService.storeToEntitySources)
+      project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
+      moduleLoaderService.storeToEntitySources = null
+      moduleLoaderService.loadModules()
+    }
+  }
+}

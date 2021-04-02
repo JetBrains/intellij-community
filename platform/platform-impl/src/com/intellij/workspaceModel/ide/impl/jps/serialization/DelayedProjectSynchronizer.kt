@@ -21,7 +21,7 @@ class DelayedProjectSynchronizer : StartupActivity.DumbAware {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (projectModelSynchronizer != null && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         val loadingTime = measureTimeMillis {
-          projectModelSynchronizer.loadRealProject(project)
+          projectModelSynchronizer.loadProject(project)
           project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
         }
         log.info("Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")

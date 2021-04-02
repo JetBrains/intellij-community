@@ -22,11 +22,9 @@ import com.intellij.openapi.module.impl.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
@@ -37,13 +35,11 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -66,26 +62,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   private fun modules(): Sequence<ModuleBridge> {
     return modules(entityStore.current)
-  }
-
-  internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
-    override fun serviceCreated(project: Project) {
-      val activity = startActivity("(wm) module loading")
-      recordModuleLoadingActivity()
-      val manager = ModuleManager.getInstance(project) as? ModuleManagerComponentBridge ?: return
-
-      val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
-      val entities = manager.entityStore.current.entities(ModuleEntity::class.java)
-        .filter { !unloadedNames.contains(it.name) }
-        .toList()
-      manager.loadModules(entities)
-      activity.end()
-      activity.setDescription("(wm) module count: ${manager.modules.size}")
-      val librariesActivity = startActivity("(wm) project libraries loading")
-      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
-      librariesActivity.end()
-      WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
-    }
   }
 
   init {
@@ -340,9 +316,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
+  internal val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
 
-  private fun loadModules(entities: List<ModuleEntity>) {
+  internal fun loadModules(entities: List<ModuleEntity>) {
     LOG.debug { "Loading modules for ${entities.size} entities" }
     val fileSystem = LocalFileSystem.getInstance()
     entities.forEach { module -> getModuleVirtualFileUrl(module)?.let { fileSystem.refreshAndFindFileByNioFile(it.toPath()) } }
@@ -373,8 +349,15 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       service.shutdownNow()
     }
 
-    WriteAction.runAndWait<RuntimeException> {
+    val runnable = Runnable {
       (ProjectRootManager.getInstance(project) as ProjectRootManagerBridge).setupTrackedLibrariesAndJdks()
+    }
+
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode || areModulesLoaded()) {
+      WriteAction.runAndWait<RuntimeException> { runnable.run() }
+    } else {
+      application.invokeLater { application.runWriteAction(runnable) }
     }
   }
 

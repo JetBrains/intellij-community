@@ -20,7 +20,6 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getExternalConfigurationDir
-import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -57,23 +56,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
   private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
-
-  init {
-    if (!project.isDefault) {
-      ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
-        override fun projectComponentsInitialized(project: Project) {
-          LOG.debug { "Project component initialized" }
-          val workspaceModelImpl = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-          if (blockCidrDelayedUpdate()) workspaceModelImpl.blockDelayedLoading()
-          if (project === this@JpsProjectModelSynchronizer.project && !workspaceModelImpl.loadedFromCache) {
-            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-            loadRealProject(project)
-            project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
-          }
-        }
-      })
-    }
-  }
 
   fun needToReloadProjectEntities(): Boolean {
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
@@ -201,7 +183,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     })
   }
 
-  fun loadRealProject(project: Project) {
+  fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     recordModuleLoadingActivity()
@@ -218,22 +200,30 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
-      WriteAction.runAndWait<RuntimeException> {
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
-                                    || it is DummyParentEntitySource }, builder.toStorage())
-        }
-      }
-
-      sourcesToSave.clear()
-      sourcesToSave.addAll(sourcesToUpdate)
-
-      fileContentReader.clearCache()
       childActivity.end()
+      activity.end()
+      return builder.toStorage() to sourcesToUpdate
     }
     activity.end()
     finishModuleLoadingActivity()
+    return null
   }
+
+  fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
+    if (storeToEntitySources == null) return
+    WriteAction.runAndWait<RuntimeException> {
+      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+        updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
+                                  || it is DummyParentEntitySource }, storeToEntitySources.first)
+      }
+    }
+    sourcesToSave.clear()
+    sourcesToSave.addAll(storeToEntitySources.second)
+
+    fileContentReader.clearCache()
+  }
+
+  fun loadProject(project: Project): Unit = applyLoadedStorage(loadProjectToEmptyStorage(project))
 
   private fun loadStateOfUnloadedModules(serializers: JpsProjectSerializers) {
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()

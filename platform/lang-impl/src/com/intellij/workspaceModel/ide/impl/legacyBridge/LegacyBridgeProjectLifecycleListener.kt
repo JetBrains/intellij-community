@@ -56,7 +56,6 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
       preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     container.unregisterComponent(ExternalModuleListStorage::class.java)
 
-    container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
 
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
