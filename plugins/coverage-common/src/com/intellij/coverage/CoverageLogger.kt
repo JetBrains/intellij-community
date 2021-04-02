@@ -41,11 +41,11 @@ class CoverageLogger : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    fun logReportLoading(project: Project, coverageRunner: CoverageRunner, timeMs: Long) =
+    fun logReportLoading(project: Project?, coverageRunner: CoverageRunner, timeMs: Long) =
       REPORT_LOADING.log(project, coverageRunner.id, timeMs)
 
     @JvmStatic
-    fun logHTMLReport(project: Project, timeMs: Long, generationTimeMs: Long) = HTML.log(project, timeMs, generationTimeMs)
+    fun logHTMLReport(project: Project?, timeMs: Long, generationTimeMs: Long) = HTML.log(project, timeMs, generationTimeMs)
   }
 
   override fun getGroup() = GROUP
