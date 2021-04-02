@@ -209,13 +209,13 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
     }
 
-    new File("$target/bin/idea.properties").text = effectiveProperties.toString()
+    Files.writeString(macDistPath.resolve("bin/idea.properties"), effectiveProperties)
     // todo support aarch64
-    def vmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
+    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
     //todo[r.sh] additional VM options should go into the launcher (probably via Info.plist)
-    vmOptions += buildContext.productProperties.additionalIdeJvmArguments.split(' ').toList()
-    vmOptions += ["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"]
-    new File("$target/bin/${executable}.vmoptions").text = vmOptions.join('\n') + '\n'
+    Collections.addAll(vmOptions, buildContext.productProperties.additionalIdeJvmArguments.split(' '))
+    vmOptions.addAll(["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"])
+    Files.writeString(macDistPath.resolve("bin/${executable}.vmoptions"), String.join('\n', vmOptions) + '\n')
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
