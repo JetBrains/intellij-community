@@ -390,8 +390,6 @@ public final class AboutPopup {
         g2.setFont(JBUI.Fonts.create("Segoe UI", 10));
       }
 
-      g2.setColor(createColor(appInfo.getAboutForeground()));
-
       JBPoint copyrightCoord = getCopyrightCoord();
       g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
       if (myShowDebugInfo) {
