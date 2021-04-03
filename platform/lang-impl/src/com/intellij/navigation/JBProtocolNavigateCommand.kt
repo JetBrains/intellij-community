@@ -27,10 +27,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
+import java.net.URI
+import java.net.URISyntaxException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
@@ -71,21 +75,23 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       return
     }
 
-    val project = ProjectUtil.getOpenProjects().find { project ->
-      if (!projectName.isNullOrEmpty() && project.name == projectName) return@find true
-      isOriginsEqual(originUrl, getProjectOriginUrl(project.guessProjectDir()?.toNioPath()))
+    val check = { name: String, path: Path? ->
+      !projectName.isNullOrEmpty() && name == projectName || isOriginsEqual(originUrl, getProjectOriginUrl(path))
     }
+
+    val project = ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }
 
     if (project != null) {
       findAndNavigateToReference(project, parameters)
+      return
     }
 
     val actions = RecentProjectListActionProvider.getInstance().getActions()
-    val recentProjectAction = actions.filterIsInstance(ReopenProjectAction::class.java).find {
-      if (!projectName.isNullOrEmpty() && it.projectName == projectName) return@find true
-
-      isOriginsEqual(originUrl, getProjectOriginUrl(Paths.get(it.projectPath)))
-    } ?: return
+    val recentProjectAction =
+      actions
+        .filterIsInstance(ReopenProjectAction::class.java)
+        .find { check.invoke(it.projectName, Paths.get(it.projectPath)) }
+      ?: return
 
 
     ApplicationManager.getApplication().invokeLater(Runnable {
@@ -100,7 +106,16 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
 
   private fun isOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
     if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
-    return originUrl.removeSuffix(".git") == projectOriginUrl.removeSuffix(".git")
+    return extractCanonicalPath(originUrl) == extractCanonicalPath(projectOriginUrl)
+  }
+
+  fun extractCanonicalPath(originUrl: String) : String? {
+    try {
+      return URI(originUrl).path?.toLowerCase()?.removeSuffix(".git")
+    } catch(e: URISyntaxException) {
+      LOG.warn("Malformed origin url '$originUrl' in navigate request", e)
+      return null
+    }
   }
 }
 
@@ -111,6 +126,7 @@ private const val FILE_PROTOCOL = "file://"
 private const val PATH_GROUP = "path"
 private const val LINE_GROUP = "line"
 private const val COLUMN_GROUP = "column"
+private const val REVISION = "revision"
 private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
 
 private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
@@ -147,10 +163,8 @@ private fun navigateByPath(project: Project, parameters: Map<String, String>, pa
   }
 
   runNavigateTask(pathText, project) {
-    var virtualFile = JBProtocolNavigateResolver.processEnhancers(path!!, project, parameters)
-    if (virtualFile == null) {
-      virtualFile = VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + path) ?: return@runNavigateTask
-    }
+    val virtualFile = findFile(project, path, parameters[REVISION])
+    if (virtualFile == null) return@runNavigateTask
 
     ApplicationManager.getApplication().invokeLater {
       FileEditorManager.getInstance(project).openFile(virtualFile, true)
@@ -162,6 +176,17 @@ private fun navigateByPath(project: Project, parameters: Map<String, String>, pa
     }
   }
 }
+
+private fun findFile(project: Project, absolutePath: String?, revision: String?): VirtualFile? {
+  absolutePath ?: return null
+
+  if (revision != null) {
+    val virtualFile = JBProtocolRevisionResolver.processResolvers(project, absolutePath, revision)
+    if (virtualFile != null) return virtualFile
+  }
+  return VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + absolutePath)
+}
+
 
 private fun runNavigateTask(reference: String, project: Project, task: (indicator: ProgressIndicator) -> Unit) {
   ProgressManager.getInstance().run(
