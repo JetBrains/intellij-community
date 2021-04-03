@@ -9,7 +9,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -23,8 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 internal fun registerComponents(project: ProjectImpl) {
   var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
   //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
-  @Suppress("UNCHECKED_CAST")
-  project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>, null)
+  project.registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null)
 
   activity = activity?.endAndStart("projectComponentRegistered")
   runOnlyCorePluginExtensions(

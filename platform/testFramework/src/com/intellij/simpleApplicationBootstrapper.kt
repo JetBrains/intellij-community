@@ -6,16 +6,18 @@ import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.*
+import com.intellij.idea.Main
+import com.intellij.idea.callAppInitialized
+import com.intellij.idea.initConfigurationStore
+import com.intellij.idea.preloadServices
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.ui.IconManager
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.EventQueue
 import java.util.concurrent.*
 import java.util.function.Supplier
@@ -43,7 +45,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
 
   val loadedPluginFuture = CompletableFuture.supplyAsync(Supplier {
     PluginManagerCore.getLoadedPlugins(PathManager::class.java.classLoader)
-  }, AppExecutorUtil.getAppExecutorService())
+  }, ForkJoinPool.commonPool())
 
   setupEventQueue()
 
@@ -53,13 +55,13 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     RecursionManager.assertOnMissedCache(app)
   }
 
-  IconManager.activate()
   val plugins: List<IdeaPluginDescriptorImpl>
   try {
     // 40 seconds - tests maybe executed on cloud agents where IO speed is a very slow
-    plugins = registerRegistryAndInitStore(registerAppComponents(loadedPluginFuture, app), app)
-      .get(40, TimeUnit.SECONDS)
-
+    plugins = loadedPluginFuture.get(40, TimeUnit.SECONDS)
+    app.registerComponents(plugins, app, null)
+    initConfigurationStore(app)
+    RegistryKeyBean.addKeysFromPlugins()
     Registry.getInstance().markAsLoaded()
     val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
     app.loadComponents(null)

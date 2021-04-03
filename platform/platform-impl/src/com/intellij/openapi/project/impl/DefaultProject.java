@@ -313,7 +313,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
     registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), null);
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), ApplicationManager.getApplication(), null);
     createComponents(null);
     Disposer.register(actualContainerInstance, this);
   }

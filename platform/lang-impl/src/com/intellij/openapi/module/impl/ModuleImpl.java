@@ -92,13 +92,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), null);
+    registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null);
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
-                      Objects.requireNonNull(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID),
-                                             "Could not find plugin by id: " + PluginManagerCore.CORE_ID),
+                      ComponentManagerImpl.getFakeCorePluginDescriptor(),
                       true);
     }
     if (beforeComponentCreation != null) {

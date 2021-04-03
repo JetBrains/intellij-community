@@ -29,6 +29,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
@@ -226,7 +228,7 @@ public abstract class UsefulTestCase extends TestCase {
     setupTempDir();
 
     boolean isStressTest = isStressTest();
-    ApplicationManagerEx.setInStressTest(isStressTest);;
+    ApplicationManagerEx.setInStressTest(isStressTest);
     if (isPerformanceTest()) {
       Timings.getStatistics();
     }
@@ -236,8 +238,15 @@ public abstract class UsefulTestCase extends TestCase {
 
     if (isIconRequired()) {
       // ensure that IconLoader will use dummy empty icon
-      IconLoader.deactivate();
-      //IconManager.activate();
+      try {
+        IconManager.activate(new CoreIconManager());
+      }
+      catch (Exception e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -293,6 +302,12 @@ public abstract class UsefulTestCase extends TestCase {
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
+      () -> {
+        if (isIconRequired()) {
+          IconManager.deactivate();
+          IconLoader.clearCacheInTests();
+        }
+      },
       () -> disposeRootDisposable(),
       () -> cleanupSwingDataStructures(),
       () -> cleanupDeleteOnExitHookList(),
@@ -466,7 +481,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  protected void invokeSetUp() throws Exception {
+  protected final void invokeSetUp() throws Exception {
     long setupStart = System.nanoTime();
     setUp();
     long setupCost = (System.nanoTime() - setupStart) / 1000000;

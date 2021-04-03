@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.sender
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.completion.network.status.WebServiceStatusManager
 import com.intellij.util.Alarm
 import com.intellij.util.Time
@@ -20,7 +19,7 @@ private fun isSendAllowed(): Boolean {
 }
 
 internal fun isCompletionLogsSendAllowed(): Boolean {
-  return ApplicationManager.getApplication().isEAP && Registry.`is`("completion.stats.send.logs")
+  return ApplicationManager.getApplication().isEAP && java.lang.Boolean.parseBoolean(System.getProperty("completion.stats.send.logs", "true"))
 }
 
 private val LOG = logger<SenderPreloadingActivity>()

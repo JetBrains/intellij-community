@@ -2,7 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -56,7 +55,7 @@ public final class PathManager {
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
-  private static class Lazy {
+  private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
   }
 
@@ -550,16 +549,19 @@ public final class PathManager {
       Path file = path == null ? null : Paths.get(path);
       if (file != null) {
         try (Reader reader = Files.newBufferedReader(file)) {
-          Map<String, String> properties = PropertiesUtil.loadProperties(reader);
-          for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey();
-            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-              log(path + ": '" + key + "' cannot be redefined");
+          //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+          new Properties() {
+            @Override
+            public Object put(Object key, Object value) {
+              if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+                log(path + ": '" + key + "' cannot be redefined");
+              }
+              else if (!sysProperties.containsKey(key)) {
+                sysProperties.setProperty(String.valueOf(key), substituteVars(String.valueOf(value)));
+              }
+              return null;
             }
-            else if (!sysProperties.containsKey(key)) {
-              sysProperties.setProperty(key, substituteVars(entry.getValue()));
-            }
-          }
+          }.load(reader);
         }
         catch (NoSuchFileException | AccessDeniedException ignore) { }
         catch (IOException e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
@@ -54,7 +54,7 @@ public final class Registry  {
   }
 
   public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
-    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
@@ -72,7 +72,7 @@ public final class Registry  {
   }
 
   public static int intValue(@NonNls @NotNull String key, int defaultValue) {
-    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
     }
@@ -124,7 +124,7 @@ public final class Registry  {
   }
 
   public static @NotNull Registry getInstance() {
-    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
+    LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
     return ourInstance;
   }
 
@@ -176,15 +176,18 @@ public final class Registry  {
 
     List<RegistryValue> result = new ArrayList<>();
 
-    Map<String, RegistryKeyDescriptor> contributedKeys = getInstance().myContributedKeys;
+    Registry instance = getInstance();
+    Map<String, RegistryKeyDescriptor> contributedKeys = instance.myContributedKeys;
     while (keys.hasMoreElements()) {
       @NonNls final String each = keys.nextElement();
-      if (each.endsWith(".description") || each.endsWith(".restartRequired") || contributedKeys.containsKey(each)) continue;
-      result.add(get(each));
+      if (each.endsWith(".description") || each.endsWith(".restartRequired") || contributedKeys.containsKey(each)) {
+        continue;
+      }
+      result.add(instance.doGet(each));
     }
 
     for (String key : contributedKeys.keySet()) {
-      result.add(get(key));
+      result.add(instance.doGet(key));
     }
 
     return result;
@@ -192,9 +195,10 @@ public final class Registry  {
 
   void restoreDefaults() {
     Map<String, String> old = new HashMap<>(myUserProperties);
+    Registry instance = getInstance();
     for (String each : old.keySet()) {
       try {
-        get(each).resetToDefault();
+        instance.doGet(each).resetToDefault();
       }
       catch (MissingResourceException e) {
         // outdated property that is not declared in registry.properties anymore
@@ -212,17 +216,21 @@ public final class Registry  {
   }
 
   private static boolean isRestartNeeded(@NotNull Map<String, String> map) {
+    Registry instance = getInstance();
     for (String s : map.keySet()) {
-      final RegistryValue eachValue = get(s);
-      if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) return true;
+      RegistryValue eachValue = instance.doGet(s);
+      if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) {
+        return true;
+      }
     }
 
     return false;
   }
 
-  public static synchronized void addKeys(@NotNull List<RegistryKeyDescriptor> descriptors) {
+  public static synchronized void addKeys(@NotNull Iterator<RegistryKeyDescriptor> descriptors) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
-    for (RegistryKeyDescriptor descriptor : descriptors) {
+    while (descriptors.hasNext()) {
+      RegistryKeyDescriptor descriptor = descriptors.next();
       ourInstance.myContributedKeys.put(descriptor.getName(), descriptor);
     }
   }

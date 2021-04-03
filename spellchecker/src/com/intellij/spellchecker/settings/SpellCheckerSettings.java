@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -20,7 +17,8 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class SpellCheckerSettings implements PersistentStateComponent<Element> {
+@Service(Service.Level.PROJECT)
+public final class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // For xml serialization
   private static final String SPELLCHECKER_MANAGER_SETTINGS_TAG = "SpellCheckerSettings";
 
@@ -46,7 +44,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
-  private boolean mySettingsTransferred = false;
+  private boolean mySettingsTransferred;
 
   @NlsSafe
   public String getDictionaryToSave() {

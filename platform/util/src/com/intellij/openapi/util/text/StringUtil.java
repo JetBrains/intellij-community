@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
@@ -106,9 +105,9 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  public static final NotNullFunction<String, String> QUOTER = s -> "\"" + s + "\"";
+  public static final java.util.function.Function<String, String> QUOTER = s -> "\"" + s + "\"";
 
-  public static final NotNullFunction<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
+  public static final java.util.function.Function<String, String> SINGLE_QUOTER = s -> "'" + s + "'";
 
   @Contract(pure = true)
   public static @NotNull List<String> getWordsInStringLongestFirst(@NotNull String find) {
@@ -133,7 +132,7 @@ public class StringUtil extends StringUtilRt {
     return Object::toString;
   }
 
-  public static final @NotNull Function<String, String> TRIMMER = StringUtil::trim;
+  public static final @NotNull java.util.function.Function<String, String> TRIMMER = StringUtil::trim;
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
@@ -1211,7 +1210,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * @return list containing all words in {@code text}, or {@link ContainerUtil#emptyList()} if there are none.
+   * @return list containing all words in {@code text}, or {@link Collections#emptyList()} if there are none.
    * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are {@code Character.isJavaIdentifierPart(c)}.
    */
   @Contract(pure = true)
@@ -1239,7 +1238,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
     if (result == null) {
-      return ContainerUtil.emptyList();
+      return Collections.emptyList();
     }
     return result;
   }
@@ -1369,7 +1368,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static @NotNull String join(@NotNull Collection<String> strings, @NotNull String separator) {
     if (strings.size() <= 1) {
-      return notNullize(ContainerUtil.getFirstItem(strings));
+      return notNullize(strings.isEmpty() ? null : strings.iterator().next());
     }
     StringBuilder result = new StringBuilder();
     join(strings, separator, result);
@@ -1468,7 +1467,7 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatDuration(duration);
   }
 
-  /** 
+  /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}).
    * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
    */
@@ -2749,6 +2748,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String formatLinks(@NotNull String message) {
+    @SuppressWarnings("HttpUrlsUsage")
     Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);

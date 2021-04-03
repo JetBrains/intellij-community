@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class ApplicationImpl extends ComponentManagerImpl implements ApplicationEx {
   // do not use PluginManager.processException() because it can force app to exit, but we want just log error and continue
   private static final Logger LOG = Logger.getInstance(ApplicationImpl.class);
@@ -110,6 +111,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
+    this(isInternal, isUnitTestMode, isHeadless, isCommandLine, null);
+  }
+
+  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, Consumer<ApplicationImpl> initTask) {
     super(null);
 
     // reset back to null only when all components already disposed
@@ -119,8 +124,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
-    boolean strictMode = isUnitTestMode || isInternal;
-    BundleBase.assertOnMissedKeys(strictMode);
+    if (initTask != null) {
+      // myLock is a final field, we cannot do init in EDT and set it later
+      initTask.accept(this);
+    }
+
+    if (isUnitTestMode || isInternal) {
+      BundleBase.assertOnMissedKeys(true);
+    }
 
     // do not crash AWT on exceptions
     AWTExceptionHandler.register();
@@ -141,18 +152,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.APP_INIT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
-    Runnable runnable = () -> {
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
-      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-      Thread thread = service.getPeriodicTasksThread();
+      Thread thread = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).getPeriodicTasksThread();
       AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
       Disposer.register(this, () -> {
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
       });
       edtThread.set(Thread.currentThread());
-    };
-    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
+    });
     myLock = new ReadMostlyRWLock(edtThread.get());
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
@@ -348,14 +357,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @Override
   public final void load() {
     List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
-    registerComponents(plugins, null);
+    registerComponents(plugins, this, null);
     ApplicationLoader.initConfigurationStore(this);
     preloadServices(plugins, "", false).getSyncPreloadedServices().join();
     loadComponents(null);
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
 
-  @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
     if (indicator == null) {
       // no splash, no need to to use progress manager
@@ -632,7 +640,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
-  @ApiStatus.Internal
   public final @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                                             boolean canBeCanceled,
                                                                                             boolean shouldShowModalWindow,
@@ -1300,7 +1307,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * so that background threads with read actions don't see half-baked PSI/VFS/etc. The runnable may perform write actions itself,
    * callers should be ready for those.
    */
-  @ApiStatus.Internal
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertIsWriteThread();
     if (!myLock.isWriteLocked()) {
@@ -1393,7 +1399,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
            (isCommandLine() ? " (Command line)" : "");
   }
 
-  @ApiStatus.Internal
   @Override
   public @NotNull String activityNamePrefix() {
     return "app ";
@@ -1425,7 +1430,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 
-  @ApiStatus.Internal
   public boolean getComponentCreated() {
     return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }

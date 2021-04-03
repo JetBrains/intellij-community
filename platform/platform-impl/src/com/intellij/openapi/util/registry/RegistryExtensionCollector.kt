@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -26,14 +27,14 @@ class RegistryKeyBean : PluginAware {
     private val pendingRemovalKeys = HashSet<String>()
 
     @JvmStatic
-    internal fun addKeysFromPlugins() {
+    @ApiStatus.Internal
+    fun addKeysFromPlugins() {
       val epName = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
-
-      Registry.addKeys(epName.iterable.map { createRegistryKeyDescriptor(it) })
+      Registry.addKeys(epName.iterable.asSequence().map { createRegistryKeyDescriptor(it) }.iterator())
 
       epName.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
         override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
-          Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)))
+          Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)).iterator())
         }
       }, null)
 

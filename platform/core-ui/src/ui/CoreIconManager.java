@@ -43,9 +43,8 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     return AllIcons.Actions.Stub;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
+  public @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
     Icon icon = IconLoader.getIcon(path, aClass);
     Supplier<String> tooltip = new IconDescriptionLoader(path);
     if (icon instanceof ScalableIcon) {
@@ -103,16 +102,14 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     }
   }
 
-  @NotNull
   @Override
-  public Icon createEmptyIcon(@NotNull Icon icon) {
+  public @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
     return EmptyIcon.create(icon);
   }
 
-  @NotNull
   @Override
-  public <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
-    return IconDeferrer.getInstance().defer(base, param, f);
+  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer) {
+    return IconDeferrer.getInstance().defer(base, param, iconProducer);
   }
 
   @Override
@@ -130,24 +127,21 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     return new IconWrapperWithToolTipComposite(icon);
   }
 
-  @NotNull
   @Override
-  public com.intellij.ui.icons.RowIcon createRowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
+  public @NotNull com.intellij.ui.icons.RowIcon createRowIcon(int iconCount, com.intellij.ui.icons.RowIcon.Alignment alignment) {
     return new RowIcon(iconCount, alignment);
   }
 
-  @NotNull
   @Override
-  public com.intellij.ui.icons.RowIcon createRowIcon(Icon @NotNull ... icons) {
+  public @NotNull com.intellij.ui.icons.RowIcon createRowIcon(Icon @NotNull ... icons) {
     return new RowIcon(icons);
   }
 
-  @NotNull
   @Override
-  public RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
+  public @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
     List<Icon> layersFromProviders = new ArrayList<>();
     for (IconLayerProvider provider : IconLayerProvider.EP_NAME.getExtensionList()) {
-      final Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
+      Icon layerIcon = provider.getLayerIcon(instance, BitUtil.isSet(flags, FLAGS_LOCKED));
       if (layerIcon != null) {
         layersFromProviders.add(layerIcon);
       }
@@ -174,21 +168,18 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     return baseIcon;
   }
 
-  @NotNull
   @Override
-  public Icon createOffsetIcon(@NotNull Icon icon) {
+  public @NotNull Icon createOffsetIcon(@NotNull Icon icon) {
     return new OffsetIcon(icon);
   }
 
-  @NotNull
   @Override
-  public Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
+  public @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
     return IconUtil.colorize(g, source, color);
   }
 
-  @NotNull
   @Override
-  public Icon createLayered(Icon @NotNull ... icons) {
+  public @NotNull Icon createLayered(Icon @NotNull ... icons) {
     return new LayeredIcon(icons);
   }
 
@@ -204,8 +195,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
 
   private static final class IconLayer {
     private final int flagMask;
-    @NotNull
-    private final Icon icon;
+    private final @NotNull Icon icon;
 
     private IconLayer(final int flagMask, @NotNull Icon icon) {
       BitUtil.assertOneBitMask(flagMask);

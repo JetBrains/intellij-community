@@ -5,6 +5,7 @@ import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
@@ -63,8 +64,8 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, listenerCallbacks: MutableList<Runnable>?) {
-    super.registerComponents(plugins, null)
+  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, app: Application?, listenerCallbacks: MutableList<Runnable>?) {
+    super.registerComponents(plugins, app, null)
 
     val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID } ?: return
     registerComponent(ModuleRootManager::class.java, ModuleRootComponentBridge::class.java, corePlugin, true)

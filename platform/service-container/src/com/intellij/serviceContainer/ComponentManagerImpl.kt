@@ -234,15 +234,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun getExtensionArea() = extensionArea
 
   @Internal
-  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, listenerCallbacks: MutableList<Runnable>?) {
+  open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+                              app: Application?,
+                              listenerCallbacks: MutableList<Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
-    val app = getApplication()
-    val headless = app == null || app.isHeadlessEnvironment
     var newComponentConfigCount = 0
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
-    val isHeadlessMode = app?.isHeadlessEnvironment == true
-    val isUnitTestMode = app?.isUnitTestMode == true
+    val isHeadless = app == null || app.isHeadlessEnvironment
+    val isUnitTestMode = app?.isUnitTestMode ?: false
 
     val clonePoint = parent != null
 
@@ -257,7 +257,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
-        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, headless)
+        newComponentConfigCount += registerComponents(pluginDescriptor, containerDescriptor, isHeadless)
       }
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
@@ -268,7 +268,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             map = m
           }
           for (listener in listeners) {
-            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadlessMode && !listener.activeInHeadlessMode)) {
+            if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
               continue
             }
 
@@ -535,10 +535,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     val result = getComponent(serviceClass) ?: return null
     PluginException.logPluginError(LOG,
-                                   "$key requested as a service, but it is a component - " +
-                                   "convert it to a service or change call to " +
-                                   if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
-                                   null, serviceClass)
+      "$key requested as a service, but it is a component - " +
+      "convert it to a service or change call to " +
+      if (parent == null) "ApplicationManager.getApplication().getComponent()" else "project.getComponent()",
+      null, serviceClass)
     return result
   }
 
@@ -668,12 +668,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun <T : Any> registerServiceInstance(serviceInterface: Class<T>, instance: T, pluginDescriptor: PluginDescriptor) {
     val serviceKey = serviceInterface.name
     checkState()
-    componentKeyToAdapter.remove(serviceKey)
 
     val descriptor = ServiceDescriptor()
     descriptor.serviceInterface = serviceKey
     descriptor.serviceImplementation = instance.javaClass.name
-    registerAdapter(ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance), pluginDescriptor)
+    componentKeyToAdapter.put(serviceKey, ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance))
   }
 
   @TestOnly
@@ -937,15 +936,15 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     return ServicePreloadingResult(
       asyncPreloadedServices = CompletableFuture.runAsync({
-                                                            runActivity("${activityPrefix}service async preloading") {
-                                                              ForkJoinTask.invokeAll(asyncPreloadedServices)
-                                                            }
-                                                          }, ForkJoinPool.commonPool()),
+        runActivity("${activityPrefix}service async preloading") {
+          ForkJoinTask.invokeAll(asyncPreloadedServices)
+        }
+      }, ForkJoinPool.commonPool()),
       syncPreloadedServices = CompletableFuture.runAsync({
-                                                           runActivity("${activityPrefix}service sync preloading") {
-                                                             ForkJoinTask.invokeAll(syncPreloadedServices)
-                                                           }
-                                                         }, ForkJoinPool.commonPool())
+        runActivity("${activityPrefix}service sync preloading") {
+          ForkJoinTask.invokeAll(syncPreloadedServices)
+        }
+      }, ForkJoinPool.commonPool())
     )
   }
 

@@ -9,18 +9,19 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
 
-public class SettingsTransferActivity implements StartupActivity {
-
+final class SettingsTransferActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(project);
-    if (!settings.isSettingsTransferred()) {
-      if (settings.isUseSingleDictionaryToSave() &&
-          PROJECT.getName().equals(settings.getDictionaryToSave()) &&
-          project.getService(ProjectDictionaryState.class).getProjectDictionary().getWords().isEmpty()) {
-        settings.setDictionaryToSave(APP.getName());
-      }
-      settings.setSettingsTransferred(true);
+    SpellCheckerSettings settings = SpellCheckerSettings.getInstance(project);
+    if (settings.isSettingsTransferred()) {
+      return;
     }
+
+    if (settings.isUseSingleDictionaryToSave() &&
+        PROJECT.getName().equals(settings.getDictionaryToSave()) &&
+        project.getService(ProjectDictionaryState.class).getProjectDictionary().getWords().isEmpty()) {
+      settings.setDictionaryToSave(APP.getName());
+    }
+    settings.setSettingsTransferred(true);
   }
 }

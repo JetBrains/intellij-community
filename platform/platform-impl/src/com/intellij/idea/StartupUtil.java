@@ -29,12 +29,12 @@ import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
@@ -187,14 +187,17 @@ public final class StartupUtil {
   private static void runPreAppClass(@NotNull Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
+      Activity activity = StartUpMeasurer.startActivity("pre app class running", ActivityCategory.APP_INIT);
       try {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
+        invokeMethod.setAccessible(true);
         invokeMethod.invoke(null);
       }
       catch (Exception e) {
         log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
       }
+      activity.end();
     }
   }
 
@@ -770,6 +773,10 @@ public final class StartupUtil {
       "\n  " + PathManager.PROPERTY_LOG_PATH + '=' + logPath(PathManager.getLogPath())
     );
 
+    log.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
+             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
+             "; factory: " + ForkJoinPool.commonPool().getFactory());
+
     activity.end();
   }
 
@@ -814,11 +821,13 @@ public final class StartupUtil {
         Class<?> dialogClass = Class.forName(stepsDialogName);
         Constructor<?> constr = dialogClass.getConstructor(AppStarter.class);
         ((CommonCustomizeIDEWizardDialog) constr.newInstance(appStarter)).showIfNeeded();
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
         return;
       }
-    } else if (Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
+    }
+    else if (Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
         new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
     }
 
@@ -827,45 +836,36 @@ public final class StartupUtil {
   }
 
   // must be called from EDT
-  public static boolean patchSystem(@NotNull Logger log) {
+  public static boolean patchSystem(@NotNull Logger log) throws Throwable {
     if (!ourSystemPatched.compareAndSet(false, true)) {
       return false;
     }
 
     Activity activity = StartUpMeasurer.startActivity("event queue replacing", ActivityCategory.APP_INIT);
-    replaceSystemEventQueue(log);
+    // replace system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();
+
     if (!Main.isHeadless()) {
-      patchSystemForUi(log);
+      if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
+        activity = activity.endAndStart("repaint manager set");
+        RepaintManager.setCurrentManager(new AssertiveRepaintManager());
+      }
+
+      if (SystemInfoRt.isXWindow) {
+        activity = activity.endAndStart("linux wm set");
+        String wmName = X11UiUtil.getWmName();
+        log.info("WM detected: " + wmName);
+        if (wmName != null) {
+          X11UiUtil.patchDetectedWm(wmName);
+        }
+      }
+
+      activity = activity.endAndStart("icon manager activation");
+      IconManager.activate(new CoreIconManager());
     }
     activity.end();
     return true;
-  }
-
-  @ApiStatus.Internal
-  public static void replaceSystemEventQueue(@NotNull Logger log) {
-    log.info("CPU cores: " + Runtime.getRuntime().availableProcessors() +
-             "; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() +
-             "; factory: " + ForkJoinPool.commonPool().getFactory());
-
-    // replaces system event queue
-    //noinspection ResultOfMethodCallIgnored
-    IdeEventQueue.getInstance();
-  }
-
-  private static void patchSystemForUi(@NotNull Logger log) {
-    if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
-      RepaintManager.setCurrentManager(new AssertiveRepaintManager());
-    }
-
-    if (SystemInfoRt.isXWindow) {
-      String wmName = X11UiUtil.getWmName();
-      log.info("WM detected: " + wmName);
-      if (wmName != null) {
-        X11UiUtil.patchDetectedWm(wmName);
-      }
-    }
-
-    IconManager.activate();
   }
 
   private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
@@ -889,18 +889,17 @@ public final class StartupUtil {
     try {
       if (!ourSystemPatched.get()) {
         EventQueue.invokeAndWait(() -> {
-          if (!patchSystem(log)) {
-            return;
-          }
-
           try {
+            if (!patchSystem(log)) {
+              return;
+            }
+
             UIManager.setLookAndFeel(IntelliJLaf.class.getName());
-            IconManager.activate();
-            // todo investigate why in test mode dummy icon manager is not suitable
-            IconLoader.activate();
             // we don't set AppUIUtil.updateForDarcula(false) because light is default
           }
-          catch (Exception ignore) { }
+          catch (Throwable e) {
+            log.warn(e);
+          }
         });
       }
 

@@ -18,7 +18,7 @@ fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
 fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   val list = get(key)
   if (list == null) {
-    put(key, SmartList<V>(value))
+    put(key, SmartList(value))
   }
   else {
     list.add(value)
@@ -88,11 +88,7 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
 }
 
 inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  return asSequence().forEachLoggingErrors(logger, operation)
-}
-
-inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  forEach {
+  asSequence().forEach {
     try {
       operation(it)
     }
@@ -100,6 +96,7 @@ inline fun <T> Sequence<T>.forEachLoggingErrors(logger: Logger, operation: (T) -
       logger.error(e)
     }
   }
+  return
 }
 
 inline fun <T, R : Any> Collection<T>.mapNotNullLoggingErrors(logger: Logger, operation: (T) -> R?): List<R> {
@@ -190,7 +187,7 @@ inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
 inline fun <T, R : Any> Collection<T>.mapSmartNotNull(transform: (T) -> R?): List<R> {
   val size = size
   return if (size == 1) {
-    transform(first())?.let { SmartList<R>(it) } ?: SmartList<R>()
+    transform(first())?.let { SmartList(it) } ?: SmartList()
   }
   else {
     mapNotNullTo(ArrayList(size), transform)
@@ -219,7 +216,7 @@ inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): Muta
   return filterTo(if (size <= 1) SmartList() else ArrayList(), predicate)
 }
 
-inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)
+inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap(E::class.java)
 
 fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")

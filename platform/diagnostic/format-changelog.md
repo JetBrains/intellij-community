@@ -1,5 +1,7 @@
 # 29
-* Add `splash preparation (in queue)` and `splash initialization (in queue)`.
+ * Add `splash preparation (in queue)` and `splash initialization (in queue)`.
+ * Add `pre app class running`, `repaint manager set`, `linux wm set`. Existing`event queue replacing` doesn't include added metrics anymore.
+ * Remove `icon loader activation`.
 
 # 28
 * Add `platform plugin collecting`, `plugin from classpath loading`, `plugin from user dir loading`, `plugin from bundled dir loading`.

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import org.picocontainer.ComponentAdapter
 
 internal class MyComponentAdapter(private val componentKey: Class<*>,
                                   override val implementationClassName: String,
@@ -62,4 +63,14 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
   }
 
   override fun toString() = "ComponentAdapter(key=${getComponentKey()}, implementation=${componentImplementation}, plugin=$pluginId)"
+
+  // used in LinkedHashSetWrapper
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+    return other is ComponentAdapter && componentKey == other.componentKey
+  }
+
+  override fun hashCode() = componentKey.hashCode()
 }

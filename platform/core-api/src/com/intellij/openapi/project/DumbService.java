@@ -5,8 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -19,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
@@ -60,13 +59,23 @@ public abstract class DumbService {
   }
 
   public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ExtensionPointName<T> extensionPoint) {
-    List<T> list = extensionPoint.getExtensionList();
-    if (list.isEmpty()) {
-      return list;
+    ExtensionPoint<T> point = extensionPoint.getPoint();
+    int size = point.size();
+    if (size == 0) {
+      return Collections.emptyList();
     }
 
-    DumbService dumbService = getInstance(project);
-    return dumbService.filterByDumbAwareness(list);
+    if (!getInstance(project).isDumb()) {
+      return point.getExtensionList();
+    }
+
+    List<T> result = new ArrayList<>(size);
+    for (T element : ((ExtensionPointImpl<T>)point)) {
+      if (isDumbAware(element)) {
+        result.add(element);
+      }
+    }
+    return result;
   }
 
   public static @NotNull <T> List<T> getDumbAwareExtensions(@NotNull Project project, @NotNull ProjectExtensionPointName<T> extensionPoint) {

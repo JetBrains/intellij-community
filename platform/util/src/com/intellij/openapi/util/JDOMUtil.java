@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.io.URLUtil;
@@ -76,9 +75,11 @@ public final class JDOMUtil {
         }
       }
 
-      // avoid loading of SystemInfo class
-      if (Strings.indexOfIgnoreCase(System.getProperty("java.vm.vendor", ""), "IBM", 0) < 0) {
+      // avoid loading of SystemInfo and Strings classes
+      String jvmVendor = System.getProperty("java.vm.vendor", "");
+      if (!jvmVendor.contains("IBM") && !jvmVendor.contains("ibm")) {
         try {
+          //noinspection HttpUrlsUsage
           factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
         }
         catch (Exception e) {
@@ -184,7 +185,7 @@ public final class JDOMUtil {
       sb.append(each == '<' ? "&lt;" : "&gt;");
     }
     else if (!Verifier.isXMLCharacter(each)) {
-      sb.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
+      sb.append("0x").append(Strings.toUpperCase(Long.toHexString(each)));
     }
     else {
       sb.append(each);
@@ -410,14 +411,14 @@ public final class JDOMUtil {
     write(document, file, lineSeparator);
   }
 
+  /**
+   * Use {@link #write(Element, Path)}
+   */
+  @Deprecated
   public static void write(@NotNull Element element, @NotNull File file) throws IOException {
-    write(element, file, "\n");
-  }
-
-  public static void write(@NotNull Element element, @NotNull File file, @Nullable String lineSeparator) throws IOException {
     FileUtil.createParentDirs(file);
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-      writeElement(element, writer, createOutputter(lineSeparator));
+      writeElement(element, writer, createOutputter("\n"));
     }
   }
 

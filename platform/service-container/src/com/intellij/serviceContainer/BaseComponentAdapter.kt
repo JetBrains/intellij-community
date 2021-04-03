@@ -173,14 +173,4 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
     @Suppress("UNCHECKED_CAST")
     return old as T?
   }
-
-  // used in LinkedHashSetWrapper
-  override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    return other is ComponentAdapter && componentKey == other.componentKey
-  }
-
-  override fun hashCode() = componentKey.hashCode()
 }

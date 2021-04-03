@@ -39,16 +39,6 @@ public final class ContainerUtil {
     return new HashMap<>();
   }
 
-  /**
-   * @deprecated Use {@link HashMap#HashMap(Map)}
-   */
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public static @NotNull <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
-    return new HashMap<>(map);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
@@ -93,16 +83,6 @@ public final class ContainerUtil {
     return map;
   }
 
-  /**
-   * @deprecated Use {@link THashMap#THashMap(Map)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Contract(pure = true)
-  public static @NotNull <K, V> THashMap<K, V> newTroveMap() {
-    return new THashMap<>();
-  }
-
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static @NotNull <T> TObjectHashingStrategy<T> canonicalStrategy() {
@@ -115,15 +95,6 @@ public final class ContainerUtil {
   public static @NotNull <T> TObjectHashingStrategy<T> identityStrategy() {
     //noinspection unchecked
     return TObjectHashingStrategy.IDENTITY;
-  }
-
-  /**
-   * @deprecated Use {@link IdentityHashMap#IdentityHashMap()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
-    return new IdentityHashMap<>();
   }
 
   /**
@@ -2384,7 +2355,7 @@ public final class ContainerUtil {
     }
     return true;
   }
-  
+
   @Contract(pure = true)
   public static <T> boolean isSameElements(@NotNull Collection<? extends T> list1, @NotNull Collection<? extends T> list2) {
     return list1.size() == list2.size() && list1.containsAll(list2);

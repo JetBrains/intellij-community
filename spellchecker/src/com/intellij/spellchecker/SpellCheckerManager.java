@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -47,7 +48,8 @@ import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 
-public class SpellCheckerManager implements Disposable {
+@Service(Service.Level.PROJECT)
+public final class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(SpellCheckerManager.class);
 
   private static final int MAX_METRICS = 1;
@@ -69,7 +71,6 @@ public class SpellCheckerManager implements Disposable {
 
   private SpellCheckerEngine mySpellChecker;
   private SuggestionProvider mySuggestionProvider;
-
 
   public static SpellCheckerManager getInstance(Project project) {
     return project.getService(SpellCheckerManager.class);
@@ -412,10 +413,12 @@ public class SpellCheckerManager implements Disposable {
     }
   }
 
-  private class CustomDictFileListener implements VirtualFileListener {
+  private final class CustomDictFileListener implements VirtualFileListener {
     private final SpellCheckerSettings mySettings;
 
-    CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
+    CustomDictFileListener(@NotNull SpellCheckerSettings settings) {
+      mySettings = settings;
+    }
 
     @Override
     public void fileDeleted(@NotNull VirtualFileEvent event) {

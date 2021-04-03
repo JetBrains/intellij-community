@@ -53,10 +53,10 @@ public final class IconLoader {
   private static final Logger LOG = Logger.getInstance(IconLoader.class);
 
   // the key: URL or Pair(path, classLoader)
-  private static final ConcurrentMap<Object, CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
+  private static final ConcurrentMap<@NotNull Object, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
 
   // contains mapping between icons and disabled icons.
-  private static final Cache<Icon, Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
+  private static final Cache<@NotNull Icon, @NotNull Icon> iconToDisabledIcon = Caffeine.newBuilder().weakKeys().build();
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -86,9 +86,9 @@ public final class IconLoader {
     }
   };
 
-  private static boolean ourIsActivated;
+  private static boolean isActivated = !GraphicsEnvironment.isHeadless();
 
-  private IconLoader() { }
+  private IconLoader() {}
 
   public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
     STRICT_LOCAL.set(true);
@@ -116,8 +116,9 @@ public final class IconLoader {
 
     if (prev != next) {
       iconToDisabledIcon.invalidateAll();
-      //clears svg cache
+      // clear svg cache
       ImageLoader.ImageCache.INSTANCE.clearCache();
+      // iconCache is not cleared because it contain original icon (instance that will delegate to)
     }
   }
 
@@ -147,8 +148,16 @@ public final class IconLoader {
   }
 
   public static void clearCache() {
-    // Copy the transform to trigger update of cached icons
+    // copy the transform to trigger update of cached icons
     updateTransform(IconTransform::copy);
+  }
+
+  @TestOnly
+  public static void clearCacheInTests() {
+    iconCache.clear();
+    iconToDisabledIcon.invalidateAll();
+    ImageLoader.ImageCache.INSTANCE.clearCache();
+    pathTransformGlobalModCount.incrementAndGet();
   }
 
   /**
@@ -290,12 +299,12 @@ public final class IconLoader {
   }
 
   public static void activate() {
-    ourIsActivated = true;
+    isActivated = true;
   }
 
   @TestOnly
   public static void deactivate() {
-    ourIsActivated = false;
+    isActivated = false;
   }
 
   @Nullable
@@ -518,7 +527,7 @@ public final class IconLoader {
    * Same as {@link #getDisabledIcon(Icon)} with an ancestor component for HiDPI-awareness.
    */
   public static @NotNull Icon getDisabledIcon(@NotNull Icon icon, @Nullable Component ancestor) {
-    if (!ourIsActivated) {
+    if (!isActivated) {
       return icon;
     }
 
@@ -778,7 +787,7 @@ public final class IconLoader {
 
     private @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context) {
       ImageDataLoader resolver = this.resolver;
-      if (resolver == null || !ourIsActivated) {
+      if (resolver == null || !isActivated) {
         return EMPTY_ICON;
       }
 
@@ -1389,7 +1398,7 @@ public final class IconLoader {
     return null;
   }
 
-  private static class LabelHolder {
+  private static final class LabelHolder {
     /**
      * To get disabled icon with paint it into the image. Some icons require
      * not null component to paint.

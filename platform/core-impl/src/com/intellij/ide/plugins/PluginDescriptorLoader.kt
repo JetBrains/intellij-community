@@ -379,18 +379,38 @@ object PluginDescriptorLoader {
                                                   bundledPluginDir: Path?,
                                                   isRunningFromSources: Boolean) {
     val classLoader = PluginDescriptorLoader::class.java.classLoader
-    val urlsFromClassPath = LinkedHashMap<URL, String>()
-    var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.APP_INIT)
-    val platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, isRunningFromSources)
-
     val pool = ForkJoinPool.commonPool()
+    var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.APP_INIT)
+    val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
+    // should be the only plugin in lib (only for Ultimate and WebStorm for now)
+    val pathResolver = ClassPathXmlPathResolver(classLoader)
+    if ((platformPrefix == null || platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
+        (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || !isRunningFromSources)) {
+      val factory = context.xmlFactory
+      val element = JDOMUtil.load(classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!, factory)
 
-    if (urlsFromClassPath.isNotEmpty()) {
-      activity = activity.endAndStart("plugin from classpath loading")
-      pool.invoke(LoadDescriptorsFromClassPathAction(urls = urlsFromClassPath,
-                                                     context = context,
-                                                     platformPluginURL = platformPluginURL,
-                                                     pathResolver = ClassPathXmlPathResolver(classLoader)))
+      val descriptor = IdeaPluginDescriptorImpl(Paths.get(PathManager.getLibPath()), true)
+      descriptor.readExternal(element, pathResolver, context, descriptor, object : DataLoader {
+        override val pool: ZipFilePool
+          get() = throw IllegalStateException("must be not called")
+
+        override fun load(path: String) = throw IllegalStateException("must be not called")
+
+        override fun toString() = "product classpath"
+      })
+      descriptor.setUseCoreClassLoader()
+      context.result.add(descriptor, /* overrideUseIfCompatible = */false)
+    }
+    else {
+      val urlsFromClassPath = LinkedHashMap<URL, String>()
+      val platformPluginURL = computePlatformPluginUrlAndCollectPluginUrls(classLoader, urlsFromClassPath, platformPrefix)
+      if (!urlsFromClassPath.isEmpty()) {
+        activity = activity.endAndStart("plugin from classpath loading")
+        pool.invoke(LoadDescriptorsFromClassPathAction(urls = urlsFromClassPath,
+                                                       context = context,
+                                                       platformPluginURL = platformPluginURL,
+                                                       pathResolver = pathResolver))
+      }
     }
 
     activity = activity.endAndStart("plugin from user dir loading")
@@ -404,16 +424,7 @@ object PluginDescriptorLoader {
 
   private fun computePlatformPluginUrlAndCollectPluginUrls(loader: ClassLoader,
                                                            urls: MutableMap<URL, String>,
-                                                           isRunningFromSources: Boolean): URL? {
-    val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
-
-    // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-    if ((platformPrefix == null || platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
-        (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || !isRunningFromSources)) {
-      urls.put(loader.getResource(PluginManagerCore.PLUGIN_XML_PATH)!!, PluginManagerCore.PLUGIN_XML)
-      return null
-    }
-
+                                                           platformPrefix: String?): URL? {
     var result: URL? = null
     if (platformPrefix != null) {
       val fileName = "${platformPrefix}Plugin.xml"

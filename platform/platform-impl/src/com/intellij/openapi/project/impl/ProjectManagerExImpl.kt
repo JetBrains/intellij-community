@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.ConversionResult
@@ -85,7 +86,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     val activity = StartUpMeasurer.startMainActivity("project opening preparation")
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
-      if (!openProjects.isNullOrEmpty()) {
+      if (!openProjects.isEmpty()) {
         var projectToClose = options.projectToClose
         if (projectToClose == null) {
           // if several projects are opened, ask to reuse not last opened project frame, but last focused (to avoid focus switching)
