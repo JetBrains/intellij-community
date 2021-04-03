@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component name="libraryTable">
   <library name="Log4J" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:log4j:1.2.17.1" />
+    <properties maven-id="org.jetbrains.intellij.deps:log4j:1.2.17.2" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/log4j/1.2.17.1/log4j-1.2.17.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/log4j/1.2.17.2/log4j-1.2.17.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
