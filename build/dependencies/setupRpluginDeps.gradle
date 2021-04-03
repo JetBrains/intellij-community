@@ -1,30 +1,23 @@
-import java.util.concurrent.TimeUnit
-
-task setupRkernel {
-  group = 'rplugin'
-  inputs.property('version', rkernelVersion)
-  def artifact = file("$buildDir/rplugin/rkernelVersion.txt")
-  outputs.file(artifact)
-  doLast {
-    artifact.write("$rkernelVersion")
-  }
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+configurations {
+  rkernel
 }
 
-['osx', 'windows.exe', 'linux'].each { osSuffix ->
-  task("setupRkernel${osSuffix.capitalize() - '.exe'}") {
-    setupRkernel.dependsOn(it)
-    group = setupRkernel.group
-    inputs.property('version', rkernelVersion)
-    def artifact = file("$buildDir/rplugin/rwrapper-x64-$osSuffix")
-    outputs.file(artifact)
-    doLast {
-      download {
-        src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
-        tempAndMove true
-        dest artifact
-        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
-      }
+dependencies {
+  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:osx@tar.gz"
+  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:windows@tar.gz"
+  rkernel "org.jetbrains.intellij.deps.rkernel:rkernel:$rkernelVersion:linux@tar.gz"
+}
+
+task setupRkernel(dependsOn: configurations.rkernel) {
+  group = 'rplugin'
+  inputs.files(configurations.rkernel)
+  outputs.dir("$buildDir/rplugin")
+  copy {
+    configurations.rkernel.files.each {
+      from tarTree(it)
     }
+    into("$buildDir/rplugin")
   }
 }
 
