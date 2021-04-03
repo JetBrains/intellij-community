@@ -58,6 +58,22 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testGetterLazyVariableNotInitialized() {
+    doTest();
+  }
+
+  public void testGetterLazyInvocationProduceNPE() {
+    doTest();
+  }
+
+  public void testFieldNameConstantsExample() {
+    doTest();
+  }
+
+  public void testBuilderWithDefaultRedundantInitializer() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

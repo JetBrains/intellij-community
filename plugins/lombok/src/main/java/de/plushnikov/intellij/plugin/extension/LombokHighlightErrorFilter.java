@@ -138,6 +138,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
   private enum LombokHighlightFilter {
     // ERROR HANDLERS
 
+    //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
     VARIABLE_MIGHT_NOT_BEEN_INITIALIZED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
       private final Pattern pattern = Pattern.compile("Variable '.+' might not have been initialized");
 
@@ -152,6 +153,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       }
     },
 
+    //see com.intellij.java.lomboktest.LombokHighlightingTest.testFieldNameConstantsExample
     CONSTANT_EXPRESSION_REQUIRED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
       @Override
       public boolean descriptionCheck(@Nullable String description) {
@@ -165,7 +167,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     },
 
     // WARNINGS HANDLERS
-
+    //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
     VARIABLE_INITIALIZER_IS_REDUNDANT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
       private final Pattern pattern = Pattern.compile("Variable '.+' initializer '.+' is redundant");
 
@@ -180,9 +182,8 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       }
     },
 
-    /**
-     * field should have lazy getter and should be initialized in constructors
-     */
+    // field should have lazy getter and should be initialized in constructors
+    //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyInvocationProduceNPE
     METHOD_INVOCATION_WILL_PRODUCE_NPE(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
       private final Pattern pattern = Pattern.compile("Method invocation '.*' will produce 'NullPointerException'");
 
@@ -202,6 +203,8 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
      * Handles warnings that are related to Builder.Default cause.
      * The final fields that are marked with Builder.Default contains only possible value because user can set another value during the creation of the object.
      */
+    //see de.plushnikov.intellij.plugin.inspection.DataFlowInspectionTest.testDefaultBuilderFinalValueInspectionIsAlwaysThat
+    //see de.plushnikov.intellij.plugin.inspection.PointlessBooleanExpressionInspectionTest.testPointlessBooleanExpressionBuilderDefault
     CONSTANT_CONDITIONS_DEFAULT_BUILDER_CAN_BE_SIMPLIFIED(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
       private final Pattern patternCanBeSimplified = Pattern.compile("'.+' can be simplified to '.+'");
       private final Pattern patternIsAlways = Pattern.compile("Condition '.+' is always '(true|false)'");
