@@ -202,7 +202,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       }
       else {
         String escapedValue = StringUtil.escapeQuotes(value);
-        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.fun(escapedValue) : escapedValue;
+        quotedString = StringUtil.containsWhitespaces(value) ? StringUtil.QUOTER.apply(escapedValue) : escapedValue;
       }
       commandLine.add(key + "=" + quotedString);
     });
@@ -213,7 +213,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     if (wslDistribution != null) return ShStringUtil.quote(wslDistribution.getWslPath(systemDependentPath));
     if (Platform.current() != Platform.WINDOWS) return ShStringUtil.quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
-    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.fun(escapedPath) : escapedPath;
+    return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
   }
 
   private static String convertToWslIfNeeded(@NotNull String path, @Nullable WSLDistribution wslDistribution) {

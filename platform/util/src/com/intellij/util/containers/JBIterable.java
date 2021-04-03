@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 
@@ -432,7 +432,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public final <T> JBIterable<T> transform(@NotNull Function<? super E, ? extends T> function) {
     return map(function);
   }
-
 
   /**
    * Returns a {@code JBIterable} that applies {@code function} to each element of this
@@ -950,7 +949,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public abstract static class SCond<T> extends Stateful<SCond<T>> implements Condition<T> { }
 
   /**
-   * Stateful {@link Function}. 
+   * Stateful {@link Function}.
    * A separate cloned instance (shallow copy) is used for each iterator.
    * All mutable non-primitive fields <b>MUST BE</b> lazily initialized in {@link #fun(Object)} method.
    */
