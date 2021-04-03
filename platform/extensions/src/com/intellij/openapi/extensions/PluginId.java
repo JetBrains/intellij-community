@@ -1,13 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.containers.CollectionFactory;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -17,7 +16,7 @@ import java.util.Map;
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = CollectionFactory.createSmallMemoryFootprintMap();
+  private static final Map<String, PluginId> ourRegisteredIds = new HashMap<>();
 
   public static synchronized @NotNull PluginId getId(@NotNull String idString) {
     return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
@@ -31,13 +30,6 @@ public final class PluginId implements Comparable<PluginId> {
       }
     }
     return null;
-  }
-
-  /** @deprecated Use {@link #getRegisteredIdList} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static synchronized @NotNull Map<String, PluginId> getRegisteredIds() {
-    return CollectionFactory.createSmallMemoryFootprintMap(ourRegisteredIds);
   }
 
   public static synchronized @NotNull Collection<PluginId> getRegisteredIdList() {

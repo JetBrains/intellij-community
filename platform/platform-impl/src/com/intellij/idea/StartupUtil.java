@@ -878,7 +878,7 @@ public final class StartupUtil {
       runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
       dialogWasShown = true;
     }
-    else if (ConsentOptions.getInstance().getConsents().second) {
+    else if (ConsentOptions.getInstance().getConsents().getValue()) {
       runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
     }
     return dialogWasShown;

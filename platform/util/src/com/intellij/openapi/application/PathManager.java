@@ -6,7 +6,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
 import kotlin.Pair;
@@ -539,7 +538,8 @@ public final class PathManager {
     Set<String> paths = new LinkedHashSet<>();
     paths.add(System.getProperty(PROPERTIES_FILE));
     paths.add(getCustomPropertiesFile());
-    paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
+    // Don't use here SystemProperties.getUserHome(). Called too early to load extra class.
+    paths.add(System.getProperty("user.home") + '/' + PROPERTIES_FILE_NAME);
     for (Path binDir : getBinDirectories()) {
       paths.add(binDir.resolve(PROPERTIES_FILE_NAME).toString());
     }
@@ -547,26 +547,29 @@ public final class PathManager {
     Properties sysProperties = System.getProperties();
     for (String path : paths) {
       Path file = path == null ? null : Paths.get(path);
-      if (file != null) {
-        try (Reader reader = Files.newBufferedReader(file)) {
-          //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
-          new Properties() {
-            @Override
-            public Object put(Object key, Object value) {
-              if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-                log(path + ": '" + key + "' cannot be redefined");
-              }
-              else if (!sysProperties.containsKey(key)) {
-                sysProperties.setProperty(String.valueOf(key), substituteVars(String.valueOf(value)));
-              }
-              return null;
+      if (file == null) {
+        continue;
+      }
+
+      try (Reader reader = Files.newBufferedReader(file)) {
+        //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+        new Properties() {
+          @Override
+          public Object put(Object key, Object value) {
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(path + ": '" + key + "' cannot be redefined");
             }
-          }.load(reader);
-        }
-        catch (NoSuchFileException | AccessDeniedException ignore) { }
-        catch (IOException e) {
-          log("Can't read property file '" + path + "': " + e.getMessage());
-        }
+            else if (!sysProperties.containsKey(key)) {
+              sysProperties.setProperty(String.valueOf(key), substituteVars(String.valueOf(value)));
+            }
+            return null;
+          }
+        }.load(reader);
+      }
+      catch (NoSuchFileException | AccessDeniedException ignore) {
+      }
+      catch (IOException e) {
+        log("Can't read property file '" + path + "': " + e.getMessage());
       }
     }
   }
@@ -743,21 +746,27 @@ public final class PathManager {
 
   public static @NotNull String getAbsolutePath(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = SystemProperties.getUserHome() + path.substring(1);
+      path = System.getProperty("user.home") + path.substring(1);
     }
     return Paths.get(path).toAbsolutePath().normalize().toString();
   }
 
-  private static @Nullable String getExplicitPath(String property) {
+  private static @Nullable String getExplicitPath(@NotNull String property) {
     String path = System.getProperty(property);
-    return path != null ? getAbsolutePath(StringUtilRt.unquoteString(path, '"')) : null;
+    if (path == null) {
+      return null;
+    }
+
+    boolean quoted = path.length() > 1 && '"' == path.charAt(0) && '"' == path.charAt(path.length() - 1);
+    return getAbsolutePath(quoted ? path.substring(1, path.length() - 1) : path);
   }
 
   private static String platformPath(String selector,
                                      String macDir, String macSub,
                                      String winVar, String winSub,
                                      String xdgVar, String xdgDfl, String xdgSub) {
-    String userHome = SystemProperties.getUserHome(), vendorName = vendorName();
+    String userHome = System.getProperty("user.home");
+    String vendorName = vendorName();
 
     if (SystemInfoRt.isMac) {
       String dir = userHome + "/Library/" + macDir + '/' + vendorName;

@@ -2,9 +2,10 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.text.StringTokenizer;
 
+import java.util.Locale;
+import java.util.Objects;
+import java.util.StringTokenizer;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -93,17 +94,18 @@ public final class Prefs {
   }
 
   private static String getNodeKey(String key) {
-    final int dotIndex = key.lastIndexOf('.');
-    return Strings.toLowerCase((dotIndex >= 0 ? key.substring(dotIndex + 1) : key));
+    int dotIndex = key.lastIndexOf('.');
+    return (dotIndex >= 0 ? key.substring(dotIndex + 1) : key).toLowerCase(Locale.ENGLISH);
   }
 
   private static Preferences getPreferences(String key) {
     Preferences prefs = Preferences.userRoot();
     final int dotIndex = key.lastIndexOf('.');
     if (dotIndex > 0) {
-      final StringTokenizer tokenizer = new StringTokenizer(key.substring(0, dotIndex), ".", false);
+      StringTokenizer tokenizer = new StringTokenizer(key.substring(0, dotIndex), ".", false);
       while (tokenizer.hasMoreElements()) {
-        prefs = prefs.node(Strings.toLowerCase(tokenizer.nextElement()));
+        String str = tokenizer.nextToken();
+        prefs = prefs.node(str == null ? null : str.toLowerCase(Locale.ENGLISH));
       }
     }
     return prefs;
@@ -121,10 +123,10 @@ public final class Prefs {
     // rewrite from old location into the new one
     final Preferences prefs = Preferences.userRoot();
     final T val = getter.get(prefs, key, def);
-    if (!Comparing.equal(val, def)) {
+    // first use Objects.equals to avoid loading Comparing class
+    if (!Objects.equals(val, def) && !Comparing.equal(val, def)) {
       setter.set(getPreferences(key), getNodeKey(key), val);
       prefs.remove(key);
     }
   }
-
 }

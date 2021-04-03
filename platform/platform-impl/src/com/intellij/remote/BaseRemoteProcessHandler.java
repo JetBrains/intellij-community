@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,7 +112,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
   @NotNull
   @Override
   public Future<?> executeTask(@NotNull Runnable task) {
-    return ApplicationManager.getApplication().executeOnPooledThread(task);
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   private abstract static class RemoteOutputReader extends BaseOutputReader {

@@ -7,13 +7,15 @@ import com.intellij.openapi.util.SafeJdomFactory
 import org.jdom.Element
 import java.io.IOException
 import java.nio.file.Path
+import java.util.*
 import java.util.zip.ZipFile
 
 @Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolver {
   companion object {
     @JvmField
-    val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(emptyList())
+    // don't use Kotlin emptyList here
+    val DEFAULT_PATH_RESOLVER: PathResolver = PluginXmlPathResolver(Collections.emptyList())
 
     @JvmStatic
     private fun loadUsingZipFile(jarFile: Path, relativePath: String, jdomFactory: SafeJdomFactory): Element? {

@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.Nullable;
@@ -46,10 +45,12 @@ public class ComponentConfig {
    */
   public boolean prepareClasses(boolean headless) {
     if (headless && headlessImplementationClass != null) {
-      if (StringUtil.isEmpty(headlessImplementationClass)) return false;
+      if (headlessImplementationClass.isEmpty()) {
+        return false;
+      }
       setImplementationClass(headlessImplementationClass);
     }
-    if (StringUtil.isEmpty(interfaceClass)) {
+    if (interfaceClass == null || interfaceClass.isEmpty()) {
       setInterfaceClass(implementationClass);
     }
     return true;
@@ -64,8 +65,7 @@ public class ComponentConfig {
   }
 
   public void setHeadlessImplementationClass(String headlessImplementationClass) {
-    headlessImplementationClass = headlessImplementationClass == null ? null : headlessImplementationClass.trim();
-    this.headlessImplementationClass = headlessImplementationClass == null ? null : StringUtil.isEmpty(headlessImplementationClass) ? "" : headlessImplementationClass;
+    this.headlessImplementationClass = headlessImplementationClass == null ? null : headlessImplementationClass.trim();
   }
 
   public void setLoadForDefaultProject(boolean loadForDefaultProject) {

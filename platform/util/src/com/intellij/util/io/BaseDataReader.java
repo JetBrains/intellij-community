@@ -3,7 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,17 +39,26 @@ public abstract class BaseDataReader {
   }
 
   protected void start(@NotNull @NonNls String presentableName) {
-    if (StringUtil.isEmptyOrSpaces(presentableName)) {
+    if (StringUtilRt.isEmptyOrSpaces(presentableName)) {
       LOG.warn(new Throwable("Must provide not-empty presentable name"));
     }
     if (myFinishedFuture == null) {
       myFinishedFuture = executeOnPooledThread(() -> {
-        if (StringUtil.isEmptyOrSpaces(presentableName)) {
+        if (StringUtilRt.isEmptyOrSpaces(presentableName)) {
           doRun();
         }
         else {
           ConcurrencyUtil.runUnderThreadName("BaseDataReader: " + presentableName, this::doRun);
         }
+      });
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void startWithoutChangingThreadName() {
+    if (myFinishedFuture == null) {
+      myFinishedFuture = executeOnPooledThread(() -> {
+        doRun();
       });
     }
   }

@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.CollectionFactory;
@@ -263,7 +262,7 @@ public final class EnvironmentUtil {
         }
 
         LOG.info("loading shell env: " + String.join(" ", command));
-        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).second;
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).getValue();
       }
       finally {
         try {
@@ -284,7 +283,7 @@ public final class EnvironmentUtil {
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
-    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+    protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                               @Nullable Path workingDir,
                                                                                               @NotNull Path envFile) throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, emptyMap(), envFile);
@@ -300,10 +299,11 @@ public final class EnvironmentUtil {
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Consumer, Path)
      */
-    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
-                                                                                              @Nullable Path workingDir,
-                                                                                              @Nullable Map<String, String> scriptEnvironment,
-                                                                                              @NotNull Path envFile) throws IOException {
+    protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                                   @Nullable Path workingDir,
+                                                                                                   @Nullable Map<String, String> scriptEnvironment,
+                                                                                                   @NotNull Path envFile)
+      throws IOException {
       return runProcessAndReadOutputAndEnvs(command, workingDir, (it) -> {
         if (scriptEnvironment != null) {
           // we might need default environment for the process to launch correctly
@@ -322,7 +322,7 @@ public final class EnvironmentUtil {
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Path)
      * @see #runProcessAndReadOutputAndEnvs(List, Path, Map, Path)
      */
-    protected final @NotNull Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+    protected final @NotNull Map.Entry<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
                                                                                               @Nullable Path workingDir,
                                                                                               @NotNull Consumer<@NotNull Map<String, String>> scriptEnvironmentProcessor,
                                                                                               @NotNull Path envFile) throws IOException {
@@ -347,7 +347,7 @@ public final class EnvironmentUtil {
       if (exitCode != 0 || lines.isEmpty()) {
         throw new IOException("command " + command + "\n\texit code:" + exitCode + " text:" + lines.length() + " out:" + gobbler.getText().trim());
       }
-      return new Pair<>(gobbler.getText(), parseEnv(lines));
+      return new AbstractMap.SimpleImmutableEntry<>(gobbler.getText(), parseEnv(lines));
     }
 
     protected @NotNull List<String> getShellProcessCommand() {
@@ -564,7 +564,7 @@ public final class EnvironmentUtil {
     StreamGobbler(@NotNull InputStream stream) {
       super(stream, Charset.defaultCharset(), OPTIONS);
       myBuffer = new StringBuffer();
-      start("stdout/stderr streams of shell env loading process");
+      startWithoutChangingThreadName();
     }
 
     @Override

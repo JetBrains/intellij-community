@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +12,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -241,7 +242,13 @@ final class DummyIconManager implements IconManager {
 
     @Override
     public Icon @NotNull [] getAllIcons() {
-      return icons == null ? new Icon[0] : ContainerUtil.packNullables(icons).toArray(new Icon[0]);
+      List<Icon> list = new ArrayList<>();
+      for (Icon element : icons) {
+        if (element != null) {
+          list.add(element);
+        }
+      }
+      return list.toArray(new Icon[0]);
     }
 
     @Override

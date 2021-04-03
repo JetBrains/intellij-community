@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr
 
 import com.intellij.idea.Main
@@ -12,7 +12,6 @@ import com.intellij.ui.AppUIUtil
 import java.util.*
 
 object Agreements {
-
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
 
@@ -76,7 +75,7 @@ object Agreements {
   }
 
   private fun AgreementUi.applyDataSharing(): AgreementUi {
-    val dataSharingConsent = ConsentOptions.getInstance().consents.first[0]
+    val dataSharingConsent = ConsentOptions.getInstance().consents.key[0]
     this.setText(prepareConsentsHtmlText(dataSharingConsent))
       .setTitle(bundle.getString("dataSharing.dialog.title"))
       .clearBottomPanel()
