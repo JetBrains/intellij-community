@@ -519,7 +519,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
       final boolean isChar = UIUtil.isReallyTypedEvent(e);
-      final boolean hasActionModifiers = e.isAltDown() | e.isControlDown() | e.isMetaDown();
+      final boolean hasActionModifiers = e.isAltDown() || e.isControlDown() || e.isMetaDown();
       final boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 

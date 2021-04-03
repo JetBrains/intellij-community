@@ -223,7 +223,7 @@ public final class GroovyExtractChooser {
     if (statement instanceof GrReturnStatement) return true;
     if (statement instanceof GrIfStatement) {
       boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement)statement), returnStatements);
-      return checked & returnStatements.isEmpty();
+      return checked && returnStatements.isEmpty();
     }
     if (statement instanceof GrExpression) {
       return returnStatements.contains(statement);

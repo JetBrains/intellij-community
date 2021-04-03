@@ -226,7 +226,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof BooleanValue && rightResult instanceof BooleanValue) {
         boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 & v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 && v2);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "&"));
     }
@@ -244,7 +244,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof BooleanValue && rightResult instanceof BooleanValue) {
         boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
-        return DebuggerUtilsEx.createValue(vm, expectedType, v1 | v2);
+        return DebuggerUtilsEx.createValue(vm, expectedType, v1 || v2);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "|"));
     }
@@ -428,5 +428,5 @@ class BinaryExpressionEvaluator implements Evaluator {
     return null;
   }
 
-  
+
 }

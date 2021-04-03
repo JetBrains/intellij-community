@@ -232,11 +232,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         setSelected(myMainPane, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
         setSelected(myButtonPane, isSelected && nextStepButtonSelected, isSelected);
-        myNextStepLabel.setIcon(isSelectable & isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
+        myNextStepLabel.setIcon(isSelectable && isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
         myNextStepButtonSeparator.setVisible(!isSelected);
       }
       else {
-        myNextStepLabel.setIcon(isSelectable & isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
+        myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
       }
     }
     else {

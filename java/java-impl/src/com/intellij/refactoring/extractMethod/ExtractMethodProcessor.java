@@ -610,7 +610,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected void apply(final AbstractExtractDialog dialog) {
     myMethodName = dialog.getChosenMethodName();
     myVariableDatum = dialog.getChosenParameters();
-    myStatic = isStatic() | dialog.isMakeStatic();
+    myStatic = isStatic() || dialog.isMakeStatic();
     myIsChainedConstructor = dialog.isChainedConstructor();
     myMethodVisibility = dialog.getVisibility();
 

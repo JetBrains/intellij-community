@@ -71,15 +71,15 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
 
       .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
 
-      .betweenInside(COMMA, RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES | commonSettings.SPACE_AFTER_COMMA,
+      .betweenInside(COMMA, RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES || commonSettings.SPACE_AFTER_COMMA,
                                                                      pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
       .afterInside(LBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_AFTER_LEFT_BRACE)
       .beforeInside(RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
 
-      .between(COMMA, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES | commonSettings.SPACE_AFTER_COMMA)
+      .between(COMMA, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES || commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
 
-      .between(COMMA, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS | commonSettings.SPACE_AFTER_COMMA)
+      .between(COMMA, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS || commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
 
       .withinPair(FSTRING_FRAGMENT_START, FSTRING_FRAGMENT_END).spaces(0)

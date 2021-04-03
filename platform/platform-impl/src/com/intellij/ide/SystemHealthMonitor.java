@@ -188,7 +188,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkSignalBlocking() {
-    if (SystemInfo.isUnix & JnaLoader.isLoaded()) {
+    if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
       try {
         Memory sa = new Memory(256);
         LibC libC = Native.load("c", LibC.class);
