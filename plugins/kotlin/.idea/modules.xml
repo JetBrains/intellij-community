@@ -834,7 +834,6 @@
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/textmate/intellij.textmate.iml" filepath="$PROJECT_DIR$/intellij/plugins/textmate/intellij.textmate.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/plugins/textmate/core/intellij.textmate.core.iml" filepath="$PROJECT_DIR$/intellij/plugins/textmate/core/intellij.textmate.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/build/dependencies/intellij.tools.dependencies.iml" filepath="$PROJECT_DIR$/intellij/build/dependencies/intellij.tools.dependencies.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" filepath="$PROJECT_DIR$/intellij/build/dependencies/androidSdkUpload/intellij.tools.dependencies.androidSdkUpload.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" filepath="$PROJECT_DIR$/intellij/build/dependencies/gradle-api-deps/intellij.tools.dependencies.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" filepath="$PROJECT_DIR$/intellij/build/dependencies/kotlin-deps/intellij.tools.dependencies.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/intellij/tools/index-tools/intellij.tools.index.iml" filepath="$PROJECT_DIR$/intellij/tools/index-tools/intellij.tools.index.iml" />
