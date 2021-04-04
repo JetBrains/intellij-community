@@ -7,14 +7,14 @@ are probably not what was intended.
 <pre>
   void loopDoesNotLoop(boolean b) {
       while (b) {
-        System.out.println();
-        break;
+          System.out.println();
+          break;
       }
   }
 </pre>
 <!-- tooltip end -->
 <p>
-    Use the checkbox below to disable this inspection if condition can be updated indirectly (e.g. via called method
+  Use the checkbox below to disable this inspection if condition can be updated indirectly (e.g. via called method
   or concurrently from another thread).
 </p>
 

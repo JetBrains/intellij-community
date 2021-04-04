@@ -15,7 +15,7 @@ Use the checkbox below to ignore the infinite loop statements inside <code>Threa
 It may be useful for the daemon threads.
 <p>Example:</p>
 <pre>
-  new Thread(() -> {
+  new Thread(() -&gt; {
     while (true) {
     }
   }).start();

@@ -8,7 +8,7 @@ May happen in the code with raw types as a result of copy-paste.
 
 <p>Example:</p>
 <pre>
-  ArrayList list = new ArrayList<>();
+  ArrayList list = new ArrayList&lt;&gt;();
   list.add(list);
   return list.hashCode(); // throws StackOverflowException
 </pre>

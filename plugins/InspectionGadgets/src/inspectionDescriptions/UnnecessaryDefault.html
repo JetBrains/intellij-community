@@ -13,9 +13,9 @@ Quick fix removes default branch.
   enum E { A, B }
   int foo(E e) {
     return switch (e) {
-      case A -> 1;
-      case B -> 2;
-      default -> 3;
+      case A -&gt; 1;
+      case B -&gt; 2;
+      default -&gt; 3;
     };
   }
 </pre>
@@ -24,8 +24,8 @@ Quick fix removes default branch.
   enum E { A, B }
   int foo(E e) {
     return switch (e) {
-      case A -> 1;
-      case B -> 2;
+      case A -&gt; 1;
+      case B -&gt; 2;
     };
   }
 </pre>

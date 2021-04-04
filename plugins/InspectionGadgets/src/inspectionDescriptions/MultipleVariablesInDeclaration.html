@@ -13,7 +13,7 @@ Some coding standards prohibit such declarations.
 </pre>
 <!-- tooltip end -->
 <p>Use the first checkbox below to ignore multiple variables declared in the initialization of a 'for' loop statement, e.g.:</p>
-<pre><b>for</b> (int i = 0, max = list.size(); i < max; i++) {}</pre>
+<pre><b>for</b> (int i = 0, max = list.size(); i &gt; max; i++) {}</pre>
 <p>Use the second checkbox below to only warn when variables with different array dimensions are declared in a single declaration, e.g.:</p>
 <pre>String s = "", array[];</pre>
 <p><small>New in 2019.2</small></p>

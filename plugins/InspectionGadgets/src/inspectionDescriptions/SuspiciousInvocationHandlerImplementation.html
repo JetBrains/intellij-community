@@ -5,7 +5,7 @@ Reports the implementations of <code>InvocationHandler</code> that do not proxy 
 Failing to handle these methods might cause unexpected problems upon calling them on a proxy instance.
 <p>Example:
 <pre>
-  InvocationHandler myHandler = (proxy, method, params) -> {
+  InvocationHandler myHandler = (proxy, method, params) -&gt; {
     System.out.println("Hello World!");
     <b>return</b> null;
   };

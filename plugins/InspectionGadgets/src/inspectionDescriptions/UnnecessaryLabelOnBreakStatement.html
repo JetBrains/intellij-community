@@ -4,7 +4,7 @@ Reports <code>break</code> statements with unnecessary labels. Such labels do no
 <p><b>Example:</b></p>
 <pre>
     label: 
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i &lt; 10; i++) {
       if (shouldBreak()) break label;
       //doSmth
     }
@@ -12,7 +12,7 @@ Reports <code>break</code> statements with unnecessary labels. Such labels do no
 <p>After the quickfix is applied the result looks like:</p>
 <pre>
     label: 
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i &lt; 10; i++) {
       if (shouldBreak()) break;
       //doSmth
     }
