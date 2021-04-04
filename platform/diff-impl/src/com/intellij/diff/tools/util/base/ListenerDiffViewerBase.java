@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,57 +33,27 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   protected void onInit() {
     super.onInit();
 
-    BulkFileListener fileListener = createFileListener(myRequest);
-    if (fileListener != null) {
+    List<VirtualFile> files = extractVirtualFiles(myRequest);
+    if (!files.isEmpty()) {
       ApplicationManager.getApplication().getMessageBus().connect(this)
-        .subscribe(VirtualFileManager.VFS_CHANGES, fileListener);
+        .subscribe(VirtualFileManager.VFS_CHANGES, new MyBulkFileListener(files));
     }
 
-    DocumentListener documentListener = createDocumentListener();
-    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null);
-    TextDiffViewerUtil.installDocumentListeners(documentListener, documents, this);
+    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> {
+      return content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null;
+    });
+    TextDiffViewerUtil.installDocumentListeners(new MyDocumentListener(), documents, this);
   }
 
   @NotNull
-  protected DocumentListener createDocumentListener() {
-    return new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        onBeforeDocumentChange(event);
-      }
-
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        onDocumentChange(event);
-      }
-    };
-  }
-
-  @Nullable
-  protected BulkFileListener createFileListener(@NotNull ContentDiffRequest request) {
-    final List<VirtualFile> files = new ArrayList<>(0);
+  private static List<VirtualFile> extractVirtualFiles(@NotNull ContentDiffRequest request) {
+    List<VirtualFile> files = new ArrayList<>(0);
     for (DiffContent content : request.getContents()) {
       if (content instanceof FileContent && !(content instanceof DocumentContent)) {
         files.add(((FileContent)content).getFile());
       }
     }
-
-    if (files.isEmpty()) return null;
-
-    return new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent ||
-              event instanceof VFilePropertyChangeEvent) {
-            VirtualFile file = Objects.requireNonNull(event.getFile());
-            if (files.contains(file)) {
-              onFileChange(file);
-            }
-          }
-        }
-      }
-    };
+    return files;
   }
 
   //
@@ -103,5 +72,39 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   @RequiresEdt
   protected void onFileChange(@NotNull VirtualFile file) {
     scheduleRediff();
+  }
+
+
+  private class MyDocumentListener implements DocumentListener {
+    @Override
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
+      onBeforeDocumentChange(event);
+    }
+
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event) {
+      onDocumentChange(event);
+    }
+  }
+
+  private class MyBulkFileListener implements BulkFileListener {
+    private final List<VirtualFile> myFiles;
+
+    MyBulkFileListener(@NotNull List<VirtualFile> files) {
+      myFiles = files;
+    }
+
+    @Override
+    public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+      for (VFileEvent event : events) {
+        if (event instanceof VFileContentChangeEvent ||
+            event instanceof VFilePropertyChangeEvent) {
+          VirtualFile file = Objects.requireNonNull(event.getFile());
+          if (myFiles.contains(file)) {
+            onFileChange(file);
+          }
+        }
+      }
+    }
   }
 }
