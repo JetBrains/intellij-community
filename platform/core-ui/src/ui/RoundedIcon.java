@@ -8,6 +8,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBScalableIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
@@ -23,14 +26,18 @@ import java.util.Objects;
 public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, IconWithToolTip {
   private final Icon mySourceIcon;
   private final double myArcRatio;
+  private final boolean mySuperEllipse;
+  private Shape myLastShape = null;
+  private int myLastShapeHash = 0;
 
-  public RoundedIcon(@NotNull Image source, double arcRatio) {
-    this(IconUtil.createImageIcon(source), arcRatio);
+  public RoundedIcon(@NotNull Image source, double arcRatio, boolean superEllipse) {
+    this(IconUtil.createImageIcon(source), arcRatio, superEllipse);
   }
 
-  public RoundedIcon(@NotNull Icon source, double arcRatio) {
+  public RoundedIcon(@NotNull Icon source, double arcRatio, boolean superEllipse) {
     mySourceIcon = source;
     myArcRatio = MathUtil.clamp(arcRatio, 0, 1);
+    mySuperEllipse = superEllipse;
   }
 
   @Override
@@ -42,7 +49,7 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
 
   @Override
   public @NotNull Icon getDarkIcon(boolean isDark) {
-    return new RoundedIcon(IconLoader.getDarkIcon(mySourceIcon, isDark), myArcRatio);
+    return new RoundedIcon(IconLoader.getDarkIcon(mySourceIcon, isDark), myArcRatio, mySuperEllipse);
   }
 
   @Override
@@ -63,11 +70,60 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
       transform.concatenate(AffineTransform.getTranslateInstance(x * scale, y * scale));
       g.setTransform(transform);
       g.setPaint(new TexturePaint(bufferedImage, new Rectangle(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight())));
-      double actualArc = myArcRatio * Math.min(width, height) * scale;
-      g.fill(new RoundRectangle2D.Double(0, 0, getIconWidth() * scale, getIconHeight()* scale, actualArc, actualArc));
+      int hash = Objects.hash(x, y, getIconWidth(), getIconHeight(), scale, myArcRatio);
+      if (myLastShapeHash != hash) {
+        if (mySuperEllipse) {
+          myLastShape = getSuperEllipse(0, 0, getIconWidth() * scale, getIconHeight() * scale, myArcRatio);
+        } else {
+          double actualArc = myArcRatio * Math.min(width, height) * scale;
+          myLastShape = new RoundRectangle2D.Double(0, 0, getIconWidth() * scale, getIconHeight() * scale, actualArc, actualArc);
+        }
+        myLastShapeHash = hash;
+      }
+      g.fill(myLastShape);
+      if (mySuperEllipse) {
+        printDebugMessage(g, x, y, "n=" + String.format("%.2f", getPower(myArcRatio)), scale);
+      }
     } finally {
       g.dispose();
     }
+  }
+
+  private void printDebugMessage(Graphics2D g, int x, int y, String s, double scale) {
+    g.setFont(JBUI.Fonts.label().biggerOn(20));
+    Rectangle2D bounds = g.getFontMetrics().getStringBounds(s, g);
+    g.setColor(Color.WHITE);
+    float xx = (float)(getIconWidth() - bounds.getWidth()) / 2;
+    float yy = (float)(getIconHeight() - bounds.getHeight());
+    for (int dx = -1; dx<=1; dx++) {
+      for (int dy = -1; dy<=1; dy++) {
+        g.drawString(s, x + (float)scale * xx + dx, y + (float)scale * yy + dy);
+      }
+    }
+    g.setColor(Color.BLACK);
+    g.drawString(s, x + (float)scale * xx, y + (float)scale * yy);
+  }
+
+  private static Shape getSuperEllipse(double x, double y, double width, double height, double arcRatio) {
+    GeneralPath path = new GeneralPath();
+    path.moveTo(1, 0);
+    double step = Math.PI / 36;
+    double n = getPower(arcRatio);
+    for (double theta = step; theta <= 2 * Math.PI; theta += step) {
+      path.lineTo(
+        Math.pow(Math.abs(Math.cos(theta)), 2d/n) * Math.signum(Math.cos(theta)),
+        Math.pow(Math.abs(Math.sin(theta)), 2d/n) * Math.signum(Math.sin(theta)));
+    }
+    path.lineTo(1, 0);
+    path.closePath();
+    AffineTransform transform = AffineTransform.getScaleInstance(width /2 , height / 2);
+    transform.preConcatenate(AffineTransform.getTranslateInstance(x + width/2, y + height/2));
+    path.transform(transform);
+    return path;
+  }
+
+  private static double getPower(double arcRatio) {
+    return 100d - 98d * Math.pow(arcRatio, .1);//1->2, 0->100
   }
 
   @Override

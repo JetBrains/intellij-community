@@ -35,6 +35,7 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         horizontalTextPosition = SwingConstants.LEFT
       }
       private val iconChooser = JCheckBox("Splash", true).apply { isOpaque = false }
+      private val formChooser = JCheckBox("Superellipse", true).apply { isOpaque = false }
       val slider = JSlider(0, 100).apply {
         value = 33
         paintLabels = true
@@ -76,13 +77,18 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
             }
           }
         }.apply { border = createDefaultBorder() }
-        iconChooser.addActionListener(ActionListener {
+        val actionListener = ActionListener {
           updateIcon()
-        })
+        }
+        iconChooser.addActionListener(actionListener)
+        formChooser.addActionListener(actionListener)
 
         panel.add(myLabel, CENTER);
         val southPanel = NonOpaquePanel(BorderLayout())
-        southPanel.add(iconChooser, WEST)
+        val chooserPanel = NonOpaquePanel(GridLayout(2, 1))
+        chooserPanel.add(iconChooser);
+        chooserPanel.add(formChooser);
+        southPanel.add(chooserPanel, WEST)
         southPanel.add(slider, CENTER)
         panel.add(southPanel, SOUTH)
         return panel
@@ -90,7 +96,8 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
 
       fun updateIcon() {
         myLabel.icon = RoundedIcon(if (iconChooser.isSelected) splashIcon!! else generatedIcon!!,
-                                                                      (slider.value * 0.01))
+                                   (slider.value * 0.01),
+                                   formChooser.isSelected)
       }
 
       override fun createActions() = emptyArray<Action>()
@@ -115,6 +122,8 @@ class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
         val r = Math.random() * Math.min(width, height) / Math.PI
         g.fill(Ellipse2D.Double(Math.random() * width, Math.random() * height, r, r))
       }
+      g.color = Color(0, 0, 0, 85) //mark center of a picture
+      g.fill(Ellipse2D.Double((width/2 - 2).toDouble(), (height/2 - 2).toDouble(), 4.toDouble(), 4.toDouble()))
     }
     finally {
       g.dispose()
