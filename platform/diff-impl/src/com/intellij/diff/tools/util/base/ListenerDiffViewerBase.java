@@ -20,9 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   public ListenerDiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -49,7 +47,8 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   private static List<VirtualFile> extractVirtualFiles(@NotNull ContentDiffRequest request) {
     List<VirtualFile> files = new ArrayList<>(0);
     for (DiffContent content : request.getContents()) {
-      if (content instanceof FileContent && !(content instanceof DocumentContent)) {
+      if (content instanceof DocumentContent) continue; // handled by DocumentListener
+      if (content instanceof FileContent) {
         files.add(((FileContent)content).getFile());
       }
     }
@@ -96,14 +95,19 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+      Set<VirtualFile> toRefresh = new HashSet<>();
       for (VFileEvent event : events) {
         if (event instanceof VFileContentChangeEvent ||
             event instanceof VFilePropertyChangeEvent) {
           VirtualFile file = Objects.requireNonNull(event.getFile());
           if (myFiles.contains(file)) {
-            onFileChange(file);
+            toRefresh.add(file);
           }
         }
+      }
+
+      for (VirtualFile file : toRefresh) {
+        onFileChange(file);
       }
     }
   }
