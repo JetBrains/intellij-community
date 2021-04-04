@@ -148,7 +148,6 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
     private @Nullable MyFontItem mySelectedItem;
     private final MySeparatorItem myMonospacedSeparatorItem;
     private final MySeparatorItem myProportionalSeparatorItem;
-    private @Nullable MyWarningItem myWarningItem;
 
     private MyModel(boolean withNoneItem) {
       myMonospacedFamilies.addAll(Arrays.asList(KNOWN_MONOSPACED_FAMILIES));
@@ -180,7 +179,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
       else if (anItem instanceof String) {
         mySelectedItem = ContainerUtil.find(myItems, item -> item.isSelectable() && item.myFamilyName.equals(anItem));
         if (mySelectedItem == null) {
-          myWarningItem = new MyWarningItem((String)anItem);
+          mySelectedItem = new MyWarningItem((String)anItem);
         }
       }
       else if (anItem instanceof MySeparatorItem) {
@@ -194,7 +193,7 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
     @Override
     public @Nullable MyFontItem getSelectedItem() {
-      return mySelectedItem == null && myNoFontItem == null ? myWarningItem : mySelectedItem;
+      return mySelectedItem;
     }
 
     @Override
