@@ -29,6 +29,14 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
   private final boolean mySuperEllipse;
   private Shape myLastShape = null;
   private int myLastShapeHash = 0;
+  
+  public RoundedIcon(@NotNull Image source, double arcRatio) {
+    this(source, arcRatio, false);
+  }
+
+  public RoundedIcon(@NotNull Icon source, double arcRatio) {
+    this(source, arcRatio, false);
+  }
 
   public RoundedIcon(@NotNull Image source, double arcRatio, boolean superEllipse) {
     this(IconUtil.createImageIcon(source), arcRatio, superEllipse);
