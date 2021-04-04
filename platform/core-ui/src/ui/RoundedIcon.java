@@ -29,7 +29,7 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
   private final boolean mySuperEllipse;
   private Shape myLastShape = null;
   private int myLastShapeHash = 0;
-  
+
   public RoundedIcon(@NotNull Image source, double arcRatio) {
     this(source, arcRatio, false);
   }
@@ -89,7 +89,7 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
         myLastShapeHash = hash;
       }
       g.fill(myLastShape);
-      if (mySuperEllipse) {
+      if (mySuperEllipse && Boolean.getBoolean("idea.debug.mode")) {
         printDebugMessage(g, x, y, "n=" + String.format("%.2f", getPower(myArcRatio)), scale);
       }
     } finally {
