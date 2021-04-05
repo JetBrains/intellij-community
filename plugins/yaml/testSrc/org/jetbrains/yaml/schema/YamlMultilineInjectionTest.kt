@@ -154,6 +154,48 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |""".trimMargin())
   }
   
+  fun testBlockInjectionStrip() {
+    myFixture.configureByText("test.yaml", """
+        X: |-
+          <html>
+          <body>hello world</body>
+          </html<caret>>
+          
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val fe = myInjectionFixture.openInFragmentEditor()
+    TestCase.assertEquals("""
+      |<html>
+      |<body>hello world</body>
+      |</html>""".trimMargin(), fe.file.text)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |""".trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |-
+          <html>
+          <body>hello world</body>
+          </html>
+          
+          
+    """.trimIndent())
+    fe.performEditorAction(IdeActions.ACTION_SELECT_ALL)
+    fe.performEditorAction(IdeActions.ACTION_DELETE)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", "", fe.file.text)
+    myFixture.checkResult("""
+        |X: |-
+        |  
+        |  """.trimMargin())
+    
+  }
+  
   
   fun testPutEnterInTheEnd() {
     myFixture.configureByText("test.yaml", """
@@ -178,11 +220,83 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |</html>
       |
       |""".trimMargin(), fe.file.text)
-    assertEquals("literal text should be", """
+    myFixture.checkResult("""
+        X: |
+          <html>
+          <body>hello world</body>
+          </html>
+          
+          
+    """.trimIndent())
+
+    fe.type("footer")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
       |<html>
       |<body>hello world</body>
       |</html>
-      |""".trimMargin(), literalTextAtTheCaret)
+      |footer
+      |""".trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |
+          <html>
+          <body>hello world</body>
+          </html>
+          footer
+          
+          
+    """.trimIndent())
+  }
+  
+  fun testPutEnterInTheEndWithBlankLine() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html>
+          <body>hello world</body>
+          </html<caret>>
+          
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    TestCase.assertTrue("editor should survive adding enter to the end", quickEditHandler.isValid)
+    assertEquals("fragment editor should be", """
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |
+      |""".trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |
+          <html>
+          <body>hello world</body>
+          </html>
+          
+          
+    """.trimIndent())
+
+    fe.type("footer")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", """
+      |<html>
+      |<body>hello world</body>
+      |</html>
+      |
+      |footer""".trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |
+          <html>
+          <body>hello world</body>
+          </html>
+          
+          footer          
+    """.trimIndent())
   }
   
   private fun assertInjectedAndLiteralValue(expectedText: String) {
