@@ -52,7 +52,7 @@ fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
 
 fun PsiClass.classIdIfNonLocal(): ClassId? {
     if (this is KtLightClass) {
-        return this.kotlinOrigin?.classIdIfNonLocal()
+        return this.kotlinOrigin?.getClassId()
     }
     val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
     val packageFqName = FqName(packageName)
