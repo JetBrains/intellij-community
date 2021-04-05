@@ -293,7 +293,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
-    Dimension size = getSize();
+    Dimension size = getRootPane().getSize();
     if (ToolWindowAnchor.TOP == anchor) {
       verticalSplitter.setFirstComponent(component);
       verticalSplitter.setFirstSize((int)(size.getHeight() * weight));
