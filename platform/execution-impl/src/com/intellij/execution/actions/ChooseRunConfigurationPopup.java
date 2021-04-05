@@ -765,11 +765,17 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     protected ListCellRenderer<?> getListElementRenderer() {
       return new PopupListElementRenderer<>(this){
         @Override
-        protected JComponent createIconBar(JList<?> list, Object value, boolean selected) {
+        protected JComponent createIconBar() {
           JPanel res = new JPanel(new GridBagLayout());
           res.setOpaque(false);
           res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
 
+          return res;
+        }
+
+        @Override
+        protected void customizeComponent(JList<?> list, Object value, boolean isSelected) {
+          super.customizeComponent(list, value, isSelected);
           GridBag gbc = new GridBag()
             .setDefaultAnchor(GridBagConstraints.CENTER)
             .setDefaultWeightX(1)
@@ -777,12 +783,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
             .setDefaultFill(GridBagConstraints.BOTH);
 
           if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
-            res.add(myMnemonicLabel, gbc.next().weightx(0));
-            res.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.mnemonicIconGap()), gbc.next());
+            myIconBar.add(myMnemonicLabel, gbc.next().weightx(0));
+            myIconBar.add(Box.createHorizontalStrut(JBUI.CurrentTheme.ActionsList.mnemonicIconGap()), gbc.next());
           }
-          res.add(myIconLabel, gbc.next());
-
-          return res;
+          myIconBar.add(myIconLabel, gbc.next());
         }
       };
     }

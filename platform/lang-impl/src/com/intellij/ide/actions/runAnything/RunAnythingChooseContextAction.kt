@@ -152,14 +152,21 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
         private lateinit var myInfoLabel: JLabel
 
         override fun createItemComponent(): JComponent {
+          myIconLabel = JLabel()
           myTextLabel = ErrorLabel()
           myInfoLabel = JLabel()
           myTextLabel.border = JBUI.Borders.emptyRight(10)
+
+          myIconBar = createIconBar()
 
           val textPanel = JPanel(BorderLayout())
           textPanel.add(myTextLabel, BorderLayout.WEST)
           textPanel.add(myInfoLabel, BorderLayout.CENTER)
           return layoutComponent(textPanel)
+        }
+
+        override fun createIconBar(): JComponent {
+          return myIconLabel
         }
 
         override fun customizeComponent(list: JList<out PopupFactoryImpl.ActionItem>,

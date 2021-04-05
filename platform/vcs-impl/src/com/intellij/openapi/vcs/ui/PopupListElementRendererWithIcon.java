@@ -48,7 +48,7 @@ public class PopupListElementRendererWithIcon extends PopupListElementRenderer<O
   }
 
   @Override
-  protected @Nullable JComponent createIconBar(JList<?> list, Object value, boolean selected) {
+  protected @Nullable JComponent createIconBar() {
     return myIconLabel;
   }
 
