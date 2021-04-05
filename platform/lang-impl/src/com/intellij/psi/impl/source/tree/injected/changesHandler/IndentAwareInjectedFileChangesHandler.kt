@@ -44,12 +44,8 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
 
   }
 
-  private fun logMarkers(title: String) {
-    LOG.debug { "logMarkers('$title'):${markers.size}\n" + markers.joinToString("\n", transform = ::markerString) }
-  }
-
   override fun commitToOriginal(e: DocumentEvent) {
-    logMarkers("at beginning")
+    LOG.logMarkers("at beginning")
     val psiDocumentManager = PsiDocumentManager.getInstance(myProject)
     val hostPsiFile = psiDocumentManager.getPsiFile(myHostDocument) ?: failAndReport("no psiFile $myHostDocument", e)
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
@@ -109,7 +105,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
     }
 
     workingRange = workingRange ?: failAndReport("no workingRange", e)
-    logMarkers("before commit")
+    LOG.logMarkers("before commit")
     psiDocumentManager.commitDocument(myHostDocument)
 
     if (distributeTextToMarkers.none { (marker, text) -> marker.isValid() && text.isNotEmpty() }) {
@@ -120,9 +116,9 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       }
     }
 
-    logMarkers("after reformat")
+    LOG.logMarkers("after reformat")
     rebuildMarkers(workingRange)
-    logMarkers("after rebuild")
+    LOG.logMarkers("after rebuild")
     updateFileContextElementIfNeeded(hostPsiFile, workingRange)
   }
 

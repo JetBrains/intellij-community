@@ -163,11 +163,11 @@ open class CommonInjectedFileChangesHandler(
   protected fun fragmentMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker {
     if (!shred.innerRange.run { 0 <= startOffset && startOffset <= endOffset && endOffset <= myFragmentDocument.textLength }) {
       LOG.error("fragment and host diverged: startOffset = ${shred.innerRange.startOffset}," +
-               " endOffset = ${shred.innerRange.endOffset}," +
-               " textLength = ${myFragmentDocument.textLength}",
-               Attachment("host", shred.host?.text ?: "<null>"),
-               Attachment("fragment document", this.myFragmentDocument.text)
-        )
+                " endOffset = ${shred.innerRange.endOffset}," +
+                " textLength = ${myFragmentDocument.textLength}",
+                Attachment("host", shred.host?.text?.esclbr() ?: "<null>"),
+                Attachment("fragment document", this.myFragmentDocument.text.esclbr())
+      )
     }
     return myFragmentDocument.createRangeMarker(shred.innerRange)
   }
@@ -182,9 +182,9 @@ open class CommonInjectedFileChangesHandler(
                                     " myInjectedFile.isValid = ${myInjectedFile.isValid}, isValid = $isValid",
                                     *listOfNotNull(
                                       Attachment("hosts", markers.mapNotNullTo(LinkedHashSet()) { it.host }
-                                        .joinToString("\n\n") { it.text ?: "<null>" }),
+                                        .joinToString("\n\n") { it.text.esclbr() ?: "<null>" }),
                                       Attachment("markers", markers.logMarkersRanges()),
-                                      Attachment("fragment document", this.myFragmentDocument.text),
+                                      Attachment("fragment document", this.myFragmentDocument.text.esclbr()),
                                       exception?.let { Attachment("exception", it) }
                                     ).toTypedArray()
     )
@@ -200,6 +200,10 @@ open class CommonInjectedFileChangesHandler(
         e.toString()
       }
     }'".esclbr()
+
+  protected fun Logger.logMarkers(title: String) {
+    this.debug { "logMarkers('$title'):${markers.size}\n" + markers.joinToString("\n", transform = ::markerString) }
+  }
 
   protected fun markerString(m: MarkersMapping): String {
     val (hostMarker, fragmentMarker, _) = m
