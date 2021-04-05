@@ -8,10 +8,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.DiffPreview
-import com.intellij.openapi.vcs.changes.DiffPreviewProvider
-import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
@@ -96,6 +93,8 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
 abstract class EditorDiffPreview(private val project: Project,
                                  private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
+  private val previewFile by lazy { PreviewDiffVirtualFile(this) }
+
   protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
@@ -115,7 +114,7 @@ abstract class EditorDiffPreview(private val project: Project,
       toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(getOwnerComponent(), true) }, false)
     }
 
-    val editors = EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(this), focusEditor)
+    val editors = EditorTabPreview.openPreview(project, previewFile, focusEditor)
     for (editor in editors) {
       EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
     }
@@ -142,7 +141,11 @@ class VcsLogEditorDiffPreview(project: Project, private val mainFrame: MainFrame
   }
 
   override fun getEditorTabName(): @Nls String {
-    return VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name")
+    val changesBrowser = mainFrame.changesBrowser
+    val change = changesBrowser.selectedChanges.firstOrNull() ?: changesBrowser.directChanges.firstOrNull()
+
+    return if (change == null) VcsLogBundle.message("vcs.log.diff.preview.editor.empty.tab.name")
+    else VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name", ChangesUtil.getFilePath(change).name)
   }
 
   override fun getOwnerComponent(): JComponent = mainFrame.changesBrowser.preferredFocusedComponent
