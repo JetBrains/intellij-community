@@ -50,7 +50,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
 
   public boolean isInUpdatingMode() {
     return myMap.values().stream()
-      .anyMatch(holder -> holder instanceof VcsIgnoredFilesHolder && ((VcsIgnoredFilesHolder)holder).isInUpdatingMode());
+      .anyMatch(holder -> holder instanceof VcsManagedFilesHolder && ((VcsManagedFilesHolder)holder).isInUpdatingMode());
   }
 
   public boolean containsFile(@NotNull FilePath file) {
@@ -82,7 +82,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
 
   @NotNull
   private static FilePathHolder getHolderForVcs(@NotNull Project project, AbstractVcs vcs) {
-    VcsIgnoredFilesHolder.Provider provider = VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP
+    VcsManagedFilesHolder.Provider provider = VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP
       .findFirstSafe(project, ep -> ep.getVcs().equals(vcs));
     if (provider != null) {
       return provider.createHolder();

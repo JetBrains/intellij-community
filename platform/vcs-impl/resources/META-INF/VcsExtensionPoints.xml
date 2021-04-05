@@ -95,7 +95,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="vcs.ignoredFilesHolder"
-                    interface="com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder$Provider"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 

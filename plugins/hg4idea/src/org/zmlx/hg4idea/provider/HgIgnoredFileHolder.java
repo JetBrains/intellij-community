@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
 import com.intellij.openapi.vcs.changes.FileHolder;
-import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder;
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -35,7 +35,7 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
     return new HgIgnoredFileHolder(myProject, myManager); // re-scan roots on refresh
   }
 
-  public static class Provider implements VcsIgnoredFilesHolder.Provider, ChangesViewRefresher {
+  public static class Provider implements VcsManagedFilesHolder.Provider, ChangesViewRefresher {
     private final Project myProject;
     private final HgVcs myVcs;
     private final HgRepositoryManager myManager;
@@ -54,7 +54,7 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
 
     @NotNull
     @Override
-    public VcsIgnoredFilesHolder createHolder() {
+    public VcsManagedFilesHolder createHolder() {
       return new HgIgnoredFileHolder(myProject, myManager);
     }
 

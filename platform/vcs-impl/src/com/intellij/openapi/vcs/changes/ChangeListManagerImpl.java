@@ -26,10 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -154,7 +150,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       }
     });
 
-    VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
+    VcsManagedFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, this);
     VcsEP.EP_NAME.addChangeListener(() -> {

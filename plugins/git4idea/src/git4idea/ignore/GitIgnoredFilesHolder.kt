@@ -3,7 +3,7 @@ package git4idea.ignore
 
 import com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import git4idea.GitVcs
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -14,7 +14,7 @@ class GitIgnoredFilesHolder(val manager: GitRepositoryManager)
 
   override fun copy() = GitIgnoredFilesHolder(manager)
 
-  class Provider(project: Project) : VcsIgnoredFilesHolder.Provider {
+  class Provider(project: Project) : VcsManagedFilesHolder.Provider {
     private val gitVcs = GitVcs.getInstance(project)
     private val manager = GitRepositoryManager.getInstance(project)
 

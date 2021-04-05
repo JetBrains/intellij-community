@@ -5,12 +5,12 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
-) : VcsIgnoredFilesHolder {
+) : VcsManagedFilesHolder {
 
   private val allHolders get() = repositoryManager.repositories.asSequence().map { getHolder(it) }
 

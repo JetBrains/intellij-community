@@ -19,7 +19,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
-public interface VcsIgnoredFilesHolder extends FilePathHolder {
+public interface VcsManagedFilesHolder extends FilePathHolder {
   ProjectExtensionPointName<Provider> VCS_IGNORED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.ignoredFilesHolder");
 
   default boolean isInUpdatingMode() {return false;}
@@ -29,6 +29,6 @@ public interface VcsIgnoredFilesHolder extends FilePathHolder {
     AbstractVcs getVcs();
 
     @NotNull
-    VcsIgnoredFilesHolder createHolder();
+    VcsManagedFilesHolder createHolder();
   }
 }
