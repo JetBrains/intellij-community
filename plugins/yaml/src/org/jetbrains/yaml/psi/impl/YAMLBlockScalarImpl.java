@@ -1,5 +1,6 @@
 package org.jetbrains.yaml.psi.impl;
 
+import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +18,7 @@ import org.jetbrains.yaml.psi.YAMLBlockScalar;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAMLBlockScalar {
   protected static final int DEFAULT_CONTENT_INDENT = 2;
@@ -107,6 +109,19 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
 
     return lastNonEmpty == -1 ? Collections.emptyList() : result.subList(0, lastNonEmpty + 1);
   }
+
+  protected int getFragmentEndOfLines(Set<QuickEditHandler> fragmentEditors) {
+    if (fragmentEditors.isEmpty()) return -1;
+    QuickEditHandler fe = ContainerUtil.getFirstItem(fragmentEditors);
+
+    CharSequence cs = fe.getFragmentDocument().getImmutableCharSequence();
+    int i = 0;
+    for (; i < cs.length(); i++) {
+      if (cs.charAt(cs.length() - i - 1) != '\n') break;
+    }
+    return i;
+  }
+  
 
   @Override
   public boolean hasExplicitIndent() {

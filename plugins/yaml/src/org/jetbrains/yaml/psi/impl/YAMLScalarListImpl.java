@@ -1,5 +1,6 @@
 package org.jetbrains.yaml.psi.impl;
 
+import com.intellij.codeInsight.intention.impl.QuickEditHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
@@ -19,6 +21,7 @@ import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author oleg
@@ -55,9 +58,17 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
   protected boolean shouldIncludeEolInRange(ASTNode child) {
     if (getChompingIndicator() == ChompingIndicator.KEEP) return true;
     
-    if (isEol(child) && isEolOrNull(child.getTreeNext())) {
+    int feen = getFragmentEndOfLines(QuickEditHandler.getFragmentEditors(this));
+    
+    long endingEndls = StreamEx.iterate(child.getTreeNext(), it -> it.getTreeNext())
+      .takeWhile(Objects::nonNull)
+      .takeWhile(it -> isEolOrNull(it)).count();
+    
+    if (feen == -1 && isEol(child) && isEolOrNull(child.getTreeNext())) {
       return false;
     }
+    if(feen != -1 && endingEndls < feen) return true;
+    
     ASTNode next = TreeUtil.findSibling(child.getTreeNext(), NON_SPACE_VALUES);
     if (isEol(next) && isEolOrNull(TreeUtil.findSibling(next.getTreeNext(), NON_SPACE_VALUES)) && getChompingIndicator() == ChompingIndicator.STRIP) {
       return false;

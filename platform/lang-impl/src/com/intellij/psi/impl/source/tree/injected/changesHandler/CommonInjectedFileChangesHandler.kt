@@ -152,6 +152,7 @@ open class CommonInjectedFileChangesHandler(
                     "; original text: " + currentHost.text +
                     "; updated range in host: " + localInsideHost +
                     "; decoded text to replace: " + decodedText.esclbr(), e)
+    LOG.debug { "updated host: '${updatedHost.text?.esclbr()}'" }
     return updatedHost
   }
 

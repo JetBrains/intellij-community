@@ -244,7 +244,6 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           </html>
           footer
           
-          
     """.trimIndent())
   }
   
@@ -255,6 +254,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           <body>hello world</body>
           </html<caret>>
           
+        Y: 12
     """.trimIndent())
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
@@ -279,6 +279,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           </html>
           
           
+        Y: 12
     """.trimIndent())
 
     fe.type("footer")
@@ -295,7 +296,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
           <body>hello world</body>
           </html>
           
-          footer          
+          footer
+        Y: 12
     """.trimIndent())
   }
   
