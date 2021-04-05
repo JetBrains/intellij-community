@@ -221,24 +221,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
       val mutableChildren = children.toMutableSet()
 
       val addedChildrenSet = addedChildrenMap[connectionId] ?: emptySet()
-      for (addedChild in addedChildrenSet) {
-        if (diffLog[addedChild] is ChangeEntry.AddEntity<*>) {
-          val possibleNewChildId = replaceMap[addedChild]
-          if (possibleNewChildId != null) {
-            mutableChildren += possibleNewChildId
-          }
-          else {
-            val bookedChildId = target.entitiesByType.book(addedChild.clazz)
-            replaceMap[addedChild] = bookedChildId
-            mutableChildren += bookedChildId
-          }
-        }
-        else {
-          if (target.entityDataById(addedChild) != null) {
-            mutableChildren += addedChild
-          }
-        }
-      }
+      val updatedAddedChildren = addedChildrenSet.mapNotNull { childrenMapper(it) }
+      mutableChildren.addAll(updatedAddedChildren)
 
       val removedChildrenSet = removedChildrenMap[connectionId] ?: emptySet()
       for (removedChild in removedChildrenSet) {
@@ -260,26 +244,30 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       val mutableChildren = children.toMutableSet()
 
-      for (child in children) {
-        if (diffLog[child] is ChangeEntry.AddEntity<*>) {
-          val possibleNewChildId = replaceMap[child]
-          if (possibleNewChildId != null) {
-            mutableChildren += possibleNewChildId
-          }
-          else {
-            val bookedChildId = target.entitiesByType.book(child.clazz)
-            replaceMap[child] = bookedChildId
-            mutableChildren += bookedChildId
-          }
-        }
-        else {
-          if (target.entityDataById(child) != null) {
-            mutableChildren += child
-          }
-        }
-      }
+      val updatedChildren = children.mapNotNull { childrenMapper(it) }
+      mutableChildren.addAll(updatedChildren)
 
       target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
+    }
+  }
+
+  private fun childrenMapper(child: EntityId): EntityId? {
+    return if (diffLog[child] is ChangeEntry.AddEntity<*>) {
+      val possibleNewChildId = replaceMap[child]
+      if (possibleNewChildId != null) {
+        possibleNewChildId
+      }
+      else {
+        val bookedChildId = target.entitiesByType.book(child.clazz)
+        replaceMap[child] = bookedChildId
+        bookedChildId
+      }
+    }
+    else {
+      if (target.entityDataById(child) != null) {
+        child
+      }
+      else null
     }
   }
 
