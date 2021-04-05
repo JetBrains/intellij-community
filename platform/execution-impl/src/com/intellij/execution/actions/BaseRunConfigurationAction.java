@@ -45,12 +45,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return e != null ? getChildren(e.getDataContext()) : EMPTY_ARRAY;
+    return e != null ? getChildren(e.getDataContext(), e.getPlace()) : EMPTY_ARRAY;
   }
 
-  private AnAction[] getChildren(DataContext dataContext) {
+  private AnAction[] getChildren(DataContext dataContext, @Nullable String place) {
     if (dataContext.getData(ExecutorAction.getOrderKey()) != null) return EMPTY_ARRAY;
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext); //!!! to rule???
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, place); //!!! to rule???
     if (!Registry.is("suggest.all.run.configurations.from.context") && findExisting(context) != null) {
       return EMPTY_ARRAY;
     }
@@ -116,7 +116,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
       return false;
     }
 
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null) {
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
@@ -129,7 +129,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
@@ -227,7 +227,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   protected void fullUpdate(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, event.getPlace());
     final Presentation presentation = event.getPresentation();
     final RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;

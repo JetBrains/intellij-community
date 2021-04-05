@@ -18,6 +18,7 @@ package com.intellij.java.execution.actions;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -41,7 +42,7 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
     dataContext.put(CommonDataKeys.EDITOR, myFixture.getEditor());
     dataContext.put(CommonDataKeys.PSI_FILE, myFixture.getFile());
 
-    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
     //noinspection unchecked
     return settings != null ? (T)settings.getConfiguration() : null;

@@ -42,7 +42,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
     if (file == null) return;
     final Project project = e.getProject();
     if (project == null) return;
-    final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+    final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace());
     final ConfigurationFromContext fromContext =
       RunConfigurationProducer.getInstance(PythonRunConfigurationProducer.class).createConfigurationFromContext(context);
     if (fromContext == null) return;

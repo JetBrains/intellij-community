@@ -1039,7 +1039,7 @@ public final class PlatformTestUtil {
     final Location<PsiElement> location = PsiLocation.fromPsiElement(element);
     dataContext.put(Location.DATA_KEY, location);
 
-    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final ConfigurationFromContext configuration = producer.createConfigurationFromContext(cc);
     return configuration != null ? configuration.getConfiguration() : null;

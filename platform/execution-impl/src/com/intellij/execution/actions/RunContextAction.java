@@ -6,6 +6,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -52,6 +53,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setTemporaryConfiguration(configuration);
     }
     else if (configuration != findExisting(context)) {
+      RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
       runManager.setTemporaryConfiguration(configuration);
     }
     if (Registry.is("select.run.configuration.from.context")) {

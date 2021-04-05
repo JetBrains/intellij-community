@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -58,12 +59,23 @@ public class ConfigurationContext {
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
   private final DataContext myDataContext;
+  private final String myPlace;
 
   private List<RuntimeConfigurationProducer> myPreferredProducers;
   private List<ConfigurationFromContext> myConfigurationsFromContext;
 
+
+  /**
+   * @deprecated use {@link this#getFromContext(DataContext dataContext, String place)}
+   */
   @NotNull
+  @Deprecated
   public static ConfigurationContext getFromContext(DataContext dataContext) {
+    return getFromContext(dataContext, ActionPlaces.UNKNOWN);
+  }
+
+  @NotNull
+  public static ConfigurationContext getFromContext(DataContext dataContext, String place) {
     DataManager dataManager = DataManager.getInstance();
     ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
     Pair<Location<PsiElement>, Boolean> calculatedLocation = null;
@@ -76,7 +88,7 @@ public class ConfigurationContext {
         module = LangDataKeys.MODULE.getData(dataContext);
         calculatedLocation = calcLocation(dataContext, module);
       }
-      sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond());
+      sharedContext = new ConfigurationContext(dataContext, calculatedLocation.getFirst(), module, calculatedLocation.getSecond(), place);
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }
     return sharedContext;
@@ -87,7 +99,7 @@ public class ConfigurationContext {
     return new ConfigurationContext(location);
   }
 
-  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection) {
+  private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection, String place) {
     RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
     if (configuration == null) {
       ExecutionEnvironment environment = dataContext.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
@@ -104,6 +116,7 @@ public class ConfigurationContext {
     myModule = module;
     myLocation = location;
     myMultipleSelection = multipleSelection;
+    myPlace = place;
   }
 
   @NotNull
@@ -140,6 +153,7 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myDataContext = this::getDefaultData;
+    myPlace = null;
   }
 
   private ConfigurationContext(@NotNull Location location) {
@@ -148,6 +162,7 @@ public class ConfigurationContext {
     myModule = location.getModule();
     myRuntimeConfiguration = null;
     myDataContext = this::getDefaultData;
+    myPlace = null;
   }
 
   private Object getDefaultData(String dataId) {
@@ -200,6 +215,13 @@ public class ConfigurationContext {
   public Location getLocation() {
     return myLocation;
   }
+
+  /**
+   * Returns the place for action which created this context.
+   * @return the place for action which created this context.
+   */
+  @Nullable
+  public String getPlace() { return myPlace; }
 
   /**
    * Returns the PSI element at caret for this context.

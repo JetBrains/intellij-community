@@ -52,7 +52,7 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
                          @NotNull TaskData taskData,
                          @NotNull AnActionEvent e) {
     final ExternalTaskExecutionInfo taskExecutionInfo = ExternalSystemActionUtil.buildTaskInfo(taskData);
-    final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+    final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext(), e.getPlace());
 
     RunnerAndConfigurationSettings configuration = findOrGet(context);
     if (configuration == null ||

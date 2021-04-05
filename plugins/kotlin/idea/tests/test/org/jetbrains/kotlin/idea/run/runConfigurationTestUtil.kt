@@ -17,6 +17,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
@@ -44,7 +45,7 @@ fun createConfigurationFromElement(element: PsiElement, save: Boolean = false): 
     val dataContext = MapDataContext()
     dataContext.put(Location.DATA_KEY, PsiLocation(element.project, element))
 
-    val runnerAndConfigurationSettings = ConfigurationContext.getFromContext(dataContext).configuration
+    val runnerAndConfigurationSettings = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configuration
     if (save) {
         RunManagerEx.getInstanceEx(element.project).setTemporaryConfiguration(runnerAndConfigurationSettings)
     }

@@ -940,7 +940,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     configuration.name = createUniqueName(typeNode, suggestName(configuration), CONFIGURATION, TEMPORARY_CONFIGURATION)
     (configuration as? LocatableConfigurationBase<*>)?.setNameChangedByUser(false)
     callNewConfigurationCreated(factory, configuration)
-    RunConfigurationOptionUsagesCollector.logAddNew(project, factory.type.id)
+    RunConfigurationOptionUsagesCollector.logAddNew(project, factory.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
     return createNewConfiguration(settings, node, selectedNode)
   }
 
@@ -1026,7 +1026,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
         if (node.userObject is SingleConfigurationConfigurable<*>) {
           val configurable = node.userObject as SingleConfigurationConfigurable<*>
-          RunConfigurationOptionUsagesCollector.logRemove(project, configurable.configuration.type.id)
+          RunConfigurationOptionUsagesCollector.logRemove(project, configurable.configuration.type.id, ActionPlaces.RUN_CONFIGURATION_EDITOR)
           configurable.disposeUIResources()
         }
 

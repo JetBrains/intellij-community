@@ -8,6 +8,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
@@ -437,7 +438,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   private fun TaskRuntimeContext.configureDebugConfiguration(): Boolean {
     val runManager = RunManager.getInstance(project)
     val dataContext = DataManagerImpl.getInstance().getDataContext(editor.component)
-    val configurationsFromContext = ConfigurationContext.getFromContext(dataContext).configurationsFromContext
+    val configurationsFromContext = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).configurationsFromContext
 
     val configuration = configurationsFromContext?.singleOrNull() ?: return false
     runManager.addConfiguration(configuration.configurationSettings)
