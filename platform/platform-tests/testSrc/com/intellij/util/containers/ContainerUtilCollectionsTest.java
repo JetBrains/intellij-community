@@ -150,6 +150,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftKeySoftValueMap(1, 1, 1));
   }
 
+  @SuppressWarnings("OverwrittenKey")
   private void checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(Map<Object, Object> map) {
     Object key = new Object();
     class MyValue_ {}
