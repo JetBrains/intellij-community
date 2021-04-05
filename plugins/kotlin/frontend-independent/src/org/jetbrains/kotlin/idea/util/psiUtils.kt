@@ -38,21 +38,13 @@ fun KtElement.getElementTextInContext(): String {
 
 private const val ELEMENT_TAG = "ELEMENT"
 
-fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
-    if (KtPsiUtil.isLocal(this)) return null
-    val packageName = containingKtFile.packageFqName
-    val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
-    if (classesNames.any { it == null }) return null
-    return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
-}
-
 fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement = let {
     CodeStyleManager.getInstance(it.project).reformat(it, canChangeWhiteSpacesOnly)
 }
 
 fun PsiClass.classIdIfNonLocal(): ClassId? {
     if (this is KtLightClass) {
-        return this.kotlinOrigin?.classIdIfNonLocal()
+        return this.kotlinOrigin?.getClassId()
     }
     val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
     val packageFqName = FqName(packageName)
