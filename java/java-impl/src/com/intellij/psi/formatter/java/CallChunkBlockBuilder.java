@@ -59,8 +59,7 @@ public class CallChunkBlockBuilder {
       Block block = newJavaBlock(firstNode, mySettings, myJavaSettings, indent, null, strategy, myFormattingMode);
       subBlocks.add(block);
       if (subNodes.size() > 1) {
-        subBlocks.add(
-          createSyntheticBlock(createJavaBlocks(subNodes.subList(1, subNodes.size())), null, null, FRAGMENT_DEBUG_NAME));
+        subBlocks.addAll(createJavaBlocks(subNodes.subList(1, subNodes.size())));
       }
       return createSyntheticBlock(subBlocks, alignment, wrap, CHAINED_CALL_DEBUG_NAME);
     }
