@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.UISettings;
@@ -35,17 +35,10 @@ public class SwitcherTest extends FileEditorManagerTestCase {
     JList<Switcher.FileInfo> list = new JBList<>(filesToShow);
     int selectedItem = Switcher.SwitcherPanel.getFilesSelectedIndex(getProject(), list, goForward);
 
-    if (tabPlacement == UISettings.TABS_NONE) {
-      assertEquals(goForward ? 1 : 2, selectedItem);
-      assertEquals(3, filesToShow.size());
-      assertEquals(getFile("/src/3.txt"), filesToShow.get(0).first);
-      assertEquals(getFile("/src/2.txt"), filesToShow.get(1).first);
-      assertEquals(getFile("/src/1.txt"), filesToShow.get(2).first);
-    } else {
-      assertEquals(goForward ? 0 : 1, selectedItem);
-      assertEquals(2, filesToShow.size());
-      assertEquals(getFile("/src/2.txt"), filesToShow.get(0).first);
-      assertEquals(getFile("/src/1.txt"), filesToShow.get(1).first);
-    }
+    assertEquals(goForward ? 1 : 2, selectedItem);
+    assertEquals(3, filesToShow.size());
+    assertEquals(getFile("/src/3.txt"), filesToShow.get(0).first);
+    assertEquals(getFile("/src/2.txt"), filesToShow.get(1).first);
+    assertEquals(getFile("/src/1.txt"), filesToShow.get(2).first);
   }
 }
