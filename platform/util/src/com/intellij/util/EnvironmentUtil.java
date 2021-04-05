@@ -98,32 +98,33 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Future<@Nullable Boolean> loadEnvironment(@NotNull Path reader, @NotNull Activity activity) {
+  public static @Nullable Boolean loadEnvironment(@NotNull Path reader, @NotNull Activity activity) {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
-      return CompletableFuture.completedFuture(null);
+      return null;
     }
 
-    CompletableFuture<Boolean> state = new CompletableFuture<>();
-    ourEnvGetter.set(CompletableFuture.supplyAsync(() -> {
-      Boolean result = Boolean.TRUE;
-      try {
-        Map<String, String> env = getShellEnv(reader);
-        setCharsetVar(env);
-        return Collections.unmodifiableMap(env);
-      }
-      catch (Throwable t) {
-        result = Boolean.FALSE;
-        LOG.warn("can't get shell environment", t);
-        return getSystemEnv();
-      }
-      finally {
-        activity.end();
-        activity.updateThreadName();
-        state.complete(result);
-      }
-    }, ForkJoinPool.commonPool()));
-    return state;
+    CompletableFuture<Map<String, String>> envFuture = new CompletableFuture<>();
+    ourEnvGetter.set(envFuture);
+    Boolean result = Boolean.TRUE;
+    try {
+      Map<String, String> env = getShellEnv(reader);
+      setCharsetVar(env);
+      envFuture.complete(Collections.unmodifiableMap(env));
+    }
+    catch (Throwable t) {
+      result = Boolean.FALSE;
+      LOG.warn("can't get shell environment", t);
+    }
+    finally {
+      activity.end();
+    }
+
+    // execution time of handlers of envFuture should be not included into load env activity
+    if (result == Boolean.FALSE) {
+      envFuture.complete(getSystemEnv());
+    }
+    return result;
   }
 
   private static boolean shouldLoadShellEnv() {

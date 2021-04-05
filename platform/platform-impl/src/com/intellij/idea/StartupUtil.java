@@ -282,15 +282,12 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.APP_INIT);
-    Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
-    if (envReaderFile == null) {
-      subActivity.end();
-      ourShellEnvLoaded = CompletableFuture.completedFuture(null);
-    }
-    else {
-      ourShellEnvLoaded = EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
-    }
+    // don't load EnvironmentUtil class in main thread
+    ourShellEnvLoaded = ForkJoinPool.commonPool().submit(() -> {
+      Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.APP_INIT);
+      Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
+      return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
+    });
 
     Thread.currentThread().setUncaughtExceptionHandler((__, e) -> {
       StartupAbortedException.processException(e);
