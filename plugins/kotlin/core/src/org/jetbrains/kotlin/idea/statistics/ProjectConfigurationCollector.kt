@@ -6,14 +6,13 @@ import com.intellij.facet.ProjectFacetManager
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.PlatformVersion
-import org.jetbrains.kotlin.idea.caches.project.isMPPModule
-import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
@@ -31,24 +30,18 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
     override fun getMetrics(project: Project): Set<MetricEvent> {
         val metrics = mutableSetOf<MetricEvent>()
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
-        val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
 
         if (modulesWithFacet.isNotEmpty()) {
             modulesWithFacet.forEach {
                 val buildSystem = getBuildSystemType(it)
                 val platform = getPlatform(it)
-
-                metrics.add(
-                    buildEvent.metric(
-                        systemField.with(buildSystem),
-                        platformField.with(platform),
-                        isMPPBuild.with(it.isMPPModule || it.isNewMPPModule),
-                        pluginInfoField.with(pluginInfo)
-                    )
-                )
+                metrics.add(buildEvent.metric(EventPair(systemField, buildSystem)))
+                metrics.add(buildEvent.metric(EventPair(platformField, platform)))
             }
         }
 
+        val pluginInfo = getPluginInfoById(KotlinPluginUtil.KOTLIN_PLUGIN_ID)
+        metrics.add(buildEvent.metric(EventPair(pluginInfoField, pluginInfo)))
         return metrics
     }
 
@@ -81,7 +74,6 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
 
         private val systemField = EventFields.String("system", listOf("JPS", "Maven", "Gradle", "unknown"))
         private val platformField = EventFields.String("platform", composePlatformFields())
-        private val isMPPBuild = EventFields.Boolean("isMPP")
         private val pluginInfoField = EventFields.PluginInfo
 
         private fun composePlatformFields(): List<String> {
@@ -95,7 +87,6 @@ class ProjectConfigurationCollector : ProjectUsagesCollector() {
             "Build",
             systemField,
             platformField,
-            isMPPBuild,
             pluginInfoField
         )
 
