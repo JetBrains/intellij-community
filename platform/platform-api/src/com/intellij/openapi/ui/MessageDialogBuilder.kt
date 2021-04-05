@@ -130,7 +130,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
                                                          message = message, title = title, icon = icon,
                                                          options = arrayOf(yesText, noText),
                                                          doNotAskOption = doNotAskOption,
-                                                         helpId = helpId) == 0)
+                                                         helpId = helpId, alwaysUseIdeaUI = true) == 0)
       })
     }
   }
@@ -171,7 +171,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
                                                               message = message, title = title, options = options,
                                                               icon = icon,
                                                               doNotAskOption = doNotAskOption,
-                                                              helpId = helpId)) {
+                                                              helpId = helpId, alwaysUseIdeaUI = true)) {
           0 -> YES
           1 -> NO
           else -> CANCEL
@@ -214,7 +214,8 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
         MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent, message = message,
                                                         title = title, options = options,
                                                         defaultOptionIndex = defaultOptionIndex, focusedOptionIndex = focusedOptionIndex,
-                                                        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId)
+                                                        icon = icon, doNotAskOption = doNotAskOption, helpId = helpId,
+                                                        alwaysUseIdeaUI = true)
       })
       return if (result < 0) null else buttons[result]
     }
@@ -242,14 +243,14 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
       MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                       message = message, title = title, options = arrayOf(yesText, noText),
                                                       icon = icon,
-                                                      doNotAskOption = doNotAskOption) == 0
+                                                      doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true) == 0
     })
   }
 }
 
 private inline fun <T> showMessage(project: Project?, parentComponent: Component?, mac: (Window?) -> T, other: () -> T): T {
-  try {
-    if (canShowMacSheetPanel()) {
+  if (canShowMacSheetPanel()) {
+    try {
       val window = if (parentComponent == null) {
         WindowManager.getInstance().suggestParentWindow(project)
       }
@@ -258,9 +259,11 @@ private inline fun <T> showMessage(project: Project?, parentComponent: Component
       }
       return mac(window)
     }
-  }
-  catch (e: Exception) {
-    logger<MessagesService>().error(e)
+    catch (e: Exception) {
+      if (e.message != "Cannot find any window") {
+        logger<MessagesService>().error(e)
+      }
+    }
   }
   return other()
 }
