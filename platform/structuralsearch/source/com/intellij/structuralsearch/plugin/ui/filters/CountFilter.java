@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class CountFilter extends FilterAction {
 
   boolean myMinZero;
