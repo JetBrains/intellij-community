@@ -65,7 +65,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
 
   public void releaseIndex(int localId) throws MavenServerIndexerException {
     MavenLog.LOG.debug("releaseIndex " + localId);
-    IndexData data = null;
+    IndexData data;
     synchronized (myDataMap){
       data = myDataMap.remove(localId);
     }
@@ -141,7 +141,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   private int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
-    IndexData result = null;
+    IndexData result;
     synchronized (myDataMap){
       result = myDataMap.get(localId);
     }

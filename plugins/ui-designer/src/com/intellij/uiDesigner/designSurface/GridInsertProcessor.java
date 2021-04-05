@@ -59,7 +59,6 @@ public class GridInsertProcessor {
         rc.grow(EPSILON*2, EPSILON*2);
         if (rc.contains(aPoint)) {
           container = (RadContainer) singleComponent;
-          EPSILON *= 2;
         }
       }
     }

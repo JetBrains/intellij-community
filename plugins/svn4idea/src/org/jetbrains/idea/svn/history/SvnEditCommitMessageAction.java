@@ -64,7 +64,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
-    boolean visible = enabled;
+    boolean visible;
     Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) {
       visible = VcsDataKeys.REMOTE_HISTORY_LOCATION.getData(dc) instanceof SvnRepositoryLocation;

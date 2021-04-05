@@ -126,7 +126,7 @@ public final class MavenServerManager implements Disposable {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
 
-    MavenServerConnector connector = null;
+    MavenServerConnector connector;
     synchronized (myMultimoduleDirToConnectorMap) {
       connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
     }
@@ -434,7 +434,7 @@ public final class MavenServerManager implements Disposable {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        MavenServerConnector connector = null;
+        MavenServerConnector connector;
         synchronized (myMultimoduleDirToConnectorMap) {
           connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> FileUtil
             .isAncestor(finalPath, c.getMultimoduleDirectory(), false));
