@@ -1506,7 +1506,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
     List<FileEditor> result = new ArrayList<>();
     myOpenedEditors.forEach(composite -> {
-      if (composite.getFile().equals(file)) ContainerUtil.addAll(result, composite.myEditors);
+      if (composite.getFile().equals(file) || composite.getFile().equals(BackedVirtualFile.getOriginFileIfBacked(file))) {
+        ContainerUtil.addAll(result, composite.myEditors);
+      }
     });
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
