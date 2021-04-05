@@ -26,7 +26,7 @@ public abstract class BareTestFixtureTestCase {
 
   @Before
   public final void setupFixture() throws Exception {
-    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isPerformanceTest(null, getClass().getName()));;
+    ApplicationManagerEx.setInStressTest(TestFrameworkUtil.isPerformanceTest(null, getClass().getName()));
 
     boolean headless = SKIP_HEADLESS && getClass().getAnnotation(SkipInHeadlessEnvironment.class) != null;
     assumeFalse("Class '" + getClass().getName() + "' is skipped because it requires working UI environment", headless);
@@ -35,10 +35,7 @@ public abstract class BareTestFixtureTestCase {
 
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createBareFixture();
     myFixture.setUp();
-    Disposer.register(getTestRootDisposable(), () -> {
-      ApplicationManagerEx.setInStressTest(false);
-      ;
-    });
+    Disposer.register(getTestRootDisposable(), () -> ApplicationManagerEx.setInStressTest(false));
   }
 
   @After
