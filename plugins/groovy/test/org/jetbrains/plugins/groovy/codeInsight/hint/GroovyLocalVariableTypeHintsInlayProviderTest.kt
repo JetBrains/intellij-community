@@ -67,4 +67,10 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     """.trimIndent(), true)
   }
 
+  fun `test no type hint for variable with explicit type`() {
+    testTypeHints("""
+      String s = ""
+    """.trimIndent())
+  }
+
 }

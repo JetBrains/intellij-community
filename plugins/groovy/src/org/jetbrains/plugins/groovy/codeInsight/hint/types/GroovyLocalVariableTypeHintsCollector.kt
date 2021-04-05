@@ -56,6 +56,9 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
 
     return variableDeclaration.variables
       .mapSmart {
+        if (it.typeElementGroovy != null) {
+          return@mapSmart null
+        }
         val type = it.typeGroovy ?: return@mapSmart null
         val identifier = it.nameIdentifier ?: return@mapSmart null
         type to identifier
