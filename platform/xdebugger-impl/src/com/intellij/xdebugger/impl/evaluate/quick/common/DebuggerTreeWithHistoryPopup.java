@@ -15,6 +15,10 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeModelAdapter;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +28,9 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.List;
+
+import static com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup.updateDebugPopupBounds;
 
 final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
@@ -110,7 +117,19 @@ final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryConta
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
 
-    updateInitialBounds(tree);
+    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children,
+                                 boolean last) {
+        if (last) {
+          updateDebugPopupBounds(tree, myToolbar, myPopup);
+          ((XDebuggerTree)tree).removeTreeListener(this);
+        }
+      }
+    });
+
+    updateDebugPopupBounds(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -133,18 +152,4 @@ final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryConta
     popupWindow.repaint();
   }
 
-  private void updateInitialBounds(final Tree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
-    final Dimension size = tree.getPreferredSize();
-    final Point location = popupWindow.getLocation();
-    final Rectangle windowBounds = popupWindow.getBounds();
-    final Rectangle targetBounds = new Rectangle(location.x,
-                                                 location.y,
-                                                 Math.max(size.width + 250, windowBounds.width),
-                                                 Math.max(size.height, windowBounds.height));
-    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
-    popupWindow.setBounds(targetBounds);
-    popupWindow.validate();
-    popupWindow.repaint();
-  }
 }
