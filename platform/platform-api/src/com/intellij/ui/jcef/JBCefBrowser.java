@@ -12,7 +12,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
-import org.cef.CefClient;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefBrowserOsrWithHandler;
 import org.cef.browser.CefFrame;
@@ -131,6 +130,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   private volatile boolean myFirstShow = true;
 
+  /**
+   * Defines the way the browser is rendered onto its surface.
+   */
   @ApiStatus.Experimental
   public enum RenderingType {
     /**
@@ -163,37 +165,18 @@ public class JBCefBrowser extends JBCefBrowserBase {
    */
   @ApiStatus.Experimental
   public static @NotNull JBCefBrowser create(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url, boolean createImmediately) {
-    JBCefApp.checkOffScreenRenderingModeEnabled();
+    return new JBCefBrowser(type, client, url, createImmediately);
+  }
 
-    JBCefBrowser browser = null;
-    CefBrowser cefBrowser = null;
-    boolean isDefaultClient = false;
-    if (client == null) {
-      isDefaultClient = true;
-      client = JBCefApp.getInstance().createClient();
-    }
-
-    switch (type) {
-      case EMBEDDED_WINDOW:
-        cefBrowser = createBrowser(client.getCefClient(), url, CefRendering.DEFAULT);
-        browser = new JBCefBrowser(cefBrowser, true, client, isDefaultClient);
-        break;
-      case OGL_CANVAS:
-        cefBrowser = createBrowser(client.getCefClient(), url, CefRendering.OFFSCREEN);
-        browser = new JBCefBrowser(cefBrowser, true, client, isDefaultClient);
-        break;
-      case BUFFERED_IMAGE:
-        JBCefOsrComponent comp = new JBCefOsrComponent();
-        JBCefOsrHandler handler = new JBCefOsrHandler(comp);
-        comp.setRenderHandler(handler);
-        cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, handler, comp);
-        browser = new JBCefBrowser(cefBrowser, true, client, true);
-        comp.setBrowser(browser);
-        browser.setProperty(JBCefBrowserBase.Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
-        break;
+  protected JBCefBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url, boolean createImmediately) {
+    this(createBrowser(type, client, url));
+    CefBrowser cefBrowser = getCefBrowser();
+    if (type == RenderingType.BUFFERED_IMAGE) {
+      CefBrowserOsrWithHandler cefOsrBrowser = (CefBrowserOsrWithHandler)cefBrowser;
+      ((JBCefOsrComponent)cefOsrBrowser.getUIComponent()).setBrowser(this);
+      setProperty(JBCefBrowserBase.Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
     }
     if (createImmediately) cefBrowser.createImmediately();
-    return browser;
   }
 
   /**
@@ -208,7 +191,11 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
-    this(createBrowser(client.getCefClient(), url, CefRendering.DEFAULT), true, client, isDefaultClient);
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, client, url));
+  }
+
+  private JBCefBrowser(@NotNull CreateBrowserArtefacts artefacts) {
+    this(artefacts.cefBrowser, true, artefacts.jbClient, artefacts.isDefaultClient);
   }
 
   private JBCefBrowser(@NotNull CefBrowser cefBrowser,
@@ -271,8 +258,44 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
-  private static @NotNull CefBrowser createBrowser(@NotNull CefClient client, @Nullable String url, @NotNull CefRendering cefRendering) {
-    return client.createBrowser(ObjectUtils.notNull(url, BLANK_URI), cefRendering, false, null);
+  private static class CreateBrowserArtefacts {
+    final @NotNull CefBrowser cefBrowser;
+    final @NotNull JBCefClient jbClient;
+    boolean isDefaultClient;
+
+    CreateBrowserArtefacts(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient jbClient, boolean isDefaultClient) {
+      this.cefBrowser = cefBrowser;
+      this.jbClient = jbClient;
+      this.isDefaultClient = isDefaultClient;
+    }
+  }
+
+  private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
+    boolean isDefaultClient = client == null;
+    if (isDefaultClient) client = JBCefApp.getInstance().createClient();
+    switch (type) {
+      case EMBEDDED_WINDOW:
+        return new CreateBrowserArtefacts(
+          client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.DEFAULT, false, null),
+          client,
+          isDefaultClient);
+      case OGL_CANVAS:
+        JBCefApp.checkOffScreenRenderingModeEnabled();
+        return new CreateBrowserArtefacts(
+          client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.OFFSCREEN, false, null),
+          client,
+          isDefaultClient);
+      case BUFFERED_IMAGE:
+        JBCefApp.checkOffScreenRenderingModeEnabled();
+        JBCefOsrComponent comp = new JBCefOsrComponent();
+        JBCefOsrHandler handler = new JBCefOsrHandler(comp);
+        comp.setRenderHandler(handler);
+        return new CreateBrowserArtefacts(
+          new CefBrowserOsrWithHandler(client.getCefClient(), url, null, handler, comp),
+          client,
+          isDefaultClient);
+    }
+    throw new IllegalArgumentException("wrong RenderingType"); // unreachable
   }
 
   private @NotNull JPanel createComponent() {
