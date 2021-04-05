@@ -115,7 +115,7 @@ public class RoundedIcon extends JBScalableIcon implements DarkIconProvider, Ico
   private static Shape getSuperEllipse(double x, double y, double width, double height, double arcRatio) {
     GeneralPath path = new GeneralPath();
     path.moveTo(1, 0);
-    double step = Math.PI / 36;
+    double step = Math.PI / 360;
     double n = getPower(arcRatio);
     for (double theta = step; theta <= 2 * Math.PI; theta += step) {
       path.lineTo(
