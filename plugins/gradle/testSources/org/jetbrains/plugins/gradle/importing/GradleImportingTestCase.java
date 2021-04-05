@@ -45,7 +45,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyGradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -305,8 +304,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     importProject(config, null);
   }
 
-  protected @NotNull GroovyGradleBuildScriptBuilder createBuildScriptBuilder() {
-    return new GroovyGradleBuildScriptBuilder(getCurrentGradleVersion());
+  protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion());
   }
 
   protected @NotNull String getJUnitTestAnnotationClass() {

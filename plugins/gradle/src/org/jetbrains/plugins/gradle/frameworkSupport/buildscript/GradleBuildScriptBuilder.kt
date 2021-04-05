@@ -29,8 +29,6 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun addBuildScriptClasspath(dependency: String): BSB
   fun addBuildScriptClasspath(dependency: Expression): BSB
 
-  fun withTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}): BSB
-
   fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean = false): BSB
 
   fun withMavenCentral(useOldStyleMetadata: Boolean = false): BSB
@@ -50,10 +48,4 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withJUnit4(): BSB
 
   fun withJUnit5(): BSB
-
-  fun withGradleIdeaExtPluginIfCan(): BSB
-
-  fun withGradleIdeaExtPlugin(): BSB
-
-  fun withLocalGradleIdeaExtPlugin(jarFile: File): BSB
 }

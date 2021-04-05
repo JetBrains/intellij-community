@@ -73,14 +73,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : AbstractGradleBuildScriptB
   override fun addBuildScriptClasspath(dependency: Expression) =
     withBuildScriptDependency { call("classpath", dependency) }
 
-  override fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) =
-    withPostfix {
-      when (type) {
-        null -> call("tasks.create", string(name), configure = configure)
-        else -> call("tasks.create", string(name), code(type), configure = configure)
-      }
-    }
-
   override fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean) =
     withBuildScriptRepository {
       mavenCentralRepository(useOldStyleMetadata)
@@ -144,42 +136,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : AbstractGradleBuildScriptB
       call("test") {
         call("useJUnitPlatform")
       }
-    }
-  }
-
-  override fun withGradleIdeaExtPluginIfCan() = apply {
-    val localDirWithJar = System.getenv("GRADLE_IDEA_EXT_PLUGIN_DIR")?.let(::File)
-    if (localDirWithJar == null) {
-      withGradleIdeaExtPlugin()
-      return@apply
-    }
-    if (!localDirWithJar.exists()) throw RuntimeException("Directory $localDirWithJar not found")
-    if (!localDirWithJar.isDirectory) throw RuntimeException("File $localDirWithJar is not directory")
-    val template = "gradle-idea-ext-.+-SNAPSHOT\\.jar".toRegex()
-    val jarFile = localDirWithJar.listFiles()?.find { it.name.matches(template) }
-    if (jarFile == null) throw RuntimeException("Jar with gradle-idea-ext plugin not found")
-    if (!jarFile.isFile) throw RuntimeException("Invalid jar file $jarFile")
-    withLocalGradleIdeaExtPlugin(jarFile)
-  }
-
-  override fun withGradleIdeaExtPlugin() = apply {
-    addPlugin("org.jetbrains.gradle.plugin.idea-ext", IDEA_EXT_PLUGIN_VERSION)
-  }
-
-  override fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
-    withBuildScriptMavenCentral()
-    addBuildScriptClasspath(call("files", FileUtil.toSystemIndependentName(jarFile.absolutePath)))
-    addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
-    addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
-    applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
-  }
-
-  companion object {
-    const val IDEA_EXT_PLUGIN_VERSION = "0.10"
-
-    @JvmStatic
-    fun extPluginVersionIsAtLeast(version: String): Boolean {
-      return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
     }
   }
 }
