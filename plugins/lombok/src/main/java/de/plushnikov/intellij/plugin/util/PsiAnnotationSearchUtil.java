@@ -41,7 +41,7 @@ public class PsiAnnotationSearchUtil {
   }
 
   @NotNull
-  public static String getSimpleNameOf(@NotNull PsiAnnotation psiAnnotation) {
+  public static String getShortNameOf(@NotNull PsiAnnotation psiAnnotation) {
     PsiJavaCodeReferenceElement referenceElement = psiAnnotation.getNameReferenceElement();
     return StringUtil.notNullize(null == referenceElement ? null : referenceElement.getReferenceName());
   }
@@ -51,8 +51,8 @@ public class PsiAnnotationSearchUtil {
     final PsiModifierList modifierList = modifierListOwner.getModifierList();
     if (null != modifierList) {
       for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String simpleName = getSimpleNameOf(psiAnnotation);
-        if (annotationNames.contains(simpleName)) {
+        final String shortName = getShortNameOf(psiAnnotation);
+        if (annotationNames.contains(shortName)) {
           return true;
         }
       }

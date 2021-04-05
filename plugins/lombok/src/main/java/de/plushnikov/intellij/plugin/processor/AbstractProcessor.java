@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -106,7 +107,11 @@ public abstract class AbstractProcessor implements Processor {
         ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
       combinedListOfCopyableAnnotations.addAll(configuredCopyableAnnotations);
     }
+    // first reduce combinedListOfCopyableAnnotations to only matching existed annotations by shortName
+    final List<String> existedShortAnnotationNames = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotationSearchUtil::getShortNameOf);
+    combinedListOfCopyableAnnotations.removeIf(fqn -> !existedShortAnnotationNames.contains(StringUtil.getShortName(fqn)));
 
+    // finally search for really copyable annotations by fqn
     final List<PsiAnnotation> existedCopyableAnnotations =
       AnnotationUtil.findAllAnnotations(psiField, combinedListOfCopyableAnnotations, true);
     return ContainerUtil.map(existedCopyableAnnotations, PsiAnnotation::getQualifiedName);
