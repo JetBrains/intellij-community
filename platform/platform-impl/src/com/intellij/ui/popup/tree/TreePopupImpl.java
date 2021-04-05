@@ -353,7 +353,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         }
 
         PopupStep<?> queriedStep;
-        try (AccessToken ignore = PopupImplUtil.prohibitDialogsInside(myStep)) {
+        try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
           queriedStep = myStep.onChosen(userObject, handleFinalChoices);
         }
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {

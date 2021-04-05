@@ -408,7 +408,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     valuesSelected(selectedValues);
 
     PopupStep<?> nextStep;
-    try (AccessToken ignore = PopupImplUtil.prohibitDialogsInside(listStep)) {
+    try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
       if (listStep instanceof MultiSelectionListPopupStep<?>) {
         nextStep = ((MultiSelectionListPopupStep<Object>)listStep).onChosen(Arrays.asList(selectedValues), handleFinalChoices);
       }
