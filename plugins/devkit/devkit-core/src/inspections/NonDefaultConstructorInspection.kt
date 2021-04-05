@@ -142,6 +142,10 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
   val strictMatch = searchString === qualifiedName
   processExtensionDeclarations(searchString, project, strictMatch = strictMatch) { extension, tag ->
     val point = extension.extensionPoint ?: return@processExtensionDeclarations true
+    if (point.name.value == "psi.symbolReferenceProvider") {
+      return@processExtensionDeclarations true
+    }
+
     when (point.beanClass.stringValue) {
       null -> {
         if (tag.attributes.any { it.name == Extension.IMPLEMENTATION_ATTRIBUTE && it.value == qualifiedName }) {
