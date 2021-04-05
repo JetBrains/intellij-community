@@ -60,10 +60,13 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   @NotNull
   private Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.APP_INIT);
-    Iterator<FileBasedIndexExtension<?, ?>> extensions =
-      IndexInfrastructure.hasIndices() ?
-      ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator() :
-      Collections.emptyIterator();
+    Iterator<FileBasedIndexExtension<?, ?>> extensions;
+    if (IndexInfrastructure.hasIndices()) {
+      extensions = ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator();
+    }
+    else {
+      extensions = Collections.emptyIterator();
+    }
     List<ThrowableRunnable<?>> tasks = new ArrayList<>();
 
     // todo: init contentless indices first ?
@@ -97,9 +100,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     return tasks;
   }
 
-  @NotNull
   @Override
-  protected Collection<ThrowableRunnable<?>> prepareTasks() {
+  protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
     // 1) we call for it's instance before index creation to make sure it's initialized
     // 2) we dispose FileBasedIndex before PersistentFS disposing

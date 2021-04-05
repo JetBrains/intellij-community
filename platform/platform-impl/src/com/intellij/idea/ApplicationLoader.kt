@@ -318,7 +318,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
-  initUiTask.thenRunAsync(Runnable {
+  initUiTask.thenRunAsync({
     val args = processProgramArguments(rawArgs)
     EventQueue.invokeLater {
       executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)

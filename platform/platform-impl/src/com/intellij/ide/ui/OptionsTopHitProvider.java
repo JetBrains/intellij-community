@@ -7,6 +7,7 @@ import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
@@ -164,8 +165,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
   static final class Activity extends PreloadingActivity implements StartupActivity.DumbAware {
     Activity() {
-      if (ApplicationManager.getApplication().isUnitTestMode() ||
-          ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
         throw ExtensionNotApplicableException.INSTANCE;
       }
     }

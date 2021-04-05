@@ -18,25 +18,23 @@ public final class DeployToServerConfigurationTypesRegistrar implements Applicat
     getConfigurationTypesExtPoint()
       .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
 
-    ServerType.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<>() {
-        @Override
-        public void extensionAdded(@NotNull ServerType addedServer, @NotNull PluginDescriptor pluginDescriptor) {
-          getConfigurationTypesExtPoint().registerExtension(new DeployToServerConfigurationType(addedServer));
-        }
+    ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull ServerType addedServer, @NotNull PluginDescriptor pluginDescriptor) {
+        getConfigurationTypesExtPoint().registerExtension(new DeployToServerConfigurationType(addedServer));
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull ServerType removedServer, @NotNull PluginDescriptor pluginDescriptor) {
-          DeployToServerConfigurationType deployForServer = findDeployConfigurationType(removedServer);
-          if (deployForServer != null) {
-            getConfigurationTypesExtPoint().unregisterExtension(deployForServer);
-          }
+      @Override
+      public void extensionRemoved(@NotNull ServerType removedServer, @NotNull PluginDescriptor pluginDescriptor) {
+        DeployToServerConfigurationType deployForServer = findDeployConfigurationType(removedServer);
+        if (deployForServer != null) {
+          getConfigurationTypesExtPoint().unregisterExtension(deployForServer);
         }
-      }, null);
+      }
+    }, null);
   }
 
-  @NotNull
-  public static DeployToServerConfigurationType getDeployConfigurationType(@NotNull ServerType<?> serverType) {
+  public static @NotNull DeployToServerConfigurationType getDeployConfigurationType(@NotNull ServerType<?> serverType) {
     DeployToServerConfigurationType result = findDeployConfigurationType(serverType);
     if (result == null) {
       throw new IllegalArgumentException("Cannot find run configuration type for " + serverType.getClass());
@@ -44,8 +42,7 @@ public final class DeployToServerConfigurationTypesRegistrar implements Applicat
     return result;
   }
 
-  @Nullable
-  private static DeployToServerConfigurationType findDeployConfigurationType(@NotNull ServerType<?> serverType) {
+  private static @Nullable DeployToServerConfigurationType findDeployConfigurationType(@NotNull ServerType<?> serverType) {
     String serverTypeId = serverType.getId();
     return (DeployToServerConfigurationType)ConfigurationType.CONFIGURATION_TYPE_EP
       .findFirstSafe(next -> isDeployForServerType(next, serverTypeId));

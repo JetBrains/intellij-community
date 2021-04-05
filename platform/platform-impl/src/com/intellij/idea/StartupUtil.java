@@ -145,7 +145,7 @@ public final class StartupUtil {
     return ourShellEnvLoaded;
   }
 
-  private static @Nullable Future<@Nullable Object> loadEuaDocument() {
+  private static @Nullable ForkJoinTask<@Nullable Object> loadEuaDocument() {
     if (Main.isHeadless()) {
       return null;
     }
@@ -210,7 +210,7 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("main class loading scheduling");
 
-    Future<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
+    ForkJoinTask<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("main class loading", ActivityCategory.APP_INIT);
       Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
       subActivity.end();
@@ -231,7 +231,7 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
-    Future<Object> euaDocument = loadEuaDocument();
+    ForkJoinTask<Object> euaDocument = loadEuaDocument();
     if (Main.isHeadless()) {
       enableHeadlessAwtGuard();
       enableHeadlessAwtGuard();
@@ -292,36 +292,35 @@ public final class StartupUtil {
       ourShellEnvLoaded = EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
     }
 
-    if (!configImportNeeded) {
-      runPreAppClass(log);
-    }
-
     Thread.currentThread().setUncaughtExceptionHandler((__, e) -> {
       StartupAbortedException.processException(e);
     });
 
-    startApp(args, initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
+    if (!configImportNeeded) {
+      runPreAppClass(log);
+    }
+
+    startApp(Arrays.asList(args), initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
   }
 
-  private static @NotNull AppStarter getAppStarter(@NotNull Future<? extends AppStarter> mainStartFuture)
-    throws InterruptedException, ExecutionException {
+  private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
     Activity activity = mainStartFuture.isDone() ? null : StartUpMeasurer.startMainActivity("main class loading waiting");
-    AppStarter result = mainStartFuture.get();
+    AppStarter result = mainStartFuture.join();
     if (activity != null) {
       activity.end();
     }
     return result;
   }
 
-  private static void startApp(String @NotNull [] args,
+  private static void startApp(@NotNull List<String> args,
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
-                               @NotNull Future<? extends AppStarter> appStarterFuture,
-                               @Nullable Future<@Nullable Object> euaDocument) throws Exception {
+                               @NotNull ForkJoinTask<AppStarter> appStarterFuture,
+                               @Nullable ForkJoinTask<@Nullable Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");
-      Object document = euaDocument == null ? null : euaDocument.get();
+      Object document = euaDocument == null ? null : euaDocument.join();
       boolean agreementDialogWasShown = document != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, (EndUserAgreement.Document)document);
 
       if (configImportNeeded) {
@@ -334,7 +333,9 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, Arrays.asList(args), log), initUiTask);
+        runInEdtAndWait(log, () -> {
+          ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log);
+        }, initUiTask);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
@@ -361,7 +362,7 @@ public final class StartupUtil {
 
     try {
       oldEdtInvocationManager = EdtInvocationManager.setEdtInvocationManager(edtInvocationManager);
-      getAppStarter(appStarterFuture).start(Arrays.asList(args), initUiTask);
+      getAppStarter(appStarterFuture).start(args, initUiTask);
     }
     finally {
       EdtInvocationManager.restoreEdtInvocationManager(edtInvocationManager, oldEdtInvocationManager);
@@ -386,7 +387,7 @@ public final class StartupUtil {
   }
 
   private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args,
-                                                              @Nullable Future<@Nullable Object> eulaDocument) {
+                                                              @Nullable ForkJoinTask<@Nullable Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -440,10 +441,10 @@ public final class StartupUtil {
               Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
               boolean isEulaAccepted;
               try {
-                EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.get();
+                EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.join();
                 isEulaAccepted = document == null || document.isAccepted();
               }
-              catch (InterruptedException | ExecutionException ignore) {
+              catch (Exception ignore) {
                 isEulaAccepted = true;
               }
               eulaActivity.end();
