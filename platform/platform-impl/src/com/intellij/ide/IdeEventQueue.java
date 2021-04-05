@@ -577,13 +577,12 @@ public final class IdeEventQueue extends EventQueue {
     return manager;
   }
 
-  @Nullable
-  private static PerformanceWatcher obtainPerformanceWatcher() {
+  private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
     PerformanceWatcher watcher = ourPerformanceWatcher;
     if (watcher == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        watcher = PerformanceWatcher.getInstance();
+        watcher = ApplicationManager.getApplication().getServiceIfCreated(PerformanceWatcher.class);
         ourPerformanceWatcher = watcher;
       }
     }

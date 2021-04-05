@@ -65,7 +65,7 @@ public final class PerformanceWatcher implements Disposable {
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("EDT Performance Checker", 1);
   private FreezeCheckerTask myCurrentEDTEventChecker;
 
-  private static final boolean SHOULD_WATCH = shouldWatch();
+  private final boolean shouldWatch = shouldWatch();
   private final JitWatcher myJitWatcher = new JitWatcher();
 
   public static @NotNull PerformanceWatcher getInstance() {
@@ -73,8 +73,10 @@ public final class PerformanceWatcher implements Disposable {
     return ApplicationManager.getApplication().getService(PerformanceWatcher.class);
   }
 
-  public PerformanceWatcher() {
-    if (!shouldWatch()) return;
+  private PerformanceWatcher() {
+    if (!shouldWatch) {
+      return;
+    }
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
     service.setNewThreadListener(new BiConsumer<>() {
@@ -290,7 +292,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventStarted() {
     long start = System.nanoTime();
     myActiveEvents++;
-    if (SHOULD_WATCH) {
+    if (shouldWatch) {
       finishTracking();
       startTracking(start);
     }
@@ -299,7 +301,7 @@ public final class PerformanceWatcher implements Disposable {
   public void edtEventFinished() {
     myActiveEvents--;
     finishTracking();
-    if (SHOULD_WATCH && myActiveEvents > 0) {
+    if (shouldWatch && myActiveEvents > 0) {
       startTracking(System.nanoTime());
     }
   }
@@ -327,7 +329,9 @@ public final class PerformanceWatcher implements Disposable {
                                      boolean millis,
                                      ThreadInfo[] threadInfos,
                                      @Nullable FreezeCheckerTask task) {
-    if (!shouldWatch()) return null;
+    if (!shouldWatch()) {
+      return null;
+    }
 
     if (!pathPrefix.contains("/")) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
