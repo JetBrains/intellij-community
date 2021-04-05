@@ -405,17 +405,17 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
    * {@link PsiTreeUtil#getParentOfType}
    */
   private static void checkInconsistency(@NotNull PsiReferenceList throwsList, @Nullable String methodClassName) {
-    if (methodClassName == null) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
-
-      methodClassName = method != null ? method.getClass().getSimpleName() : "null";
-    }
 
     final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
 
     final PsiClassType[] referencedTypes = throwsList.getReferencedTypes();
 
     if (referenceElements.length != referencedTypes.length) {
+      if (methodClassName == null) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(throwsList, PsiMethod.class);
+
+        methodClassName = method != null ? method.getClass().getSimpleName() : "null";
+      }
       LOGGER.error("Stub-PSI inconsistency detected. " +
                    "The number of elements in the throws list doesn't match the number of types in the throws list. " +
                    "The method's class is " + methodClassName,
