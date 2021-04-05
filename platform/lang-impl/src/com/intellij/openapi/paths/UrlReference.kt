@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 
+@Suppress("NonDefaultConstructor")
 class UrlReference(private val element: PsiElement,
                    private val rangeInElement: TextRange,
                    val url: String) : PsiHighlightedReference {
@@ -31,13 +32,14 @@ class UrlReference(private val element: PsiElement,
 
   override fun resolveReference(): Collection<SymbolResolveResult> = listOf(SymbolResolveResult.fromSymbol(UrlSymbol(url)))
 
-  override fun highlightMessage(): String? = HyperlinkAnnotator.getMessage()
+  override fun highlightMessage() = HyperlinkAnnotator.getMessage()
 
   override fun highlightReference(annotationBuilder: AnnotationBuilder): AnnotationBuilder {
     return annotationBuilder.textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
   }
 }
 
+@Suppress("NonDefaultConstructor")
 private class UrlSymbol(
   @NlsSafe private val url: String
 ) : Pointer<UrlSymbol>,
@@ -47,7 +49,7 @@ private class UrlSymbol(
 
   override fun createPointer(): Pointer<out Symbol> = this
 
-  override fun dereference(): UrlSymbol? = this
+  override fun dereference(): UrlSymbol = this
 
   override fun getSymbolPresentation(): SymbolPresentation = SymbolPresentation.create(AllIcons.General.Web, url, url)
 
