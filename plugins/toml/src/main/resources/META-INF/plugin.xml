@@ -11,7 +11,7 @@
     <!-- TODO: create normal change note list -->
     <change-notes><![CDATA[
         <ul>
-            <li>Consider Cargo.toml.orig as TOML file</li>
+            <li>Provide `Unresolved reference` inspection for references inside string literals</li>
         </ul>
     ]]>
     </change-notes>
