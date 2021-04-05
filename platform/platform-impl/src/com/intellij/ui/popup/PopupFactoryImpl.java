@@ -8,12 +8,10 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
@@ -235,26 +233,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
       });
 
       addListSelectionListener(e -> {
-        final JList list = (JList)e.getSource();
-        final ActionItem actionItem = (ActionItem)list.getSelectedValue();
+        JList<?> list = (JList<?>)e.getSource();
+        ActionItem actionItem = (ActionItem)list.getSelectedValue();
         if (actionItem == null) return;
-        Presentation presentation = updateActionItem(actionItem);
-        ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
+        ActionMenu.showDescriptionInStatusBar(true, myComponent, actionItem.getDescription());
       });
-    }
-
-    @NotNull
-    private Presentation updateActionItem(@NotNull ActionItem actionItem) {
-      AnAction action = actionItem.getAction();
-      Presentation presentation = new Presentation();
-      presentation.setDescription(action.getTemplatePresentation().getDescription());
-
-      final AnActionEvent actionEvent =
-        new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), myActionPlace, presentation,
-                          ActionManager.getInstance(), 0);
-      actionEvent.setInjectedContext(action.isInInjectedContext());
-      ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, false);
-      return presentation;
     }
 
     protected static ListPopupStep<ActionItem> createStep(@PopupTitle String title,
@@ -296,9 +279,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
         KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
         if (dontClosePopupAction != null) {
           actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0, e);
-          for (ActionItem item : actionPopupStep.getValues()) {
-            updateActionItem(item);
-          }
           getList().repaint();
           return;
         }
@@ -308,22 +288,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     protected void handleToggleAction() {
-      final Object[] selectedValues = getList().getSelectedValues();
+      List<Object> selectedValues = getList().getSelectedValuesList();
 
-      ListPopupStep<Object> listStep = getListStep();
-      final ActionPopupStep actionPopupStep = ObjectUtils.tryCast(listStep, ActionPopupStep.class);
-      if (actionPopupStep == null) return;
+      ListPopupStep<?> listStep = getListStep();
+      if (!(listStep instanceof ActionPopupStep)) return;
+      ActionPopupStep actionPopupStep = (ActionPopupStep)listStep;
 
       List<ToggleAction> filtered = ContainerUtil.mapNotNull(selectedValues, o -> getActionByClass(o, actionPopupStep, ToggleAction.class));
 
       for (ToggleAction action : filtered) {
         actionPopupStep.performAction(action, 0);
       }
-
-      for (ActionItem item : actionPopupStep.getValues()) {
-        updateActionItem(item);
-      }
-
       getList().repaint();
     }
 
