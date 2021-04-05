@@ -261,9 +261,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
-    }
-    else if (myMnemonicLabel != null) {
-      myMnemonicLabel.setVisible(false);
+      myIconBar.add(myMnemonicLabel);
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
@@ -316,7 +314,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     Box res = Box.createHorizontalBox();
     res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
     res.add(myIconLabel);
-    res.add(myMnemonicLabel);
 
     return res;
   }
