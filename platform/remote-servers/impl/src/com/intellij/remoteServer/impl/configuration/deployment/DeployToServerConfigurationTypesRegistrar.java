@@ -2,21 +2,27 @@
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.remoteServer.ServerType;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class DeployToServerConfigurationTypesRegistrar implements ApplicationInitializedListener {
-  @Override
-  public void componentsInitialized() {
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+// sync preloaded service and not as an ApplicationInitializedListener because it takes relatively a lot of time
+public final class DeployToServerConfigurationTypesRegistrar {
+  private DeployToServerConfigurationTypesRegistrar() {
     //todo[nik] improve this: configuration types should be loaded lazily
-    getConfigurationTypesExtPoint()
-      .registerExtensions(ContainerUtil.map(ServerType.EP_NAME.getExtensionList(), type -> new DeployToServerConfigurationType(type)));
+    Collection<? extends ServerType<?>> collection = ServerType.EP_NAME.getExtensionList();
+    List<DeployToServerConfigurationType> list = new ArrayList<>(collection.size());
+    for (ServerType<?> t : collection) {
+      list.add(new DeployToServerConfigurationType(t));
+    }
+    getConfigurationTypesExtPoint().registerExtensions(list);
 
     ServerType.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override

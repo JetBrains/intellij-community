@@ -37,8 +37,9 @@
                     serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeploymentConfigurationManagerImpl"/>
     <remoteServer.deploymentSource.type
       implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
-    <applicationInitializedListener
-      implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"/>
+    <applicationService
+      serviceImplementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar"
+      preload="await"/>
 
     <projectService serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersDeploymentManager"/>
     <serviceViewContributor implementation="com.intellij.remoteServer.impl.runtime.ui.DefaultRemoteServersServiceViewContributor"/>
