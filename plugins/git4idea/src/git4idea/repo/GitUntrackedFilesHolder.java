@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
-import git4idea.GitLocalBranch;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -258,76 +257,20 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   @Override
   public void filesChanged(@NotNull List<? extends @NotNull VFileEvent> events) {
-    boolean allChanged = false;
     Set<FilePath> filesToRefresh = new HashSet<>();
 
     for (VFileEvent event : events) {
-      if (allChanged) {
-        break;
-      }
-      String path = event.getPath();
-      if (totalRefreshNeeded(myRepository, path)) {
-        allChanged = true;
-      }
-      else {
-        Set<FilePath> affectedPaths = getAffectedFilePaths(event);
-        for (FilePath affectedFilePath : affectedPaths) {
-          if (notIgnored(affectedFilePath)) {
-            filesToRefresh.add(affectedFilePath);
-          }
+      Set<FilePath> affectedPaths = getAffectedFilePaths(event);
+      for (FilePath affectedFilePath : affectedPaths) {
+        if (notIgnored(affectedFilePath)) {
+          filesToRefresh.add(affectedFilePath);
         }
       }
     }
 
-    // if index has changed, no need to refresh specific files - we get the full status of all files
-    if (allChanged) {
-      rescanIgnoredFiles(() -> {
-        LOG.debug(String.format("GitUntrackedFilesHolder: total refresh is needed, marking %s recursively dirty", myRoot));
-        myDirtyScopeManager.dirDirtyRecursively(myRoot);
-      });
-      synchronized (LOCK) {
-        myReady = false;
-      }
-    } else {
-      synchronized (LOCK) {
-        myPossiblyUntrackedFiles.addAll(filesToRefresh);
-      }
+    synchronized (LOCK) {
+      myPossiblyUntrackedFiles.addAll(filesToRefresh);
     }
-  }
-
-  private static boolean totalRefreshNeeded(@NotNull GitRepository repository, @NotNull String path) {
-    return indexChanged(repository, path) || externallyCommitted(repository, path) || headMoved(repository, path) ||
-           headChanged(repository, path) || currentBranchChanged(repository, path) || gitignoreChanged(repository, path);
-  }
-
-  private static boolean headChanged(@NotNull GitRepository repository, @NotNull String path) {
-    return repository.getRepositoryFiles().isHeadFile(path);
-  }
-
-  private static boolean currentBranchChanged(@NotNull GitRepository repository, @NotNull String path) {
-    GitLocalBranch currentBranch = repository.getCurrentBranch();
-    return currentBranch != null && repository.getRepositoryFiles().isBranchFile(path, currentBranch.getFullName());
-  }
-
-  private static boolean headMoved(@NotNull GitRepository repository, @NotNull String path) {
-    return repository.getRepositoryFiles().isOrigHeadFile(path);
-  }
-
-  public static boolean indexChanged(@NotNull GitRepository repository, @NotNull String path) {
-    return repository.getRepositoryFiles().isIndexFile(path);
-  }
-
-  private static boolean externallyCommitted(@NotNull GitRepository repository, @NotNull String path) {
-    return repository.getRepositoryFiles().isCommitMessageFile(path);
-  }
-
-  private static boolean gitignoreChanged(@NotNull GitRepository repository, @NotNull String path) {
-    // TODO watch file stored in core.excludesfile
-    return path.endsWith(GitRepositoryFiles.GITIGNORE) || repository.getRepositoryFiles().isExclude(path);
-  }
-
-  private void rescanIgnoredFiles(@NotNull Runnable doAfterRescan) { //TODO move to ignore manager
-    myRepository.getIgnoredFilesHolder().startRescan(doAfterRescan);
   }
 
   private boolean notIgnored(@Nullable FilePath file) {

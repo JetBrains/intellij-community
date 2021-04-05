@@ -13,9 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
@@ -23,25 +21,12 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
-import git4idea.repo.GitRepositoryManager
-import git4idea.repo.GitUntrackedFilesHolder
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val cache = GitIndexVirtualFileCache(project)
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        val roots = GitRepositoryManager.getInstance(project).repositories.filter { repo ->
-          events.any { e -> GitUntrackedFilesHolder.indexChanged(repo, e.path) }
-        }.map { it.root }
-        if (roots.isNotEmpty()) {
-          LOG.debug("Scheduling refresh for roots ${roots.joinToString { it.name }}")
-          refresh { roots.contains(it.root) }
-        }
-      }
-    })
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
       LOG.debug("Scheduling refresh for repository ${repository.root.name}")
       refresh { it.root == repository.root }
