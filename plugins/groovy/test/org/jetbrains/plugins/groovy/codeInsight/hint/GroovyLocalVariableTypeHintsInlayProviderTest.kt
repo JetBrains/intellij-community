@@ -19,10 +19,38 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
 
   fun `test basic cases`() {
     val text = """
-def x<# [:  Integer] #> = 1
-def y<# [:  String] #> = "abc"
+      def x<# [:  Integer] #> = 1
+      def y<# [:  String] #> = "abc"
     """.trimIndent()
     testTypeHints(text)
+  }
+
+  fun `test no type hint for object or null`() {
+    testTypeHints("""
+      def x = null
+      def foo() {}
+      def y = foo()
+    """.trimIndent())
+  }
+
+  fun `test no type hint for casted expression`() {
+    testTypeHints("""
+      def x = 1 as Number
+      def y = (Number)1
+    """.trimIndent())
+  }
+
+  fun `test no type hint for constructor calls`() {
+    testTypeHints("""
+      def x = new File()
+    """.trimIndent()
+    )
+  }
+
+  fun `test var keyword`() {
+    testTypeHints("""
+      def x<# [:  Integer] #> = 1
+    """.trimIndent())
   }
 
 }
