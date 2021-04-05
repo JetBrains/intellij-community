@@ -3,13 +3,11 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.SyntheticElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightParameter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -71,18 +69,20 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     }
 
     LombokLightParameter that = (LombokLightParameter)o;
-
-    final PsiType thisType = getType();
-    final PsiType thatType = that.getType();
-    if (thisType.isValid() != thatType.isValid()) {
+    if (!Objects.equals(getName(), that.getName())) {
       return false;
     }
 
-    return thisType.getCanonicalText().equals(thatType.getCanonicalText());
+    final PsiType type = getType();
+    final PsiType thatType = that.getType();
+    if (type instanceof PsiClassType && thatType instanceof PsiClassType) {
+      return Objects.equals(((PsiClassType)type).getName(), ((PsiClassType)thatType).getName());
+    }
+    return type.equals(thatType);
   }
 
   @Override
   public int hashCode() {
-    return getType().hashCode();
+    return Objects.hash(getName(), getType());
   }
 }
