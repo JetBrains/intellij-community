@@ -57,7 +57,9 @@ public class HeavyAwareExecutor implements Disposable {
   public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task,
                                                 @NotNull ProgressIndicator indicator) {
     ExecutingHeavyOrPowerSaveListener executingListener = new ExecutingHeavyOrPowerSaveListener(myProject, myDelayMs, this, () -> {
-      ListenableFuture<?> future = runAsync(task, indicator);
+      ListenableFuture<?> future = myExecutorService.submit(() -> {
+        ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator);
+      });
 
       Disposable disposable = Disposer.newDisposable();
       future.addListener(() -> Disposer.dispose(disposable), directExecutor());
@@ -66,13 +68,6 @@ public class HeavyAwareExecutor implements Disposable {
       return future;
     });
     return Futures.transformAsync(executingListener.getFuture(), input -> input, directExecutor());
-  }
-
-  @NotNull
-  private ListenableFuture<?> runAsync(@NotNull Consumer<? super ProgressIndicator> task,
-                                       @NotNull ProgressIndicator indicator) {
-    Runnable taskWithProgress = () -> ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator);
-    return myExecutorService.submit(taskWithProgress);
   }
 
   @Override
