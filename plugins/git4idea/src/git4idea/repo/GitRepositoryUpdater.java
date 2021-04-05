@@ -26,6 +26,7 @@ import java.util.Set;
  */
 final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
   @NotNull private final GitRepository myRepository;
+  @NotNull private final Collection<VirtualFile> myRootDirs;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
@@ -34,8 +35,8 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
 
   GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;
-    Collection<String> rootPaths = ContainerUtil.map(gitFiles.getRootDirs(), file -> file.getPath());
-    myWatchRequests = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
+    myRootDirs = gitFiles.getRootDirs();
+    myWatchRequests = LocalFileSystem.getInstance().addRootsToWatch(ContainerUtil.map(myRootDirs, VirtualFile::getPath), true);
 
     myRepositoryFiles = gitFiles;
     visitSubDirsInVfs();
@@ -63,35 +64,37 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     boolean tagChanged = false;
     Set<VirtualFile> toReloadVfs = new HashSet<>();
     for (VFileEvent event : events) {
-      String filePath = event.getPath();
-      if (myRepositoryFiles.isConfigFile(filePath)) {
-        configChanged = true;
-      }
-      else if (myRepositoryFiles.isHeadFile(filePath)) {
-        headChanged = true;
-      }
-      else if (myRepositoryFiles.isBranchFile(filePath)) {
-        // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
-        branchFileChanged = true;
-        ContainerUtil.addIfNotNull(toReloadVfs, myHeadsDir);
-      }
-      else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
-        // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
-        branchFileChanged = true;
-        ContainerUtil.addIfNotNull(toReloadVfs, myRemotesDir);
-      }
-      else if (myRepositoryFiles.isPackedRefs(filePath)) {
-        packedRefsChanged = true;
-      }
-      else if (myRepositoryFiles.isRebaseFile(filePath)) {
-        rebaseFileChanged = true;
-      }
-      else if (myRepositoryFiles.isMergeFile(filePath)) {
-        mergeFileChanged = true;
-      }
-      else if (myRepositoryFiles.isTagFile(filePath)) {
-        ContainerUtil.addIfNotNull(toReloadVfs, myTagsDir);
-        tagChanged = true;
+      if (isRootDirChange(event)) {
+        String filePath = event.getPath();
+        if (myRepositoryFiles.isConfigFile(filePath)) {
+          configChanged = true;
+        }
+        else if (myRepositoryFiles.isHeadFile(filePath)) {
+          headChanged = true;
+        }
+        else if (myRepositoryFiles.isBranchFile(filePath)) {
+          // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
+          branchFileChanged = true;
+          ContainerUtil.addIfNotNull(toReloadVfs, myHeadsDir);
+        }
+        else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
+          // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
+          branchFileChanged = true;
+          ContainerUtil.addIfNotNull(toReloadVfs, myRemotesDir);
+        }
+        else if (myRepositoryFiles.isPackedRefs(filePath)) {
+          packedRefsChanged = true;
+        }
+        else if (myRepositoryFiles.isRebaseFile(filePath)) {
+          rebaseFileChanged = true;
+        }
+        else if (myRepositoryFiles.isMergeFile(filePath)) {
+          mergeFileChanged = true;
+        }
+        else if (myRepositoryFiles.isTagFile(filePath)) {
+          ContainerUtil.addIfNotNull(toReloadVfs, myTagsDir);
+          tagChanged = true;
+        }
       }
     }
     for (VirtualFile dir : toReloadVfs) {
@@ -107,6 +110,15 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
     if (configChanged) {
       BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GitConfigListener.TOPIC).notifyConfigChanged(myRepository);
     }
+  }
+
+  private boolean isRootDirChange(@NotNull VFileEvent event) {
+    VirtualFile file = event.getFile();
+    if (file == null) return true; // can't do fast check, fallback to paths matching
+    for (VirtualFile dir : myRootDirs) {
+      if (VfsUtilCore.isAncestor(dir, file, false)) return true;
+    }
+    return false;
   }
 
   private void visitSubDirsInVfs() {
