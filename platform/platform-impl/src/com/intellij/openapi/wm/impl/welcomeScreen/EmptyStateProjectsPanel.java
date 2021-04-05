@@ -54,9 +54,19 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
 
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
-      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreActionGroup.getChildrenCount() == 1
-                                                           ? new AnActionLink(moreActionGroup.getChildren(null)[0], ActionPlaces.WELCOME_SCREEN)
-                                                           : createLinkWithPopup(moreActionGroup));
+      JComponent actionLink;
+      if (moreActionGroup.getChildrenCount() == 1) {
+        AnAction action = moreActionGroup.getChildren(null)[0];
+        actionLink = new AnActionLink(action, ActionPlaces.WELCOME_SCREEN);
+        if (action instanceof OpenAlienProjectAction) {
+          ((OpenAlienProjectAction)action).scheduleUpdate(actionLink);
+        }
+      }
+      else {
+        actionLink = createLinkWithPopup(moreActionGroup);
+      }
+
+      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), actionLink);
       moreLinkPanel.setBorder(JBUI.Borders.emptyTop(5));
       mainPanel.add(moreLinkPanel);
     }

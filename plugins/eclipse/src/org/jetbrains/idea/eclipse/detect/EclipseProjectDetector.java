@@ -24,8 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
 
-class EclipseProjectDetector implements ProjectDetector {
+class EclipseProjectDetector extends ProjectDetector {
   private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
   protected void collectProjectPaths(List<String> projects) throws Exception {
@@ -57,7 +58,7 @@ class EclipseProjectDetector implements ProjectDetector {
   }
 
   @Override
-  public void detectProjects(Runnable callback) {
+  public void detectProjects(Consumer<List<String>> onFinish) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         List<String> projects = new ArrayList<>();
@@ -67,7 +68,7 @@ class EclipseProjectDetector implements ProjectDetector {
         ProjectGroup group = new ProjectGroup("Eclipse Projects");
         group.setProjects(projects);
         manager.addGroup(group);
-        ApplicationManager.getApplication().invokeLater(callback);
+        ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(projects));
       }
       catch (Exception e) {
         LOG.error(e);

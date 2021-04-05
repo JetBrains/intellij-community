@@ -177,10 +177,7 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
-    ProjectDetector @NotNull [] extensions = ProjectDetector.EXTENSION_POINT_NAME.getExtensions();
-    for (ProjectDetector detector : extensions) {
-      detector.detectProjects(() -> RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(myList.getModel()));
-    }
+    ProjectDetector.runDetectors((projects) -> RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel(myList.getModel()));
   }
 
   public static Function<? super AnAction, String> createProjectNameFunction() {
