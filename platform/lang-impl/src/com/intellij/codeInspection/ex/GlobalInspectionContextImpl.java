@@ -103,6 +103,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolPresentation> myPresentationMap = new ConcurrentHashMap<>();
+  private boolean forceInspectAllScope = false;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
@@ -189,6 +190,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   public InspectionResultsView getView() {
     return myView;
+  }
+
+  public boolean isForceInspectAllScope() {
+    return forceInspectAllScope;
+  }
+
+  public void setForceInspectAllScope(boolean forceInspectAllScope) {
+    this.forceInspectAllScope = forceInspectAllScope;
   }
 
   private static void resolveElementRecursively(@NotNull InspectionToolResultExporter presentation, @NotNull RefEntity refElement) {
@@ -515,7 +524,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
-            if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
+            if (!forceInspectAllScope && (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
               if (getProject().isDisposed()) throw new ProcessCanceledException();
