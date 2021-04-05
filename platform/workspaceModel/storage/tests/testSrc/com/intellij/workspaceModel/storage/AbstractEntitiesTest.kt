@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.workspaceModel.storage.entities.*
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AbstractEntitiesTest {
@@ -58,5 +59,31 @@ class AbstractEntitiesTest {
     val actualChild = assertOneElement(actualLeftEntity.children.toList())
     assertEquals(anotherMiddleEntity, actualChild)
     assertEquals(anotherMiddleEntity.property, (actualChild as MiddleEntity).property)
+  }
+
+  @Test
+  fun `children replace in addDiff`() {
+    val builder = WorkspaceEntityStorageBuilder.create()
+    val middleEntity = builder.addMiddleEntity()
+    val leftEntity: CompositeBaseEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+
+    val anotherBuilder = WorkspaceEntityStorageBuilder.from(builder)
+    val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
+    anotherBuilder.modifyEntity(ModifiableLeftEntity::class.java, leftEntity) {
+      this.children = sequenceOf(middleEntity, anotherMiddleEntity)
+    }
+
+    val initialMiddleEntity = builder.addMiddleEntity("Initial")
+    builder.modifyEntity(ModifiableLeftEntity::class.java, leftEntity) {
+      this.children = sequenceOf(middleEntity, initialMiddleEntity)
+    }
+
+    builder.addDiff(anotherBuilder)
+
+    val actualLeftEntity = assertOneElement(builder.entities(LeftEntity::class.java).toList())
+    val children = actualLeftEntity.children.toList() as List<MiddleEntity>
+    assertEquals(2, children.size)
+    assertTrue(children.any { it.property == "Another" })
+    assertTrue(children.none { it.property == "Initial" })
   }
 }

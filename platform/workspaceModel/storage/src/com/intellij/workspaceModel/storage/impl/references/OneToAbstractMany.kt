@@ -1,16 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.references
 
-import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY
-import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenOfParent
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
 import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+/**
+ * This reference has a special behaviour. During addDIff it doesn't try to merge added and remove children, but just replaces all children.
+ * This behaviour should be updated if you want a version of this reference that merges children
+ */
 class OneToAbstractMany<Parent : WorkspaceEntityBase, Child : WorkspaceEntityBase>(private val childClass: Class<Child>) : ReadOnlyProperty<Parent, Sequence<Child>> {
 
   private var connectionId: ConnectionId? = null
