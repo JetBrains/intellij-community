@@ -31,13 +31,17 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     }
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
       val type: PsiType = getRepresentableType(element) ?: return true
-      val typeRepresentation = factory.buildRepresentation(type, " ").run { factory.roundWithBackground(this) }
+      val typeRepresentation = with(factory) {
+        roundWithBackground(seq(smallText(" "), buildRepresentation(type)))
+      }
       sink.addInlineElement(element.textOffset, false, typeRepresentation, false)
     }
     if (element is GrClosableBlock && element.parameterList.isEmpty) {
       val itParameter: GrParameter = element.allParameters.singleOrNull() ?: return true
       val type: PsiType = getRepresentableType(itParameter) ?: return true
-      val textRepresentation: InlayPresentation = factory.roundWithBackground(factory.buildRepresentation(type, " it -> "))
+      val textRepresentation: InlayPresentation = with(factory) {
+        roundWithBackground(seq(smallText(" it -> "), buildRepresentation(type)))
+      }
       sink.addInlineElement(element.lBrace.endOffset, true, textRepresentation, false)
     }
     if (settings.showTypeParameterList &&

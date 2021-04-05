@@ -15,7 +15,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
-class GroovyLocalVariableTypeHintsCollector(editor: Editor) : FactoryInlayHintsCollector(editor) {
+class GroovyLocalVariableTypeHintsCollector(editor: Editor,
+                                            val settings: GroovyLocalVariableTypeHintsInlayProvider.Settings) : FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
     if (!element.isValid) {
@@ -29,11 +30,20 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor) : FactoryInlayHintsC
     }
     val results = getPresentableType(element)
     for ((type, identifier) in results) {
-      val typeRepresentation = factory.buildRepresentation(type, prefix = ": ").let(factory::roundWithBackground)
-      val identifierRange = identifier.textRange ?: continue
-      sink.addInlineElement(identifierRange.endOffset, true, typeRepresentation, false)
+      submitInlayHint(identifier, type, sink)
     }
     return true
+  }
+
+  private fun submitInlayHint(identifier: PsiIdentifier, type : PsiType, sink: InlayHintsSink) {
+    val identifierRange = identifier.textRange ?: return
+    val typeRepresentation = factory.buildRepresentation(type)
+    val (offset, representation) = if (settings.insertBeforeIdentifier) {
+      identifierRange.startOffset to factory.seq(typeRepresentation, factory.smallText(" "))
+    } else {
+      identifierRange.endOffset to factory.seq(factory.smallText(": "), typeRepresentation)
+    }
+    sink.addInlineElement(offset, true, factory.roundWithBackground(representation), false)
   }
 
   private fun getPresentableType(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {

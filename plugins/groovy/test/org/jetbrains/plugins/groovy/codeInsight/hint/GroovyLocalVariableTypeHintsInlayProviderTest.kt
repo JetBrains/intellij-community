@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
-import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
@@ -13,8 +12,11 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     return GroovyProjectDescriptors.GROOVY_3_0
   }
 
-  private fun testTypeHints(text: String) {
-    testProvider("test.groovy", text, GroovyLocalVariableTypeHintsInlayProvider(), NoSettings())
+  private fun testTypeHints(text: String, drawHintBefore: Boolean = false) {
+    testProvider("test.groovy",
+                 text,
+                 GroovyLocalVariableTypeHintsInlayProvider(),
+                 GroovyLocalVariableTypeHintsInlayProvider.Settings(insertBeforeIdentifier = drawHintBefore))
   }
 
   fun `test basic cases`() {
@@ -57,6 +59,12 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     testTypeHints("""
     def (a<# [:  Integer] #>, b<# [:  String] #>) = new Tuple2<>(1, "")
     """.trimIndent())
+  }
+
+  fun `test draw hint before`() {
+    testTypeHints("""
+      def <# [Integer  ] #>a = 1
+    """.trimIndent(), true)
   }
 
 }

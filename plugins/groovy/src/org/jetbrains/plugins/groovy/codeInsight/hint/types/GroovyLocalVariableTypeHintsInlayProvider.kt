@@ -8,17 +8,19 @@ import com.intellij.ui.layout.*
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 
-class GroovyLocalVariableTypeHintsInlayProvider : InlayHintsProvider<NoSettings> {
+class GroovyLocalVariableTypeHintsInlayProvider : InlayHintsProvider<GroovyLocalVariableTypeHintsInlayProvider.Settings> {
   companion object {
-    val ourKey: SettingsKey<NoSettings> = SettingsKey("groovy.variable.type.hints")
+    private val ourKey: SettingsKey<Settings> = SettingsKey("groovy.variable.type.hints")
   }
 
-  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector = GroovyLocalVariableTypeHintsCollector(editor)
+  override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector = GroovyLocalVariableTypeHintsCollector(editor, settings)
 
-  override fun createSettings(): NoSettings = NoSettings()
+  override fun createSettings(): Settings = Settings()
+
+  data class Settings(var insertBeforeIdentifier : Boolean = false)
 
   override val name: String = GroovyBundle.message("local.variable.types")
-  override val key: SettingsKey<NoSettings> = ourKey
+  override val key: SettingsKey<Settings> = ourKey
   override val previewText: String = """
 def foo() {
   def x = 1
@@ -26,8 +28,10 @@ def foo() {
 }
   """.trimIndent()
 
-  override fun createConfigurable(settings: NoSettings): ImmediateConfigurable = object : ImmediateConfigurable {
-    override val cases: List<ImmediateConfigurable.Case> = emptyList()
+  override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
+    override val cases: List<ImmediateConfigurable.Case> = listOf(
+      ImmediateConfigurable.Case(GroovyBundle.message("settings.inlay.insert.type.hint.before.identifier"), "inferred.parameter.types", settings::insertBeforeIdentifier),
+    )
 
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
 

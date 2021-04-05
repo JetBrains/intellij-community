@@ -6,7 +6,7 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.psi.*
 
-internal fun PresentationFactory.buildRepresentation(type: PsiType, postfix: String = "", prefix: String = ""): InlayPresentation {
+internal fun PresentationFactory.buildRepresentation(type: PsiType): InlayPresentation {
   return type.accept(object : PsiTypeVisitor<InlayPresentation>() {
     private val visitor = this
 
@@ -50,8 +50,7 @@ internal fun PresentationFactory.buildRepresentation(type: PsiType, postfix: Str
       return smallText(primitiveType.name)
     }
 
-  }).run { if (postfix.isEmpty()) this else seq(this, smallText(postfix)) }
-    .run { if (prefix.isEmpty()) this else seq(smallText(prefix), this) }
+  })
 }
 
 private fun <T> Iterable<T>.intersperse(delimiter: T): List<T> {
