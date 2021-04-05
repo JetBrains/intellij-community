@@ -27,10 +27,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleGroupPathEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.impl.reportErrorAndAttachStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -251,10 +248,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
       val res = ConcurrencyUtil.invokeAll(tasks, service)
       val builders = res.map { it.get() }
-      val sourcesToUpdate = if (enableExternalStorage) {
-        checkUniqueModules(builders, serializers, project)
-      }
-      else emptyList()
+      val sourcesToUpdate = removeDiplicatingEntities(builders, serializers, project)
       val squashedBuilder = squash(builders, consistencyCheckingMode)
       builder.addDiff(squashedBuilder)
       return sourcesToUpdate
@@ -286,13 +280,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   // Check if the same module is loaded from different source. This may happen in case of two `modules.xml` with the same module.
   // See IDEA-257175
   // This code may be removed if we'll get rid of storing modules.xml and friends in external storage (cache/external_build_system)
-  private fun checkUniqueModules(builders: List<WorkspaceEntityStorageBuilder>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
+  private fun removeDiplicatingEntities(builders: List<WorkspaceEntityStorageBuilder>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
     if (project == null) return emptyList()
 
     val modules = mutableMapOf<ModuleId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
+    val libraries = mutableMapOf<LibraryId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
     builders.forEachIndexed { i, builder ->
-      builder.entities(ModuleEntity::class.java).forEach { module ->
-        modules.getOrPut(module.persistentId()) { ArrayList() }.add(builder to serializers.get(i))
+      if (enableExternalStorage) {
+        builder.entities(ModuleEntity::class.java).forEach { module ->
+          modules.getOrPut(module.persistentId()) { ArrayList() }.add(builder to serializers.get(i))
+        }
+      }
+      builder.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }.forEach { library ->
+        libraries.getOrPut(library.persistentId()) { ArrayList() }.add(builder to serializers[i])
       }
     }
 
@@ -330,6 +330,27 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
       }
       reportIssue(project, moduleId, buildersWithModule.map { it.second }, leftModuleId)
+    }
+    for ((libraryId, buildersWithSerializers) in libraries) {
+      if (buildersWithSerializers.size <= 1) continue
+      val defaultFileName = FileUtil.sanitizeFileName(libraryId.name) + ".xml"
+      val entitiesToRemove = buildersWithSerializers.mapNotNull { (builder, serializer) ->
+        val library = builder.resolve(libraryId)!!
+        val entitySource = library.entitySource
+        if (entitySource !is JpsFileEntitySource.FileInDirectory) return@mapNotNull null
+        val fileName = serializer.fileUrl.fileName
+        if (fileName != defaultFileName) Triple(builder, library, fileName) else null
+      }
+      if (entitiesToRemove.isNotEmpty() && entitiesToRemove.size < buildersWithSerializers.size) {
+        for ((builder, entity) in entitiesToRemove) {
+          sourcesToUpdate.add(entity.entitySource)
+          builder.removeEntity(entity)
+        }
+        LOG.warn("""
+            |Multiple configuration files were found for '${libraryId.name}' library. 
+            |Libraries defined in ${entitiesToRemove.joinToString { it.third }} files will ignored and these files will be removed.
+          """.trimMargin())
+      }
     }
     return sourcesToUpdate
   }
