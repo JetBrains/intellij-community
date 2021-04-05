@@ -107,10 +107,9 @@ public abstract class AbstractProcessor implements Processor {
       combinedListOfCopyableAnnotations.addAll(configuredCopyableAnnotations);
     }
 
-    final List<String> existingAnnotations = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotation::getQualifiedName);
-    existingAnnotations.retainAll(combinedListOfCopyableAnnotations);
-
-    return existingAnnotations;
+    final List<PsiAnnotation> existedCopyableAnnotations =
+      AnnotationUtil.findAllAnnotations(psiField, combinedListOfCopyableAnnotations, true);
+    return ContainerUtil.map(existedCopyableAnnotations, PsiAnnotation::getQualifiedName);
   }
 
   protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
