@@ -62,9 +62,9 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
-* @author Gregory Shrago
-*/
-public class QuickEditHandler implements Disposable, DocumentListener {
+ * @author Gregory Shrago
+ */
+public class QuickEditHandler extends UserDataHolderBase implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
@@ -72,6 +72,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private final Editor myEditor;
   private final Document myOrigDocument;
 
+  @NotNull
   private final Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
@@ -121,8 +122,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
-    myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
-    assert myNewDocument != null;
+    myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     myOrigDocument.addDocumentListener(this, this);
@@ -167,10 +167,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     Disposer.register(this, myEditChangesHandler);
 
     StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
-      Set<QuickEditHandler> editHandlers = QUICK_EDIT_HANDLERS.get(h);
+      Set<QuickEditHandler> editHandlers = h.getCopyableUserData(QUICK_EDIT_HANDLERS);
       if (editHandlers == null) {
         editHandlers = new SmartHashSet<>();
-        QUICK_EDIT_HANDLERS.set(h, editHandlers);
+        h.putCopyableUserData(QUICK_EDIT_HANDLERS, editHandlers);
       }
       editHandlers.add(this);
       Set<QuickEditHandler> finalEditHandlers = editHandlers;
@@ -183,7 +183,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");
 
   public static @NotNull Set<QuickEditHandler> getFragmentEditors(@NotNull PsiLanguageInjectionHost host) {
-    Set<QuickEditHandler> handlers = QUICK_EDIT_HANDLERS.get(host);
+    Set<QuickEditHandler> handlers = host.getCopyableUserData(QUICK_EDIT_HANDLERS);
     if (handlers == null) return Collections.emptySet();
     return handlers;
   }
@@ -355,14 +355,19 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     return myNewFile;
   }
 
-  public @NotNull Editor getEditor() {
-    return myEditor;
+  @NotNull
+  public Document getFragmentDocument() {
+    return myNewDocument;
   }
 
   public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {
     return myEditChangesHandler.tryReuse(injectedFile, hostRange);
   }
 
+  @Override
+  public String toString() {
+    return "QuickEditHandler@" + this.hashCode() + super.toString();
+  }
 
   private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
