@@ -54,6 +54,7 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DragSource;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -330,21 +331,16 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> {
-          ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log);
-        }, initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log), initUiTask);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
           // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
           EventQueue.invokeAndWait(() -> {
             runStartupWizard(appStarter);
-            PluginManagerCore.scheduleDescriptorLoading();
           });
         }
-        else {
-          PluginManagerCore.scheduleDescriptorLoading();
-        }
+        PluginManagerCore.scheduleDescriptorLoading();
       }
       activity.end();
     }
@@ -399,7 +395,6 @@ public final class StartupUtil {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");
         }
 
-        //noinspection SpellCheckingInspection
         EventQueue.invokeLater(() -> {
           try {
             // it is required even if headless because some tests creates configurable, so, our LaF is expected
@@ -420,40 +415,17 @@ public final class StartupUtil {
           // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
           Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.APP_INIT);
           JBUIScale.getSystemFontData();
-
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          boolean showSplash = false;
-          // product specifies `slash` VM properties, `nosplash` is deprecated property,
-          // it should be checked first
-          if (!Boolean.getBoolean(CommandLineArgs.NO_SPLASH) && Boolean.getBoolean(CommandLineArgs.SPLASH)) {
-            showSplash = true;
-          }
-          if (showSplash && !Main.isLightEdit()) {
-            Activity prepareSplashActivity = activity.endAndStart("splash preparation");
-            Activity prepareSplashQueueActivity = prepareSplashActivity.startChild("splash preparation (in queue)");
-            EventQueue.invokeLater(() -> {
-              prepareSplashQueueActivity.end();
-              Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
-              boolean isEulaAccepted;
-              try {
-                EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.join();
-                isEulaAccepted = document == null || document.isAccepted();
-              }
-              catch (Exception ignore) {
-                isEulaAccepted = true;
-              }
-              eulaActivity.end();
-
-              SplashManager.show(args, isEulaAccepted);
-              prepareSplashActivity.end();
-            });
-            return;
-          }
+          showSplashIfNeeded(args, eulaDocument, activity);
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
           EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
+
+          ForkJoinPool.commonPool().execute(() -> {
+            loadSystemFontsAndDnDCursors();
+          });
         });
       }
       catch (Throwable e) {
@@ -462,28 +434,66 @@ public final class StartupUtil {
     });
 
     if (!Main.isHeadless()) {
-      // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon);
+      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, ForkJoinPool.commonPool());
     }
 
-    CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
     if (isUsingSeparateWriteThread()) {
-      ForkJoinPool.commonPool().execute(() -> {
+      return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
         Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading", ActivityCategory.APP_INIT);
         try {
           WriteIntentLockInstrumenter.instrument();
         }
         finally {
           activity.end();
-          instrumentationFuture.complete(null);
         }
-      });
+      }, ForkJoinPool.commonPool()));
     }
     else {
-      instrumentationFuture.complete(null);
+      return initUiFuture;
+    }
+  }
+
+  private static void loadSystemFontsAndDnDCursors() {
+    Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.APP_INIT);
+    // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
+    new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
+    // This caches available font family names (for the default locale) to make corresponding call
+    // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
+    GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+
+    // pre-load cursors used by drag-n-drop AWT subsystem
+    activity = activity.endAndStart("DnD setup");
+    DragSource.getDefaultDragSource();
+    activity.end();
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private static void showSplashIfNeeded(@NotNull String @NotNull [] args,
+                                         @Nullable ForkJoinTask<@Nullable Object> eulaDocument,
+                                         @NotNull Activity activity) {
+    // product specifies `slash` VM properties, `nosplash` is deprecated property, it should be checked first
+    if (Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !Boolean.getBoolean(CommandLineArgs.SPLASH) || Main.isLightEdit()) {
+      return;
     }
 
-    return CompletableFuture.allOf(initUiFuture, instrumentationFuture);
+    Activity prepareSplashActivity = activity.endAndStart("splash preparation");
+    Activity prepareSplashQueueActivity = prepareSplashActivity.startChild("splash preparation (in queue)");
+    EventQueue.invokeLater(() -> {
+      prepareSplashQueueActivity.end();
+      Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
+      boolean isEulaAccepted;
+      try {
+        EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.join();
+        isEulaAccepted = document == null || document.isAccepted();
+      }
+      catch (Exception ignore) {
+        isEulaAccepted = true;
+      }
+      eulaActivity.end();
+
+      SplashManager.show(args, isEulaAccepted);
+      prepareSplashActivity.end();
+    });
   }
 
   private static void updateFrameClassAndWindowIcon() {

@@ -68,7 +68,6 @@ public final class StartupUiUtil {
 
   public static void initDefaultLaF()
     throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
-
     blockATKWrapper();
 
     Activity activity = StartUpMeasurer.startActivity("LaF initialization", ActivityCategory.APP_INIT);

@@ -773,6 +773,7 @@ public final class PluginManagerCore {
     prepareLoadingPluginsErrorMessage(pluginErrors, globalErrors, actions);
   }
 
+  // separate method to avoid exposing of DescriptorListLoadingContext class
   public static void scheduleDescriptorLoading() {
     getOrScheduleLoading();
   }

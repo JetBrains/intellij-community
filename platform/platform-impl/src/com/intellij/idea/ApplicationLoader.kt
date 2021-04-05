@@ -38,9 +38,6 @@ import com.intellij.util.ui.AsyncProcessIcon
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
-import java.awt.Font
-import java.awt.GraphicsEnvironment
-import java.awt.dnd.DragSource
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -318,27 +315,6 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
 fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
-  initUiTask.thenRunAsync({
-    val args = processProgramArguments(rawArgs)
-    EventQueue.invokeLater {
-      executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)
-    }
-
-    if (!Main.isHeadless()) {
-      runActivity("system fonts loading") {
-        // editor and other UI components need the list of system fonts to implement font fallback
-        // this list is pre-loaded here, in parallel to other activities, to speed up project opening
-        // ideally, it shouldn't overlap with other font-related activities to avoid contention on JDK-internal font manager locks
-        loadSystemFonts()
-      }
-
-      // pre-load cursors used by drag-n-drop AWT subsystem
-      runActivity("DnD setup") {
-        DragSource.getDefaultDragSource()
-      }
-    }
-  }, ForkJoinPool.commonPool()) // must not be executed neither in IDE main thread nor in EDT
-
   try {
     val activity = initAppActivity.startChild("plugin descriptor init waiting")
     PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
@@ -354,16 +330,15 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
   }
   catch (e: Throwable) {
     loadAndInitPluginFuture.completeExceptionally(e)
-    return
   }
-}
 
-private fun loadSystemFonts() {
-  // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
-  Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-  // This caches available font family names (for the default locale) to make corresponding call
-  // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
-  GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+  // use main thread, avoid thread switching
+  (initUiTask as CompletableFuture<*>).join()
+
+  val args = processProgramArguments(rawArgs)
+  EventQueue.invokeLater {
+    executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)
+  }
 }
 
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
