@@ -30,7 +30,7 @@ def foo() {
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
     override val cases: List<ImmediateConfigurable.Case> = listOf(
-      ImmediateConfigurable.Case(GroovyBundle.message("settings.inlay.insert.type.hint.before.identifier"), "inferred.parameter.types", settings::insertBeforeIdentifier),
+      ImmediateConfigurable.Case(GroovyBundle.message("settings.inlay.put.type.hint.before.identifier"), "inferred.parameter.types", settings::insertBeforeIdentifier),
     )
 
     override fun createComponent(listener: ChangeListener): JPanel = panel {}
