@@ -197,7 +197,7 @@ public final class UIUtil {
   }
 
   private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
-    if (!SystemInfo.isXWindow) {
+    if (!SystemInfoRt.isXWindow) {
       return false;
     }
 
@@ -452,7 +452,7 @@ public final class UIUtil {
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
-  private static final Ref<Boolean> ourRetina = Ref.create(SystemInfo.isMac ? null : false);
+  private static final Ref<Boolean> ourRetina = Ref.create(SystemInfoRt.isMac ? null : false);
 
   private UIUtil() {
   }
@@ -612,9 +612,9 @@ public final class UIUtil {
     if (c < 0x20 || c == 0x7F) return false;
 
     // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
-    if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
+    if (SystemInfoRt.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       return !e.isMetaDown() && !e.isControlDown();
     }
 
@@ -1158,7 +1158,7 @@ public final class UIUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderAquaLookAndFeel() {
-    return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
+    return SystemInfoRt.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
   /**
@@ -1171,12 +1171,12 @@ public final class UIUtil {
   }
 
   public static boolean isUnderAquaBasedLookAndFeel() {
-    return SystemInfo.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
+    return SystemInfoRt.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
   }
 
   public static boolean isUnderDefaultMacTheme() {
     LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfo.isMac && lookAndFeel instanceof UserDataHolder) {
+    if (SystemInfoRt.isMac && lookAndFeel instanceof UserDataHolder) {
       UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
@@ -1187,7 +1187,7 @@ public final class UIUtil {
 
   public static boolean isUnderWin10LookAndFeel() {
     LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (SystemInfo.isWindows && lookAndFeel instanceof UserDataHolder) {
+    if (SystemInfoRt.isWindows && lookAndFeel instanceof UserDataHolder) {
       UserDataHolder dh = (UserDataHolder)lookAndFeel;
 
       return Boolean.TRUE != dh.getUserData(LAF_WITH_THEME_KEY) &&
@@ -1207,11 +1207,11 @@ public final class UIUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static boolean isUnderGTKLookAndFeel() {
-    return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
+    return SystemInfoRt.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
 
   public static boolean isGraphite() {
-    if (!SystemInfo.isMac) return false;
+    if (!SystemInfoRt.isMac) return false;
     try {
       // https://developer.apple.com/library/mac/documentation/Cocoa/Reference/ApplicationKit/Classes/NSCell_Class/index.html#//apple_ref/doc/c_ref/NSGraphiteControlTint
       // NSGraphiteControlTint = 6
@@ -1222,7 +1222,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Font getToolbarFont() {
-    return SystemInfo.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : StartupUiUtil.getLabelFont();
+    return SystemInfoRt.isMac ? getLabelFont(UIUtil.FontSize.SMALL) : StartupUiUtil.getLabelFont();
   }
 
   public static @NotNull Color shade(@NotNull Color c, final double factor, final double alphaFactor) {
@@ -1287,7 +1287,7 @@ public final class UIUtil {
   }
 
   public static boolean isControlKeyDown(@NotNull MouseEvent mouseEvent) {
-    return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
+    return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
   public static String @NotNull [] getValidFontNames(final boolean familyName) {
@@ -1410,7 +1410,7 @@ public final class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-    if (SystemInfo.isMac && !isRetina() || SystemInfo.isLinux) {
+    if (SystemInfoRt.isMac && !isRetina() || SystemInfoRt.isLinux) {
       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
     }
     else {
@@ -1997,7 +1997,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull String text) {
-    if (!SystemInfo.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
+    if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
       return getFontWithFallback(font);
     }
     else {
@@ -2008,7 +2008,7 @@ public final class UIUtil {
   public static @NotNull FontUIResource getFontWithFallback(@NotNull Font font) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
-    if (!SystemInfo.isMac) {
+    if (!SystemInfoRt.isMac) {
       try {
         if (!FontUtilities.fontSupportsDefaultEncoding(font)) {
           font = FontUtilities.getCompositeFontUIResource(font);
@@ -2027,7 +2027,7 @@ public final class UIUtil {
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
-    Font fontWithFallback = SystemInfo.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
+    Font fontWithFallback = SystemInfoRt.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
   }
 
@@ -2216,7 +2216,7 @@ public final class UIUtil {
   }
 
   public static void fixFormattedField(@NotNull JFormattedTextField field) {
-    if (SystemInfo.isMac) {
+    if (SystemInfoRt.isMac) {
       final int commandKeyMask;
       try {
         commandKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
@@ -2266,7 +2266,7 @@ public final class UIUtil {
   }
 
   public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
-    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
+    return SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
   }
 
   @SuppressWarnings("deprecation")
@@ -2808,7 +2808,7 @@ public final class UIUtil {
     textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfoRt.isMac
                                                                            ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
@@ -3309,15 +3309,6 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableSelectionForeground() {
     return getTableSelectionForeground(true);
-  }
-
-  /**
-   * @deprecated use {@link JBUIScale#getSystemFontData()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static Pair<String, Integer> getSystemFontData() {
-    return JBUIScale.getSystemFontData();
   }
 
   /**

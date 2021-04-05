@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformUtils;
@@ -38,6 +37,7 @@ import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -210,7 +210,7 @@ public final class PluginManagerCore {
   }
 
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
-    ourBrokenPluginVersions = new java.lang.ref.SoftReference<>(brokenPlugins);
+    ourBrokenPluginVersions = new SoftReference<>(brokenPlugins);
     Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
       out.write(1);
@@ -235,7 +235,7 @@ public final class PluginManagerCore {
       return Collections.emptyMap();
     }
 
-    Map<PluginId, Set<String>> result = SoftReference.dereference(ourBrokenPluginVersions);
+    Map<PluginId, Set<String>> result = ourBrokenPluginVersions == null ? null : ourBrokenPluginVersions.get();
     if (result == null) {
       result = readBrokenPluginFile();
       ourBrokenPluginVersions = new SoftReference<>(result);

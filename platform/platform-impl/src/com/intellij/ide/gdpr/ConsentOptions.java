@@ -33,12 +33,13 @@ public final class ConsentOptions {
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance;
     static {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      Path commonDataPath = PathManager.getCommonDataPath();
       ourInstance = new ConsentOptions(new IOBackend() {
-        private final Path DEFAULT_CONSENTS_FILE = PathManager.getCommonDataPath()
+        private final Path DEFAULT_CONSENTS_FILE = commonDataPath
           .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
           .resolve("consentOptions/cached");
-        private final Path CONFIRMED_CONSENTS_FILE = PathManager.getCommonDataPath().resolve("consentOptions").resolve("accepted");
+        private final Path CONFIRMED_CONSENTS_FILE = commonDataPath.resolve("consentOptions/accepted");
         private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
 
         @Override

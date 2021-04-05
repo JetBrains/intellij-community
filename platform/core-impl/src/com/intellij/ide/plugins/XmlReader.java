@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.messages.ListenerDescriptor;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -60,34 +59,52 @@ final class XmlReader {
 
   private static @NotNull ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
     ServiceDescriptor descriptor = new ServiceDescriptor();
-    descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
-    descriptor.serviceImplementation = Strings.nullize(element.getAttributeValue("serviceImplementation"));
-    descriptor.testServiceImplementation = Strings.nullize(element.getAttributeValue("testServiceImplementation"));
-    descriptor.headlessImplementation = Strings.nullize(element.getAttributeValue("headlessImplementation"));
-    descriptor.configurationSchemaKey = element.getAttributeValue("configurationSchemaKey");
-
-    String preload = element.getAttributeValue("preload");
-    if (preload != null) {
-      switch (preload) {
-        case "true":
-          descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+    for (Attribute attribute : element.getAttributes()) {
+      switch (attribute.getName()) {
+        case "serviceImplementation":
+          descriptor.serviceImplementation = getNullifiedValue(attribute);
           break;
-        case "await":
-          descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+        case "serviceInterface":
+          descriptor.serviceInterface = getNullifiedValue(attribute);
           break;
-        case "notHeadless":
-          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+        case "testServiceImplementation":
+          descriptor.testServiceImplementation = getNullifiedValue(attribute);
           break;
-        case "notLightEdit":
-          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+        case "headlessImplementation":
+          descriptor.headlessImplementation = getNullifiedValue(attribute);
           break;
-        default:
-          LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+        case "configurationSchemaKey":
+          descriptor.configurationSchemaKey = attribute.getValue();
           break;
+        case "overrides":
+          descriptor.overrides = Boolean.parseBoolean(attribute.getValue());
+          break;
+        case "preload": {
+          String preload = attribute.getValue();
+          if (preload != null) {
+            switch (preload) {
+              case "true":
+                descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+                break;
+              case "await":
+                descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+                break;
+              case "notHeadless":
+                descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+                break;
+              case "notLightEdit":
+                descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+                break;
+              default:
+                LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+                break;
+            }
+          }
+        }
+        break;
       }
     }
 
-    descriptor.overrides = Boolean.parseBoolean(element.getAttributeValue("overrides"));
     return descriptor;
   }
 
@@ -192,11 +209,10 @@ final class XmlReader {
       return;
     }
 
-    List<Attribute> attributes = element.getAttributes();
-    for (Attribute attribute : attributes) {
+    for (Attribute attribute : element.getAttributes()) {
       switch (attribute.getName()) {
         case "url":
-          descriptor.url = Strings.nullize(attribute.getValue());
+          descriptor.url = getNullifiedValue(attribute);
           break;
 
         case "use-idea-classloader":
@@ -216,11 +232,11 @@ final class XmlReader {
           break;
 
         case "package":
-          descriptor.packagePrefix = Strings.nullize(attribute.getValue());
+          descriptor.packagePrefix = getNullifiedValue(attribute);
           break;
 
         case "version":
-          String internalVersionString = Strings.nullize(attribute.getValue());
+          String internalVersionString = getNullifiedValue(attribute);
           if (internalVersionString != null) {
             try {
               Integer.parseInt(internalVersionString);
@@ -232,6 +248,11 @@ final class XmlReader {
           break;
       }
     }
+  }
+
+  private static @Nullable String getNullifiedValue(Attribute attribute) {
+    String v = attribute.getValue();
+    return v == null || v.isEmpty() ? null : v;
   }
 
   static void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,

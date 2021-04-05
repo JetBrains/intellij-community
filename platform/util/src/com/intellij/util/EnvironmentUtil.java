@@ -6,7 +6,6 @@ import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.*;
@@ -352,7 +351,7 @@ public final class EnvironmentUtil {
 
     protected @NotNull List<String> getShellProcessCommand() {
       String shellScript = getShell();
-      if (StringUtilRt.isEmptyOrSpaces(shellScript)) {
+      if (shellScript == null || shellScript.isEmpty()) {
         throw new RuntimeException("empty $SHELL");
       }
       if (!Files.isExecutable(Paths.get(shellScript))) {
@@ -481,7 +480,7 @@ public final class EnvironmentUtil {
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
     Locale[] available = Locale.getAvailableLocales();
     for (Locale l : available) {
-      if (StringUtilRt.equal(l.toString(), candidateLanguageTerritory, true)) {
+      if (Objects.equals(l.toString(), candidateLanguageTerritory)) {
         return true;
       }
     }

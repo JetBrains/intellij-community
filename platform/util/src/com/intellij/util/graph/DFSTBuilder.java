@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.graph;
 
-import com.intellij.openapi.util.Couple;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntStack;
@@ -22,7 +19,7 @@ public final class DFSTBuilder<Node> {
   private final OutboundSemiGraph<Node> myGraph;
   private final Object2IntMap<Node> myNodeToNNumber; // node -> node number in topological order [0..size). Independent nodes are in reversed loading order (loading order is the graph.getNodes() order)
   private final Node[] myInvN; // node number in topological order [0..size) -> node
-  private Couple<Node> myBackEdge;
+  private Map.Entry<Node, Node> myBackEdge;
 
   private Comparator<Node> myNComparator;
   private Comparator<Node> myTComparator;
@@ -120,7 +117,7 @@ public final class DFSTBuilder<Node> {
       }
     }
 
-    private final Stack<Frame> frames = new Stack<>(); // recursion stack
+    private final Deque<Frame> frames = new ArrayDeque<>(); // recursion stack
     private final Object2IntMap<Node> nodeIndex = new Object2IntOpenHashMap<>();
     private int dfsIndex;
     private int sccsSizeCombined;
@@ -137,7 +134,7 @@ public final class DFSTBuilder<Node> {
           continue;
         }
 
-        frames.push(new Frame(i));
+        frames.addLast(new Frame(i));
         List<List<Node>> sccs = new ArrayList<>();
 
         strongConnect(sccs);
@@ -152,7 +149,10 @@ public final class DFSTBuilder<Node> {
           Node rootNode = myAllNodes[i];
           int rIndex = scc.indexOf(rootNode);
           if (rIndex != -1) {
-            ContainerUtil.swapElements(scc, rIndex, 0);
+            Node e1 = scc.get(rIndex);
+            Node e2 = scc.get(0);
+            scc.set(rIndex, e2);
+            scc.set(0, e1);
           }
 
           for (int j = 0; j < scc.size(); j++) {
@@ -185,7 +185,7 @@ public final class DFSTBuilder<Node> {
       int successor = -1;
       nextNode:
       while (!frames.isEmpty()) {
-        Frame pair = frames.peek();
+        Frame pair = frames.peekLast();
         int i = pair.nodeI;
 
         // we have returned to the node
@@ -206,18 +206,18 @@ public final class DFSTBuilder<Node> {
         while (pair.nextUnexploredIndex < pair.out.length) {
           int nextI = pair.out[pair.nextUnexploredIndex++];
           if (index[nextI] == -1) {
-            frames.push(new Frame(nextI));
+            frames.addLast(new Frame(nextI));
             continue nextNode;
           }
           if (isOnStack[nextI]) {
             lowLink[i] = Math.min(lowLink[i], index[nextI]);
 
             if (myBackEdge == null) {
-              myBackEdge = new Couple<>(myAllNodes[nextI], myAllNodes[i]);
+              myBackEdge = new AbstractMap.SimpleImmutableEntry<>(myAllNodes[nextI], myAllNodes[i]);
             }
           }
         }
-        frames.pop();
+        frames.removeLast();
         topo.add(i);
         // we are really back, pop a scc
         if (lowLink[i] == index[i]) {
@@ -263,7 +263,7 @@ public final class DFSTBuilder<Node> {
   }
 
   @Nullable
-  public Couple<Node> getCircularDependency() {
+  public Map.Entry<Node, Node> getCircularDependency() {
     return myBackEdge;
   }
 

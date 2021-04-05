@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.util.Locale;
 
 public final class ApplicationNamesInfo {
   private final String myProductName;
@@ -50,8 +50,7 @@ public final class ApplicationNamesInfo {
     }
   }
 
-  @NotNull
-  public static ApplicationNamesInfo getInstance() {
+  public static @NotNull ApplicationNamesInfo getInstance() {
     ApplicationNamesInfo result = instance;
     if (result == null) {
       //noinspection SynchronizeOnThis
@@ -106,7 +105,7 @@ public final class ApplicationNamesInfo {
    * @see #getEditionName()
    */
   public @NlsSafe String getFullProductNameWithEdition() {
-    return myEditionName != null ? myFullProductName + ' ' + myEditionName : myFullProductName;
+    return myEditionName == null ? myFullProductName : myFullProductName + ' ' + myEditionName;
   }
 
   /**
@@ -122,7 +121,8 @@ public final class ApplicationNamesInfo {
    * <strong>Kept for compatibility; use {@link #getFullProductName()} instead.</strong>
    */
   public String getLowercaseProductName() {
-    return Strings.capitalize(Strings.toLowerCase(myProductName));
+    String s = myProductName.toLowerCase(Locale.ENGLISH);
+    return Character.isUpperCase(s.charAt(0)) ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
   /**

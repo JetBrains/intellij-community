@@ -104,9 +104,9 @@ public final class JarsBuilder {
   private JarInfo @Nullable [] sortJars() {
     final DFSTBuilder<JarInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
-      final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();
-      String message = JpsBuildBundle.message("build.message.cannot.build.circular.dependency.found.between.0.and.1", dependency.getFirst().getPresentableDestination(),
-                                              dependency.getSecond().getPresentableDestination());
+      Map.Entry<JarInfo, JarInfo> dependency = builder.getCircularDependency();
+      String message = JpsBuildBundle.message("build.message.cannot.build.circular.dependency.found.between.0.and.1", dependency.getKey().getPresentableDestination(),
+                                              dependency.getValue().getPresentableDestination());
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, message));
       return null;
     }

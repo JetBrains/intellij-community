@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -62,7 +61,7 @@ public final class LoadingOrder {
     boolean first = false;
     Set<String> before = null;
     Set<String> after = null;
-    for (String string : StringUtil.split(text, ORDER_RULE_SEPARATOR)) {
+    for (String string : text.split(ORDER_RULE_SEPARATOR)) {
       String trimmed = string.trim();
       if (trimmed.equalsIgnoreCase(FIRST_STR)) {
         first = true;
@@ -70,25 +69,25 @@ public final class LoadingOrder {
       else if (trimmed.equalsIgnoreCase(LAST_STR)) {
         last = true;
       }
-      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR)) {
+      else if (StringUtilRt.startsWithIgnoreCase(trimmed, BEFORE_STR)) {
         if (before == null) {
           before = new LinkedHashSet<>(2);
         }
         before.add(trimmed.substring(BEFORE_STR.length()).trim());
       }
-      else if (StringUtil.startsWithIgnoreCase(trimmed, BEFORE_STR_OLD)) {
+      else if (StringUtilRt.startsWithIgnoreCase(trimmed, BEFORE_STR_OLD)) {
         if (before == null) {
           before = new LinkedHashSet<>(2);
         }
         before.add(trimmed.substring(BEFORE_STR_OLD.length()).trim());
       }
-      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR)) {
+      else if (StringUtilRt.startsWithIgnoreCase(trimmed, AFTER_STR)) {
         if (after == null) {
           after = new LinkedHashSet<>(2);
         }
         after.add(trimmed.substring(AFTER_STR.length()).trim());
       }
-      else if (StringUtil.startsWithIgnoreCase(trimmed, AFTER_STR_OLD)) {
+      else if (StringUtilRt.startsWithIgnoreCase(trimmed, AFTER_STR_OLD)) {
         if (after == null) {
           after = new LinkedHashSet<>(2);
         }
@@ -157,7 +156,7 @@ public final class LoadingOrder {
     final Set<Orderable> hasBefore = new LinkedHashSet<>(orderable.size());
     for (Orderable o : orderable) {
       String id = o.getOrderId();
-      if (StringUtil.isNotEmpty(id)) {
+      if (id != null && !id.isEmpty()) {
         map.put(id, o);
       }
       LoadingOrder order = o.getOrder();
@@ -199,7 +198,7 @@ public final class LoadingOrder {
         }
 
         String id = n.getOrderId();
-        if (StringUtil.isNotEmpty(id)) {
+        if (id != null && !id.isEmpty()) {
           for (Orderable o : hasBefore) {
             LoadingOrder hisOrder = cachedMap.getOrDefault(o, ANY);
             if (hisOrder.myBefore.contains(id)) {
@@ -227,8 +226,8 @@ public final class LoadingOrder {
 
     DFSTBuilder<Orderable> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(graph)));
     if (!builder.isAcyclic()) {
-      Pair<Orderable, Orderable> p = Objects.requireNonNull(builder.getCircularDependency());
-      throw new SortingException("Could not satisfy sorting requirements", p.first, p.second);
+      Map.Entry<Orderable, Orderable> p = Objects.requireNonNull(builder.getCircularDependency());
+      throw new SortingException("Could not satisfy sorting requirements", p.getKey(), p.getValue());
     }
 
     orderable.sort(builder.comparator());

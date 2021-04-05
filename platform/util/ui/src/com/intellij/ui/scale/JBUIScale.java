@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
@@ -18,6 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.AbstractMap;
+import java.util.Map;
 
 /**
  * @author tav
@@ -44,10 +45,10 @@ public final class JBUIScale {
 
   private JBUIScale() {}
 
-  private static volatile Pair<String, Integer> systemFontData;
+  private static volatile Map.Entry<String, Integer> systemFontData;
 
-  private synchronized static @NotNull Pair<String, Integer> computeSystemFontData() {
-    Pair<String, Integer> result = systemFontData;
+  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData() {
+    Map.Entry<String, Integer > result = systemFontData;
     if (result != null) {
       return result;
     }
@@ -102,19 +103,18 @@ public final class JBUIScale {
       }
     }
 
-    result = new Pair<>(font.getName(), font.getSize());
+    result = new AbstractMap.SimpleImmutableEntry<>(font.getName(), font.getSize());
     systemFontData = result;
     if (isScaleVerbose) {
-      log.info(String.format("ourSystemFontData: %s, %d", result.first, result.second));
+      log.info(String.format("ourSystemFontData: %s, %d", result.getKey(), result.getValue()));
     }
     return result;
   }
 
   @ApiStatus.Internal
   public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<>() {
-    @Nullable
     @Override
-    public Float initialize() {
+    public @Nullable Float initialize() {
       String prop = System.getProperty("ide.ui.scale");
       if (prop != null) {
         try {
@@ -158,7 +158,7 @@ public final class JBUIScale {
       return 1f;
     }
 
-    float result = getFontScale(getSystemFontData().getSecond());
+    float result = getFontScale(getSystemFontData().getValue());
     getLogger().info("System scale factor: " + result + " (" + (JreHiDpiUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     return result;
   });
@@ -322,8 +322,8 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  public static @NotNull Pair<String, Integer> getSystemFontData() {
-    Pair<String, Integer> result = systemFontData;
+  public static @NotNull Map.Entry<String, Integer> getSystemFontData() {
+    Map.Entry<String, Integer> result = systemFontData;
     return result == null ? computeSystemFontData() : result;
   }
 

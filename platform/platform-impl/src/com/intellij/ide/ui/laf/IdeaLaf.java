@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
@@ -14,12 +13,12 @@ import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import java.awt.*;
+import java.util.Map;
 
 /**
 * @author Konstantin Bulenkov
 */
 public final class IdeaLaf extends MetalLookAndFeel {
-
   public static final ColorUIResource TOOLTIP_BACKGROUND_COLOR = new ColorUIResource(255, 255, 231);
 
   @Override
@@ -28,8 +27,8 @@ public final class IdeaLaf extends MetalLookAndFeel {
     LafManagerImpl.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Pair<String, Integer> systemFont = JBUIScale.getSystemFontData();
-    LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.first, Font.PLAIN, systemFont.second));
+    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData();
+    LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
