@@ -53,4 +53,10 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     """.trimIndent())
   }
 
+  fun `test tuples`() {
+    testTypeHints("""
+    def (a<# [:  Integer] #>, b<# [:  String] #>) = new Tuple2<>(1, "")
+    """.trimIndent())
+  }
+
 }

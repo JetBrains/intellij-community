@@ -6,10 +6,11 @@ import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import com.intellij.util.containers.mapSmart
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -23,27 +24,36 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor) : FactoryInlayHintsC
     if (element is GrParameter) {
       return true
     }
-    if (element !is GrVariable) {
+    if (element !is GrVariableDeclaration) {
       return true
     }
-    if (element.typeElement != null) {
-      return true
+    val results = getPresentableType(element)
+    for ((type, identifier) in results) {
+      val typeRepresentation = factory.buildRepresentation(type, prefix = ": ").let(factory::roundWithBackground)
+      val identifierRange = identifier.textRange ?: continue
+      sink.addInlineElement(identifierRange.endOffset, true, typeRepresentation, false)
     }
-    val type = getPresentableType(element.initializerGroovy) ?: return true
-    val typeRepresentation = factory.buildRepresentation(type, prefix = ": ").let(factory::roundWithBackground)
-    val identifierRange = element.nameIdentifier?.textRange ?: return true
-    sink.addInlineElement(identifierRange.endOffset, true, typeRepresentation, false)
     return true
   }
 
-  fun getPresentableType(expression : GrExpression?) : PsiType? {
-    if (expression == null || expression is GrConstructorCall || expression is GrTypeCastExpression || expression is GrSafeCastExpression) {
-      return null
+  private fun getPresentableType(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {
+    if (!variableDeclaration.isTuple) {
+      val initializer = variableDeclaration.variables.singleOrNull()?.initializerGroovy ?: return emptyList()
+      if (initializer is GrConstructorCall || initializer is GrSafeCastExpression || initializer is GrTypeCastExpression) {
+        return emptyList()
+      }
     }
-    val type = expression.type ?: return null
-    if (type == PsiType.NULL || type == PsiType.VOID || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      return null
-    }
-    return type
+
+    return variableDeclaration.variables
+      .mapSmart {
+        val type = it.typeGroovy ?: return@mapSmart null
+        val identifier = it.nameIdentifier ?: return@mapSmart null
+        type to identifier
+      }.filterNotNull()
+      .filter { (type, _) ->
+        type != PsiType.NULL &&
+        type != PsiType.VOID &&
+        !type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
+      }
   }
 }
