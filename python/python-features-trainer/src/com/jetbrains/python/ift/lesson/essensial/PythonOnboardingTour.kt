@@ -20,6 +20,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -36,6 +37,7 @@ import com.intellij.xdebugger.XDebuggerBundle
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ift.PythonLessonsBundle
+import com.jetbrains.python.ift.PythonLessonsUtil
 import icons.FeaturesTrainerIcons
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -77,7 +79,7 @@ class PythonOnboardingTour :
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   val sample: LessonSample = parseLessonSample("""
-    def find_average(values: list)<caret id=3/>:
+    def find_average(values)<caret id=3/>:
         result = 0
         for v in values:
             result += v
@@ -487,22 +489,25 @@ class PythonOnboardingTour :
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
 
-    val returnTypeMessage = PyPsiBundle.message("INTN.specify.return.type.in.annotation")
+    fun returnTypeMessage(project: Project)=
+      if (PythonLessonsUtil.isPython3Installed(project)) PyPsiBundle.message("INTN.specify.return.type.in.annotation")
+      else PyPsiBundle.message("INTN.specify.return.type.in.docstring")
+
     caret("find_average")
     task("ShowIntentionActions") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.intention.for.code",
                                        code("find_average"), action(it)))
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
-        item.toString().contains(returnTypeMessage)
+        item.toString().contains(returnTypeMessage(project))
       }
       restoreIfModifiedOrMoved()
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage), LessonUtil.rawEnter()))
+      text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage(project)), LessonUtil.rawEnter()))
       stateCheck {
-        // TODO: make normal check
-        previous.sample.text != editor.document.text
+        val text = editor.document.text
+        previous.sample.text != text && text.contains("object")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
