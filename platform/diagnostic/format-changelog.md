@@ -1,3 +1,7 @@
+# 30
+
+ * Add `preloading activity executing`.
+
 # 29
  * Add `splash preparation (in queue)` and `splash initialization (in queue)`.
  * Add `pre app class running`, `repaint manager set`, `linux wm set`. Existing`event queue replacing` doesn't include added metrics anymore.

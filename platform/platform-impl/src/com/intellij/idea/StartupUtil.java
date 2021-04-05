@@ -91,9 +91,9 @@ public final class StartupUtil {
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private static SocketLock ourSocketLock;
-  private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
-  private static Future<@Nullable Boolean> ourShellEnvLoaded;
+  private static SocketLock socketLock;
+  private static final AtomicBoolean isLaFForPreStartupSet = new AtomicBoolean();
+  private static Future<@Nullable Boolean> shellEnvLoadFuture;
 
   private StartupUtil() { }
 
@@ -125,8 +125,8 @@ public final class StartupUtil {
 
   // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
-    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
-    ourSocketLock.setCommandProcessor(processor);
+    if (socketLock == null) throw new AssertionError("Not initialized yet");
+    socketLock.setCommandProcessor(processor);
   }
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -134,16 +134,16 @@ public final class StartupUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static synchronized @Nullable BuiltInServer getServer() {
-    return ourSocketLock == null ? null : ourSocketLock.getServer();
+    return socketLock == null ? null : socketLock.getServer();
   }
 
   public static synchronized @NotNull CompletableFuture<BuiltInServer> getServerFuture() {
-    CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
+    CompletableFuture<BuiltInServer> serverFuture = socketLock == null ? null : socketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
   }
 
   public static @NotNull Future<@Nullable Boolean> getShellEnvLoadingFuture() {
-    return ourShellEnvLoaded;
+    return shellEnvLoadFuture;
   }
 
   private static @Nullable ForkJoinTask<@Nullable Object> loadEuaDocument() {
@@ -165,7 +165,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    void start(@NotNull List<String> args, @NotNull CompletionStage<?> initUiTask);
+    void start(@NotNull List<String> args, @NotNull CompletionStage<?> prepareUiFuture);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
@@ -284,7 +284,7 @@ public final class StartupUtil {
     });
 
     // don't load EnvironmentUtil class in main thread
-    ourShellEnvLoaded = ForkJoinPool.commonPool().submit(() -> {
+    shellEnvLoadFuture = ForkJoinPool.commonPool().submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.APP_INIT);
       Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
       return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
@@ -298,7 +298,23 @@ public final class StartupUtil {
       runPreAppClass(log);
     }
 
-    startApp(Arrays.asList(args), initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
+    CompletableFuture<@Nullable Void> prepareUiFuture = new CompletableFuture<>();
+    initUiTask.thenRun(() -> {
+      // called in EDT, but other events in queue should be processed before patchSystem
+      EventQueue.invokeLater(() -> {
+        try {
+          patchSystem(log);
+        }
+        catch (Throwable e) {
+          prepareUiFuture.completeExceptionally(e);
+          StartupAbortedException.processException(e);
+          return;
+        }
+
+        prepareUiFuture.complete(null);
+      });
+    });
+    startApp(Arrays.asList(args), prepareUiFuture, log, configImportNeeded, appStarterFuture, euaDocument);
   }
 
   private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
@@ -311,7 +327,7 @@ public final class StartupUtil {
   }
 
   private static void startApp(@NotNull List<String> args,
-                               @NotNull CompletableFuture<?> initUiTask,
+                               @NotNull CompletableFuture<?> prepareUiFuture,
                                @NotNull Logger log,
                                boolean configImportNeeded,
                                @NotNull ForkJoinTask<AppStarter> appStarterFuture,
@@ -319,11 +335,12 @@ public final class StartupUtil {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("eua showing");
       Object document = euaDocument == null ? null : euaDocument.join();
-      boolean agreementDialogWasShown = document != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, (EndUserAgreement.Document)document);
+      boolean agreementDialogWasShown = document != null &&
+                                        showUserAgreementAndConsentsIfNeeded(log, prepareUiFuture, (EndUserAgreement.Document)document);
 
       if (configImportNeeded) {
         activity = activity.endAndStart("screen reader checking");
-        runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, initUiTask);
+        runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, prepareUiFuture);
       }
 
       if (configImportNeeded) {
@@ -331,7 +348,7 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log), initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log), prepareUiFuture);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
@@ -349,13 +366,13 @@ public final class StartupUtil {
     EdtInvocationManager.SwingEdtInvocationManager edtInvocationManager = new EdtInvocationManager.SwingEdtInvocationManager() {
       @Override
       public void invokeAndWait(@NotNull Runnable task) {
-        runInEdtAndWait(log, task, initUiTask);
+        runInEdtAndWait(log, task, prepareUiFuture);
       }
     };
 
     try {
       oldEdtInvocationManager = EdtInvocationManager.setEdtInvocationManager(edtInvocationManager);
-      getAppStarter(appStarterFuture).start(args, initUiTask);
+      getAppStarter(appStarterFuture).start(args, prepareUiFuture);
     }
     finally {
       EdtInvocationManager.restoreEdtInvocationManager(edtInvocationManager, oldEdtInvocationManager);
@@ -471,7 +488,7 @@ public final class StartupUtil {
   private static void showSplashIfNeeded(@NotNull String @NotNull [] args,
                                          @Nullable ForkJoinTask<@Nullable Object> eulaDocument,
                                          @NotNull Activity activity) {
-    // product specifies `slash` VM properties, `nosplash` is deprecated property, it should be checked first
+    // product specifies `splash` VM properties, `nosplash` is deprecated property, it should be checked first
     if (Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !Boolean.getBoolean(CommandLineArgs.SPLASH) || Main.isLightEdit()) {
       return;
     }
@@ -643,19 +660,19 @@ public final class StartupUtil {
   }
 
   private static void lockSystemDirs(@NotNull Path configPath, @NotNull Path systemPath, @NotNull String @NotNull[] args) throws Exception {
-    if (ourSocketLock != null) {
+    if (socketLock != null) {
       throw new AssertionError("Already initialized");
     }
-    ourSocketLock = new SocketLock(configPath, systemPath);
+    socketLock = new SocketLock(configPath, systemPath);
 
-    Map.Entry<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
+    Map.Entry<SocketLock.ActivationStatus, CliResult> status = socketLock.lockAndTryActivate(args);
     switch (status.getKey()) {
       case NO_INSTANCE: {
         ShutDownTracker.getInstance().registerShutdownTask(() -> {
           //noinspection SynchronizeOnThis
           synchronized (StartupUtil.class) {
-            ourSocketLock.dispose();
-            ourSocketLock = null;
+            socketLock.dispose();
+            socketLock = null;
           }
         });
         break;
@@ -844,9 +861,9 @@ public final class StartupUtil {
   }
 
   // must be called from EDT
-  public static boolean patchSystem(@NotNull Logger log) throws Throwable {
-    if (!ourSystemPatched.compareAndSet(false, true)) {
-      return false;
+  private static void patchSystem(@NotNull Logger log) throws Throwable {
+    if (!isLaFForPreStartupSet.compareAndSet(false, true)) {
+      return;
     }
 
     Activity activity = StartUpMeasurer.startActivity("event queue replacing", ActivityCategory.APP_INIT);
@@ -873,46 +890,38 @@ public final class StartupUtil {
       IconManager.activate(new CoreIconManager());
     }
     activity.end();
-    return true;
   }
 
   private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
-                                                              @NotNull CompletableFuture<?> initUiTask,
+                                                              @NotNull CompletableFuture<?> prepareUiFuture,
                                                               @NotNull EndUserAgreement.Document agreement) {
     boolean dialogWasShown = false;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
+      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), prepareUiFuture);
       dialogWasShown = true;
     }
     else if (ConsentOptions.getInstance().getConsents().getValue()) {
-      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, prepareUiFuture);
     }
     return dialogWasShown;
   }
 
-  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {
-    initUiTask.join();
+  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> prepareUiFuture) {
+    prepareUiFuture.join();
     try {
-      if (!ourSystemPatched.get()) {
-        EventQueue.invokeAndWait(() -> {
+      EventQueue.invokeAndWait(() -> {
+        if (!isLaFForPreStartupSet.get()) {
           try {
-            if (!patchSystem(log)) {
-              return;
-            }
-
             UIManager.setLookAndFeel(IntelliJLaf.class.getName());
-            // we don't set AppUIUtil.updateForDarcula(false) because light is default
           }
           catch (Throwable e) {
             log.warn(e);
           }
-        });
-      }
-
-      // this invokeAndWait() call is needed to place on a freshly minted IdeEventQueue instance
-      EventQueue.invokeAndWait(runnable);
+        }
+        runnable.run();
+      });
     }
     catch (InterruptedException | InvocationTargetException e) {
       log.warn(e);

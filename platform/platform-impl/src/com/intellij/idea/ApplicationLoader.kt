@@ -16,10 +16,15 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.ui.DialogEarthquakeShaker
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
@@ -32,7 +37,9 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
 import net.miginfocom.layout.PlatformDefaults
@@ -53,7 +60,6 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 private fun executeInitAppInEdt(args: List<String>,
                                 initAppActivity: Activity,
                                 pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
-  StartupUtil.patchSystem(LOG)
   val registerComponentFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   val app = runActivity("create app") {
     ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
@@ -183,9 +189,7 @@ private fun startApp(app: ApplicationImpl,
 
   initStoreFuture
     .thenCompose {
-      // `invokeLater()` is needed to place the app starting code on a freshly minted `IdeEventQueue` instance
       val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
-
       val loadComponentInEdtFuture = CompletableFuture.runAsync({
         placeOnEventQueueActivity.end()
 
@@ -312,7 +316,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
   return result
 }
 
-fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
+fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
   try {
@@ -333,7 +337,7 @@ fun initApplication(rawArgs: List<String>, initUiTask: CompletionStage<*>) {
   }
 
   // use main thread, avoid thread switching
-  (initUiTask as CompletableFuture<*>).join()
+  (prepareUiFuture as CompletableFuture<*>).join()
 
   val args = processProgramArguments(rawArgs)
   EventQueue.invokeLater {
@@ -414,6 +418,11 @@ fun callAppInitialized(app: Application): List<RecursiveAction> {
   }
   extensionPoint.reset()
 
+  if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
+      java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
+    result.add(Preloader(extensionArea))
+  }
+
   // should be after scheduling all app initialized listeners (because this activity is not important)
   result.add(object : RecursiveAction() {
     override fun compute() {
@@ -443,4 +452,85 @@ fun callAppInitialized(app: Application): List<RecursiveAction> {
   })
 
   return result
+}
+
+private class Preloader(private val extensionArea: ExtensionsAreaImpl) : RecursiveAction() {
+  companion object {
+    @JvmStatic
+    private fun checkHeavyProcessRunning() {
+      if (HeavyProcessLatch.INSTANCE.isRunning) {
+        TimeoutUtil.sleep(1)
+      }
+    }
+
+    @JvmStatic
+    private fun preload(activity: PreloadingActivity, descriptor: PluginDescriptor?) {
+      val indicator = ProgressIndicatorBase()
+      Disposer.register(ApplicationManager.getApplication()) { indicator.cancel() }
+      val wrappingIndicator = object : AbstractProgressIndicatorBase() {
+        override fun checkCanceled() {
+          checkHeavyProcessRunning()
+          indicator.checkCanceled()
+        }
+
+        override fun isCanceled() = indicator.isCanceled
+      }
+
+      if (indicator.isCanceled) {
+        return
+      }
+      checkHeavyProcessRunning()
+      if (indicator.isCanceled) {
+        return
+      }
+
+      val isDebugEnabled = LOG.isDebugEnabled
+      ProgressManager.getInstance().runProcess({
+                                                 val measureActivity = if (descriptor == null) {
+                                                   null
+                                                 }
+                                                 else {
+                                                   StartUpMeasurer.startActivity(activity.javaClass.name,
+                                                                                 ActivityCategory.PRELOAD_ACTIVITY,
+                                                                                 descriptor.pluginId.idString)
+                                                 }
+
+                                                 try {
+                                                   activity.preload(wrappingIndicator)
+                                                 }
+                                                 catch (ignore: ProcessCanceledException) {
+                                                   return@runProcess
+                                                 }
+                                                 finally {
+                                                   measureActivity?.end()
+                                                 }
+                                                 if (isDebugEnabled) {
+                                                   LOG.debug("${activity.javaClass.name} finished")
+                                                 }
+                                               }, indicator)
+    }
+
+  }
+
+  override fun compute() {
+    runActivity("preloading activity executing") {
+      val extensionPoint = extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
+      extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->
+        val activity: PreloadingActivity
+        try {
+          activity = supplier.get()
+        }
+        catch (ignore: ExtensionNotApplicableException) {
+          return@processImplementations
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          return@processImplementations
+        }
+
+        preload(activity, pluginDescriptor)
+      }
+      extensionPoint.reset()
+    }
+  }
 }
