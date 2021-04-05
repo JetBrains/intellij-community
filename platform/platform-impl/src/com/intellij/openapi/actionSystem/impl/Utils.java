@@ -3,8 +3,10 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,7 +35,10 @@ import org.jetbrains.concurrency.CancellablePromise;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -126,16 +131,18 @@ public final class Utils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
-        if (queue0 != null) {
-          Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
-          if (runnable != null) runnable.run();
-        }
-        else {
-          AWTEvent event = queue.getNextEvent();
-          queue.dispatchEvent(event);
-        }
-      });
+      try (AccessToken ignore = cancelOnUserActivityInside(promise)) {
+        list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
+          if (queue0 != null) {
+            Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
+            if (runnable != null) runnable.run();
+          }
+          else {
+            AWTEvent event = queue.getNextEvent();
+            queue.dispatchEvent(event);
+          }
+        });
+      }
       if (promise.isCancelled()) {
         throw new ProcessCanceledException();
       }
@@ -151,6 +158,17 @@ public final class Utils {
       }
     }
     return list;
+  }
+
+  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
+    return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
+      if (event instanceof FocusEvent ||
+          event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
+          event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
+        promise.cancel();
+      }
+      return null;
+    });
   }
 
   static void fillMenu(@NotNull ActionGroup group,
