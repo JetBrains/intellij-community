@@ -214,7 +214,7 @@ final class FilePartNodeRoot extends FilePartNode {
         StringUtil.endsWith(path, 0, end, JarFileSystem.JAR_SEPARATOR) && end > 2 && path.charAt(end - 3) != '/';
       if (isJarSeparator) {
         names.add(JarFileSystem.JAR_SEPARATOR);
-        end = end - 2;
+        end -= 2;
         continue;
       }
       if (path.charAt(end-1) == '/') {
