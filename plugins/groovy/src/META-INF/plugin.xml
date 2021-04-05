@@ -396,6 +396,7 @@
               implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
+    <library.type implementation="org.jetbrains.plugins.groovy.config.GroovyDownloadableLibraryType"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
