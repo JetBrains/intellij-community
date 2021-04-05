@@ -159,7 +159,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     }
 
     Boolean dropInBetweenPinnedTabs = null;
-    Boolean dropInPinnedRow = false;
+    boolean dropInPinnedRow = false;
     if (myCurrentOver != null) {
       int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
