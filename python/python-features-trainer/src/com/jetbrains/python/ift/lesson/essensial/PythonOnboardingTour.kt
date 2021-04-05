@@ -52,6 +52,7 @@ import training.learn.course.Lesson
 import training.learn.course.LessonProperties
 import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonManager
+import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
@@ -101,6 +102,7 @@ class PythonOnboardingTour :
         }
       }
     }
+    clearBreakpoints()
 
     projectTasks()
 
