@@ -8,6 +8,7 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,12 @@ public class UtilityClassProcessor extends AbstractClassProcessor {
 
   public UtilityClassProcessor() {
     super(PsiMethod.class, LombokClassNames.UTILITY_CLASS);
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return null == nameHint || nameHint.equals(psiClass.getName());
   }
 
   @Override
