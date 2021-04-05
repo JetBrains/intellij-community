@@ -5,17 +5,16 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.frame.EditorDiffPreview
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.event.ListSelectionListener
 
-class FileHistoryEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val fileHistoryPanel: FileHistoryPanel) :
-  EditorDiffPreview(project, uiProperties, fileHistoryPanel) {
+class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPanel: FileHistoryPanel) :
+  EditorDiffPreview(project, fileHistoryPanel) {
 
   init {
-    init(project)
+    init()
   }
 
   override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable

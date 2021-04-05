@@ -5,7 +5,6 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -24,6 +23,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import com.intellij.vcs.log.util.VcsLogUiUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -94,23 +94,12 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
 }
 
 abstract class EditorDiffPreview(private val project: Project,
-                                 private val uiProperties: VcsLogUiProperties,
                                  private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
-  protected fun init(project: Project) {
-    toggleDiffPreviewOnPropertyChange(uiProperties, owner) { state ->
-      if (state) {
-        openPreviewInEditor(false)
-      }
-      else {
-        //'equals' for such files is overridden and means the equality of its owner
-        FileEditorManager.getInstance(project).closeFile(PreviewDiffVirtualFile(this))
-      }
-    }
-
+  protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
-      if (uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) {
+      if (VcsLogUiUtil.isDiffPreviewInEditor()) {
         openPreviewInEditor(false)
       }
     }
@@ -139,11 +128,11 @@ abstract class EditorDiffPreview(private val project: Project,
   abstract fun addSelectionListener(listener: () -> Unit)
 }
 
-class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties, private val mainFrame: MainFrame) :
-  EditorDiffPreview(project, uiProperties, mainFrame.changesBrowser) {
+class VcsLogEditorDiffPreview(project: Project, private val mainFrame: MainFrame) :
+  EditorDiffPreview(project, mainFrame.changesBrowser) {
 
   init {
-    init(project)
+    init()
   }
 
   override fun createDiffRequestProcessor(): DiffRequestProcessor {

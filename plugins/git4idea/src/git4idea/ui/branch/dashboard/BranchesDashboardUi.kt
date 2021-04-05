@@ -35,15 +35,18 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
+import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.MAIN_LOG_ID
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
-import com.intellij.vcs.log.ui.frame.*
-import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
+import com.intellij.vcs.log.ui.frame.MainFrame
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
@@ -160,14 +163,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     uiController.registerLogUiFilterListener(logUi.filterUi)
     branchesSearchField.setVerticalSizeReferent(logUi.toolbar)
     branchViewSplitter.secondComponent = logUi.mainLogComponent
-    val isDiffPreviewInEditor = isDiffPreviewInEditor()
-    val diffPreview = logUi.createDiffPreview(isDiffPreviewInEditor)
-    if (isDiffPreviewInEditor) {
-      mainPanel.add(branchesTreeWithLogPanel)
-    }
-    else {
-      mainPanel.add(DiffPreviewSplitter(diffPreview, logUi.properties, branchesTreeWithLogPanel).mainComponent)
-    }
+    mainPanel.add(branchesTreeWithLogPanel)
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
@@ -348,17 +344,13 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
     get() = mainFrame.changesBrowser
 
   override fun createMainFrame(logData: VcsLogData, uiProperties: MainVcsLogUiProperties, filterUi: VcsLogFilterUiEx) =
-    MainFrame(logData, this, uiProperties, filterUi, false, this)
+    MainFrame(logData, this, uiProperties, filterUi, this)
       .apply {
         isFocusCycleRoot = false
         focusTraversalPolicy = null //new focus traversal policy will be configured include branches tree
       }
 
   override fun getMainComponent() = branchesUi.getMainComponent()
-
-  fun createDiffPreview(isInEditor: Boolean): VcsLogChangeProcessor {
-    return mainFrame.createDiffPreview(isInEditor, mainFrame.changesBrowser)
-  }
 }
 
 internal val SHOW_GIT_BRANCHES_LOG_PROPERTY =
@@ -381,14 +373,5 @@ private class BranchViewSplitter(first: JComponent? = null, second: JComponent? 
   init {
     firstComponent = first
     secondComponent = second
-  }
-}
-
-private class DiffPreviewSplitter(diffPreview: VcsLogChangeProcessor, uiProperties: VcsLogUiProperties, mainComponent: JComponent)
-  : FrameDiffPreview<VcsLogChangeProcessor>(diffPreview, uiProperties, mainComponent,
-                                            "vcs.branch.view.diff.splitter.proportion",
-                                            uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT], 0.3f) {
-  override fun updatePreview(state: Boolean) {
-    previewDiff.updatePreview(state)
   }
 }

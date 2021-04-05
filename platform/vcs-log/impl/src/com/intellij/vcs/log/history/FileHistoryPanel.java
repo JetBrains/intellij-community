@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.Disposable;
@@ -61,7 +61,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @NotNull private final JBSplitter myDetailsSplitter;
 
   public FileHistoryPanel(@NotNull AbstractVcsLogUi logUi, @NotNull FileHistoryModel fileHistoryModel, @NotNull VcsLogData logData,
-                          @NotNull FilePath filePath, boolean withDiffPreview, @NotNull Disposable disposable) {
+                          @NotNull FilePath filePath, @NotNull Disposable disposable) {
     myProject = logData.getProject();
 
     myFilePath = filePath;
@@ -125,19 +125,14 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     tablePanel.add(actionsToolbar, BorderLayout.WEST);
 
     setLayout(new BorderLayout());
-    if (withDiffPreview) {
-      add(new FrameDiffPreview<>(createDiffPreview(false), myProperties, tablePanel,
-                                 "vcs.history.diff.splitter.proportion", false, 0.7f) {
+    add(new FrameDiffPreview<>(createDiffPreview(false), myProperties, tablePanel,
+                               "vcs.history.diff.splitter.proportion", false, 0.7f) {
 
-        @Override
-        public void updatePreview(boolean state) {
-          getPreviewDiff().updatePreview(state);
-        }
-      }.getMainComponent(), BorderLayout.CENTER);
-    }
-    else {
-      add(tablePanel, BorderLayout.CENTER);
-    }
+      @Override
+      public void updatePreview(boolean state) {
+        getPreviewDiff().updatePreview(state);
+      }
+    }.getMainComponent(), BorderLayout.CENTER);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
@@ -81,13 +81,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final EditorNotificationPanel myNotificationLabel;
 
-  @Nullable private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
+  @NotNull private final FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi,
-                   boolean withDiffPreview,
                    @NotNull Disposable disposable) {
     myLogData = logData;
     myUiProperties = uiProperties;
@@ -154,22 +153,16 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
-    if (withDiffPreview) {
-      myDiffPreview = new FrameDiffPreview<>(createDiffPreview(false, myChangesBrowser),
-                                             myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                             myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
-                                             0.7f) {
-        @Override
-        public void updatePreview(boolean state) {
-          getPreviewDiff().updatePreview(state);
-        }
-      };
-      add(myDiffPreview.getMainComponent());
-    }
-    else {
-      myDiffPreview = null;
-      add(myChangesBrowserSplitter);
-    }
+    myDiffPreview = new FrameDiffPreview<>(createDiffPreview(false, myChangesBrowser),
+                                           myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                           myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
+                                           0.7f) {
+      @Override
+      public void updatePreview(boolean state) {
+        getPreviewDiff().updatePreview(state);
+      }
+    };
+    add(myDiffPreview.getMainComponent());
 
     Disposer.register(disposable, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
