@@ -194,6 +194,3 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
 }
 
 private val LOG: Logger = logger<IndentAwareInjectedFileChangesHandler>()
-
-private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
-

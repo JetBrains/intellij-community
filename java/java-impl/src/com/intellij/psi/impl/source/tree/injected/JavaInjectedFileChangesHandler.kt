@@ -232,8 +232,6 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
 }
 
-private infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
-
 private fun intermediateElement(psi: PsiElement) =
   psi is PsiWhiteSpace || (psi is PsiJavaToken && psi.tokenType == JavaTokenType.PLUS)
 

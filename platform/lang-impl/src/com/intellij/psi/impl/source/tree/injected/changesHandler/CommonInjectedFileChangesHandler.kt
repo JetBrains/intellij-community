@@ -2,10 +2,7 @@
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -87,11 +84,10 @@ open class CommonInjectedFileChangesHandler(
     }
     LOG.debug { "newInjectedFile = $newInjectedFile" }
 
-    val injectedFileChanged = newInjectedFile !== myInjectedFile
     myInjectedFile = newInjectedFile ?: myInjectedFile
 
     //some hostless shreds could exist for keeping guarded values
-    if (injectedFileChanged && myInjectedFile.isValid) {
+    if (myInjectedFile.isValid) {
       markers.forEach { it.dispose() }
       markers.clear()
 
@@ -99,6 +95,9 @@ open class CommonInjectedFileChangesHandler(
       val markersFromShreds = getMarkersFromShreds(hostfulShreds)
       markers.addAll(markersFromShreds)
     }
+    else
+      LOG.error(
+        getReportException("failed to rebuildMarkers at range $contextRange due to invalid myInjectedFile, newInjectedFile = $newInjectedFile", null, null))
   }
 
   override fun isValid(): Boolean = myInjectedFile.isValid && markers.all { it.isValid() }
@@ -109,39 +108,55 @@ open class CommonInjectedFileChangesHandler(
 
     val documentManager = PsiDocumentManager.getInstance(myProject)
     documentManager.commitDocument(myHostDocument) // commit here and after each manipulator update
+    var workingRange: TextRange? = null
     for (host in map.keys) {
       if (host == null) continue
       val hostRange = host.textRange
       val hostOffset = hostRange.startOffset
-      val originalText = host.text
       var currentHost = host;
-      for ((hostMarker, fragmentMarker, _) in map[host].orEmpty().reversed()) {
+      val hostMarkers = map[host].orEmpty().reversed()
+      for ((hostMarker, fragmentMarker, _) in hostMarkers) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
         val localInsideFile = ProperTextRange(fragmentMarker.startOffset, fragmentMarker.endOffset)
+        currentHost!! // should never happen
 
         // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
-        if (currentHost != null && localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
+        if (localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
           val decodedText = localInsideFile.substring(text)
-          currentHost = updateInjectionHostElement(currentHost, localInsideHost, decodedText)
-          if (currentHost == null) {
-            failAndReport("Updating host returned null. Original host" + host +
-                          "; original text: " + originalText +
-                          "; updated range in host: " + localInsideHost +
-                          "; decoded text to replace: " + decodedText, e)
-          }
+          currentHost = updateHostOrFail(currentHost, localInsideHost, decodedText, e)
         }
+        else if (hostMarkers.size == 1 && text.isEmpty()) {
+          currentHost = updateHostOrFail(currentHost, localInsideHost, text, e)
+        }
+        else
+          continue
+        workingRange = workingRange union currentHost.contentRange
       }
     }
     
     if (!markers.all { it.isValid() }) {
-      markers.asSequence().mapNotNull { it.hostMarker.range }.reduceOrNull(TextRange::union)?.let { workingRange ->
+      workingRange?.let { workingRange ->
         rebuildMarkers(workingRange)
       }
     }
   }
 
+  private fun updateHostOrFail(currentHost: PsiLanguageInjectionHost,
+                               localInsideHost: TextRange,
+                               decodedText: String,
+                               e: DocumentEvent?): PsiLanguageInjectionHost {
+    LOG.debug { "updating host '${currentHost.text?.esclbr()}' at $localInsideHost with '${decodedText.esclbr()}' " }
+    val updatedHost = updateInjectionHostElement(currentHost, localInsideHost, decodedText)
+    if (updatedHost == null)
+      failAndReport("Updating host returned null. Original host" + currentHost +
+                    "; original text: " + currentHost.text +
+                    "; updated range in host: " + localInsideHost +
+                    "; decoded text to replace: " + decodedText.esclbr(), e)
+    return updatedHost
+  }
+
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
-                                           insideHost: ProperTextRange,
+                                           insideHost: TextRange,
                                            content: String): PsiLanguageInjectionHost? {
     return ElementManipulators.handleContentChange(host, insideHost, content)
   }
@@ -282,6 +297,8 @@ data class MarkersMapping(val hostMarker: RangeMarker,
     hostMarker.dispose()
   }
 }
+
+infix fun TextRange?.union(another: TextRange?) = another?.let { this?.union(it) ?: it } ?: this
 
 inline val Segment.range: TextRange get() = TextRange.create(this)
 
