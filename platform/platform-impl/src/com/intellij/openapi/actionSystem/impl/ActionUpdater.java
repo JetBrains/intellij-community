@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.injected.editor.EditorWindow;
@@ -12,6 +11,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -41,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
@@ -278,36 +278,41 @@ final class ActionUpdater {
 
     Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
     if (myToolbarAction) {
-      cancelAndRestartOnUserActivity(promise, disposableParent);
+      cancelOnUserActivity(promise, disposableParent);
     }
     else if (myContextMenuAction) {
       cancelAllUpdates();
     }
-    ourPromises.add(promise);
 
-    ourExecutor.execute(() -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
-      while (promise.getState() == Promise.State.PENDING) {
-        try {
-          indicator.checkCanceled();
-          boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
-            ensureSlowDataKeysPreCached();
-            List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
-            computeOnEdt(() -> {
-              applyPresentationChanges();
-              promise.setResult(result);
-              return null;
-            });
-          }, new SensitiveProgressWrapper(indicator));
-          if (!success) {
-            ProgressIndicatorUtils.yieldToPendingWriteActions();
-          }
-        }
-        catch (Throwable e) {
-          promise.setError(e);
+    Runnable runnable = () -> {
+      indicator.checkCanceled();
+      ensureSlowDataKeysPreCached();
+      List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
+      computeOnEdt(() -> {
+        applyPresentationChanges();
+        promise.setResult(result);
+        return null;
+      });
+    };
+    ourPromises.add(promise);
+    ourExecutor.execute(() -> {
+      try {
+        boolean[] success = {false};
+        ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () ->
+          success[0] = ProgressIndicatorUtils.runActionAndCancelBeforeWrite(applicationEx, promise::cancel, () ->
+            applicationEx.tryRunReadAction(runnable)), indicator);
+        if (!success[0] && !promise.isDone()) {
+          promise.cancel();
         }
       }
-      ourPromises.remove(promise);
-    }, indicator));
+      catch (Throwable e) {
+        promise.setError(e);
+      }
+      finally {
+        ourPromises.remove(promise);
+      }
+    });
     return promise;
   }
 
@@ -338,8 +343,8 @@ final class ActionUpdater {
     }
   }
 
-  private static void cancelAndRestartOnUserActivity(@NotNull CancellablePromise<?> promise,
-                                                     @NotNull Disposable disposableParent) {
+  private static void cancelOnUserActivity(@NotNull CancellablePromise<?> promise,
+                                           @NotNull Disposable disposableParent) {
     Disposable disposable = Disposer.newDisposable("Action Update");
     Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPostprocessor(e -> {
