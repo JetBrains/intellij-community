@@ -495,7 +495,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
           if (LOG.isDebugEnabled()) {
             String scopeInString = StringUtil.join(scopes, Object::toString, "->\n");
             LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
-                      "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
+                      "\nignored: " + myComposite.getIgnoredFileHolder().getFiles().size() +
                       "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
                       "\ncurrent changes: " + myWorker);
           }
@@ -779,6 +779,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
+  public boolean isUnversionedInUpdateMode() {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getUnversionedFileHolder().isInUpdatingMode();
+      }
+    });
+  }
+
   /**
    * @deprecated use {@link #getUnversionedFilesPaths}
    */
@@ -794,7 +802,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   public List<FilePath> getUnversionedFilesPaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return myComposite.getUnversionedFileHolder().getFiles();
+        return new ArrayList<>(myComposite.getUnversionedFileHolder().getFiles());
       }
     });
   }
@@ -825,7 +833,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   public List<FilePath> getIgnoredFilePaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
+        return new ArrayList<>(myComposite.getIgnoredFileHolder().getFiles());
       }
     });
   }

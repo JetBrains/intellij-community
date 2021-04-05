@@ -4,10 +4,11 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.IgnoredFilesCompositeHolder
+import com.intellij.openapi.vcs.changes.CompositeFilePathHolder.UnversionedFilesCompositeHolder
 
 internal class FileHolderComposite private constructor(
   private val project: Project,
-  val unversionedFileHolder: FilePathHolderImpl = FilePathHolderImpl(project),
+  val unversionedFileHolder: UnversionedFilesCompositeHolder = UnversionedFilesCompositeHolder(project),
   val ignoredFileHolder: IgnoredFilesCompositeHolder = IgnoredFilesCompositeHolder(project),
   val modifiedWithoutEditingFileHolder: VirtualFileHolder = VirtualFileHolder(project),
   val lockedFileHolder: VirtualFileHolder = VirtualFileHolder(project),

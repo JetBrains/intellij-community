@@ -99,6 +99,11 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
+    <extensionPoint name="vcs.unversionedFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
     <extensionPoint name="vcsPopupProvider"
                     interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"
                     dynamic="true"/>

@@ -17,13 +17,21 @@ package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.UnversionedViewDialog
 import org.jetbrains.annotations.Nls
 
-class ChangesBrowserUnversionedFilesNode(project: Project,
+class ChangesBrowserUnversionedFilesNode(private val project: Project,
                                          files: List<FilePath>)
   : ChangesBrowserSpecificFilePathsNode<ChangesBrowserNode.Tag>(UNVERSIONED_FILES_TAG, files,
                                                                 { if (!project.isDisposed) UnversionedViewDialog(project).show() }) {
+
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    super.render(renderer, selected, expanded, hasFocus)
+    if (!project.isDisposed && ChangeListManagerImpl.getInstanceImpl(project).isUnversionedInUpdateMode) {
+      appendUpdatingState(renderer)
+    }
+  }
 
   @Nls
   override fun getTextPresentation(): String = getUserObject().toString()

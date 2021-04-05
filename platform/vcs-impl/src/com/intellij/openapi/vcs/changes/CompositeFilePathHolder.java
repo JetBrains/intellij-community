@@ -58,7 +58,7 @@ public abstract class CompositeFilePathHolder implements FileHolder {
   }
 
   @NotNull
-  public Collection<FilePath> values() {
+  public Collection<FilePath> getFiles() {
     HashSet<FilePath> result = new HashSet<>();
     for (FilePathHolder fileHolder : myMap.values()) {
       result.addAll(fileHolder.values());
@@ -93,6 +93,31 @@ public abstract class CompositeFilePathHolder implements FileHolder {
     return Objects.hash(myMap);
   }
 
+  public static class UnversionedFilesCompositeHolder extends CompositeFilePathHolder {
+    public UnversionedFilesCompositeHolder(@NotNull Project project) {
+      super(project);
+    }
+
+    @NotNull
+    @Override
+    protected FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
+      VcsManagedFilesHolder.Provider provider = VcsManagedFilesHolder.VCS_UNVERSIONED_FILES_HOLDER_EP
+        .findFirstSafe(project, ep -> ep.getVcs().equals(vcs));
+      if (provider != null) {
+        return provider.createHolder();
+      }
+      else {
+        return new FilePathHolderImpl(project);
+      }
+    }
+
+    @Override
+    public UnversionedFilesCompositeHolder copy() {
+      UnversionedFilesCompositeHolder result = new UnversionedFilesCompositeHolder(myProject);
+      result.copyFrom(this);
+      return result;
+    }
+  }
 
   public static class IgnoredFilesCompositeHolder extends CompositeFilePathHolder {
     public IgnoredFilesCompositeHolder(@NotNull Project project) {

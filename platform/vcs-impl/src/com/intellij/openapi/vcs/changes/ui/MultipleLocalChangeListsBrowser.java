@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -112,6 +113,13 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     updateDisplayedChangeLists();
     updateSelectedChangeList(myChangeList);
+
+    project.getMessageBus().connect(this)
+      .subscribe(VcsManagedFilesHolder.TOPIC, () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myViewer.repaint();
+        });
+      });
   }
 
   @Nullable

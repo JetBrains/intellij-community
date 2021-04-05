@@ -5,15 +5,15 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 
-class FilePathHolderImpl(private val project: Project) : FileHolder {
+class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   private val files = hashSetOf<FilePath>()
 
-  fun getFiles(): List<FilePath> = files.toList()
+  override fun values(): Collection<FilePath> = files
 
   override fun cleanAll() = files.clear()
   override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(files, scope)
 
-  fun addFile(file: FilePath) {
+  override fun addFile(file: FilePath) {
     files.add(file)
   }
 
@@ -26,7 +26,7 @@ class FilePathHolderImpl(private val project: Project) : FileHolder {
       it.files.addAll(files)
     }
 
-  fun containsFile(file: FilePath) = file in files
+  override fun containsFile(file: FilePath) = file in files
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

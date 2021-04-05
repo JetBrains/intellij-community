@@ -102,7 +102,7 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   @Override
   public void processUnversionedFile(FilePath filePath) {
     if (acceptFilePath(filePath, false)) {
-      myComposite.getUnversionedFileHolder().addFile(filePath);
+      myComposite.getUnversionedFileHolder().addFile(myScope.getVcs(), filePath);
       SwitchedFileHolder switchedFileHolder = myComposite.getSwitchedFileHolder();
       if (!switchedFileHolder.isEmpty()) {
         // if a file was previously marked as switched through recursion, remove it from switched list

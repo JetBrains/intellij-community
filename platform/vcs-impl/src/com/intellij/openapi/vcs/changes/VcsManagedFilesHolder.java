@@ -27,6 +27,7 @@ import java.util.EventListener;
  * @see ChangeListManagerImpl#notifyUnchangedFileStatusChanged
  */
 public interface VcsManagedFilesHolder extends FilePathHolder {
+  ProjectExtensionPointName<Provider> VCS_UNVERSIONED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.unversionedFilesHolder");
   ProjectExtensionPointName<Provider> VCS_IGNORED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.ignoredFilesHolder");
 
   @Topic.ProjectLevel
