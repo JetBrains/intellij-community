@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,18 +57,20 @@ abstract class ReplaceCallFix(
     }
 
     protected fun replace(element: KtQualifiedExpression?, project: Project, editor: Editor?): KtExpression? {
-        if (element?.selectorExpression == null) return null
+        val selectorExpression = element?.selectorExpression ?: return null
         val elvis = element.elvisOrEmpty(notNullNeeded)
         val betweenReceiverAndOperation = element.elementsBetweenReceiverAndOperation().joinToString(separator = "") { it.text }
         val newExpression = KtPsiFactory(element).createExpressionByPattern(
             "$0$betweenReceiverAndOperation$operation$1$elvis",
             element.receiverExpression,
-            element.selectorExpression!!
+            selectorExpression,
         )
+
         val replacement = element.replace(newExpression)
         if (elvis.isNotEmpty()) {
             replacement.moveCaretToEnd(editor, project)
         }
+
         return replacement as? KtExpression
     }
 
@@ -215,7 +217,7 @@ class ReplaceWithDotCallFix(
             var parent = qualifiedExpression.getQualifiedExpressionForReceiver() as? KtSafeQualifiedExpression
             var callChainCount = 0
             if (parent != null) {
-                val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL)
+                val bindingContext = qualifiedExpression.analyze(BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
                 while (parent is KtQualifiedExpression) {
                     val compilerReports = bindingContext.diagnostics.forElement(parent.operationTokenNode as PsiElement)
                     if (compilerReports.none { it.factory == Errors.UNNECESSARY_SAFE_CALL }) break

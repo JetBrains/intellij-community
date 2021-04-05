@@ -10879,6 +10879,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public void testSafeCallChain2() throws Exception {
             runTest("testData/quickfix/replaceWithDotCall/safeCallChain2.kt");
         }
+
+        @TestMetadata("safeCallChain3.kt")
+        public void testSafeCallChain3() throws Exception {
+            runTest("testData/quickfix/replaceWithDotCall/safeCallChain3.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
