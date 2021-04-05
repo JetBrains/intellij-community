@@ -53,8 +53,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
     Rectangle rect;
     try {
-      rect = myComponent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
-    } catch (Exception e) {
+      if (!myComponent.isShowing()) {
+        rect = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+      }
+      else {
+        rect = myComponent.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds();
+      }
+    }
+    catch (Exception e) {
       Logger.getInstance(JBCefOsrHandler.class).error(e);
       rect = new Rectangle(0, 0, 0, 0);
     }
