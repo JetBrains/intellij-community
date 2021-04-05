@@ -1,43 +1,36 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
-import kotlin.apply as applyKt
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.CallElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.StringElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.script
 
-class GroovyScriptBuilder : AbstractScriptBuilder<GroovyScriptBuilder>() {
-
-  override fun apply(action: GroovyScriptBuilder.() -> Unit) = applyKt(action)
-
-  override fun call(name: String) = apply {
-    code("$name()")
-  }
-
-  override fun call(
-    name: String,
-    firstArgument: String,
-    vararg arguments: String,
-    configure: (GroovyScriptBuilder.() -> Unit)?
-  ) = call(name, listOf(firstArgument, *arguments), configure)
-
-  override fun call(
-    name: String,
-    firstArgument: Pair<String, String>,
-    vararg arguments: Pair<String, String>,
-    configure: (GroovyScriptBuilder.() -> Unit)?
-  ) = call(name, listOf(firstArgument, *arguments).map { (arg, value) -> "$arg: $value" }, configure)
-
-  private fun call(name: String, arguments: Iterable<Any>, configure: (GroovyScriptBuilder.() -> Unit)? = null) = apply {
-    when (configure) {
-      null -> code("$name ${arguments.joinToString()}")
-      else -> block("$name(${arguments.joinToString()})", configure)
+class GroovyScriptBuilder : AbstractScriptBuilder() {
+  override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
+    when {
+      element is ArgumentElement && element.name != null -> {
+        add(element.name, indent, isNewLine)
+        add(": ", indent, false)
+        add(element.value, indent, false)
+        return
+      }
+      element is CallElement && isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments) -> {
+        add(element.name, indent, isNewLine)
+        add(" ", indent, false)
+        add(element.arguments, indent)
+        return
+      }
+      element is StringElement && !element.value.contains('$') -> {
+        add("'${element.value}'", indent, isNewLine)
+        return
+      }
     }
-  }
-
-  override fun str(string: String) = when ('$' in string) {
-    true -> """"$string""""
-    else -> "'$string'"
+    super.add(element, indent, isNewLine)
   }
 
   companion object {
-    fun groovy(configure: GroovyScriptBuilder.() -> Unit) = GroovyScriptBuilder().apply(configure).generate()
+    fun groovy(configure: ScriptTreeBuilder.() -> Unit) =
+      script(GroovyScriptBuilder(), configure)
   }
 }

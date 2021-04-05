@@ -7,16 +7,9 @@ import kotlin.apply as applyKt
 
 class GroovyGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<GroovyScriptBuilder, GroovyGradleBuildScriptBuilder>(gradleVersion) {
+) : AbstractGradleBuildScriptBuilder<GroovyGradleBuildScriptBuilder>(gradleVersion) {
+
+  override val scriptBuilder = GroovyScriptBuilder()
 
   override fun apply(action: GroovyGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
-
-  override fun createScriptBuilder() = GroovyScriptBuilder()
-
-  override fun addPlugin(id: String, version: String?) = withPlugin {
-    when (version) {
-      null -> code("id $id")
-      else -> code("id $id version $version")
-    }
-  }
 }

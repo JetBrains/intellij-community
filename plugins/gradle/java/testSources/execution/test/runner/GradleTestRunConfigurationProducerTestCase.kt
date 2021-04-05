@@ -13,8 +13,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.buildscript
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.runners.Parameterized
@@ -152,8 +152,8 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       }
     """.trimIndent())
     createProjectSubFile("settings.gradle", groovy {
-      code("rootProject.name = 'project'")
-      call("include", "'module'", "'my module'")
+      assign("rootProject.name", "project")
+      call("include", "module", "my module")
     })
     createProjectSubFile("build.gradle", buildscript {
       withJavaPlugin()
@@ -161,13 +161,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
       withJUnit4()
       withGroovyPlugin()
       withPrefix {
-        block("sourceSets") {
+        call("sourceSets") {
           code("automation.java.srcDirs += 'automation'")
           code("automation.runtimeClasspath += sourceSets.test.runtimeClasspath")
           code("automation.compileClasspath += sourceSets.test.compileClasspath")
         }
       }
-      addImplementationDependency("project(path: ':', configuration: 'tests')", sourceSet = "automation")
+      addImplementationDependency(code("project(path: ':', configuration: 'tests')"), sourceSet = "automation")
       withTask("autoTest", "Test") {
         code("classpath = sourceSets.automation.runtimeClasspath")
         code("testClassesDirs = sourceSets.automation.output.classesDirs")
@@ -177,18 +177,18 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         code("testClassesDirs = sourceSets.automation.output.classesDirs")
       }
       withTask("testJar", "Jar") {
-        call("dependsOn", "testClasses")
-        code("baseName = \"test-${'$'}{project.archivesBaseName}\"")
-        call("from", "sourceSets.test.output")
+        code("dependsOn testClasses")
+        assign("baseName", "test-${'$'}{project.archivesBaseName}")
+        code("from sourceSets.test.output")
       }
       withPostfix {
-        block("configurations") {
+        call("configurations") {
           code("tests")
         }
-        block("artifacts") {
-          call("tests", "testJar")
+        call("artifacts") {
+          code("tests testJar")
         }
-        block("idea.module") {
+        call("idea.module") {
           code("testSourceDirs += file('automation')")
         }
       }
@@ -196,13 +196,13 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     createProjectSubFile("module/build.gradle", buildscript {
       withJavaPlugin()
       withJUnit4()
-      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
+      addTestImplementationDependency(code("project(path: ':', configuration: 'tests')"))
     })
     createProjectSubFile("my module/build.gradle", buildscript {
       withJavaPlugin()
       withJUnit4()
       withGroovyPlugin()
-      addTestImplementationDependency("project(path: ':', configuration: 'tests')")
+      addTestImplementationDependency(code("project(path: ':', configuration: 'tests')"))
     })
     importProject()
     assertModulesContains("project", "project.module", "project.my_module")

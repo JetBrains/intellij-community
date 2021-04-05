@@ -19,10 +19,8 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   fun createGradleSettingsFile(vararg moduleNames: String) {
     createSettingsFile(
       groovy {
-        assign("rootProject.name", str("project"))
-        for (moduleName in moduleNames) {
-          call("include", str(moduleName))
-        }
+        assign("rootProject.name", "project")
+        call("include", *moduleNames)
       }
     )
   }
@@ -45,18 +43,18 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
       withPrefix {
         assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
         assignIfNotNull("targetCompatibility", projectTargetCompatibility)
-        block("compileJava") {
+        call("compileJava") {
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)
           if (mainSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", str("--enable-preview"))
+            call("options.compilerArgs.add", "--enable-preview")
           }
         }
-        block("compileTestJava") {
+        call("compileTestJava") {
           assignIfNotNull("sourceCompatibility", testSourceCompatibility)
           assignIfNotNull("targetCompatibility", testTargetCompatibility)
           if (testSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", str("--enable-preview"))
+            call("options.compilerArgs.add", "--enable-preview")
           }
         }
       }

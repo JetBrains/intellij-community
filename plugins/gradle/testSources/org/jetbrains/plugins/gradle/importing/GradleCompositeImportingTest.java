@@ -559,8 +559,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("included-project/build.gradle",
                          createBuildScriptBuilder()
                            .withJavaPlugin()
-                           .group("my.grp")
-                           .version("1.0")
+                           .addGroup("my.grp")
+                           .addVersion("1.0")
                            .generate());
 
     importProject("");

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing
 
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.junit.Test
 
 class GradleBuildScriptBuilderTest {
@@ -18,12 +18,12 @@ class GradleBuildScriptBuilderTest {
     assertThat(buildscript(GradleVersion.current()) {
       addImport("org.example.Class1")
       addImport("org.example.Class2")
-      addPlugin("id 'plugin-id'")
+      addPlugin("plugin-id")
       addRepository("repositoryCentral()")
-      addDependency("dependency 'my-dependency-id'")
+      addDependency("dependency", "my-dependency-id")
       addPrefix("")
-      withPrefix { call("println", "'Hello, Prefix!'") }
-      withPostfix { call("println", "'Hello, Postfix!'") }
+      withPrefix { call("println", "Hello, Prefix!") }
+      withPostfix { call("println", call("hello", code("postfix"))) }
     }).isEqualTo("""
       import org.example.Class1
       import org.example.Class2
@@ -38,7 +38,7 @@ class GradleBuildScriptBuilderTest {
       dependencies {
           dependency 'my-dependency-id'
       }
-      println 'Hello, Postfix!'
+      println hello(postfix)
     """.trimIndent())
   }
 
@@ -46,13 +46,13 @@ class GradleBuildScriptBuilderTest {
   fun `test build script with buildscript block`() {
     assertThat(buildscript(GradleVersion.current()) {
       addBuildScriptPrefix("println 'Hello, Prefix!'")
-      withBuildScriptRepository { call("repo", "file('build/repo')") }
-      withBuildScriptDependency { call("classpath", "file('build/targets/org/classpath/archive.jar')") }
+      withBuildScriptRepository { call("repo", code("file('build/repo')")) }
+      withBuildScriptDependency { call("classpath", code("file('build/targets/org/classpath/archive.jar')")) }
       addBuildScriptPostfix("println 'Hello, Postfix!'")
-      applyPlugin("'gradle-build'")
+      applyPlugin("gradle-build")
       addImport("org.classpath.Build")
       withPrefix {
-        block("Build.configureSuperGradleBuild") {
+        call("Build.configureSuperGradleBuild") {
           call("makeBeautiful")
         }
       }
@@ -101,57 +101,53 @@ class GradleBuildScriptBuilderTest {
 
   @Test
   fun `test compile-implementation dependency scope`() {
-    assertThat(buildscript(GradleVersion.current()) {
+    val configureScript = fun GradleBuildScriptBuilder<*>.() {
       withJUnit()
       addImplementationDependency("my-dep")
-      addRuntimeOnlyDependency("my-runtime-dep")
-    }).isEqualTo("""
-      repositories {
-          maven {
-              url 'https://repo.labs.intellij.net/repo1'
-          }
-      }
-      dependencies {
-          testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-          testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-          implementation my-dep
-          runtimeOnly my-runtime-dep
-      }
-      test {
-          useJUnitPlatform()
-      }
-    """.trimIndent())
-    assertThat(buildscript(GradleVersion.version("3.0")) {
-      withJUnit()
-      addImplementationDependency("my-dep")
-      addRuntimeOnlyDependency("my-runtime-dep")
-    }).isEqualTo("""
-      repositories {
-          maven {
-              url 'https://repo.labs.intellij.net/repo1'
-          }
-      }
-      dependencies {
-          testCompile 'junit:junit:4.12'
-          compile my-dep
-          runtime my-runtime-dep
-      }
-    """.trimIndent())
-    assertThat(buildscript(GradleVersion.version("4.0")) {
-      withJUnit()
-      addImplementationDependency("my-dep")
-      addRuntimeOnlyDependency("my-runtime-dep")
-    }).isEqualTo("""
-      repositories {
-          maven {
-              url 'https://repo.labs.intellij.net/repo1'
-          }
-      }
-      dependencies {
-          testImplementation 'junit:junit:4.12'
-          implementation my-dep
-          runtimeOnly my-runtime-dep
-      }
-    """.trimIndent())
+      addRuntimeOnlyDependency(code("my-runtime-dep"))
+    }
+    assertThat(buildscript(GradleVersion.current(), configureScript))
+      .isEqualTo("""
+        repositories {
+            maven {
+                url 'https://repo.labs.intellij.net/repo1'
+            }
+        }
+        dependencies {
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+            implementation 'my-dep'
+            runtimeOnly my-runtime-dep
+        }
+        test {
+            useJUnitPlatform()
+        }
+      """.trimIndent())
+    assertThat(buildscript(GradleVersion.version("3.0"), configureScript))
+      .isEqualTo("""
+        repositories {
+            maven {
+                url 'https://repo.labs.intellij.net/repo1'
+            }
+        }
+        dependencies {
+            testCompile 'junit:junit:4.12'
+            compile 'my-dep'
+            runtime my-runtime-dep
+        }
+      """.trimIndent())
+    assertThat(buildscript(GradleVersion.version("4.0"), configureScript))
+      .isEqualTo("""
+        repositories {
+            maven {
+                url 'https://repo.labs.intellij.net/repo1'
+            }
+        }
+        dependencies {
+            testImplementation 'junit:junit:4.12'
+            implementation 'my-dep'
+            runtimeOnly my-runtime-dep
+        }
+      """.trimIndent())
   }
 }

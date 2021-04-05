@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.util.function.Consumer
 
-interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuildScriptBuilderCore<SB, BSB>> {
+@Suppress("unused")
+interface GradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuilderCore<BSB>> : ScriptElementBuilder {
   /**
    * ...
    * import [import]
@@ -26,8 +28,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addBuildScriptPrefix(vararg prefix: String): BSB
-  fun withBuildScriptPrefix(configure: SB.() -> Unit): BSB
-  fun withBuildScriptPrefix(configure: Consumer<SB>): BSB
+  fun withBuildScriptPrefix(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withBuildScriptPrefix(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * buildscript {
@@ -38,8 +40,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addBuildScriptDependency(dependency: String): BSB
-  fun withBuildScriptDependency(configure: SB.() -> Unit): BSB
-  fun withBuildScriptDependency(configure: Consumer<SB>): BSB
+  fun withBuildScriptDependency(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withBuildScriptDependency(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * buildscript {
@@ -50,8 +52,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addBuildScriptRepository(repository: String): BSB
-  fun withBuildScriptRepository(configure: SB.() -> Unit): BSB
-  fun withBuildScriptRepository(configure: Consumer<SB>): BSB
+  fun withBuildScriptRepository(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withBuildScriptRepository(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * buildscript {
@@ -63,21 +65,21 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addBuildScriptPostfix(vararg postfix: String): BSB
-  fun withBuildScriptPostfix(configure: SB.() -> Unit): BSB
-  fun withBuildScriptPostfix(configure: Consumer<SB>): BSB
+  fun withBuildScriptPostfix(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withBuildScriptPostfix(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * plugins {
    *   ...
-   *   groovy: id [id] version [version]
-   *   kotlin: id([id]) version [version]
+   *   groovy: id '[id]' version '[version]'
+   *   kotlin: id("[id]") version "[version]"
    * }
    */
   fun addPlugin(id: String, version: String? = null): BSB
 
   /**
-   * groovy: apply plugin: [plugin]
-   * kotlin: apply(plugin = [plugin])
+   * groovy: apply plugin: '[plugin]'
+   * kotlin: apply(plugin = "[plugin]")
    */
   fun applyPlugin(plugin: String): BSB
 
@@ -90,8 +92,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * ...
    */
   fun addPrefix(vararg prefix: String): BSB
-  fun withPrefix(configure: SB.() -> Unit): BSB
-  fun withPrefix(configure: Consumer<SB>): BSB
+  fun withPrefix(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withPrefix(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * dependencies {
@@ -100,8 +102,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addDependency(dependency: String): BSB
-  fun withDependency(configure: SB.() -> Unit): BSB
-  fun withDependency(configure: Consumer<SB>): BSB
+  fun withDependency(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withDependency(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * repositories {
@@ -110,8 +112,8 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * }
    */
   fun addRepository(repository: String): BSB
-  fun withRepository(configure: SB.() -> Unit): BSB
-  fun withRepository(configure: Consumer<SB>): BSB
+  fun withRepository(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withRepository(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * buildscript { ... }
@@ -122,16 +124,11 @@ interface GradleBuildScriptBuilderCore<SB : ScriptBuilder<SB>, BSB : GradleBuild
    * [postfix]
    */
   fun addPostfix(vararg postfix: String): BSB
-  fun withPostfix(configure: SB.() -> Unit): BSB
-  fun withPostfix(configure: Consumer<SB>): BSB
+  fun withPostfix(configure: ScriptTreeBuilder.() -> Unit): BSB
+  fun withPostfix(configure: Consumer<ScriptTreeBuilder>): BSB
 
   /**
    * @return content for build.gradle
    */
   fun generate(): String
-
-  /**
-   * Surrounds string by [ScriptBuilder.str]
-   */
-  fun str(string: String): String
 }

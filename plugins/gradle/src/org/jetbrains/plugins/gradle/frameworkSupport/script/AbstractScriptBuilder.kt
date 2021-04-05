@@ -1,98 +1,103 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.AssignElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PlusAssignElement
 import java.util.*
-import java.util.function.Consumer
-import kotlin.collections.ArrayList
 
-abstract class AbstractScriptBuilder<SB : AbstractScriptBuilder<SB>> : ScriptBuilder<SB> {
+abstract class AbstractScriptBuilder : ScriptBuilder {
+  private val lines = ArrayList<String>()
 
-  private val root = Element.Code(ArrayList())
-
-  protected abstract fun apply(action: SB.() -> Unit): SB
-
-  override fun contains(builder: SB) = builder.root in root.elements
-
-  override fun join(builder: SB) = apply {
-    root.elements.add(builder.root)
+  override fun generate(root: BlockElement): String {
+    root.statements.forEach { add(it, 0, true) }
+    val joiner = StringJoiner("\n")
+    lines.forEach(joiner::add)
+    return joiner.toString()
   }
 
-  override fun code(vararg text: String) = apply {
-    for (line in text) {
-      root.elements.add(Element.Line(line))
-    }
-  }
-
-  override fun blockIfNotEmpty(name: String, configure: Consumer<SB>) = blockIfNotEmpty(name, configure::accept)
-  override fun blockIfNotEmpty(name: String, configure: SB.() -> Unit) = blockIfNotEmpty(name, code(configure))
-  override fun blockIfNotEmpty(name: String, builder: SB) = blockIfNotEmpty(name, builder.root)
-  private fun blockIfNotEmpty(name: String, code: Element.Code) = apply {
-    if (!code.isEmpty()) {
-      block(name, code)
-    }
-  }
-
-  override fun block(name: String, configure: Consumer<SB>) = block(name, configure::accept)
-  override fun block(name: String, configure: SB.() -> Unit) = block(name, code(configure))
-  override fun block(name: String, builder: SB) = block(name, builder.root)
-  private fun block(name: String, code: Element.Code) = apply {
-    root.elements.add(Element.Block(name, code))
-  }
-
-  private fun code(configure: SB.() -> Unit): Element.Code {
-    val size = root.elements.size
-    apply(configure)
-    val elementsView = root.elements.subList(size, root.elements.size)
-    val elements = elementsView.toMutableList()
-    elementsView.clear()
-    return Element.Code(elements)
-  }
-
-  override fun assign(name: String, value: String) = code("$name = $value")
-  override fun assignIfNotNull(name: String, value: String?) = apply {
-    if (value != null) {
-      assign(name, value)
-    }
-  }
-
-  override fun generate(indent: Int) = root.generate(indent)
-
-  private sealed class Element {
-    abstract fun generate(indent: Int): String
-
-    override fun equals(other: Any?): Boolean {
-      return other is Element && generate(0) == other.generate(0)
-    }
-
-    override fun hashCode() = generate(0).hashCode()
-
-    class Line(val line: String) : Element() {
-      override fun generate(indent: Int) = INDENT.repeat(indent) + line
-    }
-
-    class Block(val name: String, val code: Code) : Element() {
-      override fun generate(indent: Int) = StringJoiner("\n").apply {
-        if (code.isEmpty()) {
-          add(INDENT.repeat(indent) + "$name {}")
+  protected open fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
+    when (element) {
+      is ArgumentElement -> {
+        if (element.name != null) {
+          add(element.name, indent, isNewLine)
+          add(" = ", indent, false)
+        }
+        add(element.value, indent, false)
+      }
+      is AssignElement -> {
+        add(element.name, indent, isNewLine)
+        add(" = ", indent, false)
+        add(element.value, indent, false)
+      }
+      is PlusAssignElement -> {
+        add(element.name, indent, isNewLine)
+        add(" += ", indent, false)
+        add(element.value, indent, false)
+      }
+      is BlockElement -> {
+        add("{", indent, isNewLine)
+        for (statement in element.statements) {
+          add(statement, indent + 1, true)
+        }
+        add("}", indent, true)
+      }
+      is CallElement -> {
+        add(element.name, indent, isNewLine)
+        if (hasTrailingBlock(element.arguments)) {
+          if (element.arguments.size > 1) {
+            add("(", indent, false)
+            add(element.arguments.dropLast(1), indent)
+            add(")", indent, false)
+          }
+          add(" ", indent, false)
+          add(element.arguments.last().value, indent, false)
         }
         else {
-          add(INDENT.repeat(indent) + "$name {")
-          add(code.generate(indent + 1))
-          add(INDENT.repeat(indent) + "}")
+          add("(", indent, false)
+          add(element.arguments, indent)
+          add(")", indent, false)
         }
-      }.toString()
-    }
-
-    class Code(val elements: MutableList<Element>) : Element() {
-      fun isEmpty(): Boolean = elements.all { it is Code && it.isEmpty() }
-
-      override fun generate(indent: Int) = elements
-        .filter { it !is Code || !it.isEmpty() }
-        .joinToString("\n") { it.generate(indent) }
+      }
+      is CodeElement -> {
+        for ((i, line) in element.text.withIndex()) {
+          add(line, indent, i == 0 && isNewLine)
+        }
+      }
+      is InfixCall -> {
+        add(element.left, indent, isNewLine)
+        add(" ", indent, false)
+        add(element.name, indent, false)
+        add(" ", indent, false)
+        add(element.right, indent, false)
+      }
+      is StringElement -> {
+        add(""""${element.value}"""", indent, isNewLine)
+      }
     }
   }
 
-  companion object {
-    private const val INDENT = "    "
+  protected fun add(arguments: List<ArgumentElement>, indent: Int) {
+    for ((i, argument) in arguments.withIndex()) {
+      if (i != 0) {
+        add(", ", indent, false)
+      }
+      add(argument, indent, false)
+    }
+  }
+
+  protected fun add(code: String, indent: Int, isNewLine: Boolean) {
+    if (isNewLine || lines.isEmpty()) {
+      lines.add("    ".repeat(indent) + code)
+    }
+    else {
+      lines[lines.lastIndex] += code
+    }
+  }
+
+  protected fun hasTrailingBlock(arguments: List<ArgumentElement>): Boolean {
+    val last = arguments.lastOrNull() ?: return false
+    return last.value is BlockElement && last.name == null
   }
 }

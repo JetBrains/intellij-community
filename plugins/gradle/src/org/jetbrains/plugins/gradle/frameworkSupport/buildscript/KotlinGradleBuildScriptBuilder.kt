@@ -7,16 +7,9 @@ import kotlin.apply as applyKt
 
 class KotlinGradleBuildScriptBuilder(
   gradleVersion: GradleVersion
-) : AbstractGradleBuildScriptBuilder<KotlinScriptBuilder, KotlinGradleBuildScriptBuilder>(gradleVersion) {
+) : AbstractGradleBuildScriptBuilder<KotlinGradleBuildScriptBuilder>(gradleVersion) {
+
+  override val scriptBuilder = KotlinScriptBuilder()
 
   override fun apply(action: KotlinGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
-
-  override fun createScriptBuilder() = KotlinScriptBuilder()
-
-  override fun addPlugin(id: String, version: String?) = withPlugin {
-    when (version) {
-      null -> code("id($id)")
-      else -> code("id($id) version $version")
-    }
-  }
 }
