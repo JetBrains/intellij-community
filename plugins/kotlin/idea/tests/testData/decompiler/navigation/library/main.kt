@@ -118,3 +118,7 @@ public fun <T: Number> funWithTypeParam(t: T) {
 }
 
 typealias SimpleClassAlias = SimpleClass
+
+typealias NestedSimpleClassAlias = List<SimpleClassAlias>
+
+typealias NestedSimpleClassAliasFunctionalType = SimpleClassAlias.() -> Unit

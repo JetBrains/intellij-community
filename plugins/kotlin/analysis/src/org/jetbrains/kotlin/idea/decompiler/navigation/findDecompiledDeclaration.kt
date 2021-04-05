@@ -193,5 +193,6 @@ object ByDescriptorIndexer : DecompiledTextIndexer<String> {
         modifiers = DescriptorRendererModifier.ALL
         alwaysRenderModifiers = true
         withDefinedIn = true
+        renderUnabbreviatedType = false
     }
 }

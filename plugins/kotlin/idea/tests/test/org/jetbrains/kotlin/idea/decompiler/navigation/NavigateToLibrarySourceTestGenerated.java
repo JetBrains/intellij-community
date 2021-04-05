@@ -76,6 +76,16 @@ public class NavigateToLibrarySourceTestGenerated extends AbstractNavigateToLibr
         runTest("testData/decompiler/navigation/usercode/NamedObject.kt");
     }
 
+    @TestMetadata("NestedSimpleClassAliasFunctionalType.kt")
+    public void testNestedSimpleClassAliasFunctionalType() throws Exception {
+        runTest("testData/decompiler/navigation/usercode/NestedSimpleClassAliasFunctionalType.kt");
+    }
+
+    @TestMetadata("NestedTypeAlias.kt")
+    public void testNestedTypeAlias() throws Exception {
+        runTest("testData/decompiler/navigation/usercode/NestedTypeAlias.kt");
+    }
+
     @TestMetadata("OverloadedFunWithTypeParam.kt")
     public void testOverloadedFunWithTypeParam() throws Exception {
         runTest("testData/decompiler/navigation/usercode/OverloadedFunWithTypeParam.kt");
