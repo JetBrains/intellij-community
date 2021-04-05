@@ -442,7 +442,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                                                              IdeBundle.message("command.name.apply.color"),
                                                                              groupId);
         alarm.cancelAllRequests();
-        alarm.addRequest(() -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply), 150);
+        Runnable request = () -> ApplicationManager.getApplication().invokeLaterOnWriteThread(apply);
+        if (source instanceof ColorPipetteButton && ((ColorPipetteButton)source).getCurrentState() == ColorPipetteButton.PipetteState.UPDATING) {
+          alarm.addRequest(request, 150);
+        } else {
+          request.run();
+        }
       }
     };
 
