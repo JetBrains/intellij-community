@@ -10,7 +10,7 @@ class PackageSearchSearchableOptionContributor : SearchableOptionContributor() {
         addSearchConfigurationMap(
             processor,
             "packagesearch", "package", "search", "dependency", "dependencies",
-            "gradle", "configuration", "maven", "scope", "reformat", "refresh", "import"
+            "gradle", "configuration", "maven", "scope"
         )
     }
 }

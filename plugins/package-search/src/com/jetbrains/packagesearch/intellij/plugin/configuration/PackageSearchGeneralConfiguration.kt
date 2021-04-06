@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 @State(
     name = "PackageSearchGeneralConfiguration",
-    storages = [(Storage(PackageSearchGeneralConfiguration.StorageFileName))]
+    storages = [Storage(PackageSearchGeneralConfiguration.StorageFileName)]
 )
 class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<PackageSearchGeneralConfiguration> {
 
