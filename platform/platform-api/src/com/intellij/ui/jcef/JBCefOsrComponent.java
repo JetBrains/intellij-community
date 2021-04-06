@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -10,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
+import java.awt.event.*;
 
 /**
  * A lightweight component on which an off-screen browser is rendered.
@@ -34,12 +33,24 @@ class JBCefOsrComponent extends JPanel {
     setBackground(JBColor.background());
     addPropertyChangeListener("graphicsConfiguration", e -> myRenderHandler.updateScale(myScale = JBUIScale.sysScale(this)));
 
-    setFocusable(true);
-    setRequestFocusEnabled(true);
     enableEvents(AWTEvent.KEY_EVENT_MASK |
                  AWTEvent.MOUSE_EVENT_MASK |
                  AWTEvent.MOUSE_WHEEL_EVENT_MASK |
                  AWTEvent.MOUSE_MOTION_EVENT_MASK);
+
+    setFocusable(true);
+    setRequestFocusEnabled(true);
+
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        myBrowser.getCefBrowser().setFocus(true);
+      }
+      @Override
+      public void focusLost(FocusEvent e) {
+        myBrowser.getCefBrowser().setFocus(false);
+      }
+    });
   }
 
   public void setBrowser(@NotNull JBCefBrowser browser) {
@@ -59,13 +70,6 @@ class JBCefOsrComponent extends JPanel {
 
   @SuppressWarnings("deprecation")
   @Override
-  public void show() {
-    super.show();
-    myRenderHandler.notifyComponentShown();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     myAlarm.cancelAllRequests();
@@ -75,10 +79,10 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
-    boolean mousePressed = e.getID() == MouseEvent.MOUSE_PRESSED;
-    if (mousePressed) myRenderHandler.notifyMousePressed();
     myBrowser.getCefBrowser().sendMouseEvent(e);
-    if (mousePressed) requestFocusInWindow();
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+      requestFocusInWindow();
+    }
   }
 
   @Override
@@ -87,6 +91,9 @@ class JBCefOsrComponent extends JPanel {
 
     double val = e.getPreciseWheelRotation() *
                  RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
+    if (SystemInfoRt.isLinux) {
+      val *= -1;
+    }
     myBrowser.getCefBrowser().sendMouseWheelEvent(new MouseWheelEvent(
       e.getComponent(),
       e.getID(),

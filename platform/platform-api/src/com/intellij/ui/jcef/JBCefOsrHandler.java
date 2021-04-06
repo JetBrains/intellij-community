@@ -16,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.nio.ByteBuffer;
@@ -42,7 +46,21 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final @NotNull Object myImageLock = new Object();
 
   JBCefOsrHandler(@NotNull JComponent component) {
-    this.myComponent = component;
+    myComponent = component;
+
+    myComponent.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        updateLocation();
+      }
+    });
+
+    myComponent.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        updateLocation();
+      }
+    });
   }
 
   @Override
@@ -164,16 +182,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     myScale = scale;
   }
 
-  void notifyMousePressed() {
-    updateLocation();
-  }
-
-  void notifyComponentShown() {
-    updateLocation();
-  }
-
   private void updateLocation() {
-    // getLocationOnScreen() is an expensive op, so do not request it on every mouse move but cache
+    // getLocationOnScreen() is an expensive op, so do not request it on every mouse move, but cache
     myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
   }
 

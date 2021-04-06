@@ -228,7 +228,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
         }
         if (!browser.getUIComponent().hasFocus()) {
           if (SystemInfo.isLinux) {
-            browser.getUIComponent().requestFocus();
+            if (isProperty(JBCefBrowserBase.Properties.IS_LIGHTWEIGHT)) {
+              browser.getUIComponent().requestFocusInWindow();
+            }
+            else {
+              browser.getUIComponent().requestFocus();
+            }
           }
           else {
             browser.getUIComponent().requestFocusInWindow();
