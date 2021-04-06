@@ -498,8 +498,9 @@ public final class PerformanceWatcher implements Disposable {
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         //TODO always true for some reason
         //myFreezeDuringStartup = !LoadingState.INDEXING_FINISHED.isOccurred();
-        getPublisher().uiFreezeStarted();
-        FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> p.start(new File(myLogDir, myFreezeFolder)));
+        File reportDir = new File(myLogDir, myFreezeFolder);
+        reportDir.mkdirs();
+        getPublisher().uiFreezeStarted(reportDir);
 
         myDumpTask = new SamplingTask(getDumpInterval(), getMaxDumpDuration()) {
           @Override
