@@ -45,11 +45,12 @@ fun main(args: Array<String>) {
 
   serializer.deserializeClassToIntConverter(converterFile.inputStream())
 
+  val resStore = serializer.deserializeCache(resFile.inputStream())!!
+
   val leftStore = serializer.deserializeCache(leftFile.inputStream()) ?: throw IllegalArgumentException("Cannot load cache")
   val filterPattern = args.getOrNull(1)
   if (filterPattern != null) {
     val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
-    val resStore = serializer.deserializeCache(resFile.inputStream())!!
 
     val allEntitySources = leftStore.entitiesBySource { true }.map { it.key }.toHashSet()
     allEntitySources.addAll(rightStore.entitiesBySource { true }.map { it.key })
@@ -63,7 +64,6 @@ fun main(args: Array<String>) {
   }
   else {
     val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.inputStream(), rightDiffLogFile.inputStream())!!
-    val resStore = serializer.deserializeCache(resFile.inputStream())!!
 
     val expectedResult = leftStore.toBuilder()
     expectedResult.addDiff(rightStore)
