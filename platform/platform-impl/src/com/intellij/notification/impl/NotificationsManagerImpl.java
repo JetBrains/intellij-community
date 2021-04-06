@@ -50,6 +50,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -430,6 +431,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
     text.setText(textContent);
+    setTextAccessibleName(text, textContent);
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -556,7 +558,9 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (notification.hasTitle()) {
       String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
       JLabel title = new JLabel();
-      title.setText(NotificationsUtil.buildHtml(notification, titleStyle, false, null, null));
+      String titleContent = NotificationsUtil.buildHtml(notification, titleStyle, false, null, null);
+      title.setText(titleContent);
+      setTextAccessibleName(title, titleContent);
       title.setOpaque(false);
       title.setForeground(layoutData.textColor);
       centerPanel.addTitle(title);
@@ -671,6 +675,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     Disposer.register(parentDisposable, balloon);
     return balloon;
+  }
+
+  private static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
+    component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                StringUtil.unescapeXmlEntities(StringUtil.stripHtml(htmlContent, " ")));
   }
 
   public static @NotNull JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
