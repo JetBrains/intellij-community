@@ -21,3 +21,13 @@ interface Finalizer {
 
     void finalize();
 }
+class MyGraphics extends FinalizeNotProtected {
+
+  public void finalize() throws Throwable { // no warning when overriding public method
+    try {
+      // cleanup
+    } finally {
+      super.finalize();
+    }
+  }
+}

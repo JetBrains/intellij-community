@@ -4,7 +4,21 @@ Reports any implementations of the <b>Object.finalize()</b> method
 which are not declared <b>protected</b>. <b>finalize()</b> should be declare <b>protected</b>,
 to prevent it from being explicitly invoked by other classes.
 <!-- tooltip end -->
-<p>
-
+<p>Example:
+<pre><code>
+  <b>class</b> X {
+    <b>public void</b> finalize() {
+      // todo cleanup
+    }
+  }
+</code></pre>
+<p>After the quick fix is applied the result looks like:</p>
+<pre><code>
+  <b>class</b> X {
+    <b>protected void</b> finalize() {
+      // todo cleanup
+    }
+  }
+</code></pre>
 </body>
 </html>
