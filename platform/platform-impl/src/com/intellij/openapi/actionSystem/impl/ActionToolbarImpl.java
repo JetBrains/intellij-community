@@ -154,21 +154,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
 
   public ActionToolbarImpl(@NotNull String place, @NotNull ActionGroup actionGroup, boolean horizontal) {
-    this(place, actionGroup, horizontal, false, false);
+    this(place, actionGroup, horizontal, false);
   }
 
   public ActionToolbarImpl(@NotNull String place,
                            @NotNull ActionGroup actionGroup,
                            boolean horizontal,
                            boolean decorateButtons) {
-    this(place, actionGroup, horizontal, decorateButtons, false);
-  }
-
-  public ActionToolbarImpl(@NotNull String place,
-                           @NotNull ActionGroup actionGroup,
-                           final boolean horizontal,
-                           final boolean decorateButtons,
-                           boolean updateActionsNow) {
     super(null);
 
     myPlace = place;
@@ -189,15 +181,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
-    addLoadingIcon();
-
-    myUpdater.updateActions(updateActionsNow, false, false);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      addLoadingIcon();
+    }
 
     // If the panel doesn't handle mouse event then it will be passed to its parent.
     // It means that if the panel is in sliding mode then the focus goes to the editor
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
-    setMiniMode(false);
+    setMiniModeInner(false);
   }
 
   @Override
@@ -1489,7 +1481,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
                  @NotNull JComponent parent) {
-      super(place, actionGroup, horizontal, false, true);
+      super(place, actionGroup, horizontal, false);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
       setBorder(myParent.getBorder());
@@ -1580,8 +1572,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   @Override
   public void setMiniMode(boolean minimalMode) {
-    //if (myMinimalMode == minimalMode) return;
+    if (myMinimalMode == minimalMode) return;
+    setMiniModeInner(minimalMode);
+    myUpdater.updateActions(false, true, false);
+  }
 
+  private void setMiniModeInner(boolean minimalMode) {
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
       setMinimumButtonSize(JBUI.emptySize());
@@ -1595,8 +1591,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }
-
-    myUpdater.updateActions(false, true, false);
   }
 
   public static boolean isInPopupToolbar(@Nullable Component component) {
