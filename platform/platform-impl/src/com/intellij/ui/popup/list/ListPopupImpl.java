@@ -263,7 +263,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setSelectionModel(new MyListSelectionModel());
 
     selectFirstSelectableItem();
-    updateListPaddings();
+    myList.setBorder(new EmptyBorder(UIUtil.getListViewportPadding(isAdVisible())));
 
     ScrollingUtil.installActions(myList);
 
@@ -296,17 +296,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
-  }
-
-  @Override
-  public void setAdText(@NotNull String s, int alignment) {
-    super.setAdText(s, alignment);
-    updateListPaddings();
-  }
-
-  private void updateListPaddings() {
-    Insets padding = UIUtil.getListViewportPadding(isAdVisible());
-    myList.setBorder(new EmptyBorder(padding));
   }
 
   private boolean isMultiSelectionEnabled() {

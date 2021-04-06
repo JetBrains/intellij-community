@@ -386,7 +386,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   @Override
-  public void setAdText(@NotNull String s, int alignment) {
+  public void setAdText(@NotNull @NlsContexts.PopupAdvertisement String s, int alignment) {
     JLabel label;
     if (myAdComponent == null || !(myAdComponent instanceof JLabel)) {
       label = HintUtil.createAdComponent(s, JBUI.CurrentTheme.Advertiser.border(), alignment);
@@ -433,7 +433,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private String wrapToSize(@NotNull @Nls String hint) {
     if (StringUtil.isEmpty(hint)) return hint;
 
-    Dimension size = myContent.computePreferredSize();
+    Dimension size = myContent.getSize();
+    if (size.width == 0 && size.height == 0)
+      size = myContent.computePreferredSize();
+
+    JBInsets.removeFrom(size, myContent.getInsets());
+    JBInsets.removeFrom(size, myAdComponent.getInsets());
+
     int width = Math.max(JBUI.CurrentTheme.Popup.minimumHintWidth(), size.width);
     return HtmlChunk.text(hint).wrapWith(HtmlChunk.div().attr("width", width)).wrapWith(HtmlChunk.html()).toString();
   }
