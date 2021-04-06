@@ -187,6 +187,8 @@ public final class Utils {
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
                                                              @Nullable Consumer<String> missedKeys) {
+    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast.timeout.ms", 20);
+    if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
@@ -197,7 +199,7 @@ public final class Utils {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
         long elapsed = System.currentTimeMillis() - start;
-        if (elapsed > 10) {
+        if (elapsed > maxTime) {
           promise.cancel();
         }
       });
