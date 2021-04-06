@@ -54,8 +54,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 "intellij.sh",
                 "intellij.vcs.changeReminder",
                 "intellij.markdown",
-                "intellij.grazie",
-                "intellij.space"
+                "intellij.grazie"
         ]
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
