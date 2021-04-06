@@ -97,9 +97,7 @@ public class GitStagingAreaHolder {
     VirtualFile root = myRepository.getRoot();
 
     RecursiveFilePathSet dirtyScope = new RecursiveFilePathSet(true); // GitVcs#needsCaseSensitiveDirtyScope is true
-    for (FilePath path : dirtyPaths) {
-      dirtyScope.add(path);
-    }
+    dirtyScope.addAll(dirtyPaths);
 
     List<GitFileStatus> rootRecords = GitIndexStatusUtilKt.getStatus(myProject, root, dirtyPaths, true, false, false);
     rootRecords.removeIf(record -> {

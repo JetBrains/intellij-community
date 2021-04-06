@@ -661,7 +661,7 @@ public final class NewMappings implements Disposable {
 
     @Nullable
     public MappedRoot getRootFor(@NotNull FilePath filePath) {
-      return myPathMapping.getMappingFor(filePath);
+      return myPathMapping.getMappingFor(filePath.getPath());
     }
   }
 }
