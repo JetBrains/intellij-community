@@ -15,18 +15,18 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -36,19 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
-public class UnaryPlusInspection extends BaseInspection {
-
+public final class UnaryPlusInspection extends LocalInspectionTool {
   public boolean onlyReportInsideBinaryExpression = true;
 
-  @Override
   @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unary.plus.problem.descriptor");
-  }
-
-  @Nullable
   @Override
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.unary.plus.unary.binary.option"), this,
@@ -60,12 +53,6 @@ public class UnaryPlusInspection extends BaseInspection {
     if (!onlyReportInsideBinaryExpression) {
       node.addContent(new Element("option").setAttribute("name", "onlyReportInsideBinaryExpression").setAttribute("value", "false"));
     }
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnaryPlusFix();
   }
 
   private static class UnaryPlusFix extends InspectionGadgetsFix {
@@ -93,19 +80,74 @@ public class UnaryPlusInspection extends BaseInspection {
     }
   }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnaryPlusVisitor();
+  private static class UnaryIncrementFix extends InspectionGadgetsFix {
+    private final String myRefName;
+
+    private UnaryIncrementFix(@NotNull String refName) {
+      myRefName = refName;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return InspectionGadgetsBundle.message("unary.increment.quickfix", myRefName);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("unary.increment.quickfix.family.name");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
+      if (prefixExpr == null) {
+        return;
+      }
+      final PsiExpression operand = prefixExpr.getOperand();
+      final PsiExpression oldExpr;
+      final PsiReferenceExpression refExpr;
+      if (operand instanceof PsiReferenceExpression) {
+        oldExpr = (PsiExpression)prefixExpr.getParent();
+        refExpr = (PsiReferenceExpression)operand;
+      }
+      else if (operand instanceof PsiPrefixExpression) {
+        oldExpr = prefixExpr;
+        refExpr = (PsiReferenceExpression)((PsiPrefixExpression)operand).getOperand();
+      }
+      else {
+        return;
+      }
+      if (refExpr == null || oldExpr == null) {
+        return;
+      }
+      final String refName = refExpr.getReferenceName();
+      if (refName == null) {
+        return;
+      }
+      PsiReplacementUtil.replaceExpression(oldExpr, "++" + refName);
+    }
   }
 
-  private class UnaryPlusVisitor extends BaseInspectionVisitor {
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new UnaryPlusVisitor(holder, isOnTheFly, onlyReportInsideBinaryExpression);
+  }
+
+  private static class UnaryPlusVisitor extends BaseInspectionVisitor {
+    private final ProblemsHolder myHolder;
+    private final boolean myOnTheFly;
+    private final boolean myOnlyReportInsideBinaryExpression;
+
+    private UnaryPlusVisitor(@NotNull ProblemsHolder holder, boolean onTheFly, boolean onlyReportInsideBinaryExpression) {
+      myHolder = holder;
+      myOnTheFly = onTheFly;
+      myOnlyReportInsideBinaryExpression = onlyReportInsideBinaryExpression;
+    }
 
     @Override
     public void visitPrefixExpression(PsiPrefixExpression prefixExpression) {
       super.visitPrefixExpression(prefixExpression);
-      final PsiJavaToken token = prefixExpression.getOperationSign();
-      final IElementType tokenType = token.getTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUS)) {
+      if (!unaryPlusPrefixExpression(prefixExpression)) {
         return;
       }
       final PsiExpression operand = prefixExpression.getOperand();
@@ -116,7 +158,7 @@ public class UnaryPlusInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      if (onlyReportInsideBinaryExpression) {
+      if (myOnlyReportInsideBinaryExpression) {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(prefixExpression);
         if (!(operand instanceof PsiParenthesizedExpression ||
               operand instanceof PsiPrefixExpression ||
@@ -132,7 +174,62 @@ public class UnaryPlusInspection extends BaseInspection {
         // unary plus might have been used as cast to int
         return;
       }
-      registerError(token, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      List<LocalQuickFix> fixes = new SmartList<>(new UnaryPlusFix());
+      if (myOnTheFly) {
+        if (operand instanceof PsiReferenceExpression) {
+          final PsiPrefixExpression parentPrefixExpr = ObjectUtils.tryCast(prefixExpression.getParent(), PsiPrefixExpression.class);
+          if (unaryPlusPrefixExpression(parentPrefixExpr)) {
+            addUnaryIncrementFix(fixes, (PsiReferenceExpression)operand);
+          }
+        }
+        else if (operand instanceof PsiPrefixExpression && unaryPlusPrefixExpression((PsiPrefixExpression)operand)) {
+          final PsiExpression operandExpr = ((PsiPrefixExpression)operand).getOperand();
+          final PsiReferenceExpression operandRefExpr = ObjectUtils.tryCast(operandExpr, PsiReferenceExpression.class);
+          if (operandRefExpr != null) {
+            addUnaryIncrementFix(fixes, operandRefExpr);
+          }
+        }
+      }
+      myHolder.registerProblem(prefixExpression.getOperationSign(), InspectionGadgetsBundle.message("unary.plus.problem.descriptor"),
+                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(LocalQuickFix[]::new));
+    }
+
+    private static boolean unaryPlusPrefixExpression(@Nullable PsiPrefixExpression prefixExpr) {
+      return prefixExpr != null && prefixExpr.getOperationTokenType().equals(JavaTokenType.PLUS);
+    }
+
+    private void addUnaryIncrementFix(@NotNull List<LocalQuickFix> fixes, @NotNull PsiReferenceExpression refExpr) {
+      final String refName = refExpr.getReferenceName();
+      if (refName == null) {
+        return;
+      }
+      final PsiPrefixExpression topPrefixExpr = ObjectUtils.tryCast(refExpr.getParent().getParent(), PsiPrefixExpression.class);
+      if (topPrefixExpr == null) {
+        return;
+      }
+      if (myOnlyReportInsideBinaryExpression) {
+        if (!applicableToBeReplacedWithInc(topPrefixExpr)) {
+          return;
+        }
+      }
+      else {
+        final PsiType refExprType = refExpr.getType();
+        if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
+            MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
+          return;
+        }
+      }
+      final PsiVariable resolved = ObjectUtils.tryCast(refExpr.resolve(), PsiVariable.class);
+      if (resolved == null || resolved.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      fixes.add(new UnaryIncrementFix(refName));
+    }
+
+    private static boolean applicableToBeReplacedWithInc(@NotNull PsiPrefixExpression topPrefixExpr) {
+      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(topPrefixExpr);
+      return parent instanceof PsiPolyadicExpression || parent instanceof PsiPrefixExpression ||
+             parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable;
     }
   }
 }

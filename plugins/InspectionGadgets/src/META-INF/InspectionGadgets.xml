@@ -1840,7 +1840,7 @@
                      groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.SuspiciousLiteralUnderscoreInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnaryPlus" bundle="messages.InspectionGadgetsBundle" key="unary.plus.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnaryPlusInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryExplicitNumericCast" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessary.explicit.numeric.cast.display.name" groupBundle="messages.InspectionsBundle"
