@@ -32,10 +32,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.wm.WeakFocusStackManager;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.lang.ZipFilePool;
@@ -86,7 +88,8 @@ public final class StartupUtil {
   public static BiFunction<String, String[], Integer> LISTENER = (integer, s) -> Main.ACTIVATE_NOT_INITIALIZED;
 
   private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
-  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";  // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
+  // see `ApplicationImpl#USE_SEPARATE_WRITE_THREAD`
+  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
@@ -312,7 +315,22 @@ public final class StartupUtil {
         }
 
         prepareUiFuture.complete(null);
+
+        if (!Main.isHeadless()) {
+          // not important
+          EventQueue.invokeLater(() -> {
+            //noinspection ResultOfMethodCallIgnored
+            WeakFocusStackManager.getInstance();
+          });
+        }
       });
+      if (!Main.isHeadless() && SystemInfoRt.isMac) {
+        ForkJoinPool.commonPool().execute(() -> {
+          Activity subActivity = StartUpMeasurer.startActivity("mac app init", ActivityCategory.APP_INIT);
+          MacOSApplicationProvider.initApplication();
+          subActivity.end();
+        });
+      }
     });
     startApp(Arrays.asList(args), prepareUiFuture, log, configImportNeeded, appStarterFuture, euaDocument);
   }

@@ -359,7 +359,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getLoadedPlugins(null);
     registerComponents(plugins, this, null);
     ApplicationLoader.initConfigurationStore(this);
-    preloadServices(plugins, "", false).getSyncPreloadedServices().join();
+    preloadServices(plugins, "", false).getSecond().join();
     loadComponents(null);
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }

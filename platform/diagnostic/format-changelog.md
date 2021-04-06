@@ -1,3 +1,7 @@
+# 31
+
+ * Rename `add registry keys` to `registry keys adding`.
+
 # 30
 
  * Add `preloading activity executing`.

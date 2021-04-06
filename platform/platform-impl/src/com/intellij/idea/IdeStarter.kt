@@ -40,11 +40,14 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
+import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
   companion object {
+    @JvmStatic
     private var filesToLoad: List<Path> = emptyList()
+    @JvmStatic
     private var wizardStepProvider: CustomizeIDEWizardStepsProvider? = null
 
     @JvmStatic
@@ -79,15 +82,9 @@ open class IdeStarter : ApplicationStarter {
 
     val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
 
-    // Event queue should not be changed during initialization of application components.
-    // It also cannot be changed before initialization of application components because IdeEventQueue uses other
-    // application components. So it is proper to perform replacement only here.
-    // out of EDT
     val windowManager = WindowManagerEx.getInstanceEx()
-    app.invokeLater {
-      runMainActivity("IdeEventQueue informing about WindowManager") {
-        IdeEventQueue.getInstance().setWindowManager(windowManager)
-      }
+    runMainActivity("IdeEventQueue informing about WindowManager") {
+      IdeEventQueue.getInstance().setWindowManager(windowManager)
     }
 
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
@@ -222,7 +219,7 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
 
 private fun postOpenUiTasks(app: Application) {
   if (SystemInfoRt.isMac) {
-    NonUrgentExecutor.getInstance().execute {
+    ForkJoinPool.commonPool().execute {
       runActivity("mac touchbar on app init") {
         TouchBarsManager.onApplicationInitialized()
         if (TouchBarsManager.isTouchBarAvailable()) {
@@ -232,7 +229,7 @@ private fun postOpenUiTasks(app: Application) {
     }
   }
   else if (SystemInfoRt.isXWindow && SystemInfo.isJetBrainsJvm) {
-    NonUrgentExecutor.getInstance().execute {
+    ForkJoinPool.commonPool().execute {
       runActivity("input method disabling on Linux") {
         disableInputMethodsIfPossible()
       }

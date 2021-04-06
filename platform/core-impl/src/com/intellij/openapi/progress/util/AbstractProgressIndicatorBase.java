@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -16,12 +16,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -29,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
@@ -43,10 +43,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myRunning;
   private volatile boolean myStopped;
 
-  private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
+  private volatile boolean myIndeterminate = Boolean.parseBoolean(System.getProperty("ide.progress.indeterminate.by.default", "true"));
   private volatile Runnable myMacActivity;
   // false by default - do not attempt to use such a relatively heavy code on start-up
-  private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Registry.is("idea.mac.prevent.app.nap", false);
+  private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.mac.prevent.app.nap", "true"));
 
   private Stack<@NlsContexts.ProgressText String> myTextStack; // guarded by this
   private DoubleArrayList myFractionStack; // guarded by this
@@ -88,7 +88,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private static final Set<Class<?>> ourReportedReuseExceptions = ContainerUtil.newConcurrentSet();
+  @SuppressWarnings("SSBasedInspection")
+  private static final Set<Class<?>> ourReportedReuseExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
   protected boolean isReuseable() {
     return false;

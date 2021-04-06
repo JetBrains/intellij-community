@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -49,10 +48,11 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   boolean processQueue() {
     boolean processed = false;
     MyReference<T> reference;
+    //noinspection unchecked
     while ((reference = (MyReference<T>)myQueue.poll()) != null) {
       int index = reference.index;
-
-      if (index < myList.size() && reference == myList.get(index)) { // list may have changed while the reference was dangling in queue
+      // list may have changed while the reference was dangling in queue
+      if (index < myList.size() && reference == myList.get(index)) {
         nullizeAt(index);
       }
       processed = true;
@@ -151,7 +151,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
       nextElement = null;
       nextIndex = -1;
       for (int i= curIndex +1; i<myList.size();i++) {
-        T t = SoftReference.dereference(myList.get(i));
+        Reference<T> ref = myList.get(i);
+        T t = ref == null ? null : ref.get();
         if (t != null) {
           nextElement = t;
           nextIndex = i;
@@ -188,7 +189,8 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   public boolean remove(@NotNull Object o) {
     processQueue();
     for (int i = 0; i < myList.size(); i++) {
-      T t = SoftReference.dereference(myList.get(i));
+      Reference<T> ref = myList.get(i);
+      T t = ref == null ? null : ref.get();
       if (t != null && t.equals(o)) {
         nullizeAt(i);
         modCount++;
@@ -238,7 +240,7 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   private static void throwNotAllowedException() {
-    throw new IncorrectOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
+    throw new UnsupportedOperationException("index/size-based operations in UnsafeWeakList are not supported because they don't make sense in the presence of weak references. Use .iterator() (which retains its elements to avoid sudden GC) instead.");
   }
 
   @Override

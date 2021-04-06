@@ -822,8 +822,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun createError(error: Throwable, pluginId: PluginId): RuntimeException {
     return when (val effectiveError: Throwable = if (error is InvocationTargetException) error.targetException else error) {
-      is ProcessCanceledException, is ExtensionNotApplicableException -> effectiveError as RuntimeException
-      else -> createPluginExceptionIfNeeded(effectiveError, pluginId)
+      is ProcessCanceledException, is ExtensionNotApplicableException, is PluginException -> effectiveError as RuntimeException
+      else -> PluginException(effectiveError, pluginId)
     }
   }
 
@@ -871,13 +871,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   @Internal
   open fun activityNamePrefix(): String? = null
 
-  data class ServicePreloadingResult(val asyncPreloadedServices: CompletableFuture<Void?>,
-                                     val syncPreloadedServices: CompletableFuture<Void?>)
-
   @ApiStatus.Internal
   fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
-                      onlyIfAwait: Boolean = false): ServicePreloadingResult {
+                      onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
     val asyncPreloadedServices = mutableListOf<RecursiveAction>()
     val syncPreloadedServices = mutableListOf<RecursiveAction>()
     for (plugin in plugins) {
@@ -934,13 +931,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
     }
 
-    return ServicePreloadingResult(
-      asyncPreloadedServices = CompletableFuture.runAsync({
+    return Pair(
+      CompletableFuture.runAsync({
         runActivity("${activityPrefix}service async preloading") {
           ForkJoinTask.invokeAll(asyncPreloadedServices)
         }
       }, ForkJoinPool.commonPool()),
-      syncPreloadedServices = CompletableFuture.runAsync({
+      CompletableFuture.runAsync({
         runActivity("${activityPrefix}service sync preloading") {
           ForkJoinTask.invokeAll(syncPreloadedServices)
         }

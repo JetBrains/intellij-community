@@ -492,8 +492,10 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
         projectManager.openProject(entry.first, entry.second)
       }
       catch (e: Exception) {
+        @Suppress("SSBasedInspection")
         (entry.second.frameManager as MyProjectUiFrameManager?)?.dispose()
         while (iterator.hasNext()) {
+          @Suppress("SSBasedInspection")
           (iterator.next().second.frameManager as MyProjectUiFrameManager?)?.dispose()
         }
 
