@@ -46,7 +46,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     val projectEntities = when {
       initialContent != null -> initialContent
       cache != null -> {
-        val activity = startActivity("(wm) cache loading", ActivityCategory.DEFAULT)
+        val activity = startActivity("module cache loading", ActivityCategory.DEFAULT)
         val previousStorage: WorkspaceEntityStorage?
         val loadingCacheTime = measureTimeMillis {
           previousStorage = cache.loadCache()

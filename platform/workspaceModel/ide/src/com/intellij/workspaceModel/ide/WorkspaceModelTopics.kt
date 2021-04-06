@@ -68,26 +68,30 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("(wm) events sending after modules are loaded", ActivityCategory.DEFAULT)
+    val activity = StartUpMeasurer.startActivity("events sending after modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
-    val activityInQueue = activity.startChild("(wm) events sending (in queue)")
-    val application = ApplicationManager.getApplication()
-    application.invokeAndWait {
-      application.runWriteAction {
-        val innerActivity = activityInQueue.endAndStart("(wm) events sending")
-        allEvents.forEach { queue ->
-          queue.collectToQueue = false
-          queue.events.forEach { (isBefore, event) ->
-            if (isBefore) queue.originalListener.beforeChanged(event)
-            else queue.originalListener.changed(event)
+    val activityInQueue = activity.startChild("events sending (in queue)")
+    if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
+      val application = ApplicationManager.getApplication()
+      application.invokeAndWait {
+        application.runWriteAction {
+          val innerActivity = activityInQueue.endAndStart("events sending")
+          allEvents.forEach { queue ->
+            queue.collectToQueue = false
+            queue.events.forEach { (isBefore, event) ->
+              if (isBefore) queue.originalListener.beforeChanged(event)
+              else queue.originalListener.changed(event)
+            }
+            queue.events.clear()
           }
-          queue.events.clear()
+          innerActivity.end()
         }
-        allEvents.clear()
-        modulesAreLoaded = true
-        innerActivity.end()
       }
+    } else {
+      allEvents.forEach { queue -> queue.collectToQueue = false }
     }
+    allEvents.clear()
+    modulesAreLoaded = true
     activity.end()
   }
 

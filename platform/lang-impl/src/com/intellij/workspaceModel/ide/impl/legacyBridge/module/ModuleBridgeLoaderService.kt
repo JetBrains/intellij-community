@@ -29,38 +29,35 @@ class ModuleBridgeLoaderService(private val project: Project) {
   private var activity: Activity? = null
 
   init {
-    if (WorkspaceModel.isEnabled) {
-      if (project.isDefault) {
-        loadModules()
-      } else {
-        val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
-        val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-        if (projectModelSynchronizer != null) {
-          if (projectModelSynchronizer.blockCidrDelayedUpdate()) workspaceModel.blockDelayedLoading()
-          if (!workspaceModel.loadedFromCache) {
-            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-            activity = StartUpMeasurer.startActivity("(wm) modules loading without cache", ActivityCategory.DEFAULT)
-            storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-          } else {
-            activity = StartUpMeasurer.startActivity("(wm) modules loading with cache", ActivityCategory.DEFAULT)
-            loadModules()
-          }
+    if (WorkspaceModel.isEnabled && !project.isDefault) {
+      val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+      val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
+      if (projectModelSynchronizer != null) {
+        if (projectModelSynchronizer.blockCidrDelayedUpdate()) workspaceModel.blockDelayedLoading()
+        if (!workspaceModel.loadedFromCache) {
+          LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
+          activity = StartUpMeasurer.startActivity("modules loading without cache", ActivityCategory.DEFAULT)
+          storeToEntitySources = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+        }
+        else {
+          activity = StartUpMeasurer.startActivity("modules loading with cache", ActivityCategory.DEFAULT)
+          loadModules()
         }
       }
     }
   }
 
   private fun loadModules() {
-    val childActivity = activity?.startChild("(wm) modules instantiation")
+    val childActivity = activity?.startChild("modules instantiation")
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
     val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
       .filter { !unloadedNames.contains(it.name) }
       .toList()
     moduleManager.loadModules(entities)
-    childActivity?.setDescription("(wm) modules count: ${moduleManager.modules.size}")
+    childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("(wm) project libraries loading", ActivityCategory.DEFAULT)
+    val librariesActivity = StartUpMeasurer.startActivity("project libraries loading", ActivityCategory.DEFAULT)
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
     librariesActivity.end()
     activity?.end()

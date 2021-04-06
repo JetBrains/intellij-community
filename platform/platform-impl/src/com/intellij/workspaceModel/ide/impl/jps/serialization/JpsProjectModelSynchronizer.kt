@@ -187,19 +187,19 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun loadProjectToEmptyStorage(project: Project): Pair<WorkspaceEntityStorage, List<EntitySource>>? {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    activity = startActivity("(wm) project files loading", ActivityCategory.DEFAULT)
-    childActivity = activity?.startChild("(wm) serializers creation")
+    activity = startActivity("project files loading", ActivityCategory.DEFAULT)
+    childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
     val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
-    childActivity = childActivity?.endAndStart("(wm) unloaded modules loading")
+    childActivity = childActivity?.endAndStart("unloaded modules loading")
     loadStateOfUnloadedModules(serializers)
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
-      childActivity = childActivity?.endAndStart("(wm) entities loading")
+      childActivity = childActivity?.endAndStart("entities loading")
       val sourcesToUpdate = loadAndReportErrors { serializers.loadAll(fileContentReader, builder, it, project) }
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
-      childActivity = childActivity?.endAndStart("(wm) changes to store (in queue)")
+      childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
       return builder.toStorage() to sourcesToUpdate
     } else {
       childActivity?.end()
@@ -213,7 +213,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   fun applyLoadedStorage(storeToEntitySources: Pair<WorkspaceEntityStorage, List<EntitySource>>?) {
     if (storeToEntitySources == null) return
     WriteAction.runAndWait<RuntimeException> {
-      childActivity = childActivity?.endAndStart("(wm) changes to store")
+      childActivity = childActivity?.endAndStart("project model changes saving")
       WorkspaceModel.getInstance(project).updateProjectModel { updater ->
         updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource || it is CustomModuleEntitySource
                                   || it is DummyParentEntitySource }, storeToEntitySources.first)
