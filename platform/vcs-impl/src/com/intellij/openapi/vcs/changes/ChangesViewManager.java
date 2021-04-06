@@ -719,8 +719,10 @@ public class ChangesViewManager implements ChangesViewEx,
         List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
+        boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
+                                              !ChangeListManager.getInstance(myProject).areChangeListsEnabled();
         TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-          .setChangeLists(changeLists, Registry.is("vcs.skip.single.default.changelist"), getChangeDecoratorProvider())
+          .setChangeLists(changeLists, skipSingleDefaultChangeList, getChangeDecoratorProvider())
           .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
           .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
           .setSwitchedFiles(changeListManager.getSwitchedFilesMap())

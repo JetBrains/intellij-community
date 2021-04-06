@@ -156,6 +156,7 @@ class CommitModeManager(private val project: Project) {
 sealed class CommitMode {
   abstract fun useCommitToolWindow(): Boolean
   open fun hideLocalChangesTab(): Boolean = false
+  open fun disableDefaultCommitAction(): Boolean = false
 
   object PendingCommitMode : CommitMode() {
     override fun useCommitToolWindow(): Boolean {
@@ -175,5 +176,6 @@ sealed class CommitMode {
   data class ExternalCommitMode(val vcs: AbstractVcs) : CommitMode() {
     override fun useCommitToolWindow(): Boolean = true
     override fun hideLocalChangesTab(): Boolean = true
+    override fun disableDefaultCommitAction(): Boolean = true
   }
 }

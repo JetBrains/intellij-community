@@ -29,6 +29,9 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
@@ -156,6 +159,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }, this);
 
     busConnection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateChangeListAvailability());
+    Registry.get("vcs.disable.changelists").addListener(new RegistryValueListener() {
+      @Override
+      public void afterValueChanged(@NotNull RegistryValue value) {
+        updateChangeListAvailability();
+      }
+    }, this);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -1468,7 +1477,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private boolean shouldEnableChangeLists() {
-    return !CommitModeManager.getInstance(myProject).getCurrentCommitMode().hideLocalChangesTab();
+    boolean forceDisable = CommitModeManager.getInstance(myProject).getCurrentCommitMode().hideLocalChangesTab() ||
+                           Registry.is("vcs.disable.changelists");
+    return !forceDisable;
   }
 
   @Override

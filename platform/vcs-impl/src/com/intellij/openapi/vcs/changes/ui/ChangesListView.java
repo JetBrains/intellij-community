@@ -385,8 +385,11 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
       if (node instanceof ChangesBrowserChangeListNode) {
         return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
       }
-      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
-        return getRoot().getAllChangesUnder();
+      if (node == getRoot()) {
+        if (Registry.is("vcs.skip.single.default.changelist") ||
+            !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+          return getRoot().getAllChangesUnder();
+        }
       }
       node = (DefaultMutableTreeNode)node.getParent();
     }
