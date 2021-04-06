@@ -3,14 +3,12 @@ package com.intellij.dvcs.ignore
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
-) : VcsManagedFilesHolder {
+) : VcsManagedFilesHolderBase() {
 
   private val allHolders get() = repositoryManager.repositories.asSequence().map { getHolder(it) }
 
@@ -18,23 +16,10 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun isInUpdatingMode() = allHolders.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
-  override fun cleanAll() = Unit
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = Unit
-
-  override fun addFile(file: FilePath) {
-    LOG.warn("Attempt to populate vcs-managed ignored files holder with $file", Throwable())
+  override fun containsFile(file: FilePath): Boolean {
+    val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return false
+    return getHolder(repository).containsFile(file)
   }
-
-  override fun containsFile(file: FilePath) = findIgnoreHolderByFile(file)?.containsFile(file) ?: false
 
   override fun values() = allHolders.flatMap { it.ignoredFilePaths }.toList()
-
-  private fun findIgnoreHolderByFile(file: FilePath): VcsRepositoryIgnoredFilesHolder? {
-    val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return null
-    return getHolder(repository)
-  }
-
-  companion object {
-    private val LOG = logger<VcsIgnoredFilesHolderBase<*>>()
-  }
 }

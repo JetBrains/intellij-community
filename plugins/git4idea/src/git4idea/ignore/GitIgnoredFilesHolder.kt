@@ -12,8 +12,6 @@ class GitIgnoredFilesHolder(val manager: GitRepositoryManager)
   : VcsIgnoredFilesHolderBase<GitRepository>(manager) {
   override fun getHolder(repository: GitRepository) = repository.ignoredFilesHolder
 
-  override fun copy() = GitIgnoredFilesHolder(manager)
-
   class Provider(project: Project) : VcsManagedFilesHolder.Provider {
     private val gitVcs = GitVcs.getInstance(project)
     private val manager = GitRepositoryManager.getInstance(project)
