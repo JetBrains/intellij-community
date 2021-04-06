@@ -129,6 +129,12 @@ public final class Utils {
       isInModalContext, presentationFactory, context, place, isContextMenu, false, null, queue0 != null ? queue0::offer : null);
     List<AnAction> list;
     if (async) {
+      Set<String> missedKeys = new HashSet<>();
+      list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+      if (list != null && missedKeys.isEmpty()) {
+        if (onProcessed != null) onProcessed.run();
+        return list;
+      }
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
