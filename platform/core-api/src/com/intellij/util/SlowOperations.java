@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.EDT;
@@ -23,6 +24,7 @@ public final class SlowOperations {
   public static final String ACTION_PERFORM = "action.perform";
   public static final String RENDERING = "rendering";
   public static final String GENERIC = "generic";
+  public static final String FAST_TRACK = "  fast track  ";
 
   private static final Set<String> ourReportedTraces = new HashSet<>();
   private static final String[] misbehavingFrames = {
@@ -70,6 +72,11 @@ public final class SlowOperations {
       return;
     }
     for (Frame frame = ourStack; frame != null; frame = frame.parent) {
+      if (FAST_TRACK == frame.activity) {
+        throw new ProcessCanceledException();
+      }
+    }
+    for (Frame frame = ourStack; frame != null; frame = frame.parent) {
       if (!Registry.is("ide.slow.operations.assertion." + frame.activity, true)) {
         return;
       }
@@ -86,7 +93,7 @@ public final class SlowOperations {
     if (result || !ourReportedTraces.add(stackTrace)) {
       return;
     }
-    LOG.error("Slow operations are prohibited in the EDT");
+    LOG.error("Slow operations are prohibited on EDT");
   }
 
   private static boolean isAlwaysAllowed() {

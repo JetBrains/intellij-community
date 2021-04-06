@@ -189,9 +189,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
-    if (isAsyncUpdateSupportedForPlace()) {
-      addLoadingIcon();
-    }
+    addLoadingIcon();
 
     myUpdater.updateActions(updateActionsNow, false, false);
 
@@ -1116,20 +1114,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateActionsImmediately();
   }
 
-  private boolean isAsyncUpdateSupportedForPlace() {
-    return !ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR.equals(myPlace);
-  }
-
   private void updateActionsImpl(boolean forced) {
     if (forced) myForcedUpdateRequested = true;
-    boolean forcedActual = forced || myForcedUpdateRequested;
 
-    DataContext dataContext = isAsyncUpdateSupportedForPlace() ? Utils.wrapDataContext(getDataContext()) : getDataContext();
+    DataContext dataContext = Utils.wrapDataContext(getDataContext());
     ActionUpdater updater = new ActionUpdater(LaterInvocator.isInModalContext(), myPresentationFactory,
                                               dataContext, myPlace, false, true);
     if (Utils.isAsyncDataContext(dataContext)) {
       if (myLastUpdate != null) myLastUpdate.cancel();
 
+      updateActionsImplFastTrack(updater);
+
+      boolean forcedActual = forced || myForcedUpdateRequested;
       myLastUpdate = updater.expandActionGroupAsync(myActionGroup, myHideDisabled);
       myLastUpdate.onSuccess(actions -> actionsUpdated(forcedActual, actions))
         .onError(ex -> {
@@ -1140,11 +1136,26 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         .onProcessed(__ -> myLastUpdate = null);
     }
     else {
+      boolean forcedActual = forced || myForcedUpdateRequested;
       actionsUpdated(forcedActual, updater.expandActionGroupWithTimeout(myActionGroup, myHideDisabled));
     }
     if (mySecondaryActionsButton != null) {
       mySecondaryActionsButton.update();
       mySecondaryActionsButton.repaint();
+    }
+  }
+
+  private void updateActionsImplFastTrack(@NotNull ActionUpdater updater) {
+    String failedKey = "ActionToolbarImpl.fastTrackFailed";
+    if (!(myVisibleActions.isEmpty() && getComponentCount() == 1 && getClientProperty(failedKey) == null)) {
+      return;
+    }
+    List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null);
+    if (actions != null) {
+      actionsUpdated(true, actions);
+    }
+    else {
+      putClientProperty(failedKey, true);
     }
   }
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -169,6 +170,27 @@ public final class Utils {
       }
       return null;
     });
+  }
+
+  static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
+                                                             @NotNull ActionGroup group,
+                                                             boolean hideDisabled,
+                                                             @Nullable Consumer<String> missedKeys) {
+    BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+    ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+      long start = System.currentTimeMillis();
+      ActionUpdater.cancelAllUpdates();
+      CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
+      return runLoopAndWaitForFuture(promise, null, () -> {
+        Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
+        if (runnable != null) runnable.run();
+        long elapsed = System.currentTimeMillis() - start;
+        if (elapsed > 10) {
+          promise.cancel();
+        }
+      });
+    }
   }
 
   static void fillMenu(@NotNull ActionGroup group,
