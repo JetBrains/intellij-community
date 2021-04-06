@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
@@ -20,6 +21,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -33,9 +35,7 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
@@ -88,60 +88,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
-    val needToOpenProject: Boolean
-    if (isStandaloneLightEdit) {
-      needToOpenProject = true
-    }
-    else {
-      frameInitActivity.runChild("app frame created callback") {
-        lifecyclePublisher.appFrameCreated(args)
-      }
-
-      // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
-      if (app.isHeadlessEnvironment) {
-        needToOpenProject = false
-      }
-      else {
-        val willOpenProject = (args.isNotEmpty() || filesToLoad.isNotEmpty() || RecentProjectsManager.getInstance().willReopenProjectOnStart())
-                              && JetBrainsProtocolHandler.getCommand() == null
-        needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
-      }
-
-      frameInitActivity.end()
-
-      NonUrgentExecutor.getInstance().execute {
-        LifecycleUsageTriggerCollector.onIdeStart()
-      }
-    }
-
-    val project = when {
-      !needToOpenProject -> null
-      filesToLoad.isNotEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-      args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
-      else -> null
-    }
-
-    lifecyclePublisher.appStarting(project)
-
-    if (needToOpenProject && project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-      val recentProjectManager = RecentProjectsManager.getInstance()
-      var openLightEditFrame = isStandaloneLightEdit
-      if (recentProjectManager.willReopenProjectOnStart()) {
-        if (recentProjectManager.reopenLastProjectsOnStart()) {
-          openLightEditFrame = false
-        }
-        else if (!isStandaloneLightEdit) {
-          WelcomeFrame.showIfNoProjectOpened()
-        }
-      }
-
-      if (openLightEditFrame) {
-        ApplicationManager.getApplication().invokeLater {
-          LightEditService.getInstance().showEditorWindow()
-        }
-      }
-    }
+    openProjectIfNeeded(args, app, frameInitActivity, lifecyclePublisher)
 
     reportPluginErrors()
 
@@ -154,6 +101,64 @@ open class IdeStarter : ApplicationStarter {
 
     if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+    }
+  }
+
+  protected open fun openProjectIfNeeded(args: List<String>,
+                                         app: ApplicationEx,
+                                         frameInitActivity: Activity,
+                                         lifecyclePublisher: AppLifecycleListener) {
+    frameInitActivity.runChild("app frame created callback") {
+      lifecyclePublisher.appFrameCreated(args)
+    }
+
+    // must be after appFrameCreated because some listeners can mutate state of RecentProjectsManager
+    if (app.isHeadlessEnvironment) {
+      frameInitActivity.end()
+
+      LifecycleUsageTriggerCollector.onIdeStart()
+      lifecyclePublisher.appStarting(null)
+      return
+    }
+
+    if (JetBrainsProtocolHandler.appStartedWithCommand()) {
+      val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject = false)
+      frameInitActivity.end()
+      LifecycleUsageTriggerCollector.onIdeStart()
+
+      val project = when {
+        !needToOpenProject -> null
+        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        else -> null
+      }
+      lifecyclePublisher.appStarting(project)
+    }
+    else {
+      val recentProjectManager = RecentProjectsManager.getInstance()
+      val willReopenRecentProjectOnStart = recentProjectManager.willReopenProjectOnStart()
+      val willOpenProject = willReopenRecentProjectOnStart || !args.isEmpty() || !filesToLoad.isEmpty()
+      val needToOpenProject = showWizardAndWelcomeFrame(lifecyclePublisher, willOpenProject)
+      frameInitActivity.end()
+      ForkJoinPool.commonPool().execute {
+        LifecycleUsageTriggerCollector.onIdeStart()
+      }
+
+      if (needToOpenProject) {
+        val project = when {
+          !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+          !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+          else -> null
+        }
+        lifecyclePublisher.appStarting(project)
+
+        if (project == null && willReopenRecentProjectOnStart && !recentProjectManager.reopenLastProjectsOnStart()) {
+          WelcomeFrame.showIfNoProjectOpened()
+        }
+      }
+      else {
+        lifecyclePublisher.appStarting(null)
+      }
     }
   }
 
@@ -200,6 +205,28 @@ open class IdeStarter : ApplicationStarter {
       }
     }
     return false
+  }
+
+  internal class StandaloneLightEditStarter : IdeStarter() {
+    override fun openProjectIfNeeded(args: List<String>,
+                                     app: ApplicationEx,
+                                     frameInitActivity: Activity,
+                                     lifecyclePublisher: AppLifecycleListener) {
+      val project = when {
+        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        else -> null
+      }
+
+      if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
+        val recentProjectManager = RecentProjectsManager.getInstance()
+        if (!recentProjectManager.willReopenProjectOnStart() || !recentProjectManager.reopenLastProjectsOnStart()) {
+          ApplicationManager.getApplication().invokeLater {
+            LightEditService.getInstance().showEditorWindow()
+          }
+        }
+      }
+    }
   }
 }
 

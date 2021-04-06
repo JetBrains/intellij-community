@@ -32,6 +32,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.storage.HeavyProcessLatch
@@ -106,7 +107,8 @@ private fun executeInitAppInEdt(args: List<String>,
   // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
   registerComponentFuture
     .thenRun {
-      val starter = findStarter(args.first()) ?: IdeStarter()
+      val starter = findStarter(args.first())
+                    ?: if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
       if (Main.isHeadless() && !starter.isHeadless) {
         val commandName = starter.commandName
         val message = IdeBundle.message(
