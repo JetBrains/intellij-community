@@ -1,0 +1,22 @@
+package pkg;
+
+public class TestInheritanceChainCycle extends TestInheritanceChainCycle {
+   public void printMessage() {
+      System.out.println("Hello, bug!");// 21 22 23
+   }// 24
+}
+
+class 'pkg/TestInheritanceChainCycle' {
+   method 'printMessage ()V' {
+      0      4
+      3      4
+      5      4
+      8      5
+   }
+}
+
+Lines mapping:
+21 <-> 5
+22 <-> 5
+23 <-> 5
+24 <-> 6
