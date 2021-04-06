@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.navigation.History;
@@ -49,6 +50,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
   @NotNull private final History myHistory;
   @NotNull private final LinkedHashMap<String, VcsLogHighlighter> myHighlighters = new LinkedHashMap<>();
+  @Nullable private VcsLogEditorDiffPreview myEditorDiffPreview;
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -64,6 +66,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
 
     createEditorDiffPreview();
 
+    EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::createEditorDiffPreview);
+
     LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
     updateHighlighters();
 
@@ -76,9 +80,18 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   }
 
   private void createEditorDiffPreview() {
-    if (VcsLogUiUtil.isDiffPreviewInEditor(myProject)) {
-      VcsLogEditorDiffPreview editorDiffPreview = new VcsLogEditorDiffPreview(myProject, myMainFrame);
-      myMainFrame.getChangesBrowser().setEditorDiffPreview(editorDiffPreview);
+    VcsLogEditorDiffPreview preview = myEditorDiffPreview;
+
+    boolean isEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
+    if (isEditorDiffPreview && preview == null) {
+      preview = new VcsLogEditorDiffPreview(myProject, myMainFrame);
+      myEditorDiffPreview = preview;
+      myMainFrame.getChangesBrowser().setEditorDiffPreview(preview);
+    }
+    else if (!isEditorDiffPreview && preview != null) {
+      preview.closePreview();
+      myEditorDiffPreview = null;
+      myMainFrame.getChangesBrowser().setEditorDiffPreview(null);
     }
   }
 

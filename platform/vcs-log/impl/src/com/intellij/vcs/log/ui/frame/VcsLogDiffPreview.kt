@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -93,7 +94,8 @@ abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewD
 abstract class EditorDiffPreview(private val project: Project,
                                  private val owner: Disposable) : DiffPreviewProvider, DiffPreview {
 
-  private val previewFile by lazy { PreviewDiffVirtualFile(this) }
+  private val previewFileDelegate = lazy { PreviewDiffVirtualFile(this) }
+  private val previewFile by previewFileDelegate
 
   protected fun init() {
     @Suppress("LeakingThis")
@@ -105,7 +107,7 @@ abstract class EditorDiffPreview(private val project: Project,
   }
 
   override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-    if (isPreviewVisible) openPreviewInEditor(focus)
+    if (isPreviewVisible) openPreviewInEditor(focus) else closePreview()
   }
 
   fun openPreviewInEditor(focusEditor: Boolean) {
@@ -117,6 +119,12 @@ abstract class EditorDiffPreview(private val project: Project,
     val editors = EditorTabPreview.openPreview(project, previewFile, focusEditor)
     for (editor in editors) {
       EditorTabPreview.registerEscapeHandler(editor, escapeHandler)
+    }
+  }
+
+  fun closePreview() {
+    if (previewFileDelegate.isInitialized()) {
+      FileEditorManager.getInstance(project).closeFile(previewFile)
     }
   }
 
