@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.jetbrains.kotlin.test.KotlinTestUtils
@@ -34,7 +35,7 @@ abstract class AbstractConfigureKotlinInTempDirTest : AbstractConfigureKotlinTes
     }
 
     override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
-        val originalDir = KotlinRoot.DIR.resolve("idea/testData/configuration").resolve(projectName)
+        val originalDir = IDEA_TEST_DATA_DIR.resolve("configuration").resolve(projectName)
         originalDir.copyRecursively(projectRoot)
         val projectFile = projectRoot.resolve("projectFile.ipr")
         val projectRoot = (if (projectFile.exists()) projectFile else projectRoot).toPath()

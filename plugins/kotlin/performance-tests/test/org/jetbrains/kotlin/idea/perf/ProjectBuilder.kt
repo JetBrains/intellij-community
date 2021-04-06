@@ -200,9 +200,8 @@ class ProjectBuilder {
     internal var initDefaultProfile: Boolean = true
     private val kotlinFiles = mutableListOf<Pair<String, KotlinFileSource>>()
 
-    fun buildGradle(buildGradle: String) {
-        val file = File(buildGradle)
-        val target = if (file.exists()) file else KotlinRoot.DIR.resolve(file)
+    fun buildGradle(buildGradle: File) {
+        val target = if (buildGradle.exists()) buildGradle else KotlinRoot.DIR.resolve(buildGradle)
         this.buildGradle = target.absolutePath
     }
 

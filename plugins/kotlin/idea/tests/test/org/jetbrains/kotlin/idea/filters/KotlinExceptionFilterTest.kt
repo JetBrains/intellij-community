@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.core.util.toVirtualFile
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -47,7 +48,7 @@ class KotlinExceptionFilterTest : KotlinLightCodeInsightFixtureTestCase() {
     fun doTest(template: String, expectedLine: Int, expectedColumn: Int) {
         val filter = KotlinExceptionFilterFactory().create(GlobalSearchScope.allScope(project))
 
-        val rootDir = File(KotlinRoot.DIR, "idea/testData/debugger/nativeExceptions")
+        val rootDir = IDEA_TEST_DATA_DIR.resolve("debugger/nativeExceptions")
 
         for (ioFile in rootDir.listFiles()!!) {
             val absolutePath = ioFile.absolutePath

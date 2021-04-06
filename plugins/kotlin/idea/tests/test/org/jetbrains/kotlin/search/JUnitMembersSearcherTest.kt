@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import java.io.IOException
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import com.intellij.psi.search.searches.AnnotatedMembersSearch
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.test.TestRoot
 import org.junit.Assert
@@ -43,7 +44,7 @@ class JUnitMembersSearcherTest : AbstractSearcherTest() {
     }
 
     private fun doJUnit3test() {
-        checkClassWithDirectives("idea/testData/search/junit/testJunit3.kt")
+        checkClassWithDirectives(IDEA_TEST_DATA_DIR.resolve("search/junit/testJunit3.kt").path)
     }
 
     @Throws(IOException::class)

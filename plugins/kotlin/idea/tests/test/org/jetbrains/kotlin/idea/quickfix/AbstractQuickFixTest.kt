@@ -45,7 +45,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val PRIORITY_DIRECTIVE = "PRIORITY"
 
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
-                KotlinRoot.DIR.resolve("idea/testData/quickfix/allowResolveInWriteAction.txt").path,
+                IDEA_TEST_DATA_DIR.resolve("quickfix/allowResolveInWriteAction.txt").path,
                 """
                     # Actions that are allowed to resolve in write action. Normally this list shouldn't be extended and eventually should
                     # be dropped. Please consider rewriting a quick-fix and remove resolve from it before adding a new entry to this list.

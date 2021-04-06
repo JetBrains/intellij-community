@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
 import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
@@ -38,7 +39,7 @@ abstract class AbstractConfigureKotlinTestBase : HeavyPlatformTestCase() {
         super.setUp()
     }
 
-    open fun createProjectRoot(): File = KotlinRoot.DIR.resolve("idea/testData/configuration").resolve(projectName)
+    open fun createProjectRoot(): File = IDEA_TEST_DATA_DIR.resolve("configuration").resolve(projectName)
 
     override fun initApplication() {
         super.initApplication()

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite
 import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.perf.util.suite
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
@@ -50,7 +51,7 @@ class PerformanceStressTest : UsefulTestCase() {
 
                     descriptor {
                         name(name)
-                        buildGradle("idea/testData/perfTest/simpleTemplate/")
+                        buildGradle(IDEA_TEST_DATA_DIR.resolve("perfTest/simpleTemplate/"))
 
                         for (index in 1..2) {
                             kotlinFile("DataClass") {
@@ -134,7 +135,7 @@ class PerformanceStressTest : UsefulTestCase() {
                 project {
                     descriptor {
                         name("kt-35135")
-                        buildGradle("idea/testData/perfTest/simpleTemplate/")
+                        buildGradle(IDEA_TEST_DATA_DIR.resolve("perfTest/simpleTemplate/"))
 
                         kotlinFile("OverloadX") {
                             pkg("pkg")

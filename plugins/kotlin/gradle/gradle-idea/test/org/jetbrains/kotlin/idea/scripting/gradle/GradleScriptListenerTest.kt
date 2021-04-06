@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
 import org.jetbrains.kotlin.idea.scripting.gradle.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.idea.scripting.gradle.roots.GradleBuildRootsManager
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.KotlinRoot
@@ -40,7 +41,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
     )
 
     override fun setUpTestProject() {
-        val rootDir = File(KotlinRoot.DIR, "idea/testData/script/definition/loading/gradle/")
+        val rootDir = IDEA_TEST_DATA_DIR.resolve("script/definition/loading/gradle/")
 
         val settings: KtFile = copyFromTestdataToProject(File(rootDir, GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
         val prop: PsiFile = copyFromTestdataToProject(File(rootDir, "gradle.properties"))

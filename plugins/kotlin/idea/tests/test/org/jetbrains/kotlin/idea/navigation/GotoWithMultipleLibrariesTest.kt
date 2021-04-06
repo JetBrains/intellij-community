@@ -9,6 +9,7 @@ import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.test.KotlinRoot
@@ -21,7 +22,7 @@ import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class GotoWithMultipleLibrariesTest : AbstractMultiModuleTest() {
-    override fun getTestDataDirectory() = KotlinRoot.DIR.resolve("idea/testData/multiModuleReferenceResolve/sameJarInDifferentLibraries")
+    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleReferenceResolve/sameJarInDifferentLibraries")
 
     fun testOneHasSourceAndOneDoesNot() {
         doTestSameJarSharedByLibrariesWithAndWithoutSourceAttached(withSource = 1, noSource = 1)
