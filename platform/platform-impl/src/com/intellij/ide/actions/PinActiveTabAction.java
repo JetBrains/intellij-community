@@ -59,16 +59,7 @@ public class PinActiveTabAction extends DumbAwareAction {
 
     e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.General.Pin_tab : null);
     Toggleable.setSelected(e.getPresentation(), selected);
-
-    String text;
-    // add the word "active" if the target tab is current
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || handler != null && handler.isActiveTab) {
-      text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
-    }
-    else {
-      text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
-    }
-    e.getPresentation().setText(text);
+    e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
