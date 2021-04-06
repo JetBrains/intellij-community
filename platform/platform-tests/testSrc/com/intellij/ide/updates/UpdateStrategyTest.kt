@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.*
@@ -272,28 +272,25 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     assertThat(result.patches?.chain).isEqualTo(listOf("183.3795.13", "183.3975.18", "183.4139.22").map(BuildNumber::fromString))
   }
 
-  //<editor-fold desc="Helpers.">
   private fun check(currentBuild: String,
                     selectedChannel: ChannelStatus,
                     testData: String,
                     ignoredBuilds: List<String> = emptyList()): CheckForUpdateResult {
-    val updates = UpdatesInfo(JDOMUtil.load("""
+    val product = parseUpdateData(JDOMUtil.load("""
           <products>
             <product name="IntelliJ IDEA">
               <code>IU</code>
-              $testData
+              ${testData}
             </product>
-          </products>"""))
+          </products>"""), "IU")
     val settings = UpdateSettings()
     settings.selectedChannelStatus = selectedChannel
     settings.ignoredBuildNumbers += ignoredBuilds
-    val result = UpdateStrategy(BuildNumber.fromString(currentBuild)!!, updates, settings).checkForUpdates()
+    val result = UpdateStrategy(BuildNumber.fromString(currentBuild)!!, product, settings).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result
   }
 
-  private fun assertBuild(expected: String, build: BuildInfo?) {
+  private fun assertBuild(expected: String, build: BuildInfo?) =
     assertEquals(expected, build?.number?.asStringWithoutProductCode())
-  }
-  //</editor-fold>
 }

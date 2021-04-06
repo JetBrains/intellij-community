@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
-import com.intellij.openapi.updateSettings.impl.ChannelStatus
-import com.intellij.openapi.updateSettings.impl.UpdateChannel
-import com.intellij.openapi.updateSettings.impl.UpdatesInfo
+import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assume.assumeTrue
@@ -14,11 +11,10 @@ import java.io.IOException
 import java.net.URL
 import java.text.SimpleDateFormat
 
-class UpdateInfoParsingTest : BareTestFixtureTestCase() {
+class UpdateInfoParsingTest {
   @Test fun liveJetBrainsUpdateFile() {
     try {
-      val info = load(URL("https://www.jetbrains.com/updates/updates.xml").readText())
-      assertNotNull(info["IC"])
+      assertNotNull(load(URL("https://www.jetbrains.com/updates/updates.xml").readText(), "IC"))
     }
     catch (e: IOException) {
       assumeTrue(e.toString(), false)
@@ -27,8 +23,7 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
 
   @Test fun liveAndroidUpdateFile() {
     try {
-      val info = load(URL("https://dl.google.com/android/studio/patches/updates.xml").readText())
-      assertNotNull(info["AI"])
+      assertNotNull(load(URL("https://dl.google.com/android/studio/patches/updates.xml").readText(), "AI"))
     }
     catch (e: IOException) {
       assumeTrue(e.toString(), false)
@@ -36,21 +31,23 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
   }
 
   @Test fun emptyChannels() {
-    val info = load("""
+    val updates = """
       <products>
         <product name="IntelliJ IDEA">
           <code>IU</code>
           <code>IC</code>
         </product>
-      </products>""".trimIndent())
-    val product = info["IU"]!!
-    assertEquals("IntelliJ IDEA", product.name)
-    assertEquals(0, product.channels.size)
-    assertEquals(product, info["IC"])
+      </products>""".trimIndent()
+    val ultimate = load(updates, "IU")!!
+    assertEquals("IntelliJ IDEA", ultimate.name)
+    assertEquals(0, ultimate.channels.size)
+    val community = load(updates, "IC")!!
+    assertEquals("IntelliJ IDEA", community.name)
+    assertEquals(0, community.channels.size)
   }
 
   @Test fun oneProductOnly() {
-    val info = load("""
+    val product = load("""
       <products>
         <product name="IntelliJ IDEA">
           <code>IU</code>
@@ -69,9 +66,8 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
             </build>
           </channel>
         </product>
-      </products>""".trimIndent())
+      </products>""".trimIndent(), "IU")!!
 
-    val product = info["IU"]!!
     assertEquals("IntelliJ IDEA", product.name)
     assertEquals(2, product.channels.size)
 
@@ -90,7 +86,7 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
   }
 
   @Test fun targetRanges() {
-    val info = load("""
+    val product = load("""
       <products>
         <product name="IntelliJ IDEA">
           <code>IU</code>
@@ -100,12 +96,12 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
             <build number="2016.1.11" version="2016.1"/>
           </channel>
         </product>
-      </products>""".trimIndent())
-    assertEquals(2, info["IU"]!!.channels[0].builds.count { it.target != null })
+      </products>""".trimIndent(), "IU")
+    assertEquals(2, product!!.channels[0].builds.count { it.target != null })
   }
 
   @Test fun fullBuildNumbers() {
-    val info = load("""
+    val buildInfo = load("""
       <products>
         <product name="IntelliJ IDEA">
           <code>IU</code>
@@ -115,11 +111,10 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
             </build>
           </channel>
         </product>
-      </products>""".trimIndent())
-    val buildInfo = info["IU"]!!.channels[0].builds[0]
+      </products>""".trimIndent(), "IU")!!.channels[0].builds[0]
     assertEquals("162.100.1", buildInfo.number.asStringWithoutProductCode())
     assertEquals("162.99.2", buildInfo.patches[0].fromBuild.asStringWithoutProductCode())
   }
 
-  private fun load(text: String) = UpdatesInfo(JDOMUtil.load(text))
+  private fun load(text: String, productCode: String): Product? = parseUpdateData(JDOMUtil.load(text), productCode)
 }

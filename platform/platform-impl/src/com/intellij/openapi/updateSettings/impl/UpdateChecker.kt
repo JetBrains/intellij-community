@@ -208,11 +208,10 @@ object UpdateChecker {
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
-  fun loadProductData(indicator: ProgressIndicator?): Product? {
+  fun loadProductData(indicator: ProgressIndicator?): Product? =
     productDataLock.withLock {
-      SoftReference.dereference(productDataCache)?.let {
-        return it.getOrThrow()
-      }
+      val cached = SoftReference.dereference(productDataCache)
+      if (cached != null) return@withLock cached.getOrThrow()
 
       val result = runCatching {
         var url = Urls.newFromEncoded(updateUrl)
@@ -220,15 +219,13 @@ object UpdateChecker {
           url = UpdateRequestParameters.amendUpdateRequest(url)
         }
         LOG.debug { "loading ${url}" }
-        val updates = HttpRequests.request(url).connect { UpdatesInfo(JDOMUtil.load(it.getReader(indicator))) }
-        updates.get(ApplicationInfo.getInstance().build.productCode)
+        parseUpdateData(HttpRequests.request(url).connect { JDOMUtil.load(it.getReader(indicator)) })
       }
 
       productDataCache = SoftReference(result)
       AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
-      return result.getOrThrow()
+      return@withLock result.getOrThrow()
     }
-  }
 
   private fun clearProductDataCache() {
     if (productDataLock.tryLock(1, TimeUnit.MILLISECONDS)) {  // longer means loading now, no much sense in clearing
@@ -666,8 +663,7 @@ object UpdateChecker {
     if (!ourHasFailedPlugins) {
       val app = ApplicationManager.getApplication()
       if (app != null && !app.isDisposed && UpdateSettings.getInstance().isPluginsCheckNeeded) {
-        val pluginDescriptor = PluginManagerCore.getPlugin(
-          PluginUtil.getInstance().findPluginId(event.throwable))
+        val pluginDescriptor = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
         if (pluginDescriptor != null && !pluginDescriptor.isBundled) {
           ourHasFailedPlugins = true
           updateAndShowResult()
@@ -678,7 +674,7 @@ object UpdateChecker {
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
   @ApiStatus.Internal
-  fun testPlatformUpdate(project: Project?, updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
+  fun testPlatformUpdate(project: Project?, updateDataText: String, patchFilePath: String?, forceUpdate: Boolean) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
     }
@@ -686,15 +682,16 @@ object UpdateChecker {
     val channel: UpdateChannel?
     val newBuild: BuildInfo?
     val patches: UpdateChain?
+    val currentBuild = ApplicationInfo.getInstance().build
     if (forceUpdate) {
-      val node = JDOMUtil.load(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
-      channel = UpdateChannel(node)
+      val node = JDOMUtil.load(updateDataText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      channel = UpdateChannel(node, currentBuild.productCode)
       newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
       patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
     }
     else {
-      val updateInfo = UpdatesInfo(JDOMUtil.load(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val product = parseUpdateData(JDOMUtil.load(updateDataText), currentBuild.productCode)
+      val strategy = UpdateStrategy(currentBuild, product, UpdateSettings.getInstance())
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild
