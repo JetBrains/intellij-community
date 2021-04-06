@@ -253,7 +253,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected boolean compare(@NotNull String text, @Nullable String pattern) {
-    return !StringUtil.isEmpty(pattern) && myComparator.matchingFragments(pattern, text) != null;
+    return pattern != null && myComparator.matchingFragments(pattern, text) != null;
   }
 
   public SpeedSearchComparator getComparator() {
