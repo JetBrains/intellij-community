@@ -80,10 +80,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
     myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, this);
 
-    if (VcsLogUiUtil.isDiffPreviewInEditor(logData.getProject())) {
-      new FileHistoryEditorDiffPreview(logData.getProject(), myFileHistoryPanel);
-    }
-
     getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
