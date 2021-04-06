@@ -345,15 +345,23 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       WindowAdapter focusListener = new WindowAdapter() {
         @Override
         public void windowGainedFocus(WindowEvent e) {
-          super.windowGainedFocus(e);
-          if (canBeClosed() && !myIsPinned.get()) {
-            //closeImmediately();
-            myDialog.doCancelAction();
-          }
+          closeIfPossible();
         }
       };
 
       dialogWindow.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowDeactivated(WindowEvent e) {
+          // At the moment of deactivation there is just "temporary" focus owner (main frame),
+          // true focus owner (Search Everywhere popup etc.) appears later so the check should postponed too
+          ApplicationManager.getApplication().invokeLater(() -> {
+            Window w = ComponentUtil.getWindow(IdeFocusManager.getInstance(myProject).getFocusOwner());
+            if (w != null && w.getOwner() != dialogWindow) {
+              closeIfPossible();
+            }
+          }, ModalityState.current());
+        }
+
         @Override
         public void windowOpened(WindowEvent e) {
           Arrays.stream(Frame.getFrames())
@@ -380,6 +388,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         });
       }
       ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
+    }
+  }
+
+  private void closeIfPossible() {
+    if (canBeClosed() && !myIsPinned.get()) {
+      myDialog.doCancelAction();
     }
   }
 
