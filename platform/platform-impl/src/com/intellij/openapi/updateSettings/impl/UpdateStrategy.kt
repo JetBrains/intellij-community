@@ -4,21 +4,25 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.util.graph.InboundSemiGraph
+import com.intellij.util.graph.impl.ShortestPathFinder
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 private val NUMBER = Regex("\\d+")
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val product: Product?, private val settings: UpdateSettings) {
+class UpdateStrategy(private val currentBuild: BuildNumber,
+                     private val product: Product?,
+                     private val settings: UpdateSettings,
+                     private val customization: UpdateStrategyCustomization) {
+
+  constructor(currentBuild: BuildNumber, product: Product?, settings: UpdateSettings) :
+    this(currentBuild, product, settings, UpdateStrategyCustomization.getInstance())
+
   @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Suppress("DEPRECATION")
   constructor(currentBuild: BuildNumber, updates: UpdatesInfo, settings: UpdateSettings) :
     this(currentBuild, updates.product, settings)
-
-  private val customization = UpdateStrategyCustomization.getInstance()
 
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
@@ -84,7 +88,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val product:
       override fun getNodes() = upgrades.keySet() + upgrades.values()
       override fun getIn(n: BuildNumber) = upgrades[n].iterator()
     }
-    val path = GraphAlgorithms.getInstance().findShortestPath(graph, from.withoutProductCode(), newBuild.number.withoutProductCode())
+    val path = ShortestPathFinder(graph).findPath(from.withoutProductCode(), newBuild.number.withoutProductCode())
     if (path == null || path.size <= 2) return null
 
     var total = 0

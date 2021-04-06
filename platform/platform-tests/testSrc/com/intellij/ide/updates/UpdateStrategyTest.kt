@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.updateSettings.impl.*
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.*
 import org.junit.Test
 
 // unless stated otherwise, the behavior described in cases is true for 162+
-class UpdateStrategyTest : BareTestFixtureTestCase() {
+class UpdateStrategyTest {
   @Test fun `channel contains no builds`() {
     val result = check("IU-145.258", ChannelStatus.RELEASE, """<channel id="IDEA_Release" status="release" licensing="release"/>""")
     assertNull(result.newBuild)
@@ -286,7 +286,8 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
     val settings = UpdateSettings()
     settings.selectedChannelStatus = selectedChannel
     settings.ignoredBuildNumbers += ignoredBuilds
-    val result = UpdateStrategy(BuildNumber.fromString(currentBuild)!!, product, settings).checkForUpdates()
+    val customization = UpdateStrategyCustomization()
+    val result = UpdateStrategy(BuildNumber.fromString(currentBuild)!!, product, settings, customization).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result
   }
