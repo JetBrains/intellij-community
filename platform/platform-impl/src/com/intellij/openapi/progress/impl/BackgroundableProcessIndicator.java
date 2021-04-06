@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.progress.impl;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -45,7 +44,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myOption = option;
     myInfo = info;
     myStatusBar = statusBarOverride;
-    myBackgrounded = shouldStartInBackground();
+    myBackgrounded = true;
     UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
   }
 
@@ -68,12 +67,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
     }
-    myBackgrounded &= myStatusBar != null;
-    if (myBackgrounded) doBackground(myStatusBar);
-  }
-
-  private boolean shouldStartInBackground() {
-    return Registry.is("ide.background.tasks") || myOption.shouldStartInBackground();
+    doBackground(myStatusBar);
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
@@ -112,7 +106,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (myDisposed) return;
     initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (shouldStartInBackground() && myStatusBar != null) {
+    if (myStatusBar != null) {
       return;
     }
 
