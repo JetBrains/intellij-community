@@ -111,10 +111,13 @@ final class ActionUpdater {
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> updateActionReal(action, Op.update),
+      action -> updateActionReal(action, myEventTransform == null ? Op.update : Op.beforeActionPerformedUpdate),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
+
+    LOG.assertTrue(myEventTransform == null || ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
+                   ActionPlaces.MOUSE_SHORTCUT.equals(myPlace), "beforeActionPerformed requested in '" + myPlace + "'");
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) ||
                         ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
@@ -486,10 +489,7 @@ final class ActionUpdater {
     ActionUpdater updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                               myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
     updater.myPreCacheSlowDataKeys = false;
-    return updater.asUpdateSession(new UpdateStrategy(
-      action -> updater.updateActionReal(action, Op.beforeActionPerformedUpdate),
-      updater.myRealUpdateStrategy.getChildren,
-      updater.myRealUpdateStrategy.canBePerformed));
+    return updater.asUpdateSession();
   }
 
   @NotNull
