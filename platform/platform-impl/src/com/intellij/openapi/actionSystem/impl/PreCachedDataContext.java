@@ -44,12 +44,8 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
   private final Map<String, Object> myCachedData;
   private final Consumer<? super String> myMissedKeysIfFrozen;
 
-  PreCachedDataContext(@NotNull DataContext original) {
-    if (!(original instanceof DataManagerImpl.MyDataContext)) {
-      throw new AssertionError(original.getClass().getName());
-    }
+  PreCachedDataContext(@Nullable Component component) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Component component = original.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     myMissedKeysIfFrozen = null;
     myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
 

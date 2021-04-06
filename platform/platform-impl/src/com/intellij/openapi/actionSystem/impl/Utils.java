@@ -40,10 +40,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -66,9 +64,16 @@ public final class Utils {
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
-    if (dataContext instanceof DataManagerImpl.MyDataContext &&
-        Registry.is("actionSystem.update.actions.async")) {
-      return new PreCachedDataContext(dataContext);
+    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
+    Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (dataContext instanceof DataManagerImpl.MyDataContext) {
+      return new PreCachedDataContext(component);
+    }
+    else if (dataContext instanceof SimpleDataContext && component != null) {
+      PreCachedDataContext wrapped = new PreCachedDataContext(component);
+      LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
+      LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
+      return wrapped;
     }
     return dataContext;
   }
