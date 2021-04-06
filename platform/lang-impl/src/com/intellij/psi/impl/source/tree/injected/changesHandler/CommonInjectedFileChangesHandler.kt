@@ -78,7 +78,7 @@ open class CommonInjectedFileChangesHandler(
       injectedLanguageManager.getInjectedPsiFiles(host)
         .orEmpty()
         .asSequence()
-        .filter { (_, range) -> range.length > 0 && injectionRange.intersects(range) }
+        .filter { (_, range) -> injectionRange.intersects(range) }
         .mapNotNull { it.first as? PsiFile }
         .firstOrNull()
     }
@@ -316,7 +316,7 @@ private val PsiElement.withNextSiblings: Sequence<PsiElement>
 @ApiStatus.Internal
 fun getInjectionHostAtRange(hostPsiFile: PsiFile, contextRange: Segment): PsiLanguageInjectionHost? =
   hostPsiFile.findElementAt(contextRange.startOffset)?.withNextSiblings.orEmpty()
-    .takeWhile { it.textRange.startOffset < contextRange.endOffset }
+    .takeWhile { it.textRange.startOffset <= contextRange.endOffset }
     .flatMap { it.parents(true).take(3) }
     .filterIsInstance<PsiLanguageInjectionHost>().firstOrNull()
 

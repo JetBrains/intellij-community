@@ -191,7 +191,6 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     assertEquals("fragment editor should be", "", fe.file.text)
     myFixture.checkResult("""
         |X: |-
-        |  
         |  """.trimMargin())
     
   }
