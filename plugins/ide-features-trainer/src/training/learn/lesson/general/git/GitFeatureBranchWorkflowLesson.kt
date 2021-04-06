@@ -15,6 +15,8 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.EngravedLabel
 import com.intellij.ui.components.BasicOptionButtonUI
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.util.findBranch
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -25,6 +27,7 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskRuntimeContext
 import training.learn.course.KLesson
+import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
@@ -35,6 +38,7 @@ import javax.swing.JDialog
 
 class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature branch workflow") {
   override val existedFile = "src/git/simple_cat.yml"
+  private val branchName = "feature"
   private lateinit var repository: GitRepository
   private val remoteProjectName = "RemoteLearningProject"
 
@@ -48,7 +52,7 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
         git.addRemote(repository, "origin", remoteProjectRoot.path).throwOnError()
         repository.update()
         git.fetch(repository, repository.remotes.first(), emptyList())
-        git.checkout(repository, "feature", null, false, false).throwOnError()
+        git.checkout(repository, branchName, null, false, false).throwOnError()
         git.setUpstream(repository, "origin/main", "main")
         repository.update()
       }
@@ -56,7 +60,7 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
     }
 
     task("ActivateVersionControlToolWindow") {
-      text("Press ${action(it)} to open Git tool window and overview the project history.")
+      text("Suppose you have finished the work on your ${strong(branchName)} branch and pushed the changes to remote hoping to merge it with the ${strong("main")} branch later. Press ${action(it)} to open Git tool window and overview the project history.")
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
@@ -64,13 +68,34 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
     }
 
     resetGitLogWindow()
+    lateinit var vcsData: VcsLogData
+    task {
+      val future = findVcsLogData()
+      stateCheck {
+        val data = future.getNow(null)
+        if (data != null) {
+          vcsData = data
+          true
+        }
+        else false
+      }
+    }
+
+    task("main") {
+      text("But when you were worked on it some of your colleagues may also push their changes to the ${strong(it)} branch. So we should check that possible changes from ${strong(it)} will not conflict with our changes.")
+      highlightSubsequentCommitsInGitLog(sequenceLength = 2) { commit ->
+        val root = vcsData.roots.single()
+        commit.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
+      }
+      proceedLink()
+    }
 
     task {
-      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == "feature" }
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows -> ui.text == branchName }
     }
 
     task("Git.Branches") {
-      text("Suppose you have finished the work on your feature branch and pushed the changes to remote hoping to merge it with the main branch later. But when you were worked on it some of your colleagues may also push their changes to the main branch. So we should check that possible changes from main will not conflict with our changes. At first, we need to checkout the main branch. Please press ${action(it)} or click the highlighted current branch to open the branches list.")
+      text("At first, we need to checkout the ${strong("main")} branch. Please press ${action(it)} or click the highlighted current branch to open the branches list.")
       text("Your active branch is displayed here.", LearningBalloonConfig(Balloon.Position.above, 200))
       triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
         ui.text.contains("Git Branches")
@@ -78,7 +103,7 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
     }
 
     task("main") {
-      text("Select the ${code(it)} branch and choose ${strong("Checkout")}.")
+      text("Select the ${strong(it)} branch and choose ${strong("Checkout")}.")
       triggerByListItemAndHighlight { item -> item.toString() == it }
       stateCheck { repository.currentBranchName == it }
     }
@@ -89,7 +114,7 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
     }
 
     task("Vcs.UpdateProject") {
-      text("Second, we should update the main branch to be aware of the possible changes from remote. Press ${action(it)} to open update project dialog.")
+      text("Second, we should update the ${strong("main")} branch to be aware of the possible changes from remote. Press ${action(it)} to open update project dialog.")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title == "Update Project"
       }
@@ -103,13 +128,16 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
     }
 
     task("Git.Branches") {
-      text("There really were some changes in the main branch.")
-      highlightSubsequentCommitsInGitLog(startRowIncl = 0, endRowExcl = 2, highlightInside = false, usePulsation = true)
+      text("There really were some changes in the ${strong("main")} branch.")
+      highlightSubsequentCommitsInGitLog(sequenceLength = 2) {
+        val root = vcsData.roots.single()
+        it.id == vcsData.dataPack.findBranch("origin/main", root)?.commitHash
+      }
       proceedLink()
     }
 
     task("Git.Branches") {
-      text("So we should rebase our feature branch on main. Press ${action(it)} or click the highlighted current branch to open the branches list again.")
+      text("So we should rebase our ${strong(branchName)} branch on ${strong("main")}. Press ${action(it)} or click the highlighted current branch to open the branches list again.")
       triggerByUiComponentAndHighlight(usePulsation = true) { ui: TextPanel.WithIconAndArrows ->
         ui.text == "main"
       }
@@ -118,20 +146,20 @@ class GitFeatureBranchWorkflowLesson : KLesson("Git.BasicWorkflow", "Feature bra
       }
     }
 
-    task("feature") {
-      text("Select the ${code(it)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
+    task(branchName) {
+      text("Select the ${strong(it)} branch and choose ${strong("Checkout and Rebase onto Current")}.")
       triggerByListItemAndHighlight { item -> item.toString() == it }
       triggerByListItemAndHighlight { item -> item.toString() == "Checkout and Rebase onto Current" }
       triggerOnNotification { notification -> notification.title == "Rebase successful" }
     }
 
     task("Vcs.Push") {
-      text("When feature branch become updated we should update it in the remote repository too. Press ${action(it)} to open push dialog.")
+      text("When ${strong(branchName)} branch become updated we should update it in the remote repository too. Press ${action(it)} to open push dialog.")
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
     }
 
     task("Force Push") {
-      text("We can't just push the changes, because our remote feature branch conflicts with updated local branch. We should use ${strong(it)}. Press highlighted arrow near ${strong("Push")} button to open drop-down menu and select ${strong(it)}.")
+      text("We can't just push the changes, because our remote ${strong(branchName)} branch conflicts with updated local branch. We should use ${strong(it)}. Press highlighted arrow near ${strong("Push")} button to open drop-down menu and select ${strong(it)}.")
       triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title == it

@@ -8,6 +8,9 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
@@ -79,19 +82,53 @@ object GitLessonsUtil {
     }
   }
 
-  fun TaskContext.highlightCommitInGitLog(row: Int, highlightInside: Boolean = true, usePulsation: Boolean = false) {
-    highlightSubsequentCommitsInGitLog(row, row + 1, highlightInside, usePulsation)
+  fun TaskContext.findVcsLogData(): CompletableFuture<VcsLogData> {
+    val future = CompletableFuture<VcsLogData>()
+    val data = VcsProjectLog.getInstance(project).dataManager
+    if (data != null) {
+      future.complete(data)
+    }
+    else {
+      before {
+        subscribeForMessageBus(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, object : VcsProjectLog.ProjectLogListener {
+          override fun logCreated(manager: VcsLogManager) {
+            future.complete(data)
+          }
+
+          override fun logDisposed(manager: VcsLogManager) {}
+        })
+      }
+    }
+    return future
   }
 
-  fun TaskContext.highlightSubsequentCommitsInGitLog(startRowIncl: Int,
-                                                     endRowExcl: Int,
-                                                     highlightInside: Boolean = false,
+  fun TaskContext.highlightSubsequentCommitsInGitLog(startCommitRow: Int,
+                                                     sequenceLength: Int = 1,
+                                                     highlightInside: Boolean = true,
                                                      usePulsation: Boolean = false) {
     triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
-      val cells = (1..4).map { ui.getCellRect(startRowIncl, it, false) }
-      val width = cells.fold(0) { acc, rect -> acc + rect.width }
-      Rectangle(cells[0].x, cells[0].y, width, cells[0].height * (endRowExcl - startRowIncl))
+      ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
     }
+  }
+
+  fun TaskContext.highlightSubsequentCommitsInGitLog(sequenceLength: Int = 1,
+                                                     highlightInside: Boolean = true,
+                                                     usePulsation: Boolean = false,
+                                                     startCommitPredicate: (VcsCommitMetadata) -> Boolean) {
+    triggerByPartOfComponent(highlightInside = highlightInside, usePulsation = usePulsation) { ui: VcsLogGraphTable ->
+      val rowIndexes = (0 until ui.rowCount).toList().toIntArray()
+      val startCommitRow = ui.model.getCommitMetadata(rowIndexes).indexOfFirst(startCommitPredicate)
+      if (startCommitRow >= 0) {
+        ui.getRectForSubsequentCommits(startCommitRow, sequenceLength)
+      }
+      else null
+    }
+  }
+
+  private fun VcsLogGraphTable.getRectForSubsequentCommits(startCommitRow: Int, sequenceLength: Int): Rectangle {
+    val cells = (1..4).map { getCellRect(startCommitRow, it, false) }
+    val width = cells.fold(0) { acc, rect -> acc + rect.width }
+    return Rectangle(cells[0].x, cells[0].y, width, cells[0].height * sequenceLength)
   }
 
   fun TaskContext.triggerOnNotification(checkState: (Notification) -> Boolean) {

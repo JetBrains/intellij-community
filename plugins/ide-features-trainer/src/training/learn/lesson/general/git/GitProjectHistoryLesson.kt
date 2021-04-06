@@ -8,30 +8,31 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.util.findBranch
 import training.dsl.LessonContext
 import training.dsl.LessonUtil
-import training.dsl.TaskContext
 import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.highlightCommitInGitLog
+import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
+import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
-import training.ui.LearningUiManager
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.Rectangle
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 class GitProjectHistoryLesson() : KLesson("Git.ProjectHistory", "Project history") {
   override val existedFile = "src/git/sphinx_cat.yml"
+  private val branchName = "feature"
+  private val textToFind = "sphinx"
 
   override val lessonContent: LessonContext.() -> Unit = {
     checkoutBranch("feature")
@@ -45,9 +46,24 @@ class GitProjectHistoryLesson() : KLesson("Git.ProjectHistory", "Project history
     }
 
     resetGitLogWindow()
+    lateinit var vcsData: VcsLogData
+    task {
+      val future = findVcsLogData()
+      stateCheck {
+        val data = future.getNow(null)
+        if (data != null) {
+          vcsData = data
+          true
+        }
+        else false
+      }
+    }
 
     task {
-      highlightCommitInGitLog(2)
+      highlightSubsequentCommitsInGitLog {
+        val root = vcsData.roots.single()
+        it.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
+      }
     }
 
     task {
@@ -69,8 +85,7 @@ class GitProjectHistoryLesson() : KLesson("Git.ProjectHistory", "Project history
 
     val meFilterText = VcsLogBundle.message("vcs.log.user.filter.me")
     task {
-      text(
-        "You can use a lot of filters that can help to find needed commits. For example you can show the commits from a specific author. Click the highlighted filter to open users popup.")
+      text("You can use a lot of filters that can help to find needed commits. For example you can show the commits from a specific author. Click the highlighted filter to open users popup.")
       triggerByUiComponentAndHighlight { _: UserFilterPopupComponent -> true }
       triggerByListItemAndHighlight { item ->
         item.toString() == meFilterText
@@ -84,20 +99,20 @@ class GitProjectHistoryLesson() : KLesson("Git.ProjectHistory", "Project history
       }
     }
 
-    task("sphinx") {
-      text("Highlighted search field can help you to find a commit by message or hash. Suppose you want to find a commit by part of the message. For example, type ${code(it)} in the highlighted field and press ${LessonUtil.rawEnter()}.")
+    task {
+      text("Highlighted search field can help you to find a commit by message or hash. Suppose you want to find a commit by part of the message. For example, type ${code(textToFind)} in the highlighted field and press ${LessonUtil.rawEnter()}.")
       triggerByUiComponentAndHighlight { ui: SearchTextField ->
         UIUtil.getParentOfType(MainFrame::class.java, ui) != null
       }
       triggerByUiComponentAndHighlight(false, false) l@{ ui: VcsLogGraphTable ->
         val model = ui.model as? GraphTableModel ?: return@l false
-        model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(it)
+        model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
       }
     }
 
     task {
       text("Select found commit to show information about it.")
-      highlightCommitInGitLog(0)
+      highlightSubsequentCommitsInGitLog(0)
       triggerByUiComponentAndHighlight(false, false) { ui: VcsLogGraphTable ->
         ui.selectedRow == 0
       }

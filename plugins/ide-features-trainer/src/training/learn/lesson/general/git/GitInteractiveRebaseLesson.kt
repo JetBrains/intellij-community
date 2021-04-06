@@ -9,7 +9,11 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.table.JBTable
+import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.util.findBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import training.dsl.LessonContext
@@ -17,10 +21,11 @@ import training.dsl.LessonUtil
 import training.dsl.TaskContext
 import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.highlightCommitInGitLog
+import training.learn.lesson.general.git.GitLessonsUtil.findVcsLogData
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.triggerOnNotification
+import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.JButton
@@ -29,28 +34,52 @@ import javax.swing.KeyStroke
 
 class GitInteractiveRebaseLesson: KLesson("Git.InteractiveRebase", "Interactive Rebase") {
   override val existedFile = "src/git/martian_cat.yml"
+  private val branchName = "fixes"
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch("fixes")
+    checkoutBranch(branchName)
 
     task("ActivateVersionControlToolWindow") {
-      text("Press ${action(it)} to open Git tool window and overview the project history.")
+      text("Suppose you have made some fixes to your project. Press ${action(it)} to open Git tool window and overview the project history.")
       stateCheck {
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
       }
     }
 
+    resetGitLogWindow()
+    lateinit var vcsData: VcsLogData
     task {
-      text("Suppose you have made some fixes to your project. But from the resulting sequence of commits, it was difficult to understand what has changed in general. It would be more easy if some commits will be reordered or squashed.")
-      highlightSubsequentCommitsInGitLog(0, 5, usePulsation = true)
+      val future = findVcsLogData()
+      stateCheck {
+        val data = future.getNow(null)
+        if (data != null) {
+          vcsData = data
+          true
+        }
+        else false
+      }
+    }
+
+    task {
+      text("But from the resulting highlighted sequence of commits, it was difficult to understand what has changed in general. It would be more easy if some commits will be reordered or squashed.")
+      highlightSubsequentCommitsInGitLog(sequenceLength = 5, highlightInside = false, usePulsation = true) {
+        val root = vcsData.roots.single()
+        it.id == vcsData.dataPack.findBranch(branchName, root)?.commitHash
+      }
       proceedLink()
     }
 
     val interactiveRebaseMenuItemText = GitBundle.message("action.Git.Interactive.Rebase.text")
     task {
       text("We can use ${strong("Interactive Rebase")} to solve this task easily. Right click the highlighted commit to open context menu.")
-      highlightCommitInGitLog(4)
+      var commitHashToHighlight: Hash? = null
+      before {
+        commitHashToHighlight = vcsData.findFirstCommitInBranch(branchName)
+      }
+      highlightSubsequentCommitsInGitLog {
+        it.id == commitHashToHighlight
+      }
       triggerByUiComponentAndHighlight { ui: ActionMenuItem ->
         ui.text == interactiveRebaseMenuItemText
       }
@@ -154,5 +183,24 @@ class GitInteractiveRebaseLesson: KLesson("Git.InteractiveRebase", "Interactive 
       }
       else null
     }
+  }
+
+  private fun VcsLogData.findFirstCommitInBranch(branchName: String): Hash? {
+    val root = roots.single()
+    val mainCommitHash = dataPack.findBranch("main", root)?.commitHash
+    val lastCommitHash = dataPack.findBranch(branchName, root)?.commitHash
+    return if (mainCommitHash != null && lastCommitHash != null) {
+      var metadata = getCommitMetadata(lastCommitHash)
+      while (metadata.parents.single() != mainCommitHash) {
+        metadata = getCommitMetadata(metadata.parents.single())
+      }
+      metadata.id
+    }
+    else null
+  }
+
+  private fun VcsLogData.getCommitMetadata(hash: Hash): VcsCommitMetadata {
+    val index = getCommitIndex(hash, roots.single())
+    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index, listOf(index))
   }
 }

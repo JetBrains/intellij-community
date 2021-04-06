@@ -26,16 +26,15 @@ import com.intellij.ui.table.JBTable
 import com.intellij.util.DocumentUtil
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import training.dsl.*
 import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
 import training.learn.lesson.general.git.GitLessonsUtil.gotItStep
+import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
 import training.ui.LearnToolWindow
 import training.ui.LearningUiHighlightingManager
-import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.JTree
@@ -44,11 +43,12 @@ import javax.swing.tree.TreePath
 
 class GitCommitLesson : KLesson("Git.Commit", "Commit") {
   override val existedFile = "src/git/simple_cat.yml"
+  private val branchName = "feature"
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
 
   override val lessonContent: LessonContext.() -> Unit = {
-    checkoutBranch("feature")
+    checkoutBranch(branchName)
 
     prepareRuntimeTask {
       modifyFiles()
@@ -59,7 +59,7 @@ class GitCommitLesson : KLesson("Git.Commit", "Commit") {
         action("CheckinProject")
       } to open commit tool window.")
       stateCheck {
-        ToolWindowManager.getInstance(project).getToolWindow("Commit")?.isVisible == true
+        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)?.isVisible == true
       }
     }
 
@@ -200,11 +200,7 @@ class GitCommitLesson : KLesson("Git.Commit", "Commit") {
       triggerOnTopCommitSelected()
     }
 
-    task {
-      text("Now you can see that our commit contain to changed files.")
-      triggerByUiComponentAndHighlight(highlightInside = false) { _: VcsLogChangesBrowser -> true }
-      proceedLink()
-    }
+    text("Now you can see that our commit contain two changed files.")
   }
 
   private fun LessonContext.highlightVcsChange(changeFileName: String) {
@@ -226,11 +222,7 @@ class GitCommitLesson : KLesson("Git.Commit", "Commit") {
   }
 
   private fun TaskContext.triggerOnTopCommitSelected() {
-    triggerByPartOfComponent(highlightInside = true) { ui: VcsLogGraphTable ->
-      val cells = (1..4).map { ui.getCellRect(0, it, false) }
-      val width = cells.fold(0) { acc, rect -> acc + rect.width }
-      Rectangle(cells[0].x, cells[0].y, width, cells[0].height)
-    }
+    highlightSubsequentCommitsInGitLog(0)
     triggerByUiComponentAndHighlight(false, false) { ui: JBTable ->
       ui.isCellSelected(0, 1)
     }
