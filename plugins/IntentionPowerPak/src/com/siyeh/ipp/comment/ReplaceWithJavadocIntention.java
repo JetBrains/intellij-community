@@ -5,11 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -32,17 +35,16 @@ public class ReplaceWithJavadocIntention extends Intention {
 
     final PsiElement child = method.getFirstChild();
     if (!(child instanceof PsiComment)) return;
-    final PsiComment comment = (PsiComment)child;
-
-    // a set will contain nodes to remove: all the right and left sibling nodes of the PsiComment type
-    final Set<PsiComment> commentNodes = new HashSet<>();
-    final List<String> rightSiblingsComments = siblingsComments(comment, commentNodes);
+    final PsiComment firstCommentOfMethod = (PsiComment)child;
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(element.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
 
-    final String javadoc = prepareJavadocComment(rightSiblingsComments);
-    final PsiDocComment docComment = factory.createDocCommentFromText(javadoc);
+    // the set will contain all the comment nodes that are directly before the method's modifier list
+    final Set<PsiComment> commentNodes = new HashSet<>();
+
+    final String javadocText = prepareJavadocComment(firstCommentOfMethod, commentNodes);
+    final PsiDocComment javadoc = factory.createDocCommentFromText(javadocText);
 
     if (commentNodes.isEmpty()) {
       LOGGER.error("The set of visited node comments is empty");
@@ -55,7 +57,7 @@ public class ReplaceWithJavadocIntention extends Intention {
     }
 
     final PsiComment item = ContainerUtil.getFirstItem(commentNodes);
-    item.replace(docComment);
+    item.replace(javadoc);
   }
 
   /**
@@ -84,6 +86,17 @@ public class ReplaceWithJavadocIntention extends Intention {
     return result;
   }
 
+  @NotNull
+  @NonNls
+  private static String extractJavadocTagContent(PsiDocTag tag) {
+    final PsiDocTagValue element = tag.getValueElement();
+    final String result = "@" + tag.getName();
+
+    if (element == null) return result;
+
+    return result + " " + element.getText();
+  }
+
   /**
    * Combines the collection of strings into a string in the javadoc format:
    * <ul>
@@ -91,11 +104,11 @@ public class ReplaceWithJavadocIntention extends Intention {
    *   <li>Each line from the collection is precluded with '<code>*</code>'</li>
    *   <li>The resulting string ends with <code>*&#47;</code></li>
    * </ul>
-   * @param commentContent the collection of strings to form the javadoc's content
    * @return the string in the javadoc format.
    */
-  @Contract(pure = true)
-  private static @NotNull String prepareJavadocComment(final @NotNull Collection<String> commentContent) {
+  @Contract(mutates = "param2")
+  private static @NotNull String prepareJavadocComment(PsiComment comment, @NotNull Set<@NotNull PsiComment> visited) {
+    final @NotNull Collection<String> commentContent = siblingsComments(comment, visited);
     final StringBuilder sb = new StringBuilder("/**\n");
 
     for (String string : commentContent) {
@@ -104,6 +117,18 @@ public class ReplaceWithJavadocIntention extends Intention {
       sb.append("* ");
       sb.append(line);
       sb.append("\n");
+    }
+
+    if (comment instanceof PsiDocComment) {
+      PsiDocComment javadoc = (PsiDocComment)comment;
+      final PsiDocTag[] tags = javadoc.getTags();
+      if (tags.length > 0) {
+        final int start = tags[0].getStartOffsetInParent();
+        final int end = tags[tags.length - 1].getTextRangeInParent().getEndOffset();
+        sb.append("* ");
+        sb.append(comment.getText(), start, end);
+        sb.append("\n");
+      }
     }
     sb.append("*/");
 
@@ -133,8 +158,7 @@ public class ReplaceWithJavadocIntention extends Intention {
       .filter(Predicate.not(String::isEmpty))
       .map(line -> line.startsWith("*") ? line.substring(1) : line)
       .map(line -> StringUtil.replace(line, "*/", "*&#47;"))
-      .collect(Collectors.toList())
-    ;
+      .collect(Collectors.toList());
   }
 
   /**
