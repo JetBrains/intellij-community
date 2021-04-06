@@ -8,11 +8,11 @@ Reports problems found in <code>Comparator.compare()</code> implementations:
     and result of sorting could be unpredictable if equal elements are encountered. In particular,
     sorting method may fail with exception on some data sets.</li>
 </ul>
-<!-- tooltip end -->
 <p>Sample of the code that will be reported: </p>
 <pre>
-  Comparator&lt;String&gt; lambda = (a, b) -> (a.length() > b.length() ? 0 :
-                Math.random() > 0.5 ? (-1) : (1));
+  Comparator&lt;String&gt; lambda = (a, b) -&gt; (a.length() &gt; b.length() ? 0 :
+                Math.random() &gt; 0.5 ? (-1) : (1));
 </pre>
+<!-- tooltip end -->
 </body>
 </html>

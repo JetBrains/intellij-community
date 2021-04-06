@@ -7,7 +7,7 @@ expressions that can be replaced with the
 <pre>
   boolean hasEmptyString(List&lt;String&gt; list) {
     // Warning: can be simplified
-    return list.indexOf("") >= 0;
+    return list.indexOf("") &gt;= 0;
   }
 </pre>
 A quick-fix is provided that will replace the <code>indexOf</code> call with a <code>contains</code> call:
