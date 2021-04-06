@@ -174,7 +174,7 @@ public final class Utils {
 
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent ||
+      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         promise.cancel();
@@ -251,13 +251,13 @@ public final class Utils {
   }
 
 
-  private static void fillMenuInner(JComponent component,
+  private static void fillMenuInner(@NotNull JComponent component,
                                     @NotNull List<? extends AnAction> list,
                                     boolean checked,
                                     boolean enableMnemonics,
-                                    PresentationFactory presentationFactory,
+                                    @NotNull PresentationFactory presentationFactory,
                                     @NotNull DataContext context,
-                                    String place,
+                                    @NotNull String place,
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
@@ -298,9 +298,8 @@ public final class Utils {
     }
 
     if (list.isEmpty()) {
-      final ActionMenuItem each =
-        new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
-                           !fixMacScreenMenu, checked, useDarkIcons);
+      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER),
+                                               place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
       component.add(each);
       children.add(each);
     }
