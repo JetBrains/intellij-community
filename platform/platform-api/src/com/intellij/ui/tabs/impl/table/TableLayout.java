@@ -8,17 +8,16 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class TableLayout extends TabLayout implements MorePopupAware {
   private int myScrollOffset = 0;
@@ -191,36 +190,14 @@ public class TableLayout extends TabLayout implements MorePopupAware {
 
   private void calculateCompressibleLengths(List<TabInfo> list, TablePassInfo data, int toFitLength) {
     if (list.isEmpty()) return;
-    int hGap = myTabs.getTabHGap();
-    int maxGridSize = 0;
     int spentLength = 0;
     int lengthEstimation = 0;
 
-    int[] lengths = new int[list.size()];
-    for (int i = 0; i < list.size(); i++) {
-      TabInfo tabInfo = list.get(i);
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-      if (maxGridSize == 0) {
-        Font font = label.getLabelComponent().getFont();
-        maxGridSize = GraphicsUtil.stringWidth("m", font == null ? JBFont.label() : font) * myTabs.tabMSize();
-      }
-      int lengthIncrement = Math.max(JBUI.scale(50), label.getPreferredSize().width);
-      lengths[i] = lengthIncrement;
-      lengthEstimation += lengthIncrement;
+    for (TabInfo tabInfo : list) {
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.myInfo2Label.get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = toFitLength - lengthEstimation;
-
-    Arrays.sort(lengths);
-    double acc = 0;
-    int actualGridSize = 0;
-    for (int i = 0; i < lengths.length; i++) {
-      int length = lengths[i];
-      acc += length;
-      actualGridSize = (int)Math.min(maxGridSize, (acc + extraWidth) / (i + 1));
-      if (i < lengths.length - 1 && actualGridSize < lengths[i + 1]) break;
-    }
-
 
     for (Iterator<TabInfo> iterator = list.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
@@ -229,20 +206,20 @@ public class TableLayout extends TabLayout implements MorePopupAware {
       int length;
       int lengthIncrement = label.getPreferredSize().width;
       if (!iterator.hasNext()) {
-        length = Math.min(toFitLength - spentLength, Math.max(actualGridSize, lengthIncrement));
+        length = Math.min(toFitLength - spentLength, lengthIncrement);
       }
       else if (extraWidth <= 0) {//need compress
         length = (int)(lengthIncrement * (float)toFitLength / lengthEstimation);
       }
       else {
-        length = Math.max(lengthIncrement, actualGridSize);
+        length = lengthIncrement;
       }
       if (tabInfo.isPinned()) {
         length = Math.min(getMaxPinnedTabWidth(), length);
       }
-      length = Math.max(JBUI.scale(50), length);
+      length = Math.max(getMinTabWidth(), length);
       data.lengths.put(tabInfo, length);
-      spentLength += length + hGap;
+      spentLength += length + myTabs.getTabHGap();
     }
   }
 
@@ -252,7 +229,7 @@ public class TableLayout extends TabLayout implements MorePopupAware {
       TabLabel eachLabel = myTabs.getTabLabel(info);
       Dimension size =
         eachLabel.isPinned() && showPinnedTabsSeparately ? eachLabel.getNotStrictPreferredSize() : eachLabel.getPreferredSize();
-      data.lengths.put(info, Math.max(JBUI.scale(50), size.width + myTabs.getTabHGap()));
+      data.lengths.put(info, Math.max(getMinTabWidth(), size.width + myTabs.getTabHGap()));
     }
   }
 
