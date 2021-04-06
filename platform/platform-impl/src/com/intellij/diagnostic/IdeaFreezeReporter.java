@@ -90,10 +90,11 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                 else if (name.startsWith(PerformanceWatcher.DUMP_PREFIX)) {
                   dumps.add(text);
                 }
-                FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> ContainerUtil.addIfNotNull(attachments, p.createAttachment(file)));
               }
 
               addDumpsAttachments(dumps, Function.identity(), attachments);
+
+              FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
 
               if (message != null && throwable != null && !attachments.isEmpty()) {
                 IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
@@ -150,7 +151,13 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       }
       reset();
       myDumpTask = new SamplingTask(Registry.intValue("freeze.reporter.dump.interval.ms"),
-                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000);
+                                    Registry.intValue("freeze.reporter.dump.duration.s") * 1000) {
+        @Override
+        public void stop() {
+          super.stop();
+          FreezeProfiler.EP_NAME.forEachExtensionSafe(FreezeProfiler::stop);
+        }
+      };
       FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> p.start(reportDir));
     }
   }
@@ -199,7 +206,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     myDumpTask.stop();
 
     List<Attachment> extraAttachments = new ArrayList<>();
-    FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.stop(reportDir)));
+    if (reportDir != null) {
+      FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.getAttachments(reportDir)));
+    }
 
     cleanup(reportDir);
 

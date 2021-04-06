@@ -4,7 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -13,12 +13,9 @@ import java.util.List;
 public interface FreezeProfiler {
   ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
 
-  @Nullable
-  default Attachment createAttachment(File file) {
-    return null;
-  }
+  void start(@NotNull File dir);
 
-  void start(File dir);
+  void stop();
 
-  List<Attachment> stop(File reportDir);
+  @NotNull List<Attachment> getAttachments(@NotNull File reportDir);
 }
