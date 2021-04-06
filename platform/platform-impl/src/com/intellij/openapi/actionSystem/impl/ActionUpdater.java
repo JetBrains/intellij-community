@@ -10,9 +10,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -262,21 +264,16 @@ final class ActionUpdater {
 
   @NotNull
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
+    ComponentManager disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
+
     AsyncPromise<List<AnAction>> promise = new AsyncPromise<>();
     ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
-      try {
-        computeOnEdt(() -> {
-          applyPresentationChanges();
-          return null;
-        });
-      }
-      finally {
-        indicator.cancel();
-      }
+      indicator.cancel();
+      ApplicationManager.getApplication().invokeLater(
+        this::applyPresentationChanges, ModalityState.any(), disposableParent.getDisposed());
     });
 
-    Disposable disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
     if (myToolbarAction) {
       cancelOnUserActivity(promise, disposableParent);
     }
