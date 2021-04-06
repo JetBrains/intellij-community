@@ -541,6 +541,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return false;
   }
 
+  public List<String> getWriteAnnotations() {
+    return List.copyOf(myWriteAnnotations);
+  }
+
   public LinkedHashSet<ClassPattern> getPatterns() {
     return myPatterns;
   }
