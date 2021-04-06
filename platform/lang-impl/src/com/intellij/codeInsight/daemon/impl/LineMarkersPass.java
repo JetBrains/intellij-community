@@ -168,6 +168,12 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
           consumer.consume(element, info);
         }
       }
+    }
+
+    // line markers for injected could be slow
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < elements.size(); i++) {
+      PsiElement element = elements.get(i);
 
       queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
     }
