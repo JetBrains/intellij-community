@@ -10,7 +10,9 @@ import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.eventLog.events.*;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -44,7 +46,10 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final String OPTION_NAME = "option_name";
   private static final String INSPECTION_ID = "inspection_id";
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 5);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 6);
+  private static final EventId1<Integer> PROFILES =
+    GROUP.registerEvent("profiles",
+                        EventFields.Int("amount"));
   private static final EventId3<Boolean, Boolean, Boolean> PROFILE =
     GROUP.registerEvent("used.profile",
                         EventFields.Boolean("project_level"),
@@ -61,7 +66,9 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   public Set<MetricEvent> getMetrics(@NotNull final Project project) {
     final Set<MetricEvent> result = new HashSet<>();
 
-    final var profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    final var profileManager = InspectionProjectProfileManager.getInstance(project);
+    result.add(PROFILES.metric(profileManager.getProfiles().size()));
+    final var profile = profileManager.getCurrentProfile();
     result.add(create(profile));
 
     final List<ScopeToolState> tools = profile.getAllTools();
