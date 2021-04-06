@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.fileTemplates.FileTemplateManager
@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
+import com.intellij.util.SlowOperations
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -29,7 +31,7 @@ import java.util.*
 import javax.swing.JComponent
 
 //TODO better undo support
-class NewThemeAction: AnAction() {
+class NewThemeAction : AnAction() {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
@@ -54,7 +56,10 @@ class NewThemeAction: AnAction() {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(LangDataKeys.MODULE)
-    e.presentation.isEnabled = module != null && (PsiUtil.isPluginModule(module) || PluginModuleType.get(module) is PluginModuleType)
+    e.presentation.isEnabled = module != null &&
+                               (PluginModuleType.get(module) is PluginModuleType ||
+                                SlowOperations.allowSlowOperations<Boolean,Throwable> { PsiUtil.isPluginModule(module) }
+                               )
   }
 
   @Suppress("HardCodedStringLiteral")
