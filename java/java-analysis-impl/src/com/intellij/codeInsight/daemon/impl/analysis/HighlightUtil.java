@@ -3165,6 +3165,14 @@ public final class HighlightUtil {
     PsiElement resolved = result.getElement();
 
     PsiElement refParent = ref.getParent();
+
+    if (isCallToStaticMember(refParent)) {
+      final String text = JavaErrorBundle.message("cannot.resolve.symbol", refName.getText());
+      final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text).create();
+      QuickFixAction.registerQuickFixAction(info, new RemoveNewKeywordFix(refParent));
+      return info;
+    }
+
     PsiElement granny;
     if (refParent instanceof PsiReferenceExpression && (granny = refParent.getParent()) instanceof PsiMethodCallExpression) {
       PsiReferenceExpression referenceToMethod = ((PsiMethodCallExpression)granny).getMethodExpression();
@@ -3280,7 +3288,7 @@ public final class HighlightUtil {
    * @return true if the new expression can actually be a call to a class member (field or method), false otherwise.
    */
   @Contract(value = "null -> false", pure = true)
-  static boolean isCallToStaticMember(@Nullable PsiElement element) {
+  private static boolean isCallToStaticMember(@Nullable PsiElement element) {
     if (!(element instanceof PsiNewExpression)) return false;
 
     final PsiNewExpression newExpression = (PsiNewExpression)element;
@@ -3292,14 +3300,13 @@ public final class HighlightUtil {
     if (!(qualifier instanceof PsiReference) || memberName == null) return false;
 
     final PsiReference psiReference = (PsiReference)qualifier;
-    final PsiElement maybeClass = psiReference.resolve();
-    if (!(maybeClass instanceof PsiClass)) return false;
+    final PsiClass clazz = tryCast(psiReference.resolve(), PsiClass.class);
+    if (clazz == null) return false;
 
-    final PsiClass clazz = (PsiClass)maybeClass;
-    final PsiField field = clazz.findFieldByName(memberName.getText(), false);
+    final PsiField field = clazz.findFieldByName(memberName.getText(), true);
 
     if (field != null) return true;
-    final PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), false);
+    final PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
 
     return methods.length != 0;
   }
