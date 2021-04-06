@@ -89,6 +89,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.startsWith("Replace with block comment") ||
                                       intentionText.startsWith("Replace with javadoc") ||
                                       intentionText.startsWith("Remove //noinspection") ||
+                                      intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
                                       intentionText.startsWith("Remove 'if' statement") ||//remove content of the if with everything inside
                                       intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
