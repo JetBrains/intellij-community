@@ -25,7 +25,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.idea.maven.execution.SoutMavenConsole;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.execution.BTWMavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenTask;
@@ -144,7 +145,7 @@ public class MavenProjectsProcessor {
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
           task.perform(myProject, myEmbeddersManager,
-                       new SoutMavenConsole(mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces()),
+                       getMavenConsole(mavenGeneralSettings),
                        indicator);
         }
         catch (MavenProcessCanceledException e) {
@@ -179,6 +180,11 @@ public class MavenProjectsProcessor {
       }
       throw e;
     }
+  }
+
+  @NotNull
+  private MavenConsole getMavenConsole(MavenGeneralSettings mavenGeneralSettings) {
+    return new BTWMavenConsole(myProject, mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces());
   }
 
   private void logImportErrorIfNotControlFlow(Throwable e) {

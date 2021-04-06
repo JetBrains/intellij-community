@@ -96,8 +96,11 @@ class MavenSyncConsole(private val myProject: Project) {
     myPostponed.clear();
   }
 
+  fun addText(@Nls text: String) = addText(text, true)
+
+
   @Synchronized
-  fun addText(@Nls text: String) = doIfImportInProcess {
+  fun addText(@Nls text: String, stdout: Boolean) = doIfImportInProcess {
     addText(mySyncId, text, true)
   }
 
