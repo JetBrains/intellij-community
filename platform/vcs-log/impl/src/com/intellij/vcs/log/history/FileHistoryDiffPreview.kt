@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.ui.frame.EditorDiffPreview
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -19,7 +20,8 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
 
   override fun getOwnerComponent(): JComponent = fileHistoryPanel.graphTable
 
-  override fun getEditorTabName(): @Nls String = fileHistoryPanel.filePath.name
+  override fun getEditorTabName(): @Nls String = VcsLogBundle.message("file.history.diff.preview.editor.tab.name",
+                                                                      fileHistoryPanel.filePath.name)
 
   override fun addSelectionListener(listener: () -> Unit) {
     val selectionListener = ListSelectionListener {
