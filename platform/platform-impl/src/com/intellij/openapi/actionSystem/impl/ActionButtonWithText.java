@@ -262,7 +262,7 @@ public class ActionButtonWithText extends ActionButton {
 
   @NotNull
   @NlsActions.ActionText
-  private String getText() {
+  protected String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";
   }

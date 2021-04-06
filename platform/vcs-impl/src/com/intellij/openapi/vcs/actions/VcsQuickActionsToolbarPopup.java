@@ -70,7 +70,7 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text"),
       group, e.getDataContext(), JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
-      action -> true, ActionPlaces.MAIN_TOOLBAR);
+      action -> true, e.getPlace());
 
     showPopup(e, popup);
   }
