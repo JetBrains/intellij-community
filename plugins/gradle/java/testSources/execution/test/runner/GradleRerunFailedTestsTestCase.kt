@@ -44,7 +44,6 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
   override fun setUp() {
     super.setUp()
     testDisposable = Disposer.newDisposable()
-    //initTextNotificationEventsPrinter()
     initExecutionConsoleHandler()
   }
 
@@ -55,6 +54,9 @@ abstract class GradleRerunFailedTestsTestCase : GradleImportingTestCase() {
     ).run()
   }
 
+  /**
+   * Call this method inside [setUp] to print events trace to console
+   */
   @Suppress("unused")
   private fun initTextNotificationEventsPrinter() {
     val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
