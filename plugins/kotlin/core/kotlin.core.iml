@@ -27,7 +27,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-stdlib-jdk8" />
+    <orderEntry type="library" name="kotlinc.kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="javaslang" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
@@ -36,12 +36,12 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-compiler" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-common" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-compiler-impl" exported="" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-scripting-jvm" />
-    <orderEntry type="module" module-name="kotlinc-delegator.kotlin-script-runtime" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.jps-common" />
