@@ -32,8 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -71,6 +70,34 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (icon == null) return null;
 
     return createLineMarker(element, icon, infos);
+  }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+      Icon icon = null;
+      List<Info> infos = null;
+      for (RunLineMarkerContributor contributor : contributors) {
+        Info info = contributor.getSlowInfo(element);
+        if (info == null) {
+          continue;
+        }
+        if (icon == null) {
+          icon = info.icon;
+        }
+
+        if (infos == null) {
+          infos = new SmartList<>();
+        }
+        infos.add(info);
+      }
+      if (icon != null) {
+         result.add(createLineMarker(element, icon, infos));
+      }
+    }
+
   }
 
   public static @NotNull LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
