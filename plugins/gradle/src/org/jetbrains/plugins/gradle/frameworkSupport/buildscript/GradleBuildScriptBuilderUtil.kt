@@ -17,3 +17,7 @@ fun isSupportedRuntimeOnlyScope(gradleVersion: GradleVersion): Boolean {
 fun isSupportedJUnit5(gradleVersion: GradleVersion): Boolean {
   return gradleVersion.baseVersion >= GradleVersion.version("4.7")
 }
+
+fun isSupportedKotlin4(gradleVersion: GradleVersion): Boolean {
+  return gradleVersion.baseVersion >= GradleVersion.version("5.6.2")
+}

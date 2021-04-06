@@ -4,9 +4,13 @@ package org.jetbrains.plugins.gradle.frameworkSupport.script
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
+import java.util.function.Consumer
 
 @Suppress("unused")
 interface ScriptElementBuilder {
+
+  fun newLine(): NewLineElement
+  fun ScriptElement?.ln(): NewLineElement?
 
   fun string(value: String): StringElement
 
@@ -25,6 +29,7 @@ interface ScriptElementBuilder {
   fun call(name: String, arguments: List<ArgumentElement>, configure: ScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String): CallElement
+  fun call(name: String, configure: Consumer<ScriptTreeBuilder>): CallElement
   fun call(name: String, configure: ScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String, vararg arguments: ArgumentElement): CallElement

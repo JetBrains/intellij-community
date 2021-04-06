@@ -6,15 +6,25 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Argume
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.NewLineElement
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
   private val roots = ArrayList<ScriptElement>()
 
-  operator fun contains(builder: ScriptTreeBuilder) = roots.containsAll(builder.generate().statements)
+  fun join(builder: ScriptTreeBuilder) = builder.generate().apply {
+    roots.addAll(statements)
+  }
 
-  fun join(builder: ScriptTreeBuilder) = roots.addAll(builder.generate().statements)
+  fun addNonExistedElements(configure: ScriptTreeBuilder.() -> Unit) = addNonExistedElements(ScriptTreeBuilder(configure))
+  fun addNonExistedElements(builder: ScriptTreeBuilder) = builder.generate().apply {
+    for (statement in statements) {
+      if (statement !in roots) {
+        roots.add(statement)
+      }
+    }
+  }
 
   private fun <E : ScriptElement> process(vararg children: ScriptElement, element: () -> E) = process(children.toList(), element)
   private fun <E : ScriptElement> process(children: List<ScriptElement>, createElement: () -> E): E {
@@ -26,6 +36,7 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
     return element
   }
 
+  override fun newLine() = process { super.newLine() }
   override fun string(value: String) = process { super.string(value) }
   override fun code(text: List<String>) = process { super.code(text) }
   override fun assign(name: String, value: Expression) = process(value) { super.assign(name, value) }
@@ -41,7 +52,7 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
       LOG.error("Found non complete script tree. Orphan elements: " +
                 roots.filterNot { it is Statement })
     }
-    return BlockElement(statements)
+    return BlockElement(statements.dropLastWhile { it == NewLineElement })
   }
 
   companion object {

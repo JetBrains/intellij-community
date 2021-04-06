@@ -1,12 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.util.function.Consumer
 
 @Suppress("unused")
-interface GradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuilderCore<BSB>> : ScriptElementBuilder {
+interface GradleBuildScriptBuilderCore<out BSB : GradleBuildScriptBuilderCore<BSB>> : ScriptElementBuilder {
+
+  val gradleVersion: GradleVersion
+
   /**
    * ...
    * import [import]
@@ -68,20 +72,15 @@ interface GradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuilderCore<BSB>> 
   fun withBuildScriptPostfix(configure: ScriptTreeBuilder.() -> Unit): BSB
   fun withBuildScriptPostfix(configure: Consumer<ScriptTreeBuilder>): BSB
 
+
   /**
    * plugins {
    *   ...
-   *   groovy: id '[id]' version '[version]'
-   *   kotlin: id("[id]") version "[version]"
+   *   [plugin]
    * }
    */
-  fun addPlugin(id: String, version: String? = null): BSB
-
-  /**
-   * groovy: apply plugin: '[plugin]'
-   * kotlin: apply(plugin = "[plugin]")
-   */
-  fun applyPlugin(plugin: String): BSB
+  fun addPlugin(plugin: String): BSB
+  fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): BSB
 
   /**
    * buildscript { ... }

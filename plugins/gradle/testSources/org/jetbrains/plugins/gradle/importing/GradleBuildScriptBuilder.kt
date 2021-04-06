@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.Version
-import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
@@ -10,10 +9,14 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 import kotlin.apply as applyKt
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBuildScriptBuilder<GradleBuildScriptBuilder>(gradleVersion) {
   override val scriptBuilder = GroovyScriptBuilder()
 
   override fun apply(action: GradleBuildScriptBuilder.() -> Unit) = applyKt(action)
+
+  fun applyPlugin(plugin: String) =
+    withPrefix { call("apply", argument("plugin", code(plugin))) }
 
   fun withTask(name: String, type: String? = null, configure: ScriptTreeBuilder.() -> Unit = {}) =
     withPostfix {
@@ -38,16 +41,43 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBui
     withLocalGradleIdeaExtPlugin(jarFile)
   }
 
-  fun withGradleIdeaExtPlugin() = apply {
-    addPlugin("org.jetbrains.gradle.plugin.idea-ext", IDEA_EXT_PLUGIN_VERSION)
-  }
+  fun withGradleIdeaExtPlugin() =
+    withPlugin("org.jetbrains.gradle.plugin.idea-ext", IDEA_EXT_PLUGIN_VERSION)
 
   fun withLocalGradleIdeaExtPlugin(jarFile: File) = apply {
     withBuildScriptMavenCentral()
-    addBuildScriptClasspath(call("files", FileUtil.toSystemIndependentName(jarFile.absolutePath)))
+    addBuildScriptClasspath(jarFile)
     addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
     addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
-    applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
+    applyPlugin("'org.jetbrains.gradle.plugin.idea-ext'")
+  }
+
+  override fun withBuildScriptMavenCentral() =
+    withBuildScriptMavenCentral(false)
+
+  override fun withMavenCentral() =
+    withMavenCentral(false)
+
+  fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean) =
+    withBuildScriptRepository {
+      mavenCentralRepository(useOldStyleMetadata)
+    }
+
+  fun withMavenCentral(useOldStyleMetadata: Boolean) =
+    withRepository {
+      mavenCentralRepository(useOldStyleMetadata)
+    }
+
+  private fun ScriptTreeBuilder.mavenCentralRepository(useOldStyleMetadata: Boolean = false) {
+    call("maven") {
+      call("url", "https://repo.labs.intellij.net/repo1")
+      if (useOldStyleMetadata) {
+        call("metadataSources") {
+          call("mavenPom")
+          call("artifact")
+        }
+      }
+    }
   }
 
   companion object {

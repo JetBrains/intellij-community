@@ -54,7 +54,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
-import org.jetbrains.plugins.gradle.frameworkSupport.KotlinBuildScriptDataBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionUtil;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
@@ -167,15 +169,10 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       myUseKotlinDSL
     );
 
-    BuildScriptDataBuilder builder;
-    if (myUseKotlinDSL) {
-      GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
-      GradleVersion version = gradleProjectSettings.resolveGradleVersion();
-      builder = new KotlinBuildScriptDataBuilder(gradleBuildFile, version);
-    }
-    else {
-      builder = new BuildScriptDataBuilder(gradleBuildFile);
-    }
+    GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
+    GradleVersion version = gradleProjectSettings.resolveGradleVersion();
+    ScriptBuilder scriptBuilder = myUseKotlinDSL ? new KotlinScriptBuilder() : new GroovyScriptBuilder();
+    BuildScriptDataBuilder builder = new BuildScriptDataBuilder(gradleBuildFile, scriptBuilder, version);
     modifiableRootModel.getModule().putUserData(BUILD_SCRIPT_DATA, builder);
   }
 
@@ -269,15 +266,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (buildScriptDataBuilder == null) return null;
     try {
       VirtualFile buildScriptFile = buildScriptDataBuilder.getBuildScriptFile();
-      String lineSeparator = lineSeparator(buildScriptFile);
-      String imports = StringUtil.convertLineSeparators(buildScriptDataBuilder.buildImports(), lineSeparator);
-      String configurationPart = StringUtil.convertLineSeparators(buildScriptDataBuilder.buildConfigurationPart(), lineSeparator);
-      String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile));
-      String content = (!imports.isEmpty() ? imports + lineSeparator : "") +
-                       (!configurationPart.isEmpty() ? configurationPart + lineSeparator : "") +
-                       (!existingText.isEmpty() ? existingText + lineSeparator : "") +
-                       lineSeparator +
-                       StringUtil.convertLineSeparators(buildScriptDataBuilder.buildMainPart(), lineSeparator);
+      buildScriptDataBuilder.addPrefix(StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile)));
+      String content = StringUtil.convertLineSeparators(buildScriptDataBuilder.generate(), lineSeparator(buildScriptFile));
       VfsUtil.saveText(buildScriptFile, content);
       return buildScriptFile;
     }

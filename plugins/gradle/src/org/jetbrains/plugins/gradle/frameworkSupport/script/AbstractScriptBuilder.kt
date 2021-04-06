@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.AssignElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PlusAssignElement
 import java.util.*
 
 abstract class AbstractScriptBuilder : ScriptBuilder {
@@ -61,8 +60,8 @@ abstract class AbstractScriptBuilder : ScriptBuilder {
         }
       }
       is CodeElement -> {
-        for ((i, line) in element.text.withIndex()) {
-          add(line, indent, i == 0 && isNewLine)
+        for (line in element.text) {
+          add(line, indent, isNewLine)
         }
       }
       is InfixCall -> {
@@ -74,6 +73,9 @@ abstract class AbstractScriptBuilder : ScriptBuilder {
       }
       is StringElement -> {
         add(""""${element.value}"""", indent, isNewLine)
+      }
+      NewLineElement -> {
+        add("", indent, isNewLine)
       }
     }
   }
@@ -89,7 +91,12 @@ abstract class AbstractScriptBuilder : ScriptBuilder {
 
   protected fun add(code: String, indent: Int, isNewLine: Boolean) {
     if (isNewLine || lines.isEmpty()) {
-      lines.add("    ".repeat(indent) + code)
+      if (code.isBlank()) {
+        lines.add(code)
+      }
+      else {
+        lines.add("    ".repeat(indent) + code)
+      }
     }
     else {
       lines[lines.lastIndex] += code

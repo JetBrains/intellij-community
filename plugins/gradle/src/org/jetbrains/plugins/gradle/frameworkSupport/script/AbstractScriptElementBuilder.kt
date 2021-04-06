@@ -5,9 +5,13 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Argume
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
+import java.util.function.Consumer
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
+
+  override fun newLine() = NewLineElement
+  override fun ScriptElement?.ln() = if (this == null || this is BlockElement && isEmpty()) null else newLine()
 
   override fun string(value: String) = StringElement(value)
 
@@ -27,6 +31,7 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
     call(name, arguments + argument(configure))
 
   override fun call(name: String) = call(name, emptyList())
+  override fun call(name: String, configure: Consumer<ScriptTreeBuilder>) = call(name, configure::accept)
   override fun call(name: String, configure: ScriptTreeBuilder.() -> Unit) =
     call(name, emptyList(), configure)
 

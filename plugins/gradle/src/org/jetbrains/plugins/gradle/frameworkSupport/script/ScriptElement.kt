@@ -5,6 +5,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport.script
 sealed class ScriptElement {
   data class ArgumentElement(val name: String?, val value: Statement.Expression) : ScriptElement()
   sealed class Statement : ScriptElement() {
+    object NewLineElement : Statement()
     data class AssignElement(val name: String, val value: Expression) : Statement()
     data class PlusAssignElement(val name: String, val value: Expression) : Statement()
     sealed class Expression : Statement() {

@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
 
 @Suppress("unused")
@@ -13,6 +12,9 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
 
   fun addDependency(scope: String, dependency: String): BSB
   fun addDependency(scope: String, dependency: Expression): BSB
+
+  fun addApiDependency(dependency: String, sourceSet: String? = null): BSB
+  fun addApiDependency(dependency: Expression, sourceSet: String? = null): BSB
 
   fun addImplementationDependency(dependency: String, sourceSet: String? = null): BSB
   fun addImplementationDependency(dependency: Expression, sourceSet: String? = null): BSB
@@ -28,24 +30,23 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
 
   fun addBuildScriptClasspath(dependency: String): BSB
   fun addBuildScriptClasspath(dependency: Expression): BSB
+  fun addBuildScriptClasspath(vararg dependencies: File): BSB
 
-  fun withBuildScriptMavenCentral(useOldStyleMetadata: Boolean = false): BSB
+  fun withMavenCentral(): BSB
+  fun withBuildScriptMavenCentral(): BSB
 
-  fun withMavenCentral(useOldStyleMetadata: Boolean = false): BSB
+  fun withPlugin(id: String, version: String? = null): BSB
 
   fun withJavaPlugin(): BSB
-
+  fun withJavaLibraryPlugin(): BSB
   fun withIdeaPlugin(): BSB
-
-  fun withKotlinPlugin(version: String): BSB
-
+  fun withKotlinJvmPlugin(): BSB
+  fun withKotlinJsPlugin(): BSB
+  fun withKotlinMultiplatformPlugin(): BSB
   fun withGroovyPlugin(): BSB
-
   fun withApplicationPlugin(mainClassName: String): BSB
 
   fun withJUnit(): BSB
-
   fun withJUnit4(): BSB
-
   fun withJUnit5(): BSB
 }

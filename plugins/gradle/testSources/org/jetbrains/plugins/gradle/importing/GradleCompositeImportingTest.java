@@ -393,22 +393,20 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/core/build.gradle",
                          createBuildScriptBuilder()
-                           .withKotlinPlugin("1.3.50")
-                           .addRepository(" maven { url 'https://repo.labs.intellij.net/repo1' }")
-                           .addPrefix("apply plugin: 'java-library'").generate());
+                           .withMavenCentral()
+                           .withKotlinJvmPlugin()
+                           .withJavaLibraryPlugin()
+                           .generate());
 
     createProjectSubFile("project-a/ext/build.gradle",
                          createBuildScriptBuilder()
-                           .withKotlinPlugin("1.3.50")
-                           .addRepository(" maven { url 'https://repo.labs.intellij.net/repo1' }")
-                           .addPrefix(
-                             "apply plugin: 'java-library'",
-                             "group = 'myGroup.projectA'",
-                             "version = '1.0-SNAPSHOT'",
-                             "dependencies {",
-                             " api project(':core')",
-                             "}"
-                         ).generate());
+                           .withMavenCentral()
+                           .withKotlinJvmPlugin()
+                           .withJavaLibraryPlugin()
+                           .addGroup("myGroup.projectA")
+                           .addVersion("1.0-SNAPSHOT")
+                           .addDependency("api project(':core')")
+                           .generate());
 
     createProjectSubFile("project-a/build.gradle", "");
 

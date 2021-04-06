@@ -19,26 +19,29 @@ class GradleBuildScriptBuilderTest {
     assertThat(buildscript(GradleVersion.current()) {
       addImport("org.example.Class1")
       addImport("org.example.Class2")
-      addPlugin("plugin-id")
+      withPlugin("plugin-id")
       addRepository("repositoryCentral()")
       addDependency("dependency", "my-dependency-id")
-      addPrefix("")
       withPrefix { call("println", "Hello, Prefix!") }
       withPostfix { call("println", call("hello", code("postfix"))) }
     }).isEqualTo("""
       import org.example.Class1
       import org.example.Class2
+      
       plugins {
           id 'plugin-id'
       }
       
       println 'Hello, Prefix!'
+      
       repositories {
           repositoryCentral()
       }
+      
       dependencies {
           dependency 'my-dependency-id'
       }
+      
       println hello(postfix)
     """.trimIndent())
   }
@@ -50,7 +53,7 @@ class GradleBuildScriptBuilderTest {
       withBuildScriptRepository { call("repo", code("file('build/repo')")) }
       withBuildScriptDependency { call("classpath", code("file('build/targets/org/classpath/archive.jar')")) }
       addBuildScriptPostfix("println 'Hello, Postfix!'")
-      applyPlugin("gradle-build")
+      applyPlugin("'gradle-build'")
       addImport("org.classpath.Build")
       withPrefix {
         call("Build.configureSuperGradleBuild") {
@@ -59,16 +62,21 @@ class GradleBuildScriptBuilderTest {
       }
     }).isEqualTo("""
       import org.classpath.Build
+      
       buildscript {
           println 'Hello, Prefix!'
+      
           repositories {
               repo file('build/repo')
           }
+      
           dependencies {
               classpath file('build/targets/org/classpath/archive.jar')
           }
+      
           println 'Hello, Postfix!'
       }
+      
       apply plugin: 'gradle-build'
       Build.configureSuperGradleBuild {
           makeBeautiful()
@@ -80,20 +88,26 @@ class GradleBuildScriptBuilderTest {
   fun `test build script deduplication`() {
     assertThat(buildscript(GradleVersion.current()) {
       withJUnit()
+      withJUnit()
       withGroovyPlugin()
       withGroovyPlugin()
     }).isEqualTo("""
-      apply plugin: 'groovy'
+      plugins {
+          id 'groovy'
+      }
+      
       repositories {
           maven {
               url 'https://repo.labs.intellij.net/repo1'
           }
       }
+      
       dependencies {
           testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
           testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
           implementation 'org.codehaus.groovy:groovy-all:3.0.5'
       }
+      
       test {
           useJUnitPlatform()
       }
@@ -114,12 +128,14 @@ class GradleBuildScriptBuilderTest {
                 url 'https://repo.labs.intellij.net/repo1'
             }
         }
+        
         dependencies {
             testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
             implementation 'my-dep'
             runtimeOnly my-runtime-dep
         }
+        
         test {
             useJUnitPlatform()
         }
@@ -131,6 +147,7 @@ class GradleBuildScriptBuilderTest {
                 url 'https://repo.labs.intellij.net/repo1'
             }
         }
+        
         dependencies {
             testCompile 'junit:junit:4.12'
             compile 'my-dep'
@@ -144,6 +161,7 @@ class GradleBuildScriptBuilderTest {
                 url 'https://repo.labs.intellij.net/repo1'
             }
         }
+        
         dependencies {
             testImplementation 'junit:junit:4.12'
             implementation 'my-dep'
