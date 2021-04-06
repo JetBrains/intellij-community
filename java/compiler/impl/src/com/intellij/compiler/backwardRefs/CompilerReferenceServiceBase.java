@@ -123,7 +123,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
           openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
         }
         else {
-          markAsOutdated(validIndexExists);
+          markAsOutdated();
         }
       });
     }
@@ -426,19 +426,15 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      try {
-        if (reason == IndexOpenReason.COMPILATION_FINISHED) {
-          myDirtyScopeHolder.compilerActivityFinished(compiledModules);
-        }
-        else if (reason == IndexOpenReason.UP_TO_DATE_CACHE) {
-          myDirtyScopeHolder.upToDateCheckFinished(Module.EMPTY_ARRAY);
-        }
+      if (reason == IndexOpenReason.COMPILATION_FINISHED) {
+        myActiveBuilds--;
+        myDirtyScopeHolder.compilerActivityFinished(compiledModules);
       }
-      catch (RuntimeException e) {
-        --myActiveBuilds;
-        throw e;
+      else if (reason == IndexOpenReason.UP_TO_DATE_CACHE) {
+        myDirtyScopeHolder.upToDateCheckFinished(Module.EMPTY_ARRAY);
       }
-      if ((--myActiveBuilds == 0) && myProject.isOpen()) {
+
+      if (myActiveBuilds == 0 && myProject.isOpen()) {
         myReader = myReaderFactory.create(myProject);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
@@ -448,15 +444,12 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  private void markAsOutdated(boolean decrementBuildCount) {
+  private void markAsOutdated() {
     Module[] modules = ReadAction.compute(() -> myProject.isDisposed()
                                                 ? null
                                                 : ModuleManager.getInstance(myProject).getModules());
     myOpenCloseLock.lock();
     try {
-      if (decrementBuildCount) {
-        --myActiveBuilds;
-      }
       if (modules == null) return;
       myDirtyScopeHolder.upToDateCheckFinished(modules);
     } finally {
