@@ -375,7 +375,7 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
 
     @TestMetadata("SyntheticPrimitiveJavaProperty")
     public void testSyntheticPrimitiveJavaProperty() throws Exception {
-        runTest("idea/idea-completion/testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
+        runTest("testData/basic/multifile/SyntheticPrimitiveJavaProperty/");
     }
 
     @TestMetadata("TopLevelFunction")

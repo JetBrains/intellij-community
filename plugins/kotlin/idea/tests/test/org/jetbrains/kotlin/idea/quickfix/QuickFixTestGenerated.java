@@ -9119,7 +9119,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("removeExternalModifier.kt")
         public void testRemoveExternalModifier() throws Exception {
-            runTest("idea/testData/quickfix/modifiers/removeExternalModifier.kt");
+            runTest("testData/quickfix/modifiers/removeExternalModifier.kt");
         }
 
         @TestMetadata("removeIncompatibleModifier.kt")

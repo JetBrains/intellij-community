@@ -80,7 +80,7 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
 
     @TestMetadata("ExtensionPropertyFromSameFile.kt")
     public void testExtensionPropertyFromSameFile() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+        runTest("../completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
     }
 
     @TestMetadata("ExtensionReceiverTypeArg.kt")
@@ -180,7 +180,7 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
 
     @TestMetadata("LocalFunction.kt")
     public void testLocalFunction() throws Exception {
-        runTest("idea/idea-completion/testData/handlers/basic/LocalFunction.kt");
+        runTest("../completion/testData/handlers/basic/LocalFunction.kt");
     }
 
     @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
@@ -509,7 +509,7 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
 
         @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
         public void testInsertFunctionLiteralForLocalFunction() throws Exception {
-            runTest("idea/idea-completion/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
+            runTest("../completion/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
         }
 
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
