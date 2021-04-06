@@ -350,7 +350,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
                                      dataContext: DataContext,
                                      place: @NotNull String,
                                      private val ensureSelection: Boolean)
-    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, place, -1) {
+    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     init {
       list.background = background
     }

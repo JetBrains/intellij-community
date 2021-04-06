@@ -37,6 +37,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +163,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     private final Runnable myDisposeCallback;
     private final Component myComponent;
-    private final String myActionPlace;
 
     public ActionGroupPopup(@PopupTitle String title,
                             @NotNull ActionGroup actionGroup,
@@ -209,21 +209,34 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
+                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, maxRowCount);
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
     }
 
+    /**
+     * @deprecated Use {@link ActionGroupPopup#ActionGroupPopup(WizardPopup, ListPopupStep, Runnable, DataContext, int)} instead
+     * @noinspection unused
+     */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+    @Deprecated
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
                                @NotNull ListPopupStep step,
                                @Nullable Runnable disposeCallback,
                                @NotNull DataContext dataContext,
                                @Nullable String actionPlace,
                                int maxRowCount) {
+      this(aParent, step, disposeCallback, dataContext, maxRowCount);
+    }
+
+    protected ActionGroupPopup(@Nullable WizardPopup aParent,
+                               @NotNull ListPopupStep step,
+                               @Nullable Runnable disposeCallback,
+                               @NotNull DataContext dataContext,
+                               int maxRowCount) {
       super(CommonDataKeys.PROJECT.getData(dataContext), aParent, step, null);
       setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
 
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override

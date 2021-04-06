@@ -146,7 +146,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
   }
 
   open inner class ChooseContextPopup(step: ActionPopupStep, dataContext: DataContext)
-    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, ActionPlaces.POPUP, -1) {
+    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     override fun getListElementRenderer(): PopupListElementRenderer<PopupFactoryImpl.ActionItem> =
       object : PopupListElementRenderer<PopupFactoryImpl.ActionItem>(this) {
         private lateinit var myInfoLabel: JLabel

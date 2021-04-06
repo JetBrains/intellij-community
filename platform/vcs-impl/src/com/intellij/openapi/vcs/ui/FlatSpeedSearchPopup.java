@@ -42,7 +42,7 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
                                  @NotNull ListPopupStep step,
                                  @NotNull DataContext dataContext,
                                  @Nullable Object value) {
-    super(parent, step, null, dataContext, null, -1);
+    super(parent, step, null, dataContext, -1);
     setParentValue(value);
   }
 
