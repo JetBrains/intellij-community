@@ -23,6 +23,12 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     processor: TestOnlyApiUsageProcessor,
     private val holder: ProblemsHolder
   ) : ApiUsageUastVisitor(processor) {
+    override fun visitClass(node: UClass): Boolean {
+      super.visitClass(node)
+      checkDoubleAnnotation(node)
+      return true
+    }
+
     override fun visitMethod(node: UMethod): Boolean {
       super.visitMethod(node)
       checkDoubleAnnotation(node)
@@ -36,15 +42,15 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     }
 
     private fun checkDoubleAnnotation(elem: UDeclaration) {
-      val javaPsi = elem.javaPsi
-      if (javaPsi !is PsiMember) return
-      val vft = findVisibleForTestingAnnotation(javaPsi)
-      if (vft != null && isDirectlyTestOnly(javaPsi)) {
-        val toHighlight = elem.uastAnchor.sourcePsiElement ?: return
+      val vft = elem.uAnnotations.find { visibleForTestingAnnotations.contains(it.qualifiedName) } ?: return
+      if (isDirectlyTestOnly(elem)) {
+        val vftSourcePsi = vft.sourcePsi ?: return
+        val vftJavaPsi = vft.javaPsi ?: return
+        val elemJavaPsi = elem.javaPsi
         holder.registerProblem(
-          toHighlight,
+          vftSourcePsi,
           JvmAnalysisBundle.message("jvm.inspections.testonly.visiblefortesting"),
-          RemoveAnnotationQuickFix(vft, javaPsi as PsiModifierListOwner)
+          RemoveAnnotationQuickFix(vftJavaPsi, elemJavaPsi as PsiModifierListOwner)
         )
         return
       }
@@ -70,7 +76,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = place.sourcePsi ?: return
       val uMember = member.toUElement() ?: return
       if (uMember !is UDeclaration) return
-      val vft = findVisibleForTestingAnnotation(member)
+      val vft = AnnotationUtil.findAnnotation(member, visibleForTestingAnnotations)
       if (vft == null && !isAnnotatedAsTestOnly(uMember)) return
       if (isInsideTestOnlyMethod(place)) return
       if (isInsideTestOnlyField(place)) return
@@ -119,8 +125,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     private fun isInsideTestOnlyClass(elem: UElement) = isAnnotatedAsTestOnly(elem.getTopLevelParentOfType(UClass::class.java))
 
     private fun isAnnotatedAsTestOnly(member: UDeclaration?): Boolean {
-      val javaPsi = member?.javaPsi ?: return false
-      return javaPsi is PsiModifierListOwner && (isDirectlyTestOnly(javaPsi) || isAnnotatedAsTestOnly(member.getContainingUClass()))
+      return member != null && (isDirectlyTestOnly(member) || isAnnotatedAsTestOnly(member.getContainingUClass()))
     }
 
     private fun isInsideTestClass(elem: UElement): Boolean {
@@ -155,11 +160,7 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  private fun findVisibleForTestingAnnotation(member: PsiModifierListOwner) =
-    AnnotationUtil.findAnnotation(member, visibleForTestingAnnotations)
-
-  private fun isDirectlyTestOnly(member: PsiModifierListOwner) =
-    AnnotationUtil.isAnnotated(member, AnnotationUtil.TEST_ONLY, AnnotationUtil.CHECK_EXTERNAL)
+  private fun isDirectlyTestOnly(member: UDeclaration) = member.findAnnotation(AnnotationUtil.TEST_ONLY) != null
 
   companion object {
     private val visibleForTestingAnnotations = listOf(

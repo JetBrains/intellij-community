@@ -13,8 +13,8 @@ class TestOnlyTest @TestOnly constructor() {
   fun aMethod(x: Int): Int = x
 
   @TestOnly
-  @VisibleForTesting
-  fun <warning descr="@VisibleForTesting makes little sense on @TestOnly code">aStringMethod</warning>(): String = "Foo"
+  <warning descr="@VisibleForTesting makes little sense on @TestOnly code">@VisibleForTesting</warning>
+  fun aStringMethod(): String = "Foo"
 }
 
 fun main() {

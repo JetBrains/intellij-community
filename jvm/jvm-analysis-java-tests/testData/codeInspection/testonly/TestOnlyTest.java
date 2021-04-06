@@ -12,8 +12,8 @@ public class TestOnlyTest {
   static String someString(String someStr) { return someStr + "Foo"; }
 
   @TestOnly
-  @VisibleForTesting
-  static String <warning descr="@VisibleForTesting makes little sense on @TestOnly code">doubleAnn</warning>() { return "Foo"; }
+  <warning descr="@VisibleForTesting makes little sense on @TestOnly code">@VisibleForTesting</warning>
+  static String doubleAnn() { return "Foo"; }
 
   static class Bar {
     @TestOnly
