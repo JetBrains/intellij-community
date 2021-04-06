@@ -25,16 +25,18 @@ open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
   override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
     FileDocumentManager.getInstance().saveAllDocuments()
     val configuration = environment.runProfile as DebuggableRunConfiguration
-    val socketAddress = configuration.computeDebugAddress(state)
-    val starter = { executionResult: ExecutionResult? ->
-      startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
-    }
-    @Suppress("IfThenToElvis")
-    if (state is DebuggableRunProfileState) {
-      return state.execute(socketAddress.port).then(starter)
-    }
-    else {
-      return resolvedPromise(starter(null))
+
+    return configuration.computeDebugAddressAsync(state).thenAsync{ socketAddress ->
+      val starter = { executionResult: ExecutionResult? ->
+        startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
+      }
+      @Suppress("IfThenToElvis")
+      if (state is DebuggableRunProfileState) {
+        state.execute(socketAddress.port).then(starter)
+      }
+      else {
+        resolvedPromise(starter(null))
+      }
     }
   }
 
