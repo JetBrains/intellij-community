@@ -4,25 +4,32 @@ package com.intellij.packaging.jlink;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.intellij.packaging.jlink.JLinkArtifactProperties.CompressionLevel;
 
 final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JLinkArtifactProperties myProperties;
+  private final Map<CompressionLevel, @Nls String> myCompressionLevelText;
 
-  private ComboBox<String> myCompressionLevel;
+  private ComboBox<CompressionLevel> myCompressionLevel;
   private JCheckBox myVerbose;
 
   JLinkArtifactPropertiesEditor(@NotNull JLinkArtifactProperties properties) {
     myProperties = properties;
+    myCompressionLevelText = new LinkedHashMap<>();
+    myCompressionLevelText.put(CompressionLevel.ZERO, JavaBundle.message("packaging.jlink.compression.zero.level"));
+    myCompressionLevelText.put(CompressionLevel.FIRST, JavaBundle.message("packaging.jlink.compression.first.level"));
+    myCompressionLevelText.put(CompressionLevel.SECOND, JavaBundle.message("packaging.jlink.compression.second.level"));
   }
 
   @Nls
@@ -35,12 +42,10 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public @Nullable JComponent createComponent() {
     final FormBuilder builder = new FormBuilder();
 
-    myCompressionLevel = new ComboBox<>(ContainerUtil.map(CompressionLevel.values(), t -> t.myText).toArray(String[]::new));
-    CompressionLevel compressionLevel = myProperties.compressionLevel;
-    if (compressionLevel == null) {
-      compressionLevel = CompressionLevel.ZERO;
-    }
-    myCompressionLevel.setItem(compressionLevel.myText);
+    myCompressionLevel = new ComboBox<>(myCompressionLevelText.keySet().toArray(CompressionLevel[]::new));
+    myCompressionLevel.setItem(myProperties.compressionLevel);
+    myCompressionLevel.setRenderer(
+      SimpleListCellRenderer.create(myCompressionLevelText.get(CompressionLevel.ZERO), myCompressionLevelText::get));
     builder.addLabeledComponent(JavaBundle.message("packaging.jlink.compression.level"), myCompressionLevel);
 
     myVerbose = new JCheckBox(JavaBundle.message("packaging.jlink.verbose.tracing"), myProperties.verbose);
@@ -51,16 +56,14 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   @Override
   public boolean isModified() {
-    if (myProperties.compressionLevel != CompressionLevel.getLevelByText(myCompressionLevel.getItem())) return true;
+    if (myProperties.compressionLevel != myCompressionLevel.getItem()) return true;
     if (myProperties.verbose != myVerbose.isSelected()) return true;
     return false;
   }
 
   @Override
   public void apply() {
-    myProperties.compressionLevel = Optional.ofNullable(myCompressionLevel.getItem())
-      .map(i -> CompressionLevel.getLevelByText(i))
-      .orElse(CompressionLevel.ZERO);
+    myProperties.compressionLevel = Optional.ofNullable(myCompressionLevel.getItem()).orElse(CompressionLevel.ZERO);
     myProperties.verbose = myVerbose.isSelected();
   }
 }
