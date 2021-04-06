@@ -1478,7 +1478,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   private boolean shouldEnableChangeLists() {
     boolean forceDisable = CommitModeManager.getInstance(myProject).getCurrentCommitMode().hideLocalChangesTab() ||
-                           Registry.is("vcs.disable.changelists");
+                           Registry.is("vcs.disable.changelists", false);
     return !forceDisable;
   }
 
