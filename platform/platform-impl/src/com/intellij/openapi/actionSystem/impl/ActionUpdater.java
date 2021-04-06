@@ -397,15 +397,13 @@ final class ActionUpdater {
     }
     if (child instanceof ActionGroup) {
       ActionGroup actionGroup = (ActionGroup)child;
-      JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
-      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) {
-        return Collections.emptyList();
-      }
 
       boolean isPopup = actionGroup.isPopup(myPlace);
       boolean hasEnabled = false, hasVisible = false;
       if (hideDisabled || isPopup) {
-        for (AnAction action : childrenIterable) {
+        JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
+        for (AnAction action : childrenIterable.take(100)) {
+          if (action instanceof Separator) continue;
           Presentation p = update(action, strategy);
           if (p == null) continue;
           hasVisible |= p.isVisible();
@@ -454,16 +452,15 @@ final class ActionUpdater {
     return presentation != null ? presentation : computeOnEdt(() -> myFactory.getPresentation(action));
   }
 
-  private static List<AnAction> removeUnnecessarySeparators(List<? extends AnAction> visible) {
+  static @NotNull List<AnAction> removeUnnecessarySeparators(@NotNull List<? extends AnAction> visible) {
     List<AnAction> result = new ArrayList<>();
     for (AnAction child : visible) {
-      if (child instanceof Separator) {
-        if (!StringUtil.isEmpty(((Separator)child).getText()) || (!result.isEmpty() && !(result.get(result.size() - 1) instanceof Separator))) {
-          result.add(child);
-        }
-      } else {
-        result.add(child);
+      if (child instanceof Separator &&
+          ContainerUtil.getLastItem(result) instanceof Separator &&
+          StringUtil.isEmpty(((Separator)child).getText())) {
+        continue;
       }
+      result.add(child);
     }
     return result;
   }
@@ -533,8 +530,7 @@ final class ActionUpdater {
       .withRoots(getGroupChildren(group, strategy))
       .unique()
       .traverse(TreeTraversal.LEAVES_DFS)
-      .filter(o -> !(o instanceof Separator) && !(isDumb && !o.isDumbAware()))
-      .take(1000);
+      .filter(o -> !isDumb || o.isDumbAware());
   }
 
   private static void handleUpdateException(AnAction action, Presentation presentation, Throwable exc) {
