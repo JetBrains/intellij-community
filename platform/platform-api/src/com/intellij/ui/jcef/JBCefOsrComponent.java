@@ -91,7 +91,7 @@ class JBCefOsrComponent extends JPanel {
 
     double val = e.getPreciseWheelRotation() *
                  RegistryManager.getInstance().intValue("ide.browser.jcef.osr.wheelRotation.factor");
-    if (SystemInfoRt.isLinux) {
+    if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
       val *= -1;
     }
     myBrowser.getCefBrowser().sendMouseWheelEvent(new MouseWheelEvent(
