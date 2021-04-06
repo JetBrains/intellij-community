@@ -414,40 +414,22 @@ object UpdateChecker {
     return ExternalResults(result, errors)
   }
 
-  @JvmStatic
-  fun mergePluginsFromRepositories(
-    marketplaceUpdates: List<IdeaPluginDescriptor>,
-    customPlugins: List<IdeaPluginDescriptor>,
-    addNotExist: Boolean
-  ): List<IdeaPluginDescriptor> {
-    val compatiblePluginMap = marketplaceUpdates.associateBy { it.pluginId }.toMutableMap()
-    for (customPlugin in customPlugins) {
-      val pluginId = customPlugin.pluginId
-      val plugin = compatiblePluginMap[pluginId]
-      if (plugin == null) {
-        if (addNotExist) {
-          compatiblePluginMap[pluginId] = customPlugin
-        }
-      }
-      else if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.version, plugin) > 0) {
-        compatiblePluginMap[pluginId] = customPlugin
-      }
-    }
-    return compatiblePluginMap.values.toList()
-  }
-
   @Throws(IOException::class)
+  @JvmOverloads
   @JvmStatic
-  fun checkAndPrepareToInstall(originalDownloader: PluginDownloader,
-                               state: InstalledPluginsState,
-                               toUpdate: MutableMap<PluginId, PluginDownloader>,
-                               buildNumber: BuildNumber?,
-                               indicator: ProgressIndicator?) {
+  fun checkAndPrepareToInstall(
+    originalDownloader: PluginDownloader,
+    state: InstalledPluginsState,
+    toUpdate: MutableMap<PluginId, PluginDownloader>,
+    buildNumber: BuildNumber? = null,
+    indicator: ProgressIndicator? = null,
+  ) {
     val pluginId = originalDownloader.id
     val pluginVersion = originalDownloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    if (installedPlugin == null || pluginVersion == null ||
-        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
+    if (installedPlugin == null
+        || pluginVersion == null
+        || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
       val oldDownloader = ourUpdatedPlugins[pluginId]
       val downloader = if (PluginManagerCore.isDisabled(pluginId)) {
         originalDownloader

@@ -30,7 +30,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(base, false);
       PluginManager.loadDescriptorFromFile(descriptor, base.resolve(name), base, null, Collections.emptySet());
       PluginDownloader downloader = PluginDownloader.createDownloader(descriptor, null, buildNumber);
-      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate, null, null);
+      UpdateChecker.checkAndPrepareToInstall(downloader, new InstalledPluginsState(), toUpdate);
     }
     assertEquals("Found: " + toUpdate.size(), 1, toUpdate.size());
 

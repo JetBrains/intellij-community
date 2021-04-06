@@ -111,7 +111,7 @@ public final class RepositoryHelper {
                    repositoryUrl);
   }
 
-  private static List<PluginNode> process(List<PluginNode> list,
+  private static @NotNull List<PluginNode> process(@NotNull List<PluginNode> list,
                                                    @NotNull BuildNumber build,
                                                    @Nullable String repositoryUrl) {
     Map<PluginId, PluginNode> result = new LinkedHashMap<>(list.size());
