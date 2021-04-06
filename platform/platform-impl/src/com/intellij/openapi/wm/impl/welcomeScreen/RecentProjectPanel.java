@@ -95,13 +95,10 @@ public class RecentProjectPanel extends JPanel {
     myList.setCellRenderer(createRenderer(myPathShortener));
 
     if (Registry.is("autocheck.availability.welcome.screen.projects")) {
-      myChecker = new FilePathChecker(new Runnable() {
-        @Override
-        public void run() {
-          if (myList.isShowing()) {
-            myList.revalidate();
-            myList.repaint();
-          }
+      myChecker = new FilePathChecker(() -> {
+        if (myList.isShowing()) {
+          myList.revalidate();
+          myList.repaint();
         }
       }, pathsToCheck);
       Disposer.register(parentDisposable, myChecker);
