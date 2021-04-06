@@ -41,7 +41,9 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
 
-    Collection<PluginDownloader> availableUpdates = UpdateChecker.findPluginUpdates(null).getEnabled();
+    Collection<PluginDownloader> availableUpdates = UpdateChecker.getInternalPluginUpdates()
+      .getPluginUpdates()
+      .getAllEnabled();
     if (availableUpdates.isEmpty()) {
       log("All plugins up to date.");
       System.exit(0);

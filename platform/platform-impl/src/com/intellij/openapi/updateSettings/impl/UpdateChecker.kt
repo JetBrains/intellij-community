@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -49,9 +48,6 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
 import kotlin.Result
 import kotlin.concurrent.withLock
-
-private typealias PluginResults = Triple<PluginUpdates, Collection<PluginNode>, Map<String?, Exception>>
-private typealias ExternalResults = Pair<Collection<ExternalUpdate>, Map<ExternalComponentSource, Exception>>
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -106,11 +102,16 @@ object UpdateChecker {
    */
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
-    val callback = ActionCallback()
-    ProcessIOExecutorService.INSTANCE.execute {
-      doUpdateAndShowResult(null, UpdateSettings.getInstance(), false, false, true, null, callback)
+    return ActionCallback().also {
+      ProcessIOExecutorService.INSTANCE.execute {
+        doUpdateAndShowResult(
+          userInitiated = false,
+          preferDialog = false,
+          showSettingsLink = true,
+          callback = it,
+        )
+      }
     }
-    return callback
   }
 
   /**
@@ -118,93 +119,108 @@ object UpdateChecker {
    * (the latter action passes customized update settings and forces results presentation in a dialog).
    */
   @JvmStatic
-  fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
-    val settings = customSettings ?: UpdateSettings.getInstance()
-    val modal = customSettings != null
+  @JvmOverloads
+  fun updateAndShowResult(
+    project: Project?,
+    customSettings: UpdateSettings? = null,
+  ) {
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
-      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), settings, true, modal, !modal, indicator, null)
-      override fun isConditionalModal(): Boolean = modal
-      override fun shouldStartInBackground(): Boolean = !modal
+      override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(
+        getProject(),
+        customSettings,
+        userInitiated = true,
+        preferDialog = isConditionalModal,
+        showSettingsLink = shouldStartInBackground(),
+        indicator = indicator,
+      )
+
+      override fun isConditionalModal(): Boolean = customSettings != null
+
+      override fun shouldStartInBackground(): Boolean = !isConditionalModal
     })
   }
 
-  private fun doUpdateAndShowResult(project: Project?,
-                                    updateSettings: UpdateSettings,
-                                    userInitiated: Boolean,
-                                    preferDialog: Boolean,
-                                    showSettingsLink: Boolean,
-                                    indicator: ProgressIndicator?,
-                                    callback: ActionCallback?) {
-    indicator?.text = IdeBundle.message("updates.checking.platform")
-    val platformUpdates = checkForPlatformUpdates(updateSettings, indicator)
-    if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR) {
+  @JvmStatic
+  private fun doUpdateAndShowResult(
+    project: Project? = null,
+    customSettings: UpdateSettings? = null,
+    userInitiated: Boolean,
+    preferDialog: Boolean,
+    showSettingsLink: Boolean,
+    indicator: ProgressIndicator? = null,
+    callback: ActionCallback? = null,
+  ) {
+    val updateSettings = customSettings ?: UpdateSettings.getInstance()
+
+    val platformUpdates = getPlatformUpdates(updateSettings, indicator)
+    if (platformUpdates is CheckForUpdateResult.ConnectionError) {
       if (userInitiated) {
-        showErrors(project, IdeBundle.message("updates.error.connection.failed", platformUpdates.error?.message), preferDialog)
+        showErrors(project, IdeBundle.message("updates.error.connection.failed", platformUpdates.error.message), preferDialog)
       }
       callback?.setRejected()
       return
     }
 
-    indicator?.text = IdeBundle.message("updates.checking.plugins")
-    val (pluginUpdates, customRepoPlugins, pluginErrors) = checkForPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
+    val (pluginUpdates, customRepoPlugins, internalErrors) = getInternalPluginUpdates(platformUpdates.newBuild?.apiVersion, indicator)
 
     indicator?.text = IdeBundle.message("updates.external.progress")
-    val (externalUpdates, externalErrors) = checkForExternalUpdates(updateSettings, indicator)
+    val (externalUpdates, externalErrors) = getExternalPluginUpdates(updateSettings, indicator)
 
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
-    if (userInitiated && (pluginErrors.isNotEmpty() || externalErrors.isNotEmpty())) {
+    if (userInitiated && (internalErrors.isNotEmpty() || externalErrors.isNotEmpty())) {
       val builder = HtmlBuilder()
-      pluginErrors.forEach { (host, ex) ->
+      internalErrors.forEach { (host, ex) ->
         if (!builder.isEmpty) builder.br()
-        builder.append(
-          if (host == null) IdeBundle.message("updates.plugins.error.message1", ex.message)
-          else IdeBundle.message("updates.plugins.error.message2", host, ex.message))
+
+        val message = host?.let {
+          IdeBundle.message("updates.plugins.error.message2", it, ex.message)
+        } ?: IdeBundle.message("updates.plugins.error.message1", ex.message)
+        builder.append(message)
       }
-      externalErrors.forEach { (source, ex) ->
+      externalErrors.forEach { (key, value) ->
         if (!builder.isEmpty) builder.br()
-        builder.append(IdeBundle.message("updates.external.error.message", source.name, ex.message))
+        builder.append(IdeBundle.message("updates.external.error.message", key.name, value.message))
       }
       showErrors(project, builder.wrapWithHtmlBody().toString(), preferDialog)
     }
 
     ApplicationManager.getApplication().invokeLater {
-      showResults(project, platformUpdates, pluginUpdates, customRepoPlugins, externalUpdates, userInitiated, preferDialog, showSettingsLink)
+      showResults(
+        project,
+        platformUpdates,
+        pluginUpdates,
+        customRepoPlugins,
+        externalUpdates,
+        userInitiated,
+        preferDialog,
+        showSettingsLink,
+      )
       callback?.setDone()
     }
   }
 
-  private fun checkForPlatformUpdates(settings: UpdateSettings, indicator: ProgressIndicator?): CheckForUpdateResult =
+  @JvmOverloads
+  @JvmStatic
+  @JvmName("getPlatformUpdates")
+  internal fun getPlatformUpdates(
+    settings: UpdateSettings = UpdateSettings.getInstance(),
+    indicator: ProgressIndicator? = null,
+  ): CheckForUpdateResult =
     try {
-      val product = loadProductData(indicator)
-      if (product != null) UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
-      else CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-    catch (e: JDOMException) {
-      LOG.infoWithDebug(e)
-      CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)  // corrupted content, don't bother telling user
+      indicator?.text = IdeBundle.message("updates.checking.platform")
+
+      loadProductData(indicator)?.let {
+        UpdateStrategy(ApplicationInfo.getInstance().build, it, settings).checkForUpdates()
+      } ?: CheckForUpdateResult.Empty
     }
     catch (e: Exception) {
       LOG.infoWithDebug(e)
-      CheckForUpdateResult(UpdateStrategy.State.CONNECTION_ERROR, e)
+      when (e) {
+        is JDOMException -> CheckForUpdateResult.Empty  // corrupted content, don't bother telling user
+        else -> CheckForUpdateResult.ConnectionError(e)
+      }
     }
-
-  @JvmStatic
-  fun checkForPlatformUpdates(indicator: ProgressIndicator?): Triple<CheckForUpdateResult, List<PluginDownloader>?, Collection<IdeaPluginDescriptor>?> {
-    indicator?.text = IdeBundle.message("updates.checking.platform")
-    val platformUpdates = checkForPlatformUpdates(UpdateSettings.getInstance(), indicator)
-
-    if (platformUpdates.state == UpdateStrategy.State.CONNECTION_ERROR || platformUpdates.state == UpdateStrategy.State.NOTHING_LOADED ||
-        platformUpdates.updatedChannel == null || platformUpdates.newBuild == null) {
-      return Triple(platformUpdates, null, null)
-    }
-
-    indicator?.text = IdeBundle.message("updates.checking.plugins")
-    val (pluginUpdates, customRepoPlugins, _) = checkForPluginUpdates(platformUpdates.newBuild.apiVersion, indicator)
-    val updatedPlugins = (pluginUpdates.enabled.asSequence() + pluginUpdates.disabled.asSequence()).filter { !isIgnored(it.descriptor) }.toList()
-
-    return Triple(platformUpdates, updatedPlugins, customRepoPlugins)
-  }
 
   @JvmStatic
   @Throws(IOException::class, JDOMException::class)
@@ -234,17 +250,6 @@ object UpdateChecker {
     }
   }
 
-  @JvmStatic
-  fun findPluginUpdates(indicator: ProgressIndicator?): PluginUpdates = findPluginUpdates(null, indicator)
-
-  /**
-   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
-   * otherwise, returns versions compatible with the specified build.
-   */
-  @JvmStatic
-  fun findPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginUpdates =
-    checkForPluginUpdates(buildNumber, indicator).first
-
   @ApiStatus.Internal
   @JvmStatic
   fun updateDescriptorsForInstalledPlugins(state: InstalledPluginsState) {
@@ -256,7 +261,17 @@ object UpdateChecker {
     }
   }
 
-  private fun checkForPluginUpdates(buildNumber: BuildNumber?, indicator: ProgressIndicator?): PluginResults {
+  /**
+   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
+   * otherwise, returns versions compatible with the specified build.
+   */
+  @JvmOverloads
+  @JvmStatic
+  fun getInternalPluginUpdates(
+    buildNumber: BuildNumber? = null,
+    indicator: ProgressIndicator? = null,
+  ): InternalPluginResults {
+    indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (System.getProperty("idea.ignore.disabled.plugins") == null) {
       val brokenPlugins = MarketplaceRequests.Instance.getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
@@ -266,7 +281,7 @@ object UpdateChecker {
 
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) {
-      return PluginResults(PluginUpdates(emptyList(), emptyList(), emptyList()), emptyList(), emptyMap())
+      return InternalPluginResults(PluginUpdates())
     }
 
     val toUpdate = HashMap<PluginId, PluginDownloader>()
@@ -311,7 +326,7 @@ object UpdateChecker {
         .toSet()
     }
 
-    return PluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible), customRepoPlugins.values, errors)
+    return InternalPluginResults(PluginUpdates(toUpdate.values, toUpdateDisabled.values, incompatible), customRepoPlugins.values, errors)
   }
 
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor?> {
@@ -387,11 +402,12 @@ object UpdateChecker {
     checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, buildNumber, indicator)
   }
 
+  @JvmOverloads
   @JvmStatic
-  fun findExternalUpdates(updateSettings: UpdateSettings, indicator: ProgressIndicator?): Collection<ExternalUpdate> =
-    checkForExternalUpdates(updateSettings, indicator).first
-
-  private fun checkForExternalUpdates(updateSettings: UpdateSettings, indicator: ProgressIndicator?): ExternalResults {
+  fun getExternalPluginUpdates(
+    updateSettings: UpdateSettings,
+    indicator: ProgressIndicator? = null,
+  ): ExternalPluginResults {
     val result = ArrayList<ExternalUpdate>()
     val errors = LinkedHashMap<ExternalComponentSource, Exception>()
 
@@ -411,7 +427,7 @@ object UpdateChecker {
       }
     }
 
-    return ExternalResults(result, errors)
+    return ExternalPluginResults(result, errors)
   }
 
   @Throws(IOException::class)
@@ -473,13 +489,9 @@ object UpdateChecker {
     preferDialog: Boolean,
     showSettingsLink: Boolean,
   ) {
-    val updatedChannel = platformUpdates.updatedChannel
-    val newBuild = platformUpdates.newBuild
-    val enabledPlugins = pluginUpdates.enabled.filter { !isIgnored(it.descriptor) }
-    val updatedPlugins = (enabledPlugins.asSequence() + pluginUpdates.disabled.asSequence().filter { !isIgnored(it.descriptor) }).toList()
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
-    if (updatedChannel != null && newBuild != null) {
+    if (platformUpdates is CheckForUpdateResult.Loaded) {
       val showNotification = userInitiated || WelcomeFrame.getInstance() != null
 
       if (showNotification) {
@@ -489,11 +501,9 @@ object UpdateChecker {
       val runnable = {
         UpdateInfoDialog(
           project,
-          updatedChannel,
-          newBuild,
-          platformUpdates.patches,
+          platformUpdates,
           showSettingsLink,
-          updatedPlugins,
+          pluginUpdates.updated,
           pluginUpdates.incompatible,
         ).show()
       }
@@ -502,12 +512,12 @@ object UpdateChecker {
         runnable()
       }
       else {
-        UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, pluginUpdates.incompatible)
+        UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, pluginUpdates.updated, pluginUpdates.incompatible)
 
         if (showNotification) {
           IdeUpdateUsageTriggerCollector.trigger("notification.shown")
           val message = IdeBundle.message("updates.new.build.notification.title", ApplicationNamesInfo.getInstance().fullProductName,
-                                          newBuild.version)
+                                          platformUpdates.newBuild.version)
           showNotification(
             project, NotificationKind.PLATFORM, "ide.update.available", "", message,
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.notification.update.action")) {
@@ -520,11 +530,12 @@ object UpdateChecker {
       return
     }
 
-    if (enabledPlugins.isNotEmpty()) {
+    if (pluginUpdates.enabled.any()) {
       if (userInitiated) {
         ourShownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
       }
 
+      val updatedPlugins = pluginUpdates.updated
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
 
       if (forceDialog) {
@@ -534,12 +545,17 @@ object UpdateChecker {
         UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
 
         if (userInitiated) {
-          val (title, message) = when (updatedPlugins.size) {
-            1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPlugins[0].pluginName)
-            else -> IdeBundle.message("updates.plugins.ready.title") to updatedPlugins.joinToString { "\"${it.pluginName}\"" }
+          val updatedPluginNames = updatedPlugins.map { it.pluginName }
+          val (title, message) = when (updatedPluginNames.size) {
+            1 -> "" to IdeBundle.message("updates.plugin.ready.title", updatedPluginNames[0])
+            else -> IdeBundle.message("updates.plugins.ready.title") to updatedPluginNames.joinToString { """"$it"""" }
           }
           showNotification(
-            project, NotificationKind.PLUGINS, "plugins.update.available", title, message,
+            project,
+            NotificationKind.PLUGINS,
+            "plugins.update.available",
+            title,
+            message,
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
               PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
             },
@@ -568,7 +584,7 @@ object UpdateChecker {
       }
     }
 
-    if (enabledPlugins.isEmpty() && externalUpdates.isEmpty()) {
+    if (pluginUpdates.enabled.none() && externalUpdates.isEmpty()) {
       if (forceDialog) {
         NoUpdatesDialog(showSettingsLink).show()
       }
@@ -609,7 +625,8 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean =
+  @JvmName("isIgnored")
+  internal fun isIgnored(descriptor: IdeaPluginDescriptor): Boolean =
     descriptor.ignoredKey in ignoredPlugins
 
   @JvmStatic
@@ -618,7 +635,7 @@ object UpdateChecker {
     ignoredPlugins += descriptors.map { it.ignoredKey }
     runCatching { Files.write(Path.of(PathManager.getConfigPath(), DISABLED_PLUGIN_UPDATE), ignoredPlugins) }
       .onFailure { LOG.error(it) }
-    UpdateSettingsEntryPointActionProvider.removePluginsUpdate(descriptors.map { it.pluginId }.toSet())
+    UpdateSettingsEntryPointActionProvider.removePluginsUpdate(descriptors)
   }
 
   private val ignoredPlugins: MutableSet<String> by lazy { TreeSet(readConfigLines(DISABLED_PLUGIN_UPDATE)) }
@@ -656,44 +673,52 @@ object UpdateChecker {
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
   @ApiStatus.Internal
-  fun testPlatformUpdate(project: Project?, updateDataText: String, patchFilePath: String?, forceUpdate: Boolean) {
+  fun testPlatformUpdate(
+    project: Project?,
+    updateDataText: String,
+    patchFile: File?,
+    forceUpdate: Boolean,
+  ) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
     }
 
-    val channel: UpdateChannel?
-    val newBuild: BuildInfo?
-    val patches: UpdateChain?
     val currentBuild = ApplicationInfo.getInstance().build
-    if (forceUpdate) {
-      val node = JDOMUtil.load(updateDataText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
-      channel = UpdateChannel(node, currentBuild.productCode)
-      newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
-      patches = newBuild.patches.firstOrNull()?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
+    val productCode = currentBuild.productCode
+    val checkForUpdateResult = if (forceUpdate) {
+      val node = JDOMUtil.load(updateDataText)
+                   .getChild("product")
+                   ?.getChild("channel")
+                 ?: throw IllegalArgumentException("//channel missing")
+      val channel = UpdateChannel(node, productCode)
+      val newBuild = channel.builds.firstOrNull()
+                     ?: throw IllegalArgumentException("//build missing")
+      val patches = newBuild.patches.firstOrNull()
+        ?.let { UpdateChain(listOf(it.fromBuild, newBuild.number), it.size) }
+
+      CheckForUpdateResult.Loaded(newBuild, channel, patches)
     }
     else {
-      val product = parseUpdateData(JDOMUtil.load(updateDataText), currentBuild.productCode)
-      val strategy = UpdateStrategy(currentBuild, product, UpdateSettings.getInstance())
-      val checkForUpdateResult = strategy.checkForUpdates()
-      channel = checkForUpdateResult.updatedChannel
-      newBuild = checkForUpdateResult.newBuild
-      patches = checkForUpdateResult.patches
+      UpdateStrategy(
+        currentBuild,
+        parseUpdateData(updateDataText, productCode),
+      ).checkForUpdates()
     }
 
-    if (channel != null && newBuild != null) {
-      val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(project, channel, newBuild, patches, patchFile).show()
+    val dialog = when (checkForUpdateResult) {
+      is CheckForUpdateResult.Loaded -> UpdateInfoDialog(project, checkForUpdateResult, patchFile)
+      else -> NoUpdatesDialog(true)
     }
-    else {
-      NoUpdatesDialog(true).show()
-    }
+
+    dialog.show()
   }
 
   //<editor-fold desc="Deprecated stuff.">
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
   @Suppress("DEPRECATION")
-  @JvmField val NOTIFICATIONS =
+  @JvmField
+  val NOTIFICATIONS =
     NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
   @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
@@ -707,6 +732,6 @@ object UpdateChecker {
   @Deprecated(message = "Use checkForPluginUpdates", replaceWith = ReplaceWith(""))
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    findPluginUpdates(null, null).enabled.ifEmpty { null }
+    getInternalPluginUpdates().pluginUpdates.allEnabled.ifEmpty { null }
   //</editor-fold>
 }

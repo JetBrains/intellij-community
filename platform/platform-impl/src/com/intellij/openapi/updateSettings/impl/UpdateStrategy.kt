@@ -8,43 +8,48 @@ import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.graph.impl.ShortestPathFinder
 import org.jetbrains.annotations.ApiStatus
 
-class UpdateStrategy(private val currentBuild: BuildNumber,
-                     private val product: Product?,
-                     private val settings: UpdateSettings,
-                     private val customization: UpdateStrategyCustomization) {
-
-  constructor(currentBuild: BuildNumber, product: Product?, settings: UpdateSettings) :
-    this(currentBuild, product, settings, UpdateStrategyCustomization.getInstance())
+class UpdateStrategy @JvmOverloads constructor(
+  private val currentBuild: BuildNumber,
+  private val product: Product? = null,
+  private val settings: UpdateSettings = UpdateSettings.getInstance(),
+  private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
+) {
 
   @Deprecated("Please use `UpdateStrategy(BuildNumber, Product, UpdateSettings)` instead")
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Suppress("DEPRECATION")
-  constructor(currentBuild: BuildNumber, updates: UpdatesInfo, settings: UpdateSettings) :
-    this(currentBuild, updates.product, settings)
-
-  enum class State {
-    LOADED, CONNECTION_ERROR, NOTHING_LOADED
-  }
+  constructor(
+    currentBuild: BuildNumber,
+    updates: UpdatesInfo,
+    settings: UpdateSettings = UpdateSettings.getInstance(),
+  ) : this(
+    currentBuild,
+    updates.product,
+    settings,
+  )
 
   fun checkForUpdates(): CheckForUpdateResult {
     if (product == null || product.channels.isEmpty()) {
-      return CheckForUpdateResult(State.NOTHING_LOADED, null)
+      return CheckForUpdateResult.Empty
     }
 
     val selectedChannel = settings.selectedChannelStatus
     val ignoredBuilds = settings.ignoredBuildNumbers.toSet()
 
-    val result = product.channels.asSequence()
-      .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
-      .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
-      .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
-      .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
-      .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
-
-    val newBuild = result?.first
-    val updatedChannel = result?.second
-    val patches = if (newBuild != null) patches(newBuild, product, currentBuild) else null
-    return CheckForUpdateResult(newBuild, updatedChannel, patches)
+    return product.channels
+             .asSequence()
+             .filter { ch -> ch.status >= selectedChannel }                                            // filters out inapplicable channels
+             .sortedBy { ch -> ch.status }                                                             // reorders channels (EAPs first)
+             .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }                    // maps into a sequence of <build, channel> pairs
+             .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
+             .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
+             ?.let { (newBuild, channel) ->
+               CheckForUpdateResult.Loaded(
+                 newBuild,
+                 channel,
+                 patches(newBuild, product, currentBuild),
+               )
+             } ?: CheckForUpdateResult.Empty
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =

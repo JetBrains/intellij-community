@@ -61,9 +61,9 @@ public class PluginUpdateDialog extends DialogWrapper {
   private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> updatedPlugins,
+                            @NotNull Collection<PluginDownloader> downloaders,
                             @Nullable Collection<PluginNode> customRepositoryPlugins) {
-    this(project, updatedPlugins, customRepositoryPlugins, false);
+    this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
@@ -74,15 +74,15 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   private PluginUpdateDialog(@Nullable Project project,
-                             @NotNull Collection<PluginDownloader> updatedPlugins,
+                             @NotNull Collection<PluginDownloader> downloaders,
                              @Nullable Collection<PluginNode> customRepositoryPlugins,
                              boolean platformUpdate) {
     super(project, true);
 
-    myDownloaders = updatedPlugins;
+    myDownloaders = downloaders;
     myPlatformUpdate = platformUpdate;
 
-    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size()), e -> {
+    myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", downloaders.size()), e -> {
       close(CANCEL_EXIT_CODE);
       UpdateChecker.ignorePlugins(ContainerUtil.map(myGroup.ui.plugins, ListPluginComponent::getPluginDescriptor));
     });
@@ -119,7 +119,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
     });
 
-    for (PluginDownloader plugin : updatedPlugins) {
+    for (PluginDownloader plugin : downloaders) {
       myGroup.descriptors.add(plugin.getDescriptor());
     }
     myGroup.sortByName();

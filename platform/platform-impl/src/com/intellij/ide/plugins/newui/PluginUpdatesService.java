@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.PluginUpdates;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -204,10 +203,8 @@ public class PluginUpdatesService {
     }
 
     NonUrgentExecutor.getInstance().execute(() -> {
-      PluginUpdates updates = UpdateChecker.findPluginUpdates(null);
-      List<IdeaPluginDescriptor> cache = new ArrayList<>();
-      cache.addAll(ContainerUtil.map(updates.getEnabled(), PluginDownloader::getDescriptor));
-      cache.addAll(ContainerUtil.map(updates.getDisabled(), PluginDownloader::getDescriptor));
+      List<IdeaPluginDescriptor> cache = ContainerUtil.map(UpdateChecker.getInternalPluginUpdates().getPluginUpdates().getAll(),
+                                                           PluginDownloader::getDescriptor);
 
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {

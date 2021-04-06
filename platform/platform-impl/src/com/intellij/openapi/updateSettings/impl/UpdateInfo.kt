@@ -4,16 +4,20 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.BuildRange
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.*
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
+
+@Throws(IOException::class, JDOMException::class)
+fun parseUpdateData(
+  text: String,
+  productCode: String = ApplicationInfo.getInstance().build.productCode,
+): Product? = parseUpdateData(JDOMUtil.load(text), productCode)
 
 fun parseUpdateData(node: Element, productCode: String = ApplicationInfo.getInstance().build.productCode): Product? =
   node.getChildren("product")
