@@ -75,6 +75,10 @@ sealed class JpsFileEntitySource : EntitySource {
     override fun hashCode(): Int {
       return directory.hashCode() * 31 * 31 + projectLocation.hashCode() * 31 + fileNameId
     }
+
+    override fun toString(): String {
+      return "FileInDirectory(directory=$directory, fileNameId=$fileNameId, projectLocation=$projectLocation)"
+    }
   }
 }
 
