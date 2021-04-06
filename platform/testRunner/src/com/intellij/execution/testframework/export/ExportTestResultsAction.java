@@ -119,12 +119,8 @@ public final class ExportTestResultsAction extends DumbAwareAction {
       return;
     }
     ProgressManager.getInstance().run(
-      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false, new PerformInBackgroundOption() {
-        @Override
-        public boolean shouldStartInBackground() {
-          return true;
-        }
-      }) {
+      new Task.Backgroundable(project, ExecutionBundle.message("export.test.results.task.name"), false,
+                              PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);

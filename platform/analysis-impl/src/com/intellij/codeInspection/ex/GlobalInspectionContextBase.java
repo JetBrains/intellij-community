@@ -228,7 +228,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   @NotNull
   protected PerformInBackgroundOption createOption() {
-    return () -> true;
+    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {

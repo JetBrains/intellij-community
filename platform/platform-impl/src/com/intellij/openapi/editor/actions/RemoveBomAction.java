@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -77,7 +78,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
     List<VirtualFile> filesToProcess = getFilesWithBom(files);
     if (filesToProcess.isEmpty()) return;
     List<VirtualFile> filesUnableToProcess = new ArrayList<>();
-    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.BOM"), true, () -> false) {
+    new Task.Backgroundable(getEventProject(e), IdeBundle.message("removing.BOM"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
