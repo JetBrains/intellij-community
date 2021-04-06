@@ -8,8 +8,6 @@ import com.intellij.util.graph.InboundSemiGraph
 import com.intellij.util.graph.impl.ShortestPathFinder
 import org.jetbrains.annotations.ApiStatus
 
-private val NUMBER = Regex("\\d+")
-
 class UpdateStrategy(private val currentBuild: BuildNumber,
                      private val product: Product?,
                      private val settings: UpdateSettings,
@@ -67,6 +65,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber,
 
     val upgrades = MultiMap<BuildNumber, BuildNumber>()
     val sizes = mutableMapOf<Pair<BuildNumber, BuildNumber>, Int>()
+    val number = Regex("\\d+")
 
     product.channels.forEach { channel ->
       channel.builds.forEach { build ->
@@ -76,7 +75,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber,
             val fromBuild = patch.fromBuild.withoutProductCode()
             upgrades.putValue(toBuild, fromBuild)
             if (patch.size != null) {
-              val maxSize = NUMBER.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().maxOrNull()
+              val maxSize = number.findAll(patch.size).map { it.value.toIntOrNull() }.filterNotNull().maxOrNull()
               if (maxSize != null) sizes += (fromBuild to toBuild) to maxSize
             }
           }

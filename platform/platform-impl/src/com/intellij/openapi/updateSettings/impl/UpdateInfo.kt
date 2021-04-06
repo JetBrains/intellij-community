@@ -21,7 +21,7 @@ fun parseUpdateData(node: Element, productCode: String = ApplicationInfo.getInst
     ?.let { Product(it, productCode) }
 
 class Product internal constructor(node: Element, private val productCode: String) {
-  @NlsSafe val name: String = node.getMandatoryAttributeValue("name")
+  val name: @NlsSafe String = node.getMandatoryAttributeValue("name")
   val channels: List<UpdateChannel> = node.getChildren("channel").map { UpdateChannel(it, productCode) }
 
   override fun toString(): String = productCode
@@ -44,7 +44,7 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
   val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"), productCode)
   val apiVersion: BuildNumber = node.getAttributeValue("apiVersion")?.let { BuildNumber.fromStringWithProductCode(it, number.productCode) } ?: number
   val version: String = node.getAttributeValue("version") ?: ""
-  @NlsSafe val message: String = node.getChild("message")?.value ?: ""
+  val message: @NlsSafe String = node.getChild("message")?.value ?: ""
   val blogPost: String? = node.getChild("blogPost")?.getAttributeValue("url")
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
