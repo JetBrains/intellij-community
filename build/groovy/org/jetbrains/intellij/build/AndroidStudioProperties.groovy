@@ -74,6 +74,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         withModule("intellij.cidr.util.ui", mainJarName)
       },
       plugin("intellij.cidr.base.plugin") {
+        withModule("intellij.c.dfa", mainJarName)
         withModule("intellij.cidr.base", mainJarName)
         withModule("intellij.cidr.projectModel", mainJarName)
         withModule("intellij.cidr.workspaceModel", mainJarName)
@@ -97,7 +98,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       plugin("intellij.c.plugin") {
         withModule("intellij.c", mainJarName)
         withModule("intellij.c.debugger", mainJarName)
-        withModule("intellij.c.dfa", mainJarName)
         withModule("intellij.c.doxygen", mainJarName)
         withModule("intellij.c.testing", mainJarName)
         withModule("intellij.cidr.modulemap.language", mainJarName)
