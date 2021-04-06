@@ -38,6 +38,7 @@ final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryConta
   private final Editor myEditor;
   private final Point myPoint;
   @Nullable private final Runnable myHideRunnable;
+  private JComponent myToolbar;
 
   private DebuggerTreeWithHistoryPopup(@NotNull D initialItem,
                                        @NotNull DebuggerTreeCreator<D> creator,
@@ -54,6 +55,12 @@ final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryConta
   public static <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D initialItem, @NotNull Editor editor,
                                        @NotNull Point point, @NotNull Project project, Runnable hideRunnable) {
     new DebuggerTreeWithHistoryPopup<>(initialItem, creator, editor, point, project, hideRunnable).updateTree(initialItem);
+  }
+
+  @Override
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
+    myToolbar = super.createToolbar(parent, tree);
+    return myToolbar;
   }
 
   private TreeModelListener createTreeListener(final Tree tree) {

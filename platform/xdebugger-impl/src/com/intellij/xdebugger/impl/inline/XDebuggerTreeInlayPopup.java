@@ -324,12 +324,13 @@ public class XDebuggerTreeInlayPopup<D> {
     final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    int width = Math.max(size.width, toolbar.getPreferredSize().width) + 150;
-    int maxWidth = 600;
+    int hMargin = JBUI.scale(150);
+    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
+    int maxWidth = JBUI.scale(600);
     int row = Math.min(12, tree.getRowCount() - 1);
     Rectangle bounds = tree.getRowBounds(row);
-    int margin = 30;
-    int height = toolbar.getHeight() + margin + (bounds == null ? 0 : bounds.y + bounds.height);
+    int vMargin = JBUI.scale(30);
+    int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
