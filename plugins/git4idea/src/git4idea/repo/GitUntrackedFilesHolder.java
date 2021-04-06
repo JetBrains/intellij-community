@@ -90,8 +90,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private final ProjectLevelVcsManager myVcsManager;
   private final Git myGit;
 
-  private final Set<FilePath> myDefinitelyUntrackedFiles = new HashSet<>();
-  private final Set<FilePath> myPossiblyUntrackedFiles = new HashSet<>();
+  private final Set<FilePath> myUntrackedFiles = new HashSet<>();
+  private final Set<FilePath> myDirtyFiles = new HashSet<>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
   private final Object RESCAN_LOCK = new Object();
@@ -118,8 +118,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   @Override
   public void dispose() {
     synchronized (LOCK) {
-      myDefinitelyUntrackedFiles.clear();
-      myPossiblyUntrackedFiles.clear();
+      myUntrackedFiles.clear();
+      myDirtyFiles.clear();
     }
   }
 
@@ -128,8 +128,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    */
   public void add(@NotNull FilePath file) {
     synchronized (LOCK) {
-      myDefinitelyUntrackedFiles.add(file);
-      myPossiblyUntrackedFiles.add(file);
+      myUntrackedFiles.add(file);
+      myDirtyFiles.add(file);
     }
   }
 
@@ -138,8 +138,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    */
   public void add(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      myDefinitelyUntrackedFiles.addAll(files);
-      myPossiblyUntrackedFiles.addAll(files);
+      myUntrackedFiles.addAll(files);
+      myDirtyFiles.addAll(files);
     }
   }
 
@@ -148,8 +148,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    */
   public void remove(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      files.forEach(myDefinitelyUntrackedFiles::remove);
-      myPossiblyUntrackedFiles.addAll(files);
+      files.forEach(myUntrackedFiles::remove);
+      myDirtyFiles.addAll(files);
     }
   }
 
@@ -159,7 +159,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    */
   public void markPossiblyUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      myPossiblyUntrackedFiles.addAll(files);
+      myDirtyFiles.addAll(files);
     }
   }
 
@@ -186,13 +186,13 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   @NotNull
   public Collection<FilePath> getUntrackedFilePaths() {
     synchronized (LOCK) {
-      return new ArrayList<>(myDefinitelyUntrackedFiles);
+      return new ArrayList<>(myUntrackedFiles);
     }
   }
 
   public boolean containsFile(@NotNull FilePath filePath) {
     synchronized (LOCK) {
-      return myDefinitelyUntrackedFiles.contains(filePath);
+      return myUntrackedFiles.contains(filePath);
     }
   }
 
@@ -211,8 +211,8 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   private void rescan() throws VcsException {
     @Nullable Set<FilePath> suspiciousFiles;
     synchronized (LOCK) {
-      suspiciousFiles = myReady ? new HashSet<>(myPossiblyUntrackedFiles) : null;
-      myPossiblyUntrackedFiles.clear();
+      suspiciousFiles = myReady ? new HashSet<>(myDirtyFiles) : null;
+      myDirtyFiles.clear();
     }
 
     Set<FilePath> untrackedFiles = myGit.untrackedFilePaths(myProject, myRoot, suspiciousFiles);
@@ -222,12 +222,12 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     synchronized (LOCK) {
       if (suspiciousFiles != null) {
         // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
-        myDefinitelyUntrackedFiles.removeIf((definitelyUntrackedFile) -> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
-        myDefinitelyUntrackedFiles.addAll(untrackedFiles);
+        myUntrackedFiles.removeIf((definitelyUntrackedFile) -> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
+        myUntrackedFiles.addAll(untrackedFiles);
       }
       else {
-        myDefinitelyUntrackedFiles.clear();
-        myDefinitelyUntrackedFiles.addAll(untrackedFiles);
+        myUntrackedFiles.clear();
+        myUntrackedFiles.addAll(untrackedFiles);
         myReady = true;
       }
     }
@@ -269,7 +269,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
 
     synchronized (LOCK) {
-      myPossiblyUntrackedFiles.addAll(filesToRefresh);
+      myDirtyFiles.addAll(filesToRefresh);
     }
   }
 
