@@ -92,7 +92,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
     Disposer.register(parentDisposable, this)
   }
 
-  override fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point) {
+  override fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point, disposeAction: Runnable?) {
       presentation.putClientProperty(PRESENTATION_GOT_IT_KEY, ActionContext(this, pointProvider))
       Disposer.register(this, Disposable { presentation.putClientProperty(PRESENTATION_GOT_IT_KEY, null) })
   }

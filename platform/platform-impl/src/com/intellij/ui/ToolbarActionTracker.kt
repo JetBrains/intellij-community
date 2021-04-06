@@ -14,6 +14,7 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.event.AncestorEvent
 import org.jetbrains.annotations.ApiStatus.Experimental
+import java.util.function.Consumer
 
 
 @Experimental
@@ -73,7 +74,7 @@ abstract class ToolbarActionTracker: Disposable {
    * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates its content and ActionButton's
    * showing status / location may change in time.
    */
-  abstract fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point)
+  abstract fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point, disposeAction: Runnable? = null)
 
   abstract fun wasCreated(): Boolean
 

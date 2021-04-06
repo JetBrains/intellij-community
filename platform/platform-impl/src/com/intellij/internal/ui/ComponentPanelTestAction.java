@@ -836,7 +836,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       toolbarActions.add(new MyAction("Short", AllIcons.Ide.Rating1) {
         {
           GotItTooltip actionGotIt = new GotItTooltip("short.action", "Short action text", project).withHeader("Header");
-          actionGotIt.assignTo(getTemplatePresentation(), GotItTooltip.BOTTOM_MIDDLE);
+          actionGotIt.assignTo(getTemplatePresentation(),
+                               GotItTooltip.BOTTOM_MIDDLE, ()->{});
         }
       }.withShortCut("control K"));
       toolbarActions.add(new MyAction("Long", AllIcons.Ide.Rating2).withShortCut("control N"));
