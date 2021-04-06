@@ -34,7 +34,6 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   private int myCurrentIndex = -1;
   protected final DebuggerTreeCreator<D> myTreeCreator;
   @NotNull protected final Project myProject;
-  protected JComponent myToolbar;
 
   protected DebuggerTreeWithHistoryContainer(@NotNull D initialItem, @NotNull DebuggerTreeCreator<D> creator, @NotNull Project project) {
     myTreeCreator = creator;
@@ -47,13 +46,13 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   protected BorderLayoutPanel fillMainPanel(BorderLayoutPanel mainPanel, Tree tree) {
-    myToolbar = createToolbar(mainPanel, tree);
+    JComponent toolbar = createToolbar(mainPanel, tree);
     tree.setBackground(UIUtil.getToolTipBackground());
-    myToolbar.setBackground(UIUtil.getToolTipActionBackground());
+    toolbar.setBackground(UIUtil.getToolTipActionBackground());
     WindowMoveListener moveListener = new WindowMoveListener(mainPanel);
-    myToolbar.addMouseListener(moveListener);
-    myToolbar.addMouseMotionListener(moveListener);
-    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(myToolbar);
+    toolbar.addMouseListener(moveListener);
+    toolbar.addMouseMotionListener(moveListener);
+    return mainPanel.addToCenter(ScrollPaneFactory.createScrollPane(tree, true)).addToBottom(toolbar);
   }
 
   private void updateTree() {
@@ -78,7 +77,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
   }
 
-  protected final JComponent createToolbar(JPanel parent, Tree tree) {
+  protected JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new SetAsRootAction(tree));
 
