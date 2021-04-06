@@ -37,6 +37,7 @@ import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
 import org.apache.maven.model.io.ModelReader;
 import org.apache.maven.model.path.DefaultUrlNormalizer;
+import org.apache.maven.model.path.PathTranslator;
 import org.apache.maven.model.path.UrlNormalizer;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.model.validation.ModelValidator;
@@ -49,10 +50,6 @@ import org.apache.maven.profiles.activation.ProfileActivator;
 import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
-import org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator;
-import org.apache.maven.project.interpolation.ModelInterpolationException;
-import org.apache.maven.project.path.DefaultPathTranslator;
-import org.apache.maven.project.path.PathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
@@ -67,7 +64,6 @@ import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
@@ -342,10 +338,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
-
-    PathTranslator pathTranslator = new DefaultPathTranslator();
-    pathTranslator.alignToBaseDirectory(result, basedir);
-
     return MavenModelConverter.convertModel(result, null);
   }
 
@@ -430,23 +422,53 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull
   private static Model doInterpolate(@NotNull Model result, File basedir) throws RemoteException {
     try {
-      AbstractStringBasedModelInterpolator interpolator = new CustomMaven3ModelInterpolator(new DefaultPathTranslator());
-      interpolator.initialize();
 
-      Properties props = MavenServerUtil.collectSystemProperties();
-      ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
-      config.setBuildStartTime(new Date());
+      CustomMaven3ModelInterpolator2 interpolator = new CustomMaven3ModelInterpolator2();
+      //interpolator.initialize();
 
       Properties userProperties = new Properties();
       userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
-      config.setUserProperties(userProperties);
+      ModelBuildingRequest request = new DefaultModelBuildingRequest();
+      request.setUserProperties(userProperties);
+      request.setSystemProperties(MavenServerUtil.collectSystemProperties());
+      request.setBuildStartTime(new Date());
+      request.setRawModel(result);
+      interpolator.setPathTranslator(new PathTranslator() {
+        @Override
+        public String alignToBaseDirectory(String path, File basedir) {
+          String result = path;
+          if (path != null && basedir != null) {
+            path = path.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+            File file = new File(path);
+            if (file.isAbsolute()) {
+              result = file.getPath();
+            }
+            else if (file.getPath().startsWith(File.separator)) {
+              result = file.getAbsolutePath();
+            }
+            else {
+              result = (new File((new File(basedir, path)).toURI().normalize())).getAbsolutePath();
+            }
+          }
 
-      result = interpolator.interpolate(result, basedir, config, false);
+          return result;
+        }
+      });
+      final List<ModelProblemCollectorRequest> problems = new ArrayList<ModelProblemCollectorRequest>();
+      result = interpolator.interpolateModel(result, basedir, request, new ModelProblemCollector() {
+        @Override
+        public void add(ModelProblemCollectorRequest request) {
+          problems.add(request);
+        }
+      });
+
+      for (ModelProblemCollectorRequest problem : problems) {
+        if (problem.getException() != null) {
+          Maven3ServerGlobals.getLogger().warn(problem.getException());
+        }
+      }
     }
-    catch (ModelInterpolationException e) {
-      Maven3ServerGlobals.getLogger().warn(e);
-    }
-    catch (InitializationException e) {
+    catch (Exception e) {
       Maven3ServerGlobals.getLogger().error(e);
     }
     return result;
@@ -725,35 +747,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-              final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
-
-              final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<Dependency, Artifact>();
-              Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
-              dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
-                @Override
-                public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
-                  final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
-                  final Dependency dependency = node.getDependency();
-                  if (dependency != null && winner == null) {
-                    Artifact winnerArtifact = Maven3AetherModelConverter.toArtifact(dependency);
-                    winnerDependencyMap.put(dependency, winnerArtifact);
-                  }
-                  return true;
-                }
-
-                @Override
-                public boolean visitLeave(org.eclipse.aether.graph.DependencyNode node) {
-                  return true;
-                }
-              }));
-              for (Dependency dependency : dependencies) {
-                final Artifact artifact = winnerDependencyMap.get(dependency);
-                if (artifact != null) {
-                  artifacts.add(artifact);
-                  resolveAsModule(artifact);
-                }
-              }
-
+              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph")==null;
+              Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
               project.setArtifacts(artifacts);
               executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
             }
@@ -766,6 +761,72 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     });
 
     return executionResults;
+  }
+
+  @NotNull
+  private Set<Artifact> resolveArtifacts(final DependencyResolutionResult dependencyResolutionResult, boolean addUnresolvedNodes) {
+    final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<Dependency, Artifact>();
+    Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+    Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<Dependency, Boolean>());
+    resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
+
+    if (dependencyResolutionResult.getDependencyGraph() != null) {
+      dependencyResolutionResult.getDependencyGraph().getChildren();
+    }
+
+    for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
+      final Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
+      if (artifact != null) {
+        addedDependencies.add(dependency);
+        artifacts.add(artifact);
+        resolveAsModule(artifact);
+      }
+    }
+
+    //if any syntax error presents in pom.xml we may not get dependencies via getDependencies, but they are in dependencyGraph.
+    // we need to BFS this graph and add dependencies
+    if (addUnresolvedNodes) {
+      Queue<org.eclipse.aether.graph.DependencyNode> queue = new ArrayDeque<org.eclipse.aether.graph.DependencyNode>();
+      queue.addAll(dependencyResolutionResult.getDependencyGraph().getChildren());
+      while (!queue.isEmpty()) {
+        org.eclipse.aether.graph.DependencyNode node = queue.poll();
+        queue.addAll(node.getChildren());
+        Dependency dependency = node.getDependency();
+        if (dependency == null || !addedDependencies.add(dependency)) {
+          continue;
+        }
+        final Artifact artifact = winnerDependencyMap.get(dependency);
+        if (artifact != null) {
+          addedDependencies.add(dependency);
+          //todo: properly resolve order
+          artifacts.add(artifact);
+          resolveAsModule(artifact);
+        }
+      }
+    }
+
+    return artifacts;
+  }
+
+  private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,
+                                       final Map<Dependency, Artifact> winnerDependencyMap) {
+    dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
+      @Override
+      public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
+        final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
+        final Dependency dependency = node.getDependency();
+        if (dependency != null && winner == null) {
+          Artifact winnerArtifact = Maven3AetherModelConverter.toArtifact(dependency);
+          winnerDependencyMap.put(dependency, winnerArtifact);
+        }
+        return true;
+      }
+
+      @Override
+      public boolean visitLeave(org.eclipse.aether.graph.DependencyNode node) {
+        return true;
+      }
+    }));
   }
 
   private boolean resolveAsModule(Artifact a) {
