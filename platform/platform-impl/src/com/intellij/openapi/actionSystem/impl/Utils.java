@@ -414,14 +414,14 @@ public final class Utils {
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() -> {
               Set<String> missedKeys = ContainerUtil.newConcurrentSet();
-              UpdateSession fastSession = actionUpdater.asBeforeActionPerformedUpdateSession(missedKeys::add);
+              UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
               T fastResult = function.apply(fastSession);
               sessionRef.set(fastSession);
               if (fastResult != null) {
                 ref.set(fastResult);
               }
               else if (ReadAction.compute(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
-                UpdateSession slowSession = actionUpdater.asBeforeActionPerformedUpdateSession(null);
+                UpdateSession slowSession = actionUpdater.asUpdateSession();
                 T slowResult = function.apply(slowSession);
                 ref.set(slowResult);
                 sessionRef.set(slowSession);
@@ -430,7 +430,7 @@ public final class Utils {
             return ref.get();
           });
           queue.offer(() -> {
-            actionUpdater.applyPresentationChanges(sessionRef.get());
+            ActionUpdater.getActionUpdater(sessionRef.get()).applyPresentationChanges();
             promise.setResult(ref.get());
           });
         }
@@ -444,9 +444,8 @@ public final class Utils {
       });
     }
     else {
-      UpdateSession session = actionUpdater.asBeforeActionPerformedUpdateSession(null);
-      result = function.apply(session);
-      actionUpdater.applyPresentationChanges(session);
+      result = function.apply(actionUpdater.asUpdateSession());
+      actionUpdater.applyPresentationChanges();
     }
     long time = System.currentTimeMillis() - start;
     if (time > 500) {

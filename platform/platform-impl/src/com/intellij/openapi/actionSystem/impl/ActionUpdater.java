@@ -30,10 +30,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -137,11 +134,7 @@ final class ActionUpdater {
     return success ? presentation : null;
   }
 
-  void applyPresentationChanges(@NotNull UpdateSession session) {
-    ((UpdateSessionImpl)session).updater.applyPresentationChanges();
-  }
-
-  private void applyPresentationChanges() {
+  void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
       AnAction action = entry.getKey();
       Presentation orig = myFactory.getPresentation(action);
@@ -487,17 +480,12 @@ final class ActionUpdater {
   }
 
   @NotNull
-  UpdateSession asBeforeActionPerformedUpdateSession(@Nullable Consumer<? super String> missedKeysFast) {
-    DataContext frozenContext = missedKeysFast != null ? Utils.freezeDataContext(myDataContext, missedKeysFast) : null;
-    ActionUpdater updater;
-    if (frozenContext == null || frozenContext == myDataContext) {
-      updater = this;
-    }
-    else {
-      updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
-                                  myEventTransform, myLaterInvocator);
-      updater.myPreCacheSlowDataKeys = false;
-    }
+  UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
+                                    @Nullable Consumer<Runnable> laterInvocator) {
+    DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
+    ActionUpdater updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
+                                              myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
+    updater.myPreCacheSlowDataKeys = false;
     return updater.asUpdateSession(new UpdateStrategy(
       action -> updater.updateActionReal(action, Op.beforeActionPerformedUpdate),
       updater.myRealUpdateStrategy.getChildren,
@@ -596,6 +584,10 @@ final class ActionUpdater {
       this.getChildren = getChildren;
       this.canBePerformed = canBePerformed;
     }
+  }
+
+  static @NotNull ActionUpdater getActionUpdater(@NotNull UpdateSession session) {
+    return ((UpdateSessionImpl)session).updater;
   }
 
   private static class UpdateSessionImpl implements UpdateSession {
