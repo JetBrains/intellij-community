@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
@@ -73,7 +74,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     Point pt = viewPoint.getLocation();
     Point loc = myLocationOnScreenRef.get();
     pt.translate(loc.x, loc.y);
-    return scaleUp(pt);
+    return SystemInfoRt.isWindows ? scaleUp(pt) : pt;
   }
 
   @Override
