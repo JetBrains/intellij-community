@@ -16,14 +16,13 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.registry.Registry;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,6 +50,27 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertModules("project");
     MavenProject root = getRootProjects().get(0);
     assertProblems(root, "'artifactId' with value '${undefined}' does not match a valid id pattern.");
+  }
+
+  public void testRecursiveInterpolation() {
+    importProjectWithErrors("<groupId>test</groupId>" +
+                            "<artifactId>project</artifactId>" +
+                            "<version>${version}</version>" +
+
+                            "<dependencies>" +
+                            "  <dependency>" +
+                            "    <groupId>group</groupId>" +
+                            "    <artifactId>artifact</artifactId>" +
+                            "    <version>1</version>" +
+                            "   </dependency>" +
+                            "</dependencies>");
+
+    assertModules("project");
+
+    MavenProject root = getRootProjects().get(0);
+    List<MavenProjectProblem> problems = root.getProblems();
+    assertFalse(problems.isEmpty());
+    assertModuleLibDeps("project", "Maven: group:artifact:1");
   }
 
   public void testUnresolvedParent() {
