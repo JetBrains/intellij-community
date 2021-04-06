@@ -77,7 +77,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @ApiStatus.Internal
-  boolean isSerializeCodeInsightPasses() {
+  public boolean isSerializeCodeInsightPasses() {
     return serializeCodeInsightPasses;
   }
 
