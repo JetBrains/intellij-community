@@ -216,7 +216,7 @@ class JpsCompilationRunner {
   }
 
   private class AntMessageHandler implements MessageHandler {
-    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createLinked()
+    private MultiMap<String, String> errorMessagesByCompiler = MultiMap.createConcurrent()
     private Map<String, Long> compilationStartTimeForTarget = new ConcurrentHashMap<>()
     private Map<String, Long> compilationFinishTimeForTarget = new ConcurrentHashMap<>()
     private float progress = -1.0
