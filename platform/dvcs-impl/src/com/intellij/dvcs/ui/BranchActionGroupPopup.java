@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -67,10 +66,8 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<? super AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
-    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.builder()
-            .add(CommonDataKeys.PROJECT, project)
-            .add(PlatformDataKeys.CONTEXT_COMPONENT, IdeFocusManager.getInstance(project).getFocusOwner())
-            .build(),
+    super(title, createBranchSpeedSearchActionGroup(actions),
+          DataManager.getInstance().getDataContext(IdeFocusManager.getInstance(project).getFocusOwner()),
           preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
