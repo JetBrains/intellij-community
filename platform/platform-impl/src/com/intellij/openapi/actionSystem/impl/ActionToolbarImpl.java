@@ -1475,12 +1475,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
-    private final JComponent myParent;
+    final ActionToolbarImpl myParent;
 
     PopupToolbar(@NotNull String place,
                  @NotNull ActionGroup actionGroup,
                  final boolean horizontal,
-                 @NotNull JComponent parent) {
+                 @NotNull ActionToolbarImpl parent) {
       super(place, actionGroup, horizontal, false);
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, this);
       myParent = parent;
@@ -1498,7 +1498,40 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       Dimension size = super.getPreferredSize();
       size.width = Math.max(size.width, DEFAULT_MINIMUM_BUTTON_SIZE.width);
       size.height = Math.max(size.height, DEFAULT_MINIMUM_BUTTON_SIZE.height);
+      if (isPaintParentWhileLoading()) {
+        Dimension parentSize = myParent.getSize();
+        size.width += parentSize.width;
+        size.height = parentSize.height;
+      }
       return size;
+    }
+
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      if (isPaintParentWhileLoading()) {
+        JLabel component = (JLabel)getComponent(0);
+        component.setLocation(component.getX() + myParent.getWidth(), component.getY());
+      }
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      if (isPaintParentWhileLoading()) {
+        myParent.paint(g);
+        paintChildren(g);
+      }
+      else {
+        super.paint(g);
+      }
+    }
+
+    boolean isPaintParentWhileLoading() {
+      return getOrientation() == SwingConstants.HORIZONTAL &&
+             myParent.getOrientation() == SwingConstants.HORIZONTAL &&
+             !hasVisibleActions() && myParent.hasVisibleActions() &&
+             getComponentCount() == 1 && getComponent(0) instanceof JLabel &&
+             ((JLabel)getComponent(0)).getIcon() instanceof AnimatedIcon;
     }
 
     @Override
