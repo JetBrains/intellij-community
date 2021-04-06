@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -40,6 +41,8 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
 
   public GitRepositoryManager(@NotNull Project project) {
     super(GitVcs.getInstance(project), GitUtil.DOT_GIT);
+
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), this);
   }
 
   @NotNull

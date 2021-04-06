@@ -193,10 +193,8 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
     if (toUnversioned) {
       GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
-      for (FilePath path : files) {
-        if (untrackedFilesHolder != null) {
-          untrackedFilesHolder.add(path);
-        }
+      if (untrackedFilesHolder != null) {
+        untrackedFilesHolder.add(files);
       }
     }
   }

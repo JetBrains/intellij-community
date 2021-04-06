@@ -56,8 +56,23 @@ const val NUL = "\u0000"
  */
 
 @Throws(VcsException::class)
-fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
-              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<GitFileStatus> {
+fun getStatus(project: Project,
+              root: VirtualFile,
+              files: List<FilePath> = emptyList(),
+              withRenames: Boolean = true,
+              withUntracked: Boolean = true,
+              withIgnored: Boolean = false): List<GitFileStatus> {
+  return getFileStatus(project, root, files, withRenames, withUntracked, withIgnored)
+    .map { GitFileStatus(root, it) }
+}
+
+@Throws(VcsException::class)
+fun getFileStatus(project: Project,
+                  root: VirtualFile,
+                  files: List<FilePath>,
+                  withRenames: Boolean,
+                  withUntracked: Boolean,
+                  withIgnored: Boolean): List<LightFileStatus.StatusRecord> {
   val h = GitUtil.createHandlerWithPaths(files) {
     val h = GitLineHandler(project, root, GitCommand.STATUS)
     h.setSilent(true)
@@ -67,7 +82,7 @@ fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = empty
   }
 
   val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
-  return parseGitStatusOutput(output).map { GitFileStatus(root, it) }
+  return parseGitStatusOutput(output)
 }
 
 @Throws(VcsException::class)

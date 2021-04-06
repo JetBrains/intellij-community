@@ -174,7 +174,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private class MyUpdate(val repository: Repository,
                          val isFullRescan: Boolean,
                          val action: () -> Unit)
-    : DisposableUpdate(repository, ComparableObject.Impl(repository, isFullRescan)) {
+    : DisposableUpdate(repository, ComparableObject.Impl(MyUpdate::class.java, repository, isFullRescan)) {
 
     override fun canEat(update: Update): Boolean {
       return update is MyUpdate &&

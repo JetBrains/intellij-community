@@ -2,6 +2,7 @@
 package com.intellij.dvcs.repo;
 
 import com.intellij.dvcs.MultiRootBranches;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class AbstractRepositoryManager<T extends Repository>
-  implements RepositoryManager<T> {
+  implements RepositoryManager<T>, Disposable {
 
   @NotNull private final AbstractVcs myVcs;
   @NotNull private final String myRepoDirName;
@@ -25,6 +26,10 @@ public abstract class AbstractRepositoryManager<T extends Repository>
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(vcs.getProject());
     myVcs = vcs;
     myRepoDirName = repoDirName;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override

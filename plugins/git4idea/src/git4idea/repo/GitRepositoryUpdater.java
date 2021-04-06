@@ -141,9 +141,7 @@ final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
       BackgroundTaskUtil.syncPublisher(myRepository.getProject(), GitConfigListener.TOPIC).notifyConfigChanged(myRepository);
     }
     if (indexChanged || externallyCommitted || headMoved || headChanged || currentBranchChanged || gitignoreChanged) {
-      myRepository.getIgnoredFilesHolder().startRescan(() -> {
-        VcsDirtyScopeManager.getInstance(myRepository.getProject()).dirDirtyRecursively(myRepository.getRoot());
-      });
+      VcsDirtyScopeManager.getInstance(myRepository.getProject()).dirDirtyRecursively(myRepository.getRoot());
       myRepository.getUntrackedFilesHolder().invalidate();
     }
     if (indexChanged) {
