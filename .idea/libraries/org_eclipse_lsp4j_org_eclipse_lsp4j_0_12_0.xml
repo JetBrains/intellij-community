@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j/0.12.0/org.eclipse.lsp4j-0.12.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

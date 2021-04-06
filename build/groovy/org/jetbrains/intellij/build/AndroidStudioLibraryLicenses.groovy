@@ -60,8 +60,8 @@ class AndroidStudioLibraryLicenses {
     // for eclipse-layout-kernel module library in intellij.android.designer
     new LibraryLicense(name: "Eclipse Layout Kernel", libraryName: "eclipse-layout-kernel", license: "Eclipse Public License 1.0"),
     // for LSP4J module libraries in intellij.c
-    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j:0.10.0", license: "Eclipse Public License 1.0"),
-    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.10.0", license: "Eclipse Public License 1.0"),
+    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j:0.12.0", license: "Eclipse Public License 1.0"),
+    new LibraryLicense(name: "Eclipse LSP4J", libraryName: "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.12.0", license: "Eclipse Public License 1.0"),
     new LibraryLicense(name: "fetchasgoogle.jar", libraryName: "fetchasgoogle.jar", license: "Apache 2.0"),
     // for flatbuffers-java module library in android.sdktools.mlkit-common
     new LibraryLicense(name: "FlatBuffers Java API", libraryName: "flatbuffers-java",
