@@ -12,7 +12,7 @@ public class PythonIndentingLexer extends PythonIndentingProcessor {
   private static final TokenSet TOKENS_TO_MERGE = PyTokenTypes.FSTRING_TEXT_TOKENS;
 
   public PythonIndentingLexer() {
-    super(new _PythonLexer(null, PythonLexerKind.REGULAR), TOKENS_TO_MERGE);
+    this(PythonLexerKind.REGULAR);
   }
 
   public PythonIndentingLexer(@NotNull PythonLexerKind kind) {

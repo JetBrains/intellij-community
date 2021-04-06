@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PythonLexer extends FlexAdapter {
   public PythonLexer() {
-    super(new _PythonLexer(null, PythonLexerKind.REGULAR));
+    this(PythonLexerKind.REGULAR);
   }
 
   public PythonLexer(@NotNull PythonLexerKind kind) {
