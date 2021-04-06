@@ -310,6 +310,11 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
             runTest("testData/incremental/pureKotlin/classSignatureUnchanged/");
         }
 
+        @TestMetadata("companionConstantChanged")
+        public void testCompanionConstantChanged() throws Exception {
+            runTest("testData/incremental/pureKotlin/companionConstantChanged/");
+        }
+
         @TestMetadata("compilationErrorThenFixedOtherPackage")
         public void testCompilationErrorThenFixedOtherPackage() throws Exception {
             runTest("testData/incremental/pureKotlin/compilationErrorThenFixedOtherPackage/");
