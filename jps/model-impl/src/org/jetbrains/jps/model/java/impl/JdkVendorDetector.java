@@ -14,27 +14,33 @@ import java.util.regex.Pattern;
 public final class JdkVendorDetector {
 
   // @formatter:off
-  static final Vendor ORACLE   = new Vendor("oracle",     null,                        false);
-  static final Vendor CORRETTO = new Vendor("corretto",   "Amazon Corretto",           true);
-  static final Vendor LIBERICA = new Vendor("liberica",   "BellSoft Liberica JDK",     true);
-  static final Vendor SAP      = new Vendor("sapmachine", "SAP SapMachine",            true);
-  static final Vendor AZUL     = new Vendor("azul",       "Azul Zulu Community\u2122", true);
-  static final Vendor JBR      = new Vendor("jbr",        "JetBrains Runtime",         true);
+  static final Vendor ORACLE        = new Vendor("oracle",        null,                         false);
+  static final Vendor ADOPT_OPEN_HS = new Vendor("adopt-openjdk", "AdoptOpenJDK (HostSpot)",    true);
+  static final Vendor ADOPT_OPEN_J9 = new Vendor("adopt-openj9",  "AdoptOpenJDK (OpenJ9)",      true);
+  static final Vendor CORRETTO      = new Vendor("corretto",      "Amazon Corretto",            true);
+  static final Vendor LIBERICA      = new Vendor("liberica",      "BellSoft Liberica JDK",      true);
+  static final Vendor SAP           = new Vendor("sapmachine",    "SAP SapMachine",             true);
+  static final Vendor AZUL          = new Vendor("azul",          "Azul Zulu Community\u2122",  true);
+  static final Vendor JBR           = new Vendor("jbr",           "JetBrains Runtime",          true);
   // @formatter:on
 
   private static final VendorCase[] VENDOR_CASES = {
     // @formatter:off
-    new VendorCase(CORRETTO, new PropertyPattern("IMPLEMENTOR", "^Amazon([\\s.].*)?$")),
-    new VendorCase(CORRETTO, new PropertyPattern("IMPLEMENTOR_VERSION", "^Corretto-.*$")),
-    new VendorCase(LIBERICA, new PropertyPattern("IMPLEMENTOR", "^.*BellSoft.*$")),
-    new VendorCase(SAP,      new PropertyPattern("IMPLEMENTOR", "^SAP(\\s.*)?$")),
-    new VendorCase(SAP,      new PropertyPattern("IMPLEMENTOR_VERSION", "^SapMachine.*$")),
-    new VendorCase(AZUL,     new PropertyPattern("IMPLEMENTOR", "^Azul(\\s.*)?$")),
-    new VendorCase(JBR,      new PropertyPattern("IMPLEMENTOR", "^.*JetBrains.*$")),
-    new VendorCase(ORACLE,   new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")
-                         ,   new PropertyPattern("JAVA_VERSION", "^1\\.7\\..*$")),
-    new VendorCase(ORACLE,   new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")
-                         ,   new PropertyPattern("BUILD_TYPE", "^.*commercial.*$")),
+    new VendorCase(ADOPT_OPEN_HS, new PropertyPattern("IMPLEMENTOR", "^.*AdoptOpenJDK.*$")
+                                , new PropertyPattern("JVM_VARIANT", "^.*Hotspot.*$")),
+    new VendorCase(ADOPT_OPEN_J9, new PropertyPattern("IMPLEMENTOR", "^.*AdoptOpenJDK.*$")
+                                , new PropertyPattern("JVM_VARIANT", "^.*Openj9.*$")),
+    new VendorCase(CORRETTO,      new PropertyPattern("IMPLEMENTOR", "^Amazon([\\s.].*)?$")),
+    new VendorCase(CORRETTO,      new PropertyPattern("IMPLEMENTOR_VERSION", "^Corretto-.*$")),
+    new VendorCase(LIBERICA,      new PropertyPattern("IMPLEMENTOR", "^.*BellSoft.*$")),
+    new VendorCase(SAP,           new PropertyPattern("IMPLEMENTOR", "^SAP(\\s.*)?$")),
+    new VendorCase(SAP,           new PropertyPattern("IMPLEMENTOR_VERSION", "^SapMachine.*$")),
+    new VendorCase(AZUL,          new PropertyPattern("IMPLEMENTOR", "^Azul(\\s.*)?$")),
+    new VendorCase(JBR,           new PropertyPattern("IMPLEMENTOR", "^.*JetBrains.*$")),
+    new VendorCase(ORACLE,        new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")
+                         ,        new PropertyPattern("JAVA_VERSION", "^1\\.7\\..*$")),
+    new VendorCase(ORACLE,        new PropertyPattern("SOURCE", "^.*\\shotspot:[0-9A-Fa-f]+.*$")
+                         ,        new PropertyPattern("BUILD_TYPE", "^.*commercial.*$")),
     // @formatter:on
   };
 
