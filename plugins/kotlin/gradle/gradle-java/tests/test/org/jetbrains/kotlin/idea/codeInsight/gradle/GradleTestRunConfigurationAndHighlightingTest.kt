@@ -107,7 +107,7 @@ class GradleTestRunConfigurationAndHighlightingTest : KotlinGradleImportingTestC
                 RunConfigurationsTags.SETTINGS -> settings.toString()
             }
 
-            result += tag.name.toLowerCase() to renderedTagValue
+            result += tag.name.lowercase() to renderedTagValue
         }
 
         return result.joinToString { (tagName, tagValue) -> tagName + "=\"" + tagValue.replace("\"", "\\\"") + "\"" }
