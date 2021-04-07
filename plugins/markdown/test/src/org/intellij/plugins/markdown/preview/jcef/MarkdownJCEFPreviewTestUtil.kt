@@ -40,7 +40,7 @@ object MarkdownJCEFPreviewTestUtil {
   }
 
   fun setupViewComponent(browser: MarkdownJCEFHtmlPanel) {
-    JBCefTestHelper.invokeAndWaitForLoad(browser) {
+    JBCefTestHelper.invokeAndWaitForShow(browser) {
       SwingUtilities.invokeLater {
         with(JFrame(MarkdownContentEscapingTest::class.java.name)) {
           setSize(640, 480)

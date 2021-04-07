@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import kotlin.random.Random
 
-class MarkdownJCEFHtmlPanel() : JCEFHtmlPanel(getRenderingType(), null, getClassUrl(), true), MarkdownHtmlPanel {
+class MarkdownJCEFHtmlPanel() : JCEFHtmlPanel(getRenderingType(), null, getClassUrl()), MarkdownHtmlPanel {
   private val resourceProvider = MyResourceProvider()
   private val browserPipe = BrowserPipe(this)
 

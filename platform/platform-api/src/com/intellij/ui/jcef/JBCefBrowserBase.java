@@ -23,6 +23,7 @@ import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
 import org.cef.network.CefRequest;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,6 +145,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
   @NotNull protected final JBCefClient myCefClient;
   @NotNull protected final CefBrowser myCefBrowser;
+  private final @NotNull RenderingType myRenderingType;
   @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @Nullable private final CefLoadHandler myLoadHandler;
   @Nullable private final CefRequestHandler myRequestHandler;
@@ -155,10 +157,59 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @Nullable private volatile String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
-  JBCefBrowserBase(@NotNull JBCefClient cefClient, @NotNull CefBrowser cefBrowser, boolean isNewBrowserCreated, boolean isDefaultClient) {
+  /**
+   * Defines the way the browser is rendered onto its surface.
+   */
+  @ApiStatus.Experimental
+  public enum RenderingType {
+    /**
+     * The browser is rendered on a platform heavyweight window embedded into the host frame.
+     */
+    EMBEDDED_WINDOW,
+    /**
+     * The browser is rendered off-screen on a heavyweight canvas via OGL.
+     */
+    OGL_CANVAS,
+    /**
+     * The browser is rendered off-screen on a lightweight Swing component via a buffered image.
+     */
+    BUFFERED_IMAGE,
+
+    // [tav] todo
+    //VOLATILE_IMAGE
+  }
+
+  static class CreateBrowserArtefacts {
+    final @NotNull RenderingType renderingType;
+    final @NotNull CefBrowser cefBrowser;
+    final @NotNull JBCefClient client;
+    boolean isDefaultClient;
+
+    CreateBrowserArtefacts(@NotNull RenderingType renderingType, @NotNull CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient) {
+      this.renderingType = renderingType;
+      this.cefBrowser = cefBrowser;
+      this.client = client;
+      this.isDefaultClient = isDefaultClient;
+    }
+  }
+
+  JBCefBrowserBase(@NotNull CreateBrowserArtefacts artefacts) {
+    this(artefacts.renderingType, artefacts.client, artefacts.isDefaultClient, artefacts.cefBrowser, true);
+  }
+
+  JBCefBrowserBase(@NotNull RenderingType type,
+                   @NotNull JBCefClient cefClient,
+                   boolean isDefaultClient,
+                   @NotNull CefBrowser cefBrowser,
+                   boolean isNewBrowserCreated)
+  {
+    myRenderingType = type;
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
     myIsDefaultClient = isDefaultClient;
+
+    if (type != RenderingType.EMBEDDED_WINDOW) JBCefApp.checkOffScreenRenderingModeEnabled();
+    if (type == RenderingType.BUFFERED_IMAGE) setProperty(Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
 
     if (isNewBrowserCreated) {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -324,10 +375,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
-   * Returns a component representing the browser in the UI hierarchy.
+   * Returns the component representing the browser in the UI hierarchy.
    */
-  public @Nullable JComponent getComponent() {
-    return null;
+  public abstract @Nullable JComponent getComponent();
+
+  /**
+   * Returns the rendering type.
+   */
+  public @NotNull RenderingType getRenderingType() {
+    return myRenderingType;
   }
 
   final boolean isCefBrowserCreated() {

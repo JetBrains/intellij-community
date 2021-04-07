@@ -62,7 +62,7 @@ public class WebBrowser extends AnAction implements DumbAware {
     frame.setLayout(new BorderLayout());
 
     JBCefBrowser.RenderingType type = isOffScreenRenderingMode ? JBCefBrowser.RenderingType.BUFFERED_IMAGE : JBCefBrowser.RenderingType.EMBEDDED_WINDOW;
-    final JBCefBrowser myJBCefBrowser = JBCefBrowser.create(type, null, URL, true);
+    final JBCefBrowser myJBCefBrowser = JBCefBrowser.create(type, null, URL);
 
     myJBCefBrowser.setErrorPage(new JBCefBrowserBase.ErrorPage() {
       @Override

@@ -7,6 +7,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import org.cef.callback.CefNativeAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ import java.awt.event.*;
 /**
  * A lightweight component on which an off-screen browser is rendered.
  *
- * @see JBCefBrowser#create(JBCefBrowser.RenderingType, JBCefClient, String, boolean)
+ * @see JBCefBrowser#create(JBCefBrowser.RenderingType, JBCefClient, String)
  * @see JBCefBrowser#getComponent()
  * @author tav
  */
@@ -60,6 +61,15 @@ class JBCefOsrComponent extends JPanel {
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
     myRenderHandler = renderHandler;
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    // [tav] todo: this check is actually not thread safe
+    if (((CefNativeAdapter)myBrowser.getCefBrowser()).getNativeRef("CefBrowser") == 0) {
+      myBrowser.getCefBrowser().createImmediately();
+    }
   }
 
   @Override

@@ -131,52 +131,25 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private volatile boolean myFirstShow = true;
 
   /**
-   * Defines the way the browser is rendered onto its surface.
-   */
-  @ApiStatus.Experimental
-  public enum RenderingType {
-    /**
-     * The browser is rendered on a platform heavyweight window embedded into the host frame.
-     */
-    EMBEDDED_WINDOW,
-    /**
-     * The browser is rendered off-screen on a heavyweight canvas via OGL.
-     */
-    OGL_CANVAS,
-    /**
-     * The browser is rendered off-screen on a lightweight Swing component via a buffered image.
-     */
-    BUFFERED_IMAGE,
-
-    // [tav] todo
-    //VOLATILE_IMAGE
-  }
-
-  /**
    * Creates a browser with the specified rendering type.
-   * <p></p>
-   * When {@code createImmediately} is {@code false}, call {@link CefBrowser#createImmediately()} via {@link #getCefBrowser()}.
    *
    * @param type the rendering type
    * @param client the client, a default client is used when null is passed
    * @param url the URL, a blank url is loaded when null is passed
-   * @param createImmediately whether the {@code CefBrowser} should be created immediately
    * @return the new browser instance
    */
   @ApiStatus.Experimental
-  public static @NotNull JBCefBrowser create(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url, boolean createImmediately) {
-    return new JBCefBrowser(type, client, url, createImmediately);
+  public static @NotNull JBCefBrowser create(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
+    return new JBCefBrowser(type, client, url);
   }
 
-  protected JBCefBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url, boolean createImmediately) {
+  protected JBCefBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
     this(createBrowser(type, client, url));
     CefBrowser cefBrowser = getCefBrowser();
     if (type == RenderingType.BUFFERED_IMAGE) {
       CefBrowserOsrWithHandler cefOsrBrowser = (CefBrowserOsrWithHandler)cefBrowser;
       ((JBCefOsrComponent)cefOsrBrowser.getUIComponent()).setBrowser(this);
-      setProperty(JBCefBrowserBase.Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
     }
-    if (createImmediately) cefBrowser.createImmediately();
   }
 
   /**
@@ -187,7 +160,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
-    this(cefBrowser, false, client, false);
+    this(RenderingType.EMBEDDED_WINDOW, cefBrowser, false, client, false);
   }
 
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
@@ -195,15 +168,16 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   private JBCefBrowser(@NotNull CreateBrowserArtefacts artefacts) {
-    this(artefacts.cefBrowser, true, artefacts.jbClient, artefacts.isDefaultClient);
+    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client, artefacts.isDefaultClient);
   }
 
-  private JBCefBrowser(@NotNull CefBrowser cefBrowser,
+  private JBCefBrowser(@NotNull RenderingType type,
+                       @NotNull CefBrowser cefBrowser,
                        boolean isNewBrowserCreated,
                        @NotNull JBCefClient client,
                        boolean isDefaultClient)
   {
-    super(client, cefBrowser, isNewBrowserCreated, isDefaultClient);
+    super(type, client, isDefaultClient, cefBrowser, isNewBrowserCreated);
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
@@ -263,39 +237,28 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
-  private static class CreateBrowserArtefacts {
-    final @NotNull CefBrowser cefBrowser;
-    final @NotNull JBCefClient jbClient;
-    boolean isDefaultClient;
-
-    CreateBrowserArtefacts(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient jbClient, boolean isDefaultClient) {
-      this.cefBrowser = cefBrowser;
-      this.jbClient = jbClient;
-      this.isDefaultClient = isDefaultClient;
-    }
-  }
-
   private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
     boolean isDefaultClient = client == null;
     if (isDefaultClient) client = JBCefApp.getInstance().createClient();
     switch (type) {
       case EMBEDDED_WINDOW:
         return new CreateBrowserArtefacts(
+          type,
           client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.DEFAULT, false, null),
           client,
           isDefaultClient);
       case OGL_CANVAS:
-        JBCefApp.checkOffScreenRenderingModeEnabled();
         return new CreateBrowserArtefacts(
+          type,
           client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.OFFSCREEN, false, null),
           client,
           isDefaultClient);
       case BUFFERED_IMAGE:
-        JBCefApp.checkOffScreenRenderingModeEnabled();
         JBCefOsrComponent comp = new JBCefOsrComponent();
         JBCefOsrHandler handler = new JBCefOsrHandler(comp);
         comp.setRenderHandler(handler);
         return new CreateBrowserArtefacts(
+          type,
           new CefBrowserOsrWithHandler(client.getCefClient(), url, null, handler, comp),
           client,
           isDefaultClient);

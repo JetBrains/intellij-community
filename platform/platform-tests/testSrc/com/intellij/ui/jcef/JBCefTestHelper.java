@@ -12,6 +12,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class JBCefTestHelper {
+  /**
+   * Invokes and waits for a load completion. Either the runnable should load URL/HTML or the browser should be created with initial URL/HTML.
+   */
   public static void invokeAndWaitForLoad(@NotNull JBCefBrowserBase browser, @NotNull Runnable runnable) {
     CountDownLatch latch = new CountDownLatch(1);
 
@@ -25,6 +28,29 @@ public class JBCefTestHelper {
     }, browser.getCefBrowser());
 
     invokeAndWaitForLatch(latch, runnable);
+  }
+
+  /**
+   * Invokes and waits for the browser component showing.
+   */
+  public static void invokeAndWaitForShow(@NotNull JBCefBrowserBase browser, @NotNull Runnable runnable) {
+    CountDownLatch latch = new CountDownLatch(1);
+
+    invokeAndWaitForLatch(latch, () -> {
+      runnable.run();
+      latch.countDown();
+    });
+
+    while (!browser.getComponent().isShowing()) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(100);
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+        break;
+      }
+    }
   }
 
   public static void invokeAndWaitForLatch(@NotNull CountDownLatch latch, @NotNull Runnable runnable) {

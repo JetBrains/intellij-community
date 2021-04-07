@@ -28,12 +28,12 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   }
 
   public JCEFHtmlPanel(JBCefClient client, String url) {
-    this(RenderingType.EMBEDDED_WINDOW, client, url, false); // should no pass url to ctor
+    this(RenderingType.EMBEDDED_WINDOW, client, url); // should no pass url to ctor
   }
 
   @ApiStatus.Experimental
-  public JCEFHtmlPanel(@NotNull JBCefBrowser.RenderingType type, @Nullable JBCefClient client, @Nullable String url, boolean createImmediately) {
-    super(type, client, url, createImmediately);
+  public JCEFHtmlPanel(@NotNull JBCefBrowser.RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
+    super(type, client, url);
     myUrl = getCefBrowser().getURL();
     if (client != null && client != ourCefClient) {
       Disposer.register(this, client);

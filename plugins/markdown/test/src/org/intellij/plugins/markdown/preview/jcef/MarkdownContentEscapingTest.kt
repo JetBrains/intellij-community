@@ -41,7 +41,14 @@ class MarkdownContentEscapingTest {
   fun `interesting symbols`() = doTest("interestingSymbols")
 
   private fun doTest(name: String) {
+    doTest(name, false)
+    doTest(name, true)
+  }
+
+  private fun doTest(name: String, osr: Boolean) {
     TestScaleHelper.assumeStandalone()
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.markdownView.osr.enabled", osr.toString())
+
     val content = File(testPath, "$name.html").readText()
     val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content)
     val expected = parseContentBody(content)
