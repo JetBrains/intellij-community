@@ -67,6 +67,7 @@ class EclipseProjectDetector extends ProjectDetector {
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         ProjectGroup group = new ProjectGroup("Eclipse Projects");
         group.setProjects(projects);
+        group.setBottomGroup(true);
         manager.addGroup(group);
         ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(projects));
       }

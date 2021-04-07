@@ -20,6 +20,7 @@ public final class ProjectGroup {
   private boolean myExpanded = false;
   //used in different places, i.e. closing tutorials group should hide all nested items too
   private boolean myTutorials = false;
+  private boolean myBottomGroup = false;
 
   public ProjectGroup(@NotNull @NlsSafe String name) {
     myName = name;
@@ -104,6 +105,14 @@ public final class ProjectGroup {
 
   public void setTutorials(boolean tutorials) {
     myTutorials = tutorials;
+  }
+
+  public boolean isBottomGroup() {
+    return myBottomGroup;
+  }
+
+  public void setBottomGroup(boolean bottomGroup) {
+    myBottomGroup = bottomGroup;
   }
 
   @Override
