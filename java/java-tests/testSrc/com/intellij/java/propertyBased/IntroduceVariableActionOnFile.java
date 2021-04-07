@@ -65,7 +65,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
   private static void introduceVariableInline(Environment env, Project project, Editor editor, PsiExpression expression) {
     var handler = new InplaceIntroduceVariableTest.MyIntroduceVariableHandler();
     Disposable disposable = Disposer.newDisposable();
-    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable using inline introducer; expression: %s at %d",
                                  expression.getText(), expression.getTextRange().getStartOffset()));
     try {
       UiInterceptors.register(new RandomActivityInterceptor(env, disposable));
@@ -87,7 +87,11 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
 
 
   private static void introduceVariableNoInline(@NotNull Environment env, Project project, Editor editor, PsiExpression expression) {
-    String varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    String varName;
+    do {
+      varName = env.generateValue(Generator.asciiIdentifiers(), null);
+    }
+    while (!PsiNameHelper.getInstance(project).isIdentifier(varName));
     boolean replaceAll = env.generateValue(Generator.booleans(), null);
     boolean declareFinal = env.generateValue(Generator.booleans(), null);
     boolean declareVar = env.generateValue(Generator.booleans(), null);
@@ -97,7 +101,7 @@ public class IntroduceVariableActionOnFile extends ActionOnFile {
                                   "declareVar", declareVar,
                                   "replaceLValues", replaceLValues)
       .filterValues(x -> x).keys().joining(" | ");
-    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d", 
+    env.logMessage(String.format("Introduce variable; flags: %s; expression: %s at %d",
                                  flags, expression.getText(), expression.getTextRange().getStartOffset()));
     IntroduceVariableBase handler = new MockIntroduceVariableHandler(varName, replaceAll, declareFinal, declareVar, replaceLValues);
     try {
