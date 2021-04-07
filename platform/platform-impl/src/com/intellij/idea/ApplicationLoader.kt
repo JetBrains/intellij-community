@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -52,20 +53,38 @@ private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-private fun executeInitAppInEdt(args: List<String>,
-                                initAppActivity: Activity,
-                                pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
-  val registerComponentFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
-  val app = runActivity("create app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
-      Main.isCommandLine()) { app ->
-      ForkJoinPool.commonPool().execute {
-        pluginDescriptorFuture
-          .thenApply {
-            if (!app.isHeadlessEnvironment) {
+fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
+  val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
+  val loadAndInitPluginFutureActivity = initAppActivity.startChild("plugin descriptor init waiting")
+  val loadAndInitPluginFuture = PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
+  loadAndInitPluginFuture.thenRun(loadAndInitPluginFutureActivity::end)
+
+  // use main thread, avoid thread switching
+  (prepareUiFuture as CompletableFuture<*>).join()
+
+  val args = processProgramArguments(rawArgs)
+  EventQueue.invokeLater {
+    runActivity("create app") {
+      val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+      ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine()) { app ->
+        loadAndInitPluginFuture
+          .thenAcceptAsync({ plugins ->
+            runMainActivity("app component registration") {
+              app.registerComponents(plugins, app, null)
+            }
+
+            if (args.isEmpty()) {
+              startApp(app, IdeStarter(), initAppActivity, plugins, args)
+            }
+            else {
+              // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
+              findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
+            }
+
+            if (!Main.isHeadless()) {
               ForkJoinPool.commonPool().execute {
                 runActivity("icons preloading") {
-                  if (app.isInternal) {
+                  if (isInternal) {
                     IconLoader.setStrictGlobally(true)
                   }
 
@@ -80,67 +99,21 @@ private fun executeInitAppInEdt(args: List<String>,
                 }
               }
             }
-
-            runMainActivity("app component registration") {
-              app.registerComponents(it, app, null)
-            }
-            it
-          }
-          .whenComplete { result, error ->
-            if (error == null) {
-              registerComponentFuture.complete(result)
-            }
-            else {
-              registerComponentFuture.completeExceptionally(error)
-            }
+          }, { if (EventQueue.isDispatchThread()) ForkJoinPool.commonPool().execute(it) else it.run() })
+          .exceptionally {
+            StartupAbortedException.processException(it)
+            null
           }
       }
     }
   }
-
-  if (args.isEmpty()) {
-    startApp(app, IdeStarter(), initAppActivity, registerComponentFuture, args)
-    return
-  }
-
-  // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
-  registerComponentFuture
-    .thenRun {
-      val starter = findStarter(args.first())
-                    ?: if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
-      if (Main.isHeadless() && !starter.isHeadless) {
-        val commandName = starter.commandName
-        val message = IdeBundle.message(
-          "application.cannot.start.in.a.headless.mode",
-          when {
-            starter is IdeStarter -> 0
-            commandName != null -> 1
-            else -> 2
-          },
-          commandName,
-          starter.javaClass.name,
-          if (args.isEmpty()) 0 else 1,
-          args.joinToString(" ")
-        )
-        Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
-        exitProcess(Main.NO_GRAPHICS)
-      }
-
-      starter.premain(args)
-      startApp(app, starter, initAppActivity, registerComponentFuture, args)
-    }
-    .exceptionally {
-      StartupAbortedException.processException(it)
-      null
-    }
 }
 
 private fun startApp(app: ApplicationImpl,
                      starter: ApplicationStarter,
                      initAppActivity: Activity,
-                     registerComponentFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
+                     plugins: List<IdeaPluginDescriptorImpl>,
                      args: List<String>) {
-  registerComponentFuture.thenApply { plugins ->
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
     // but it is ok because registry is not and should be not used
     initConfigurationStore(app)
@@ -179,8 +152,7 @@ private fun startApp(app: ApplicationImpl,
       })
     }
 
-    CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
-  }
+  CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
     .thenComposeAsync({
       val pool = ForkJoinPool.commonPool()
 
@@ -245,6 +217,34 @@ private fun startApp(app: ApplicationImpl,
       StartupAbortedException.processException(it)
       null
     }
+}
+
+private fun findCustomAppStarterAndStart(plugins: List<IdeaPluginDescriptorImpl>,
+                                         args: List<String>,
+                                         app: ApplicationImpl,
+                                         initAppActivity: Activity) {
+  val starter = findStarter(args.first())
+                ?: if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+  if (Main.isHeadless() && !starter.isHeadless) {
+    val commandName = starter.commandName
+    val message = IdeBundle.message(
+      "application.cannot.start.in.a.headless.mode",
+      when {
+        starter is IdeStarter -> 0
+        commandName != null -> 1
+        else -> 2
+      },
+      commandName,
+      starter.javaClass.name,
+      if (args.isEmpty()) 0 else 1,
+      args.joinToString(" ")
+    )
+    Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
+    exitProcess(Main.NO_GRAPHICS)
+  }
+
+  starter.premain(args)
+  startApp(app, starter, initAppActivity, plugins, args)
 }
 
 fun createAppLocatorFile() {
@@ -327,35 +327,6 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
     }
   }
   return result
-}
-
-fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
-  val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
-  val loadAndInitPluginFuture = CompletableFuture<List<IdeaPluginDescriptorImpl>>()
-  try {
-    val activity = initAppActivity.startChild("plugin descriptor init waiting")
-    PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
-      .whenComplete { result, error ->
-        activity.end()
-        if (error == null) {
-          loadAndInitPluginFuture.complete(result)
-        }
-        else {
-          loadAndInitPluginFuture.completeExceptionally(error)
-        }
-      }
-  }
-  catch (e: Throwable) {
-    loadAndInitPluginFuture.completeExceptionally(e)
-  }
-
-  // use main thread, avoid thread switching
-  (prepareUiFuture as CompletableFuture<*>).join()
-
-  val args = processProgramArguments(rawArgs)
-  EventQueue.invokeLater {
-    executeInitAppInEdt(args, initAppActivity, loadAndInitPluginFuture)
-  }
 }
 
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }

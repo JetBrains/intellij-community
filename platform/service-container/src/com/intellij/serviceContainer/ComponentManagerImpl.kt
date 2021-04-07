@@ -396,10 +396,14 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     componentAdapters.add(adapter)
   }
 
-  internal open fun getApplication(): Application? = if (this is Application) this else ApplicationManager.getApplication()
+  internal open fun getApplication(): Application? {
+    return if (parent == null || this is Application) this as Application else parent.getApplication()
+  }
 
   private fun registerServices(services: List<ServiceDescriptor>, pluginDescriptor: IdeaPluginDescriptor) {
     checkState()
+
+    val app = getApplication()!!
     for (descriptor in services) {
       // Allow to re-define service implementations in plugins.
       // Empty serviceImplementation means we want to unregister service.
@@ -409,7 +413,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
 
       // empty serviceImplementation means we want to unregister service
-      if (descriptor.implementation != null) {
+      val implementation = when {
+        descriptor.testServiceImplementation != null && app.isUnitTestMode -> descriptor.testServiceImplementation
+        descriptor.headlessImplementation != null && app.isHeadlessEnvironment -> descriptor.headlessImplementation
+        else -> descriptor.serviceImplementation
+      }
+
+      if (implementation != null) {
         val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
         if (componentKeyToAdapter.putIfAbsent(key, componentAdapter) != null) {
           throw PluginException("Key $key duplicated", pluginDescriptor.pluginId)
@@ -593,7 +603,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       return messageBus
     }
 
-    messageBus = MessageBusFactory.getInstance().createMessageBus(this, parent?.messageBus) as MessageBusImpl
+    messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
         if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {

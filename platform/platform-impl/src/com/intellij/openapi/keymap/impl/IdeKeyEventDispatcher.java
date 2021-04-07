@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
@@ -8,7 +8,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.KeyboardAwareFocusOwner;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -79,7 +78,7 @@ import java.util.function.Function;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class IdeKeyEventDispatcher implements Disposable {
+public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
 
   private KeyStroke myFirstKeyStroke;
@@ -93,7 +92,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private KeyState myState = KeyState.STATE_INIT;
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private boolean myDisposed;
   private boolean myLeftCtrlPressed;
   private boolean myRightAltPressed;
 
@@ -111,15 +109,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   };
 
-
-  public IdeKeyEventDispatcher(@Nullable IdeEventQueue queue){
+  public IdeKeyEventDispatcher(@Nullable IdeEventQueue queue) {
     myQueue = queue;
-
-    // Application is null on early start when e.g. license dialog is shown
-    Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      Disposer.register(app, this);
-    }
   }
 
   public boolean isWaitingForSecondKeyStroke() {
@@ -131,10 +122,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * {@code IdeKeyEventDispatcher} and there is no need for any other processing of the event.
    */
   public boolean dispatchKeyEvent(KeyEvent e) {
-    if (myDisposed) {
-      return false;
-    }
-
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       storeAsciiForChar(e);
     }
@@ -936,11 +923,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public KeyProcessorContext getContext() {
     return myContext;
-  }
-
-  @Override
-  public void dispose() {
-    myDisposed = true;
   }
 
   public KeyState getState() {

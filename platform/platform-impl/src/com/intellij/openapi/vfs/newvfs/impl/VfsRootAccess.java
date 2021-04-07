@@ -3,10 +3,9 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -52,13 +51,11 @@ public final class VfsRootAccess {
 
   @TestOnly
   static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
-    Application application = ApplicationManager.getApplication();
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     if (SHOULD_PERFORM_ACCESS_CHECK &&
-        application.isUnitTestMode() &&
-        application instanceof ApplicationImpl &&
-        ((ApplicationImpl)application).getComponentCreated() &&
+        app.isUnitTestMode() &&
+        app.isComponentCreated() &&
         !ApplicationManagerEx.isInStressTest()) {
-
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
       }

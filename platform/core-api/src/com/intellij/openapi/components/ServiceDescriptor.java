@@ -67,6 +67,14 @@ public final class ServiceDescriptor {
 
   @Override
   public String toString() {
-    return "ServiceDescriptor(interface=" + getInterface() + ", implementation=" + getImplementation() + ")";
+    return "ServiceDescriptor(" +
+           "interface='" + serviceInterface + '\'' +
+           ", serviceImplementation='" + serviceImplementation + '\'' +
+           ", testServiceImplementation='" + testServiceImplementation + '\'' +
+           ", headlessImplementation='" + headlessImplementation + '\'' +
+           ", overrides=" + overrides +
+           ", configurationSchemaKey='" + configurationSchemaKey + '\'' +
+           ", preload=" + preload +
+           ')';
   }
 }

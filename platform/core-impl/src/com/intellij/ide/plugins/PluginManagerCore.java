@@ -4,8 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.*;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,12 +31,14 @@ import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
+import java.awt.*;
 import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.nio.file.*;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -53,7 +53,6 @@ import java.util.stream.Stream;
 // Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
-  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
   public static final String CORE_PLUGIN_ID = "com.intellij";
@@ -518,44 +517,38 @@ public final class PluginManagerCore {
   }
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginLoadingError> pluginErrors,
-                                                        @NotNull List<? extends Supplier<@NlsContexts.DetailedDescription String>> globalErrors,
-                                                        @NotNull List<? extends Supplier<? extends HtmlChunk>> actions) {
+                                                        @NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrors,
+                                                        @NotNull List<Supplier<HtmlChunk>> actions) {
     ourPluginLoadingErrors = pluginErrors;
 
-    // Log includes all messages, not only those which need to be reported to the user
-    String logMessage;
-    if (!pluginErrors.isEmpty() || !globalErrors.isEmpty()) {
-      logMessage = "Problems found loading plugins:\n  " +
-                   Stream.concat(globalErrors.stream().map(Supplier::get),
-                                 pluginErrors.entrySet().stream()
-                                   .sorted(Map.Entry.comparingByKey())
-                                   .map(e -> e.getValue().getInternalMessage()))
-                     .collect(Collectors.joining("\n  "));
-    }
-    else {
-      logMessage = null;
+    if (pluginErrors.isEmpty() && globalErrors.isEmpty()) {
+      return;
     }
 
-    Application app = ApplicationManager.getApplication();
-    if (app == null || !app.isHeadlessEnvironment() || isUnitTestMode) {
+    // log includes all messages, not only those which need to be reported to the user
+    String logMessage = "Problems found loading plugins:\n  " +
+                        Stream.concat(globalErrors.stream().map(Supplier::get),
+                                      pluginErrors.entrySet().stream()
+                                        .sorted(Map.Entry.comparingByKey())
+                                        .map(e -> e.getValue().getInternalMessage()))
+                          .collect(Collectors.joining("\n  "));
+
+    if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
       List<Supplier<HtmlChunk>> errorsList = Stream.<Supplier<HtmlChunk>>concat(
         globalErrors.stream().map(message -> () -> HtmlChunk.text(message.get())),
         pluginErrors.entrySet().stream()
-        .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue)
-        .filter(PluginLoadingError::isNotifyUser)
-        .map(error -> () -> HtmlChunk.text(error.getDetailedMessage()))
+          .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue)
+          .filter(PluginLoadingError::isNotifyUser)
+          .map(error -> () -> HtmlChunk.text(error.getDetailedMessage()))
       ).collect(Collectors.toList());
 
       if (!errorsList.isEmpty()) {
         registerPluginErrors(ContainerUtil.concat(errorsList, actions));
       }
 
-      // as warn in tests
-      if (logMessage != null) {
-        getLogger().warn(logMessage);
-      }
+      getLogger().warn(logMessage);
     }
-    else if (logMessage != null) {
+    else {
       getLogger().error(logMessage);
     }
   }
@@ -750,7 +743,7 @@ public final class PluginManagerCore {
                                                         @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
                                                         @NotNull Map<PluginId, PluginLoadingError> pluginErrors,
-                                                        @NotNull List<? extends Supplier<String>> globalErrors) {
+                                                        @NotNull List<Supplier<String>> globalErrors) {
     List<Supplier<HtmlChunk>> actions = new ArrayList<>();
     if (!disabledIds.isEmpty()) {
       @NlsSafe String nameToDisable;

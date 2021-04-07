@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -32,12 +31,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -69,6 +68,7 @@ public final class UITheme {
   private ClassLoader providerClassLoader = getClass().getClassLoader();
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
   private UITheme() { }
 
@@ -424,7 +424,21 @@ public final class UITheme {
       return parseGrayFilter(value);
     }
     else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
+      Icon icon;
+      if (value.startsWith("AllIcons.")) {
+        Icon result;
+        try {
+          MethodHandle getter = LOOKUP.findStaticGetter(AllIcons.class, value.substring(value.lastIndexOf('.') + 1), Icon.class);
+          result = (Icon)getter.invoke();
+        }
+        catch (Throwable e) {
+          result = null;
+        }
+        icon = result;
+      }
+      else {
+        icon = null;
+      }
       if (icon != null) {
         return new IconUIResource(icon);
       }

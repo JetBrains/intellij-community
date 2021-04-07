@@ -27,9 +27,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
+import java.lang.invoke.MethodHandles;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -51,6 +51,7 @@ import java.util.function.Supplier;
  */
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance(IconLoader.class);
+  private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
   // the key: URL or Pair(path, classLoader)
   private static final ConcurrentMap<@NotNull Object, @NotNull CachedImageIcon> iconCache = new ConcurrentHashMap<>(100, 0.9f, 2);
@@ -179,12 +180,10 @@ public final class IconLoader {
       if (!Character.isLowerCase(path.charAt(0))) {
         fullClassName = (path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.") + fullClassName.replace('.', '$');
       }
-      Class<?> aClass = Class.forName(fullClassName, true, classLoader);
-      Field field = aClass.getField(path.substring(lastDotIndex + 1));
-      field.setAccessible(true);
-      return (Icon)field.get(null);
+      Class<?> aClass = classLoader.loadClass(fullClassName);
+      return (Icon)LOOKUP.findStaticGetter(aClass, path.substring(lastDotIndex + 1), Icon.class).invoke();
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       return null;
     }
   }

@@ -117,9 +117,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, Consumer<ApplicationImpl> initTask) {
     super(null);
 
-    // reset back to null only when all components already disposed
-    ApplicationManager.setApplication(this, myLastDisposable);
-
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
@@ -144,6 +141,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myCommandLineMode = isCommandLine;
 
     mySaveAllowed = !(isUnitTestMode || isHeadless);
+
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
 
     if (!isUnitTestMode && !isHeadless) {
       Disposable uiRootDisposable = Disposer.newDisposable();
@@ -1430,7 +1430,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
   }
 
-  public boolean getComponentCreated() {
+  @Override
+  public boolean isComponentCreated() {
     return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }
 }

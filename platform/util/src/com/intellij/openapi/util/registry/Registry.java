@@ -108,13 +108,18 @@ public final class Registry  {
     }
 
     Map<String, String> map = new HashMap<>(1_800);
-    //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
-    new Properties() {
-      @Override
-      public Object put(Object key, Object value) {
-        return map.put((String)key, (String)value);
-      }
-    }.load(stream);
+    try {
+      //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+      new Properties() {
+        @Override
+        public Object put(Object key, Object value) {
+          return map.put((String)key, (String)value);
+        }
+      }.load(stream);
+    }
+    finally {
+      stream.close();
+    }
     bundledRegistry = new SoftReference<>(map);
     return map;
   }

@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.TestOnly;
 
 public final class ApplicationManagerEx extends ApplicationManager {
+  public static final String IS_INTERNAL_PROPERTY = "idea.is.internal";
+
   private static volatile boolean inStressTest;
 
   public static ApplicationEx getApplicationEx() {

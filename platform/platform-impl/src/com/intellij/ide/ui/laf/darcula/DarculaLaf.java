@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
@@ -60,7 +60,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   protected BasicLookAndFeel createBaseLookAndFeel() {
     try {
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         Constructor<?> constructor = Class.forName(name).getDeclaredConstructor();
         constructor.setAccessible(true);
@@ -123,7 +123,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       UIDefaults metalDefaults = new MetalLookAndFeel().getDefaults();
       UIDefaults defaults = base.getDefaults();
 
-      if (SystemInfo.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
+      if (SystemInfoRt.isLinux && Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
         defaults.keySet().stream().
           filter(key -> StringUtil.endsWith(key.toString(), ".font")).
           forEach(key -> {
@@ -140,10 +140,10 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isLinux && JBUIScale.isUsrHiDPI()) {
+      if (SystemInfoRt.isLinux && JBUIScale.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
-      if (SystemInfo.isMac) {
+      if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",
           "released ENTER", "release",
@@ -214,7 +214,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Nullable
   protected String getSystemPrefix() {
-    String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
+    String osSuffix = SystemInfoRt.isMac ? "mac" : SystemInfoRt.isWindows ? "windows" : "linux";
     return getPrefix() + "_" + osSuffix;
   }
 
@@ -282,26 +282,34 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
-    Properties properties = new Properties();
     try {
+      Map<String, String> map = new HashMap<>(300);
+      //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
+      @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+      Properties properties = new Properties() {
+        @Override
+        public Object put(Object key, Object value) {
+          return map.put((String)key, (String)value);
+        }
+      };
       try (InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties")) {
         properties.load(stream);
       }
 
       String systemPrefix = getSystemPrefix();
-      if (StringUtil.isNotEmpty(systemPrefix)) {
+      if (systemPrefix != null && !systemPrefix.isEmpty()) {
         try (InputStream stream = getClass().getResourceAsStream(systemPrefix + ".properties")) {
           properties.load(stream);
         }
       }
 
-      Map<String, Object> darculaGlobalSettings = new HashMap<>();
+      Map<String, Object> darculaGlobalSettings = new HashMap<>(32);
       String prefix = getPrefix();
       prefix = prefix.substring(prefix.lastIndexOf("/") + 1) + ".";
 
-      for (String key : properties.stringPropertyNames()) {
+      for (String key : map.keySet()) {
         if (key.startsWith(prefix)) {
-          Object value = parseValue(key, properties.getProperty(key));
+          Object value = parseValue(key, map.get(key));
           String darculaKey = key.substring(prefix.length());
           if (value == SYSTEM) {
             darculaGlobalSettings.remove(darculaKey);
@@ -312,20 +320,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
         }
       }
 
+      UIDefaults multiUiDefaults = UIManager.getDefaults();
       for (Object key : defaults.keySet()) {
         if (key instanceof String && ((String)key).contains(".")) {
-          final String s = (String)key;
-          final String darculaKey = s.substring(s.lastIndexOf('.') + 1);
+          String s = (String)key;
+          String darculaKey = s.substring(s.lastIndexOf('.') + 1);
           if (darculaGlobalSettings.containsKey(darculaKey)) {
-            UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
+            // MultiUIDefaults misses correct property merging
+            multiUiDefaults.remove(key);
             defaults.put(key, darculaGlobalSettings.get(darculaKey));
           }
         }
       }
 
-      for (String key : properties.stringPropertyNames()) {
-        UIManager.getDefaults().remove(key); // MultiUIDefaults misses correct property merging
-        defaults.put(key, parseValue(key, properties.getProperty(key)));
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        // MultiUIDefaults misses correct property merging
+        multiUiDefaults.remove(entry.getKey());
+        defaults.put(entry.getKey(), parseValue(entry.getKey(), entry.getValue()));
       }
     }
     catch (IOException e) {
