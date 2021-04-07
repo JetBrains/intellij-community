@@ -7,7 +7,10 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightModifierList;
+import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -132,15 +135,15 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
       methodBuilder.withModifier(PsiModifier.STATIC);
     }
 
-    PsiParameter setterParameter = methodBuilder.getParameterList().getParameter(0);
-    PsiModifierList methodParameterModifierList = setterParameter.getModifierList();
-    if (null != methodParameterModifierList) {
-      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+    LombokLightParameter setterParameter = methodBuilder.getParameterList().getParameter(0);
+    if(null!=setterParameter) {
+      LombokLightModifierList methodParameterModifierList = setterParameter.getModifierList();
+      copyCopyableAnnotations(psiField, methodParameterModifierList, LombokCopyableAnnotations.BASE_COPYABLE);
       copyOnXAnnotations(setterAnnotation, methodParameterModifierList, "onParam");
     }
 
-    final PsiModifierList modifierList = methodBuilder.getModifierList();
-    copyCopyableAnnotations(psiField, modifierList, LombokUtils.COPY_TO_SETTER_ANNOTATIONS);
+    final LombokLightModifierList modifierList = methodBuilder.getModifierList();
+    copyCopyableAnnotations(psiField, modifierList, LombokCopyableAnnotations.COPY_TO_SETTER);
     copyOnXAnnotations(setterAnnotation, modifierList, "onMethod");
     if (psiField.isDeprecated()) {
       modifierList.addAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
