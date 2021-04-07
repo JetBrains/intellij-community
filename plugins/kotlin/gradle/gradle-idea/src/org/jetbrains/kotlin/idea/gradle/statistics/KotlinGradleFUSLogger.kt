@@ -85,7 +85,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
             val data = HashMap<String, String>()
             fun putIfNotNull(key: String, value: String?) {
                 if (value != null) {
-                    data[key.toLowerCase()] = value
+                    data[key.lowercase()] = value
                 }
             }
 

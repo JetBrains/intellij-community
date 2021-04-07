@@ -29,7 +29,7 @@ fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
 }
 
 fun compilationFullName(simpleName: String, classifier: String?) =
-    if (classifier != null) classifier + simpleName.capitalize() else simpleName
+    if (classifier != null) classifier + simpleName.replaceFirstChar(Char::uppercaseChar) else simpleName
 
 fun String.capitalize(): String {
     /* Default implementation as suggested by 'capitalize' deprecation */
