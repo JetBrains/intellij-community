@@ -58,6 +58,10 @@ class ExtractMethodInplaceTest: LightJavaCodeInsightTestCase() {
     doTest(changedName = "renamed")
   }
 
+  fun testRenamedParametrizedDuplicate(){
+    doTest(changedName = "average")
+  }
+
   fun testStaticMustBePlaced(){
     doTest()
   }
