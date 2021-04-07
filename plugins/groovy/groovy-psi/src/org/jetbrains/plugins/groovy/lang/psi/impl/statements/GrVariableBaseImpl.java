@@ -128,15 +128,6 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
 
   @Override
   @Nullable
-  public PsiType getDeclaredType() {
-    GrTypeElement typeElement = getTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
-
-    return null;
-  }
-
-  @Override
-  @Nullable
   public PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
