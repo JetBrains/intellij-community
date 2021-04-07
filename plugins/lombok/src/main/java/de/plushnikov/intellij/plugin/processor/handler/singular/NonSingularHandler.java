@@ -4,7 +4,6 @@ import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +43,8 @@ class NonSingularHandler implements BuilderElementHandler {
       .withParameter(info.getFieldName(), info.getFieldType())
       .withNavigationElement(info.getVariable())
       .withModifier(info.getVisibilityModifier())
-      .withAnnotations(info.getAnnotations());
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+      .withAnnotations(info.getAnnotations())
+      .withBodyText(blockText);
     return Collections.singleton(methodBuilder);
   }
 
