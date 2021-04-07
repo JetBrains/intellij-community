@@ -66,7 +66,10 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
           if (!constants.isEmpty()) {
             UIdentifier identifier = expression.getMethodIdentifier();
             if (identifier != null) {
-              result.add(createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi()));
+              LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi());
+              if (marker != null) {
+                result.add(marker);
+              }
             }
           }
         }
