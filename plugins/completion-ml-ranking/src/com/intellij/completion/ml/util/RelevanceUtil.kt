@@ -11,6 +11,7 @@ import com.intellij.psi.WeighingComparable
 object RelevanceUtil {
   private val LOG = logger<RelevanceUtil>()
 
+  private const val NULL_TEXT = "null"
   private val IGNORED_FACTORS = setOf("kotlin.byNameAlphabetical",
                                       "scalaMethodCompletionWeigher",
                                       "unresolvedOnTop",
@@ -99,6 +100,8 @@ object RelevanceUtil {
       if (it.isNotBlank()) {
         val key = "${prefix}_${it.substringBefore('=').trim()}"
         val value = it.substringAfter('=').trim()
+        if (value == NULL_TEXT)
+          return@forEach
         this[key] = value
       }
     }
