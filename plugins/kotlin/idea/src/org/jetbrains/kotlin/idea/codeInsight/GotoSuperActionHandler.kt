@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class GotoSuperActionHandler : CodeInsightActionHandler {
-    internal data class SuperDeclarationsAndDescriptor(val supers: List<PsiElement>, val descriptor: DeclarationDescriptor?) {
+    data class SuperDeclarationsAndDescriptor(val supers: List<PsiElement>, val descriptor: DeclarationDescriptor?) {
         constructor() : this(emptyList(), null)
 
         companion object {

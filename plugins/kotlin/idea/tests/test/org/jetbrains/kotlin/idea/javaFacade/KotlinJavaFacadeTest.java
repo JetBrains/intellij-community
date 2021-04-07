@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 
 import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/javaFacade")
 @RunWith(JUnit38ClassRunner.class)
 public class KotlinJavaFacadeTest extends KotlinLightCodeInsightFixtureTestCase {

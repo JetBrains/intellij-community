@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/wordSelection")
 @RunWith(JUnit38ClassRunner.class)
 public class WordSelectionTest extends KotlinLightCodeInsightFixtureTestCase {

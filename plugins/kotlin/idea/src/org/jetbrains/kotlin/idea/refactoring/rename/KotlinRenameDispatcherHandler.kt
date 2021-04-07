@@ -37,7 +37,7 @@ class KotlinRenameDispatcherHandler : RenameHandler {
             }
     }
 
-    internal fun getRenameHandler(dataContext: DataContext): RenameHandler? {
+    fun getRenameHandler(dataContext: DataContext): RenameHandler? {
         val availableHandlers = handlers.filterTo(LinkedHashSet()) { it.isRenaming(dataContext) }
         availableHandlers.singleOrNull()?.let { return it }
         availableHandlers.firstIsInstanceOrNull<KotlinMemberInplaceRenameHandler>()?.let { availableHandlers -= it }

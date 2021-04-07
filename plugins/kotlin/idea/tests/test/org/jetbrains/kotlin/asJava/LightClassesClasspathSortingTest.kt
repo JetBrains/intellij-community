@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 import java.io.File
 import kotlin.test.assertNotNull
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/decompiler/lightClassesOrder")
 @RunWith(JUnit38ClassRunner::class)
 class LightClassesClasspathSortingTest : KotlinLightCodeInsightFixtureTestCase() {

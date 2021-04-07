@@ -24,7 +24,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/highlighterJsr305/project")
 @RunWith(JUnit38ClassRunner::class)
 class Jsr305HighlightingTest : KotlinLightCodeInsightFixtureTestCase() {

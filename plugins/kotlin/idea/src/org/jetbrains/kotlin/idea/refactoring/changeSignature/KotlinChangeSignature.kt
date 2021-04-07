@@ -133,7 +133,7 @@ class KotlinChangeSignature(
         }
     }
 
-    internal fun createSilentRefactoringProcessor(methodDescriptor: KotlinMethodDescriptor): BaseRefactoringProcessor? = selectRefactoringProcessor(
+    fun createSilentRefactoringProcessor(methodDescriptor: KotlinMethodDescriptor): BaseRefactoringProcessor? = selectRefactoringProcessor(
         methodDescriptor,
         propertyProcessor = { KotlinChangePropertySignatureDialog.createProcessorForSilentRefactoring(project, commandName, it) },
         functionProcessor = {

@@ -168,7 +168,7 @@ private fun unwrapElement(unwrappedUsage: KtReferenceExpression, referenced: Psi
     return resultExpression.getQualifiedElementSelector() as KtReferenceExpression
 }
 
-internal class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val originalText: String) {
+class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val originalText: String) {
     /**
      * @return [strategy] without validation if [elementToValidation] is null
      */
@@ -179,10 +179,10 @@ internal class J2KInlineCache(private val strategy: UsageReplacementStrategy, pr
     companion object {
         private val JAVA_TO_KOTLIN_INLINE_CACHE_KEY = Key<J2KInlineCache>("JAVA_TO_KOTLIN_INLINE_CACHE")
 
-        internal fun PsiElement.findUsageReplacementStrategy(withValidation: Boolean): UsageReplacementStrategy? =
+        fun PsiElement.findUsageReplacementStrategy(withValidation: Boolean): UsageReplacementStrategy? =
             getUserData(JAVA_TO_KOTLIN_INLINE_CACHE_KEY)?.getStrategy(this.takeIf { withValidation })
 
-        internal fun PsiElement.setUsageReplacementStrategy(strategy: UsageReplacementStrategy): Unit =
+        fun PsiElement.setUsageReplacementStrategy(strategy: UsageReplacementStrategy): Unit =
             putUserData(JAVA_TO_KOTLIN_INLINE_CACHE_KEY, J2KInlineCache(strategy, text))
 
         internal fun findOrCreateUsageReplacementStrategy(javaMember: PsiMember, context: PsiElement): UsageReplacementStrategy? {

@@ -22,7 +22,7 @@ import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/kdoc/navigate")
 @RunWith(JUnit38ClassRunner::class)
 class QuickDocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {

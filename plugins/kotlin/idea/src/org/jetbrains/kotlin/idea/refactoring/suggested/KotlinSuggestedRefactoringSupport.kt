@@ -133,12 +133,12 @@ enum class DeclarationType {
     }
 }
 
-internal data class KotlinSignatureAdditionalData(
+data class KotlinSignatureAdditionalData(
     val declarationType: DeclarationType,
     val receiverType: String?
 ) : SuggestedRefactoringSupport.SignatureAdditionalData
 
-internal data class KotlinParameterAdditionalData(
+data class KotlinParameterAdditionalData(
     val defaultValue: String?,
     val modifiers: String
 ) : SuggestedRefactoringSupport.ParameterAdditionalData
@@ -149,5 +149,5 @@ internal val Signature.receiverType: String?
 internal val Parameter.defaultValue: String?
     get() = (additionalData as KotlinParameterAdditionalData?)?.defaultValue
 
-internal val Parameter.modifiers: String
+val Parameter.modifiers: String
     get() = (additionalData as KotlinParameterAdditionalData?)?.modifiers ?: ""

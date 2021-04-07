@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.test.KotlinRoot
 import org.junit.Assert
 
 @JvmField
-val COMPLETION_TEST_DATA_BASE = KotlinRoot.DIR.resolve("completion/testData")
+val COMPLETION_TEST_DATA_BASE = KotlinRoot.DIR.resolve("completion/tests/testData")
 
 fun testCompletion(
     fileText: String,

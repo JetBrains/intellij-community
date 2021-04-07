@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.TestRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/quickfix.special/deprecatedSymbolUsage")
 class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCase() {

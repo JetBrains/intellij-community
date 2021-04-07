@@ -19,7 +19,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.instance as KotlinArtifacts
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {

@@ -13,7 +13,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 @Deprecated("All tests from here to be moved to the generated test")
-@TestRoot("completion/testData")
+@TestRoot("completion/tests/testData")
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
 class BasicCompletionHandlerTest : CompletionHandlerTestBase() {

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.test.TestRoot;
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/refactoring/rename/simpleNameReference")
 public class SimpleNameReferenceRenameTest extends KotlinLightCodeInsightFixtureTestCase {
     public void testRenameLabel() throws Exception {

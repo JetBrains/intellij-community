@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/search/todo")
 @RunWith(JUnit38ClassRunner::class)
 class TodoSearchTest : KotlinLightCodeInsightFixtureTestCase() {

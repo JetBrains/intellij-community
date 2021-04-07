@@ -28,7 +28,7 @@ import java.util.*
 class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun setUp() {
         super.setUp()
-        myFixture.testDataPath = KotlinRoot.DIR.resolve("live-templates/testData").slashedPath
+        myFixture.testDataPath = KotlinRoot.DIR.resolve("live-templates/tests/testData").slashedPath
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     }
 

@@ -86,7 +86,7 @@ internal fun buildCodeToInline(
     )
 }
 
-internal fun Editor.findSimpleNameReference(): PsiReference? {
+fun Editor.findSimpleNameReference(): PsiReference? {
     val reference = TargetElementUtil.findReference(this, caretModel.offset) ?: return null
     return when {
         reference.element.language != KotlinLanguage.INSTANCE -> reference

@@ -273,7 +273,7 @@ private class TemplateTokenSequence(private val inputString: String) : Sequence<
 }
 
 @TestOnly
-internal fun createTemplateSequenceTokenString(input: String): String {
+fun createTemplateSequenceTokenString(input: String): String {
     return TemplateTokenSequence(input).map {
         when (it) {
             is LiteralChunk -> "LITERAL_CHUNK(${it.text})"

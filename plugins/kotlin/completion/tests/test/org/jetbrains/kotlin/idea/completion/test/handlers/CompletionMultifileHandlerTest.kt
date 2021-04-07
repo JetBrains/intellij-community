@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("testData/handlers/multifile")
 class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {

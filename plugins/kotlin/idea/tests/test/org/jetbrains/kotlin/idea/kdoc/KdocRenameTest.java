@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.test.TestRoot;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/kdoc/rename")
 @RunWith(JUnit38ClassRunner.class)
 public class KdocRenameTest extends KotlinLightCodeInsightFixtureTestCase {

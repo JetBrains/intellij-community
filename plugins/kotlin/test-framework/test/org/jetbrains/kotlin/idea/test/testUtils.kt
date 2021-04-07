@@ -25,7 +25,7 @@ import java.io.File
 import java.util.*
 
 @JvmField
-val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/testData")
+val IDEA_TEST_DATA_DIR = File(KotlinRoot.DIR, "idea/tests/testData")
 
 fun KtFile.dumpTextWithErrors(ignoreErrors: Set<DiagnosticFactory<*>> = emptySet()): String {
     val text = text

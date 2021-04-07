@@ -64,7 +64,7 @@ import java.util.*
 class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     companion object {
         @set:TestOnly
-        internal var Project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
+        var Project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
                 by NotNullableUserDataProperty(Key.create("ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED"), true)
 
         private var KtDeclaration.dropActualModifier: Boolean? by UserDataProperty(Key.create("DROP_ACTUAL_MODIFIER"))

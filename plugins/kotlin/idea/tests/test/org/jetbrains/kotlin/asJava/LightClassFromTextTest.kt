@@ -23,7 +23,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
 // see KtFileLightClassTest
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/asJava/fileLightClass")
 @RunWith(JUnit38ClassRunner::class)
 class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {

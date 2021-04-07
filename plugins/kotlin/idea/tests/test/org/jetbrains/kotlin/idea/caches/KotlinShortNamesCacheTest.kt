@@ -29,7 +29,7 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.reflect.KMutableProperty0
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/cache")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinShortNamesCacheTest : KotlinLightCodeInsightFixtureTestCase() {

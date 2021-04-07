@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/refactoring/nameSuggester")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase() {

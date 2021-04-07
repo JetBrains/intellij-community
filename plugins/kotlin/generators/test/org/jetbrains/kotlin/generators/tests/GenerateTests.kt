@@ -252,7 +252,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea") {
+    testGroup("idea/tests") {
         testClass<AbstractAdditionalResolveDescriptorRendererTest> {
             model("resolve/additionalLazyResolve")
         }
@@ -975,7 +975,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir-low-level-api", testDataPath = "../idea/testData") {
+    testGroup("fir-low-level-api", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirMultiModuleResolveTest> {
             model("fir/multiModule", isRecursive = false, pattern = DIRECTORY)
         }
@@ -1025,7 +1025,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/idea-fir/tests", "idea/testData") {
+    testGroup("idea/idea-fir/tests", "idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
             model("resolve/references", pattern = KT_WITHOUT_DOTS)
         }
@@ -1051,7 +1051,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/idea-fir/tests", "idea/testData/findUsages") {
+    testGroup("idea/idea-fir/tests", "idea/tests/testData/findUsages") {
 
         testClass<AbstractFindUsagesFirTest> {
             model("kotlin", pattern = """^(.+)\.0\.(kt|kts)$""")
@@ -1104,14 +1104,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("gradle/gradle-idea", testDataPath = "../../idea/testData") {
+    testGroup("gradle/gradle-idea", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
         }
     }
 
-    testGroup("idea") {
+    testGroup("idea/tests") {
         testClass<AbstractResolveByStubTest> {
             model("compiler/loadJava/compiledKotlin")
         }
@@ -1156,7 +1156,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("completion") {
+    testGroup("completion/tests") {
         testClass<AbstractCompiledKotlinInJavaCompletionTest> {
             model("injava", pattern = JAVA, isRecursive = false)
         }
@@ -1270,7 +1270,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     //TODO: move these tests into idea-completion module
-    testGroup("idea", testDataPath = "../completion/testData") {
+    testGroup("idea/tests", testDataPath = "../../completion/tests/testData") {
         testClass<AbstractCodeFragmentCompletionHandlerTest> {
             model("handlers/runtimeCast")
         }
@@ -1385,7 +1385,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("performance-tests", testDataPath = "../idea/testData") {
+    testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
             model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^\.]+)\.java$""".toRegex())
         }
@@ -1412,7 +1412,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("performance-tests", testDataPath = "../completion/testData") {
+    testGroup("performance-tests", testDataPath = "../completion/tests/testData") {
         testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
             model("incrementalResolve", testMethodName = "doPerfTest")
         }

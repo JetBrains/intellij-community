@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @RunWith(JUnit38ClassRunner::class)
 @TestMetadata("testData/codeInsight/overrideImplement/withLib")

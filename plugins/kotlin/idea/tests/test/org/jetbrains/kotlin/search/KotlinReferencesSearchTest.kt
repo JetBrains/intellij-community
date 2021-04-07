@@ -22,7 +22,7 @@ import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/search/references")
 @RunWith(JUnit38ClassRunner::class)
 class KotlinReferencesSearchTest : AbstractSearcherTest() {

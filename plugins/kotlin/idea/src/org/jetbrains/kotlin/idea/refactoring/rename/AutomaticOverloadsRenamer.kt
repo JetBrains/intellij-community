@@ -31,7 +31,7 @@ class AutomaticOverloadsRenamer(function: KtNamedFunction, newName: String) : Au
     companion object {
         @get:TestOnly
         @set:TestOnly
-        internal var PsiElement.elementFilter: ((PsiElement) -> Boolean)? by UserDataProperty(Key.create("ELEMENT_FILTER"))
+        var PsiElement.elementFilter: ((PsiElement) -> Boolean)? by UserDataProperty(Key.create("ELEMENT_FILTER"))
     }
 
     init {

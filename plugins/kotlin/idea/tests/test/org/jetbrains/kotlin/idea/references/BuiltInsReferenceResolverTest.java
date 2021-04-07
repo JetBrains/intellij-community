@@ -32,7 +32,7 @@ import java.util.List;
 
 import static org.jetbrains.kotlin.test.util.ReferenceUtils.renderAsGotoImplementation;
 
-@TestRoot("idea")
+@TestRoot("idea/tests")
 @TestMetadata("testData/resolve/builtins")
 @RunWith(JUnit38ClassRunner.class)
 public class BuiltInsReferenceResolverTest extends KotlinLightCodeInsightFixtureTestCase {
