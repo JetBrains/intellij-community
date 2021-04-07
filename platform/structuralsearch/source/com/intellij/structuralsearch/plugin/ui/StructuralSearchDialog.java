@@ -291,7 +291,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (myReplace) {
       return (template == null) ? new ReplaceConfiguration(getUserDefined(), getUserDefined()) : new ReplaceConfiguration(template);
     }
-    return (template == null) ? new SearchConfiguration(getUserDefined(), getUserDefined()) : new SearchConfiguration(template);
+    if (template == null) {
+      return new SearchConfiguration(getUserDefined(), getUserDefined());
+    }
+    return (template instanceof ReplaceConfiguration) ? new ReplaceConfiguration(template) : new SearchConfiguration(template);
   }
 
   static @Nls(capitalization = Nls.Capitalization.Sentence) String getUserDefined() {
@@ -842,7 +845,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   public Configuration getConfiguration() {
     saveConfiguration();
-    return myConfiguration.copy();
+    return myReplace ? new ReplaceConfiguration(myConfiguration) : new SearchConfiguration(myConfiguration);
   }
 
   private void removeMatchHighlights() {
@@ -956,7 +959,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (component == null) {
       return Collections.emptyList();
     }
-    List<ValidationInfo> errors = new SmartList<>();
+    final List<ValidationInfo> errors = new SmartList<>();
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     try {
       final Project project = getProject();
