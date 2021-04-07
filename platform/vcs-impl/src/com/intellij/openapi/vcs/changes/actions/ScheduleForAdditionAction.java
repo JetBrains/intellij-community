@@ -178,8 +178,6 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
           changeListManager.moveChangesTo(list, newChanges.toArray(new Change[0]));
         }
 
-        ChangesViewManager.getInstance(project).scheduleRefresh();
-
         if (changesConsumer != null) {
           if (moveRequired && !newChanges.isEmpty()) {
             // newChanges contains ChangeListChange instances from active change list in case of partial changes
@@ -191,9 +189,6 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
           changesConsumer.consume(newChanges);
         }
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
-    }
-    else {
-      ChangesViewManager.getInstance(project).scheduleRefresh();
     }
 
     return exceptions.isEmpty();
