@@ -25,3 +25,14 @@ internal fun createEmptyBuilder(): WorkspaceEntityStorageBuilderImpl {
 internal fun createBuilderFrom(storage: WorkspaceEntityStorage): WorkspaceEntityStorageBuilderImpl {
   return WorkspaceEntityStorageBuilderImpl.from(storage, ConsistencyCheckingMode.SYNCHRONOUS)
 }
+
+internal inline fun makeBuilder(from: WorkspaceEntityStorage? = null, action: WorkspaceEntityStorageBuilder.() -> Unit): WorkspaceEntityStorageBuilderImpl {
+  val builder = if (from == null) {
+    createEmptyBuilder()
+  }
+  else {
+    createBuilderFrom(from)
+  }
+  builder.action()
+  return builder
+}

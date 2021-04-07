@@ -240,6 +240,11 @@ internal class MutableRefsTable(
       ConnectionType.ONE_TO_ABSTRACT_MANY -> {
         val copiedMap = getOneToAbstractManyMutableMap(connectionId)
         copiedMap.removeValue(parentId)
+
+        // In theory this removing can be avoided because keys will be replaced anyway, but without this cleanup we may get an
+        // incorrect ordering of the children
+        childrenIds.forEach { copiedMap.remove(it) }
+
         childrenIds.forEach { copiedMap[it] = parentId }
       }
       ConnectionType.ABSTRACT_ONE_TO_ONE -> {
