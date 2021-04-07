@@ -278,7 +278,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                 .thenComparing(c -> c.getQualifiedName(), Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(c -> {
                   PsiFile file = c.getContainingFile();
-                  return file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "";
+                  return file instanceof PsiClassOwner ? ((PsiClassOwner)file).getPackageName() : "";
                 }))
       .toArray(PsiClass.EMPTY_ARRAY);
   }
