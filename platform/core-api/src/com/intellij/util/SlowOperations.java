@@ -91,7 +91,7 @@ public final class SlowOperations {
     if (!ourReportedTraces.add(stackTrace)) {
       return;
     }
-    LOG.error("Slow operations are prohibited in the EDT");
+    LOG.error("Slow operations are prohibited in the EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc for more information.");
   }
 
   private static boolean isAlwaysAllowed() {
