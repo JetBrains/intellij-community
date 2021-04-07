@@ -43,13 +43,10 @@ private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryM
   }
 
   override fun loadState(state: Element) {
-    val registry = Registry.getInstance()
-    registry.loadState(state)
-    log(registry)
+    log(Registry.getInstance().loadState(state))
   }
 
-  private fun log(registry: Registry) {
-    val userProperties = registry.userProperties
+  private fun log(userProperties: Map<String, String>) {
     if (userProperties.size <= (if (userProperties.containsKey("ide.firstStartup")) 1 else 0)) {
       return
     }

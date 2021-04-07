@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
@@ -484,7 +484,7 @@ public class RegistryUi implements Disposable {
               myComponent.setBackground(bg);
               myComponent.append(v.asString(), getAttributes(v, isSelected));
               if (v.isChangedFromDefault()) {
-                myComponent.append(" [" + Registry.getInstance().getBundleValue(v.getKey(), false) + "]",
+                myComponent.append(" [" + Registry.getInstance().getBundleValueOrNull(v.getKey()) + "]",
                                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
               }
               SpeedSearchUtil.applySpeedSearchHighlighting(table, myComponent, true, hasFocus);
