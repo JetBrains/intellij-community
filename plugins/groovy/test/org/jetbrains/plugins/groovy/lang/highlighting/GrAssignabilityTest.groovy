@@ -3,12 +3,10 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.openapi.util.RecursionManager
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.DfaCacheConsistencyKt
 
 /**
  * @author Max Medvedev
@@ -137,8 +135,6 @@ go('a', 'c', 1, 2, 3)
   }
 
   void testPassingCollectionSubtractionIntoGenericMethod() {
-    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    DfaCacheConsistencyKt.allowCacheInconsistency(testRootDisposable)
     doTest(new GrUnresolvedAccessInspection())
   }
 

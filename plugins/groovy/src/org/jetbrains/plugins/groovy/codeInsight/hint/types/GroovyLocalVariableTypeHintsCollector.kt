@@ -12,6 +12,7 @@ import com.intellij.util.containers.mapSmart
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -50,7 +51,7 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
   private fun getVariableTypes(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {
     if (!variableDeclaration.isTuple) {
       val initializer = variableDeclaration.variables.singleOrNull()?.initializerGroovy ?: return emptyList()
-      if (initializer is GrConstructorCall || initializer is GrSafeCastExpression || initializer is GrTypeCastExpression) {
+      if (initializer is GrConstructorCall || initializer is GrSafeCastExpression || initializer is GrTypeCastExpression || initializer is GrOperatorExpression) {
         return emptyList()
       }
     }
