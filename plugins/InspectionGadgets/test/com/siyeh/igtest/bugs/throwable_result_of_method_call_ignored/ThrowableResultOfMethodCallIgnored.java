@@ -8,7 +8,7 @@ public class ThrowableResultOfMethodCallIgnored {
 
     public static void test() {
         try {
-            firstNonNull(new Throwable(), null);
+            <warning descr="Result of 'firstNonNull()' not thrown">firstNonNull</warning>(new Throwable(), null);
         }
         catch (Exception e) {
             throw new RuntimeException(firstNonNull(e.getCause(), e));
@@ -118,7 +118,7 @@ class Throwables {
 
     void generics() {
         Map<String, Throwable> map = new HashMap<>();
-        map.put("asdf", new Throwable());
+        map.<warning descr="Result of 'put()' not thrown">put</warning>("asdf", new Throwable());
     }
 
     void call(Exception e) {

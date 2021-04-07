@@ -90,10 +90,6 @@ public class ThrowableNotThrownInspection extends BaseInspection {
       if (method == null) {
         return;
       }
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(method.getReturnType());
-      if (aClass instanceof PsiTypeParameter) {
-        return;
-      }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return;
