@@ -16,8 +16,12 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author peter
@@ -90,6 +94,17 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       myComputedWeighs[index] = weight;
     }
     return weight == NULL ? null : weight;
+  }
+
+  @ApiStatus.Internal
+  public Map<String, Object> getWeights() {
+    Map<String, Object> result = new LinkedHashMap<>();
+    for (int i = 0; i < myComputedWeighs.length; i++) {
+      if (myComputedWeighs[i] == NULL) continue;
+
+      result.put(myWeighers[i].toString(), myComputedWeighs[i]);
+    }
+    return result;
   }
 
   public String toString() {
