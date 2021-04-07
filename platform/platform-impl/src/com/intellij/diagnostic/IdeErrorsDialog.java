@@ -921,7 +921,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (plugin != null) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor != null && plugin.getPluginId() == descriptor.getPluginId()) {
+        if (descriptor != null && Objects.equals(plugin.getPluginId(), descriptor.getPluginId())) {
           return reporter;
         }
       }
@@ -930,7 +930,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
-        if (descriptor == null || PluginId.getId(PluginManagerCore.CORE_PLUGIN_ID) == descriptor.getPluginId()) {
+        if (descriptor == null || PluginManagerCore.CORE_ID.equals(descriptor.getPluginId())) {
           return reporter;
         }
       }

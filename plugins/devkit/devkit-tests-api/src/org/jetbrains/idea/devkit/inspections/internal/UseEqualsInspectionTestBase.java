@@ -5,6 +5,7 @@ import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase;
 
+@SuppressWarnings("unused")
 public abstract class UseEqualsInspectionTestBase extends PluginModuleTestCase {
 
   public abstract void testVirtualFile();

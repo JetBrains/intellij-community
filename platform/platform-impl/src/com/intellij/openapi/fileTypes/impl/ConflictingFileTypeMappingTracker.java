@@ -107,7 +107,7 @@ class ConflictingFileTypeMappingTracker {
   }
 
   private static boolean isCorePlugin(@NotNull PluginDescriptor descriptor) {
-    return descriptor.getPluginId() == PluginManagerCore.CORE_ID;
+    return PluginManagerCore.CORE_ID.equals(descriptor.getPluginId());
   }
 
   private final RemovedMappingTracker myRemovedMappingTracker;

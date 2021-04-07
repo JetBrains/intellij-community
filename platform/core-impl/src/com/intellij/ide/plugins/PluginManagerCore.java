@@ -319,7 +319,7 @@ public final class PluginManagerCore {
 
   public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
     PluginId id = getPluginOrPlatformByClassName(className);
-    return (id == null || CORE_ID == id) ? null : id;
+    return (id != null && !CORE_ID.equals(id)) ? id : null;
   }
 
   public static @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
@@ -355,7 +355,7 @@ public final class PluginManagerCore {
     }
 
     // return if the found plugin is not "core" or the package is obviously "core"
-    if (result.getPluginId() != CORE_ID ||
+    if (!CORE_ID.equals(result.getPluginId()) ||
         className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
         className.startsWith("com.android.") ||
@@ -420,9 +420,13 @@ public final class PluginManagerCore {
                                                                   @NotNull Supplier<IdeaPluginDescriptorImpl> javaDepGetter) {
     // skip our plugins as expected to be up-to-date whether bundled or not
     if (descriptor.isBundled() ||
-        descriptor.getPluginId() == CORE_ID ||
-        descriptor.getPluginId() == JAVA_PLUGIN_ID ||
         VENDOR_JETBRAINS.equals(descriptor.getVendor())) {
+      return null;
+    }
+
+    PluginId pluginId = descriptor.getPluginId();
+    if (CORE_ID.equals(pluginId) ||
+        JAVA_PLUGIN_ID.equals(pluginId)) {
       return null;
     }
 
@@ -438,8 +442,10 @@ public final class PluginManagerCore {
 
   static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptorImpl descriptor) {
     for (PluginDependency dependency : descriptor.getPluginDependencies()) {
-      PluginId depId = dependency.id;
-      if (depId == JAVA_PLUGIN_ID || depId == JAVA_MODULE_ID || isModuleDependency(depId)) {
+      PluginId dependencyPluginId = dependency.getPluginId();
+      if (JAVA_PLUGIN_ID.equals(dependencyPluginId) ||
+          JAVA_MODULE_ID.equals(dependencyPluginId) ||
+          isModuleDependency(dependencyPluginId)) {
         return true;
       }
     }
@@ -460,15 +466,16 @@ public final class PluginManagerCore {
     Set<PluginId> disabledPlugins = new HashSet<>();
     for (IdeaPluginDescriptor descriptor : plugins) {
       StringBuilder target;
+      PluginId pluginId = descriptor.getPluginId();
       if (!descriptor.isEnabled()) {
-        if (!DisabledPluginsState.isDisabled(descriptor.getPluginId())) {
+        if (!DisabledPluginsState.isDisabled(pluginId)) {
           // plugin will be logged as part of "Problems found loading plugins"
           continue;
         }
-        disabledPlugins.add(descriptor.getPluginId());
+        disabledPlugins.add(pluginId);
         target = disabled;
       }
-      else if (descriptor.isBundled() || descriptor.getPluginId() == SPECIAL_IDEA_PLUGIN_ID) {
+      else if (descriptor.isBundled() || SPECIAL_IDEA_PLUGIN_ID.equals(pluginId)) {
         target = bundled;
       }
       else {
@@ -638,7 +645,7 @@ public final class PluginManagerCore {
       // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
       // can be such requirements removed or not
       if (rootDescriptor == dep) {
-        if (rootDescriptor.getPluginId() != CORE_ID) {
+        if (!CORE_ID.equals(rootDescriptor.getPluginId())) {
           getLogger().error("Plugin " + rootDescriptor + " depends on self");
         }
       }
@@ -1163,17 +1170,8 @@ public final class PluginManagerCore {
     Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
     // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
     // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
-    Arrays.sort(sortedRequired, (o1, o2) -> {
-      if (o1.getPluginId() == CORE_ID) {
-        return -1;
-      }
-      else if (o2.getPluginId() == CORE_ID) {
-        return 1;
-      }
-      else {
-        return comparator.compare(o1, o2);
-      }
-    });
+    Arrays.sort(sortedRequired,
+                (o1, o2) -> CORE_ID.equals(o1.getPluginId()) ? -1 : CORE_ID.equals(o2.getPluginId()) ? 1 : comparator.compare(o1, o2));
     return sortedRequired;
   }
 
@@ -1244,7 +1242,7 @@ public final class PluginManagerCore {
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
                                               @NotNull Map<PluginId, PluginLoadingError> errors) {
-    if (descriptor.getPluginId() == CORE_ID) {
+    if (CORE_ID.equals(descriptor.getPluginId())) {
       return true;
     }
     boolean notifyUser = !descriptor.isImplementationDetail();
@@ -1394,10 +1392,10 @@ public final class PluginManagerCore {
     }
   }
 
-  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     if (id != null) {
       for (IdeaPluginDescriptor plugin : getPlugins()) {
-        if (id == plugin.getPluginId()) {
+        if (id.equals(plugin.getPluginId())) {
           return plugin;
         }
       }

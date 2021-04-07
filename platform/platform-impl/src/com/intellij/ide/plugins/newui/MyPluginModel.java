@@ -1004,9 +1004,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   void uninstallAndUpdateUi(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor) {
     List<IdeaPluginDescriptor> deps = dependent(descriptor);
     if (!deps.isEmpty()) {
-      String listOfDeps = StringUtil.join(deps, plugin -> {
-        return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName();
-      }, "<br>");
+      String listOfDeps = StringUtil.join(deps,
+                                          plugin -> "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName(),
+                                          "<br>");
       String message = XmlStringUtil
         .wrapInHtml(IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps));
       String title = IdeBundle.message("title.plugin.uninstall");
@@ -1143,23 +1143,31 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins();
   }
 
-  @NotNull
-  private List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
+  private @NotNull List<IdeaPluginDescriptor> dependent(@NotNull IdeaPluginDescriptor rootDescriptor) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     PluginId rootId = rootDescriptor.getPluginId();
 
     List<IdeaPluginDescriptor> result = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : getAllPlugins()) {
       PluginId pluginId = plugin.getPluginId();
-      if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
-        continue;
-      }
-      if (!(plugin instanceof IdeaPluginDescriptorImpl) || ((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
+      if (Objects.equals(pluginId, rootId) ||
+          appInfo.isEssentialPlugin(pluginId) ||
+          !plugin.isEnabled() ||
+          plugin.isImplementationDetail()) {
         continue;
       }
 
-      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)plugin, false, PluginManagerCore.buildPluginIdMap(), (id, descriptor) -> {
-        if (id == rootId) {
+      if (!(plugin instanceof IdeaPluginDescriptorImpl)) {
+        continue;
+      }
+
+      IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)plugin;
+      if (pluginDescriptor.isDeleted()) {
+        continue;
+      }
+
+      PluginManagerCore.processAllDependencies(pluginDescriptor, false, descriptor -> {
+        if (Objects.equals(descriptor.getPluginId(), rootId)) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;
         }

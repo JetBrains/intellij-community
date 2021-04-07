@@ -492,7 +492,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
       String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
       if (bundleName == null) {
-        bundleName = plugin.getPluginId() == PluginManagerCore.CORE_ID ? ACTIONS_BUNDLE : plugin.getResourceBundleBaseName();
+        bundleName = PluginManagerCore.CORE_ID.equals(plugin.getPluginId()) ? ACTIONS_BUNDLE : plugin.getResourceBundleBaseName();
       }
 
       ResourceBundle bundle;

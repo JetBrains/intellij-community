@@ -164,9 +164,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
                                                          null, groupId);
           List<IdSet> sets = myPluginGroups.getSets(groupId);
           for (IdSet idSet : sets) {
-            for (PluginId id : idSet.getIds()) {
-              myPluginGroups.setPluginEnabledWithDependencies(id, !enabled);
-            }
+            myPluginGroups.setIdSetEnabled(idSet, !enabled);
           }
           repaint();
           return;
@@ -203,7 +201,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   private boolean isGroupEnabled(String group) {
     List<IdSet> sets = myPluginGroups.getSets(group);
     for (IdSet idSet : sets) {
-      for (PluginId id : idSet.getIds()) {
+      for (PluginId id : idSet.getPluginIds()) {
         if (myPluginGroups.isPluginEnabled(id)) {
           return true;
         }

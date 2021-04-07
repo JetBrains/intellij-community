@@ -288,7 +288,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
   private static Map<String, PluginId> getActionToPluginId() {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Map<String, PluginId> actionToPluginId = new HashMap<>();
-    for (PluginId id : PluginId.getRegisteredIdList()) {
+    for (PluginId id : PluginId.getRegisteredIds()) {
       for (String action : actionManager.getPluginActions(id)) {
         actionToPluginId.put(action, id);
       }

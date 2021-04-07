@@ -247,7 +247,7 @@ public class InstalledPluginsTableModel {
       IdeaPluginDescriptorImpl pluginDescriptor = ((IdeaPluginDescriptorImpl)descriptorToCheckDependencies);
 
       PluginManagerCore.processAllDependencies(pluginDescriptor, false, pluginIdMap, (depId, descriptor) -> {
-        if (depId == pluginDescriptor.getPluginId()) {
+        if (depId.equals(pluginDescriptor.getPluginId())) {
           return FileVisitResult.CONTINUE;
         }
 
@@ -270,7 +270,7 @@ public class InstalledPluginsTableModel {
         }
 
         for (IdeaPluginDescriptor d : descriptorsWithChangedEnabledState) {
-          if (depId == d.getPluginId()) {
+          if (depId.equals(d.getPluginId())) {
             dependencies.add(Pair.create(pluginDescriptor, pluginDescriptor.getName()));
             break;
           }

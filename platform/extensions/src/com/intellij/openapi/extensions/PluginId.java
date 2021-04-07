@@ -4,8 +4,9 @@ package com.intellij.openapi.extensions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,11 +32,12 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
-  public static @NotNull Collection<PluginId> getRegisteredIdList() {
-    return new ArrayList<>(registeredIds.values());
+  public static @NotNull Set<PluginId> getRegisteredIds() {
+    // TODO use `Collectors.toUnmodifiableSet()` in JDK 10
+    return Collections.unmodifiableSet(new HashSet<>(registeredIds.values()));
   }
 
-  private final String idString;
+  private final @NotNull String idString;
 
   private PluginId(@NotNull String idString) {
     this.idString = idString;
@@ -46,12 +48,26 @@ public final class PluginId implements Comparable<PluginId> {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PluginId)) return false;
+
+    PluginId pluginId = (PluginId)o;
+    return idString.equals(pluginId.idString);
+  }
+
+  @Override
+  public int hashCode() {
+    return idString.hashCode();
+  }
+
+  @Override
   public int compareTo(@NotNull PluginId o) {
     return idString.compareTo(o.idString);
   }
 
   @Override
   public String toString() {
-    return getIdString();
+    return idString;
   }
 }

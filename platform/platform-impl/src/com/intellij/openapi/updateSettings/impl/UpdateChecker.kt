@@ -387,8 +387,8 @@ object UpdateChecker {
                                                state: InstalledPluginsState,
                                                indicator: ProgressIndicator?) {
     val requests = MarketplaceRequests.Instance
-    val marketplacePluginIds = requests.getMarketplacePlugins(indicator).map { it.idString }
-    val idsToUpdate = updateable.keys.filter { it.idString in marketplacePluginIds }.toSet()
+    val marketplacePluginIds = requests.getMarketplacePlugins(indicator)
+    val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
     val updates = requests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     updateable.forEach { (id, descriptor) ->
       val lastUpdate = updates.find { it.pluginId == id.idString }

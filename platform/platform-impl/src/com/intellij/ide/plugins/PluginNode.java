@@ -437,7 +437,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof PluginNode && id == ((PluginNode)o).id;
+    return this == o ||
+           o instanceof PluginNode && id.equals(((PluginNode)o).id);
   }
 
   @Override

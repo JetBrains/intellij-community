@@ -99,7 +99,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
       String pluginVersion = plugin.getVersion();
       BuildNumber currentIdeVersion = ApplicationInfo.getInstance().getBuild();
       if (plugin.isBundled() && !plugin.allowBundledUpdate() && currentIdeVersion.asStringWithoutProductCode().equals(pluginVersion)) {
-        String pluginFromString = PluginManagerCore.CORE_ID == plugin.getPluginId() ? "" : "plugin '" + plugin.getName() + "' from ";
+        String pluginFromString = PluginManagerCore.CORE_ID.equals(plugin.getPluginId()) ? "" : "plugin '" + plugin.getName() + "' from ";
         if (minVersion != null && currentIdeVersion.compareTo(BuildNumber.fromString(minVersion)) < 0) {
           errorMessages
             .add(IdeBundle.message("error.project.requires.newer.ide", project.getName(), pluginFromString, minVersion, pluginVersion));

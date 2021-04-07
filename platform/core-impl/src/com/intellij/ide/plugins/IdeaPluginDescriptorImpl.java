@@ -467,7 +467,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     else {
       // https://youtrack.jetbrains.com/issue/IDEA-206274
       for (PluginDependency item : pluginDependencies) {
-        if (item.id == dependencyId) {
+        if (dependencyId.equals(item.getPluginId())) {
           if (item.isOptional) {
             if (!isOptional) {
               item.isOptional = false;
@@ -896,7 +896,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public boolean equals(Object o) {
-    return this == o || o instanceof IdeaPluginDescriptorImpl && id == ((IdeaPluginDescriptorImpl)o).id;
+    return this == o ||
+           Objects.equals(id,
+                          o instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)o).id : null);
   }
 
   @Override

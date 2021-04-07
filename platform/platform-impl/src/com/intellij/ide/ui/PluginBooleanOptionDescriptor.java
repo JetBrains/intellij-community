@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.FileVisitResult;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -102,15 +103,16 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription imple
     result.add(rootDescriptor);
 
     if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-      PluginManagerCore.processAllDependencies(
-        (IdeaPluginDescriptorImpl)rootDescriptor,
-        false,
-        descriptor -> descriptor.getPluginId() != PluginManagerCore.CORE_ID &&
-                      !descriptor.isEnabled() &&
-                      result.add(descriptor) ?
-                      FileVisitResult.CONTINUE : // if descriptor has already been added/enabled, no need to process it's dependencies
-                      FileVisitResult.SKIP_SUBTREE
-      );
+      PluginManagerCore.processAllDependencies((IdeaPluginDescriptorImpl)rootDescriptor,
+                                               false,
+                                               descriptor -> PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ||
+                                                             descriptor.isEnabled() ||
+                                                             !result.add(descriptor)
+                                                             ?
+                                                             // if descriptor has already been added/enabled, no need to process it's dependencies
+                                                             FileVisitResult.SKIP_SUBTREE
+                                                             :
+                                                             FileVisitResult.CONTINUE);
     }
 
     return result;
@@ -120,12 +122,16 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription imple
     Set<IdeaPluginDescriptor> result = new HashSet<>();
     result.add(rootDescriptor);
 
+    // TODO unify with PluginBooleanOptionDescriptor.getPluginsIdsToDisable
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     PluginId rootId = rootDescriptor.getPluginId();
 
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       PluginId pluginId = plugin.getPluginId();
-      if (pluginId == rootId || appInfo.isEssentialPlugin(pluginId) || !plugin.isEnabled() || plugin.isImplementationDetail()) {
+      if (Objects.equals(pluginId, rootId) ||
+          appInfo.isEssentialPlugin(pluginId) ||
+          !plugin.isEnabled() ||
+          plugin.isImplementationDetail()) {
         continue;
       }
 
@@ -139,7 +145,7 @@ final class PluginBooleanOptionDescriptor extends BooleanOptionDescription imple
       }
 
       PluginManagerCore.processAllDependencies(pluginDescriptor, false, descriptor -> {
-        if (descriptor.getPluginId() == rootId) {
+        if (Objects.equals(descriptor.getPluginId(), rootId)) {
           result.add(plugin);
           return FileVisitResult.TERMINATE;
         }

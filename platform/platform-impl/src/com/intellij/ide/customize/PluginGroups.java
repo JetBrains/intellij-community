@@ -2,12 +2,13 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import icons.PlatformImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -15,6 +16,8 @@ import javax.swing.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PluginGroups {
@@ -356,18 +359,21 @@ public class PluginGroups {
       if (CORE.equals(group)) continue;
 
       List<IdSet> idSets = new ArrayList<>();
-      @Nls StringBuilder description = new StringBuilder();
       for (String idDescription : g.getPluginIdDescription()) {
-        IdSet idSet = new IdSet(this, idDescription);
-        String idSetTitle = idSet.getTitle();
-        if (idSetTitle == null) continue;
-        idSets.add(idSet);
-        if (description.length() > 0) {
-          description.append(", ");
+        int i = idDescription.indexOf(":");
+        IdSet idSet = createIdSet(i > 0 ? idDescription.substring(0, i) /* NON-NLS */ : null,
+                                  i > 0 ? idDescription.substring(i + 1) : idDescription);
+        if (idSet != null) {
+          idSets.add(idSet);
         }
-        description.append(idSetTitle);
       }
       myGroups.put(group, idSets);
+
+      @Nls StringBuilder description = new StringBuilder();
+      StringUtil.join(idSets,
+                      IdSet::getTitle,
+                      ", ",
+                      description);
 
       if (description.length() > MAX_DESCR_LENGTH) {
         int lastWord = description.lastIndexOf(",", MAX_DESCR_LENGTH);
@@ -416,15 +422,15 @@ public class PluginGroups {
 
   public final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
-      if (pluginDescriptor.getPluginId() == id) {
+      if (id.equals(pluginDescriptor.getPluginId())) {
         return pluginDescriptor;
       }
     }
     return null;
   }
 
-  public boolean isIdSetAllEnabled(IdSet set) {
-    for (PluginId id : set.getIds()) {
+  public boolean isIdSetAllEnabled(@NotNull IdSet set) {
+    for (PluginId id : set.getPluginIds()) {
       if (!isPluginEnabled(id)) {
         return false;
       }
@@ -433,7 +439,7 @@ public class PluginGroups {
   }
 
   public void setIdSetEnabled(@NotNull IdSet set, boolean enabled) {
-    for (PluginId id : set.getIds()) {
+    for (PluginId id : set.getPluginIds()) {
       setPluginEnabledWithDependencies(id, enabled);
     }
   }
@@ -452,83 +458,88 @@ public class PluginGroups {
     return !myDisabledPluginIds.contains(pluginId);
   }
 
-  private IdSet getSet(@NotNull PluginId pluginId) {
-    initIfNeeded();
-    for (List<IdSet> sets : myGroups.values()) {
-      for (IdSet set : sets) {
-        for (PluginId id : set.getIds()) {
-          if (id == pluginId) {
-            return set;
+  private @NotNull Set<PluginId> getAllPluginIds(@NotNull Set<PluginId> pluginIds) {
+    HashSet<PluginId> result = new HashSet<>(pluginIds);
+    for (PluginId pluginId : pluginIds) {
+      for (List<IdSet> sets : myGroups.values()) {
+        for (IdSet set : sets) {
+          Set<PluginId> ids = set.getPluginIds();
+          if (ids.contains(pluginId)) {
+            result.addAll(ids);
           }
         }
       }
     }
-    return null;
-  }
-
-  void setFeaturedPluginEnabled(String pluginId, boolean enabled) {
-    if (enabled) {
-      myFeaturedIds.add(pluginId);
-    }
-    else {
-      myFeaturedIds.remove(pluginId);
-    }
-    WelcomeWizardUtil.setFeaturedPluginsToInstall(myFeaturedIds);
+    return Collections.unmodifiableSet(result);
   }
 
   public void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
     initIfNeeded();
-    Set<PluginId> ids = new HashSet<>();
-    Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor = new HashMap<>(myAllPlugins.size());
-    for (IdeaPluginDescriptorImpl pluginDescriptor : myAllPlugins) {
-      idToDescriptor.put(pluginDescriptor.getPluginId(), pluginDescriptor);
-    }
 
-    collectInvolvedIds(pluginId, enabled, ids, idToDescriptor);
-    Set<IdSet> sets = new HashSet<>();
-    for (PluginId id : ids) {
-      IdSet set = getSet(id);
-      if (set != null) {
-        sets.add(set);
-      }
+    Function<PluginId, List<IdeaPluginDescriptorImpl>> pluginsById =
+      enabled ?
+      new Function<>() {
+        private final Map<PluginId, IdeaPluginDescriptorImpl> myPluginById = myAllPlugins.stream()
+          .collect(Collectors.toUnmodifiableMap(IdeaPluginDescriptorImpl::getPluginId, Function.identity()));
+
+        @Override
+        public @NotNull List<IdeaPluginDescriptorImpl> apply(PluginId pluginId) {
+          IdeaPluginDescriptorImpl descriptor = myPluginById.get(pluginId);
+          return descriptor != null ? List.of(descriptor) : List.of();
+        }
+      } : (__ -> myAllPlugins);
+
+    BiPredicate<PluginId, PluginId> predicate =
+      enabled ?
+      (dependencyId, __) -> !PluginManagerCore.CORE_ID.equals(dependencyId) :
+      Objects::equals;
+
+    Set<PluginId> pluginIds = getAllPluginIds(collectInvolvedIds(pluginId, predicate, pluginsById));
+    if (enabled) {
+      myDisabledPluginIds.removeAll(pluginIds);
     }
-    for (IdSet set : sets) {
-      ids.addAll(set.getIds());
-    }
-    for (PluginId id : ids) {
-      if (enabled) {
-        myDisabledPluginIds.remove(id);
-      }
-      else {
-        myDisabledPluginIds.add(id);
-      }
+    else {
+      myDisabledPluginIds.addAll(pluginIds);
     }
   }
 
-  private void collectInvolvedIds(@NotNull PluginId pluginId,
-                                  boolean toEnable,
-                                  @NotNull Set<? super PluginId> ids,
-                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor) {
-    ids.add(pluginId);
-    if (toEnable) {
-      IdeaPluginDescriptorImpl descriptor = idToDescriptor.get(pluginId);
-      if (descriptor != null) {
-        for (PluginDependency dependency : descriptor.getPluginDependencies()) {
-          if (!dependency.isOptional && dependency.id != PluginManagerCore.CORE_ID) {
-            collectInvolvedIds(dependency.id, true, ids, idToDescriptor);
-          }
+  private static @NotNull Set<PluginId> collectInvolvedIds(@NotNull PluginId pluginId,
+                                                           @NotNull BiPredicate<@NotNull PluginId, @NotNull PluginId> predicate,
+                                                           @NotNull Function<@NotNull PluginId, @NotNull List<IdeaPluginDescriptorImpl>> pluginsById) {
+    Set<PluginId> pluginIds = new HashSet<>();
+    pluginIds.add(pluginId);
+
+    for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
+      for (PluginDependency dependency : plugin.getPluginDependencies()) {
+        if (!dependency.isOptional && predicate.test(dependency.id, pluginId)) {
+          pluginIds.addAll(collectInvolvedIds(dependency.id, predicate, pluginsById));
         }
       }
     }
-    else {
-      for (IdeaPluginDescriptorImpl plugin : myAllPlugins) {
-        for (PluginDependency dependency : plugin.getPluginDependencies()) {
-          if (!dependency.isOptional && dependency.id == pluginId) {
-            collectInvolvedIds(plugin.getPluginId(), false, ids, idToDescriptor);
-          }
-        }
-      }
+
+    return pluginIds;
+  }
+
+  private @Nullable IdSet createIdSet(@Nls @Nullable String title,
+                                      @NonNls @NotNull String ids) {
+    Ref<IdeaPluginDescriptor> firstDescriptor = Ref.create();
+    Set<PluginId> pluginIds = Arrays.stream(ids.split(","))
+      .distinct()
+      .map(PluginId::getId)
+      .filter(pluginId -> {
+        IdeaPluginDescriptor descriptor = findPlugin(pluginId);
+        firstDescriptor.setIfNull(descriptor);
+        return descriptor != null;
+      }).collect(Collectors.toUnmodifiableSet());
+
+    int size = pluginIds.size();
+    if (title == null && size > 1) {
+      throw new IllegalArgumentException("There is no common title for " + size + " ids: " + ids);
     }
+
+    return size != 0 ?
+           new IdSet(pluginIds, title != null ? title : firstDescriptor.get().getName()) :
+           null;
   }
 
   public static final class Group {

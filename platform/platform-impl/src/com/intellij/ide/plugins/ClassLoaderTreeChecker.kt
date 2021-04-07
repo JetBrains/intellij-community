@@ -32,7 +32,7 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
         LOG.error("$classLoader must be unloaded but still referenced")
       }
 
-      if (classLoader.pluginId === unloadedMainDescriptor.pluginId && classLoader.pluginDescriptor === descriptor) {
+      if (classLoader.pluginId == unloadedMainDescriptor.pluginId && classLoader.pluginDescriptor === descriptor) {
         LOG.error("Classloader of $descriptor must be nullified")
       }
     }
@@ -46,7 +46,7 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
     }
 
     for (parent in parents) {
-      if (parent is PluginClassLoader && parent.pluginId === unloadedMainDescriptor.pluginId) {
+      if (parent is PluginClassLoader && parent.pluginId == unloadedMainDescriptor.pluginId) {
         LOG.error("$classLoader references via parents $parent that must be unloaded")
       }
     }

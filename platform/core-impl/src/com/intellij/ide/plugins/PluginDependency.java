@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class PluginDependency implements IdeaPluginDependency {
-  public final PluginId id;
+  public final @NotNull PluginId id;
   public boolean isOptional;
 
   public String configFile;
@@ -23,7 +23,7 @@ public final class PluginDependency implements IdeaPluginDependency {
   }
 
   @Override
-  public PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return id;
   }
 

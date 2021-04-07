@@ -279,7 +279,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
       //noinspection unchecked
       DescriptorBasedMessageBusConnection<Object> connection = (DescriptorBasedMessageBusConnection<Object>)holder;
-      if (connection.pluginId != pluginId) {
+      if (!pluginId.equals(connection.pluginId)) {
         continue;
       }
 

@@ -15,10 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -103,7 +100,7 @@ public class PluginUpdatesService {
       for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
         IdeaPluginDescriptor downloadedDescriptor = I.next();
 
-        if (downloadedDescriptor.getPluginId() == descriptor.getPluginId()) {
+        if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
           I.remove();
 
           Integer countValue = getCount();

@@ -69,7 +69,7 @@ public final class DescriptorListLoadingContext implements AutoCloseable {
   }
 
   boolean isPluginDisabled(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
+    return !PluginManagerCore.CORE_ID.equals(id) && disabledPlugins.contains(id);
   }
 
   @NotNull SafeJdomFactory getXmlFactory() {

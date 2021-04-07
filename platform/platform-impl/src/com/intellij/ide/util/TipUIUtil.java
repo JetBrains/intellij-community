@@ -72,13 +72,12 @@ public final class TipUIUtil {
   private TipUIUtil() {
   }
 
-  @NotNull
-  @NlsSafe
-  public static String getPoweredByText(@NotNull TipAndTrickBean tip) {
+  public static @NlsSafe @NotNull String getPoweredByText(@NotNull TipAndTrickBean tip) {
     PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor != null &&
-           PluginManagerCore.CORE_ID != descriptor.getPluginId() ?
-           descriptor.getName() : "";
+    return descriptor == null ||
+           PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ?
+           "" :
+           descriptor.getName();
   }
 
   @Nullable
@@ -162,7 +161,7 @@ public final class TipUIUtil {
     browser.setText(getTipText(tip, browser.getComponent()));
   }
 
-  private static String getCantReadText(TipAndTrickBean bean) {
+  private static @NotNull String getCantReadText(@NotNull TipAndTrickBean bean) {
     String plugin = getPoweredByText(bean);
     String product = ApplicationNamesInfo.getInstance().getFullProductName();
     if (!plugin.isEmpty()) {

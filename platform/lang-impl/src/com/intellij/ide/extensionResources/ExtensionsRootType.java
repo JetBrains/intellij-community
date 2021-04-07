@@ -144,7 +144,7 @@ public final class ExtensionsRootType extends RootType {
     PluginId ownerPluginId = getOwner(resourcesDir);
     if (ownerPluginId == null) return null;
 
-    if (PluginManagerCore.CORE_ID == ownerPluginId) {
+    if (PluginManagerCore.CORE_ID.equals(ownerPluginId)) {
       return PlatformUtils.getPlatformPrefix();
     }
 

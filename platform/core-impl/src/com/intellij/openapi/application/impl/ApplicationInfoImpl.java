@@ -1002,7 +1002,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public boolean isEssentialPlugin(@NotNull PluginId pluginId) {
-    return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
+    return PluginManagerCore.CORE_ID.equals(pluginId) || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
   @Override

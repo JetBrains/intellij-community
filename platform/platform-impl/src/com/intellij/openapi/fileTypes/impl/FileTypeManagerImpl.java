@@ -1619,8 +1619,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       for (FileNameMatcher matcher : fileNameMatchers) {
         FileTypeBean pendingTypeByMatcher = myPendingAssociations.findAssociatedFileType(matcher);
         if (pendingTypeByMatcher != null) {
-          PluginId id = pendingTypeByMatcher.getPluginId();
-          if (id == null || PluginManagerCore.CORE_ID == id) {
+          PluginId pluginId = pendingTypeByMatcher.getPluginId();
+          if (pluginId == null || PluginManagerCore.CORE_ID.equals(pluginId)) {
             instantiateFileTypeBean(pendingTypeByMatcher);
           }
         }

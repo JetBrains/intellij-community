@@ -23,7 +23,7 @@ public final class UIPluginGroup {
 
   public @Nullable ListPluginComponent findComponent(@NotNull PluginId pluginId) {
     for (ListPluginComponent component : plugins) {
-      if (pluginId == component.getPluginDescriptor().getPluginId()) {
+      if (pluginId.equals(component.getPluginDescriptor().getPluginId())) {
         return component;
       }
     }

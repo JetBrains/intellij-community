@@ -164,7 +164,7 @@ public class _LastInSuiteTest extends TestCase {
 
       List<WeakReference<Object>> list = new ArrayList<>();
       ep.processWithPluginDescriptor(false, (object, pluginDescriptor) -> {
-        if (pluginDescriptor.getPluginId() != PluginManagerCore.CORE_ID) {
+        if (!PluginManagerCore.CORE_ID.equals(pluginDescriptor.getPluginId())) {
           list.add(new WeakReference<>(object));
         }
       });

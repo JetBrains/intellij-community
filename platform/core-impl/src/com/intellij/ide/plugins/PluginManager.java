@@ -198,7 +198,7 @@ public final class PluginManager {
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.getLoadedPlugins(null);
     for (IdeaPluginDescriptor plugin : result) {
-      if (id == plugin.getPluginId()) {
+      if (id.equals(plugin.getPluginId())) {
         return plugin;
       }
     }

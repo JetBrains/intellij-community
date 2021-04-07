@@ -438,9 +438,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  private fun parseXmlIds(reader: Reader): Set<PluginId> {
-    return objectMapper.readValue(reader, object : TypeReference<Set<String>>() {}).map { PluginId.getId(it) }.toCollection(HashSet())
-  }
+  private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<Set<PluginId>>() {})
 
   private fun parseJsonPluginMeta(reader: Reader) = objectMapper.readValue(reader, IntellijUpdateMetadata::class.java)
 }
