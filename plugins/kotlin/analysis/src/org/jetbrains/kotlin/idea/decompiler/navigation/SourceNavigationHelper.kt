@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 object SourceNavigationHelper {
@@ -164,12 +165,10 @@ object SourceNavigationHelper {
                     }
                 }
             }
-            else -> throw IllegalStateException(
-                "Unexpected container of " +
-                        (if (navigationKind == NavigationKind.CLASS_FILES_TO_SOURCES) "decompiled" else "source") +
-                        " declaration: " +
-                        decompiledContainer::class.java.simpleName
-            )
+            else -> throw KotlinExceptionWithAttachments("Unexpected container of ${if (navigationKind == NavigationKind.CLASS_FILES_TO_SOURCES) "decompiled" else "source"} declaration: ${decompiledContainer::class.java.simpleName}")
+                .withAttachment("declaration", declaration.text)
+                .withAttachment("container", decompiledContainer.text)
+                .withAttachment("file", declaration.containingFile.text)
         }
 
         if (candidates.isEmpty()) {
