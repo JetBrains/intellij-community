@@ -394,4 +394,13 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "};");
   }
 
+  public void testIdea149711() {
+    getSettings().WHILE_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
+    doMethodTest(
+      "while (true);",
+
+      "while (true) ;"
+    );
+  }
+
 }

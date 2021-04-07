@@ -94,6 +94,8 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
 
     if (!checkRangeContainsElement(blockCandidate)) return;
 
+    if (blockCandidate instanceof PsiEmptyStatement) return;
+
     final PsiManager manager = statement.getManager();
     LOG.assertTrue(manager != null);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
