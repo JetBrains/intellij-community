@@ -3,34 +3,47 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.mac.foundation.ID;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 final class ItemsContainer {
   private final @NotNull String myName;    // just for logging/debugging
-  private final @NotNull List<TBItem> myItems = new ArrayList<>();
+  private final @NotNull List<@NotNull TBItem> myItems = new ArrayList<>();
 
   private long myCounter = 0; // for unique id generation
 
-  ItemsContainer(@NotNull @NonNls String name) { myName = name; }
+  ItemsContainer(@NotNull String name) { myName = name; }
 
-  boolean isEmpty() { return myItems.isEmpty(); }
+  synchronized boolean isEmpty() { return myItems.isEmpty(); }
 
-  boolean hasAnActionItems() { return anyMatchDeep(item -> item instanceof TBItemAnActionButton); }
+  synchronized int size() { return myItems.size(); }
+
+  synchronized TBItem get(int index) { return myItems.get(index); }
 
   @Override
   public String toString() { return myName; }
+
+  synchronized @NotNull String getDescription() {
+    if (myItems.isEmpty())
+      return "empty_container";
+    StringBuilder res = new StringBuilder(String.format("items [%d]: ", myItems.size()));
+    for (TBItem item : myItems) {
+      res.append(item.getUid());
+      res.append(", ");
+    }
+    return res.toString();
+  }
 
   void addItem(@NotNull TBItem item) {
     addItem(item, -1);
   }
 
-  void addItem(@NotNull TBItem item, int index) {
+  synchronized void addItem(@NotNull TBItem item, int index) {
     if (item.getUid() == null || item.getUid().isEmpty()) {
       item.setUid(_genNewID(item.getName()));
     }
@@ -42,7 +55,7 @@ final class ItemsContainer {
     }
   }
 
-  void addItem(@NotNull TBItem item, @Nullable TBItem positionAnchor) {
+  synchronized void addItem(@NotNull TBItem item, @Nullable TBItem positionAnchor) {
     final int index = positionAnchor != null ? myItems.indexOf(positionAnchor) : -1;
     addItem(item, index);
   }
@@ -51,7 +64,7 @@ final class ItemsContainer {
     addSpacing(large, -1);
   }
 
-  void addSpacing(boolean large, int index) {
+  synchronized void addSpacing(boolean large, int index) {
     final SpacingItem spacing = new SpacingItem();
     spacing.setUid(large ? "static_touchbar_item_large_space" : "static_touchbar_item_small_space");
     if (index >= 0 && index < myItems.size()) {
@@ -66,7 +79,7 @@ final class ItemsContainer {
     addFlexibleSpacing(-1);
   }
 
-  void addFlexibleSpacing(int index) {
+  synchronized void addFlexibleSpacing(int index) {
     final SpacingItem spacing = new SpacingItem();
     spacing.setUid("static_touchbar_item_flexible_space");
     if (index >= 0 && index < myItems.size()) {
@@ -77,36 +90,12 @@ final class ItemsContainer {
     }
   }
 
-  void releaseAll() {
+  synchronized void releaseAll() {
     myItems.forEach(item -> item.releaseNativePeer());
     myItems.clear();
   }
 
-  void remove(@Nullable Predicate<? super TBItem> filter) {
-    if (filter == null) {
-      releaseAll();
-      return;
-    }
-
-    final Iterator<TBItem> i = myItems.iterator();
-    while (i.hasNext()) {
-      @NotNull final TBItem item = i.next();
-      boolean removeGroup = false;
-      if (item instanceof TBItemGroup) {
-        final ItemsContainer group = ((TBItemGroup)item).getContainer();
-        group.remove(filter);
-        if (group.isEmpty()) {
-          removeGroup = true;
-        }
-      }
-      if (removeGroup || filter.test(item)) {
-        item.releaseNativePeer();
-        i.remove();
-      }
-    }
-  }
-
-  @NotNull String @NotNull [] getVisibleIds() {
+  synchronized @NotNull String @NotNull [] getVisibleIds() {
     String[] ids = new String[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
@@ -117,71 +106,43 @@ final class ItemsContainer {
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
 
-  ID @NotNull [] getVisibleNativePeers() {
+  synchronized ID @NotNull [] getNativePeers() {
     final ID[] ids = new ID[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer())) {
-        ids[c++] = item.getNativePeer();
+      final ID nativePeer = item.createNativePeer();
+      if (!ID.NIL.equals(nativePeer)) {
+        ids[c++] = nativePeer;
       }
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
   }
 
-  void softClear(@NotNull Map<AnAction, TBItemAnActionButton> actPool, @NotNull LinkedList<TBItemGroup> groupPool) {
+  synchronized void softClear(@NotNull Map<AnAction, TBItemAnActionButton> actPool, @NotNull Map<Integer, TBItemGroup> groupPool) {
     myItems.forEach((item -> {
       if (item instanceof TBItemAnActionButton) {
         final TBItemAnActionButton actItem = (TBItemAnActionButton)item;
-        actPool.put(actItem.getAnAction(), actItem);
+        TBItemAnActionButton prev = actPool.put(actItem.getAnAction(), actItem);
+        if (prev != null) { // just for insurance
+          prev.releaseNativePeer();
+        }
       }
       if (item instanceof TBItemGroup) {
         final TBItemGroup group = (TBItemGroup)item;
-        group.getContainer().softClear(actPool, groupPool);
-        groupPool.add(group);
+        TBItemGroup prev = groupPool.put(group.size(), group);
+        if (prev != null) { // just for insurance
+          prev.releaseNativePeer();
+        }
       }
     }));
     myItems.clear();
   }
 
-  TBItem getItem(int index) { return index >= 0 && index < myItems.size() ? myItems.get(index) : null; }
-
-  void forEachDeep(Consumer<? super TBItem> proc) {
-    myItems.forEach((item -> {
-      if (item instanceof TBItemGroup) {
-        ((TBItemGroup)item).getContainer().forEachDeep(proc);
-        return;
-      }
-      proc.accept(item);
-    }));
-  }
-
-  boolean anyMatchDeep(Predicate<? super TBItem> proc) {
-    return myItems.stream().anyMatch(item -> {
-      if (item instanceof TBItemGroup) {
-        return ((TBItemGroup)item).getContainer().anyMatchDeep(proc);
-      }
-      return proc.test(item);
-    });
-  }
-
-  int releaseItems(Predicate<? super TBItem> proc) {
-    Iterator<TBItem> i = myItems.iterator();
-    int count = 0;
-    while (i.hasNext()) {
-      final TBItem tbi = i.next();
-      if (proc.test(tbi)) {
-        ++count;
-        i.remove();
-        tbi.releaseNativePeer();
-      }
-    }
-    return count;
-  }
-
   @Nullable
-  TBItem findItem(String uid) {
+  synchronized TBItem findItem(String uid) {
     for (TBItem item : myItems) {
-      if (item.getUid().equals(uid)) {
+      final String itemUid = item.getUid();
+      if (itemUid != null && itemUid.equals(uid)) {
         return item;
       }
     }

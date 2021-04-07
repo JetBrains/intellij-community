@@ -38,7 +38,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
@@ -528,8 +527,6 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void onFocusEvent(@NotNull AWTEvent event) {
-    TouchBarsManager.onFocusEvent(event);
-
     if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
       FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
     }
@@ -741,10 +738,6 @@ public final class IdeEventQueue extends EventQueue {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
       }
       return;
-    }
-
-    if (e instanceof InputEvent && SystemInfoRt.isMac) {
-      TouchBarsManager.onInputEvent((InputEvent)e);
     }
 
     if (dispatchByCustomDispatchers(e)) {

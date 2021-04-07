@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.mac.foundation.ID;
@@ -45,12 +46,12 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
     };
   }
 
+  synchronized
   private void updateItems(int fromPosition, int count, boolean withImages) {
-    synchronized (myReleaseLock) {
-      if (myNativePeer.equals(ID.NIL))
-        return;
-      NST.updateScrubberItems(myNativePeer, myItems, fromPosition, count, withImages, !withImages, myStats);
-    }
+    final ID nativePeer = getNativePeer();
+    if (nativePeer.equals(ID.NIL))
+      return;
+    NST.updateScrubberItems(nativePeer, myItems, fromPosition, count, withImages, !withImages, myStats);
   }
 
   TBItemScrubber addItem(Icon icon, String text, Runnable action) {
@@ -61,6 +62,7 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
         action.run();
       if (myListener != null)
         myListener.onItemEvent(this, 0);
+      ActivityTracker.getInstance().inc();
     };
     myItems.add(new ItemData(icon, text, nativeAction));
     return this;
@@ -77,14 +79,11 @@ class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberDelegate {
       id.myEnabled = enabled;
     }
 
-    if (myNativePeer == ID.NIL)
-      return;
-
-    NST.enableScrubberItems(myNativePeer, indices, enabled);
+    NST.enableScrubberItems(getNativePeer(), indices, enabled);
   }
 
   void showItems(Collection<Integer> indices, boolean visible, boolean inverseOthers) {
-    NST.showScrubberItem(myNativePeer, indices, visible, inverseOthers);
+    NST.showScrubberItem(getNativePeer(), indices, visible, inverseOthers);
   }
 
   @Override

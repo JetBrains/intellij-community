@@ -1426,6 +1426,18 @@
     </action>
 
     <group id="TouchBar">
+      <group id="TouchBarEditorSearch">
+        <action id="EditorSearchSession.ToggleMatchCase" class="com.intellij.find.editorHeaderActions.ToggleMatchCase"/>
+        <action id="EditorSearchSession.ToggleWholeWordsOnlyAction" class="com.intellij.find.editorHeaderActions.ToggleWholeWordsOnlyAction"/>
+        <action id="EditorSearchSession.ToggleRegex" class="com.intellij.find.editorHeaderActions.ToggleRegex"/>
+        <separator text="type.large"/>
+        <action id="EditorSearchSession.PrevOccurrence" class="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
+        <action id="EditorSearchSession.NextOccurrenceAction" class="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
+        <group id="TouchBarEditorSearch_ctrl">
+          <reference id="EditorSearchSession.ToggleMatchCase"/>
+          <reference id="EditorSearchSession.ToggleWholeWordsOnlyAction"/>
+        </group>
+      </group>
       <group id="TouchBarDefault">
         <reference ref="RunConfiguration"/>
         <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
@@ -1437,8 +1449,7 @@
           <separator/>
         </group>
         <group id="TouchBarDefault_alt">
-          <reference ref="SelectInProjectView"/>
-          <separator text="type.flexible"/>
+          <separator/>
         </group>
         <group id="TouchBarDefault_cmd">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
@@ -1449,19 +1460,12 @@
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
           <separator text="type.flexible"/>
-          <reference ref="ShowUsages"/>
         </group>
         <group id="TouchBarDefault_cmd.alt">
-          <separator text="type.flexible"/>
-          <reference ref="FindUsages"/>
+          <separator/>
         </group>
         <group id="TouchBarDefault_shift">
           <!--Use Shift to show Refactor actions/-->
-          <reference ref="RenameElement"/>
-          <reference ref="ChangeSignature"/>
-          <separator text="type.flexible"/>
-          <reference ref="CopyElement"/>
-          <reference ref="Move"/>
         </group>
       </group>
       <group id="TouchBarDebug">

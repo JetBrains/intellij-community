@@ -38,7 +38,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -425,7 +425,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus((getOwner()!=null && getOwner().isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
 
     if (SystemInfo.isMac) {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+      final Disposable tb = TouchbarSupport.showDialogButtons(myDialog.getContentPane());
       if (tb != null) {
         myDisposeActions.add(() -> Disposer.dispose(tb));
       }

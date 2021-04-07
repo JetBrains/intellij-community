@@ -70,7 +70,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IconDeferrer
-import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.ReflectionUtil
@@ -501,7 +501,7 @@ object DynamicPlugins {
           app.getServiceIfCreated(TopHitCache::class.java)?.clear()
           PresentationFactory.clearPresentationCaches()
           ActionToolbarImpl.updateAllToolbarsImmediately(true)
-          TouchBarsManager.reloadAll()
+          TouchbarSupport.reloadAllActions()
           (serviceIfCreated<NotificationsManager>() as? NotificationsManagerImpl)?.expireAll()
           MessagePool.getInstance().clearErrors()
           LaterInvocator.purgeExpiredItems()

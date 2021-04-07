@@ -10,7 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.Nls;
@@ -141,7 +141,7 @@ final class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    _showTouchBar();
+    TouchbarSupport.showDialogButtons(this, myController.getSheetPanel());
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 
@@ -164,17 +164,6 @@ final class SheetMessage implements Disposable {
   public void dispose() {
     DialogWrapper.cleanupRootPane(myWindow.getRootPane());
     myWindow.dispose();
-  }
-
-  private void _showTouchBar() {
-    if (!TouchBarsManager.isTouchBarEnabled()) {
-      return;
-    }
-
-    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myController.getSheetPanel());
-    if (tb != null) {
-      Disposer.register(this, tb);
-    }
   }
 
   private static void maximizeIfNeeded(@Nullable Window owner) {

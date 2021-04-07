@@ -24,14 +24,11 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
-import com.intellij.ui.mac.foundation.Foundation
-import com.intellij.ui.mac.touchbar.TouchBarsManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createDirectories
@@ -136,24 +133,6 @@ private fun startApp(app: ApplicationImpl,
       }
       app.loadComponents(indicator)
     }, Executor(app::invokeLater))
-
-    if (!app.isHeadlessEnvironment && SystemInfoRt.isMac) {
-      ForkJoinPool.commonPool().execute(Runnable {
-        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-        // do not wait completion - it is thread safe and not required for application start
-        runActivity("mac touchbar") {
-          if (app.isDisposed) {
-            return@Runnable
-          }
-
-          Foundation.init()
-          if (app.isDisposed) {
-            return@Runnable
-          }
-          TouchBarsManager.initialize()
-        }
-      })
-    }
 
   CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
     .thenComposeAsync({

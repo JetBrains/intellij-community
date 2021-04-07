@@ -69,7 +69,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
@@ -1962,7 +1962,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHeaderPanel.repaint();
 
     if (SystemInfo.isMac) {
-      TouchBarsManager.onUpdateEditorHeader(this, header);
+      TouchbarSupport.onUpdateEditorHeader(this);
     }
   }
 

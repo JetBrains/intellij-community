@@ -18,12 +18,10 @@ import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -38,7 +36,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
-import com.intellij.ui.mac.touchbar.TouchBarsManager
+import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
@@ -260,10 +258,7 @@ private fun postOpenUiTasks(app: Application) {
   if (SystemInfoRt.isMac) {
     ForkJoinPool.commonPool().execute {
       runActivity("mac touchbar on app init") {
-        TouchBarsManager.onApplicationInitialized()
-        if (TouchBarsManager.isTouchBarAvailable()) {
-          CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, IdeBundle.message("settings.menus.group.touch.bar"))
-        }
+        TouchbarSupport.onApplicationLoaded()
       }
     }
   }

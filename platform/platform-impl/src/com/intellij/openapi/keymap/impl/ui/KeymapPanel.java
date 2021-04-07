@@ -35,8 +35,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.foundation.NSDefaults;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
-import com.intellij.ui.mac.touchbar.Utils;
+import com.intellij.ui.mac.touchbar.Helpers;
+import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -312,7 +312,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    if (TouchBarsManager.isTouchBarAvailable()) {
+    if (TouchbarSupport.isAvailable()) {
       myShowFN = new ShowFNKeysSettingWrapper();
       if (myShowFN.getCheckbox() != null) {
         panel.add(myShowFN.getCheckbox(), BorderLayout.SOUTH);
@@ -661,8 +661,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     private volatile boolean myDisposed;
 
     ShowFNKeysSettingWrapper() {
-      if (TouchBarsManager.isTouchBarAvailable()) {
-        final String appId = Utils.getAppId();
+      if (TouchbarSupport.isAvailable()) {
+        final String appId = Helpers.getAppId();
         if (appId != null && !appId.isEmpty()) {
           myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
           myCheckbox = new JCheckBox(KeyMapBundle.message("keymap.show.f.on.touch.bar"), myShowFnInitial);
@@ -676,10 +676,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     boolean isModified() { return myCheckbox != null && myShowFnInitial != myCheckbox.isSelected(); }
 
     void applyChanges() {
-      if (!TouchBarsManager.isTouchBarAvailable() || myCheckbox == null || !isModified())
+      if (!TouchbarSupport.isAvailable() || myCheckbox == null || !isModified())
         return;
 
-      final String appId = Utils.getAppId();
+      final String appId = Helpers.getAppId();
       if (appId == null || appId.isEmpty()) {
         Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
         return;
@@ -696,7 +696,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        final boolean result = Utils.restartTouchBarServer();
+        final boolean result = Helpers.restartTouchBarServer();
         if (!result) {
           // System.out.println("can't restart touchbar-server, roll back settings");
           myShowFnInitial = prevVal;
