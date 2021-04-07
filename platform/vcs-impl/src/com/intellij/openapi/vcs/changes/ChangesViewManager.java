@@ -425,6 +425,8 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myChangeProcessor != null) myChangeProcessor.fireDiffSettingsChanged();
       });
 
+      busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
+
       scheduleRefresh();
       myDiffPreview.updatePreview(false);
     }
