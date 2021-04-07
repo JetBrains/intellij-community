@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.fmap;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -73,7 +73,7 @@ public interface FMap<@NotNull K, @NotNull V> {
       return new ArrayBackedFMap<>(map);
     }
     else {
-      return new MapBackedFMap<>(new THashMap<>(map));
+      return new MapBackedFMap<>(new HashMap<>(map));
     }
   }
 
@@ -100,7 +100,7 @@ public interface FMap<@NotNull K, @NotNull V> {
 
   /**
    * Returns a value associated with given key in this {@code FMap}, or {@code null} if no value is associated.
-   * Note that unlike {@link java.util.HashMap} {@code FMap} cannot hold null values.
+   * Note that unlike {@link HashMap} {@code FMap} cannot hold null values.
    *
    * @param key a key to get the value associated with
    * @return a value associated with a given {@code key} or {@code null} if there's no such value

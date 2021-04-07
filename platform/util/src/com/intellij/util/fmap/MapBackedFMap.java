@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.fmap;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
 
@@ -24,7 +20,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
     if (value.equals(myMap.get(key))) {
       return this;
     }
-    Map<K, V> newMap = new THashMap<>(myMap);
+    Map<K, V> newMap = new HashMap<>(myMap);
     newMap.put(key, value);
     return new MapBackedFMap<>(newMap);
   }
@@ -35,7 +31,7 @@ final class MapBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
       return this;
     }
 
-    THashMap<K, V> newMap = new THashMap<>(myMap);
+    Map<K, V> newMap = new HashMap<>(myMap);
     newMap.remove(key);
 
     if (newMap.size() > ArrayBackedFMap.ARRAY_THRESHOLD) {

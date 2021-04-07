@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.fmap;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +125,7 @@ final class ArrayBackedFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
   @SuppressWarnings("unchecked")
   @NotNull
   private Map<K, V> toMapInner() {
-    Map<K, V> map = new THashMap<>(size());
+    Map<K, V> map = new HashMap<>(size());
     for (int i = 0; i < myData.length; i += 2) {
       map.put((K)myData[i], (V)myData[i + 1]);
     }

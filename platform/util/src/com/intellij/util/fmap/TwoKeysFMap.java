@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.fmap;
 
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 final class TwoKeysFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
 
@@ -82,7 +78,7 @@ final class TwoKeysFMap<@NotNull K, @NotNull V> implements FMap<K, V> {
 
   @Override
   public @NotNull Map<K, V> toMap() {
-    Map<K, V> map = new THashMap<>(2);
+    Map<K, V> map = new HashMap<>(2);
     map.put(myKey1, myValue1);
     map.put(myKey2, myValue2);
     return Collections.unmodifiableMap(map);
