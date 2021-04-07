@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -18,6 +19,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Divider;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.OnePixelSplitter;
@@ -186,7 +189,7 @@ public class PluginUpdateDialog extends DialogWrapper {
     new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
+        List<PluginDownloader> downloaders = downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
@@ -223,6 +226,28 @@ public class PluginUpdateDialog extends DialogWrapper {
         }
       }
     }.queue();
+  }
+
+  private static @NotNull List<PluginDownloader> downloadPluginUpdates(Collection<PluginDownloader> toDownloads,
+                                                                       @NotNull ProgressIndicator indicator) {
+    List<String> errors = new ArrayList<>();
+
+    try {
+      for (PluginDownloader download : toDownloads) {
+        download.setErrorsCollector(errors);
+      }
+      return UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
+    }
+    finally {
+      for (PluginDownloader download : toDownloads) {
+        download.setErrorsCollector(null);
+      }
+      if (!errors.isEmpty()) {
+        String text = StringUtil.join(errors, "\n\n");
+        String title = IdeBundle.message("title.plugin.installation");
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
+      }
+    }
   }
 
   @Override

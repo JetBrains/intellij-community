@@ -63,6 +63,7 @@ public final class PluginDownloader {
   private MarketplacePluginDownloadService myDownloadService;
 
   private boolean myShownErrors;
+  private @Nullable List<String> myErrors;
 
   private PluginDownloader(@NotNull IdeaPluginDescriptor descriptor,
                            @NotNull String url,
@@ -142,6 +143,10 @@ public final class PluginDownloader {
 
   public boolean isShownErrors() {
     return myShownErrors;
+  }
+
+  public void setErrorsCollector(@Nullable List<String> errors) {
+    myErrors = errors;
   }
 
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
@@ -239,13 +244,18 @@ public final class PluginDownloader {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
       myShownErrors = true;
-      if (showMessageOnError) {
+      if (showMessageOnError || myErrors != null) {
         if (errorMessage == null) {
           errorMessage = IdeBundle.message("unknown.error");
         }
         String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-        String title = IdeBundle.message("title.plugin.installation");
-        app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
+        if (myErrors != null) {
+          myErrors.add(text);
+        }
+        else if (showMessageOnError) {
+          String title = IdeBundle.message("title.plugin.installation");
+          app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
+        }
       }
     }
   }
