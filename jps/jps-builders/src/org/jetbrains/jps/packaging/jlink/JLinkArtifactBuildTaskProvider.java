@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
+  public static final String IMAGE_DIR_NAME = "jdk";
 
   @Override
   public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact,
@@ -72,7 +73,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
         error(context, JpsBuildBundle.message("packaging.jlink.build.task.unknown.artifact.path"));
         return;
       }
-      Path runtimeImagePath = Paths.get(artifactOutputPath, "jdk");
+      Path runtimeImagePath = Paths.get(artifactOutputPath, IMAGE_DIR_NAME);
       List<String> commands = buildCommands(context, properties, javaSdk, artifactOutputPath, runtimeImagePath);
       if (commands.isEmpty()) return;
       try {

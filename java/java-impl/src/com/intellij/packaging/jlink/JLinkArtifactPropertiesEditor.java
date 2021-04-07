@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,10 +25,9 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   JLinkArtifactPropertiesEditor(@NotNull JLinkArtifactProperties properties) {
     myProperties = properties;
-    myCompressionLevelText = new LinkedHashMap<>();
-    myCompressionLevelText.put(CompressionLevel.ZERO, JavaBundle.message("packaging.jlink.compression.zero.level"));
-    myCompressionLevelText.put(CompressionLevel.FIRST, JavaBundle.message("packaging.jlink.compression.first.level"));
-    myCompressionLevelText.put(CompressionLevel.SECOND, JavaBundle.message("packaging.jlink.compression.second.level"));
+    myCompressionLevelText = Map.of(CompressionLevel.ZERO, JavaBundle.message("packaging.jlink.compression.zero.level"),
+                                    CompressionLevel.FIRST, JavaBundle.message("packaging.jlink.compression.first.level"),
+                                    CompressionLevel.SECOND, JavaBundle.message("packaging.jlink.compression.second.level"));
   }
 
   @Nls
@@ -42,10 +40,11 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public @Nullable JComponent createComponent() {
     final FormBuilder builder = new FormBuilder();
 
-    myCompressionLevel = new ComboBox<>(myCompressionLevelText.keySet().toArray(CompressionLevel[]::new));
+    myCompressionLevel = new ComboBox<>(CompressionLevel.values());
     myCompressionLevel.setItem(myProperties.compressionLevel);
     myCompressionLevel.setRenderer(
-      SimpleListCellRenderer.create(myCompressionLevelText.get(CompressionLevel.ZERO), myCompressionLevelText::get));
+      SimpleListCellRenderer.create(myCompressionLevelText.get(CompressionLevel.ZERO),
+                                    level -> myCompressionLevelText.getOrDefault(level, String.valueOf(level.myValue))));
     builder.addLabeledComponent(JavaBundle.message("packaging.jlink.compression.level"), myCompressionLevel);
 
     myVerbose = new JCheckBox(JavaBundle.message("packaging.jlink.verbose.tracing"), myProperties.verbose);

@@ -4,8 +4,8 @@ package org.jetbrains.jps.packaging.jlink;
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 
-final class JpsJLinkArtifactType extends JpsElementTypeBase<JpsJLinkProperties> implements JpsArtifactType<JpsJLinkProperties> {
-  static final JpsJLinkArtifactType INSTANCE = new JpsJLinkArtifactType();
+public final class JpsJLinkArtifactType extends JpsElementTypeBase<JpsJLinkProperties> implements JpsArtifactType<JpsJLinkProperties> {
+  public static final JpsJLinkArtifactType INSTANCE = new JpsJLinkArtifactType();
 
   private JpsJLinkArtifactType() {
   }
