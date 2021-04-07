@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Base lombok processor class
@@ -98,20 +98,21 @@ public abstract class AbstractProcessor implements Processor {
 
   protected static @NotNull List<PsiAnnotation> copyableAnnotations(@NotNull PsiField psiField,
                                                                     @NotNull LombokCopyableAnnotations copyableAnnotations) {
-    final Set<String> setOfCopyableAnnotationFQNs = ContainerUtil.set(copyableAnnotations.getFullyQualifiedNames());
-
+    final Map<String, String> fullQualifiedToShortNames = copyableAnnotations.getFullQualifiedToShortNames();
     final PsiClass containingClass = psiField.getContainingClass();
     // append only for BASE_COPYABLE
     if (LombokCopyableAnnotations.BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
       Collection<String> configuredCopyableAnnotations =
         ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
-      setOfCopyableAnnotationFQNs.addAll(configuredCopyableAnnotations);
+
+      configuredCopyableAnnotations.forEach(fqn->fullQualifiedToShortNames.put(fqn, StringUtil.getShortName(fqn)));
     }
-    final Set<String> existedShortAnnotationNames = ContainerUtil.map2Set(psiField.getAnnotations(), PsiAnnotationSearchUtil::getShortNameOf);
-    // reduce combinedListOfCopyableAnnotations to only matching existed annotations by shortName
-    setOfCopyableAnnotationFQNs.removeIf(fqn -> !existedShortAnnotationNames.contains(StringUtil.getShortName(fqn)));
-    // collect existing annotation to copy
-    return PsiAnnotationSearchUtil.findAllAnnotations(psiField, setOfCopyableAnnotationFQNs);
+
+    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(psiField.getAnnotations(), PsiAnnotationSearchUtil::getShortNameOf);
+    // reduce copyableAnnotations to only matching existed annotations by shortName
+    fullQualifiedToShortNames.values().retainAll(existedShortAnnotationNames);
+    // collect existing annotations to copy
+    return PsiAnnotationSearchUtil.findAllAnnotations(psiField, fullQualifiedToShortNames.keySet());
   }
 
   protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,
