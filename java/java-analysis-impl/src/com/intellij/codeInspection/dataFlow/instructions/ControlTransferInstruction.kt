@@ -7,13 +7,20 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 /**
  * Instruction which performs complex control transfer (handling exception; processing finally blocks; exiting inlined lambda, etc.)
  */
-open class ControlTransferInstruction(val transfer: DfaControlTransferValue) : Instruction() {
-  init {
-    transfer.traps.forEach { trap -> trap.link(this) }
+open class ControlTransferInstruction : Instruction {
+  val transfer: DfaControlTransferValue
+
+  constructor(transfer: DfaControlTransferValue) : this(transfer, true)
+
+  constructor(transfer: DfaControlTransferValue, linkTraps: Boolean) : super() {
+    this.transfer = transfer
+    if (linkTraps) {
+      transfer.traps.forEach { trap -> trap.link(this) }
+    }
   }
 
   override fun bindToFactory(factory: DfaValueFactory): Instruction {
-    val instruction = ControlTransferInstruction(transfer.bindToFactory(factory))
+    val instruction = ControlTransferInstruction(transfer.bindToFactory(factory), false)
     instruction.index = index
     return instruction
   }
