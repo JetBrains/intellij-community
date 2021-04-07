@@ -67,6 +67,9 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testComment3() { doTestFor("StringBuffer"); }
   public void testComment4() { doTestFor("StringBuilder"); }
   public void testComment5() { doTestFor("StringBuilder"); }
+  public void testMultipleComments() { doTestFor("StringBuilder"); }
+  public void testMultipleCommentsMissingSemicolon() { doTestFor("StringBuilder"); }
+  public void testMultipleCommentsNoWhitespace() { doTestFor("StringBuilder"); }
   public void testImplicitToString() { doTestFor("StringBuilder"); }
   public void testImplicitToString2() { doTestFor("StringBuilder"); }
   public void testImplicitToString3() { doTestFor("StringBuilder"); }

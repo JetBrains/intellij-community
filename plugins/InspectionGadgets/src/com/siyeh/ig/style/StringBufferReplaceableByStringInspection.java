@@ -337,7 +337,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         return result;
       }
       for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiExpressionList) {
+        if (child instanceof PsiExpressionList ||  child instanceof PsiWhiteSpace
+            || child instanceof PsiJavaToken || child instanceof PsiReferenceParameterList) {
           continue;
         }
         if (buildStringExpression(child, tracker, result) == null) {
