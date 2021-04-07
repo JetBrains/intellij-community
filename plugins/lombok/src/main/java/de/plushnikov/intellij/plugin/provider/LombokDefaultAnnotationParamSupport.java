@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class LombokDefaultAnnotationParamSupport implements DefaultAnnotationParamInspection.IgnoreAnnotationParamSupport {
 
   @Override
-  public boolean ignoreAnnotationParam(@Nullable String qualifiedName, @NotNull String name) {
-    return LombokClassNames.EQUALS_AND_HASHCODE.equals(qualifiedName) && "callSuper".equals(name);
+  public boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {
+    return LombokClassNames.EQUALS_AND_HASHCODE.equals(annotationFQN) && "callSuper".equals(annotationParameterName);
   }
 }

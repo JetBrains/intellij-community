@@ -20,7 +20,13 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
     ExtensionPointName<IgnoreAnnotationParamSupport> EP_NAME =
       ExtensionPointName.create("com.intellij.lang.jvm.ignoreAnnotationParamSupport");
 
-    default boolean ignoreAnnotationParam(@Nullable String qualifiedName, @NotNull String name) {
+    /**
+     * Allows to skip DefaultAnnotationParamInspection for specific annotations parameters
+     * @param annotationFQN full qualified name of the annotation
+     * @param annotationParameterName name of the annotation param
+     * @return true to skip inspection
+     */
+    default boolean ignoreAnnotationParam(@Nullable String annotationFQN, @NotNull String annotationParameterName) {
       return false;
     }
   }
@@ -40,17 +46,16 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)element).getDefaultValue();
         if (defaultValue == null) return;
 
-        PsiElement elementParent = element.getParent();
-        if (elementParent instanceof PsiClass) {
-          final String qualifiedName = ((PsiClass)elementParent).getQualifiedName();
-          final String name = ((PsiAnnotationMethod)element).getName();
-          if (ContainerUtil
-            .exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensions(), ext -> ext.ignoreAnnotationParam(qualifiedName, name))) {
-            return;
-          }
-        }
-
         if (AnnotationUtil.equal(value, defaultValue)) {
+          PsiElement elementParent = element.getParent();
+          if (elementParent instanceof PsiClass) {
+            final String qualifiedName = ((PsiClass)elementParent).getQualifiedName();
+            final String name = ((PsiAnnotationMethod)element).getName();
+            if (ContainerUtil.exists(IgnoreAnnotationParamSupport.EP_NAME.getExtensions(),
+                                     ext -> ext.ignoreAnnotationParam(qualifiedName, name))) {
+              return;
+            }
+          }
           holder.registerProblem(value, JavaBundle.message("inspection.message.redundant.default.parameter.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  createRemoveParameterFix());
         }
