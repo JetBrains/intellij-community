@@ -5,9 +5,9 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
-public class MinimumSwitchBranchesInspectionTest extends LightJavaInspectionTestCase {
+public class SwitchStatementWithTooFewBranchesInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testMinimumSwitchBranches() {
+  public void testSwitchStatementWithTooFewBranches() {
     doTest();
   }
 
@@ -15,6 +15,6 @@ public class MinimumSwitchBranchesInspectionTest extends LightJavaInspectionTest
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MinimumSwitchBranchesInspection();
+    return new SwitchStatementWithTooFewBranchesInspection();
   }
 }

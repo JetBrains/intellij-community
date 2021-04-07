@@ -33,17 +33,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MinimumSwitchBranchesInspection extends BaseInspection {
+public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 2;
 
   @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
-
-  @Override
-  public @NotNull String getShortName() {
-    return "SwitchStatementWithTooFewBranches";
-  }
 
   @Override
   public JComponent createOptionsPanel() {

@@ -1,6 +1,6 @@
 package com.siyeh.igtest.controlflow.switch_statement_with_too_few_branches;
 
-class MinimumSwitchBranches {
+class SwitchStatementWithTooFewBranches {
 
   void foo(int i) {
     switch (i) {}

@@ -6,7 +6,7 @@ Reports common usage patterns of <code>java.util.Map</code>, and suggests replac
 <pre>
   map.containsKey(key) ? map.get(key) : "default";
 </pre>
-<p>Can be replaced with:</p>
+<p>>After the quick-fix is applied the result looks like:</p>
 <pre>
   map.getOrDefault(key, "default");
 </pre>
@@ -18,7 +18,7 @@ Reports common usage patterns of <code>java.util.Map</code>, and suggests replac
     map.put(key, list);
   }
 </pre>
-<p>Can be replaced with:</p>
+<p>After the quick-fix is applied the result looks like:</p>
 <pre>
   map.computeIfAbsent(key, localKey -> new ArrayList&lt;&gt;());
 </pre>
@@ -28,7 +28,7 @@ Reports common usage patterns of <code>java.util.Map</code>, and suggests replac
   if (val == null) map.put(key, 1);
   else map.put(key, val + 1);
 </pre>
-<p>Can be replaced with:</p>
+<p>After the quick-fix is applied the result looks like:</p>
 <pre>
   map.merge(key, 1, (localKey, localValue) -> localValue + 1);
 </pre>
@@ -38,7 +38,7 @@ Reports common usage patterns of <code>java.util.Map</code>, and suggests replac
     map.put(entry.getKey(), transform(entry.getValue()));
   }
 </pre>
-<p>Can be replaced with:</p>
+<p>After the quick-fix is applied the result looks like:</p>
 <pre>
   map.replaceAll((localKey, localValue) -> transform(localValue));
 </pre>

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class MaximumSwitchBranchesInspectionTest extends LightJavaInspectionTestCase {
+public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaInspectionTestCase {
 
   public void testSimple() {
     doMemberTest("    public void foo(int x) {\n" +
@@ -111,6 +111,6 @@ public class MaximumSwitchBranchesInspectionTest extends LightJavaInspectionTest
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MaximumSwitchBranchesInspection();
+    return new SwitchStatementWithTooManyBranchesInspection();
   }
 }

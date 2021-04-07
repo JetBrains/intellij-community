@@ -16,12 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class NonNormalizedAnnotationInspection extends BaseInspection {
-  @Override
-  public @NotNull String getShortName() {
-    return "SingleElementAnnotation";
-  }
-
+public class SingleElementAnnotationInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
@@ -44,14 +39,14 @@ public class NonNormalizedAnnotationInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("shorthand.annotation.quickfix");
+      return InspectionGadgetsBundle.message("single.element.annotation.quickfix");
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("shorthand.annotation.family.quickfix");
+      return InspectionGadgetsBundle.message("single.element.annotation.family.quickfix");
     }
 
     @Override
