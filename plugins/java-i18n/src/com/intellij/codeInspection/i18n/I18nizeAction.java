@@ -6,10 +6,7 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +28,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import java.util.Collection;
 import java.util.Optional;
 
-public class I18nizeAction extends AnAction {
+public class I18nizeAction extends AnAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(I18nizeAction.class);
 
   @Override
