@@ -430,7 +430,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> addFileType())
         .setRemoveAction(__ -> removeFileType())
         .setEditAction(__ -> editFileType())
@@ -441,6 +441,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       add(toolbarDecorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myFileTypesList);
       add(scrollPane, BorderLayout.CENTER);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
 
       new MySpeedSearch(myFileTypesList);
     }
@@ -570,16 +571,18 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(new ExtensionRenderer());
       myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setBorder(JBUI.Borders.empty());
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> addPattern())
         .setEditAction(__ -> editPattern())
         .setRemoveAction(__ -> removePattern())
         .disableUpDownActions();
       add(decorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myList);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
       add(scrollPane, BorderLayout.CENTER);
       //noinspection DialogTitleCapitalization IDEA-254041
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false, TITLE_INSETS).setShowLine(false));
@@ -643,10 +646,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         }
       });
       myList.setEmptyText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setBorder(JBUI.Borders.empty());
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setScrollPaneBorder(JBUI.Borders.empty())
-        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
+        .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
         .setAddAction(__ -> editHashBang(null))
         .setAddActionName(LangBundle.message("action.HashBangPanel.add.hashbang.pattern.text"))
         .setEditAction(__ -> editHashBang())
@@ -656,6 +660,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       add(decorator.createPanel(), BorderLayout.NORTH);
       JScrollPane scrollPane = new JBScrollPane(myList);
       add(scrollPane, BorderLayout.CENTER);
+      scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
       //noinspection DialogTitleCapitalization IDEA-254041
       setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
