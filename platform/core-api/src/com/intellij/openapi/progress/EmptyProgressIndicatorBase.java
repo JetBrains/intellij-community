@@ -1,43 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.DeprecatedMethodException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class EmptyProgressIndicator implements StandardProgressIndicator {
+public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
+
   @NotNull
   private final ModalityState myModalityState;
 
   @NotNull
   private volatile RunState myRunState = RunState.VIRGIN;
+
   private enum RunState {
     VIRGIN, STARTED, STOPPED
   }
-  private volatile boolean myIsCanceled;
+
   private volatile int myNonCancelableSectionCount;
 
-  public EmptyProgressIndicator() {
+  public EmptyProgressIndicatorBase() {
     this(ModalityState.defaultModalityState());
   }
 
-  public EmptyProgressIndicator(@NotNull ModalityState modalityState) {
+  public EmptyProgressIndicatorBase(@NotNull ModalityState modalityState) {
     myModalityState = modalityState;
   }
 
@@ -47,7 +33,6 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
       throw new IllegalStateException("Indicator already started");
     }
     myRunState = RunState.STARTED;
-    myIsCanceled = false;
   }
 
   @Override
@@ -69,19 +54,8 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  public final void cancel() {
-    myIsCanceled = true;
-    ProgressManager.canceled(this);
-  }
-
-  @Override
-  public final boolean isCanceled() {
-    return myIsCanceled;
-  }
-
-  @Override
   public final void checkCanceled() {
-    if (myIsCanceled && myNonCancelableSectionCount == 0) {
+    if (isCanceled() && myNonCancelableSectionCount == 0) {
       throw new ProcessCanceledException();
     }
   }
@@ -167,13 +141,5 @@ public class EmptyProgressIndicator implements StandardProgressIndicator {
   @Override
   public boolean isShowing() {
     return false;
-  }
-
-  @NotNull
-  public static ProgressIndicator notNullize(@Nullable ProgressIndicator indicator) {
-    if (indicator != null) {
-      return indicator;
-    }
-    return new EmptyProgressIndicator();
   }
 }
