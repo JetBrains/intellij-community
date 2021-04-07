@@ -1151,7 +1151,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     updateControls();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    mySearchRescheduleOnCancellationsAlarm.addRequest(this::findSettingsChanged, 100);
+    mySearchRescheduleOnCancellationsAlarm.addRequest(this::findSettingsChanged,
+                                                      Registry.intValue("ide.find.in.files.reschedule.delay", 100));
   }
 
   private void finishPreviousPreviewSearch() {
