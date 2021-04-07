@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.ml.local.models</id>
   <name>Machine Learning Local Models</name>
   <vendor>JetBrains</vendor>
