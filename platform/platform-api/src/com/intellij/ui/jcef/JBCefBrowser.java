@@ -9,7 +9,6 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
@@ -236,6 +235,16 @@ public class JBCefBrowser extends JBCefBrowserBase {
     }, myCefBrowser);
   }
 
+  // temporary possibility for debug (browser creation with empty url theoretically still can cause side-effects)
+  // TODO: remove after testing
+  private static final boolean USE_ABOUT_BLANK = Boolean.getBoolean("jcef.browser.use.about.blank");
+
+  private static @NotNull String validateUrl(@Nullable String url) {
+    if (url != null && !url.isEmpty())
+      return url;
+    return USE_ABOUT_BLANK ? BLANK_URI : "";
+  }
+
   private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
     if (client == null) {
       client = JBCefApp.getInstance().createClient(true);
@@ -244,12 +253,12 @@ public class JBCefBrowser extends JBCefBrowserBase {
       case EMBEDDED_WINDOW:
         return new CreateBrowserArtefacts(
           type,
-          client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.DEFAULT, false, null),
+          client.getCefClient().createBrowser(validateUrl(url), CefRendering.DEFAULT, false, null),
           client);
       case OGL_CANVAS:
         return new CreateBrowserArtefacts(
           type,
-          client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.OFFSCREEN, false, null),
+          client.getCefClient().createBrowser(validateUrl(url), CefRendering.OFFSCREEN, false, null),
           client);
       case BUFFERED_IMAGE:
         JBCefOsrComponent comp = new JBCefOsrComponent();
@@ -257,7 +266,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
         comp.setRenderHandler(handler);
         return new CreateBrowserArtefacts(
           type,
-          new CefBrowserOsrWithHandler(client.getCefClient(), url, null, handler, comp),
+          new CefBrowserOsrWithHandler(client.getCefClient(), validateUrl(url), null, handler, comp),
           client);
     }
     throw new IllegalArgumentException("wrong RenderingType"); // unreachable
