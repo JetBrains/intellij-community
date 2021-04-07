@@ -28,10 +28,10 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
-      new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
-      new LombokLightModifierList(manager),
-      new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
-      new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
+          new LombokLightParameterListBuilder(manager, JavaLanguage.INSTANCE),
+          new LombokLightModifierList(manager),
+          new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
+          new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     setBaseIcon(LombokIcons.Nodes.LombokMethod);
   }
 
@@ -78,7 +78,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE);
   }
 
-  public LombokLightMethodBuilder withParameter(@NotNull PsiParameter psiParameter) {
+  public LombokLightMethodBuilder withParameter(@NotNull LombokLightParameter psiParameter) {
     addParameter(psiParameter);
     return this;
   }
@@ -122,8 +122,18 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
   // add Parameter as is, without wrapping with LightTypeParameter
   @Override
   public LightMethodBuilder addTypeParameter(PsiTypeParameter parameter) {
-    ((LightTypeParameterListBuilder) getTypeParameterList()).addParameter(parameter);
+    ((LightTypeParameterListBuilder)getTypeParameterList()).addParameter(parameter);
     return this;
+  }
+
+  @Override
+  public @NotNull LombokLightModifierList getModifierList() {
+    return (LombokLightModifierList)super.getModifierList();
+  }
+
+  @Override
+  public @NotNull LombokLightParameterListBuilder getParameterList() {
+    return (LombokLightParameterListBuilder)super.getParameterList();
   }
 
   @Override
@@ -188,7 +198,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     PsiMethod result;
     try {
       final StringBuilder methodTextDeclaration = new StringBuilder();
-      methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
+      methodTextDeclaration.append(getAllModifierProperties(getModifierList()));
       PsiType returnType = getReturnType();
       if (null != returnType && returnType.isValid()) {
         methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
@@ -210,7 +220,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
       if (null != getBody()) {
         result.getBody().replace(getBody());
       }
-    } catch (Exception ex) {
+    }
+    catch (Exception ex) {
       result = null;
     }
     return result;
@@ -265,7 +276,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
       return false;
     }
 
-    LombokLightMethodBuilder that = (LombokLightMethodBuilder) o;
+    LombokLightMethodBuilder that = (LombokLightMethodBuilder)o;
 
     if (!getName().equals(that.getName())) {
       return false;

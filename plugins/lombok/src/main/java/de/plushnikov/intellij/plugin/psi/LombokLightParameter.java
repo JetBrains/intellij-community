@@ -3,7 +3,10 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightParameter;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +49,11 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
   }
 
   @Override
+  public @NotNull LombokLightModifierList getModifierList() {
+    return (LombokLightModifierList)super.getModifierList();
+  }
+
+  @Override
   public TextRange getTextRange() {
     TextRange r = super.getTextRange();
     return r == null ? TextRange.EMPTY_RANGE : r;
@@ -53,7 +61,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
 
   @Override
   public LombokLightParameter setModifiers(String... modifiers) {
-    final LombokLightModifierList lombokLightModifierList = (LombokLightModifierList)getModifierList();
+    final LombokLightModifierList lombokLightModifierList = getModifierList();
     lombokLightModifierList.clearModifiers();
     Stream.of(modifiers).forEach(lombokLightModifierList::addModifier);
     return this;
@@ -73,12 +81,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
       return false;
     }
 
-    final PsiType type = getType();
-    final PsiType thatType = that.getType();
-    if (type instanceof PsiClassType && thatType instanceof PsiClassType) {
-      return Objects.equals(((PsiClassType)type).getName(), ((PsiClassType)thatType).getName());
-    }
-    return type.equals(thatType);
+    return getType().equals(that.getType());
   }
 
   @Override
