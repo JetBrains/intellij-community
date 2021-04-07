@@ -545,7 +545,6 @@
                             id="groovyBasic2ClassName" order="first, after liveTemplates"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"
                             id="groovyBasic" order="before javaClassName"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.shell.GroovyShellCompletionContributor"/>
 
     <completion.contributor language="Groovy"
                             implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
@@ -1243,8 +1242,6 @@
   </extensions>
 
   <actions>
-    <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"/>
-
     <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
            popup="true">
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
@@ -1305,12 +1302,6 @@
 
       <add-to-group group-id="GenerateGroup" anchor="after" relative-to-action="JavaGenerateGroup1"/>
     </group>
-
-    <action id="Groovy.Shell"
-            class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
-            icon="JetgroovyIcons.Groovy.Groovy_16x16">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
   </actions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

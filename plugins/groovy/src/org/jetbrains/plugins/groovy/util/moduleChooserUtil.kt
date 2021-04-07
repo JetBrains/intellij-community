@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ModuleChooserUtil")
 
 package org.jetbrains.plugins.groovy.util
@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
-import com.intellij.openapi.util.Condition
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
@@ -55,16 +54,6 @@ private fun createSelectModulePopupStep(project: Project, modules: List<Module>,
 
   return step
 }
-
-fun filterGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): List<Module> {
-  return modules.filter(isGroovyCompatibleModule(condition.toPredicate()))
-}
-
-fun hasGroovyCompatibleModules(modules: Collection<Module>, condition: Condition<Module>): Boolean {
-  return modules.any(isGroovyCompatibleModule(condition.toPredicate()))
-}
-
-private inline fun isGroovyCompatibleModule(crossinline condition: (Module) -> Boolean) = ::hasJavaSdk and condition
 
 fun hasJavaSdk(module: Module): Boolean = ModuleRootManager.getInstance(module).sdk?.sdkType is JavaSdkType
 
