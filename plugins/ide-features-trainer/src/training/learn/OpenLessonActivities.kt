@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import training.dsl.LessonUtil
@@ -174,8 +175,13 @@ internal object OpenLessonActivities {
       hideOtherViews(project)
     }
     // We need to ensure that the learning panel is initialized
-    showLearnPanel(project)
+    learningToolWindow(project)?.let {
+      it.show()
+      openLessonWhenLearnPanelIsReady(project, lesson, vf)
+    } ?: waitLearningToolwindow(project, lesson, vf)
+  }
 
+  private fun openLessonWhenLearnPanelIsReady(project: Project, lesson: Lesson, vf: VirtualFile?) {
     LOG.debug("${project.name}: Add listeners to lesson")
     addStatisticLessonListenerIfNeeded(project, lesson)
 
@@ -229,6 +235,24 @@ internal object OpenLessonActivities {
     LOG.debug("${project.name}: 4. Process lesson")
     if (lesson is KLesson) processDslLesson(lesson, textEditor, project, vf)
     else error("Unknown lesson format")
+  }
+
+  private fun waitLearningToolwindow(project: Project, lesson: Lesson, vf: VirtualFile?) {
+    val connect = project.messageBus.connect()
+    connect.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun toolWindowsRegistered(ids: MutableList<String>, toolWindowManager: ToolWindowManager) {
+        if (ids.contains(LearnToolWindowFactory.LEARN_TOOL_WINDOW)) {
+          val toolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
+          if (toolWindow != null) {
+            connect.disconnect()
+            invokeLater {
+              toolWindow.show()
+              openLessonWhenLearnPanelIsReady(project, lesson, vf)
+            }
+          }
+        }
+      }
+    })
   }
 
   private fun processDslLesson(lesson: KLesson, textEditor: TextEditor?, projectWhereToStartLesson: Project, vf: VirtualFile?) {
