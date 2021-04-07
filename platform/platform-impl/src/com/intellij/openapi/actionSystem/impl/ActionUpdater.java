@@ -452,7 +452,7 @@ final class ActionUpdater {
     List<AnAction> result = new ArrayList<>();
     for (AnAction child : visible) {
       if (child instanceof Separator &&
-          ContainerUtil.getLastItem(result) instanceof Separator &&
+          (result.isEmpty() || ContainerUtil.getLastItem(result) instanceof Separator) &&
           StringUtil.isEmpty(((Separator)child).getText())) {
         continue;
       }
