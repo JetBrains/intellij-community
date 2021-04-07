@@ -182,10 +182,10 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles, boolean updatingMode) {
+  public TreeModelBuilder setIgnored(@Nullable List<FilePath> ignoredFiles) {
     assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
-    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles, updatingMode);
+    ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles);
     return insertSpecificFilePathNodeToModel(ignoredFiles, node, FileStatus.IGNORED);
   }
 

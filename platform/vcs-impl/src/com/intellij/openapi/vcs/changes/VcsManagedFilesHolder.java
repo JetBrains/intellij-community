@@ -17,13 +17,20 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EventListener;
 
 /**
  * @see ChangeListManagerImpl#notifyUnchangedFileStatusChanged
  */
 public interface VcsManagedFilesHolder extends FilePathHolder {
   ProjectExtensionPointName<Provider> VCS_IGNORED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.ignoredFilesHolder");
+
+  @Topic.ProjectLevel
+  Topic<VcsManagedFilesHolderListener> TOPIC = Topic.create("VcsManagedFilesHolder update", VcsManagedFilesHolderListener.class);
 
   default boolean isInUpdatingMode() {return false;}
 
@@ -33,5 +40,10 @@ public interface VcsManagedFilesHolder extends FilePathHolder {
 
     @NotNull
     VcsManagedFilesHolder createHolder();
+  }
+
+  interface VcsManagedFilesHolderListener extends EventListener {
+    @CalledInAny
+    void updatingModeChanged();
   }
 }

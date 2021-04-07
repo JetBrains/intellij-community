@@ -7,12 +7,12 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ChangesViewI;
-import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.util.StopWatch;
@@ -304,23 +304,22 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   }
 
   private static class MyRepositoryIgnoredHolderUpdateListener implements VcsIgnoredHolderUpdateListener {
-    @NotNull private final ChangesViewI myChangesViewI;
     @NotNull private final Project myProject;
 
     MyRepositoryIgnoredHolderUpdateListener(@NotNull Project project) {
-      myChangesViewI = ChangesViewManager.getInstance(project);
       myProject = project;
     }
 
     @Override
     public void updateStarted() {
-      myChangesViewI.scheduleRefresh(); //TODO optimize: remove additional refresh
+      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
     }
 
     @Override
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
+      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
       ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     }
   }

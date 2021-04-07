@@ -426,6 +426,11 @@ public class ChangesViewManager implements ChangesViewEx,
       });
 
       busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
+      busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myView.repaint();
+        });
+      });
 
       scheduleRefresh();
       myDiffPreview.updatePreview(false);
@@ -733,7 +738,7 @@ public class ChangesViewManager implements ChangesViewEx,
           .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
           .setUnversioned(unversionedFiles);
         if (myChangesViewManager.myState.myShowIgnored) {
-          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
+          treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths());
         }
 
         invokeLaterIfNeeded(() -> {

@@ -830,7 +830,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     });
   }
 
-  boolean isIgnoredInUpdateMode() {
+  public boolean isIgnoredInUpdateMode() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getIgnoredFileHolder().isInUpdatingMode();
