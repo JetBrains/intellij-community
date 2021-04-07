@@ -22,6 +22,7 @@ import java.util.Objects;
 public class LombokLightMethodBuilder extends LightMethodBuilder implements SyntheticElement {
   private PsiMethod myMethod;
   private ASTNode myASTNode;
+  private String myBodyAsText;
   private PsiCodeBlock myBodyCodeBlock;
   // used to simplify comparing of returnType in equal method
   private String myReturnTypeAsText;
@@ -103,8 +104,9 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     return this;
   }
 
-  public LombokLightMethodBuilder withBody(@NotNull PsiCodeBlock codeBlock) {
-    myBodyCodeBlock = codeBlock;
+  public LombokLightMethodBuilder withBodyText(@NotNull String codeBlockText) {
+    myBodyAsText = codeBlockText;
+    myBodyCodeBlock = null;
     return this;
   }
 
@@ -138,6 +140,12 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   @Override
   public PsiCodeBlock getBody() {
+    if (null == myBodyCodeBlock && null != myBodyAsText) {
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
+      myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + myBodyAsText + "}", this);
+
+      myBodyAsText = null;
+    }
     return myBodyCodeBlock;
   }
 

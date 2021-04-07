@@ -344,7 +344,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       blockText.append(String.format("this.%s = %s;\n", param.getName(), fieldInitializer));
     }
 
-    constructorBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), constructorBuilder));
+    constructorBuilder.withBodyText(blockText.toString());
 
     return constructorBuilder;
   }
@@ -390,7 +390,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     final String codeBlockText = createStaticCodeBlockText(returnType, useJavaDefaults, methodBuilder.getParameterList());
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+    methodBuilder.withBodyText(codeBlockText);
 
     return methodBuilder;
   }
