@@ -92,6 +92,15 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   /**
+   * @deprecated Use isGotItButton instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static boolean isBorderless(Component c) {
+    return isGotItButton(c);
+  }
+
+  /**
    * @deprecated Use isComboAction instead
    */
   @Deprecated
