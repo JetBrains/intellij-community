@@ -1,17 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.application.options
+package com.intellij.openapi.util.registry
 
+import com.intellij.application.options.RegistryManager
+import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
 import java.util.*
 
 @State(name = "Registry", storages = [Storage("ide.general.xml")])
 private class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager {
+  init {
+    runActivity("registry keys adding") {
+      RegistryKeyBean.addKeysFromPlugins()
+    }
+  }
+
   override fun `is`(key: String): Boolean {
     return Registry.get(key).asBoolean()
   }

@@ -14,6 +14,7 @@ import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Provides a UI to configure internal settings of the IDE.
@@ -29,7 +30,7 @@ public final class Registry  {
 
   private final Map<String, String> myUserProperties = new LinkedHashMap<>();
   private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private final Map<String, RegistryKeyDescriptor> myContributedKeys = new HashMap<>();
+  private Map<String, RegistryKeyDescriptor> myContributedKeys = Collections.emptyMap();
 
   private static final Registry ourInstance = new Registry();
   private volatile boolean myLoaded;
@@ -98,7 +99,8 @@ public final class Registry  {
   }
 
   static @NotNull ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
+    Reference<ResourceBundle> bundleRef = ourBundle;
+    ResourceBundle bundle = bundleRef == null ? null : bundleRef.get();
     if (bundle == null) {
       bundle = ResourceBundle.getBundle(REGISTRY_BUNDLE);
       ourBundle = new SoftReference<>(bundle);
@@ -107,8 +109,9 @@ public final class Registry  {
   }
 
   public @NlsSafe String getBundleValue(@NonNls @NotNull String key, boolean mustExist) throws MissingResourceException {
-    if (myContributedKeys.containsKey(key)) {
-      return myContributedKeys.get(key).getDefaultValue();
+    RegistryKeyDescriptor contributed = myContributedKeys.get(key);
+    if (contributed != null) {
+      return contributed.getDefaultValue();
     }
 
     try {
@@ -118,9 +121,8 @@ public final class Registry  {
       if (mustExist) {
         throw e;
       }
+      return null;
     }
-
-    return null;
   }
 
   public static @NotNull Registry getInstance() {
@@ -227,16 +229,15 @@ public final class Registry  {
     return false;
   }
 
-  public static synchronized void addKeys(@NotNull Iterator<RegistryKeyDescriptor> descriptors) {
+  @ApiStatus.Internal
+  public static synchronized void setKeys(@NotNull Map<String, RegistryKeyDescriptor> descriptors) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
-    while (descriptors.hasNext()) {
-      RegistryKeyDescriptor descriptor = descriptors.next();
-      ourInstance.myContributedKeys.put(descriptor.getName(), descriptor);
-    }
+    ourInstance.myContributedKeys = descriptors;
   }
 
-  public static synchronized void removeKey(@NonNls @NotNull String key) {
-    ourInstance.myContributedKeys.remove(key);
-    ourInstance.myValues.remove(key);
+  @ApiStatus.Internal
+  public static synchronized void mutateContributedKeys(@NotNull Function<Map<String, RegistryKeyDescriptor>, Map<String, RegistryKeyDescriptor>> mutator) {
+    // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
+    ourInstance.myContributedKeys = mutator.apply(ourInstance.myContributedKeys);
   }
 }

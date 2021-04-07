@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
-import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
@@ -141,15 +140,11 @@ private fun startApp(app: ApplicationImpl,
                      initAppActivity: Activity,
                      registerComponentFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>,
                      args: List<String>) {
-  val initStoreFuture = registerComponentFuture.thenApply { plugins ->
+  registerComponentFuture.thenApply { plugins ->
     // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
     // but it is ok because registry is not and should be not used
     initConfigurationStore(app)
-    plugins
-  }
-
-  val appInitializedFuture = initStoreFuture.thenCompose {
-    val preloadSyncServiceFuture = preloadServices(it, app, activityPrefix = "")
+    val preloadSyncServiceFuture = preloadServices(plugins, app, activityPrefix = "")
 
     val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
     val loadComponentInEdtFuture = CompletableFuture.runAsync({
@@ -166,34 +161,26 @@ private fun startApp(app: ApplicationImpl,
       app.loadComponents(indicator)
     }, Executor(app::invokeLater))
 
+    if (!app.isHeadlessEnvironment && SystemInfoRt.isMac) {
+      ForkJoinPool.commonPool().execute(Runnable {
+        // ensure that TouchBarsManager is loaded before WelcomeFrame/project
+        // do not wait completion - it is thread safe and not required for application start
+        runActivity("mac touchbar") {
+          if (app.isDisposed) {
+            return@Runnable
+          }
+
+          Foundation.init()
+          if (app.isDisposed) {
+            return@Runnable
+          }
+          TouchBarsManager.initialize()
+        }
+      })
+    }
+
     CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
   }
-
-  initStoreFuture.thenRunAsync({
-    runActivity("registry keys adding") {
-      RegistryKeyBean.addKeysFromPlugins()
-    }
-  }, ForkJoinPool.commonPool())
-
-  if (!app.isHeadlessEnvironment && SystemInfoRt.isMac) {
-    initStoreFuture.thenRunAsync(Runnable {
-      // ensure that TouchBarsManager is loaded before WelcomeFrame/project
-      // do not wait completion - it is thread safe and not required for application start
-      runActivity("mac touchbar") {
-        if (app.isDisposed) {
-          return@Runnable
-        }
-
-        Foundation.init()
-        if (app.isDisposed) {
-          return@Runnable
-        }
-        TouchBarsManager.initialize()
-      }
-    }, ForkJoinPool.commonPool())
-  }
-
-  appInitializedFuture
     .thenComposeAsync({
       val pool = ForkJoinPool.commonPool()
 

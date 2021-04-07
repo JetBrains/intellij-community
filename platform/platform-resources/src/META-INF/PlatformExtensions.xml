@@ -65,7 +65,7 @@
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
 
     <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
-                        serviceImplementation="com.intellij.application.options.RegistryManagerImpl" preload="true"/>
+                        serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl" preload="true"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileDocumentManager" preload="true"

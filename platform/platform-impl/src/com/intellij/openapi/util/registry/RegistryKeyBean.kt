@@ -4,10 +4,13 @@ package com.intellij.openapi.util.registry
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.*
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointPriorityListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -15,7 +18,7 @@ import org.jetbrains.annotations.NonNls
 /**
  * Registers custom key for [Registry].
  */
-class RegistryKeyBean : PluginAware {
+class RegistryKeyBean {
   companion object {
     // Since the XML parser removes all the '\n' chars joining indented lines together,
     // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
@@ -29,25 +32,43 @@ class RegistryKeyBean : PluginAware {
     @JvmStatic
     @ApiStatus.Internal
     fun addKeysFromPlugins() {
-      val epName = ExtensionPointName<RegistryKeyBean>("com.intellij.registryKey")
-      Registry.addKeys(epName.iterable.asSequence().map { createRegistryKeyDescriptor(it) }.iterator())
+      val point = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+        .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey")
+      val contributedKeys = HashMap<String, RegistryKeyDescriptor>(point.size())
+      point.processWithPluginDescriptor(false) { bean, pluginDescriptor ->
+        val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
+        contributedKeys.put(descriptor.name, descriptor)
+      }
+      Registry.setKeys(java.util.Map.copyOf(contributedKeys))
 
-      epName.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
+      point.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean>, ExtensionPointPriorityListener {
         override fun extensionAdded(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
-          Registry.addKeys(listOf(createRegistryKeyDescriptor(extension)).iterator())
+          val descriptor = createRegistryKeyDescriptor(extension, pluginDescriptor)
+          Registry.mutateContributedKeys { oldMap ->
+            val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size + 1)
+            newMap.putAll(oldMap)
+            newMap.put(descriptor.name, descriptor)
+            java.util.Map.copyOf(newMap)
+          }
         }
-      }, null)
+      }, false, null)
 
-      epName.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
+      point.addExtensionPointListener(object : ExtensionPointListener<RegistryKeyBean> {
         override fun extensionRemoved(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor) {
           pendingRemovalKeys.add(extension.key)
         }
-      }, null)
+      }, false, null)
 
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-          for (pendingRemovalKey in pendingRemovalKeys) {
-            Registry.removeKey(pendingRemovalKey)
+          Registry.mutateContributedKeys { oldMap ->
+            val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size - pendingRemovalKeys.size)
+            for (entry in oldMap) {
+              if (!pendingRemovalKeys.contains(entry.key)) {
+                newMap.put(entry.key, entry.value)
+              }
+            }
+            java.util.Map.copyOf(newMap)
           }
           pendingRemovalKeys.clear()
         }
@@ -55,8 +76,8 @@ class RegistryKeyBean : PluginAware {
     }
 
     @JvmStatic
-    private fun createRegistryKeyDescriptor(extension: RegistryKeyBean): RegistryKeyDescriptor {
-      val pluginId = extension.descriptor?.pluginId?.idString
+    private fun createRegistryKeyDescriptor(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor): RegistryKeyDescriptor {
+      val pluginId = pluginDescriptor.pluginId.idString
       return RegistryKeyDescriptor(extension.key,
                                    StringUtil.unescapeStringCharacters(extension.description.replace(CONSECUTIVE_SPACES_REGEX, " ")),
                                    extension.defaultValue, extension.restartRequired,
@@ -83,12 +104,4 @@ class RegistryKeyBean : PluginAware {
   @JvmField
   @Attribute("restartRequired")
   val restartRequired = false
-
-  @Transient
-  private var descriptor: PluginDescriptor? = null
-
-  @Transient
-  override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    this.descriptor = pluginDescriptor
-  }
 }
