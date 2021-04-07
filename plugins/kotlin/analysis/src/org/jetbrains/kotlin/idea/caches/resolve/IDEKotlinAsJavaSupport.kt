@@ -294,6 +294,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                     it.withAttachment("decompiledClassOrObject", decompiledClassOrObject.text)
                     it.withAttachment("fileClass", decompiledClassOrObject.containingFile::class)
                     it.withAttachment("file", decompiledClassOrObject.containingFile.text)
+                    it.withAttachment("root", rootLightClassForDecompiledFile.text)
                 },
             )
 
