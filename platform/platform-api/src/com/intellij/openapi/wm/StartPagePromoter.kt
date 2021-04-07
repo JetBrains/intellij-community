@@ -2,8 +2,10 @@
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 interface StartPagePromoter {
   companion object {
     @JvmField
