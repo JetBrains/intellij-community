@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -100,7 +101,7 @@ abstract class EditorDiffPreview(private val project: Project,
   protected fun init() {
     @Suppress("LeakingThis")
     addSelectionListener {
-      if (VcsLogUiUtil.isDiffPreviewInEditor(project)) {
+      if (VcsLogUiUtil.isDiffPreviewInEditor(project) && Registry.`is`("show.diff.preview.as.editor.tab.with.single.click")) {
         openPreviewInEditor(false)
       }
     }
