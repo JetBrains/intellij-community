@@ -294,7 +294,7 @@ object UpdateChecker {
         if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
           findUpdatesInJetBrainsRepository(updateable, toUpdate, toUpdateDisabled, buildNumber, state, indicator)
         }
-        else if (host != "__BUILTIN_PLUGINS_URL__") {
+        else {
           RepositoryHelper.loadPlugins(host, buildNumber, indicator).forEach { descriptor ->
             val id = descriptor.pluginId
             if (updateable.remove(id) != null) {

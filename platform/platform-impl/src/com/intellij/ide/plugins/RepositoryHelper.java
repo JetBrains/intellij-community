@@ -16,7 +16,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,7 +44,10 @@ public final class RepositoryHelper {
    */
   public static @NotNull List<String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
-    ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
+    String pluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
+    if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
+      hosts.add(pluginsUrl);
+    }
     hosts.add(null);  // main plugin repository
     return hosts;
   }
