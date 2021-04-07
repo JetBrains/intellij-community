@@ -156,6 +156,8 @@ public final class Utils {
         });
       }
       if (promise.isCancelled()) {
+        // to avoid duplicate "Nothing Here" items in menu bar
+        // and "Nothing Here"-only popup menus
         throw new ProcessCanceledException();
       }
     }

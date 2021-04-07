@@ -334,7 +334,7 @@ public final class ActionMenu extends JBMenu {
         clearItems();
       }
       myIsHidden = false;
-      if (ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         fillMenu();
       }
     }
@@ -342,7 +342,7 @@ public final class ActionMenu extends JBMenu {
 
   @Override
   public void setPopupMenuVisible(boolean b) {
-    if (b && !ActionPlaces.MAIN_MENU.equals(myPlace)) {
+    if (b && !(SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace))) {
       fillMenu();
       if (!isSelected()) {
         return;
