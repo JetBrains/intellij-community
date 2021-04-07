@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,9 +127,11 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 it.containingKtFile ?: throw IllegalStateException("containingKtFile was null for $it of ${it.javaClass}")
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
-                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e)
-                    .withAttachment("element.kt", it.text)
-                    .withAttachment("original", e.message)
+                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement", e).apply {
+                    kotlin.runCatching { it.text }.getOrNull()?.let { s -> withAttachment("element", s) }
+                    kotlin.runCatching { it.containingFile.text }.getOrNull()?.let { s -> withAttachment("file", s) }
+                    withAttachment("original", e.message)
+                }
             }
         }
     }
