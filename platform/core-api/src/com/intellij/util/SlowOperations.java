@@ -9,10 +9,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -34,7 +34,7 @@ public final class SlowOperations {
     "com.intellij.apiwatcher.plugin.presentation.bytecode.UsageHighlighter",
   };
   private static int ourAlwaysAllow = -1;
-  private static Frame ourStack;
+  private static @NotNull FList<@NotNull String> ourStack = FList.emptyList();
 
   private SlowOperations() {}
 
@@ -68,16 +68,16 @@ public final class SlowOperations {
     Application application = ApplicationManager.getApplication();
     if (!application.isDispatchThread() ||
         application.isWriteAccessAllowed() ||
-        ourStack == null && !Registry.is("ide.slow.operations.assertion.other", false)) {
+        ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
     }
-    for (Frame frame = ourStack; frame != null; frame = frame.parent) {
-      if (FAST_TRACK == frame.activity) {
+    for (String activity : ourStack) {
+      if (FAST_TRACK == activity) {
         throw new ProcessCanceledException();
       }
     }
-    for (Frame frame = ourStack; frame != null; frame = frame.parent) {
-      if (!Registry.is("ide.slow.operations.assertion." + frame.activity, true)) {
+    for (String activity : ourStack) {
+      if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
         return;
       }
     }
@@ -127,8 +127,8 @@ public final class SlowOperations {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
-    Frame prev = ourStack;
-    ourStack = new Frame(activityName, prev);
+    FList<String> prev = ourStack;
+    ourStack = prev.prepend(activityName);
     return new AccessToken() {
       @Override
       public void finish() {
@@ -136,20 +136,5 @@ public final class SlowOperations {
         ourStack = prev;
       }
     };
-  }
-
-  private static final class Frame {
-    final String activity;
-    final Frame parent;
-
-    Frame(@NotNull String activity, @Nullable Frame parent) {
-      this.activity = activity;
-      this.parent = parent;
-    }
-
-    @Override
-    public String toString() {
-      return activity;
-    }
   }
 }
