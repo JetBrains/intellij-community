@@ -1446,6 +1446,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @RequiresEdt
   private void updateChangeListAvailability() {
+    if (myProject.isDisposed()) return;
+
     boolean enabled = shouldEnableChangeLists();
     synchronized (myDataLock) {
       if (enabled == myWorker.areChangeListsEnabled()) return;
