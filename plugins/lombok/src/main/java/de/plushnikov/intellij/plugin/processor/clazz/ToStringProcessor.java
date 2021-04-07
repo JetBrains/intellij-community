@@ -116,13 +116,12 @@ public final class ToStringProcessor extends AbstractClassProcessor {
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
     final String blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
 
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, TO_STRING_METHOD_NAME)
+    return new LombokLightMethodBuilder(psiManager, TO_STRING_METHOD_NAME)
       .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withModifier(PsiModifier.PUBLIC);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
-    return methodBuilder;
+      .withModifier(PsiModifier.PUBLIC)
+      .withBodyText(blockText);
   }
 
   private String getSimpleClassName(@NotNull PsiClass psiClass) {

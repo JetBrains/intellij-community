@@ -150,7 +150,7 @@ public final class SetterFieldProcessor extends AbstractFieldProcessor {
     }
 
     final String codeBlockText = createCodeBlockText(psiField, psiClass, returnType, isStatic, setterParameter);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+    methodBuilder.withBodyText(codeBlockText);
 
     return methodBuilder;
   }

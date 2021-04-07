@@ -130,7 +130,7 @@ public final class GetterFieldProcessor extends AbstractFieldProcessor {
     }
 
     final String blockText = String.format("return %s.%s;", isStatic ? psiClass.getName() : "this", psiField.getName());
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    methodBuilder.withBodyText(blockText);
 
     final LombokLightModifierList modifierList = methodBuilder.getModifierList();
 

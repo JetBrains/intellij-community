@@ -195,7 +195,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
       } else {
         final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
         final String blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
-        methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+        methodBuilder.withBodyText(blockText);
       }
     }
     return methodBuilder;
