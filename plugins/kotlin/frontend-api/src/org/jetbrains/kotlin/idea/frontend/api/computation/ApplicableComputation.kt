@@ -40,8 +40,8 @@ class ApplicableComputation<ELEMENT : KtElement, DATA : Any>(
         val modificationTracker = PsiModificationTracker.SERVICE.getInstance(project)
         var completed = false
         var exception: Throwable? = null
-        var tries = 0u
-        while (!completed && tries < tryCount) {
+        var tries = 0
+        while (!completed && tries < tryCount.toInt()) {
             if (!element.isValid) return ApplicableComputationResult.NonApplicable
             if (!psiChecker(element)) return ApplicableComputationResult.NonApplicable
             val data = analyzeWithReadAction(element) { computation(element) } ?: return ApplicableComputationResult.NonApplicable
