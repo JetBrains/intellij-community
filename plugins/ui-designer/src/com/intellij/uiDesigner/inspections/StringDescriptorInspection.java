@@ -8,18 +8,11 @@ import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
 /**
  * @author yole
  */
 public abstract class StringDescriptorInspection extends BaseFormInspection {
-  private static final NotNullLazyValue<BorderProperty> myBorderProperty = NotNullLazyValue.lazy(new Supplier<>() {
-    @Override
-    public BorderProperty get() {
-      return new BorderProperty(null);
-    }
-  });
+  private static final NotNullLazyValue<BorderProperty> myBorderProperty = NotNullLazyValue.lazy(() -> new BorderProperty(null));
 
   public StringDescriptorInspection(@NonNls String inspectionKey) {
     super(inspectionKey);
