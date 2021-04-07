@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.completion.ml.ranking.models</id>
   <name>Machine Learning Code Completion Models</name>
   <vendor>JetBrains</vendor>
