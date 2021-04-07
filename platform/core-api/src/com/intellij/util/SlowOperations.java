@@ -45,14 +45,29 @@ public final class SlowOperations {
    * it's better to admit that the EP semantic as a whole requires index access,
    * and then move the iteration over all extensions to the background on the platform-side.
    * <p/>
-   * Action Subsystem<br><br>
-   * {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
-   * or moved to background thread using {@link com.intellij.openapi.actionSystem.UpdateInBackground} marker interface.
-   * {@code com.intellij.openapi.actionSystem.impl.ActionUpdater} implements that logic.
-   * {@code AnAction#actionPerformed} should be explicitly coded not to block the UI thread.
+   * In cases when it's impossible to do so, the computation can be wrapped in a {@link #allowSlowOperations} section explicitly.
+   * Sections are named and can be enabled/disabled via Registry keys, e.g. {@link #ACTION_UPDATE}, {@link #RENDERING}, etc.
+   * These sections are a temporary solution, they are tracked and solved in future.
    * <p/>
-   * In cases when it's impossible to do so, the computation should be wrapped into {@code allowSlowOperations} explicitly.
-   * This way it's possible to find all such operations by searching usages of {@code allowSlowOperations}.
+   * Action Subsystem<br><br>
+   * <l>
+   *   <li>
+   *     If the slow part is in {@link com.intellij.openapi.actionSystem.DataProvider#getData(String)} call
+   *     the provider shall be split in two parts - the fast UI part invoked on EDT and the slow part invoked in background -
+   *     using {@link com.intellij.openapi.actionSystem.PlatformDataKeys#SLOW_DATA_PROVIDERS} data key.
+   *     Slow data providers are run along with other {@code GetDataRules} in background when actions are updated.
+   *   </li>
+   *   <li>
+   *     {@code AnAction#update}, {@code ActionGroup#getChildren}, and {@code ActionGroup#canBePerformed} should be either fast
+   *     or moved to background thread using {@link com.intellij.openapi.actionSystem.UpdateInBackground} marker interface.
+   *   </li>
+   *   <li>
+   *     {@code AnAction#actionPerformed} shall be explicitly coded not to block the UI thread.
+   *   </li>
+   * </l>
+   * <p/>
+   * The described logic is implemented by {@link com.intellij.openapi.actionSystem.impl.ActionUpdater}.
+   * <p/>
    *
    * @see com.intellij.openapi.application.NonBlockingReadAction
    * @see com.intellij.openapi.application.CoroutinesKt#readAction
@@ -91,7 +106,7 @@ public final class SlowOperations {
     if (!ourReportedTraces.add(stackTrace)) {
       return;
     }
-    LOG.error("Slow operations are prohibited in the EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc for more information.");
+    LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
   }
 
   private static boolean isAlwaysAllowed() {
