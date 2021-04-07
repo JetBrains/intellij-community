@@ -965,9 +965,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.setDefault(name, automatic);
+        myChangesViewManager.scheduleRefresh();
       }
     });
-    myChangesViewManager.scheduleRefresh();
   }
 
   @Override
@@ -1034,9 +1034,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
+        myChangesViewManager.scheduleRefresh();
       }
     });
-    myChangesViewManager.scheduleRefresh();
   }
 
   @NotNull
