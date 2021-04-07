@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
