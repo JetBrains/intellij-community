@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
@@ -31,12 +30,7 @@ public final class PsiClassUtil {
 
   @NotNull
   public static Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
-    return (c1, c2) -> {
-      VirtualFile file1 = PsiUtilCore.getVirtualFile(c1);
-      VirtualFile file2 = PsiUtilCore.getVirtualFile(c2);
-      if (file1 == null) return file2 == null ? 0 : -1;
-      if (file2 == null) return 1;
-      return scope.compare(file2, file1);
-    };
+    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c), 
+                                Comparator.nullsFirst((file1, file2) -> scope.compare(file2, file1)));
   }
 }
