@@ -1,0 +1,10 @@
+(
+42)
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    PsiElement(new line)('\n')
+    Literal
+      PsiElement(Integer)('42')
+    PsiElement())(')')
