@@ -6,18 +6,15 @@
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.impl.JavaPsiImplementationHelperImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -258,38 +255,12 @@ object SourceNavigationHelper {
     }
 
     fun getOriginalClass(classOrObject: KtClassOrObject): PsiClass? {
-        // Copied from JavaPsiImplementationHelperImpl:getOriginalClass()
         val fqName = classOrObject.fqName ?: return null
+        val project = classOrObject.project
 
-        val file = classOrObject.containingKtFile
-
-        val vFile = file.virtualFile
-        val project = file.project
-
-        val idx = ProjectRootManager.getInstance(project).fileIndex
-
-        if (vFile == null || !idx.isInLibrarySource(vFile)) return null
-        val orderEntries = THashSet(idx.getOrderEntriesForFile(vFile))
-
-        return JavaPsiFacade.getInstance(project).findClass(fqName.asString(), object : GlobalSearchScope(project) {
-            override fun compare(file1: VirtualFile, file2: VirtualFile): Int {
-                return 0
-            }
-
-            override fun contains(file: VirtualFile): Boolean {
-                if (file == vFile) return false
-                val entries = idx.getOrderEntriesForFile(file)
-                return entries.any { orderEntries.contains(it) }
-            }
-
-            override fun isSearchInModuleContent(aModule: Module): Boolean {
-                return false
-            }
-
-            override fun isSearchInLibraries(): Boolean {
-                return true
-            }
-        })
+        return JavaPsiImplementationHelperImpl.findCompiledElement(project, classOrObject) { scope ->
+            listOfNotNull(JavaPsiFacade.getInstance(project).findClass(fqName.asString(), scope))
+        } as? PsiClass
     }
 
     fun getNavigationElement(declaration: KtDeclaration) = navigateToDeclaration(declaration, NavigationKind.CLASS_FILES_TO_SOURCES)
