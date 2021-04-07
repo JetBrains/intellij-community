@@ -60,7 +60,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
-    return findCompiledElement(psiClass, scope -> {
+    return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
@@ -69,21 +69,21 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
-    return findCompiledElement(module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
+    return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
-  private <T extends PsiElement> T findCompiledElement(T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
+  public static <T extends PsiElement> T findCompiledElement(Project project, T original, Function<? super GlobalSearchScope, ? extends Collection<T>> candidateFinder) {
     PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) {
       @SuppressWarnings("unchecked") T t = (T)cls;
       return t;
     }
 
-    if (!DumbService.isDumb(myProject)) {
+    if (!DumbService.isDumb(project)) {
       VirtualFile vFile = original.getContainingFile().getVirtualFile();
-      ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
+      ProjectFileIndex idx = ProjectRootManager.getInstance(project).getFileIndex();
       if (vFile != null && idx.isInLibrarySource(vFile)) {
-        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(project).getLibrariesOnlyScope();
         Set<OrderEntry> originalEntries = new HashSet<>(idx.getOrderEntriesForFile(vFile));
         for (T candidate : candidateFinder.apply(librariesScope)) {
           PsiFile candidateFile = candidate.getContainingFile();
