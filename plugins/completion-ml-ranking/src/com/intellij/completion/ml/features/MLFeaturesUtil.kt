@@ -6,10 +6,10 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal object MLFeaturesUtil {
-  fun valueAsString(featureValue: MLFeatureValue): String {
+  fun getRawValue(featureValue: MLFeatureValue): Any {
     return when (featureValue) {
-      is MLFeatureValue.BinaryValue -> if (featureValue.value) "1" else "0"
-      is MLFeatureValue.FloatValue -> featureValue.value.toString()
+      is MLFeatureValue.BinaryValue -> if (featureValue.value) 1 else 0
+      is MLFeatureValue.FloatValue -> featureValue.value
       is MLFeatureValue.CategoricalValue -> featureValue.value
       is MLFeatureValue.ClassNameValue -> getClassNameSafe(featureValue)
     }
@@ -25,7 +25,7 @@ internal object MLFeaturesUtil {
 
   private val CLASS_NAMES_CACHE = Caffeine.newBuilder().maximumSize(100).build<String, ClassNames>()
 
-  private fun getClassNameSafe(feature: MLFeatureValue.ClassNameValue): String {
+  fun getClassNameSafe(feature: MLFeatureValue.ClassNameValue): String {
     val clazz = feature.value
     val names = CLASS_NAMES_CACHE.get(clazz.name) { if (getPluginInfo(clazz).isSafeToReport()) clazz.getNames() else THIRD_PARTY_NAME }!!
     return if (feature.useSimpleName) names.simpleName else names.fullName
