@@ -44,8 +44,8 @@ interface KotlinStdlibCache {
 }
 
 class KotlinStdlibCacheImpl(val project: Project) : KotlinStdlibCache {
-    @JvmInline
-    private value class StdlibDependency(val libraryInfo: LibraryInfo?)
+    //@JvmInline
+    private inline class StdlibDependency(val libraryInfo: LibraryInfo?)
 
     private val isStdlibCache: MutableMap<LibraryInfo, Boolean>
         get() = project.cacheInvalidatingOnRootModifications {
