@@ -27,6 +27,7 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
     assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @SuppressWarnings("DoubleCheckedLocking")
   public void testSimple() {
     doTest("class A {" +
            "    private  boolean initialized;\n" +
