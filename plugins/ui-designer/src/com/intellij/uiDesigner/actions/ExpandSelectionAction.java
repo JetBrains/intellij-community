@@ -12,9 +12,8 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Stack;
 
 /**
  * For each component selects all non selected siblings (if any). If

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.Stack;
 
 import java.math.BigInteger;
 import java.util.*;
