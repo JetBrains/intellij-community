@@ -903,31 +903,30 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (multicaster instanceof EditorEventMulticasterEx) {
       EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
       ex.addFocusChangeListener(new FocusChangeListener() {
-        private transient boolean myIgnoreNextGainedEvent;
+        private final Alarm myAlarm = new Alarm(myProject);
 
         @Override
         public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (event.isTemporary()) {
-            myIgnoreNextGainedEvent = true;
-          }
+          myAlarm.cancelAllRequests();
+          myAutoScrollOnFocusEditor.set(true);
         }
 
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (myIgnoreNextGainedEvent) {
-            myIgnoreNextGainedEvent = false;
-          }
-          else if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
-            FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
-            if (manager != null) {
-              JComponent component = editor.getComponent();
-              for (FileEditor fileEditor : manager.getAllEditors()) {
-                if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
-                  myAutoScrollFromSourceHandler.scrollFromSource(false);
-                  break;
+          if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(() -> {
+              FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
+              if (manager != null) {
+                JComponent component = editor.getComponent();
+                for (FileEditor fileEditor : manager.getAllEditors()) {
+                  if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
+                    myAutoScrollFromSourceHandler.scrollFromSource(false);
+                    break;
+                  }
                 }
               }
-            }
+            }, 20);
           }
         }
 
@@ -1102,7 +1101,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isCurrentSelectionObsolete(requestFocus)) return;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane != null) {
-      myAutoScrollOnFocusEditor.set(false);
+      myAutoScrollOnFocusEditor.set(!requestFocus);
       viewPane.select(element, file, requestFocus);
     }
   }
@@ -1113,7 +1112,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane instanceof AbstractProjectViewPSIPane) {
-      myAutoScrollOnFocusEditor.set(false);
+      myAutoScrollOnFocusEditor.set(!requestFocus);
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
