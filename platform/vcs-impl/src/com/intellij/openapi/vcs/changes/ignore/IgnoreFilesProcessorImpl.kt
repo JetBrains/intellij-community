@@ -46,7 +46,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     }
   }
 
-  override fun changeListUpdateDone() {
+  override fun unchangedFileStatusChanged() {
     if (ApplicationManager.getApplication().isUnitTestMode) return
 
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toList() }

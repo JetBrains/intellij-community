@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -267,7 +268,7 @@ public final class HgRepositoryImpl extends RepositoryImpl implements HgReposito
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
-      myChangesViewI.scheduleRefresh();
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     }
   }
 }

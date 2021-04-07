@@ -48,11 +48,6 @@ final class AffectedTestsInChangeListPainter implements ChangeListDecorator {
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
         scheduleUpdate();
       }
-
-      @Override
-      public void unchangedFileStatusChanged() {
-        scheduleUpdate();
-      }
     };
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
     MessageBusConnection connection = myProject.getMessageBus().connect();

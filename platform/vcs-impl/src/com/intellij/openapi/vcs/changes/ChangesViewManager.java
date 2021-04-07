@@ -818,7 +818,12 @@ public class ChangesViewManager implements ChangesViewEx,
       }
 
       @Override
-      public void changeListUpdateDone() {
+      public void unchangedFileStatusChanged() {
+        scheduleRefresh();
+      }
+
+      @Override
+      public void changedFileStatusChanged() {
         setBusy(false);
         scheduleRefresh();
 

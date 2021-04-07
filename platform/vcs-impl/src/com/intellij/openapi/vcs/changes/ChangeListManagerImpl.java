@@ -447,6 +447,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         myUpdateException = null;
         myAdditionalInfo = null;
 
+        myDelayedNotificator.changedFileStatusChanged();
         myDelayedNotificator.unchangedFileStatusChanged();
         myDelayedNotificator.changeListUpdateDone();
         ((ChangesViewEx)myChangesViewManager).refreshImmediately();
@@ -573,6 +574,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       finally {
         dirtyScopeManager.changesProcessed();
 
+        myDelayedNotificator.changedFileStatusChanged();
         myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
@@ -1060,6 +1062,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
                                        @NotNull List<String> beforeChangeListsIds,
                                        @NotNull List<String> afterChangeListsIds) {
     myWorker.notifyChangelistsChanged(path, beforeChangeListsIds, afterChangeListsIds);
+  }
+
+  /**
+   * Notify that {@link VcsManagedFilesHolder} state was changed.
+   */
+  public void notifyUnchangedFileStatusChanged() {
+    myDelayedNotificator.unchangedFileStatusChanged();
+    myDelayedNotificator.changeListUpdateDone();
   }
 
   @Override

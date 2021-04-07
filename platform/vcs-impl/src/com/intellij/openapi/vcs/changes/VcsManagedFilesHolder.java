@@ -19,6 +19,9 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see ChangeListManagerImpl#notifyUnchangedFileStatusChanged
+ */
 public interface VcsManagedFilesHolder extends FilePathHolder {
   ProjectExtensionPointName<Provider> VCS_IGNORED_FILES_HOLDER_EP = new ProjectExtensionPointName<>("com.intellij.vcs.ignoredFilesHolder");
 

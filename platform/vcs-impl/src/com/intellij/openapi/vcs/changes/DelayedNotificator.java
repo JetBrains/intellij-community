@@ -100,6 +100,11 @@ public class DelayedNotificator implements ChangeListListener {
 
 
   @Override
+  public void changedFileStatusChanged() {
+    myScheduler.submit(() -> getMulticaster().changedFileStatusChanged());
+  }
+
+  @Override
   public void unchangedFileStatusChanged() {
     myScheduler.submit(() -> getMulticaster().unchangedFileStatusChanged());
   }

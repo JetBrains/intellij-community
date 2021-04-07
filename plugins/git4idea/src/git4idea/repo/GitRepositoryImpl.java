@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ChangesViewI;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -320,7 +321,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     public void updateFinished(@NotNull Collection<FilePath> ignoredPaths, boolean isFullRescan) {
       if(myProject.isDisposed()) return;
 
-      myChangesViewI.scheduleRefresh();
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     }
   }
 }
