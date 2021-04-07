@@ -77,6 +77,20 @@ class OverwrittenKey {
     }
   }
 
+  void testNoFallthrough(Map<String, String> map, int id) {
+    switch(id) {
+      case 1:
+        map.put("foo", "bar");
+        break;
+      case 2:
+        map.put("foo", "baz");
+        break;
+      default:
+        map.put("foo", "qux");
+        break;
+    }
+  }
+
   void differentQualifiers(Set<Integer> set) {
     set.add(h1.KEY);
     set.add(h2.KEY);
