@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -62,6 +63,30 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
   @Override
   protected Icon getElementIcon(int flags) {
     return JetgroovyIcons.Groovy.Variable;
+  }
+
+  @Override
+  public @Nullable GrExpression getInitializerGroovy() {
+    final PsiElement parent = getParent();
+    if (parent instanceof GrVariableDeclaration) {
+      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+      if (declaration.isTuple()) {
+        GrExpression rValue = declaration.getTupleInitializer();
+        if (!(rValue instanceof GrListOrMap)) {
+          return null;
+        }
+        int position = ArrayUtil.indexOf(declaration.getVariables(), this);
+        if (position < 0) {
+          return null;
+        }
+        final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
+        if (position < initializers.length) {
+          return initializers[position];
+        }
+        return null;
+      }
+    }
+    return super.getInitializerGroovy();
   }
 
   @Override

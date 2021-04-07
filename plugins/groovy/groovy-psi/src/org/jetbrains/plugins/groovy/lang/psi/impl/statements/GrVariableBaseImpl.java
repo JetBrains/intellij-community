@@ -11,7 +11,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -190,23 +188,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public GrExpression getInitializerGroovy() {
-    final PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).isTuple()){
-      final GrVariableDeclaration tuple = (GrVariableDeclaration)parent;
-      final GrExpression initializer = tuple.getTupleInitializer();
-
-      if (initializer instanceof GrListOrMap){
-        final GrListOrMap listOrMap = (GrListOrMap)initializer;
-        final GrExpression[] initializers = listOrMap.getInitializers();
-
-        final int varNumber = ArrayUtil.indexOf(tuple.getVariables(), this);
-        if (initializers.length < varNumber + 1) return null;
-
-        return initializers[varNumber];
-      }
-    }
+  public @Nullable GrExpression getInitializerGroovy() {
     return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
