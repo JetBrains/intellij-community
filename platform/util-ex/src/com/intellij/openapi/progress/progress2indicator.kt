@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress
 
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.util.Computable
 
 /**
@@ -12,10 +11,14 @@ fun <T> runUnderIndicator(progress: Progress, action: () -> T): T {
   if (progress is JobProgress) {
     return runUnderIndicator(progress.job, action)
   }
-  val indicator = object : AbstractProgressIndicatorBase() {
+  val indicator = object : EmptyProgressIndicatorBase() {
 
     @Volatile
     var myProgress: Progress? = null
+
+    override fun cancel() {
+      error("'cancel' must not be called from inside the action")
+    }
 
     override fun isCanceled(): Boolean {
       return myProgress?.isCancelled == true
