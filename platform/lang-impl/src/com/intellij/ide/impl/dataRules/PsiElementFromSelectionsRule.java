@@ -17,6 +17,7 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -46,7 +47,8 @@ public class PsiElementFromSelectionsRule implements GetDataRule {
     for (int i = 0, len = objects.length; i < len; i++) {
       Object o = objects[i];
       PsiElement element = o instanceof PsiElement ? (PsiElement)o :
-                           o instanceof PsiAwareObject && project != null ? ((PsiAwareObject)o).findElement(project) : null;
+                           o instanceof PsiAwareObject && project != null ? ((PsiAwareObject)o).findElement(project) :
+                           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
       if (element == null || !element.isValid()) return null;
       elements[i] = element;
     }

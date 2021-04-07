@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywhereClassifier;
@@ -17,6 +16,7 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -418,6 +418,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       }
       if (element instanceof DataProvider) {
         return ((DataProvider)element).getData(dataId);
+      }
+      if (element instanceof PsiElementNavigationItem) {
+        return ((PsiElementNavigationItem)element).getTargetElement();
       }
     }
 
