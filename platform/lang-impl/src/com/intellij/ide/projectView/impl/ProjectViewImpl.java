@@ -903,9 +903,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (multicaster instanceof EditorEventMulticasterEx) {
       EditorEventMulticasterEx ex = (EditorEventMulticasterEx)multicaster;
       ex.addFocusChangeListener(new FocusChangeListener() {
+        private transient boolean myIgnoreNextGainedEvent;
+
+        @Override
+        public void focusLost(@NotNull Editor editor, @NotNull FocusEvent event) {
+          if (event.isTemporary()) {
+            myIgnoreNextGainedEvent = true;
+          }
+        }
+
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
+          if (myIgnoreNextGainedEvent) {
+            myIgnoreNextGainedEvent = false;
+          }
+          else if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
             FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
             if (manager != null) {
               JComponent component = editor.getComponent();
