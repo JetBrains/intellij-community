@@ -3,11 +3,14 @@ package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -34,29 +37,34 @@ import java.util.function.Predicate;
 
 public class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
-
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
+
   private static final String OPTION_VALUE = "option_value";
   private static final String OPTION_TYPE = "option_type";
   private static final String OPTION_NAME = "option_name";
   private static final String INSPECTION_ID = "inspection_id";
 
-  @NotNull
-  @Override
-  public String getGroupId() {
-    return "inspections";
-  }
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 5);
+  private static final EventId3<Boolean, Boolean, Boolean> PROFILE =
+    GROUP.registerEvent("used.profile",
+                        EventFields.Boolean("project_level"),
+                        EventFields.Boolean("default"),
+                        EventFields.Boolean("locked"));
 
   @Override
-  public int getVersion() {
-    return 5;
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @NotNull
   @Override
   public Set<MetricEvent> getMetrics(@NotNull final Project project) {
     final Set<MetricEvent> result = new HashSet<>();
-    final List<ScopeToolState> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllTools();
+
+    final var profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    result.add(create(profile));
+
+    final List<ScopeToolState> tools = profile.getAllTools();
     for (ScopeToolState state : tools) {
       InspectionToolWrapper<?, ?> tool = state.getTool();
       PluginInfo pluginInfo = getInfo(tool);
@@ -146,6 +154,15 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     }
     data.addData(INSPECTION_ID, isSafeToReport(info) ? tool.getID() : "third.party");
     return MetricEventFactoryKt.newMetric("not.default.state", data);
+  }
+
+  @NotNull
+  private static MetricEvent create(InspectionProfileImpl profile) {
+    return PROFILE.metric(
+      profile.isProjectLevel(),
+      profile.toString().equals(profile.isProjectLevel() ? "Project Default" : "Default"),
+      profile.isProfileLocked()
+    );
   }
 
   private static boolean isSafeToReport(PluginInfo info) {
