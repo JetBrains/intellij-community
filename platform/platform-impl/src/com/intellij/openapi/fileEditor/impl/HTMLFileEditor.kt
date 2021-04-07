@@ -94,7 +94,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     }, contentPanel.cefBrowser)
 
     contentPanel.jbCefClient.addDisplayHandler(object : CefDisplayHandlerAdapter() {
-      override fun onStatusMessage(browser: CefBrowser, @NlsSafe text: String) =
+      override fun onStatusMessage(browser: CefBrowser, text: @NlsSafe String) =
         StatusBar.Info.set(text, project)
     }, contentPanel.cefBrowser)
 

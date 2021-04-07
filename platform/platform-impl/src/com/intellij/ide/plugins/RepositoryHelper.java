@@ -66,7 +66,7 @@ public final class RepositoryHelper {
   /**
    * Use method only for getting plugins from custom repositories
    *
-   * @deprecated Pleause use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
+   * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
