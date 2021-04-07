@@ -5,10 +5,13 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -38,6 +41,19 @@ public class PsiAnnotationSearchUtil {
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, String @NotNull ... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
+  }
+
+  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Iterable<String> annotationNames) {
+    List<PsiAnnotation> result = new ArrayList<>();
+    final PsiModifierList psiModifierList = listOwner.getModifierList();
+    if (psiModifierList != null) {
+      for (PsiAnnotation annotation : psiModifierList.getAnnotations()) {
+        if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName)) {
+          result.add(annotation);
+        }
+      }
+    }
+    return result;
   }
 
   @NotNull
