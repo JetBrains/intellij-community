@@ -73,4 +73,11 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
     """.trimIndent())
   }
 
+  fun `test no type hints for fields`() {
+    testTypeHints("""
+      class A {
+        def foo = 1
+      }
+    """.trimIndent())
+  }
 }

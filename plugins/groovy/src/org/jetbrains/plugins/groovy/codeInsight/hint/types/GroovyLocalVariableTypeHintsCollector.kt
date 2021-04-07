@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiType
 import com.intellij.util.containers.mapSmart
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
@@ -28,8 +29,8 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
     if (element !is GrVariableDeclaration) {
       return true
     }
-    val results = getPresentableType(element)
-    for ((type, identifier) in results) {
+    val variableTypes = getVariableTypes(element)
+    for ((type, identifier) in variableTypes) {
       submitInlayHint(identifier, type, sink)
     }
     return true
@@ -46,7 +47,7 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
     sink.addInlineElement(offset, true, factory.roundWithBackground(representation), false)
   }
 
-  private fun getPresentableType(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {
+  private fun getVariableTypes(variableDeclaration: GrVariableDeclaration): List<Pair<PsiType, PsiIdentifier>> {
     if (!variableDeclaration.isTuple) {
       val initializer = variableDeclaration.variables.singleOrNull()?.initializerGroovy ?: return emptyList()
       if (initializer is GrConstructorCall || initializer is GrSafeCastExpression || initializer is GrTypeCastExpression) {
@@ -56,7 +57,7 @@ class GroovyLocalVariableTypeHintsCollector(editor: Editor,
 
     return variableDeclaration.variables
       .mapSmart {
-        if (it.typeElementGroovy != null) {
+        if (it is GrField || it.typeElementGroovy != null) {
           return@mapSmart null
         }
         val type = it.typeGroovy ?: return@mapSmart null

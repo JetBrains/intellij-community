@@ -32,7 +32,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
       val type: PsiType = getRepresentableType(element) ?: return true
       val typeRepresentation = with(factory) {
-        roundWithBackground(seq(smallText(" "), buildRepresentation(type)))
+        roundWithBackground(seq(buildRepresentation(type), smallText(" ")))
       }
       sink.addInlineElement(element.textOffset, false, typeRepresentation, false)
     }
@@ -40,7 +40,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
       val itParameter: GrParameter = element.allParameters.singleOrNull() ?: return true
       val type: PsiType = getRepresentableType(itParameter) ?: return true
       val textRepresentation: InlayPresentation = with(factory) {
-        roundWithBackground(seq(smallText(" it -> "), buildRepresentation(type)))
+        roundWithBackground(seq(buildRepresentation(type), smallText(" it -> ")))
       }
       sink.addInlineElement(element.lBrace.endOffset, true, textRepresentation, false)
     }
