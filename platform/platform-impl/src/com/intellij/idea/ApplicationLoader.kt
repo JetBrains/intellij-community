@@ -197,14 +197,7 @@ private fun startApp(app: ApplicationImpl,
 
       pool.execute {
         runActivity("create locator file") {
-          val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
-          try {
-            locatorFile.parent?.createDirectories()
-            Files.writeString(locatorFile, PathManager.getHomePath(), StandardCharsets.UTF_8)
-          }
-          catch (e: IOException) {
-            LOG.warn("Can't store a location in '$locatorFile'", e)
-          }
+          createAppLocatorFile()
         }
       }
 
@@ -252,6 +245,17 @@ private fun startApp(app: ApplicationImpl,
       StartupAbortedException.processException(it)
       null
     }
+}
+
+fun createAppLocatorFile() {
+  val locatorFile = Path.of(PathManager.getSystemPath(), ApplicationEx.LOCATOR_FILE_NAME)
+  try {
+    locatorFile.parent?.createDirectories()
+    Files.writeString(locatorFile, PathManager.getHomePath(), StandardCharsets.UTF_8)
+  }
+  catch (e: IOException) {
+    LOG.warn("Can't store a location in '$locatorFile'", e)
+  }
 }
 
 @JvmOverloads
