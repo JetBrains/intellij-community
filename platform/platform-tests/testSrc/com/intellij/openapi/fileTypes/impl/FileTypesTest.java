@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
@@ -73,6 +74,8 @@ import java.util.stream.Collectors;
 public class FileTypesTest extends HeavyPlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
+  private @NotNull List<FileTypeManagerImpl.FileTypeWithDescriptor>
+    myOldRegisteredTypes;
 
   @Override
   protected void setUp() throws Exception {
@@ -86,11 +89,17 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     Assume.assumeTrue(
       "Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in these tests",
       StdFileTypes.JSPX == FileTypes.PLAIN_TEXT);
+    myOldRegisteredTypes = new ArrayList<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
+      assertEmpty(myFileTypeManager.getRemovedMappingTracker().getRemovedMappings());
+      List<FileTypeManagerImpl.FileTypeWithDescriptor> newRegisteredTypes = new ArrayList<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
+      myOldRegisteredTypes.sort(Comparator.comparing(FileTypeManagerImpl.FileTypeWithDescriptor::getName));
+      newRegisteredTypes.sort(Comparator.comparing(FileTypeManagerImpl.FileTypeWithDescriptor::getName));
+      assertSameElements(ContainerUtil.map(newRegisteredTypes, f->f.getName()), ContainerUtil.map(myOldRegisteredTypes, f->f.getName()));
       ConflictingFileTypeMappingTracker.onConflict(ConflictingFileTypeMappingTracker.ConflictPolicy.LOG_ERROR);
       FileTypeManagerImpl.reDetectAsync(false);
       WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
@@ -111,9 +120,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
   }
 
-  private void initStandardFileTypes() {
+  private @NotNull List<ConflictingFileTypeMappingTracker.ResolveConflictResult> initStandardFileTypes() {
     myFileTypeManager.getRegisteredFileTypes(); // ensure pending file types empty
-    myFileTypeManager.initStandardFileTypes();
+    return myFileTypeManager.initStandardFileTypes();
   }
 
   public void testMaskExclude() {
@@ -403,11 +412,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> myFileTypeManager.removeAssociatedExtension(fileType, newExtension));
       if (oldFileType != FileTypes.UNKNOWN) {
         WriteAction.run(() -> {
-          myFileTypeManager.associateExtension(fileType, newExtension);
           myFileTypeManager.getRemovedMappingTracker().removeIf(mapping ->
                mapping.getFileTypeName().equals(oldFileType.getName())
                && mapping.getFileNameMatcher() instanceof ExtensionFileNameMatcher
                && ((ExtensionFileNameMatcher)mapping.getFileNameMatcher()).getExtension().equals(newExtension));
+          myFileTypeManager.removeAssociatedExtension(fileType, newExtension);
+          myFileTypeManager.associateExtension(oldFileType, newExtension);
         });
       }
     }
@@ -437,6 +447,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEquals(1, mappings.size());
     assertTrue(mappings.get(0).isApproved());
     assertEquals(matcher, mappings.get(0).getFileNameMatcher());
+    myFileTypeManager.getRemovedMappingTracker().clear();
   }
 
   public void testRemovedExactNameMapping() {
@@ -462,6 +473,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     List<RemovedMappingTracker.RemovedMapping> mappings = myFileTypeManager.getRemovedMappingTracker().getRemovedMappings();
     assertTrue(mappings.get(0).isApproved());
     assertEquals(matcher, mappings.get(0).getFileNameMatcher());
+    myFileTypeManager.getRemovedMappingTracker().removeIf(mapping -> mapping.getFileNameMatcher().equals(matcher));
   }
 
   public void testReassignedPredefinedFileType() {
@@ -488,6 +500,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       .setPatternsTable(new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors()),
                         myFileTypeManager.getExtensionMap().copy()));
     assertEquals(1, myFileTypeManager.getRemovedMappingTracker().getRemovedMappings().size());
+    myFileTypeManager.getRemovedMappingTracker().clear();
   }
 
   public void testGetRemovedMappings() {
@@ -577,7 +590,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         }
       }, disposable);
       myFileTypeManager.getRegisteredFileTypes();
-      assertThrows(AssertionError.class, () -> initStandardFileTypes());
+      assertNotEmpty(initStandardFileTypes());
+      myFileTypeManager.unregisterFileType(myType);
       myFileTypeManager.unregisterFileType(myType);
     }
     finally {
@@ -624,6 +638,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.initializeComponent();
 
       assertEquals(typeFromPlugin, myFileTypeManager.getFileTypeByFileName("foo.foo"));
+
+      myFileTypeManager.unregisterFileType(typeFromPlugin);
     }
     finally {
       Disposer.dispose(disposable);
@@ -1084,6 +1100,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertInstanceOf(FileTypeManager.getInstance().getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
 
     WriteAction.run(() -> Disposer.dispose(disposable));
+
+    // todo restore old AbstractFileType automatically?
+    AbstractFileType old = new AbstractFileType(new SyntaxTable());
+    old.setName("Haskell");
+    myFileTypeManager.registerFileType(old);
   }
 
   private static class MyCustomImageFileType implements FileType {
@@ -1096,10 +1117,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       return "myimage";
     }
 
-    @NotNull
     @Override
-    public String getDescription() {
-      return "";
+    public @NotNull String getDisplayName() {
+      return getClass().getName();
+    }
+
+    @Override
+    public @NotNull String getDescription() {
+      return getDisplayName();
     }
 
     @NotNull
