@@ -40,7 +40,7 @@ class KaptGradleProjectImportHandler : GradleProjectImportHandler {
 
     private fun isKaptCompilerPluginPath(path: String): Boolean {
         val lastIndexOfFile = path.lastIndexOfAny(charArrayOf('/', File.separatorChar)).takeIf { it >= 0 } ?: return false
-        val fileName = path.drop(lastIndexOfFile + 1).toLowerCase(Locale.US)
+        val fileName = path.drop(lastIndexOfFile + 1).lowercase()
         return fileName.matches("kotlin\\-annotation\\-processing(\\-gradle)?\\-[0-9].*\\.jar".toRegex())
     }
 }
