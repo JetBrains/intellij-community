@@ -182,7 +182,7 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
                         is SrcFilePath -> moduleConfigurator.kotlinDirectoryName
                         is ResourcesFilePath -> moduleConfigurator.resourcesDirectoryName
                     }
-                    SRC_DIR / "${module.name}${filePath.sourcesetType.name.capitalize(Locale.US)}" / directory
+                    SRC_DIR / "${module.name}${filePath.sourcesetType.name.replaceFirstChar(Char::uppercaseChar)}" / directory
                 }
                 else -> error("Not supported for ${module.javaClass}")
             }
