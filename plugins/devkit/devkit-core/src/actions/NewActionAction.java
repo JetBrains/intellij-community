@@ -6,6 +6,7 @@ import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ActionType;
@@ -22,7 +22,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-public class NewActionAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
+public class NewActionAction extends CreateElementActionBase implements UpdateInBackground, DescriptorUtil.Patcher {
   private static class Holder {
     // length == 1 is important to make MyInputValidator close the dialog when
     // module selection is canceled. That's some weird interface actually...
@@ -52,7 +52,8 @@ public class NewActionAction extends CreateElementActionBase implements Descript
         }
       }
       return PsiElement.EMPTY_ARRAY;
-    } finally {
+    }
+    finally {
       myDialog = null;
       pluginDescriptorToPatch = null;
     }
@@ -65,7 +66,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
     }
 
     Module module = dataContext.getData(LangDataKeys.MODULE);
-    if (module == null || SlowOperations.allowSlowOperations(() -> !PsiUtil.isPluginModule(module))) {
+    if (module == null || !PsiUtil.isPluginModule(module)) {
       return false;
     }
 

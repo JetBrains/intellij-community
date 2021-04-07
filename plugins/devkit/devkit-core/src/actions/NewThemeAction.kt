@@ -7,13 +7,13 @@ import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDirectory
@@ -21,7 +21,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
-import com.intellij.util.SlowOperations
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -31,7 +30,7 @@ import java.util.*
 import javax.swing.JComponent
 
 //TODO better undo support
-class NewThemeAction : AnAction() {
+class NewThemeAction : AnAction(), UpdateInBackground {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
 
@@ -56,10 +55,7 @@ class NewThemeAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     val module = e.getData(LangDataKeys.MODULE)
-    e.presentation.isEnabled = module != null &&
-                               (PluginModuleType.get(module) is PluginModuleType ||
-                                SlowOperations.allowSlowOperations<Boolean,Throwable> { PsiUtil.isPluginModule(module) }
-                               )
+    e.presentation.isEnabled = module != null && (PluginModuleType.get(module) is PluginModuleType || PsiUtil.isPluginModule(module))
   }
 
   @Suppress("HardCodedStringLiteral")
