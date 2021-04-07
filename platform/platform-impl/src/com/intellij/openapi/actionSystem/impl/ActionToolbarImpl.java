@@ -211,7 +211,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
     // should update action right on the showing, otherwise toolbar may not be displayed at all,
     // since by default all updates are postponed until frame gets focused.
-    updateActionsImmediately();
+    updateActionsImmediately(true);
   }
 
   protected boolean isInsideNavBar() {
