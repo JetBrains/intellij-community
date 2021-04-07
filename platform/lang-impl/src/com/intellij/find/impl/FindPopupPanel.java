@@ -2,6 +2,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
@@ -75,7 +76,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
-import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1356,12 +1356,15 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     FindModel model = myHelper.getModel();
+    boolean dotAdded = false;
     if (StringUtil.isEmpty(model.getStringToFind())) {
       emptyText.setText(FindBundle.message("message.type.search.query"));
     } else {
-      emptyText.setText(message != null ? message+"." : FindBundle.message("message.nothingFound"));
+      emptyText.setText(message != null ? message : FindBundle.message("message.nothingFound"));
     }
     if (mySelectedScope == FindPopupScopeUIImpl.DIRECTORY && !model.isWithSubdirectories()) {
+      emptyText.appendText(".");
+      dotAdded = true;
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
                                                                SimpleTextAttributes.LINK_ATTRIBUTES,
                                     e -> {
@@ -1413,6 +1416,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       usedOptions.add(model);
     }
     if (!usedOptions.isEmpty()) {
+      if (!dotAdded) emptyText.appendText(".");
       emptyText.appendLine(" ");
       if (couldBeRegexp) {
         emptyText.appendLine(FindBundle.message("message.nothingFound.search.with.regex"), LINK_PLAIN_ATTRIBUTES, __ -> {
@@ -1439,10 +1443,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
         emptyText.appendLine(FindBundle.message("message.nothingFound.clearOption"), LINK_PLAIN_ATTRIBUTES,
                              __ -> resetAllFilters()).appendText(" " + getOptionText(myResetFiltersAction, true));
       }
-    }
-    else {
-      emptyText.appendLine(" ");
-      emptyText.appendLine(FindBundle.message("message.nothingFound.default.hint"));
     }
   }
 
