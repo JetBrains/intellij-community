@@ -142,7 +142,16 @@ class ConflictingFileTypeMappingTracker {
     String oldDisplayName = oldFileType.getDisplayName();
     String resolvedDisplayName = resolvedFileType.getDisplayName();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
+      AssertionError error = new AssertionError(notificationText + "; matcher: " + matcher);
+      switch(throwOnConflict) {
+        case THROW:
+          throw error;
+        case LOG_ERROR:
+          LOG.error(error);
+          break;
+        case IGNORE:
+          break;
+      }
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
