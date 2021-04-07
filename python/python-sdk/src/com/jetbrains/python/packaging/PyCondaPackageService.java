@@ -80,13 +80,18 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @NotNull
-  private static String getPythonName() {
+  public static String getPythonName() {
     return SystemInfo.isWindows ? "python.exe" : "python";
+  }
+
+  @NotNull
+  public static String getCondaName() {
+    return SystemInfo.isWindows ? "conda.exe" : "conda";
   }
 
   @Nullable
   public static String getSystemCondaExecutable() {
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    final String condaName = getCondaName();
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
     if (condaInPath != null) return condaInPath.getPath();
     return getCondaExecutableByName(condaName);

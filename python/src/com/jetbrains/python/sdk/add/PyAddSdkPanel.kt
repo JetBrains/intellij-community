@@ -141,6 +141,7 @@ fun addInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     finally {
       executor.execute {
         sdkComboBox.setBusy(false)
+        sdkComboBox.childComponent.removeAllItems()
         sdks.forEach(sdkComboBox.childComponent::addItem)
         onAdded()
       }
