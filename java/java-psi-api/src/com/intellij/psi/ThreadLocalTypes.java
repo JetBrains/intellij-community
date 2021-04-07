@@ -64,4 +64,7 @@ public final class ThreadLocalTypes {
     myMap.put(psi, type);
   }
 
+  public static boolean hasEmptyStack() {
+    return ourGuard.currentStack().isEmpty();
+  }
 }

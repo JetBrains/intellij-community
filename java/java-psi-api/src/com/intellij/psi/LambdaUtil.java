@@ -334,6 +334,16 @@ public final class LambdaUtil {
   }
 
   public static @Nullable PsiType getFunctionalInterfaceType(PsiElement expression, boolean tryToSubstitute) {
+    boolean mayUseCache = tryToSubstitute && !MethodCandidateInfo.isOverloadCheck() &&
+                          ThreadLocalTypes.hasEmptyStack();
+    if (mayUseCache) {
+      return CachedValuesManager.getProjectPsiDependentCache(expression, e -> doGetFunctionalInterfaceType(e, true));
+    }
+    return doGetFunctionalInterfaceType(expression, tryToSubstitute);
+  }
+
+  @Nullable
+  private static PsiType doGetFunctionalInterfaceType(PsiElement expression, boolean tryToSubstitute) {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
