@@ -34,8 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStubBase;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignmentType;
-
 /**
  * @author ilyas
  */
@@ -146,27 +144,6 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
       return initializerType;
     }
     return declaredType;
-  }
-
-  @Override
-  public @Nullable PsiType getInitializerType() {
-    PsiElement parent = getParent();
-    if (parent instanceof GrVariableDeclaration) {
-      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
-      if (declaration.isTuple()) {
-        GrExpression rValue = declaration.getTupleInitializer();
-        if (rValue == null) {
-          return null;
-        }
-        int position = ArrayUtil.indexOf(declaration.getVariables(), this);
-        if (position < 0) {
-          return null;
-        }
-        return getMultiAssignmentType(rValue, position);
-      }
-    }
-    GrExpression rValue = getInitializerGroovy();
-    return rValue == null ? null : rValue.getType();
   }
 
   @Override
