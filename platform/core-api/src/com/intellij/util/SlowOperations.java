@@ -59,7 +59,7 @@ public final class SlowOperations {
    * @see com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress
    */
   public static void assertSlowOperationsAreAllowed() {
-    if (isAlwaysAllowed() || !Registry.is("ide.slow.operations.assertion", true)) {
+    if (isAlwaysAllowed()) {
       return;
     }
     if (!Registry.is("ide.slow.operations.assertion", true)) {
@@ -83,17 +83,15 @@ public final class SlowOperations {
     }
 
     String stackTrace = ExceptionUtil.currentStackTrace();
-    boolean result = false;
     for (String t : misbehavingFrames) {
       if (stackTrace.contains(t)) {
-        result = true;
-        break;
+        return;
       }
     }
-    if (result || !ourReportedTraces.add(stackTrace)) {
+    if (!ourReportedTraces.add(stackTrace)) {
       return;
     }
-    LOG.error("Slow operations are prohibited on EDT");
+    LOG.error("Slow operations are prohibited in the EDT");
   }
 
   private static boolean isAlwaysAllowed() {
