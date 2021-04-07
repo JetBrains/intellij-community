@@ -32,8 +32,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
-import java.net.URI
-import java.net.URISyntaxException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
@@ -102,20 +100,6 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
         }
       }
     }, ModalityState.NON_MODAL)
-  }
-
-  private fun isOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
-    if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
-    return extractCanonicalPath(originUrl) == extractCanonicalPath(projectOriginUrl)
-  }
-
-  fun extractCanonicalPath(originUrl: String) : String? {
-    try {
-      return URI(originUrl).path?.toLowerCase()?.removeSuffix(".git")
-    } catch(e: URISyntaxException) {
-      LOG.warn("Malformed origin url '$originUrl' in navigate request", e)
-      return null
-    }
   }
 }
 

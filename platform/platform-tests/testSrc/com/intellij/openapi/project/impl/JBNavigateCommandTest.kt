@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.navigation.isOriginsEqual
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -31,6 +32,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Paths
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class JBNavigateCommandTest {
   companion object {
@@ -93,6 +96,41 @@ class JBNavigateCommandTest {
         configure(project)
         navigate(project.name, mapOf("path" to "A.java"))
         assertThat(getCurrentElement(project).name).isEqualTo("A.java")
+      }
+    }
+  }
+
+  @Test
+  fun compareOrigins() {
+    val equalOrigins = listOf(
+      "https://github.com/JetBrains/intellij.git" ,
+      "https://github.com/JetBrains/intellij" ,
+      "http://github.com/JetBrains/intellij" ,
+      "ssh://git@github.com:JetBrains/intellij.git",
+      "ssh://user@github.com:JetBrains/intellij.git",
+      "git@github.com:JetBrains/intellij.git",
+      "user@github.com:JetBrains/intellij.git",
+    )
+
+    equalOrigins.forEach { first ->
+      equalOrigins.forEach { second ->
+        assertTrue(isOriginsEqual(first, second), "Non equal: '$first' and '$second'")
+      }
+    }
+
+    val nonEqualOrigins = listOf(
+      "https://github.bom/JetBrains/intellij.git" ,
+      "https://github.com/JetBrains/intellij.git.git" ,
+      "http://github.com/JetBraind/intellij" ,
+      "http://github.com:8080/JetBrains/intellij" ,
+      "http://github.com",
+      "ssh://git@github.com:JetBrains",
+      "ssh://user@github.bom:JetBrains/intellij.git",
+      "git@github.com:JetBrains/go",
+    )
+    equalOrigins.forEach { first ->
+      nonEqualOrigins.forEach { second ->
+        assertFalse(isOriginsEqual(first, second), "Equal: '$first' and '$second'")
       }
     }
   }
