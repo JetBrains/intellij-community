@@ -13,6 +13,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class SuppressManagerImpl extends SuppressManager implements RedundantSuppressionDetector {
   private static final Logger LOG = Logger.getInstance(SuppressManager.class);
 
@@ -67,12 +69,16 @@ public class SuppressManagerImpl extends SuppressManager implements RedundantSup
     return suppressionScope != null && PsiTreeUtil.isAncestor(elementWithSuppression, suppressionScope, false);
   }
 
+  @Nullable
   @Override
   public TextRange getHighlightingRange(PsiElement elementWithSuppression, String toolId) {
     PsiElement annotationOrTagElement = elementWithSuppression instanceof PsiComment ? null : getElementToolSuppressedIn(elementWithSuppression, toolId);
     if (annotationOrTagElement != null) {
       int shiftInParent = annotationOrTagElement.getTextRange().getStartOffset() - elementWithSuppression.getTextRange().getStartOffset();
-      return RedundantSuppressionDetector.super.getHighlightingRange(annotationOrTagElement, toolId).shiftRight(shiftInParent);
+      if (shiftInParent < 0) {
+        return null; //non-normalized declaration
+      }
+      return Objects.requireNonNull(RedundantSuppressionDetector.super.getHighlightingRange(annotationOrTagElement, toolId)).shiftRight(shiftInParent);
     }
     return RedundantSuppressionDetector.super.getHighlightingRange(elementWithSuppression, toolId);
   }
