@@ -947,26 +947,32 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return true;
     });
 
-    PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField, psiField.getContainingClass());
-    PsiParameter setterParameter = setterPrototype.getParameterList().getParameters()[0];
-    for (PsiParameter parameter : parameters) {
-      PsiElement scope = parameter.getDeclarationScope();
-      if (scope instanceof PsiMethod) {
-        if (!ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(ref -> {
-          PsiElement element = ref.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
-            if (parent instanceof PsiAssignmentExpression) {
-              PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-              if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == psiField) {
-                return true;
+    PsiClass containingClass = psiField.getContainingClass();
+    if (containingClass != null) {
+      PsiMethod setterPrototype = PropertyUtilBase.generateSetterPrototype(psiField, containingClass);
+      PsiParameter setterParameter = setterPrototype.getParameterList().getParameters()[0];
+      for (PsiParameter parameter : parameters) {
+        PsiElement scope = parameter.getDeclarationScope();
+        if (scope instanceof PsiMethod) {
+          if (!ReferencesSearch.search(parameter, new LocalSearchScope(scope)).forEach(ref -> {
+            PsiElement element = ref.getElement();
+            if (element instanceof PsiReferenceExpression) {
+              PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+              if (parent instanceof PsiAssignmentExpression) {
+                PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
+                if (lExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)lExpression).resolve() == psiField) {
+                  return true;
+                }
               }
             }
-          }
-          return false;
-        })) continue;
-        usages.add(createParameterCallHierarchyUsageInfo(setterPrototype, setterParameter, (PsiMethod)scope, parameter));
+            return false;
+          })) continue;
+          usages.add(createParameterCallHierarchyUsageInfo(setterPrototype, setterParameter, (PsiMethod)scope, parameter));
+        }
       }
+    }
+    else {
+      LOG.assertTrue(!psiField.isPhysical(), "No containing class for field: " + psiField.getClass());
     }
 
     appendCallees(psiField, usages);
