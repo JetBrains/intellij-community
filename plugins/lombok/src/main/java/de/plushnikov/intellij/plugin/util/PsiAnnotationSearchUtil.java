@@ -9,10 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class PsiAnnotationSearchUtil {
@@ -43,10 +40,12 @@ public class PsiAnnotationSearchUtil {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
   }
 
-  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Iterable<String> annotationNames) {
-    List<PsiAnnotation> result = new ArrayList<>();
+  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+    List<PsiAnnotation> result = Collections.emptyList();
+
     final PsiModifierList psiModifierList = listOwner.getModifierList();
-    if (psiModifierList != null) {
+    if (psiModifierList != null && !annotationNames.isEmpty()) {
+      result = new ArrayList<>();
       for (PsiAnnotation annotation : psiModifierList.getAnnotations()) {
         if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName)) {
           result.add(annotation);
