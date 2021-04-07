@@ -27,7 +27,6 @@ import org.cef.CefSettings.LogSeverity;
 import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -330,7 +329,7 @@ public final class JBCefApp {
    * This mode allows for browser creation in either windowed or off-screen rendering mode.
    *
    * @see JBCefOsrHandlerBrowser
-   * @see JBCefBrowser#createDefaultOsrBrowser(JBCefClient, String)
+   * @see JBCefBrowser#create(JBCefBrowserBase.RenderingType, JBCefClient, String)
    */
   public static boolean isOffScreenRenderingModeEnabled() {
     return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
