@@ -305,7 +305,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   protected @NotNull GradleBuildScriptBuilder createBuildScriptBuilder() {
-    return new GradleBuildScriptBuilder(getCurrentGradleVersion());
+    return new GradleBuildScriptBuilder(getCurrentGradleVersion())
+      .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
   }
 
   protected @NotNull String getJUnitTestAnnotationClass() {
@@ -320,16 +321,24 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     return importSpecBuilder.build();
   }
 
+  private static final String MAVEN_REPOSITORY_PATCH_PLACE = "// Place for Maven repository patch";
+
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
-    config = "allprojects {\n" +
-             "  repositories {\n" +
-             "    maven {\n" +
-             "        url 'https://repo.labs.intellij.net/repo1'\n" +
-             "    }\n" +
-             "  }" +
-             "}\n" + config;
-    return config;
+    String mavenRepositoryPatch =
+      "allprojects {\n" +
+      "    repositories {\n" +
+      "        maven {\n" +
+      "            url 'https://repo.labs.intellij.net/repo1'\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n";
+    if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
+      return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
+    }
+    else {
+      return mavenRepositoryPatch + config;
+    }
   }
 
   @NotNull
