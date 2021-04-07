@@ -3642,6 +3642,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/convertSealedSubClassToObject/baseState.kt");
         }
 
+        @TestMetadata("convertSubClassFromAnotherFile.kt")
+        public void testConvertSubClassFromAnotherFile() throws Exception {
+            runTest("testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassFromAnotherFile.kt");
+        }
+
         @TestMetadata("convertSubClassWithModifiers.kt")
         public void testConvertSubClassWithModifiers() throws Exception {
             runTest("testData/inspectionsLocal/convertSealedSubClassToObject/convertSubClassWithModifiers.kt");

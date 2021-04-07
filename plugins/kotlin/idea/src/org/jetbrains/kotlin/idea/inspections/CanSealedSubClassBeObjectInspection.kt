@@ -19,20 +19,15 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.asJava.classes.KtLightClassImpl
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -41,20 +36,20 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : KtVisitorVoid() {
             override fun visitClass(klass: KtClass) {
-                if (!klass.hasModifier(KtTokens.SEALED_KEYWORD)) return
-                if (klass.getModalityFromDescriptor() != KtTokens.SEALED_KEYWORD) return
+                if (klass.matchesCanBeObjectCriteria()) {
+                    reportPossibleObject(klass)
+                }
+            }
 
-                val candidates = klass.getSubclasses()
-                    .withEmptyConstructors()
-                    .thatHasNoClassModifiers()
-                    .thatAreFinal()
-                    .thatHasNoTypeParameters()
-                    .thatHasNoInnerClasses()
-                    .thatHasNoCompanionObjects()
-                    .thatHasNoStateOrEquals()
-                if (candidates.isEmpty() || !klass.hasNoStateOrEquals() || !klass.baseClassHasNoStateOrEquals()) return
-
-                candidates.forEach { reportPossibleObject(it) }
+            fun KtClass.matchesCanBeObjectCriteria(): Boolean {
+                return isSubclassOfStatelessSealed()
+                        && withEmptyConstructors()
+                        && hasNoClassModifiers()
+                        && isFinal()
+                        && typeParameters.isEmpty()
+                        && hasNoInnerClass()
+                        && companionObjects.isEmpty()
+                        && hasNoStateOrEquals()
             }
 
             private fun reportPossibleObject(klass: KtClass) {
@@ -70,43 +65,23 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtClass.getSubclasses(): List<KtLightClassImpl> {
-        return HierarchySearchRequest(this, this.useScope, false)
-            .searchInheritors().filterIsInstance<KtLightClassImpl>()
+    private fun KtClass.isSubclassOfStatelessSealed(): Boolean {
+        fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
+        return superTypeListEntries
+            .mapNotNull { it.asKtClass() }
+            .filter { it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals() }
+            .any()
     }
 
-    private fun List<KtLightClassImpl>.withEmptyConstructors(): List<KtClass> {
-        return map { it.kotlinOrigin }.asSequence().filterIsInstance<KtClass>()
-            .filter { it.primaryConstructorParameters.isEmpty() }
-            .filter { klass -> klass.secondaryConstructors.all { cons -> cons.valueParameters.isEmpty() } }.toList()
+    private fun KtClass.withEmptyConstructors(): Boolean =
+        primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }
+
+    private fun KtClass.hasNoClassModifiers(): Boolean {
+        val modifierList = modifierList ?: return true
+        return CLASS_MODIFIERS.none { modifierList.hasModifier(it) }
     }
 
-    private fun List<KtClass>.thatHasNoClassModifiers(): List<KtClass> {
-        return filter { klass ->
-            val modifierList = klass.modifierList ?: return@filter true
-            CLASS_MODIFIERS.none { modifierList.hasModifier(it) }
-        }
-    }
-
-    private fun List<KtClass>.thatHasNoCompanionObjects(): List<KtClass> {
-        return filter { klass -> klass.companionObjects.isEmpty() }
-    }
-
-    private fun List<KtClass>.thatAreFinal(): List<KtClass> {
-        return filter { klass -> klass.getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD }
-    }
-
-    private fun List<KtClass>.thatHasNoTypeParameters(): List<KtClass> {
-        return filter { klass -> klass.typeParameters.isEmpty() }
-    }
-
-    private fun List<KtClass>.thatHasNoInnerClasses(): List<KtClass> {
-        return filter { klass -> klass.hasNoInnerClass() }
-    }
-
-    private fun List<KtClass>.thatHasNoStateOrEquals(): List<KtClass> {
-        return filter { it.hasNoStateOrEquals() }
-    }
+    private fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
 
     private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
         val descriptor = resolveToDescriptorIfAny() ?: return false
