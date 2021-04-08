@@ -8,6 +8,8 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
@@ -18,7 +20,6 @@ import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
-import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
@@ -162,10 +163,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) { onProcessStarted(it, continuation) }
     } ?: return
 
-    val form = console.component as SMTestRunnerResultsForm
-    reportProblem(form, problems, configurationSettings)
-    if (form.testsRootNode.isDefect) {
-      awaitSavingHistory(form.historyFileName)
+    val form = console.component as? SMTestRunnerResultsForm
+    if (form != null) {
+      reportProblem(form, problems, configurationSettings)
+      if (form.testsRootNode.isDefect) {
+        awaitSavingHistory(form.historyFileName)
+      }
     }
 
     disposeConsole(console)
@@ -173,25 +176,22 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
   private fun onProcessStarted(descriptor: RunContentDescriptor,
                                continuation: Continuation<ExecutionConsole?>) {
-    var executionConsole = descriptor.executionConsole
-    if (executionConsole is BuildView) {
-      executionConsole = executionConsole.consoleView
-    }
+    val handler = descriptor.processHandler
+    if (handler != null) {
+      var executionConsole = descriptor.executionConsole
+      if (executionConsole is BuildView) {
+        executionConsole = executionConsole.consoleView
+      }
 
-    val component = executionConsole?.component
-    val resultsForm = if (component is SMTestRunnerResultsForm) {
-      component
+      handler.addProcessListener(object : ProcessAdapter() {
+        override fun processTerminated(event: ProcessEvent) {
+          continuation.resume(executionConsole)
+        }
+      })
     }
     else {
       continuation.resume(null)
-      return
     }
-
-    resultsForm.addEventsListener(object : TestResultsViewer.EventsListener {
-      override fun onTestingFinished(sender: TestResultsViewer) {
-        continuation.resume(executionConsole)
-      }
-    })
   }
 
   private suspend fun awaitSavingHistory(historyFileName: String) {
