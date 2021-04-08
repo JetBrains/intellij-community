@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -24,15 +25,22 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
   override val lessonType: LessonType = LessonType.PROJECT
 
+  private val requiredClassName = "QuadraticEquationsSolver"
+
   override val lessonContent: LessonContext.() -> Unit = {
-    actionTask("SearchEverywhere") {
-      LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it), LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))
+    task("SearchEverywhere") {
+      triggerByUiComponentAndHighlight(highlightInside = false) { ui: ExtendableTextField ->
+        UIUtil.getParentOfType(SearchEverywhereUI::class.java, ui) != null
+      }
+      text(LessonsBundle.message("search.everywhere.invoke.search.everywhere", LessonUtil.actionName(it),
+                                 LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT)))
+      test { actions(it) }
     }
 
     task("que") {
       text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
       stateCheck { checkWordInSearch(it) }
-      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
+      restoreByUi()
       test {
         Thread.sleep(500)
         type(it)
@@ -40,13 +48,20 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task {
-      text(LessonsBundle.message("search.everywhere.navigate.to.class", code("QuadraticEquationsSolver"), LessonUtil.rawEnter()))
+      triggerByListItemAndHighlight { item ->
+        if (item is PsiNameIdentifierOwner)
+          item.name == requiredClassName
+        else item.toString().contains(requiredClassName)
+      }
+      restoreByUi()
+    }
+
+    task {
+      text(LessonsBundle.message("search.everywhere.navigate.to.class", code(requiredClassName), LessonUtil.rawEnter()))
       stateCheck {
         FileEditorManager.getInstance(project).selectedEditor?.file?.name.equals(resultFileName)
       }
-      showWarning(LessonsBundle.message("search.everywhere.popup.closed.warning.message", LessonUtil.rawKeyStroke(KeyEvent.VK_SHIFT))) {
-        !checkInsideSearchEverywhere()
-      }
+      restoreByUi()
       test {
         invokeActionViaShortcut("ENTER")
       }
