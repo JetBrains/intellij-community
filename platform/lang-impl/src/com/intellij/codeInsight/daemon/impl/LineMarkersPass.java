@@ -170,7 +170,6 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (true) return;
     // line markers for injected could be slow
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
