@@ -7,7 +7,6 @@ import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.diagnostic.runActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
@@ -51,10 +50,8 @@ import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.function.BiFunction
-import java.util.function.Supplier
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -85,7 +82,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return CompletableFuture.completedFuture(null)
     }
 
-    val activity = startActivity("project opening preparation")
+    val activity = StartUpMeasurer.startActivity("project opening preparation")
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
       if (!openProjects.isEmpty()) {
@@ -101,15 +98,9 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        return checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)
-          .thenComposeAsync ({
-            if (it) {
-              CompletableFuture.completedFuture(null)
-            }
-            else {
-              doOpenAsync(options, projectStoreBaseDir, activity)
-            }
-          }, ForkJoinPool.commonPool())
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
+          return CompletableFuture.completedFuture(null)
+        }
       }
     }
     return doOpenAsync(options, projectStoreBaseDir, activity)
@@ -241,7 +232,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val activity = startActivity("project instantiation")
+    val activity = StartUpMeasurer.startActivity("project instantiation")
     val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
     activity.end()
     options.beforeInit?.invoke(project)
@@ -317,24 +308,31 @@ private fun message(e: Throwable): String {
 private fun checkExistingProjectOnOpen(projectToClose: Project,
                                        callback: ProjectOpenedCallback?,
                                        projectDir: Path?,
-                                       projectManager: ProjectManagerExImpl): CompletableFuture<Boolean> {
+                                       projectManager: ProjectManagerExImpl): Boolean {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
-  return CompletableFuture.supplyAsync(Supplier {
+  var result = false
+
+  // modality per thread, it means that we cannot use invokeLater, because after getting result from EDT, we MUST continue execution
+  // in ORIGINAL thread
+  ApplicationManager.getApplication().invokeAndWait task@{
     if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
         (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       val exitCode = ProjectUtil.confirmOpenOrAttachProject()
       if (exitCode == -1) {
-        return@Supplier true
+        result = true
+        return@task
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!projectManager.closeAndDispose(projectToClose)) {
-          return@Supplier true
+          result = true
+          return@task
         }
       }
       else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
         if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-          return@Supplier true
+          result = true
+          return@task
         }
       }
       // process all pending events that can interrupt focus flow
@@ -345,21 +343,24 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
       val exitCode = ProjectUtil.confirmOpenNewProject(false)
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!projectManager.closeAndDispose(projectToClose)) {
-          return@Supplier true
+          result = true
+          return@task
         }
       }
       else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
         // not in a new window
-        return@Supplier true
+        result = true
+        return@task
       }
     }
 
-    false
-  }, ApplicationManager.getApplication()::invokeLater)
+    result = false
+  }
+  return result
 }
 
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
-  val waitEdtActivity = startActivity("placing calling projectOpened on event queue")
+  val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
                      else ProjectBundle.message("project.preparing.workspace")
@@ -376,7 +377,7 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     ProjectManagerImpl.LOG.debug("projectOpened")
 
     LifecycleUsageTriggerCollector.onProjectOpened(project)
-    val activity = StartUpMeasurer.startActivity("project opened callbacks", ActivityCategory.DEFAULT)
+    val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
     runActivity("projectOpened event executing") {
       ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
