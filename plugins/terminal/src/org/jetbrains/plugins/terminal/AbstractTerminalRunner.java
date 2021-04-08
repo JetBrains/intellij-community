@@ -182,10 +182,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     processHandler.startNotify();
   }
 
-  public void openSession(@NotNull JBTerminalWidget terminal) {
-    openSessionInDirectory(terminal, null);
-  }
-
   public @Nullable String getCurrentWorkingDir(@Nullable TerminalTabState state) {
     String dir = state != null ? state.myWorkingDirectory : null;
     VirtualFile result = dir == null ? null : LocalFileSystem.getInstance().findFileByPath(dir);
@@ -233,6 +229,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
+  /**
+   * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @ApiStatus.Internal
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
