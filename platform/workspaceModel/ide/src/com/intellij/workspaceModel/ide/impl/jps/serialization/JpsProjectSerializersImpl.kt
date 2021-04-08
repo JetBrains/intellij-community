@@ -8,6 +8,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.impl.ModulePath
@@ -101,6 +102,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     // Don't convert to links[key] = ... because it *may* became autoboxing
     @Suppress("ReplacePutWithAssignment")
     fileIdToFileName.put(source.fileNameId, fileName)
+    LOG.debug { "createFileInDirectorySource: ${source.fileNameId}=$fileName" }
     return source
   }
 
@@ -133,6 +135,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     if (source == null || source.directory != directoryUrl) return null
     @Suppress("ReplacePutWithAssignment")
     fileIdToFileName.put(source.fileNameId, fileName)
+    LOG.debug { "bindExistingSource: ${source.fileNameId}=$fileName" }
     return source
   }
 
@@ -221,6 +224,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     obsoleteSerializers.mapTo(changedSources) { it.internalEntitySource }
     obsoleteSerializers.asSequence().map { it.internalEntitySource }.filterIsInstance(JpsFileEntitySource.FileInDirectory::class.java).forEach {
       fileIdToFileName.remove(it.fileNameId)
+      LOG.debug { "remove association for ${it.fileNameId}" }
     }
 
     val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
@@ -555,6 +559,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val actualSource = if (source is JpsImportedEntitySource && !source.storedExternally) source.internalFile else source
         if (actualSource is JpsFileEntitySource.FileInDirectory) {
           fileIdToFileName.remove(actualSource.fileNameId)
+          LOG.debug { "remove association for obsolete source $actualSource" }
         }
       }
     }
@@ -565,7 +570,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       directorySerializerFactoriesByUrl.values.forEach { factory ->
         val added = entitiesMap[factory.entityClass]
         if (added != null) {
-          val newSerializers = createSerializersForDirectoryEntities(factory, added, storage)
+          val newSerializers = createSerializersForDirectoryEntities(factory, added)
           newSerializers.forEach {
             serializerToDirectoryFactory[it.key] = factory
             fileSerializersByUrl.put(it.key.fileUrl.url, it.key)
@@ -584,10 +589,31 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           // Don't convert to links[key] = ... because it *may* became autoboxing
           @Suppress("ReplacePutWithAssignment")
           fileIdToFileName.put(actualFileSource.fileNameId, fileNameByEntity)
+          LOG.debug { "update association for ${actualFileSource.fileNameId} to $fileNameByEntity (was $oldFileName)" }
           if (oldFileName != null) {
             processObsoleteSource("${actualFileSource.directory.url}/$oldFileName", true)
           }
-          processNewlyAddedDirectoryEntities(entities)
+          val existingSerializers = fileSerializersByUrl.getValues("${actualFileSource.directory.url}/$fileNameByEntity").filter {
+            it in serializerToDirectoryFactory
+          }
+          if (existingSerializers.isNotEmpty()) {
+            val existingSources = existingSerializers.map { it.internalEntitySource }
+            val entitiesWithOldSource = storage.entitiesBySource { it in existingSources }
+            //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
+            // as error for now to find real cause of IDEA-265327
+            val message = """
+             |Cannot save entities to $fileNameByEntity because it's already used for other entities;
+             |Current entity source: $actualFileSource
+             |Old file name: $oldFileName
+             |Existing serializers: $existingSerializers
+             |Their entity sources: $existingSources
+             |Entities with these sources in the storage: $entitiesWithOldSource
+            """.trimMargin()
+            reportErrorAndAttachStorage(message, storage)
+          }
+          if (existingSerializers.isEmpty() || existingSerializers.any { it.internalEntitySource != actualFileSource }) {
+            processNewlyAddedDirectoryEntities(entities)
+          }
         }
       }
       val url = getActualFileUrl(source)
@@ -704,8 +730,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun <E : WorkspaceEntity> createSerializersForDirectoryEntities(factory: JpsDirectoryEntitiesSerializerFactory<E>,
-                                                                          entities: List<WorkspaceEntity>,
-                                                                          storage: WorkspaceEntityStorage)
+                                                                          entities: List<WorkspaceEntity>)
     : Map<JpsFileEntitiesSerializer<*>, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     val serializers = serializerToDirectoryFactory.getKeysByValue(factory) ?: emptyList()
     val nameGenerator = UniqueNameGenerator(serializers, Function {
@@ -715,28 +740,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       .filter { @Suppress("UNCHECKED_CAST") factory.entityFilter(it as E) }
       .associate { entity ->
         @Suppress("UNCHECKED_CAST")
-        val rawDefaultFileName = factory.getDefaultFileName(entity as E)
-        val defaultFileName = FileUtil.sanitizeFileName(rawDefaultFileName)
+        val defaultFileName = FileUtil.sanitizeFileName(factory.getDefaultFileName(entity as E))
         val fileName = nameGenerator.generateUniqueName(defaultFileName, "", ".xml")
         val entityMap = mapOf<Class<out WorkspaceEntity>, List<WorkspaceEntity>>(factory.entityClass to listOf(entity))
         val currentSource = entity.entitySource as? JpsFileEntitySource.FileInDirectory
-        if (fileName != "$defaultFileName.xml") {
-          val oldSerializer = serializers.find { PathUtil.getFileName(it.fileUrl.url) == "$defaultFileName.xml" }
-          val oldSource = oldSerializer?.internalEntitySource
-          val entitiesWithOldSource = oldSource?.let { s -> storage.entitiesBySource { it == s }[s] }
-          val entitiesByName = storage.entities(factory.entityClass).filter { factory.getDefaultFileName(it) == rawDefaultFileName }.toList()
-          //technically this is not an error, but cases when different entities have the same default file name are rare so let's report this
-          // as error for now to find real cause of IDEA-265327
-          val message = """
-             |Cannot save $entity to $defaultFileName because a different entity is stored to the file;
-             |Current entity source: $currentSource
-             |Old serializer: $oldSerializer
-             |Its entity source: $oldSource
-             |Entities with this source in the storage: $entitiesWithOldSource
-             |Entities with the same name in the storage: $entitiesByName
-            """.trimMargin()
-          reportErrorAndAttachStorage(message, storage)
-        }
 
         val source =
           if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
