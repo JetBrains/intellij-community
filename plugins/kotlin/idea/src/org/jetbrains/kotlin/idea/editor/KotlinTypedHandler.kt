@@ -13,388 +13,329 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.kotlin.idea.editor
 
-package org.jetbrains.kotlin.idea.editor;
+import com.intellij.codeInsight.AutoPopupController
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.editorActions.TypedHandler
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorModificationUtilEx
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.formatter.FormatterUtil
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 
-import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.TypedHandler;
-import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtilEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.KtNodeTypes;
-import org.jetbrains.kotlin.kdoc.lexer.KDocTokens;
-import org.jetbrains.kotlin.lexer.KtTokens;
-import org.jetbrains.kotlin.psi.*;
-
-
-class KotlinTypedHandlerInner {
-    final static TokenSet CONTROL_FLOW_EXPRESSIONS = TokenSet.create(
-            KtNodeTypes.IF,
-            KtNodeTypes.ELSE,
-            KtNodeTypes.FOR,
-            KtNodeTypes.WHILE,
-            KtNodeTypes.TRY);
-
-    final static TokenSet SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER = TokenSet.create(
-            KtTokens.RPAR,
-            KtTokens.ELSE_KEYWORD,
-            KtTokens.TRY_KEYWORD
-    );
+internal object KotlinTypedHandlerInner {
+    val CONTROL_FLOW_EXPRESSIONS = TokenSet.create(
+        KtNodeTypes.IF,
+        KtNodeTypes.ELSE,
+        KtNodeTypes.FOR,
+        KtNodeTypes.WHILE,
+        KtNodeTypes.TRY
+    )
+    val SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER = TokenSet.create(
+        KtTokens.RPAR,
+        KtTokens.ELSE_KEYWORD,
+        KtTokens.TRY_KEYWORD
+    )
 }
 
-public class KotlinTypedHandler extends TypedHandlerDelegate {
-    private boolean kotlinLTTyped;
+class KotlinTypedHandler : TypedHandlerDelegate() {
+    private var kotlinLTTyped = false
 
-    private boolean isGlobalPreviousDollarInString; // Global flag for all editors
-    private static final Key<Integer> PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY = Key.create("PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY");
+    // Global flag for all editors
+    private var isGlobalPreviousDollarInString = false
 
-    @NotNull
-    @Override
-    public Result beforeCharTyped(
-            char c,
-            @NotNull Project project,
-            @NotNull Editor editor,
-            @NotNull PsiFile file,
-            @NotNull FileType fileType
-    ) {
-        if (!(file instanceof KtFile)) {
-            return Result.CONTINUE;
+    override fun beforeCharTyped(
+        c: Char,
+        project: Project,
+        editor: Editor,
+        file: PsiFile,
+        fileType: FileType
+    ): Result {
+        if (file !is KtFile) {
+            return Result.CONTINUE
         }
-
-        switch (c) {
-            case ')':
-                dataClassValParameterInsert(project, editor, file, /*beforeType = */ true);
-                break;
-            case '<':
+        when (c) {
+            ')' -> dataClassValParameterInsert(project, editor, file,  /*beforeType = */true)
+            '<' -> {
                 kotlinLTTyped = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-                                LtGtTypingUtils.shouldAutoCloseAngleBracket(editor.getCaretModel().getOffset(), editor);
-                autoPopupParameterInfo(project, editor);
-                return Result.CONTINUE;
-
-            case '>':
+                        LtGtTypingUtils.shouldAutoCloseAngleBracket(editor.caretModel.offset, editor)
+                autoPopupParameterInfo(project, editor)
+                return Result.CONTINUE
+            }
+            '>' -> {
                 if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
                     if (LtGtTypingUtils.handleKotlinGTInsert(editor)) {
-                        return Result.STOP;
+                        return Result.STOP
                     }
                 }
-                return Result.CONTINUE;
-
-            case '{':
+                return Result.CONTINUE
+            }
+            '{' -> {
                 // Returning Result.CONTINUE will cause inserting "{}" for unmatched '{'
-
-                int offset = editor.getCaretModel().getOffset();
+                val offset = editor.caretModel.offset
                 if (offset == 0) {
-                    return Result.CONTINUE;
+                    return Result.CONTINUE
                 }
-
-                HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
-                while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
-                    iterator.retreat();
+                val iterator = editor.highlighter.createIterator(offset - 1)
+                while (!iterator.atEnd() && iterator.tokenType === TokenType.WHITE_SPACE) {
+                    iterator.retreat()
                 }
-
                 if (iterator.atEnd() ||
-                    !(KotlinTypedHandlerInner.SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER.contains(iterator.getTokenType()))) {
-                    AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
-                    return Result.CONTINUE;
+                    !KotlinTypedHandlerInner.SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER.contains(iterator.tokenType)
+                ) {
+                    AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
+                    return Result.CONTINUE
                 }
-
-                int tokenBeforeBraceOffset = iterator.getStart();
-
-                Document document = editor.getDocument();
-                PsiDocumentManager.getInstance(project).commitDocument(document);
-
-                PsiElement leaf = file.findElementAt(offset);
+                val tokenBeforeBraceOffset = iterator.start
+                val document = editor.document
+                PsiDocumentManager.getInstance(project).commitDocument(document)
+                val leaf = file.findElementAt(offset)
                 if (leaf != null) {
-                    PsiElement parent = leaf.getParent();
-                    if (parent != null && KotlinTypedHandlerInner.CONTROL_FLOW_EXPRESSIONS.contains(parent.getNode().getElementType())) {
-                        ASTNode nonWhitespaceSibling = FormatterUtil.getPreviousNonWhitespaceSibling(leaf.getNode());
-                        if (nonWhitespaceSibling != null && nonWhitespaceSibling.getStartOffset() == tokenBeforeBraceOffset) {
-                            EditorModificationUtilEx.insertStringAtCaret(editor, "{", false, true);
-                            TypedHandler.indentBrace(project, editor, '{');
-
-                            return Result.STOP;
+                    val parent = leaf.parent
+                    if (parent != null && KotlinTypedHandlerInner.CONTROL_FLOW_EXPRESSIONS.contains(parent.node.elementType)) {
+                        val nonWhitespaceSibling = FormatterUtil.getPreviousNonWhitespaceSibling(leaf.node)
+                        if (nonWhitespaceSibling != null && nonWhitespaceSibling.startOffset == tokenBeforeBraceOffset) {
+                            EditorModificationUtilEx.insertStringAtCaret(editor, "{", false, true)
+                            TypedHandler.indentBrace(project, editor, '{')
+                            return Result.STOP
                         }
                     }
-                    if (leaf.getText().equals("}")
-                        && parent instanceof KtFunctionLiteral
-                        && document.getLineNumber(offset) == document.getLineNumber(parent.getTextRange().getStartOffset())
+                    if (leaf.text == "}" && parent is KtFunctionLiteral
+                        && document.getLineNumber(offset) == document.getLineNumber(parent.getTextRange().startOffset)
                     ) {
-                        EditorModificationUtilEx.insertStringAtCaret(editor, "{} ", false, false);
-                        editor.getCaretModel().moveToOffset(offset + 1);
-                        return Result.STOP;
+                        EditorModificationUtilEx.insertStringAtCaret(editor, "{} ", false, false)
+                        editor.caretModel.moveToOffset(offset + 1)
+                        return Result.STOP
                     }
                 }
-
-                return Result.CONTINUE;
-
-            case '.':
-                autoPopupMemberLookup(project, editor);
-                return Result.CONTINUE;
-
-            case '@':
-                autoPopupLabelLookup(project, editor);
-                autoPopupKDocTag(project, editor);
-                return Result.CONTINUE;
-
-            case ':':
-                autoPopupCallableReferenceLookup(project, editor);
-                return Result.CONTINUE;
-
-            case '[':
-                autoPopupParameterInfo(project, editor);
-                return Result.CONTINUE;
-        }
-
-        return Result.CONTINUE;
-    }
-
-    private static void autoPopupParameterInfo(Project project, Editor editor) {
-        int offset = editor.getCaretModel().getOffset();
-        if (offset == 0) return;
-
-        HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
-        IElementType tokenType = iterator.getTokenType();
-        if (KtTokens.COMMENTS.contains(tokenType)
-            || tokenType == KtTokens.REGULAR_STRING_PART
-            || tokenType == KtTokens.OPEN_QUOTE
-            || tokenType == KtTokens.CHARACTER_LITERAL) {
-            return;
-        }
-
-        AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
-    }
-
-    private static void autoPopupMemberLookup(Project project, Editor editor) {
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
-            int offset = editor.getCaretModel().getOffset();
-
-            PsiElement lastToken = file.findElementAt(offset - 1);
-            if (lastToken == null) return false;
-
-            IElementType elementType = lastToken.getNode().getElementType();
-            if (elementType == KtTokens.DOT || elementType == KtTokens.SAFE_ACCESS) return true;
-
-            if (elementType == KtTokens.REGULAR_STRING_PART && lastToken.getTextRange().getStartOffset() == offset - 1) {
-                PsiElement prevSibling = lastToken.getParent().getPrevSibling();
-                return prevSibling instanceof KtSimpleNameStringTemplateEntry;
+                return Result.CONTINUE
             }
-
-            return false;
-        });
-    }
-
-    private static void autoPopupKDocTag(Project project, Editor editor) {
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, (PsiFile file) -> {
-            int offset = editor.getCaretModel().getOffset();
-            PsiElement lastElement = file.findElementAt(offset - 1);
-            if (lastElement == null) return false;
-
-            return lastElement.getNode().getElementType() == KDocTokens.TEXT;
-        });
-    }
-
-    private static void autoPopupLabelLookup(Project project, Editor editor) {
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
-            int offset = editor.getCaretModel().getOffset();
-
-            CharSequence chars = editor.getDocument().getCharsSequence();
-            if (!endsWith(chars, offset, "this@")
-                && !endsWith(chars, offset, "return@")
-                && !endsWith(chars, offset, "break@")
-                && !endsWith(chars, offset, "continue@")) {
-                return false;
+            '.' -> {
+                autoPopupMemberLookup(project, editor)
+                return Result.CONTINUE
             }
-
-            PsiElement lastElement = file.findElementAt(offset - 1);
-            if (lastElement == null) return false;
-
-            return lastElement.getNode().getElementType() == KtTokens.AT;
-        });
-    }
-
-    private static void autoPopupCallableReferenceLookup(Project project, Editor editor) {
-        AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
-            int offset = editor.getCaretModel().getOffset();
-
-            PsiElement lastElement = file.findElementAt(offset - 1);
-            if (lastElement == null) return false;
-
-            return lastElement.getNode().getElementType() == KtTokens.COLONCOLON;
-        });
-    }
-
-    private static boolean endsWith(CharSequence chars, int offset, String text) {
-        if (offset < text.length()) return false;
-        return chars.subSequence(offset - text.length(), offset).toString().equals(text);
-    }
-
-    @NotNull
-    @Override
-    public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        if (!(file instanceof KtFile)) {
-            return Result.CONTINUE;
+            '@' -> {
+                autoPopupLabelLookup(project, editor)
+                autoPopupKDocTag(project, editor)
+                return Result.CONTINUE
+            }
+            ':' -> {
+                autoPopupCallableReferenceLookup(project, editor)
+                return Result.CONTINUE
+            }
+            '[' -> {
+                autoPopupParameterInfo(project, editor)
+                return Result.CONTINUE
+            }
         }
+        return Result.CONTINUE
+    }
 
-        Integer previousDollarInStringOffset = null;
+    override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
+        if (file !is KtFile) return Result.CONTINUE
+
+        var previousDollarInStringOffset: Int? = null
         if (isGlobalPreviousDollarInString) {
-            isGlobalPreviousDollarInString = false;
-            previousDollarInStringOffset = editor.getUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY);
+            isGlobalPreviousDollarInString = false
+            previousDollarInStringOffset = editor.getUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY)
         }
-        editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, null);
 
-        if (kotlinLTTyped) {
-            kotlinLTTyped = false;
-            LtGtTypingUtils.handleKotlinAutoCloseLT(editor);
-            return Result.STOP;
-        } else if (c == ',' || c == ')') {
-            dataClassValParameterInsert(project, editor, file, /*beforeType = */ false);
-        } else if (c == '{' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
-            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, null)
+        when {
+            kotlinLTTyped -> {
+                kotlinLTTyped = false
+                LtGtTypingUtils.handleKotlinAutoCloseLT(editor)
 
-            int offset = editor.getCaretModel().getOffset();
-            PsiElement previousElement = file.findElementAt(offset - 1);
-            if (previousElement instanceof LeafPsiElement
-                && ((LeafPsiElement) previousElement).getElementType() == KtTokens.LONG_TEMPLATE_ENTRY_START
-            ) {
-                PsiElement currentElement = file.findElementAt(offset);
-                boolean isNextTokenIsIdentifier = currentElement instanceof LeafPsiElement &&
-                                                  ((LeafPsiElement) currentElement).getElementType() == KtTokens.IDENTIFIER;
+                return Result.STOP
+            }
+            c == ',' || c == ')' -> dataClassValParameterInsert(project, editor, file,  /*beforeType = */false)
+            c == '{' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET -> {
+                PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+                val offset = editor.caretModel.offset
+                val previousElement = file.findElementAt(offset - 1)
+                if (previousElement is LeafPsiElement && previousElement.elementType === KtTokens.LONG_TEMPLATE_ENTRY_START) {
+                    val currentElement = file.findElementAt(offset)
+                    val isNextTokenIsIdentifier = currentElement is LeafPsiElement && currentElement.elementType === KtTokens.IDENTIFIER
+                    if (!isNextTokenIsIdentifier) {
+                        editor.document.insertString(offset, "}")
+                        return Result.STOP
+                    }
 
-                if (!isNextTokenIsIdentifier) {
-                    editor.getDocument().insertString(offset, "}");
-                    return Result.STOP;
-                }
-
-                PsiElement lastInLongTemplateEntry = previousElement.getParent().getLastChild();
-                boolean isSimpleLongTemplateEntry =
-                        lastInLongTemplateEntry instanceof LeafPsiElement &&
-                        ((LeafPsiElement) lastInLongTemplateEntry).getElementType() == KtTokens.LONG_TEMPLATE_ENTRY_END &&
-                        lastInLongTemplateEntry.getParent().getTextLength() == currentElement.getTextLength() + "${}".length();
-
-                if (!isSimpleLongTemplateEntry) {
-                    boolean isAfterTypedDollar =
-                            previousDollarInStringOffset != null && previousDollarInStringOffset.intValue() == offset - 1;
-                    if (isAfterTypedDollar) {
-                        editor.getDocument().insertString(offset, "}");
-                        return Result.STOP;
+                    val lastInLongTemplateEntry = previousElement.getParent().lastChild
+                    val isSimpleLongTemplateEntry =
+                        lastInLongTemplateEntry is LeafPsiElement && lastInLongTemplateEntry.elementType === KtTokens.LONG_TEMPLATE_ENTRY_END && lastInLongTemplateEntry.getParent().textLength == currentElement!!.textLength + "\${}".length
+                    if (!isSimpleLongTemplateEntry) {
+                        val isAfterTypedDollar = previousDollarInStringOffset != null && previousDollarInStringOffset.toInt() == offset - 1
+                        if (isAfterTypedDollar) {
+                            editor.document.insertString(offset, "}")
+                            return Result.STOP
+                        }
                     }
                 }
             }
-        } else if (c == ':') {
-            if (autoIndentCase(editor, project, file, KtClassOrObject.class) ||
-                autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
-                return Result.STOP;
+            c == ':' -> {
+                if (autoIndentCase(editor, project, file, KtClassOrObject::class.java) ||
+                    autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)
+                ) {
+                    return Result.STOP
+                }
             }
-        } else if (c == '.') {
-            if (autoIndentCase(editor, project, file, KtQualifiedExpression.class)) {
-                return Result.STOP;
+            c == '.' -> {
+                if (autoIndentCase(editor, project, file, KtQualifiedExpression::class.java)) return Result.STOP
             }
-        } else if (c == '|') {
-            if (autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
-                return Result.STOP;
+            c == '|' -> {
+                if (autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
             }
-        } else if (c == '&') {
-            if (autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
-                return Result.STOP;
+            c == '&' -> {
+                if (autoIndentCase(editor, project, file, KtOperationReferenceExpression::class.java)) return Result.STOP
             }
-        } else if (c == '$') {
-            int offset = editor.getCaretModel().getOffset();
-            PsiElement element = file.findElementAt(offset);
-            if (element instanceof LeafPsiElement && ((LeafPsiElement) element).getElementType() == KtTokens.REGULAR_STRING_PART) {
-                editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, offset);
-                isGlobalPreviousDollarInString = true;
-            }
-        }
-
-        return Result.CONTINUE;
-    }
-
-    private static void dataClassValParameterInsert(
-            @NotNull Project project,
-            @NotNull Editor editor,
-            @NotNull PsiFile file,
-            boolean beforeType
-    ) {
-
-        if (!KotlinEditorOptions.getInstance().isAutoAddValKeywordToDataClassParameters()) return;
-
-        Document document = editor.getDocument();
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-
-        int commaOffset = editor.getCaretModel().getOffset();
-        if (!beforeType) commaOffset--;
-        if (commaOffset < 1) return;
-
-        PsiElement elementOnCaret = file.findElementAt(commaOffset);
-        if (elementOnCaret == null) return;
-
-        boolean contextMatched = false;
-        PsiElement parentElement = elementOnCaret.getParent();
-        if (parentElement instanceof KtParameterList) {
-            parentElement = parentElement.getParent();
-            if (parentElement instanceof KtPrimaryConstructor) {
-                parentElement = parentElement.getParent();
-                if (parentElement instanceof KtClass) {
-                    KtClass klassElement = ((KtClass) parentElement);
-                    contextMatched = klassElement.isData() || klassElement.hasModifier(KtTokens.INLINE_KEYWORD);
+            c == '$' -> {
+                val offset = editor.caretModel.offset
+                val element = file.findElementAt(offset)
+                if (element is LeafPsiElement && element.elementType === KtTokens.REGULAR_STRING_PART) {
+                    editor.putUserData(PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY, offset)
+                    isGlobalPreviousDollarInString = true
                 }
             }
         }
-        if (!contextMatched) return;
 
-        PsiElement leftElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementOnCaret);
-
-        if (!(leftElement instanceof KtParameter)) return;
-
-        KtParameter ktParameter = (KtParameter) leftElement;
-        KtTypeReference typeReference = ktParameter.getTypeReference();
-        if (typeReference == null) return;
-
-        if (ktParameter.hasValOrVar()) return;
-        if (typeReference.getTextLength() == 0) return;
-
-        document.insertString(leftElement.getTextOffset(), "val ");
+        return Result.CONTINUE
     }
 
-    private static boolean autoIndentCase(Editor editor, Project project, PsiFile file, Class<?> kclass) {
-        int offset = editor.getCaretModel().getOffset();
-
-        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-
-        PsiElement currElement = file.findElementAt(offset - 1);
-        if (currElement != null) {
-
-            // Should be applied only if there's nothing but the whitespace in line before the element
-            PsiElement prevLeaf = PsiTreeUtil.prevLeaf(currElement);
-            if (!(prevLeaf instanceof PsiWhiteSpace && prevLeaf.getText().contains("\n"))) {
-                return false;
+    companion object {
+        private val PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY = Key.create<Int>("PREVIOUS_IN_STRING_DOLLAR_TYPED_OFFSET_KEY")
+        private fun autoPopupParameterInfo(project: Project, editor: Editor) {
+            val offset = editor.caretModel.offset
+            if (offset == 0) return
+            val iterator = editor.highlighter.createIterator(offset - 1)
+            val tokenType = iterator.tokenType
+            if (KtTokens.COMMENTS.contains(tokenType) ||
+                tokenType === KtTokens.REGULAR_STRING_PART ||
+                tokenType === KtTokens.OPEN_QUOTE ||
+                tokenType === KtTokens.CHARACTER_LITERAL
+            ) {
+                return
             }
 
-            PsiElement parent = currElement.getParent();
-            if (kclass.isInstance(parent)) {
-                int curElementLength = currElement.getText().length();
-                if (offset < curElementLength) return false;
+            AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null)
+        }
 
-                CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength);
+        private fun autoPopupMemberLookup(project: Project, editor: Editor): Unit =
+            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, fun(file: PsiFile): Boolean {
+                val offset = editor.caretModel.offset
+                val lastToken = file.findElementAt(offset - 1) ?: return false
+                val elementType = lastToken.node.elementType
+                if (elementType === KtTokens.DOT || elementType === KtTokens.SAFE_ACCESS) return true
+                if (elementType === KtTokens.REGULAR_STRING_PART && lastToken.textRange.startOffset == offset - 1) {
+                    val prevSibling = lastToken.parent.prevSibling
+                    return prevSibling is KtSimpleNameStringTemplateEntry
+                }
+                return false
+            })
 
-                return true;
+        private fun autoPopupKDocTag(project: Project, editor: Editor): Unit =
+            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+                val offset = editor.caretModel.offset
+                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
+                lastElement.node.elementType === KDocTokens.TEXT
+            }
+
+        private fun autoPopupLabelLookup(project: Project, editor: Editor) {
+            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+                val offset = editor.caretModel.offset
+                val chars = editor.document.charsSequence
+                if (!endsWith(chars, offset, "this@")
+                    && !endsWith(chars, offset, "return@")
+                    && !endsWith(chars, offset, "break@")
+                    && !endsWith(chars, offset, "continue@")
+                ) {
+                    return@autoPopupMemberLookup false
+                }
+
+                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
+                lastElement.node.elementType === KtTokens.AT
             }
         }
-        return false;
+
+        private fun autoPopupCallableReferenceLookup(project: Project, editor: Editor) {
+            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
+                val offset = editor.caretModel.offset
+                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
+                lastElement.node.elementType === KtTokens.COLONCOLON
+            }
+        }
+
+        private fun endsWith(chars: CharSequence, offset: Int, text: String): Boolean =
+            if (offset < text.length) false else chars.subSequence(offset - text.length, offset).toString() == text
+
+        private fun dataClassValParameterInsert(
+            project: Project,
+            editor: Editor,
+            file: PsiFile,
+            beforeType: Boolean
+        ) {
+            if (!KotlinEditorOptions.getInstance().isAutoAddValKeywordToDataClassParameters) return
+            val document = editor.document
+            PsiDocumentManager.getInstance(project).commitDocument(document)
+            var commaOffset = editor.caretModel.offset
+            if (!beforeType) commaOffset--
+            if (commaOffset < 1) return
+            val elementOnCaret = file.findElementAt(commaOffset) ?: return
+            var contextMatched = false
+            var parentElement = elementOnCaret.parent
+            if (parentElement is KtParameterList) {
+                parentElement = parentElement.getParent()
+                if (parentElement is KtPrimaryConstructor) {
+                    parentElement = parentElement.getParent()
+                    if (parentElement is KtClass) {
+                        val klassElement = parentElement
+                        contextMatched = klassElement.isData() || klassElement.hasModifier(KtTokens.INLINE_KEYWORD)
+                    }
+                }
+            }
+            if (!contextMatched) return
+            val leftElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementOnCaret) as? KtParameter ?: return
+            val typeReference = leftElement.typeReference ?: return
+            if (leftElement.hasValOrVar()) return
+            if (typeReference.textLength == 0) return
+            document.insertString(leftElement.textOffset, "val ")
+        }
+
+        private fun autoIndentCase(editor: Editor, project: Project, file: PsiFile, kclass: Class<*>): Boolean {
+            val offset = editor.caretModel.offset
+            PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+            val currElement = file.findElementAt(offset - 1)
+            if (currElement != null) {
+
+                // Should be applied only if there's nothing but the whitespace in line before the element
+                val prevLeaf = PsiTreeUtil.prevLeaf(currElement)
+                if (!(prevLeaf is PsiWhiteSpace && prevLeaf.getText().contains("\n"))) {
+                    return false
+                }
+                val parent = currElement.parent
+                if (kclass.isInstance(parent)) {
+                    val curElementLength = currElement.text.length
+                    if (offset < curElementLength) return false
+                    CodeStyleManager.getInstance(project).adjustLineIndent(file, offset - curElementLength)
+                    return true
+                }
+            }
+            return false
+        }
     }
 }
