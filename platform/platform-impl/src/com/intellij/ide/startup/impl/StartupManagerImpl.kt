@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -37,11 +36,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Supplier
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
@@ -77,20 +76,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
           }
         }
       }, project)
-    }
-
-    @JvmStatic
-    fun runActivity(runnable: Runnable) {
-      ProgressManager.checkCanceled()
-      try {
-        runnable.run()
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
     }
   }
 
@@ -137,10 +122,11 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   private fun checkThatPostActivitiesNotPassed() {
     if (postStartupActivityPassed()) {
-      LOG.error("Registering post-startup activity that will never be run:" +
+      LOG.error("Registering post-startup activity that will never be run (" +
                 " disposed=${project.isDisposed}" +
                 ", open=${project.isOpen}" +
-                ", passed=$isStartupActivitiesPassed")
+                ", passed=$isStartupActivitiesPassed"
+                + ")")
     }
   }
 
@@ -164,7 +150,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
     }
     else {
-      AppExecutorUtil.getAppExecutorService().execute {
+      ForkJoinPool.commonPool().execute {
         if (!project.isDisposed) {
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(project) { runPostStartupActivities() }
         }
@@ -191,25 +177,22 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
   private fun executeActivitiesFromExtensionPoint(indicator: ProgressIndicator?, extensionPoint: ExtensionPointImpl<StartupActivity>) {
     // use processImplementations to not even create extension if not white-listed
-    extensionPoint
-      .processImplementations( /* shouldBeSorted = */true) { supplier: Supplier<StartupActivity>, pluginDescriptor: PluginDescriptor ->
+    extensionPoint.processImplementations( /* shouldBeSorted = */true) { supplier, pluginDescriptor ->
       if (project.isDisposed) {
         return@processImplementations
       }
+
       val id = pluginDescriptor.pluginId
       if (!(id == PluginManagerCore.CORE_ID ||
             id == PluginManagerCore.JAVA_PLUGIN_ID ||
             id.idString == "com.jetbrains.performancePlugin" ||
             id.idString == "com.intellij.kotlinNative.platformDeps")) {
-        LOG.error("Only bundled plugin can define " + extensionPoint.name + ": " + pluginDescriptor)
+        LOG.error("Only bundled plugin can define ${extensionPoint.name}: $pluginDescriptor")
         return@processImplementations
       }
+
       indicator?.checkCanceled()
-      try {
-        runActivity(null, supplier.get(), pluginDescriptor, indicator)
-      }
-      catch (ignore: ExtensionNotApplicableException) {
-      }
+      runActivity(null, supplier.get() ?: return@processImplementations, pluginDescriptor, indicator)
     }
   }
 

@@ -345,7 +345,7 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public synchronized @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
+    public synchronized @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
       if (myFire != null) {
         myFire.run();
       }

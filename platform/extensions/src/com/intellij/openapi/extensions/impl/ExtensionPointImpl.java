@@ -301,7 +301,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
   }
 
-  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<T>, ? super PluginDescriptor> consumer) {
+  public final void processImplementations(boolean shouldBeSorted, @NotNull BiConsumer<? super Supplier<@Nullable T>, ? super PluginDescriptor> consumer) {
     if (isInReadOnlyMode()) {
       for (T extension : myExtensionsCache) {
         Supplier<T> supplier = () -> extension;
@@ -318,7 +318,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   // null id means that instance was created and extension element cleared
-  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<T>, ? super @Nullable String> consumer) {
+  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<@Nullable T>, ? super @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
       consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getOrderId());
@@ -456,12 +456,11 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       if (!checkThatClassloaderIsActive(adapter)) {
         return null;
       }
-      return adapter.createInstance(componentManager);
-    }
-    catch (ExtensionNotApplicableException ignore) {
-      if (LOG.isDebugEnabled()) {
+      T instance = adapter.createInstance(componentManager);
+      if (instance == null && LOG.isDebugEnabled()) {
         LOG.debug(adapter + " not loaded because it reported that not applicable");
       }
+      return instance;
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -486,6 +485,13 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !isDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(componentManager);
+      if (extension == null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(adapter + " not loaded because it reported that not applicable");
+        }
+        return null;
+      }
+
       if (duplicates != null && !duplicates.add(extension)) {
         T duplicate = ContainerUtil.find(duplicates, d -> d.equals(extension));
         assert result != null;
@@ -505,11 +511,6 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
           notifyListeners(false, Collections.singletonList(adapter), listeners);
         }
         return extension;
-      }
-    }
-    catch (ExtensionNotApplicableException ignore) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(adapter + " not loaded because it reported that not applicable");
       }
     }
     catch (ProcessCanceledException e) {
@@ -777,17 +778,17 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
           try {
             T extension = adapter.createInstance(componentManager);
-            if (isRemoved) {
-              listener.extensionRemoved(extension, adapter.getPluginDescriptor());
-            }
-            else {
-              listener.extensionAdded(extension, adapter.getPluginDescriptor());
+            if (extension != null) {
+              if (isRemoved) {
+                listener.extensionRemoved(extension, adapter.getPluginDescriptor());
+              }
+              else {
+                listener.extensionAdded(extension, adapter.getPluginDescriptor());
+              }
             }
           }
           catch (ProcessCanceledException e) {
             throw e;
-          }
-          catch (ExtensionNotApplicableException ignore) {
           }
           catch (Throwable e) {
             LOG.error(e);

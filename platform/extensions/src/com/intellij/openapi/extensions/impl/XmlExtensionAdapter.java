@@ -15,7 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
-  private @Nullable Element myExtensionElement;
+  private @Nullable Element extensionElement;
+
+  private static final Object NOT_APPLICABLE = new Object();
 
   private volatile Object extensionInstance;
   private boolean initializing;
@@ -28,7 +30,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                       @NotNull ImplementationClassResolver implementationClassResolver) {
     super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
 
-    myExtensionElement = extensionElement;
+    this.extensionElement = extensionElement;
   }
 
   @Override
@@ -37,11 +39,11 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   }
 
   @Override
-  public @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
+  public @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
     @SuppressWarnings("unchecked")
     T instance = (T)extensionInstance;
     if (instance != null) {
-      return instance;
+      return instance == NOT_APPLICABLE ? null : instance;
     }
 
     //noinspection SynchronizeOnThis
@@ -49,7 +51,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       //noinspection unchecked
       instance = (T)extensionInstance;
       if (instance != null) {
-        return instance;
+        return instance == NOT_APPLICABLE ? null : instance;
       }
 
       if (initializing) {
@@ -59,30 +61,30 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       try {
         initializing = true;
 
-        Class<T> aClass;
-        try {
-          //noinspection unchecked
-          aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          throw componentManager.createError(e, pluginDescriptor.getPluginId());
-        }
-
+        //noinspection unchecked
+        Class<T> aClass = (Class<T>)implementationClassResolver.resolveImplementationClass(componentManager, this);
         instance = instantiateClass(aClass, componentManager);
         if (instance instanceof PluginAware) {
           ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
         }
 
-        Element element = myExtensionElement;
+        Element element = extensionElement;
         if (element != null) {
-          XmlSerializer.deserializeInto(instance, element);
-          myExtensionElement = null;
+          XmlSerializer.getBeanBinding(instance.getClass()).deserializeInto(instance, element);
+          extensionElement = null;
         }
 
         extensionInstance = instance;
+      }
+      catch (ExtensionNotApplicableException e) {
+        extensionInstance = NOT_APPLICABLE;
+        return null;
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw componentManager.createError(e, pluginDescriptor.getPluginId());
       }
       finally {
         initializing = false;

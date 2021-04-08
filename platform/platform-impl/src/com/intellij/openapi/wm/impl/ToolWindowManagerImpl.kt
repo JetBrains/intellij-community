@@ -448,10 +448,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   private fun ExtensionPointImpl<RegisterToolWindowTaskProvider>.computeExtraToolWindowBeans(): List<RegisterToolWindowTask> {
     val list = mutableListOf<RegisterToolWindowTask>()
     this.processImplementations(true) { supplier, epPluginDescriptor ->
-      if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID)
-        for (bean in supplier.get().getTasks(project)) {
+      if (epPluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
+        for (bean in (supplier.get() ?: return@processImplementations).getTasks(project)) {
           list.addIfNotNull(beanToTask(bean))
         }
+      }
       else {
         LOG.error("Only bundled plugin can define registerToolWindowTaskProvider: $epPluginDescriptor")
       }

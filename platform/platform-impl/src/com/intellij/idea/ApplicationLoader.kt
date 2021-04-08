@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -390,9 +389,7 @@ fun callAppInitialized(app: ApplicationImpl): List<ForkJoinTask<*>> {
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
     result.add(ForkJoinTask.adapt {
       try {
-        supplier.get().componentsInitialized()
-      }
-      catch (ignore: ExtensionNotApplicableException) {
+        supplier.get()?.componentsInitialized()
       }
       catch (e: Throwable) {
         LOG.error(e)
@@ -459,10 +456,7 @@ private fun executePreloadActivities(app: ApplicationImpl) {
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->
     val preloadingActivity: PreloadingActivity
     try {
-      preloadingActivity = supplier.get()
-    }
-    catch (ignore: ExtensionNotApplicableException) {
-      return@processImplementations
+      preloadingActivity = supplier.get() ?: return@processImplementations
     }
     catch (e: Throwable) {
       LOG.error(e)

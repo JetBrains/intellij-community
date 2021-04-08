@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -31,7 +31,8 @@ public class ExtensionComponentAdapterTest {
     String name = TestExtensionClassOne.class.getName();
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element, InterfaceExtensionImplementationClassResolver.INSTANCE).createInstance(new ExtensionPointImplTest.MyComponentManager());
+    new XmlExtensionAdapter(name, descriptor, null, LoadingOrder.ANY, element, InterfaceExtensionImplementationClassResolver.INSTANCE)
+      .createInstance(new ExtensionPointImplTest.MyComponentManager());
   }
 
   @NotNull
