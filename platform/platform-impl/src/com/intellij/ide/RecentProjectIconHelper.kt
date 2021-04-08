@@ -76,7 +76,7 @@ internal class RecentProjectIconHelper {
   }
 
   fun getProjectIcon(path: @SystemIndependent String, isDark: Boolean, generateFromName: Boolean = false): Icon {
-    val icon = projectIcons.get(path)
+    val icon = projectIcons[path]
     if (icon != null) {
       return icon.icon
     }
@@ -109,7 +109,7 @@ internal class RecentProjectIconHelper {
     val timestamp = fileInfo.lastModifiedTime().toMillis()
 
     val recolor = isDark && !file.nameWithoutExtension.endsWith("_dark")
-    var iconWrapper = projectIcons.get(path)
+    var iconWrapper = projectIcons[path]
     if (iconWrapper != null && iconWrapper.timestamp == timestamp) {
       return iconWrapper.icon
     }
@@ -122,7 +122,7 @@ internal class RecentProjectIconHelper {
 
       iconWrapper = MyIcon(icon, timestamp)
 
-      projectIcons.put(path, iconWrapper)
+      projectIcons[path] = iconWrapper
       return iconWrapper.icon
     }
     catch (e: Exception) {
