@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
@@ -26,12 +27,12 @@ import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
  * Possible side effects for the methods usually are handled via purity or mutability annotations
  * (see {@link DfaCallArguments#flush(DfaMemoryState, DfaValueFactory, PsiMethod)}): for pure method,
  * nothing is done. For impure methods, some or all qualified mutable variables are flushed.
- * This class allows custom handling (for example, updating the size of the collection on the 
+ * This class allows custom handling (for example, updating the size of the collection on the
  * {@link java.util.List#add(Object)} call).
  */
 class SideEffectHandlers {
   private static final CallMapper<SideEffectHandler> HANDLERS = new CallMapper<SideEffectHandler>()
-    // While list.set() produces a side effect (changes element), we don't track anything except size, 
+    // While list.set() produces a side effect (changes element), we don't track anything except size,
     // so we don't need to flush anything
     .register(anyOf(instanceCall(JAVA_UTIL_LIST, "set").parameterTypes("int", "E")),
               (factory, state, arguments) -> { })
@@ -153,14 +154,14 @@ class SideEffectHandlers {
     /**
      * Apply side effects of the call to the supplied memory state. If handler is executed, default
      * processing (based on purity or mutation signature) is not executed.
-     * 
+     *
      * @param factory value factory to use if necessary
      * @param state memory state to update
      * @param arguments call arguments
      */
     void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments);
   }
-  
+
   private static void updateSize(DfaMemoryState state, DfaVariableValue var, DfType type) {
     // Dependent states may appear which we are not tracking (e.g. one visible list is sublist of another list)
     // so let's conservatively flush everything that could be affected

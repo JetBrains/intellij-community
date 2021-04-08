@@ -1,7 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +24,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   private final @Nullable SpecialField mySpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myDropConstantOnWiden;
-  
+
   DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
     super(constant);
     myPsiType = psiType;
@@ -34,7 +38,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   @Override
   public DfType widen() {
     if (myDropConstantOnWiden) {
-      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability, 
+      return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability,
                                      mySpecialField, mySpecialFieldType.widen(), false);
     }
     return this;

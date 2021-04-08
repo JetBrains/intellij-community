@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -166,7 +166,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     }
     return Collections.emptyList();
   }
-  
+
   private static List<PsiExpression> generatedList(PsiElement context, int size, IntFunction<String> generator) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     return new AbstractList<>() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -38,12 +39,12 @@ public abstract class ContractValue {
   }
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
-  
+
   @NotNull
   DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
     return DfaCondition.getUnknown();
   }
-  
+
   public DfaCondition fromCall(DfaValueFactory factory, PsiCallExpression call) {
     DfaCallArguments arguments = DfaCallArguments.fromCall(factory, call);
     if (arguments == null) return DfaCondition.getUnknown();
@@ -61,7 +62,7 @@ public abstract class ContractValue {
   public ContractValue invert() {
     return null;
   }
-  
+
   /**
    * @return true if this contract value represents a bounds-checking condition
    */

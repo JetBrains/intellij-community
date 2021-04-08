@@ -4,8 +4,8 @@
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;

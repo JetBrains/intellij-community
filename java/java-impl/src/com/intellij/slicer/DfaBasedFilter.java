@@ -4,8 +4,8 @@ package com.intellij.slicer;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.java.JavaBundle;
@@ -37,11 +37,11 @@ final class DfaBasedFilter {
   @NotNull DfType getDfType() {
     return myDfType;
   }
-  
+
   DfaBasedFilter wrap() {
     return new DfaBasedFilter(this, DfTypes.TOP);
   }
-  
+
   DfaBasedFilter unwrap() {
     return myNextFilter;
   }

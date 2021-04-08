@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
@@ -129,7 +129,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           if (refType.getMutability() != Mutability.UNKNOWN) {
             infoLines.add(Pair.create(JavaBundle.message("type.information.mutability"), refType.getMutability().getPresentationName()));
           }
-          infoLines.add(Pair.create(JavaBundle.message("type.information.locality"), 
+          infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
                                     refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
           SpecialField field = refType.getSpecialField();
           if (field != null) {
