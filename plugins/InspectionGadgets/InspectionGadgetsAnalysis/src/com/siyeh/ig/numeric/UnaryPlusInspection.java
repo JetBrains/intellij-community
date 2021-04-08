@@ -198,7 +198,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
       return prefixExpr != null && prefixExpr.getOperationTokenType().equals(JavaTokenType.PLUS);
     }
 
-    private void addUnaryIncrementFix(@NotNull List<LocalQuickFix> fixes, @NotNull PsiReferenceExpression refExpr) {
+    private static void addUnaryIncrementFix(@NotNull List<LocalQuickFix> fixes, @NotNull PsiReferenceExpression refExpr) {
       final String refName = refExpr.getReferenceName();
       if (refName == null) {
         return;
@@ -207,29 +207,16 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
       if (topPrefixExpr == null) {
         return;
       }
-      if (myOnlyReportInsideBinaryExpression) {
-        if (!applicableToBeReplacedWithInc(topPrefixExpr)) {
-          return;
-        }
-      }
-      else {
-        final PsiType refExprType = refExpr.getType();
-        if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
-            MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
-          return;
-        }
+      final PsiType refExprType = refExpr.getType();
+      if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
+          MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
+        return;
       }
       final PsiVariable resolved = ObjectUtils.tryCast(refExpr.resolve(), PsiVariable.class);
       if (resolved == null || resolved.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
       fixes.add(new UnaryIncrementFix(refName));
-    }
-
-    private static boolean applicableToBeReplacedWithInc(@NotNull PsiPrefixExpression topPrefixExpr) {
-      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(topPrefixExpr);
-      return parent instanceof PsiPolyadicExpression || parent instanceof PsiPrefixExpression ||
-             parent instanceof PsiAssignmentExpression || parent instanceof PsiVariable;
     }
   }
 }
