@@ -155,13 +155,16 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   void requestToUpdateWarning() {
-    if (myComponent != null && myValidationAlarm.isEmpty()) {
-      myValidationAlarm.addRequest(() -> {
-        if (myComponent != null) {
-          validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
-        }
-      }, 100, ModalityState.stateForComponent(myComponent.myWholePanel));
-    }
+    if (myComponent == null || !myValidationAlarm.isEmpty()) return;
+
+    ModalityState modalityState = ModalityState.stateForComponent(myComponent.myWholePanel);
+    if (modalityState == ModalityState.NON_MODAL) return;
+
+    myValidationAlarm.addRequest(() -> {
+      if (myComponent != null) {
+        validateResultOnBackgroundThread(configurationException -> myComponent.updateValidationResultVisibility(configurationException));
+      }
+    }, 100, modalityState);
   }
 
   @Override
