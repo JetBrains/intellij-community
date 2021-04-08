@@ -576,7 +576,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         if (isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           builder.myUiThreadAction.accept(result);
         }
-      }, builder.myModalityState, (x) -> isCancelled());
+      }, builder.myModalityState, __ -> isCancelled());
     }
 
     @Override

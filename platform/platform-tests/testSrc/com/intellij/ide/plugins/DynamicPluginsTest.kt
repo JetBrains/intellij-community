@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
@@ -418,7 +419,7 @@ class DynamicPluginsTest {
   @Test
   fun testExtensionOnServiceDependency() {
     val project = projectRule.project
-    StartupManagerImpl.addActivityEpListener(project)
+    (StartupManager.getInstance(project) as StartupManagerImpl).addActivityEpListener()
     val disposable = loadExtensionWithText("""
       <postStartupActivity implementation="${MyStartupActivity::class.java.name}"/>
       <projectService serviceImplementation="${MyProjectService::class.java.name}"/>

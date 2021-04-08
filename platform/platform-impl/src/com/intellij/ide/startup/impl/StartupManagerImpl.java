@@ -107,9 +107,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     LOG.warn("Activities registered via registerPostStartupActivity must be dumb-aware: " + runnable);
     synchronized (myLock) {
       checkThatPostActivitiesNotPassed();
-      postStartupActivities.add((DumbAwareRunnable)() -> {
-        DumbService.getInstance(myProject).unsafeRunWhenSmart(runnable);
-      });
+      postStartupActivities.add((DumbAwareRunnable)() -> DumbService.getInstance(myProject).unsafeRunWhenSmart(runnable));
     }
   }
 
@@ -261,32 +259,31 @@ public class StartupManagerImpl extends StartupManagerEx {
     if (!myProject.isDisposed() && !ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleBackgroundPostStartupActivities();
       //noinspection TestOnlyProblems
-      addActivityEpListener(myProject);
+      addActivityEpListener();
     }
   }
 
   @TestOnly
-  public static void addActivityEpListener(@NotNull Project project) {
+  public void addActivityEpListener() {
     StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
-        StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
         if (DumbService.isDumbAware(extension)) {
           AppExecutorUtil.getAppExecutorService().execute(() -> {
-            if (!project.isDisposed()) {
-              BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, () -> {
-                startupManager.runActivity(null, extension, pluginDescriptor, ProgressManager.getInstance().getProgressIndicator());
+            if (!myProject.isDisposed()) {
+              BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+                runActivity(null, extension, pluginDescriptor, ProgressManager.getInstance().getProgressIndicator());
               });
             }
           });
         }
         else {
-          DumbService.getInstance(project).unsafeRunWhenSmart(() -> {
-            startupManager.runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          DumbService.getInstance(myProject).unsafeRunWhenSmart(() -> {
+            runActivity(null, extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
           });
         }
       }
-    }, project);
+    }, myProject);
   }
 
   private static void dumbUnawarePostActivitiesPassed(@NotNull AtomicReference<? extends Activity> edtActivity, int count) {
@@ -450,12 +447,10 @@ public class StartupManagerImpl extends StartupManagerEx {
         LOG.debug("Background post-startup activities done in " + TimeoutUtil.getDurationMillis(startTimeNano) + "ms");
       }
     }, Registry.intValue("ide.background.post.startup.activity.delay"), TimeUnit.MILLISECONDS);
-    Disposer.register(myProject, () -> {
-      scheduledFuture.cancel(false);
-    });
+    Disposer.register(myProject, () -> scheduledFuture.cancel(false));
   }
 
-  private void runBackgroundPostStartupActivities(@NotNull List<StartupActivity.Background> activities) {
+  private void runBackgroundPostStartupActivities(@NotNull List<? extends StartupActivity.Background> activities) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
       for (StartupActivity activity : activities) {
         ProgressManager.checkCanceled();
@@ -488,14 +483,10 @@ public class StartupManagerImpl extends StartupManagerEx {
   @Override
   public void runWhenProjectIsInitialized(@NotNull Runnable action) {
     if (DumbService.isDumbAware(action)) {
-      runAfterOpened(() -> {
-        GuiUtils.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, myProject.getDisposed());
-      });
+      runAfterOpened(() -> GuiUtils.invokeLaterIfNeeded(action, ModalityState.NON_MODAL, myProject.getDisposed()));
     }
     else {
-      runAfterOpened(() -> {
-        DumbService.getInstance(myProject).unsafeRunWhenSmart(action);
-      });
+      runAfterOpened(() -> DumbService.getInstance(myProject).unsafeRunWhenSmart(action));
     }
   }
 
