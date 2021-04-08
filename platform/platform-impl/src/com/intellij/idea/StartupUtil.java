@@ -147,11 +147,7 @@ public final class StartupUtil {
     return shellEnvLoadFuture;
   }
 
-  private static @Nullable ForkJoinTask<@Nullable Object> loadEuaDocument() {
-    if (Main.isHeadless()) {
-      return null;
-    }
-
+  private static @NotNull ForkJoinTask<@Nullable Object> scheduleEuaDocumentLoading() {
     return ForkJoinPool.commonPool().submit(() -> {
       if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
         return null;
@@ -233,8 +229,32 @@ public final class StartupUtil {
 
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
-    ForkJoinTask<Object> euaDocument = loadEuaDocument();
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, euaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi();
+    ForkJoinTask<@Nullable Object> euaDocument;
+    if (Main.isHeadless()) {
+      euaDocument = null;
+    }
+    else {
+      euaDocument = scheduleEuaDocumentLoading();
+      // UIUtil.initDefaultLaF must be called before this call
+      // (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
+      initUiTask.thenRun(() -> {
+        // called in EDT
+        Activity subActivity = StartUpMeasurer.startActivity("system font data initialization");
+        JBUIScale.getSystemFontData();
+        subActivity = subActivity.endAndStart("init JBUIScale");
+        JBUIScale.scale(1f);
+
+        showSplashIfNeeded(args, euaDocument, subActivity);
+
+        // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
+        EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
+
+        ForkJoinPool.commonPool().execute(() -> {
+          loadSystemFontsAndDnDCursors();
+        });
+      });
+    }
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -393,8 +413,7 @@ public final class StartupUtil {
     AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
   }
 
-  private static @NotNull CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args,
-                                                              @Nullable ForkJoinTask<@Nullable Object> eulaDocument) {
+  private static @NotNull CompletableFuture<?> scheduleInitUi() {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
@@ -421,25 +440,6 @@ public final class StartupUtil {
 
           initUiFuture.complete(null);
           StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
-
-          if (Main.isHeadless()) {
-            return;
-          }
-
-          // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
-          Activity activity = StartUpMeasurer.startActivity("system font data initialization");
-          JBUIScale.getSystemFontData();
-          activity = activity.endAndStart("init JBUIScale");
-          JBUIScale.scale(1f);
-
-          showSplashIfNeeded(args, eulaDocument, activity);
-
-          // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
-          EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
-
-          ForkJoinPool.commonPool().execute(() -> {
-            loadSystemFontsAndDnDCursors();
-          });
         });
       }
       catch (Throwable e) {
@@ -486,7 +486,7 @@ public final class StartupUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static void showSplashIfNeeded(@NotNull String @NotNull [] args,
-                                         @Nullable ForkJoinTask<@Nullable Object> eulaDocument,
+                                         @Nullable ForkJoinTask<@Nullable Object> euaDocument,
                                          @NotNull Activity activity) {
     // product specifies `splash` VM properties, `nosplash` is deprecated property, it should be checked first
     if (Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !Boolean.getBoolean(CommandLineArgs.SPLASH) || Main.isLightEdit()) {
@@ -500,7 +500,7 @@ public final class StartupUtil {
       Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
       boolean isEulaAccepted;
       try {
-        EndUserAgreement.Document document = eulaDocument == null ? null : (EndUserAgreement.Document)eulaDocument.join();
+        EndUserAgreement.Document document = euaDocument == null ? null : (EndUserAgreement.Document)euaDocument.join();
         isEulaAccepted = document == null || document.isAccepted();
       }
       catch (Exception ignore) {
