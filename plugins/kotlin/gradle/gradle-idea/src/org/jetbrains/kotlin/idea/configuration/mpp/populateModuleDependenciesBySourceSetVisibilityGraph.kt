@@ -25,7 +25,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
         if (shouldDelegateToOtherPlugin(sourceSet)) continue
 
 
-        val visibleSourceSets = sourceSetVisibilityGraph.successors(sourceSet)
+        val visibleSourceSets = sourceSetVisibilityGraph.successors(sourceSet) - sourceSet
         val fromDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
             ?: continue
 
@@ -39,13 +39,14 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
         if (!processedModuleIds.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx))) continue
         val settings = dependencyPopulationSettings(mppModel, sourceSet)
         val directDependencies = getDependencies(sourceSet).toSet()
+        val directIntransitiveDependencies = getIntransitiveDependencies(sourceSet).toSet()
         val dependenciesFromVisibleSourceSets = getDependenciesFromVisibleSourceSets(settings, visibleSourceSets)
         val dependenciesFromNativePropagation = getPropagatedNativeDependencies(settings, sourceSet)
         val dependenciesFromPlatformPropagation = getPropagatedPlatformDependencies(sourceSet)
 
         val dependencies = dependenciesPreprocessor(
-            directDependencies + dependenciesFromVisibleSourceSets +
-                    dependenciesFromNativePropagation + dependenciesFromPlatformPropagation
+            dependenciesFromNativePropagation + dependenciesFromPlatformPropagation
+                    + dependenciesFromVisibleSourceSets + directDependencies + directIntransitiveDependencies
         )
 
         buildDependencies(resolverCtx, sourceSetMap, artifactsMap, fromDataNode, dependencies, ideProject)
@@ -78,7 +79,7 @@ private fun KotlinMppPopulateModuleDependenciesContext.getDependenciesFromVisibl
     visibleSourceSets: Set<KotlinSourceSet>
 ): Set<KotlinDependency> {
     val inheritedDependencies = visibleSourceSets
-        .flatMap { visibleSourceSet -> getDependencies(visibleSourceSet) }
+        .flatMap { visibleSourceSet -> getRegularDependencies(visibleSourceSet) }
 
     return if (settings.excludeInheritedNativeDependencies) {
         inheritedDependencies.filter { !it.name.startsWith(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE) }

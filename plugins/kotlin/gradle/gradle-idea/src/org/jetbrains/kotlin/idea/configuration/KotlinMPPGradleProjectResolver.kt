@@ -42,7 +42,8 @@ import org.jetbrains.kotlin.idea.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
 import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.configuration.utils.*
+import org.jetbrains.kotlin.idea.configuration.utils.UnsafeTestSourceSetHeuristicApi
+import org.jetbrains.kotlin.idea.configuration.utils.fullName
 import org.jetbrains.kotlin.idea.configuration.utils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.configuration.utils.predictedProductionSourceSetName
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
@@ -75,6 +76,16 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
     override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModelBuilder::class.java, Unit::class.java)
 
     override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(KotlinMPPGradleModel::class.java)
+
+    override fun getExtraCommandLineArgs(): List<String> =
+        /**
+         * The Kotlin Gradle plugin might want to use this intransitive metadata configuration to tell the IDE, that specific
+         * dependencies shall not be passed on to dependsOn source sets. (e.g. some commonized libraries).
+         * By default, the Gradle plugin does not use this configuration and instead places the dependencies into a previously
+         * supported configuration.
+         * This will tell the Gradle plugin that this version of the IDE plugin does support importing this special configuraiton.
+         */
+        listOf("-Pkotlin.mpp.enableIntransitiveMetadataConfiguration=true")
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {

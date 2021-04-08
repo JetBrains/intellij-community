@@ -13,7 +13,8 @@ class KotlinSourceSetProto(
     private val languageSettings: KotlinLanguageSettings,
     private val sourceDirs: Set<File>,
     private val resourceDirs: Set<File>,
-    private val dependencies: () -> Array<KotlinDependencyId>,
+    private val regularDependencies: () -> Array<KotlinDependencyId>,
+    private val intransitiveDependencies: () -> Array<KotlinDependencyId>,
     val dependsOnSourceSets: Set<String>
 ) {
     fun buildKotlinSourceSetImpl(
@@ -24,7 +25,8 @@ class KotlinSourceSetProto(
         languageSettings = languageSettings,
         sourceDirs = sourceDirs,
         resourceDirs = resourceDirs,
-        dependencies = if (doBuildDependencies) dependencies.invoke() else emptyArray(),
+        regularDependencies = if (doBuildDependencies) regularDependencies() else emptyArray(),
+        intransitiveDependencies = if(doBuildDependencies) intransitiveDependencies() else emptyArray(),
         declaredDependsOnSourceSets = dependsOnSourceSets,
         allDependsOnSourceSets = allDependsOnSourceSets(allSourceSetsProtosByNames)
     )
@@ -44,7 +46,8 @@ class KotlinSourceSetImpl(
     override val languageSettings: KotlinLanguageSettings,
     override val sourceDirs: Set<File>,
     override val resourceDirs: Set<File>,
-    override val dependencies: Array<KotlinDependencyId>,
+    override val regularDependencies: Array<KotlinDependencyId>,
+    override val intransitiveDependencies: Array<KotlinDependencyId>,
     override val declaredDependsOnSourceSets: Set<String>,
     @Suppress("OverridingDeprecatedMember")
     override val allDependsOnSourceSets: Set<String>,
@@ -52,13 +55,16 @@ class KotlinSourceSetImpl(
     defaultIsTestModule: Boolean = false
 ) : KotlinSourceSet {
 
+    override val dependencies: Array<KotlinDependencyId> = regularDependencies + intransitiveDependencies
+
     @Suppress("DEPRECATION")
     constructor(kotlinSourceSet: KotlinSourceSet) : this(
         name = kotlinSourceSet.name,
         languageSettings = KotlinLanguageSettingsImpl(kotlinSourceSet.languageSettings),
         sourceDirs = HashSet(kotlinSourceSet.sourceDirs),
         resourceDirs = HashSet(kotlinSourceSet.resourceDirs),
-        dependencies = kotlinSourceSet.dependencies.clone(),
+        regularDependencies = kotlinSourceSet.regularDependencies.clone(),
+        intransitiveDependencies = kotlinSourceSet.intransitiveDependencies.clone(),
         declaredDependsOnSourceSets = HashSet(kotlinSourceSet.declaredDependsOnSourceSets),
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         defaultActualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
@@ -261,26 +267,25 @@ data class KotlinMPPGradleModelImpl(
     override val targets: Collection<KotlinTarget>,
     override val extraFeatures: ExtraFeatures,
     override val kotlinNativeHome: String,
-    override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>
+    override val dependencyMap: Map<KotlinDependencyId, KotlinDependency>,
 ) : KotlinMPPGradleModel {
-
     constructor(mppModel: KotlinMPPGradleModel, cloningCache: MutableMap<Any, Any>) : this(
-        mppModel.sourceSetsByName.mapValues { initialSourceSet ->
+        sourceSetsByName = mppModel.sourceSetsByName.mapValues { initialSourceSet ->
             (cloningCache[initialSourceSet] as? KotlinSourceSet) ?: KotlinSourceSetImpl(initialSourceSet.value)
                 .also { cloningCache[initialSourceSet] = it }
         },
-        mppModel.targets.map { initialTarget ->
+        targets = mppModel.targets.map { initialTarget ->
             (cloningCache[initialTarget] as? KotlinTarget) ?: KotlinTargetImpl(initialTarget, cloningCache).also {
                 cloningCache[initialTarget] = it
             }
         }.toList(),
-        ExtraFeaturesImpl(
+        extraFeatures = ExtraFeaturesImpl(
             mppModel.extraFeatures.coroutinesState,
             mppModel.extraFeatures.isHMPPEnabled,
             mppModel.extraFeatures.isNativeDependencyPropagationEnabled
         ),
-        mppModel.kotlinNativeHome,
-        mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap()
+        kotlinNativeHome = mppModel.kotlinNativeHome,
+        dependencyMap = mppModel.dependencyMap.map { it.key to it.value.deepCopy(cloningCache) }.toMap()
     )
 }
 

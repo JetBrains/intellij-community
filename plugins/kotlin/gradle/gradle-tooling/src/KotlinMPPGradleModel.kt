@@ -57,6 +57,21 @@ interface KotlinSourceSet : KotlinModule {
     val resourceDirs: Set<File>
     val actualPlatforms: KotlinPlatformContainer
 
+    /**
+     * Special dependencies, that shall not be passed transitively to any depending source sets
+     */
+    val intransitiveDependencies: Array<KotlinDependencyId>
+
+    /**
+     * Dependencies that can be forworded transitively to any dependending source set
+     */
+    val regularDependencies: Array<KotlinDependencyId>
+
+    /**
+     * All dependencies ( [regularDependencies] + [intransitiveDependencies])
+     */
+    override val dependencies: Array<KotlinDependencyId>
+
 
     /**
      * All source sets that this source set explicitly declared a 'dependsOn' relation to

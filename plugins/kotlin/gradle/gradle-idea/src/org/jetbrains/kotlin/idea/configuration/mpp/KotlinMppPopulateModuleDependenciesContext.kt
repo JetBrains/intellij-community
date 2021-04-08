@@ -61,6 +61,14 @@ fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinMod
     return dependenciesPreprocessor(module.dependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
 
+fun KotlinMppPopulateModuleDependenciesContext.getRegularDependencies(sourceSet: KotlinSourceSet): List<KotlinDependency> {
+    return dependenciesPreprocessor(sourceSet.regularDependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
+}
+
+fun KotlinMppPopulateModuleDependenciesContext.getIntransitiveDependencies(sourceSet: KotlinSourceSet): List<KotlinDependency> {
+    return dependenciesPreprocessor(sourceSet.intransitiveDependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
+}
+
 internal fun KotlinMppPopulateModuleDependenciesContext.getCompilationsWithDependencies(
     sourceSet: KotlinSourceSet
 ): List<CompilationWithDependencies> {

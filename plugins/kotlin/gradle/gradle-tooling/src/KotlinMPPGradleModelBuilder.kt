@@ -170,12 +170,21 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
                 .distinct()
                 .toTypedArray()
         }
+
+        val intransitiveSourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
+            buildIntransitiveSourceSetDependencies(gradleSourceSet, dependencyResolver, project)
+                .map { dependencyMapper.getId(it) }
+                .distinct()
+                .toTypedArray()
+        }
+
         return KotlinSourceSetProto(
             gradleSourceSet.name,
             languageSettings,
             sourceDirs,
             resourceDirs,
             sourceSetDependenciesBuilder,
+            intransitiveSourceSetDependenciesBuilder,
             dependsOnSourceSets
         )
     }
@@ -656,6 +665,17 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
 
             this += buildAndroidSourceSetDependencies(androidDeps, gradleSourceSet)
         }
+    }
+
+    private fun buildIntransitiveSourceSetDependencies(
+        gradleSourceSet: Named,
+        dependencyResolver: DependencyResolver,
+        project: Project
+    ): List<KotlinDependency> {
+        val transformationBuilder = MetadataDependencyTransformationBuilder(gradleSourceSet)
+        return buildDependencies(
+            gradleSourceSet, dependencyResolver, "getIntransitiveMetadataConfigurationName", "COMPILE", project, transformationBuilder
+        ).toList()
     }
 
     private fun buildAndroidSourceSetDependencies(
