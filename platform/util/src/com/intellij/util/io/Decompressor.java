@@ -76,7 +76,7 @@ public abstract class Decompressor {
       if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getSize(), te.getLinkName());
       // Unix permissions are ignored on Windows
       if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getSize(), te.getLinkName());
-      return new Entry(te.getName(), te.isDirectory());
+      return new Entry(te.getName(), te.isDirectory() ? Entry.Type.DIR : Entry.Type.FILE, 0, te.getSize(), te.getLinkName());
     }
 
     private static Entry.Type type(TarArchiveEntry te) {
