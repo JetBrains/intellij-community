@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundleIndependent
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.util.string.collapseSpaces
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -108,24 +109,6 @@ open class KotlinElementDescriptionProviderBase : ElementDescriptionProvider {
             },
             Unit
         )
-    }
-
-    //TODO Copied from stringUtil.kt
-    private fun String.collapseSpaces(): String {
-        val builder = StringBuilder()
-        var haveSpaces = false
-        for (c in this) {
-            if (c.isWhitespace()) {
-                haveSpaces = true
-            } else {
-                if (haveSpaces) {
-                    builder.append(" ")
-                    haveSpaces = false
-                }
-                builder.append(c)
-            }
-        }
-        return builder.toString()
     }
 
     //TODO: Implement in FIR
