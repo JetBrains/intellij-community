@@ -65,8 +65,8 @@ public class JBCefBrowser extends JBCefBrowserBase {
     public static final @NotNull String FOCUS_ON_SHOW ="JBCefBrowser.focusOnShow";
 
     static {
-      PropertiesHelper.putType(FOCUS_ON_NAVIGATION, Boolean.class);
-      PropertiesHelper.putType(FOCUS_ON_SHOW, Boolean.class);
+      PropertiesHelper.setType(FOCUS_ON_NAVIGATION, Boolean.class);
+      PropertiesHelper.setType(FOCUS_ON_SHOW, Boolean.class);
     }
   }
 

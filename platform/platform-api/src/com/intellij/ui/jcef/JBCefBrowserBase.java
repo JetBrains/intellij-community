@@ -81,9 +81,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     public static final @NotNull String IS_LIGHTWEIGHT = "JBCefBrowserBase.isLightweight";
 
     static {
-      PropertiesHelper.putType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
-      PropertiesHelper.putType(NO_CONTEXT_MENU, Boolean.class);
-      PropertiesHelper.putType(IS_LIGHTWEIGHT, Boolean.class);
+      PropertiesHelper.setType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
+      PropertiesHelper.setType(NO_CONTEXT_MENU, Boolean.class);
+      PropertiesHelper.setType(IS_LIGHTWEIGHT, Boolean.class);
     }
   }
 

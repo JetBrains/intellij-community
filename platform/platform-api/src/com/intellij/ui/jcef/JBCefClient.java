@@ -54,7 +54,7 @@ public final class JBCefClient implements JBCefDisposable {
     public static final @NotNull String JS_QUERY_POOL_SIZE = "JBCefClient.JSQuery.poolSize";
 
     static {
-      PropertiesHelper.putType(JS_QUERY_POOL_SIZE, Integer.class);
+      PropertiesHelper.setType(JS_QUERY_POOL_SIZE, Integer.class);
     }
   }
 

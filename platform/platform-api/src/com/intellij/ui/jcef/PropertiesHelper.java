@@ -43,7 +43,7 @@ final class PropertiesHelper {
     myPropertyChangeSupport.removePropertyChangeListener(name, listener);
   }
 
-  static void putType(@NotNull String name, @NotNull Class<?> type) {
+  static void setType(@NotNull String name, @NotNull Class<?> type) {
     TYPES.put(name, type);
   }
 
