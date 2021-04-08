@@ -4,6 +4,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
+import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runMainActivity
@@ -18,6 +19,7 @@ import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManagerEx
@@ -50,8 +52,10 @@ import java.awt.event.InvocationEvent
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.TimeUnit
 import java.util.function.BiFunction
+import java.util.function.Supplier
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -96,15 +100,29 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
             projectToClose = openProjects.last()
           }
         }
+
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
-          return CompletableFuture.completedFuture(null)
-        }
+        return checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)
+          .thenComposeAsync ({
+            if (it) {
+              CompletableFuture.completedFuture(null)
+            }
+            else {
+              doOpenAsync(app, options, projectStoreBaseDir, activity)
+            }
+          }, ForkJoinPool.commonPool())
       }
     }
+    return doOpenAsync(app, options, projectStoreBaseDir, activity)
+  }
 
-    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options) else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+  private fun doOpenAsync(app: Application,
+                          options: OpenProjectTask,
+                          projectStoreBaseDir: Path,
+                          activity: Activity): CompletableFuture<Project?> {
+    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options)
+    else ProjectUiFrameAllocator(options, projectStoreBaseDir)
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     return frameAllocator.run {
       activity.end()
@@ -304,59 +322,45 @@ private fun message(e: Throwable): String {
 private fun checkExistingProjectOnOpen(projectToClose: Project,
                                        callback: ProjectOpenedCallback?,
                                        projectDir: Path?,
-                                       projectManager: ProjectManagerExImpl): Boolean {
-  val result = CompletableFuture<Boolean>()
-
+                                       projectManager: ProjectManagerExImpl): CompletableFuture<Boolean> {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
-
-  ApplicationManager.getApplication().invokeAndWait{
-    try {
-      if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
-          (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
-        val exitCode = ProjectUtil.confirmOpenOrAttachProject()
-        if (exitCode == -1) {
-          result.complete(true)
-          return@invokeAndWait
-        }
-        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!projectManager.closeAndDispose(projectToClose)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
-          if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        // process all pending events that can interrupt focus flow
-        // todo this can be removed after taming the focus beast
-        IdeEventQueue.getInstance().flushQueue()
+  return CompletableFuture.supplyAsync(Supplier {
+    if (projectDir != null && ProjectAttachProcessor.canAttachToProject() &&
+        (!isValidProject || settings.confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+      val exitCode = ProjectUtil.confirmOpenOrAttachProject()
+      if (exitCode == -1) {
+        return@Supplier true
       }
-      else {
-        val exitCode = ProjectUtil.confirmOpenNewProject(false)
-        if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!projectManager.closeAndDispose(projectToClose)) {
-            result.complete(true)
-            return@invokeAndWait
-          }
-        }
-        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-          // not in a new window
-          result.complete(true)
-          return@invokeAndWait
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!projectManager.closeAndDispose(projectToClose)) {
+          return@Supplier true
         }
       }
-
-      result.complete(false)
-    } catch (err: Throwable) {
-      result.completeExceptionally(err)
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+          return@Supplier true
+        }
+      }
+      // process all pending events that can interrupt focus flow
+      // todo this can be removed after taming the focus beast
+      IdeEventQueue.getInstance().flushQueue()
     }
-  }
+    else {
+      val exitCode = ProjectUtil.confirmOpenNewProject(false)
+      if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
+        if (!projectManager.closeAndDispose(projectToClose)) {
+          return@Supplier true
+        }
+      }
+      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+        // not in a new window
+        return@Supplier true
+      }
+    }
 
-  return result.get()
+    false
+  }, ApplicationManager.getApplication()::invokeLater)
 }
 
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {

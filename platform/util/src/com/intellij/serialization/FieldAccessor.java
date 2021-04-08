@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,155 +9,155 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 
 final class FieldAccessor implements MutableAccessor {
-  private final Field myField;
+  private final Field field;
 
   FieldAccessor(@NotNull Field field) {
-    myField = field;
+    this.field = field;
     field.setAccessible(true);
   }
 
   @Override
   public Object read(@NotNull Object o) {
-    assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + myField.getDeclaringClass();
+    assert field.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + "; should be: " + field.getDeclaringClass();
     try {
-      return myField.get(o);
+      return field.get(o);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Reading " + myField, e);
+      throw new SerializationException("Reading " + field, e);
     }
   }
 
   @Override
   public Object readUnsafe(@NotNull Object o) throws IllegalAccessException {
-    return myField.get(o);
+    return field.get(o);
   }
 
   @Override
   public int readInt(@NotNull Object o) throws IllegalAccessException {
-    return myField.getInt(o);
+    return field.getInt(o);
   }
 
   @Override
   public long readLong(@NotNull Object o) throws IllegalAccessException {
-    return myField.getLong(o);
+    return field.getLong(o);
   }
 
   @Override
   public float readFloat(@NotNull Object o) throws IllegalAccessException {
-    return myField.getFloat(o);
+    return field.getFloat(o);
   }
 
   @Override
   public double readDouble(@NotNull Object o) throws IllegalAccessException {
-    return myField.getDouble(o);
+    return field.getDouble(o);
   }
 
   @Override
   public boolean readBoolean(@NotNull Object o) throws IllegalAccessException {
-    return myField.getBoolean(o);
+    return field.getBoolean(o);
   }
 
   @Override
   public void set(@NotNull Object host, @Nullable Object value) {
     try {
-      myField.set(host, value);
+      field.set(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setBoolean(@NotNull Object host, boolean value) {
     try {
-      myField.setBoolean(host, value);
+      field.setBoolean(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setInt(@NotNull Object host, int value) {
     try {
-      myField.setInt(host, value);
+      field.setInt(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setShort(@NotNull Object host, short value) {
     try {
-      myField.setShort(host, value);
+      field.setShort(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setLong(@NotNull Object host, long value) {
     try {
-      myField.setLong(host, value);
+      field.setLong(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setFloat(@NotNull Object host, float value) {
     try {
-      myField.setFloat(host, value);
+      field.setFloat(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public void setDouble(@NotNull Object host, double value) {
     try {
-      myField.setDouble(host, value);
+      field.setDouble(host, value);
     }
     catch (IllegalAccessException e) {
-      throw new SerializationException("Writing " + myField, e);
+      throw new SerializationException("Writing " + field, e);
     }
   }
 
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
-    return myField.getAnnotation(annotationClass);
+    return field.getAnnotation(annotationClass);
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myField.getName();
+    return field.getName();
   }
 
   @NotNull
   @Override
   public Class<?> getValueClass() {
-    return myField.getType();
+    return field.getType();
   }
 
   @NotNull
   @Override
   public Type getGenericType() {
-    return myField.getGenericType();
+    return field.getGenericType();
   }
 
   // to support plain data classes, here we don't check that field is final
   @Override
   public boolean isWritable() {
-    return myField.isAccessible();
+    return field.isAccessible();
   }
 
   @NotNull
   public String toString() {
-    return "FieldAccessor(name=" + myField.getName() + ", class=" + myField.getDeclaringClass().getName() + ")";
+    return "FieldAccessor(name=" + field.getName() + ", class=" + field.getDeclaringClass().getName() + ")";
   }
 }
