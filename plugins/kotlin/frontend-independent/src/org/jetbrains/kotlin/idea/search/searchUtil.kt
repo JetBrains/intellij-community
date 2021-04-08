@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,8 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -152,15 +150,3 @@ data class ReceiverTypeSearcherInfo(
 
 fun PsiReference.isImportUsage(): Boolean =
     element.getNonStrictParentOfType<KtImportDirective>() != null
-
-//TODO: Copied from fqNameUtil.kt
-fun PsiElement.getKotlinFqName(): FqName? = when (val element = namedUnwrappedElement) {
-    is PsiPackage -> FqName(element.qualifiedName)
-    is PsiClass -> element.qualifiedName?.let(::FqName)
-    is PsiMember -> element.getName()?.let { name ->
-        val prefix = element.containingClass?.qualifiedName
-        FqName(if (prefix != null) "$prefix.$name" else name)
-    }
-    is KtNamedDeclaration -> element.fqName
-    else -> null
-}
