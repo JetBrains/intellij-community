@@ -2,6 +2,9 @@ package com.jetbrains.python.markdown
 
 import com.jetbrains.python.fixtures.PyTestCase
 
+/**
+ * Tests for [PyCodeFenceLanguageProvider].
+ */
 class PyCodeFenceTest : PyTestCase() {
   fun testPythonInjected() {
     myFixture.configureByText("a.md", """
@@ -121,7 +124,7 @@ class PyCodeFenceTest : PyTestCase() {
       ```
     """.trimIndent())
     myFixture.completeBasic()
-    assertContainsElements(lookupStrings, "doctest", "python")
+    assertContainsElements(lookupStrings, "doctest", "python", "pycon")
   }
 
   private val lookupStrings: List<String>

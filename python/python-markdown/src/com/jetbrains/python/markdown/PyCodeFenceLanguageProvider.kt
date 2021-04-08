@@ -2,6 +2,7 @@ package com.jetbrains.python.markdown
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.Language
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect
@@ -23,5 +24,12 @@ class PyCodeFenceLanguageProvider : CodeFenceLanguageProvider {
       else -> null
     }
 
-  override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> = emptyList()
+  override fun getCompletionVariantsForInfoString(parameters: CompletionParameters): List<LookupElement> {
+    return listOf(
+      LookupElementBuilder
+        .create("pycon")
+        .withIcon(PyDocstringLanguageDialect.getInstance().associatedFileType?.icon)
+        .withTypeText("Python console"),
+    )
+  }
 }
