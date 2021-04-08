@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +13,9 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.impl.PyPsiFacadeImpl;
+import com.jetbrains.python.psi.impl.PythonASTFactory;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +36,10 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
+    getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
 
     if (PythonRuntimeService.getInstance() == null) {
       myServiceDisposable = Disposer.newDisposable();
