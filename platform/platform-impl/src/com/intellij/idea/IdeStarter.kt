@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchBarsManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
@@ -75,7 +74,7 @@ open class IdeStarter : ApplicationStarter {
     if (app.isLightEditMode && !app.isHeadlessEnvironment) {
       // In a light mode UI is shown very quickly, tab layout requires ActionManager but it is forbidden to init ActionManager in EDT,
       // so, preload
-      AppExecutorUtil.getAppExecutorService().execute {
+      ForkJoinPool.commonPool().execute {
         ActionManager.getInstance()
       }
     }

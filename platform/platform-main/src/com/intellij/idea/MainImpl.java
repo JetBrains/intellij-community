@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings("UnusedDeclaration")
 public final class MainImpl implements StartupUtil.AppStarter {
   public MainImpl() {
     PlatformUtils.setDefaultPrefixForCE();

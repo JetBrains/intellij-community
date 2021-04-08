@@ -791,9 +791,8 @@ public final class PluginManagerCore {
    * Think twice before use and get approve from core team. Returns enabled plugins only.
    */
   @ApiStatus.Internal
-  public static @NotNull List<IdeaPluginDescriptorImpl> getEnabledPluginRawList() {
-    //noinspection resource
-    return getOrScheduleLoading().join().result.getEnabledPlugins();
+  public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
+    return getOrScheduleLoading().thenApply(it -> it.result.getEnabledPlugins());
   }
 
   @ApiStatus.Internal

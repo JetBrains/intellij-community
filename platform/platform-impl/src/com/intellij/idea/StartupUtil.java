@@ -41,7 +41,6 @@ import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.lang.ZipFilePool;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -336,11 +335,9 @@ public final class StartupUtil {
   }
 
   private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
-    Activity activity = mainStartFuture.isDone() ? null : StartUpMeasurer.startMainActivity("main class loading waiting");
+    Activity activity = StartUpMeasurer.startMainActivity("main class loading waiting");
     AppStarter result = mainStartFuture.join();
-    if (activity != null) {
-      activity.end();
-    }
+    activity.end();
     return result;
   }
 
@@ -358,7 +355,7 @@ public final class StartupUtil {
 
       if (configImportNeeded) {
         activity = activity.endAndStart("screen reader checking");
-        runInEdtAndWait(log, AccessibilityUtils::enableScreenReaderSupportIfNecessary, prepareUiFuture);
+        runInEdtAndWait(prepareUiFuture, log, AccessibilityUtils::enableScreenReaderSupportIfNecessary);
       }
 
       if (configImportNeeded) {
@@ -366,7 +363,7 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log), prepareUiFuture);
+        runInEdtAndWait(prepareUiFuture, log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log));
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
@@ -380,21 +377,7 @@ public final class StartupUtil {
       activity.end();
     }
 
-    EdtInvocationManager oldEdtInvocationManager = null;
-    EdtInvocationManager.SwingEdtInvocationManager edtInvocationManager = new EdtInvocationManager.SwingEdtInvocationManager() {
-      @Override
-      public void invokeAndWait(@NotNull Runnable task) {
-        runInEdtAndWait(log, task, prepareUiFuture);
-      }
-    };
-
-    try {
-      oldEdtInvocationManager = EdtInvocationManager.setEdtInvocationManager(edtInvocationManager);
-      getAppStarter(appStarterFuture).start(args, prepareUiFuture);
-    }
-    finally {
-      EdtInvocationManager.restoreEdtInvocationManager(edtInvocationManager, oldEdtInvocationManager);
-    }
+    getAppStarter(appStarterFuture).start(args, prepareUiFuture);
   }
 
   /**
@@ -917,16 +900,16 @@ public final class StartupUtil {
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), prepareUiFuture);
+      runInEdtAndWait(prepareUiFuture, log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement));
       dialogWasShown = true;
     }
     else if (ConsentOptions.getInstance().getConsents().getValue()) {
-      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, prepareUiFuture);
+      runInEdtAndWait(prepareUiFuture, log, Agreements.INSTANCE::showDataSharingAgreement);
     }
     return dialogWasShown;
   }
 
-  private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> prepareUiFuture) {
+  public static void runInEdtAndWait(@NotNull CompletableFuture<?> prepareUiFuture, @Nullable Logger log, @NotNull Runnable runnable) {
     prepareUiFuture.join();
     try {
       EventQueue.invokeAndWait(() -> {
@@ -935,14 +918,14 @@ public final class StartupUtil {
             UIManager.setLookAndFeel(IntelliJLaf.class.getName());
           }
           catch (Throwable e) {
-            log.warn(e);
+            (log == null ? Logger.getInstance(StartupUtil.class) : log).warn(e);
           }
         }
         runnable.run();
       });
     }
     catch (InterruptedException | InvocationTargetException e) {
-      log.warn(e);
+      (log == null ? Logger.getInstance(StartupUtil.class) : log).warn(e);
     }
   }
 
