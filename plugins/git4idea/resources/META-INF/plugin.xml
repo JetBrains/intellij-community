@@ -124,7 +124,7 @@
       <reference ref="Vcs.Push"/>
       <reference ref="Vcs.UpdateProject"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull"/>
-      <action id="Git.Fetch" class="git4idea.actions.GitFetch"/>
+      <action id="Git.Fetch" class="git4idea.actions.GitFetch" icon="AllIcons.Vcs.Fetch"/>
       <separator/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" icon="AllIcons.Vcs.Merge"/>
       <reference ref="Git.MainMenu.MergeActions"/>
