@@ -77,11 +77,13 @@ final class BuildTasksImpl extends BuildTasks {
           }
           for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> root in module.getSourceRoots(JavaSourceRootType.SOURCE)) {
             buildContext.ant.zipfileset(dir: root.file.absolutePath,
-                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
+                                        prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false) {
+              ["java", "groovy", "kt"].each { include(name: "**/*.$it") }
+            }
           }
           for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
             buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
-              exclude(name: "**/*.png")
+              ["java", "groovy", "kt"].each { include(name: "**/*.$it") }
             }
           }
         }

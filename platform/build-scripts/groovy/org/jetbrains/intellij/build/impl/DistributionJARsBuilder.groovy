@@ -434,7 +434,12 @@ final class DistributionJARsBuilder {
 
     if (productProperties.buildSourcesArchive) {
       String archiveName = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + "-sources.zip"
-      BuildTasks.create(buildContext).zipSourcesOfModules(projectStructureMapping.includedModules, "$buildContext.paths.artifacts/$archiveName")
+      def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
+        buildContext.findRequiredModule(moduleName).contentRootsList.urls.every { url ->
+          FileUtil.isAncestor(buildContext.paths.communityHome, JpsPathUtil.urlToOsPath(url), false)
+        }
+      }
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
     }
   }
 
