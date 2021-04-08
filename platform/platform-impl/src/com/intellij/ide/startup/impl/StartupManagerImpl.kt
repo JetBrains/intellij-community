@@ -10,6 +10,7 @@ import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -42,11 +43,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+private val LOG = logger<StartupManagerImpl>()
+
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5 seconds delay after project opening.
  */
 private val BACKGROUND_POST_STARTUP_ACTIVITY = ExtensionPointName<StartupActivity.Background>("com.intellij.backgroundPostStartupActivity")
-private val LOG = logger<StartupManagerImpl>()
 private val EDT_WARN_THRESHOLD_IN_NANO = TimeUnit.MILLISECONDS.toNanos(100)
 private const val DUMB_AWARE_PASSED = 1
 private const val ALL_PASSED = 2
@@ -142,7 +144,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       indicator.text = IdeBundle.message("startup.indicator.text.running.startup.activities")
     }
 
-    runStartUpActivities(indicator)
+    // see https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
+    LOG.assertTrue(!isStartupActivitiesPassed)
+    runActivity("project startup") {
+      runActivities(startupActivities, indicator, null)
+      val area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
+      executeActivitiesFromExtensionPoint(indicator, area.getExtensionPoint("com.intellij.startupActivity"))
+      isStartupActivitiesPassed = true
+    }
+
     indicator?.checkCanceled()
     val phase = if (DumbService.isDumb(project)) LoadingState.PROJECT_OPENED else LoadingState.INDEXING_FINISHED
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, phase)
@@ -160,19 +170,6 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
     }
-  }
-
-  /*
-   * See https://github.com/JetBrains/intellij-community/blob/master/platform/service-container/overview.md#startup-activity
-   */
-  private fun runStartUpActivities(indicator: ProgressIndicator?) {
-    LOG.assertTrue(!isStartupActivitiesPassed)
-    val activity = StartUpMeasurer.startMainActivity("project startup")
-    runActivities(startupActivities, indicator, null)
-    val area = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-    executeActivitiesFromExtensionPoint(indicator, area.getExtensionPoint("com.intellij.startupActivity"))
-    isStartupActivitiesPassed = true
-    activity.end()
   }
 
   private fun executeActivitiesFromExtensionPoint(indicator: ProgressIndicator?, extensionPoint: ExtensionPointImpl<StartupActivity>) {
@@ -283,6 +280,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
             return
           }
         }
+
         runActivities(postStartupActivities, null, null)
         val dumbService = DumbService.getInstance(project)
         if (dumbService.isDumb) {
@@ -297,7 +295,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     })
   }
 
-  private fun runActivities(activities: Deque<out Runnable>, indicator: ProgressIndicator?, activityName: String?) {
+  private fun runActivities(activities: Deque<Runnable>, indicator: ProgressIndicator?, activityName: String?) {
     synchronized(lock) {
       if (activities.isEmpty()) {
         return
@@ -306,19 +304,15 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 
     val activity = if (activityName == null) null else StartUpMeasurer.startMainActivity(activityName)
     while (true) {
-      var runnable: Runnable?
-      synchronized(lock) { runnable = activities.pollFirst() }
+      val runnable = synchronized(lock) { activities.pollFirst() } ?: break
       indicator?.checkCanceled()
-      if (runnable == null) {
-        break
-      }
 
       val startTime = StartUpMeasurer.getCurrentTime()
-      val loader = runnable!!.javaClass.classLoader
+      val loader = runnable.javaClass.classLoader
       val pluginId = if (loader is PluginClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
       ProgressManager.checkCanceled()
       try {
-        runnable!!.run()
+        runnable.run()
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -326,7 +320,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       catch (e: Throwable) {
         LOG.error(e)
       }
-      StartUpMeasurer.addCompletedActivity(startTime, runnable!!.javaClass, ActivityCategory.POST_STARTUP_ACTIVITY, pluginId,
+
+      StartUpMeasurer.addCompletedActivity(startTime, runnable.javaClass, ActivityCategory.POST_STARTUP_ACTIVITY, pluginId,
         StartUpMeasurer.MEASURE_THRESHOLD)
     }
     activity?.end()
@@ -337,6 +332,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       if (project.isDisposed) {
         return@schedule
       }
+
       val startTimeNano = System.nanoTime()
       val activities = ReadAction.compute<List<StartupActivity.Background>, RuntimeException> {
         BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity.Background?> {
@@ -347,8 +343,8 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         BACKGROUND_POST_STARTUP_ACTIVITY.extensionList
       }
       runBackgroundPostStartupActivities(activities)
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Background post-startup activities done in " + TimeoutUtil.getDurationMillis(startTimeNano) + "ms")
+      LOG.debug {
+        "Background post-startup activities done in ${TimeoutUtil.getDurationMillis(startTimeNano)}ms"
       }
     }, Registry.intValue("ide.background.post.startup.activity.delay").toLong(), TimeUnit.MILLISECONDS)
     Disposer.register(project) { scheduledFuture.cancel(false) }
@@ -413,11 +409,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
 }
 
 private fun dumbUnawarePostActivitiesPassed(edtActivity: AtomicReference<out Activity?>, count: Int) {
-  if (count != 0) {
-    return
+  if (count == 0) {
+    edtActivity.getAndSet(null)?.end()
   }
-  val activity = edtActivity.getAndSet(null)
-  activity?.end()
 }
 
 private fun reportUiFreeze(uiFreezeWarned: AtomicBoolean) {

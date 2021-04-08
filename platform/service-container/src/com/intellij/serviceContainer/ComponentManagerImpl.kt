@@ -656,12 +656,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
    * Use only if approved by core team.
    */
   @Internal
-  fun registerService(serviceInterface: Class<*>, implementation: Class<*>, pluginDescriptor: PluginDescriptor, override: Boolean) {
+  fun registerService(serviceInterface: Class<*>,
+                      implementation: Class<*>,
+                      pluginDescriptor: PluginDescriptor,
+                      override: Boolean,
+                      preloadMode: PreloadMode = PreloadMode.FALSE) {
     checkState()
 
     val descriptor = ServiceDescriptor()
     descriptor.serviceInterface = serviceInterface.name
     descriptor.serviceImplementation = implementation.name
+    descriptor.preload = preloadMode
     val adapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this, implementation)
     if (override) {
       overrideAdapter(adapter, pluginDescriptor)

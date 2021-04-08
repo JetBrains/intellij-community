@@ -15,12 +15,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
-      <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleManagerComponent</implementation-class>
       <loadForDefaultProject/>

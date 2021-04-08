@@ -7,10 +7,7 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,7 +94,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
                       ComponentManagerImpl.getFakeCorePluginDescriptor(),
-                      true);
+                      true, ServiceDescriptor.PreloadMode.FALSE);
     }
     if (beforeComponentCreation != null) {
       beforeComponentCreation.run();

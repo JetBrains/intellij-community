@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ExternalModuleListStorage
@@ -51,7 +52,8 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerComponent(RootsChangeWatcher::class.java, RootsChangeWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(VirtualFileUrlWatcher::class.java, VirtualFileUrlWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
-    container.registerComponent(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, true)
+    container.registerService(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, override = true,
+      preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     container.unregisterComponent(ExternalModuleListStorage::class.java)
 
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)

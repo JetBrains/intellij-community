@@ -230,7 +230,7 @@ public final class ProgressRunner<R> {
       // runProcess handles starting/stopping progress and setting thread's current progress
       ProgressIndicator progressIndicator;
       try {
-        progressIndicator = progressFuture.get();
+        progressIndicator = progressFuture.join();
       }
       catch (Throwable e) {
         throw new RuntimeException("Can't get progress", e);

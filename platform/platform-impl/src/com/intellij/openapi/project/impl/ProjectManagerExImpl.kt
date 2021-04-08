@@ -4,10 +4,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
-import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.runMainActivity
+import com.intellij.diagnostic.*
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
@@ -17,9 +14,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.setTrusted
 import com.intellij.ide.lightEdit.LightEditCompatible
-import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.ide.startup.impl.StartupManagerImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManagerEx
@@ -78,8 +73,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   final override fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): CompletableFuture<Project?> {
-    val app = ApplicationManager.getApplication()
-    if (LOG.isDebugEnabled && !app.isUnitTestMode) {
+    if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
 
@@ -109,22 +103,21 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
               CompletableFuture.completedFuture(null)
             }
             else {
-              doOpenAsync(app, options, projectStoreBaseDir, activity)
+              doOpenAsync(options, projectStoreBaseDir, activity)
             }
           }, ForkJoinPool.commonPool())
       }
     }
-    return doOpenAsync(app, options, projectStoreBaseDir, activity)
+    return doOpenAsync(options, projectStoreBaseDir, activity)
   }
 
-  private fun doOpenAsync(app: Application,
-                          options: OpenProjectTask,
+  private fun doOpenAsync(options: OpenProjectTask,
                           projectStoreBaseDir: Path,
                           activity: Activity): CompletableFuture<Project?> {
-    val frameAllocator = if (app.isHeadlessEnvironment) ProjectFrameAllocator(options)
+    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator(options)
     else ProjectUiFrameAllocator(options, projectStoreBaseDir)
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
-    return frameAllocator.run {
+    return frameAllocator.run { indicator ->
       activity.end()
       val result: PrepareProjectResult
       if (options.project == null) {
@@ -141,11 +134,13 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
       frameAllocator.projectLoaded(project)
       try {
-        openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
+        openProject(project, indicator, isRunStartUpActivitiesEnabled(project)).join()
       }
       catch (e: ProcessCanceledException) {
-        app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
-        app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+        ApplicationManager.getApplication().invokeAndWait {
+          closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
+        }
+        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
         return@run null
       }
 
@@ -186,11 +181,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         }
       }
     }
-    return doOpenProject(project)
-  }
 
-  @ApiStatus.Internal
-  private fun doOpenProject(project: Project): Boolean {
     if (!addToOpened(project)) {
       return false
     }
@@ -201,7 +192,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     }
 
     try {
-      openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
+      openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project)).join()
     }
     catch (e: ProcessCanceledException) {
       app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
@@ -363,13 +354,15 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
   }, ApplicationManager.getApplication()::invokeLater)
 }
 
-private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean) {
+private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
   val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
                      else ProjectBundle.message("project.preparing.workspace")
     indicator.isIndeterminate = true
   }
+
+  // invokeLater cannot be used for now
   ApplicationManager.getApplication().invokeAndWait {
     waitEdtActivity.end()
     if (indicator != null && ApplicationManager.getApplication().isInternal) {
@@ -377,25 +370,23 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     }
 
     ProjectManagerImpl.LOG.debug("projectOpened")
+
     LifecycleUsageTriggerCollector.onProjectOpened(project)
-    val activity = StartUpMeasurer.startMainActivity("project opened callbacks")
-    ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
-    // projectOpened in the project components is called _after_ message bus event projectOpened for ages
-    // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
-    // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
-    // (and, so, should be called after project initialization)
+    val activity = StartUpMeasurer.startActivity("project opened callbacks", ActivityCategory.APP_INIT)
+
+    runActivity("projectOpened event executing") {
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
+
     @Suppress("DEPRECATION")
-    (project as ComponentManagerEx).processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+    (project as ComponentManagerEx)
+      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
       ProgressManager.checkCanceled()
       try {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                              pluginDescriptor.pluginId.idString)
+          pluginDescriptor.pluginId.idString)
         component.projectOpened()
         componentActivity.end()
-      }
-      catch (e: ServiceNotReadyException) {
-        ProjectManagerImpl.LOG.error(Exception(e))
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -404,6 +395,7 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
         ProjectManagerImpl.LOG.error(e)
       }
     }
+
     activity.end()
     ProjectImpl.ourClassesAreLoaded = true
   }
@@ -411,6 +403,8 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
   if (runStartUpActivities) {
     (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   }
+
+  return CompletableFuture.completedFuture(null)
 }
 
 // allow `invokeAndWait` inside startup activities
