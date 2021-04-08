@@ -16,6 +16,14 @@ final class JLinkArtifactProperties extends ArtifactProperties<JLinkArtifactProp
   public CompressionLevel compressionLevel = CompressionLevel.ZERO;
   public boolean verbose;
 
+  JLinkArtifactProperties() {
+  }
+
+  JLinkArtifactProperties(@NotNull CompressionLevel compressionLevel, boolean verbose) {
+    this.compressionLevel = compressionLevel;
+    this.verbose = verbose;
+  }
+
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
     return new JLinkArtifactPropertiesEditor(this);
