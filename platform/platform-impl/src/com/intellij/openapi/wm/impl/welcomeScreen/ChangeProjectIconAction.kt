@@ -7,7 +7,6 @@ import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.util.io.FileUtil
@@ -47,9 +46,9 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
       val darkIconSvg = File("$projectPath/.idea/icon_dark.svg")
-      val iconSvg: File = File("$projectPath/.idea/icon.svg")
+      val iconSvg = File("$projectPath/.idea/icon.svg")
       val darkIconPng = File("$projectPath/.idea/icon_dark.png")
-      val iconPng: File = File("$projectPath/.idea/icon.png")
+      val iconPng = File("$projectPath/.idea/icon.png")
 
       if (ui.pathToDarkIcon != null) {
         FileUtil.copy(File(ui.pathToDarkIcon!!.path), darkIconSvg)
@@ -104,9 +103,5 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     val darkIconLabel = JBLabel(ProjectIcon.getProjectIcon(projectPath, true))
     var pathToDarkIcon: VirtualFile? = null
     var pathToIcon: VirtualFile? = null
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(ChangeProjectIconAction::class.java)
   }
 }
