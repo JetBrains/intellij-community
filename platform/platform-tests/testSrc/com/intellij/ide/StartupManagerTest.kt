@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.ide.startup.impl.StartupManagerImpl
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -32,7 +33,7 @@ class StartupManagerTest {
   fun runAfterOpenedMustBeDumbAware() {
     val done = CountDownLatch(1)
     val project = ProjectManagerEx.getInstanceEx().openProject(fsRule.fs.getPath("/p"), createTestOpenProjectOptions().copy(beforeOpen = { project ->
-      val startupManager = StartupManagerImpl.getInstance(project) as StartupManagerImpl
+      val startupManager = StartupManager.getInstance(project) as StartupManagerImpl
       assertThat(startupManager.postStartupActivityPassed()).isFalse()
 
       val dumbService = DumbService.getInstance(project) as DumbServiceImpl
