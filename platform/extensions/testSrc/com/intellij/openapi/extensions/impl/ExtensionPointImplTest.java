@@ -347,7 +347,12 @@ public class ExtensionPointImplTest {
     @Override
     public synchronized @Nullable <T> T createInstance(@NotNull ComponentManager componentManager) {
       if (myFire != null) {
-        myFire.run();
+        try {
+          myFire.run();
+        }
+        catch (ExtensionNotApplicableException e) {
+          return null;
+        }
       }
       return super.createInstance(componentManager);
     }
