@@ -4,7 +4,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
@@ -17,11 +16,12 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 class ConflictingFileTypeMappingTracker {
-  private static final Logger LOG = Logger.getInstance(ConflictingFileTypeMappingTracker.class);
-
   /**
    * Somebody tries to assign matcher (which was previously assigned to the oldFileType) to the newFileType.
    * If there is a conflict, show notification "some plugin is going to override file type".
@@ -110,19 +110,10 @@ class ConflictingFileTypeMappingTracker {
     return descriptor.getPluginId() == PluginManagerCore.CORE_ID;
   }
 
-  enum ConflictPolicy {
-    THROW, LOG_ERROR, IGNORE
-  }
-  private static ConflictPolicy throwOnConflict = ConflictPolicy.IGNORE;
   private final RemovedMappingTracker myRemovedMappingTracker;
 
   ConflictingFileTypeMappingTracker(@NotNull RemovedMappingTracker removedMappingTracker) {
     myRemovedMappingTracker = removedMappingTracker;
-  }
-
-  @TestOnly
-  static void onConflict(@NotNull ConflictPolicy doThrow) {
-    throwOnConflict = doThrow;
   }
 
   /**
@@ -142,16 +133,7 @@ class ConflictingFileTypeMappingTracker {
     String oldDisplayName = oldFileType.getDisplayName();
     String resolvedDisplayName = resolvedFileType.getDisplayName();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      AssertionError error = new AssertionError(notificationText + "; matcher: " + matcher);
-      switch(throwOnConflict) {
-        case THROW:
-          throw error;
-        case LOG_ERROR:
-          LOG.error(error);
-          break;
-        case IGNORE:
-          break;
-      }
+      return;
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {

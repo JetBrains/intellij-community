@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public final class FileTypeAssocTable<T> {
@@ -107,17 +108,7 @@ public final class FileTypeAssocTable<T> {
   }
 
   void removeAllAssociations(@NotNull T type) {
-    removeAssociationsFromMap(myExtensionMappings, type);
-
-    removeAssociationsFromMap(myExactFileNameAnyCaseMappings, type);
-    removeAssociationsFromMap(myExactFileNameMappings, type);
-
-    myMatchingMappings.removeIf(assoc -> type.equals(assoc.getSecond()));
-    myHashBangMap.entrySet().removeIf(e -> type.equals(e.getValue()));
-  }
-
-  private void removeAssociationsFromMap(@NotNull Map<CharSequence, T> extensionMappings, @NotNull T type) {
-    extensionMappings.entrySet().removeIf(entry -> type.equals(entry.getValue()));
+    removeAllAssociations(bean -> bean.equals(type));
   }
 
   @Nullable
@@ -290,6 +281,14 @@ public final class FileTypeAssocTable<T> {
     Map<CharSequence, T> map = CollectionFactory.createCharSequenceMap(false, source.size(), 0.5f);
     map.putAll(source);
     return Collections.synchronizedMap(map);
+  }
+
+  void removeAllAssociations(@NotNull Predicate<? super T> predicate) {
+    myExtensionMappings.entrySet().removeIf(entry -> predicate.test(entry.getValue()));
+    myExactFileNameMappings.entrySet().removeIf(entry -> predicate.test(entry.getValue()));
+    myExactFileNameAnyCaseMappings.entrySet().removeIf(entry -> predicate.test(entry.getValue()));
+    myMatchingMappings.removeIf(entry -> predicate.test(entry.getSecond()));
+    myHashBangMap.entrySet().removeIf(entry -> predicate.test(entry.getValue()));
   }
 
   @Override
