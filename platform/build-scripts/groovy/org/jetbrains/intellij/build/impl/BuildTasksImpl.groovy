@@ -21,10 +21,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -549,10 +546,14 @@ idea.fatal.error.notification=disabled
   static void addDbusJava(BuildContext buildContext, @NotNull Path distDir) {
     JpsLibrary library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
     Path destLibDir = distDir.resolve("lib")
+    List<String> extraJars = new ArrayList<>()
     Files.createDirectories(destLibDir)
     for (File file : library.getFiles(JpsOrderRootType.COMPILED)) {
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
+      extraJars += file.name
     }
+    Files.copy(Paths.get("$buildContext.paths.distAll/lib/classpath.txt"), destLibDir.resolve("classpath.txt"), StandardCopyOption.REPLACE_EXISTING)
+    Files.writeString(destLibDir.resolve("classpath.txt"), "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
   }
 
   private void logFreeDiskSpace(String phase) {
