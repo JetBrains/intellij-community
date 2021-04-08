@@ -14,6 +14,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,12 +65,17 @@ class EclipseProjectDetector extends ProjectDetector {
       try {
         List<String> projects = new ArrayList<>();
         new EclipseProjectDetector().collectProjectPaths(projects);
-        if (projects.isEmpty()) return;
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
-        ProjectGroup group = new ProjectGroup("Eclipse Projects");
+        projects.removeAll(manager.getRecentPaths());
+        if (projects.isEmpty()) return;
+        @Nls String groupName = EclipseBundle.message("eclipse.projects");
+        ProjectGroup group = ContainerUtil.find(manager.getGroups(), g -> groupName.equals(g.getName()));
+        if (group == null) {
+          group = new ProjectGroup(groupName);
+          group.setBottomGroup(true);
+          manager.addGroup(group);
+        }
         group.setProjects(projects);
-        group.setBottomGroup(true);
-        manager.addGroup(group);
         ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(projects));
       }
       catch (Exception e) {
