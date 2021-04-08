@@ -590,8 +590,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected boolean ignore() {
-    printIgnoredMessage(null);
-    return true;
+    //printIgnoredMessage(null);
+    return false;
   }
 
   protected boolean hasMavenInstallation() {

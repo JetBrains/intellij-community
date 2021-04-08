@@ -345,16 +345,13 @@ public class ReimportingTest extends MavenImportingTestCase {
     resolveDependenciesAndImport();
     assertEquals(0, counter.get());
   }
-
-  @Bombed(year = 2019, month = Calendar.APRIL, day = 1,
-    description = "need to distinguish inherited and explicitly defined properties",
-    user = "Alexander Bubenchikov")
   public void testParentVersionProperty() {
     if (ignore()) return;
     String parentPomTemplate =
                     "<groupId>test</groupId>\n" +
                     "<artifactId>project</artifactId>\n" +
                     "<version>${my.parent.version}</version>\n" +
+                    "<packaging>pom</packaging>\n" +
                     "<modules>\n" +
                     "  <module>m1</module>\n" +
                     "</modules>\n" +
@@ -406,6 +403,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
+                     "<packaging>pom</packaging>\n" +
                      "<modules>\n" +
                      "  <module>m1</module>\n" +
                      "</modules>");
