@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
@@ -37,7 +38,7 @@ internal class RecentProjectIconHelper {
     fun createIcon(file: Path): Icon? {
       try {
         if ("svg" == file.extension.toLowerCase()) {
-          return IconDeferrer.getInstance().defer(EmptyIcon.create(20), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
+          return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
             val icon = IconLoader.findIcon(file.toUri().toURL(), false)
             if (icon != null) {
               if (icon is ScaleContextAware) {
@@ -45,8 +46,8 @@ internal class RecentProjectIconHelper {
               }
 
               val iconSize = max(icon.iconWidth, icon.iconHeight)
-              if (iconSize == 20) return@defer icon
-              return@defer IconUtil.scale(icon, null, 20f / iconSize)
+              if (iconSize == projectIconSize()) return@defer icon
+              return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
             }
 
             icon
@@ -69,6 +70,9 @@ internal class RecentProjectIconHelper {
     fun refreshProjectIcon(path: @SystemIndependent String) {
       projectIcons.clear()
     }
+
+    @JvmStatic
+    fun projectIconSize() = Registry.intValue("ide.project.icon.size", 20)
   }
 
   fun getProjectIcon(path: @SystemIndependent String, isDark: Boolean, generateFromName: Boolean = false): Icon {
@@ -77,13 +81,13 @@ internal class RecentProjectIconHelper {
       return icon.icon
     }
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
-      return EmptyIcon.create(20)
+      return EmptyIcon.create(projectIconSize())
     }
-    return IconDeferrer.getInstance().defer(EmptyIcon.create(20), Pair(path, isDark)) {
+    return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(path, isDark)) {
       val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
       if (calculateIcon == null && generateFromName) {
         val name = RecentProjectsManagerBase.instanceEx.getProjectName(path)
-        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), 20)
+        AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
       }
       else calculateIcon
     }
