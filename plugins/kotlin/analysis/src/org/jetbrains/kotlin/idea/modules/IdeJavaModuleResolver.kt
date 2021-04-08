@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 
 class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
-    private fun findJavaModule(file: VirtualFile): PsiJavaModule? = ModuleHighlightUtil2.getModuleDescriptor(file, project)
+    private fun findJavaModule(file: VirtualFile): PsiJavaModule? = JavaModuleGraphUtil.findDescriptorByFile(file, project)
 
     override fun checkAccessibility(
         fileFromOurModule: VirtualFile?, referencedFile: VirtualFile, referencedPackage: FqName?
