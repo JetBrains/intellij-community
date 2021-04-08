@@ -70,6 +70,8 @@ import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractDiagnosticTraversalCounterTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractFirContextCollectionTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.resolve.AbstractInnerDeclarationsResolvePhaseTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractExpectedExpressionTypeTest
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractHLExpressionTypeTest
@@ -1068,6 +1070,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirMultiModuleLazyResolveTest> {
             model("multiModuleLazyResolve", pattern = DIRECTORY, isRecursive = false)
         }
+        testClass<AbstractFirSealedInheritorsTest> {
+            model("resolveSealed", pattern = DIRECTORY, isRecursive = false)
+        }
         testClass<AbstractFirLazyDeclarationResolveTest> {
             model("lazyResolve")
         }
@@ -1080,11 +1085,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFileStructureTest> {
             model("fileStructure")
         }
+        testClass<AbstractFirContextCollectionTest> {
+            model("fileStructure")
+        }
         testClass<AbstractDiagnosticTraversalCounterTest> {
             model("diagnosticTraversalCounter")
         }
         testClass<AbstractSessionsInvalidationTest> {
-            model("sessionInvalidation", isRecursive = false, pattern = DIRECTORY)
+            model("sessionInvalidation", pattern = DIRECTORY, isRecursive = false)
+        }
+        testClass<AbstractInnerDeclarationsResolvePhaseTest> {
+            model("innerDeclarationsResolve")
         }
     }
 
