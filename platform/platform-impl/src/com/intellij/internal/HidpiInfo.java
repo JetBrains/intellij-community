@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.icons.AllIcons;
@@ -47,8 +47,8 @@ public final class HidpiInfo extends AnAction implements DumbAware {
   // must be not constant to avoid call to JBUIScale
   public static String getUsrScaleDesc() {
     return "<html><span style='font-size:x-small'>The global IDE scale factor" +
-           (JBUIScale.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
-    ", overridden by the debug property." :
+           (JBUIScale.DEBUG_USER_SCALE_FACTOR.get() != null ?
+            ", overridden by the debug property." :
      ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
      (ENABLED ? "pt" : "px") + "</code><br>" +
      "<code>" + (SystemInfo.isMac ? "Preferences " : "Settings ") +

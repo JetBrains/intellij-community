@@ -36,7 +36,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
 import org.intellij.images.ImagesBundle;
@@ -382,27 +382,23 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
   }
 
-  private class ImageZoomModelImpl implements ImageZoomModel {
+  private final class ImageZoomModelImpl implements ImageZoomModel {
     private boolean myZoomLevelChanged;
-    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<>() {
-      @NotNull
-      @Override
-      public Double initialize() {
-        if (editor == null) return Double.MAX_VALUE;
-        VirtualFile file = editor.getFile();
+    private final LazyInitializer.LazyValue<@NotNull Double> IMAGE_MAX_ZOOM_FACTOR = LazyInitializer.create(() -> {
+      if (editor == null) return Double.MAX_VALUE;
+      VirtualFile file = editor.getFile();
 
-        if (IfsUtil.isSVG(file)) {
-          try {
-            return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()),
-                                                          ScaleContext.create(editor.getComponent())));
-          }
-          catch (Throwable t) {
-            Logger.getInstance(ImageEditorUI.class).warn(t);
-          }
+      if (IfsUtil.isSVG(file)) {
+        try {
+          return Math.max(1, SVGLoader.getMaxZoomFactor(file.getPath(), new ByteArrayInputStream(file.contentsToByteArray()),
+                                                        ScaleContext.create(editor.getComponent())));
         }
-        return Double.MAX_VALUE;
+        catch (Throwable t) {
+          Logger.getInstance(ImageEditorUI.class).warn(t);
+        }
       }
-    };
+      return Double.MAX_VALUE;
+    });
     private double zoomFactor = 0.0d;
 
     @Override

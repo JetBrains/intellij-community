@@ -5,8 +5,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.LazyInitializer.MutableNotNullValue;
-import com.intellij.util.LazyInitializer.NullableValue;
 import com.intellij.util.ui.JBScalableIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -112,28 +113,24 @@ public final class JBUIScale {
   }
 
   @ApiStatus.Internal
-  public static final NullableValue<Float> DEBUG_USER_SCALE_FACTOR = new NullableValue<>() {
-    @Override
-    public @Nullable Float initialize() {
-      String prop = System.getProperty("ide.ui.scale");
-      if (prop != null) {
-        try {
-          return Float.parseFloat(prop);
-        }
-        catch (NumberFormatException e) {
-          getLogger().error("ide.ui.scale system property is not a float value: " + prop);
-        }
+  public static final LazyValue<@Nullable Float> DEBUG_USER_SCALE_FACTOR = LazyInitializer.create(() -> {
+    String prop = System.getProperty("ide.ui.scale");
+    if (prop != null) {
+      try {
+        return Float.parseFloat(prop);
       }
-      else if (Boolean.getBoolean("ide.ui.scale.override")) {
-        return 1f;
+      catch (NumberFormatException e) {
+        getLogger().error("ide.ui.scale system property is not a float value: " + prop);
       }
-      return null;
     }
-  };
+    else if (Boolean.getBoolean("ide.ui.scale.override")) {
+      return 1f;
+    }
+    return null;
+  });
 
-  @NotNull
   // cannot be static because logging maybe not configured yet
-  private static Logger getLogger() {
+  private static @NotNull Logger getLogger() {
     return Logger.getInstance(JBUIScale.class);
   }
 

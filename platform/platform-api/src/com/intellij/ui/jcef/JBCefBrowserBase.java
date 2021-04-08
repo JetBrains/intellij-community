@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
 import com.intellij.credentialStore.Credentials;
@@ -99,38 +99,31 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @Nullable private volatile ErrorPage myErrorPage;
   @NotNull protected final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
 
-  private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
-    new LazyInitializer.NotNullValue<>() {
-      @Override
-      public @NotNull String initialize() {
-        try {
-          return new String(FileUtil.loadBytes(Objects.requireNonNull(
-            JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
+  private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
+    try {
+      return new String(FileUtil.loadBytes(Objects.requireNonNull(
+        JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
+    }
+    catch (IOException | NullPointerException e) {
+      Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
+    }
+    return "";
+  });
+
+  private static final LazyInitializer.LazyValue<ScaleContext.@NotNull Cache<String>> BASE64_ERROR_PAGE_ICON = LazyInitializer.create(
+    () -> {
+      return new ScaleContext.Cache<>((ctx) -> {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+          BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), false);
+          ImageIO.write(image, "png", out);
+          return Base64.getEncoder().encodeToString(out.toByteArray());
         }
-        catch (IOException | NullPointerException e) {
-          Logger.getInstance(JBCefBrowser.class).error("couldn't find load_error.html", e);
+        catch (IOException ex) {
+          Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
         }
         return "";
-      }
-    };
-
-  private static final LazyInitializer.NotNullValue<ScaleContext.Cache<String>> BASE64_ERROR_PAGE_ICON =
-    new LazyInitializer.NotNullValue<>() {
-      @Override
-      public @NotNull ScaleContext.Cache<String> initialize() {
-        return new ScaleContext.Cache<>((ctx) -> {
-          try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            BufferedImage image = IconUtil.toBufferedImage(IconUtil.scale(ERROR_PAGE_ICON, ctx), false);
-            ImageIO.write(image, "png", out);
-            return Base64.getEncoder().encodeToString(out.toByteArray());
-          }
-          catch (IOException ex) {
-            Logger.getInstance(JBCefBrowser.class).error("couldn't write an error image", ex);
-          }
-          return "";
-        });
-      }
-    };
+      });
+    });
 
   /**
    * According to
