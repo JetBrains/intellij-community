@@ -76,26 +76,25 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     }
 
     if (type == ValueHintType.MOUSE_OVER_HINT && !ApplicationManager.getApplication().isActive()) {
+      hideHint();
       return;
     }
 
     Point point = e.getMouseEvent().getPoint();
-    if (myRequest != null) {
-      if (myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
-        return;
-      }
-      else if (!myRequest.isKeepHint(editor, point)) {
-        hideHint();
-      }
+    if (myRequest != null && myRequest.getType() == ValueHintType.MOUSE_CLICK_HINT) {
+      return;
     }
 
     for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
       QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
       if (handler.isEnabled(myProject)) {
         requestHint(handler, editor, point, type);
-        break;
+        return;
       }
     }
+
+    // if no providers were triggered - hide
+    hideHint();
   }
 
   private void requestHint(final QuickEvaluateHandler handler, final Editor editor, final Point point, @NotNull final ValueHintType type) {
@@ -153,8 +152,10 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       return;
     }
     hintPromise.onSuccess(hint -> {
-      if (hint == null)
+      if (hint == null) {
+        UIUtil.invokeLaterIfNeeded(this::hideHint);
         return;
+      }
       if (myRequest != null && myRequest.equals(hint)) {
         return;
       }
