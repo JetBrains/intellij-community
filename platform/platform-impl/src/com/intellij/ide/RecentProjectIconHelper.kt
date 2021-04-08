@@ -68,7 +68,7 @@ internal class RecentProjectIconHelper {
 
     @JvmStatic
     fun refreshProjectIcon(path: @SystemIndependent String) {
-      projectIcons.clear()
+      projectIcons.remove(path)
     }
 
     @JvmStatic
