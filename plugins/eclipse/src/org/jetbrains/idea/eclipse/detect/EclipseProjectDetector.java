@@ -5,6 +5,7 @@ import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -63,13 +64,18 @@ class EclipseProjectDetector extends ProjectDetector {
   public void detectProjects(Consumer<List<String>> onFinish) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        List<String> projects = new ArrayList<>();
-        new EclipseProjectDetector().collectProjectPaths(projects);
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
-        projects.removeAll(manager.getRecentPaths());
-        if (projects.isEmpty()) return;
         @Nls String groupName = EclipseBundle.message("eclipse.projects");
         ProjectGroup group = ContainerUtil.find(manager.getGroups(), g -> groupName.equals(g.getName()));
+        if (group == null && !ConfigImportHelper.isFirstSession()) {
+          // the group was removed by user
+          return;
+        }
+
+        List<String> projects = new ArrayList<>();
+        new EclipseProjectDetector().collectProjectPaths(projects);
+        projects.removeAll(manager.getRecentPaths());
+        if (projects.isEmpty()) return;
         if (group == null) {
           group = new ProjectGroup(groupName);
           group.setBottomGroup(true);
