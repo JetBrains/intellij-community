@@ -29,17 +29,19 @@ class MLCompletionWeigher : CompletionWeigher() {
     return if (result.isEmpty()) DummyComparable.EMPTY else DummyComparable(result)
   }
 
-  internal class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
-    val mlFeatures = values.mapValues { MLFeaturesUtil.getRawValue(it.value) }
+  private class DummyComparable(values: Map<String, MLFeatureValue>) : Comparable<Any> {
+    val representation = calculateRepresentation(values)
 
     override fun compareTo(other: Any): Int = 0
 
-    override fun toString(): String {
-      return mlFeatures.entries.joinToString(",", "[", "]", transform = { "${it.key}=${it.value}" })
-    }
+    override fun toString(): String = representation
 
     companion object {
       val EMPTY = DummyComparable(emptyMap())
+
+      private fun calculateRepresentation(values: Map<String, MLFeatureValue>): String {
+        return values.entries.joinToString(",", "[", "]", transform = { "${it.key}=${MLFeaturesUtil.valueAsString(it.value)}" })
+      }
     }
   }
 }

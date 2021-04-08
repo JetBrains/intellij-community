@@ -1,6 +1,5 @@
 package com.intellij.completion.ml.util
 
-import com.intellij.completion.ml.features.MLCompletionWeigher
 import com.intellij.completion.ml.sorting.FeatureUtils
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.getPluginInfo
@@ -46,7 +45,7 @@ object RelevanceUtil {
           relevanceMap.addProximityValues("swift_prox", value)
         }
         "kotlin.callableWeight" -> relevanceMap.addDataClassValues("kotlin.callableWeight", value.toString())
-        "ml_weigh" -> additionalMap.addMlFeatures("ml", value)
+        "ml_weigh" -> additionalMap.addCompoundValues("ml", value.toString())
         else -> if (acceptValue(value) || name == FeatureUtils.ML_RANK) relevanceMap[name] = value
       }
     }
@@ -67,15 +66,13 @@ object RelevanceUtil {
     return substringBefore('@')
   }
 
-  private fun MutableMap<String, Any>.addMlFeatures(prefix: String, comparable: Any) {
-    if (comparable !is MLCompletionWeigher.DummyComparable) {
-      LOG.error("Unexpected value type of `$prefix`: ${comparable.javaClass.simpleName}")
-      return
-    }
+  /**
+   * Proximity features now came like [samePsiFile=true, openedInEditor=false], need to convert to proper map
+   */
+  private fun MutableMap<String, Any>.addCompoundValues(prefix: String, proximity: String) {
+    val items = proximity.replace("[", "").replace("]", "").split(",")
 
-    for ((name, value) in comparable.mlFeatures) {
-      this["${prefix}_$name"] = value
-    }
+    this.addProperties(prefix, items)
   }
 
   private fun MutableMap<String, Any>.addProximityValues(prefix: String, proximity: Any) {
