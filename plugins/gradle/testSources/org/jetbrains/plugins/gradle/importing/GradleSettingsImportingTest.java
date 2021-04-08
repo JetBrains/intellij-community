@@ -417,20 +417,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         createBuildScriptBuilder()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'IBM-Thai'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_NO_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'GB2312'")
-          .addPostfix("          transparentNativeToAsciiConversion = true")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'IBM-Thai'",
+            "        bomPolicy = BomPolicy.WITH_NO_BOM",
+            "        properties {",
+            "          encoding = 'GB2312'",
+            "          transparentNativeToAsciiConversion = true",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       assertEquals("IBM-Thai", encodingManager.getDefaultCharset().name());
@@ -443,20 +444,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         createBuildScriptBuilder()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        encoding = 'UTF-8'")
-          .addPostfix("        bomPolicy = BomPolicy.WITH_BOM")
-          .addPostfix("        properties {")
-          .addPostfix("          encoding = 'UTF-8'")
-          .addPostfix("          transparentNativeToAsciiConversion = false")
-          .addPostfix("        }")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        encoding = 'UTF-8'",
+            "        bomPolicy = BomPolicy.WITH_BOM",
+            "        properties {",
+            "          encoding = 'UTF-8'",
+            "          transparentNativeToAsciiConversion = false",
+            "        }",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       assertEquals("UTF-8", encodingManager.getDefaultCharset().name());
@@ -481,21 +483,22 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           .withJavaPlugin()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = 'ISO-8859-9'")
-          .addPostfix("        mapping['src/main/java/b'] = 'x-EUC-TW'")
-          .addPostfix("        mapping['src/main/java/c'] = 'UTF-8'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = 'KOI8-R'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = 'ISO-8859-9'",
+            "        mapping['src/main/java/b'] = 'x-EUC-TW'",
+            "        mapping['src/main/java/c'] = 'UTF-8'",
+            "        mapping['../sub-project/src/main/java'] = 'KOI8-R'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
@@ -511,20 +514,21 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
           .withJavaPlugin()
           .withGradleIdeaExtPlugin()
           .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
-          .addPostfix("}")
-          .addPostfix("idea {")
-          .addPostfix("  project {")
-          .addPostfix("    settings {")
-          .addPostfix("      encodings {")
-          .addPostfix("        mapping['src/main/java/a'] = '<System Default>'")
-          .addPostfix("        mapping['src/main/java/b'] = '<System Default>'")
-          .addPostfix("        mapping['../sub-project/src/main/java'] = '<System Default>'")
-          .addPostfix("      }")
-          .addPostfix("    }")
-          .addPostfix("  }")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += '../sub-project/src/main/java'",
+            "}",
+            "idea {",
+            "  project {",
+            "    settings {",
+            "      encodings {",
+            "        mapping['src/main/java/a'] = '<System Default>'",
+            "        mapping['src/main/java/b'] = '<System Default>'",
+            "        mapping['../sub-project/src/main/java'] = '<System Default>'",
+            "      }",
+            "    }",
+            "  }",
+            "}")
           .generate());
       EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
       Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
@@ -588,9 +592,10 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       importProject(
         createBuildScriptBuilder()
           .withJavaPlugin()
-          .addPostfix("sourceSets {")
-          .addPostfix("  main.java.srcDirs += 'java'")
-          .addPostfix("}")
+          .addPostfix(
+            "sourceSets {",
+            "  main.java.srcDirs += 'java'",
+            "}")
           .generate());
       Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
       assertTrue(sourceFolders.contains(javaSourceUrl));
@@ -632,15 +637,16 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .withKotlinJvmPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['src/main/kotlin'] = 'prefix.package.other'")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some.test'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "      packagePrefix['src/main/kotlin'] = 'prefix.package.other'",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some.test'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourceNotExists("project.main", "src/main/kotlin");
@@ -666,13 +672,14 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
         .withKotlinJvmPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     assertSourcePackagePrefix("project.main", "src/main/kotlin", "");
@@ -686,17 +693,18 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       createBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("sourceSets {")
-        .addPostfix("  test.java.srcDirs += '../subproject/src/test/java'")
-        .addPostfix("}")
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some'")
-        .addPostfix("      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "sourceSets {",
+          "  test.java.srcDirs += '../subproject/src/test/java'",
+          "}",
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/test/java'] = 'prefix.package.some'",
+          "      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     printProjectStructure();
     assertSourcePackagePrefix("project.test", "src/test/java", "prefix.package.some");
@@ -710,13 +718,14 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       createBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
   }
@@ -728,26 +737,28 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
       createBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.some'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
       createBuildScriptBuilder()
         .withGradleIdeaExtPlugin()
         .withJavaPlugin()
-        .addPostfix("idea {")
-        .addPostfix("  module {")
-        .addPostfix("    settings {")
-        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.other'")
-        .addPostfix("    }")
-        .addPostfix("  }")
-        .addPostfix("}")
+        .addPostfix(
+          "idea {",
+          "  module {",
+          "    settings {",
+          "      packagePrefix['src/main/java'] = 'prefix.package.other'",
+          "    }",
+          "  }",
+          "}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
   }

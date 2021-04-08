@@ -1738,10 +1738,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                     .withJavaPlugin()
                     .withIdeaPlugin()
                     .withJUnit4()
-                    .addPrefix("idea.module {\n" +
-                               "  downloadJavadoc = true\n" +
-                               "  downloadSources = false\n" + // should be already available in Gradle cache
-                               "}")
+                    .addPrefix(
+                      "idea.module {",
+                      "  downloadJavadoc = true",
+                      "  downloadSources = false", // should be already available in Gradle cache
+                      "}")
                     .generate());
 
     assertModules("project", "project.main", "project.test");
@@ -1835,10 +1836,11 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                       .withIdeaPlugin()
                       .addRepository(" maven { url new File(gradle.gradleUserHomeDir, 'caches/ij_test_repo')} ")
                       .addDependency("implementation 'test:aLib:1.0-SNAPSHOT-1'")
-                      .addPrefix("idea.module {\n" +
-                                 "  downloadJavadoc = true\n" +
-                                 "  downloadSources = false\n" +
-                                 "}")
+                      .addPrefix(
+                        "idea.module {",
+                        "  downloadJavadoc = true",
+                        "  downloadSources = false",
+                        "}")
                       .generate());
     }
     finally {

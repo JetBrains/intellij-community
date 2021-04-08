@@ -345,30 +345,18 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   fun `test gradle-apt-plugin settings are imported`() {
     importProject(
       createBuildScriptBuilder()
-        .withJavaPlugin()
         .withMavenCentral()
-        .addPrefix(
-          """
-      buildscript {
-        repositories {
-          maven {
-            url 'https://repo.labs.intellij.net/plugins-gradle-org'
-          }
-        }
-        dependencies {
-          classpath "net.ltgt.gradle:gradle-apt-plugin:0.21"
-        }
-      }
-      """.trimIndent())
+        .addBuildScriptRepository("maven { url 'https://repo.labs.intellij.net/plugins-gradle-org' }")
+        .addBuildScriptClasspath("net.ltgt.gradle:gradle-apt-plugin:0.21")
         .addPostfix("""
-      apply plugin: "net.ltgt.apt"
-      apply plugin: 'java'
-      
-      dependencies {
-        compileOnly("org.immutables:value-annotations:2.7.1")
-        annotationProcessor("org.immutables:value:2.7.1")
-      }
-    """.trimIndent()).generate());
+          apply plugin: "net.ltgt.apt"
+          apply plugin: 'java'
+          
+          dependencies {
+            compileOnly("org.immutables:value-annotations:2.7.1")
+            annotationProcessor("org.immutables:value:2.7.1")
+          }
+        """.trimIndent()).generate());
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles

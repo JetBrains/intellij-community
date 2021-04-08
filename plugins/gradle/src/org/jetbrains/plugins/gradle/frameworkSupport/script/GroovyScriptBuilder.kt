@@ -9,21 +9,27 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Co
 class GroovyScriptBuilder : AbstractScriptBuilder() {
   override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
     when {
-      element is ArgumentElement && element.name != null -> {
-        add(element.name, indent, isNewLine)
-        add(": ", indent, false)
-        add(element.value, indent, false)
-        return
+      element is ArgumentElement -> {
+        if (element.name != null) {
+          add(element.name, indent, isNewLine)
+          add(": ", indent, false)
+          add(element.value, indent, false)
+          return
+        }
       }
-      element is CallElement && isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments) -> {
-        add(element.name, indent, isNewLine)
-        add(" ", indent, false)
-        add(element.arguments, indent)
-        return
+      element is CallElement -> {
+        if (isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments)) {
+          add(element.name, indent, isNewLine)
+          add(" ", indent, false)
+          add(element.arguments, indent)
+          return
+        }
       }
-      element is StringElement && !element.value.contains('$') -> {
-        add("'${element.value}'", indent, isNewLine)
-        return
+      element is StringElement -> {
+        if ('$' !in element.value && '\'' !in element.value) {
+          add("'${element.value}'", indent, isNewLine)
+          return
+        }
       }
     }
     super.add(element, indent, isNewLine)

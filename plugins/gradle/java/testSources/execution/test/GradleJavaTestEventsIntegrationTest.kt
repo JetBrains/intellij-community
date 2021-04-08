@@ -11,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Condition
 import org.jetbrains.plugins.gradle.GradleManager
+import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -86,33 +87,29 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                            }
                          """.trimIndent())
 
-    importProject(
-      createBuildScriptBuilder()
-        .withMavenCentral()
-        .applyPlugin("'java'")
-        .addPostfix("dependencies {",
-                    "  testCompile 'junit:junit:4.12'",
-                    "}",
-                    if (gradleSupportsJunitPlatform) {
-                    """
-                      sourceSets {
-                        junit5test
-                      }
-                      
-                      dependencies {
-                        junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-                        junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-                      }
-                      
-                      task junit5test(type: Test) {
-                        useJUnitPlatform()
-                         testClassesDirs = sourceSets.junit5test.output.classesDirs
-                         classpath = sourceSets.junit5test.runtimeClasspath
-                      }
-                    """.trimIndent() } else { "" },
-                    "test { filter { includeTestsMatching 'my.pack.*' } }")
-        .generate()
-    )
+    importProject(buildscript {
+      withJavaPlugin()
+      withJUnit4()
+      if (gradleSupportsJunitPlatform) {
+        addPostfix("""
+          sourceSets {
+            junit5test
+          }
+          
+          dependencies {
+            junit5testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+            junit5testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+          }
+          
+          task junit5test(type: Test) {
+            useJUnitPlatform()
+            testClassesDirs = sourceSets.junit5test.output.classesDirs
+            classpath = sourceSets.junit5test.runtimeClasspath
+          }
+        """.trimIndent())
+      }
+      addPostfix("test { filter { includeTestsMatching 'my.pack.*' } }")
+    })
 
     runAll(
       { `call test task produces test events`() },

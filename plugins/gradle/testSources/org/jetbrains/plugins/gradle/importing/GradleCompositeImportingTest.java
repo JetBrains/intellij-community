@@ -471,12 +471,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject(createBuildScriptBuilder()
                     .withIdeaPlugin()
                     .withJavaPlugin()
-                    .addPostfix("group = 'myGroup'",
-                                "version = '1.0-SNAPSHOT'",
-                                "dependencies {",
-                                "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
-                                "}"
-                                )
+                    .addPostfix(
+                      "group = 'myGroup'",
+                      "version = '1.0-SNAPSHOT'",
+                      "dependencies {",
+                      "    compile group: 'myGroup', name: 'project-a', version: '1.0-SNAPSHOT'",
+                      "}")
                     .generate());
 
     assertModules("project-a",
@@ -493,8 +493,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("plugin/settings.gradle", "rootProject.name = 'test-plugin'");
     createProjectSubFile("plugin/build.gradle", createBuildScriptBuilder()
       .withJavaPlugin()
-      .addPrefix("group = 'myGroup'",
-                 "version = '1.0'")
+      .addGroup("myGroup")
+      .addVersion("1.0")
       .generate());
 
     // consumer need to be complicated to display the issue

@@ -55,17 +55,18 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
         .withIdeaPlugin()
         .withGradleIdeaExtPlugin()
         .addImport("org.jetbrains.gradle.ext.*")
-        .addPostfix("idea {\n" +
-                    "  project.settings {\n" +
-                    "    runConfigurations {\n" +
-                    "       MyApp(Application) {\n" +
-                    "           mainClass = 'my.App'\n" +
-                    "           programParameters = 'foo --bar baz'\n" +
-                    "           moduleName = 'moduleName.main'\n" +
-                    "       }\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           programParameters = 'foo --bar baz'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
         .generate()
     );
 

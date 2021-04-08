@@ -7,6 +7,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.AbstractGradleB
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
+import java.util.function.Consumer
 import kotlin.apply as applyKt
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -84,14 +85,21 @@ class GradleBuildScriptBuilder(gradleVersion: GradleVersion) : AbstractGradleBui
     const val IDEA_EXT_PLUGIN_VERSION = "0.10"
 
     @JvmStatic
-    fun extPluginVersionIsAtLeast(version: String): Boolean {
-      return Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
-    }
+    fun extPluginVersionIsAtLeast(version: String) =
+      Version.parseVersion(IDEA_EXT_PLUGIN_VERSION)!! >= Version.parseVersion(version)!!
 
-    fun GradleImportingTestCase.buildscript(configure: GradleBuildScriptBuilder.() -> Unit) =
-      buildscript(currentGradleVersion, configure)
+    @JvmStatic
+    fun buildscript(gradleVersion: GradleVersion, configure: Consumer<GradleBuildScriptBuilder>) =
+      buildscript(gradleVersion, configure::accept)
 
     fun buildscript(gradleVersion: GradleVersion, configure: GradleBuildScriptBuilder.() -> Unit) =
       GradleBuildScriptBuilder(gradleVersion).apply(configure).generate()
+
+    @JvmStatic
+    fun GradleImportingTestCase.buildscript(configure: Consumer<GradleBuildScriptBuilder>) =
+      buildscript(configure::accept)
+
+    fun GradleImportingTestCase.buildscript(configure: GradleBuildScriptBuilder.() -> Unit) =
+      createBuildScriptBuilder().apply(configure).generate()
   }
 }

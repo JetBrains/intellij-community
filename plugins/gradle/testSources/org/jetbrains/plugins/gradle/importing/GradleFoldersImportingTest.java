@@ -634,21 +634,23 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
-      .addPrefix("sourceSets {")
-      .addPrefix("  generated.java.srcDirs += \"${buildDir}/generated\"")
-      .addPrefix("  generated.java.srcDirs += '../outer4/generated'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/kotlin'")
-      .addPrefix("  main.java.srcDirs += '../outer2/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer3'")
-      .addPrefix("}")
-      .addPrefix("idea {")
-      .addPrefix("  module {")
-      .addPrefix("    inheritOutputDirs = true")
-      .addPrefix("    generatedSourceDirs += file(\"${buildDir}/generated\")")
-      .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
-      .addPrefix("  }")
-      .addPrefix("}");
+      .addPrefix(
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
     importPerSourceSet(true);
     importProject(buildScript.generate());
     assertModules("project", "project.main", "project.test", "project.generated");
@@ -683,21 +685,23 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
       .withJavaPlugin()
       .withIdeaPlugin()
-      .addPrefix("sourceSets {")
-      .addPrefix("  generated.java.srcDirs += \"${buildDir}/generated\"")
-      .addPrefix("  generated.java.srcDirs += '../outer4/generated'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer1/src/main/kotlin'")
-      .addPrefix("  main.java.srcDirs += '../outer2/src/main/java'")
-      .addPrefix("  main.java.srcDirs += '../outer3'")
-      .addPrefix("}")
-      .addPrefix("idea {")
-      .addPrefix("  module {")
-      .addPrefix("    inheritOutputDirs = true")
-      .addPrefix("    generatedSourceDirs += file(\"${buildDir}/generated\")")
-      .addPrefix("    generatedSourceDirs += file('../outer4/generated')")
-      .addPrefix("  }")
-      .addPrefix("}");
+      .addPrefix(
+        "sourceSets {",
+        "  generated.java.srcDirs += \"${buildDir}/generated\"",
+        "  generated.java.srcDirs += '../outer4/generated'",
+        "  main.java.srcDirs += '../outer1/src/main/java'",
+        "  main.java.srcDirs += '../outer1/src/main/kotlin'",
+        "  main.java.srcDirs += '../outer2/src/main/java'",
+        "  main.java.srcDirs += '../outer3'",
+        "}")
+      .addPrefix(
+        "idea {",
+        "  module {",
+        "    inheritOutputDirs = true",
+        "    generatedSourceDirs += file(\"${buildDir}/generated\")",
+        "    generatedSourceDirs += file('../outer4/generated')",
+        "  }",
+        "}");
     importPerSourceSet(false);
     importProject(buildScript.generate());
     assertModules("project");
