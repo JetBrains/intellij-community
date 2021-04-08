@@ -50,6 +50,7 @@ import org.apache.maven.profiles.activation.ProfileActivator;
 import org.apache.maven.profiles.activation.SystemPropertyProfileActivator;
 import org.apache.maven.project.*;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
+import org.apache.maven.project.path.DefaultPathTranslator;
 import org.apache.maven.project.validation.ModelValidationResult;
 import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.settings.Settings;
@@ -338,6 +339,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
+    org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
+    pathTranslator.alignToBaseDirectory(result, basedir);
     return MavenModelConverter.convertModel(result, null);
   }
 
@@ -454,6 +457,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
           return result;
         }
       });
+
       final List<ModelProblemCollectorRequest> problems = new ArrayList<ModelProblemCollectorRequest>();
       result = interpolator.interpolateModel(result, basedir, request, new ModelProblemCollector() {
         @Override
