@@ -52,7 +52,7 @@ internal object OpenLessonActivities {
   private val LOG = logger<OpenLessonActivities>()
 
   @RequiresEdt
-  fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson) {
+  fun openLesson(projectWhereToStartLesson: Project, lesson: Lesson, forceStartLesson: Boolean) {
     LOG.debug("${projectWhereToStartLesson.name}: start openLesson method")
 
     // Stop the current lesson (if any)
@@ -68,7 +68,7 @@ internal object OpenLessonActivities {
       activeToolWindow.setModulesPanel()
     }
 
-    if (LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
+    if (!forceStartLesson && LessonManager.instance.lessonShouldBeOpenedCompleted(lesson)) {
       // TODO: Do not stop lesson in another toolwindow IFT-110
       LearningUiManager.activeToolWindow?.setLearnPanel() ?: error("No active toolwindow in $projectWhereToStartLesson")
       LessonManager.instance.openLessonPassed(lesson as KLesson, projectWhereToStartLesson)
@@ -311,11 +311,11 @@ internal object OpenLessonActivities {
       StartupManager.getInstance(project).runAfterOpened {
         invokeLater {
           if (onboarding.properties.canStartInDumbMode) {
-            CourseManager.instance.openLesson(project, onboarding)
+            CourseManager.instance.openLesson(project, onboarding, true)
           }
           else {
             DumbService.getInstance(project).runWhenSmart {
-              CourseManager.instance.openLesson(project, onboarding)
+              CourseManager.instance.openLesson(project, onboarding, true)
             }
           }
         }
