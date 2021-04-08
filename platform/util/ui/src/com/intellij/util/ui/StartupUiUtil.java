@@ -70,7 +70,7 @@ public final class StartupUiUtil {
     throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
     blockATKWrapper();
 
-    Activity activity = StartUpMeasurer.startActivity("LaF initialization", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("LaF initialization", ActivityCategory.DEFAULT);
     UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
     activity.end();
   }
@@ -80,7 +80,7 @@ public final class StartupUiUtil {
       return;
     }
 
-    Activity activity = StartUpMeasurer.startActivity("html kit configuration", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("html kit configuration", ActivityCategory.DEFAULT);
 
     // save the default JRE CSS and ..
     HTMLEditorKit kit = new HTMLEditorKit();

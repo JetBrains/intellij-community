@@ -33,7 +33,7 @@ internal fun registerComponents(project: ProjectImpl) {
 }
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.APP_INIT)
+  return if (project.isDefault || !StartUpMeasurer.isEnabled()) null else startActivity(message(), ActivityCategory.DEFAULT)
 }
 
 internal inline fun <T : Any> runOnlyCorePluginExtensions(ep: ExtensionPointImpl<T>, crossinline executor: (T) -> Unit) {

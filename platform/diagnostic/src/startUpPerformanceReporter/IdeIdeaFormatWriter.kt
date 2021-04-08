@@ -106,8 +106,8 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
     super.writeItemTimeInfo(item, duration, offset, writer)
   }
 
-  override fun writeTotalDuration(writer: JsonGenerator, totalDuration: Long, end: Long, timeOffset: Long): Long {
-    val totalDurationActual = super.writeTotalDuration(writer, totalDuration, end, timeOffset)
+  override fun writeTotalDuration(writer: JsonGenerator, end: Long, timeOffset: Long): Long {
+    val totalDurationActual = super.writeTotalDuration(writer, end, timeOffset)
     publicStatMetrics.put("totalDuration", totalDurationActual.toInt())
     return totalDurationActual
   }

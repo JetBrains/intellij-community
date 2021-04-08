@@ -183,7 +183,7 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
     createComponents(indicator)
     servicePreloadingFuture?.join()
 
-    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.APP_INIT) else null
+    var activity = if (StartUpMeasurer.isEnabled()) startActivity("projectComponentCreated event handling", ActivityCategory.DEFAULT) else null
     @Suppress("DEPRECATION")
     app.messageBus.syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this)
 

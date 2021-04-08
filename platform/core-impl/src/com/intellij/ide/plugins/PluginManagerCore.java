@@ -778,7 +778,7 @@ public final class PluginManagerCore {
     }
 
     future = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.APP_INIT);
+      Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT);
       DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       activity.end();
       return context;
@@ -1351,7 +1351,7 @@ public final class PluginManagerCore {
       if (context == null) {
         context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       }
-      Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.APP_INIT);
+      Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.DEFAULT);
       PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);
 
       ourPlugins = initResult.sortedPlugins;

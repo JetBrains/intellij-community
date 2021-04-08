@@ -38,7 +38,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "31"
+    internal const val VERSION = "32"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -57,10 +57,10 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       doLogStats(projectName)
     }
 
-    private fun doLogStats(projectName: String): StartUpPerformanceReporterValues? {
-      val items = mutableListOf<ActivityImpl>()
+    private fun doLogStats(projectName: String): StartUpPerformanceReporterValues {
       val instantEvents = mutableListOf<ActivityImpl>()
-      val activities = HashMap<String, MutableList<ActivityImpl>>()
+      // write activity category in the same order as first reported
+      val activities = LinkedHashMap<String, MutableList<ActivityImpl>>()
       val serviceActivities = HashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
@@ -76,12 +76,12 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
           instantEvents.add(item)
         }
         else {
-          val category = item.category
-          if (category == null) {
-            items.add(item)
+          val category = item.category ?: ActivityCategory.DEFAULT
+          if (category == ActivityCategory.DEFAULT) {
             if (item.name == Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES) {
               end = item.end
             }
+            activities.computeIfAbsent(category.jsonName) { mutableListOf() }.add(item)
           }
           else if (category == ActivityCategory.APP_COMPONENT ||
                    category == ActivityCategory.PROJECT_COMPONENT ||
@@ -99,22 +99,19 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
         }
       }
 
-      if (items.isEmpty()) {
-        return null
-      }
-
-      sortItems(items)
-
       val pluginCostMap = computePluginCostMap()
 
       val w = IdeIdeaFormatWriter(activities, pluginCostMap, threadNameManager)
-      val startTime = items.first().start
-      for (item in items) {
-        val pluginId = item.pluginId ?: continue
-        StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
+      val defaultActivities = activities.get(ActivityCategory.DEFAULT.jsonName)
+      val startTime = defaultActivities?.first()?.start ?: 0
+      if (defaultActivities != null) {
+        for (item in defaultActivities) {
+          val pluginId = item.pluginId ?: continue
+          StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
+        }
       }
 
-      w.write(startTime, items, serviceActivities, instantEvents, end, projectName)
+      w.write(startTime, serviceActivities, instantEvents, end, projectName)
 
       val currentReport = w.toByteBuffer()
 
@@ -159,7 +156,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     private var editorRestoringTillPaint = true
 
     override fun accept(activity: ActivityImpl) {
-      if (activity.category != null && activity.category != ActivityCategory.APP_INIT) {
+      if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
         return
       }
 

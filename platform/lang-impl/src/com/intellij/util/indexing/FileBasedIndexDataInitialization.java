@@ -58,7 +58,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   }
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
-    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("file index extensions iteration", ActivityCategory.DEFAULT);
     Iterator<FileBasedIndexExtension<?, ?>> extensions;
     if (IndexInfrastructure.hasIndices()) {
       extensions = ((ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint()).iterator();

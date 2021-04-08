@@ -4,7 +4,11 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.diagnostic.runActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
@@ -81,7 +85,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return CompletableFuture.completedFuture(null)
     }
 
-    val activity = StartUpMeasurer.startMainActivity("project opening preparation")
+    val activity = startActivity("project opening preparation")
     if (!options.forceOpenInNewFrame) {
       val openProjects = openProjects
       if (!openProjects.isEmpty()) {
@@ -237,7 +241,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 
   protected open fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val activity = StartUpMeasurer.startMainActivity("project instantiation")
+    val activity = startActivity("project instantiation")
     val project = ProjectExImpl(projectStoreBaseDir, options.projectName)
     activity.end()
     options.beforeInit?.invoke(project)
@@ -259,7 +263,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         val conversionService = ConversionService.getInstance()
         if (conversionService != null) {
           indicator?.text = IdeUICustomization.getInstance().projectMessage("progress.text.project.checking.configuration")
-          conversionResult = runMainActivity("project conversion") {
+          conversionResult = runActivity("project conversion") {
             conversionService.convert(projectStoreBaseDir)
           }
           if (conversionResult.openingIsCanceled()) {
@@ -355,7 +359,7 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
 }
 
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
-  val waitEdtActivity = StartUpMeasurer.startMainActivity("placing calling projectOpened on event queue")
+  val waitEdtActivity = startActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
     indicator.text = if (ApplicationManager.getApplication().isInternal) "Waiting on event queue..."  // NON-NLS (internal mode)
                      else ProjectBundle.message("project.preparing.workspace")
@@ -372,7 +376,7 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     ProjectManagerImpl.LOG.debug("projectOpened")
 
     LifecycleUsageTriggerCollector.onProjectOpened(project)
-    val activity = StartUpMeasurer.startActivity("project opened callbacks", ActivityCategory.APP_INIT)
+    val activity = StartUpMeasurer.startActivity("project opened callbacks", ActivityCategory.DEFAULT)
 
     runActivity("projectOpened event executing") {
       ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)

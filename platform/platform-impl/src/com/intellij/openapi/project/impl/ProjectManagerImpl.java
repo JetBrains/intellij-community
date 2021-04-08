@@ -167,7 +167,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
         indicator.setText(ProjectBundle.message("project.loading.components"));
       }
 
-      Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+      Activity activity = StartUpMeasurer.startActivity("project before loaded callbacks");
       //noinspection deprecation
       ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(file, project);
       activity.end();

@@ -3,6 +3,7 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
@@ -80,10 +81,10 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
-    val frameInitActivity = StartUpMeasurer.startMainActivity("frame initialization")
+    val frameInitActivity = startActivity("frame initialization")
 
     val windowManager = WindowManagerEx.getInstanceEx()
-    runMainActivity("IdeEventQueue informing about WindowManager") {
+    runActivity("IdeEventQueue informing about WindowManager") {
       IdeEventQueue.getInstance().setWindowManager(windowManager)
     }
 

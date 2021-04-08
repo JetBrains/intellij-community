@@ -1,3 +1,9 @@
+# 32
+
+ * `prepareAppInitActivities` is removed in favour if `items`.
+ * `totalDurationComputed` is removed.
+ * `totalDurationActual` is renamed to `totalDuration`.
+
 # 31
 
  * Rename `add registry keys` to `registry keys adding`.

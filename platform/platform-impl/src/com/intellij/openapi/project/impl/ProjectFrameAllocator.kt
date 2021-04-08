@@ -5,7 +5,6 @@ import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.runMainActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.SaveAndSyncHandler
@@ -146,7 +145,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         return@invokeAndWaitIfNeeded DefaultProjectUiFrameManager(frame = freeRootFrame.frame!!, frameHelper = freeRootFrame)
       }
 
-      runMainActivity("create a frame") {
+      runActivity("create a frame") {
         val preAllocated = SplashManager.getAndUnsetProjectFrame() as IdeFrameImpl?
         if (preAllocated == null) {
           if (options.frameManager is FrameInfo) {

@@ -380,7 +380,7 @@ object PluginDescriptorLoader {
                                                   isRunningFromSources: Boolean) {
     val classLoader = PluginDescriptorLoader::class.java.classLoader
     val pool = ForkJoinPool.commonPool()
-    var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.APP_INIT)
+    var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
     val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
     // should be the only plugin in lib (only for Ultimate and WebStorm for now)
     val pathResolver = ClassPathXmlPathResolver(classLoader)

@@ -96,7 +96,7 @@ public final class Splash extends Window {
       progressSlidePainter.startPreloading();
     }
     StartUpMeasurer.addInstantEvent("splash shown");
-    Activity activity = StartUpMeasurer.startActivity("splash set visible", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("splash set visible", ActivityCategory.DEFAULT);
     setVisible(visible);
     activity.end();
     if (visible) {

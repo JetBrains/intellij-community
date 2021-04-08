@@ -107,7 +107,7 @@ public final class StartupUtil {
                            String @NotNull [] args,
                            @NotNull LinkedHashMap<String, Long> startupTimings) throws Exception {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
-    startupStart = StartUpMeasurer.startMainActivity("app initialization preparation");
+    startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
     Main.setFlags(args);
     CommandLineArgs.parse(args);
@@ -158,7 +158,7 @@ public final class StartupUtil {
         return null;
       }
 
-      Activity euaActivity = StartUpMeasurer.startActivity("eua getting", ActivityCategory.APP_INIT);
+      Activity euaActivity = StartUpMeasurer.startActivity("eua getting", ActivityCategory.DEFAULT);
       EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
       euaActivity.end();
       return result;
@@ -190,7 +190,7 @@ public final class StartupUtil {
   private static void runPreAppClass(@NotNull Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
-      Activity activity = StartUpMeasurer.startActivity("pre app class running", ActivityCategory.APP_INIT);
+      Activity activity = StartUpMeasurer.startActivity("pre app class running", ActivityCategory.DEFAULT);
       try {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
@@ -208,13 +208,13 @@ public final class StartupUtil {
     LoadingState.setStrictMode();
     LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
-    Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
+    Activity activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration");
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
     activity = activity.endAndStart("main class loading scheduling");
 
     ForkJoinTask<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("main class loading", ActivityCategory.APP_INIT);
+      Activity subActivity = StartUpMeasurer.startActivity("main class loading", ActivityCategory.DEFAULT);
       Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
       subActivity.end();
 
@@ -250,7 +250,7 @@ public final class StartupUtil {
       System.exit(Main.JDK_CHECK_FAILED);
     }
 
-    activity = StartUpMeasurer.startMainActivity("config path computing");
+    activity = StartUpMeasurer.startActivity("config path computing");
     Path configPath = canonicalPath(PathManager.getConfigPath());
     Path systemPath = canonicalPath(PathManager.getSystemPath());
     activity = activity.endAndStart("config path existence check");
@@ -287,7 +287,7 @@ public final class StartupUtil {
 
     // don't load EnvironmentUtil class in main thread
     shellEnvLoadFuture = ForkJoinPool.commonPool().submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.APP_INIT);
+      Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.DEFAULT);
       Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
       return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
     });
@@ -325,7 +325,7 @@ public final class StartupUtil {
       });
       if (!Main.isHeadless() && SystemInfoRt.isMac) {
         ForkJoinPool.commonPool().execute(() -> {
-          Activity subActivity = StartUpMeasurer.startActivity("mac app init", ActivityCategory.APP_INIT);
+          Activity subActivity = StartUpMeasurer.startActivity("mac app init", ActivityCategory.DEFAULT);
           MacOSApplicationProvider.initApplication();
           subActivity.end();
         });
@@ -335,7 +335,7 @@ public final class StartupUtil {
   }
 
   private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
-    Activity activity = StartUpMeasurer.startMainActivity("main class loading waiting");
+    Activity activity = StartUpMeasurer.startActivity("main class loading waiting");
     AppStarter result = mainStartFuture.join();
     activity.end();
     return result;
@@ -348,7 +348,7 @@ public final class StartupUtil {
                                @NotNull ForkJoinTask<AppStarter> appStarterFuture,
                                @Nullable ForkJoinTask<@Nullable Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startMainActivity("eua showing");
+      Activity activity = StartUpMeasurer.startActivity("eua showing");
       Object document = euaDocument == null ? null : euaDocument.join();
       boolean agreementDialogWasShown = document != null &&
                                         showUserAgreementAndConsentsIfNeeded(log, prepareUiFuture, (EndUserAgreement.Document)document);
@@ -431,7 +431,7 @@ public final class StartupUtil {
           }
 
           // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
-          Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.APP_INIT);
+          Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.DEFAULT);
           JBUIScale.getSystemFontData();
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
@@ -457,7 +457,7 @@ public final class StartupUtil {
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
-        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading", ActivityCategory.APP_INIT);
+        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading", ActivityCategory.DEFAULT);
         try {
           WriteIntentLockInstrumenter.instrument();
         }
@@ -472,7 +472,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemFontsAndDnDCursors() {
-    Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.DEFAULT);
     // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
     // This caches available font family names (for the default locale) to make corresponding call
@@ -515,7 +515,7 @@ public final class StartupUtil {
   }
 
   private static void updateFrameClassAndWindowIcon() {
-    Activity activity = StartUpMeasurer.startActivity("frame class updating", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("frame class updating", ActivityCategory.DEFAULT);
     AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
 
     activity = activity.endAndStart("update window icon");
@@ -528,7 +528,7 @@ public final class StartupUtil {
   }
 
   private static void configureLog4j() {
-    Activity activity = StartUpMeasurer.startMainActivity("console logger configuration");
+    Activity activity = StartUpMeasurer.startActivity("console logger configuration");
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
     @SuppressWarnings("deprecation")
@@ -723,7 +723,7 @@ public final class StartupUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
-    Activity subActivity = StartUpMeasurer.startActivity("system libs setup", ActivityCategory.APP_INIT);
+    Activity subActivity = StartUpMeasurer.startActivity("system libs setup", ActivityCategory.DEFAULT);
 
     String ideTempPath = PathManager.getTempPath();
 
@@ -748,7 +748,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemLibraries(@NotNull Logger log) {
-    Activity activity = StartUpMeasurer.startActivity("system libs loading", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("system libs loading", ActivityCategory.DEFAULT);
     JnaLoader.load(log);
     if (SystemInfoRt.isWindows) {
       //noinspection ResultOfMethodCallIgnored
@@ -758,7 +758,7 @@ public final class StartupUtil {
   }
 
   private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
-    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging", ActivityCategory.DEFAULT);
 
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
@@ -867,7 +867,7 @@ public final class StartupUtil {
       return;
     }
 
-    Activity activity = StartUpMeasurer.startActivity("event queue replacing", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("event queue replacing", ActivityCategory.DEFAULT);
     // replace system event queue
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();

@@ -3,6 +3,7 @@
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
@@ -246,7 +247,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     val clonePoint = parent != null
 
-    var activity = activityNamePrefix?.let { StartUpMeasurer.startMainActivity("${it}service and ep registration") }
+    var activity = activityNamePrefix?.let { startActivity("${it}service and ep registration") }
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
     for (mainPlugin in plugins) {
@@ -340,7 +341,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     val activity = when (val activityNamePrefix = activityNamePrefix()) {
       null -> null
-      else -> StartUpMeasurer.startMainActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
+      else -> startActivity("$activityNamePrefix${StartUpMeasurer.Activities.CREATE_COMPONENTS_SUFFIX}")
     }
 
     for (componentAdapter in componentAdapters.getImmutableSet()) {

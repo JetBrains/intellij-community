@@ -475,7 +475,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     synchronized (ApplicationInfoImpl.class) {
       result = instance;
       if (result == null) {
-        Activity activity = StartUpMeasurer.startActivity("app info loading", ActivityCategory.APP_INIT);
+        Activity activity = StartUpMeasurer.startActivity("app info loading", ActivityCategory.DEFAULT);
         try {
           result = new ApplicationInfoImpl(ApplicationNamesInfo.initAndGetRawData());
           instance = result;

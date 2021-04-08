@@ -192,7 +192,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
 
     private static void cacheAll(@Nullable ProgressIndicator indicator, @Nullable Project project) {
       String name = project == null ? "application" : "project";
-      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.APP_INIT);
+      com.intellij.diagnostic.Activity activity = StartUpMeasurer.startActivity("cache options in " + name, ActivityCategory.DEFAULT);
       SearchTopHitProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
         if (provider instanceof OptionsSearchTopHitProvider && (project == null || !(provider instanceof ApplicationLevelProvider))) {
           OptionsSearchTopHitProvider p = (OptionsSearchTopHitProvider)provider;

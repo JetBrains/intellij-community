@@ -101,12 +101,12 @@ public final class StartUpMeasurer {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, category);
   }
 
-  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
-    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
 
-  public static @NotNull Activity startMainActivity(@NonNls @NotNull String name) {
-    return new ActivityImpl(name, getCurrentTime(), null, null);
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
+    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
   }
 
   /**

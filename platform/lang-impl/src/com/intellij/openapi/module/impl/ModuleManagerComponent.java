@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ProjectTopics;
@@ -60,7 +60,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   static final class MyProjectServiceContainerInitializedListener implements ProjectServiceContainerInitializedListener {
     @Override
     public void serviceCreated(@NotNull Project project) {
-      Activity activity = StartUpMeasurer.startMainActivity("module loading");
+      Activity activity = StartUpMeasurer.startActivity("module loading");
       ModuleManager moduleManager = getInstance(project);
       if (!(moduleManager instanceof ModuleManagerImpl)) {
         return;

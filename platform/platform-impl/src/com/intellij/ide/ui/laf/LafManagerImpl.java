@@ -104,7 +104,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
 
   private final SynchronizedClearableLazy<List<UIManager.LookAndFeelInfo>> myLaFs = new SynchronizedClearableLazy<>(() -> {
-    Activity activity = StartUpMeasurer.startActivity("compute LaF list", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("compute LaF list", ActivityCategory.DEFAULT);
     List<UIManager.LookAndFeelInfo> infos = computeLafList();
     activity.end();
     return infos;

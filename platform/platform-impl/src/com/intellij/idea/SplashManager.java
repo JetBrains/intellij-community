@@ -44,7 +44,7 @@ public final class SplashManager {
       }
     }
 
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.APP_INIT);
+    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.DEFAULT);
     try {
       PROJECT_FRAME = createFrameIfPossible();
     }
@@ -61,7 +61,7 @@ public final class SplashManager {
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.DEFAULT);
     SPLASH_WINDOW = new Splash(appInfo);
     Activity queueActivity = activity.startChild("splash initialization (in queue)");
     EventQueue.invokeLater(() -> {
@@ -115,7 +115,7 @@ public final class SplashManager {
     }
 
     StartUpMeasurer.addInstantEvent("frame shown");
-    Activity activity = StartUpMeasurer.startActivity("frame set visible", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("frame set visible", ActivityCategory.DEFAULT);
     frame.setVisible(true);
     activity.end();
     return frame;

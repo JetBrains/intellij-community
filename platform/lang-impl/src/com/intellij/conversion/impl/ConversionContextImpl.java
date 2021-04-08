@@ -117,7 +117,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   public @NotNull Object2LongMap<String> getAllProjectFiles() throws CannotConvertException {
-    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting", ActivityCategory.DEFAULT);
 
     if (myStorageScheme == StorageScheme.DEFAULT) {
       List<Path> moduleFiles = getModulePaths();

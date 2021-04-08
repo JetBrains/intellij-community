@@ -101,7 +101,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
       }
     });
-    Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.APP_INIT);
+    Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
     FSRecords.connect();
     activity.end();
   }

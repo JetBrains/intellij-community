@@ -68,7 +68,7 @@ class WorkspaceModelTopics : Disposable {
   fun syncPublisher(messageBus: MessageBus): WorkspaceModelChangeListener = messageBus.syncPublisher(CHANGED)
 
   fun notifyModulesAreLoaded() {
-    val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded", ActivityCategory.APP_INIT)
+    val activity = StartUpMeasurer.startActivity("(wm) After modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
     val application = ApplicationManager.getApplication()
     application.invokeAndWait {

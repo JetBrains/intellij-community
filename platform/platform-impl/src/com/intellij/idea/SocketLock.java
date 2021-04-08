@@ -161,7 +161,7 @@ public final class SocketLock {
     }
 
     myBuiltinServerFuture = CompletableFuture.supplyAsync(() -> {
-      Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.APP_INIT);
+      Activity activity = StartUpMeasurer.startActivity("built-in server launch", ActivityCategory.DEFAULT);
 
       String token = UUID.randomUUID().toString();
       Path[] lockedPaths = {myConfigPath, mySystemPath};

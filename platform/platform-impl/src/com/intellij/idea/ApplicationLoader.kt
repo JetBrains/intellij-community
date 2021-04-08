@@ -5,6 +5,7 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -68,7 +69,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
       ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine()) { app ->
         loadAndInitPluginFuture
           .thenAcceptAsync({ plugins ->
-            runMainActivity("app component registration") {
+            runActivity("app component registration") {
               app.registerComponents(plugins, app, null)
             }
 
@@ -331,7 +332,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
+  var activity = startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
@@ -450,7 +451,7 @@ private fun executePreloadActivity(activity: PreloadingActivity, descriptor: Plu
 }
 
 private fun executePreloadActivities(app: ApplicationImpl) {
-  val activity = StartUpMeasurer.startActivity("preloading activity executing", ActivityCategory.APP_INIT)
+  val activity = StartUpMeasurer.startActivity("preloading activity executing", ActivityCategory.DEFAULT)
   val list = mutableListOf<Pair<PreloadingActivity, PluginDescriptor>>()
   val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->

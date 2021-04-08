@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
@@ -200,7 +201,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
     // (depending on dumb-awareness), but because there is no other concurrent phase,ur
     // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
-    val dumbAwareActivity = StartUpMeasurer.startMainActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
+    val dumbAwareActivity = startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
     val edtActivity = AtomicReference<Activity?>()
     val uiFreezeWarned = AtomicBoolean()
     val counter = AtomicInteger()
@@ -214,7 +215,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
         return@processWithPluginDescriptor
       }
       if (edtActivity.get() == null) {
-        edtActivity.set(StartUpMeasurer.startMainActivity("project post-startup edt activities"))
+        edtActivity.set(startActivity("project post-startup edt activities"))
       }
       counter.incrementAndGet()
       dumbService.unsafeRunWhenSmart {
@@ -302,7 +303,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
     }
 
-    val activity = if (activityName == null) null else StartUpMeasurer.startMainActivity(activityName)
+    val activity = if (activityName == null) null else startActivity(activityName)
     while (true) {
       val runnable = synchronized(lock) { activities.pollFirst() } ?: break
       indicator?.checkCanceled()

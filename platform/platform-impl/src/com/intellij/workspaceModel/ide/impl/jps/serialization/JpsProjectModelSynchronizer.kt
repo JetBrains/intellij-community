@@ -205,7 +205,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
     recordModuleLoadingActivity()
-    val activity = startActivity("(wm) Load initial project", ActivityCategory.APP_INIT)
+    val activity = startActivity("(wm) Load initial project", ActivityCategory.DEFAULT)
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val serializers = prepareSerializers()
     registerListener()

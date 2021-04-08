@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.configurationStore.saveComponentManager
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -69,7 +70,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
-      val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
+      val activity = startActivity("(wm) module loading")
       recordModuleLoadingActivity()
       val manager = ModuleManager.getInstance(project) as? ModuleManagerComponentBridge ?: return
 
@@ -80,7 +81,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       manager.loadModules(entities)
       activity.end()
       activity.setDescription("(wm) module count: ${manager.modules.size}")
-      val librariesActivity = StartUpMeasurer.startMainActivity("(wm) project libraries loading")
+      val librariesActivity = startActivity("(wm) project libraries loading")
       (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
       librariesActivity.end()
       WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
@@ -93,7 +94,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(eventProject: Project) {
-          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened", ActivityCategory.APP_INIT)
+          val activity = StartUpMeasurer.startActivity("(wm) ProjectManagerListener.projectOpened", ActivityCategory.DEFAULT)
           if (project == eventProject) {
             fireModulesAdded()
             for (module in modules()) {
