@@ -29,10 +29,12 @@ class UnusedEqualsInspection : AbstractKotlinInspection() {
 
             override fun visitBinaryExpression(expression: KtBinaryExpression) {
                 super.visitBinaryExpression(expression)
-                if (expression.operationToken == KtTokens.EQEQ &&
-                    (expression.parent is KtBlockExpression || expression.parent.parent is KtIfExpression)
-                ) {
-                    reportIfNotUsedAsExpression(expression)
+
+                if (expression.operationToken == KtTokens.EQEQ) {
+                    val parent = expression.parent
+                    if ((parent is KtBlockExpression && parent.parent !is KtCodeFragment) || parent.parent is KtIfExpression) {
+                        reportIfNotUsedAsExpression(expression)
+                    }
                 }
             }
 

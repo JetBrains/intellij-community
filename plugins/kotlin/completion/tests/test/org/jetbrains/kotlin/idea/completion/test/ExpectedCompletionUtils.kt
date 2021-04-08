@@ -113,6 +113,8 @@ object ExpectedCompletionUtils {
 
     const val RUNTIME_TYPE: String = "RUNTIME_TYPE:"
 
+    const val BLOCK_CODE_FRAGMENT = "BLOCK_CODE_FRAGMENT"
+
     private const val COMPLETION_TYPE_PREFIX = "COMPLETION_TYPE:"
 
     val KNOWN_PREFIXES: List<String> = ImmutableList.of(
@@ -133,6 +135,7 @@ object ExpectedCompletionUtils {
         RUN_HIGHLIGHTING_BEFORE_PREFIX,
         RUNTIME_TYPE,
         COMPLETION_TYPE_PREFIX,
+        BLOCK_CODE_FRAGMENT,
         LightClassComputationControl.LIGHT_CLASS_DIRECTIVE,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
     )
