@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.ConditionalGotoInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;

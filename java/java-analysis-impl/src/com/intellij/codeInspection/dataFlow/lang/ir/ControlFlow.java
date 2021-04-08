@@ -3,10 +3,10 @@
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.ReturnTransfer;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.SpliceInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.SpliceInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;

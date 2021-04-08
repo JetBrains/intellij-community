@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.lang;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

@@ -2,11 +2,11 @@
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.instructions.ExpressionPushingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodReferenceInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.ExpressionPushingInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodReferenceInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;

@@ -23,7 +23,7 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
   }
 
   /**
-   * Called before initializer end ({@link com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction}) is processed.
+   * Called before initializer end ({@link com.intellij.codeInspection.dataFlow.lang.ir.inst.EndOfInitializerInstruction}) is processed.
    * Both static and instance initializer are processed in the same flow.
    *
    * @param isStatic whether we are at the end of instance or static initializer
