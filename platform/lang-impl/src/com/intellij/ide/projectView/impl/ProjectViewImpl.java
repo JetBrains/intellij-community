@@ -913,7 +913,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
         @Override
         public void focusGained(@NotNull Editor editor, @NotNull FocusEvent event) {
-          if (event.getCause() != FocusEvent.Cause.ACTIVATION && isAutoscrollFromSourceAllowedHere()) {
+          if (isAutoscrollFromSourceAllowedHere()) {
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               FileEditorManager manager = myProject.isDisposed() ? null : FileEditorManager.getInstance(myProject);
