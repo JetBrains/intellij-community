@@ -33,7 +33,7 @@ open class AMutableIterator : MutableIterator<A> by mutableListOf<A>().iterator(
 
 // kotlin.collections.Map
 interface IMutableMap<KElem, VElem> : MutableMap<KElem, VElem>
-open class CMutableMap<KElem, VElem> : MutableMap<KElem, VElem> by mutableMapOf<KElem, VElem>()
+abstract class CMutableMap<KElem, VElem> : MutableMap<KElem, VElem> by mutableMapOf<KElem, VElem>()
 abstract class SMutableMap<VElem> : MutableMap<String, VElem> by mutableMapOf<String, VElem>()
 abstract class ABMutableMap : MutableMap<A, B> by mutableMapOf<A, B>()
 

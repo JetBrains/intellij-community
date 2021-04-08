@@ -113,13 +113,11 @@ class KtLightMutabilityPlatformWrapper(
             Java-version method delegates to Kotlin one, it's generated as final and gets 'instanceOf' check inside. Kotlin method becomes
             abstract.
 
-            The logic is a part of compiler's backend unavailable for UltraLightClasses. 'methodsWithSpecializedSignature'
-            (the function below) therefore tries to mirror it here.
+            UltraLightClasses does not utilize the compiler's backend logic.
+            'methodsWithSpecializedSignature' (the function below) therefore tries to mirror it here.
 
-            For performance reasons Kotlin's specialized signature is searched in the nearest class/interface only. For example, we generate
-            UltraLightClass for some classX and classX --<extends>--> kotlin.collections.MutableMap --<extends>--> kotlin.collections.Map.
-            Algorithm considers MutableMap.remove(K, V) and skips getOrDefault(K, V) defined in Map. See implementation of
-            KtLightMutabilityPlatformWrapper.isInKotlinInterface.
+            For performance reasons Kotlin's specialized signature is searched in the nearest class/interface only
+            by fqName only - so generic info is not available.
          */
 
         if (!method.isInKotlinInterface()) {
@@ -208,16 +206,17 @@ class KtLightMutabilityPlatformWrapper(
                 returnType = PsiType.BOOLEAN
             )
             "remove" ->
-                when (method.parameterList.parametersCount) {
-                    1 -> MethodSignature(
+                // only `remove(Object)` pair (i.e. `remove(K)`) is needed
+                if (method.parameterList.parametersCount == 1) {
+                    MethodSignature(
                         parameterTypes = listOf(k),
                         returnType = v
                     )
-                    2 -> MethodSignature(
-                        parameterTypes = listOf(k, v),
-                        returnType = PsiType.BOOLEAN
-                    )
-                    else -> null
+                } else {
+                    // we don't need `remove(K, V)` as SpecialBridgeMethods#specialMethodsWithDefaults
+                    // for `makeDescription(StandardNames.FqNames.mutableMap, "remove", 2)`
+                    // it is mapped to SpecialMethodWithDefaultInfo with no `needsGenericSignature`
+                    null
                 }
             else -> null
         } ?: return null
