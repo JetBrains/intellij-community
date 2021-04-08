@@ -328,7 +328,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       };
       app.runWriteActionWithCancellableProgressInDispatchThread(ObjectUtils.notNull(title, RefactoringBundle.message("command.name.copy")), 
                                                                 targetDirectory.getProject(), null, copyAction);
-      rethrow(thrown.get());
+      Throwable throwable = thrown.get();
+      if (throwable instanceof ProcessCanceledException) {
+        //process was canceled, don't proceed with existing files
+        return;
+      }
+      rethrow(throwable);
     }
     else {
       WriteCommandAction.writeCommandAction(targetDirectory.getProject())
@@ -344,10 +349,6 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   private static void rethrow(Throwable throwable) throws IOException {
-    if (throwable instanceof ProcessCanceledException) {
-      return;
-    }
-
     if (throwable instanceof IOException) {
       throw (IOException)throwable;
     }
