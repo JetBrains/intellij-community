@@ -153,7 +153,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
   protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
-  private final boolean myIsDefaultClient;
   @Nullable private volatile String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
@@ -183,30 +182,26 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     final @NotNull RenderingType renderingType;
     final @NotNull CefBrowser cefBrowser;
     final @NotNull JBCefClient client;
-    boolean isDefaultClient;
 
-    CreateBrowserArtefacts(@NotNull RenderingType renderingType, @NotNull CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient) {
+    CreateBrowserArtefacts(@NotNull RenderingType renderingType, @NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
       this.renderingType = renderingType;
       this.cefBrowser = cefBrowser;
       this.client = client;
-      this.isDefaultClient = isDefaultClient;
     }
   }
 
   JBCefBrowserBase(@NotNull CreateBrowserArtefacts artefacts) {
-    this(artefacts.renderingType, artefacts.client, artefacts.isDefaultClient, artefacts.cefBrowser, true);
+    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client);
   }
 
   JBCefBrowserBase(@NotNull RenderingType type,
-                   @NotNull JBCefClient cefClient,
-                   boolean isDefaultClient,
                    @NotNull CefBrowser cefBrowser,
-                   boolean isNewBrowserCreated)
+                   boolean isNewBrowserCreated,
+                   @NotNull JBCefClient cefClient)
   {
     myRenderingType = type;
     myCefClient = cefClient;
     myCefBrowser = cefBrowser;
-    myIsDefaultClient = isDefaultClient;
 
     if (type != RenderingType.EMBEDDED_WINDOW) JBCefApp.checkOffScreenRenderingModeEnabled();
     if (type == RenderingType.BUFFERED_IMAGE) setProperty(Properties.IS_LIGHTWEIGHT, Boolean.TRUE);
@@ -407,7 +402,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefBrowser.stopLoad();
       myCefBrowser.close(true);
 
-      if (myIsDefaultClient) Disposer.dispose(myCefClient);
+      if (myCefClient.isDefault()) Disposer.dispose(myCefClient);
     });
   }
 

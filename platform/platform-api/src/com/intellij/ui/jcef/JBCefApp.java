@@ -320,7 +320,12 @@ public final class JBCefApp {
 
   @NotNull
   public JBCefClient createClient() {
-    return new JBCefClient(myCefApp.createClient());
+    return createClient(false);
+  }
+
+  @NotNull
+  JBCefClient createClient(boolean isDefault) {
+    return new JBCefClient(myCefApp.createClient(), isDefault);
   }
 
   /**

@@ -160,7 +160,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
-    this(RenderingType.EMBEDDED_WINDOW, cefBrowser, false, client, false);
+    this(RenderingType.EMBEDDED_WINDOW, cefBrowser, false, client);
   }
 
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
@@ -168,16 +168,15 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   private JBCefBrowser(@NotNull CreateBrowserArtefacts artefacts) {
-    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client, artefacts.isDefaultClient);
+    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client);
   }
 
   private JBCefBrowser(@NotNull RenderingType type,
                        @NotNull CefBrowser cefBrowser,
                        boolean isNewBrowserCreated,
-                       @NotNull JBCefClient client,
-                       boolean isDefaultClient)
+                       @NotNull JBCefClient client)
   {
-    super(type, client, isDefaultClient, cefBrowser, isNewBrowserCreated);
+    super(type, cefBrowser, isNewBrowserCreated, client);
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
@@ -238,21 +237,20 @@ public class JBCefBrowser extends JBCefBrowserBase {
   }
 
   private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
-    boolean isDefaultClient = client == null;
-    if (isDefaultClient) client = JBCefApp.getInstance().createClient();
+    if (client == null) {
+      client = JBCefApp.getInstance().createClient(true);
+    }
     switch (type) {
       case EMBEDDED_WINDOW:
         return new CreateBrowserArtefacts(
           type,
           client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.DEFAULT, false, null),
-          client,
-          isDefaultClient);
+          client);
       case OGL_CANVAS:
         return new CreateBrowserArtefacts(
           type,
           client.getCefClient().createBrowser(ObjectUtils.notNull(url, BLANK_URI), CefRendering.OFFSCREEN, false, null),
-          client,
-          isDefaultClient);
+          client);
       case BUFFERED_IMAGE:
         JBCefOsrComponent comp = new JBCefOsrComponent();
         JBCefOsrHandler handler = new JBCefOsrHandler(comp);
@@ -260,8 +258,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
         return new CreateBrowserArtefacts(
           type,
           new CefBrowserOsrWithHandler(client.getCefClient(), url, null, handler, comp),
-          client,
-          isDefaultClient);
+          client);
     }
     throw new IllegalArgumentException("wrong RenderingType"); // unreachable
   }

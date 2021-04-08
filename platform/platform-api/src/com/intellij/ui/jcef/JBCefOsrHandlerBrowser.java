@@ -112,11 +112,10 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
                                                                @Nullable String url,
                                                                @NotNull CefRenderHandler renderHandler)
   {
-    boolean isDefaultClient = client == null;
-    if (isDefaultClient) {
-      client = JBCefApp.getInstance().createClient();
+    if (client == null) {
+      client = JBCefApp.getInstance().createClient(true);
     }
     var cefBrowser = new CefBrowserOsrWithHandler(client.getCefClient(), url, null, renderHandler);
-    return new CreateBrowserArtefacts(type, cefBrowser, client, isDefaultClient);
+    return new CreateBrowserArtefacts(type, cefBrowser, client);
   }
 }

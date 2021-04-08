@@ -64,6 +64,7 @@ public final class JBCefClient implements JBCefDisposable {
   private static final int JS_QUERY_POOL_MAX_SIZE = 10000;
 
   @NotNull private final CefClient myCefClient;
+  private final boolean myIsDefault;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
   @Nullable private volatile JSQueryPool myJSQueryPool;
   @NotNull private final AtomicInteger myJSQueryCounter = new AtomicInteger(0);
@@ -80,8 +81,9 @@ public final class JBCefClient implements JBCefDisposable {
   private final HandlerSupport<CefLoadHandler> myLoadHandler = new HandlerSupport<>();
   private final HandlerSupport<CefRequestHandler> myRequestHandler = new HandlerSupport<>();
 
-  JBCefClient(@NotNull CefClient client) {
+  JBCefClient(@NotNull CefClient client, boolean isDefault) {
     myCefClient = client;
+    myIsDefault = isDefault;
     Disposer.register(JBCefApp.getInstance().getDisposable(), this);
 
     Runnable createPool = () -> {
@@ -104,6 +106,10 @@ public final class JBCefClient implements JBCefDisposable {
   @NotNull
   public CefClient getCefClient() {
     return myCefClient;
+  }
+
+  boolean isDefault() {
+    return myIsDefault;
   }
 
   @Override
