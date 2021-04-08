@@ -1,5 +1,14 @@
 <html>
 <body>
-This inspection checks that JSON files conform to language specification (RFC-7159).<br>
+Checks a JSON file against <a href="https://tools.ietf.org/html/rfc7159">the language specification</a> in the following aspects:
+<ul>
+  <li>No line and block commentaries (configurable).</li>
+  <li>No multiple top-level values (expect for JSON Lines files, configurable for others).</li>
+  <li>No trailing commas in objects and arrays (configurable).</li>
+  <li>No single quoted strings.</li>
+  <li>Property keys are double quoted strings.</li>
+  <li>No NaN and Infinity/-Infinity numeric values as floating point literals (configurable).</li>
+</ul>
+
 </body>
 </html>
