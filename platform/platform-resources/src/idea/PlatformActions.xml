@@ -417,6 +417,7 @@
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.MenuOpen"/>
           <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
+            <override-text place="GoToAction"/>
             <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
             <separator/>
             <action class="com.intellij.ide.ManageRecentProjectsAction" id="ManageRecentProjects"/>
