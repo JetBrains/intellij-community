@@ -26,7 +26,7 @@ enum class F private constructor(val x: Int) {
 }
 
 sealed class G constructor(val y: Int) {
-    private constructor(): this(42)
+    protected constructor(): this(42)
 
     object H : G()
 }

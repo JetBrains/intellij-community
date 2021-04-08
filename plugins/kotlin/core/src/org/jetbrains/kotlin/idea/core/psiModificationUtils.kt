@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
@@ -346,9 +347,16 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
             KtTokens.DEFAULT_VISIBILITY_KEYWORD
         }
         this is KtConstructor<*> -> {
-            val klass = getContainingClassOrObject()
-            if (klass is KtClass && (klass.isEnum() || klass.isSealed())) KtTokens.PRIVATE_KEYWORD
-            else KtTokens.DEFAULT_VISIBILITY_KEYWORD
+            // constructors cannot be declared in objects
+            val klass = getContainingClassOrObject() as? KtClass ?: return KtTokens.DEFAULT_VISIBILITY_KEYWORD
+
+            when {
+                klass.isEnum() -> KtTokens.PRIVATE_KEYWORD
+                klass.isSealed() ->
+                    if (klass.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)) KtTokens.PROTECTED_KEYWORD
+                    else KtTokens.PRIVATE_KEYWORD
+                else -> KtTokens.DEFAULT_VISIBILITY_KEYWORD
+            }
         }
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
             (resolveToDescriptorIfAny() as? CallableMemberDescriptor)
