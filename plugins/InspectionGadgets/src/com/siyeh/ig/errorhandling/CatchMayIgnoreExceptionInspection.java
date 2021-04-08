@@ -190,7 +190,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         }
 
         CatchDataFlowRunner runner = new CatchDataFlowRunner();
-        StandardInstructionVisitor visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, runner.myStableExceptionVar);
+        var visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, runner.myStableExceptionVar);
         return runner.analyzeCodeBlock(block, visitor) == RunnerResult.OK;
       }
     };

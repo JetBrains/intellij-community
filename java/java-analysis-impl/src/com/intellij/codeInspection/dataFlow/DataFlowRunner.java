@@ -162,12 +162,12 @@ public class DataFlowRunner {
    * @param visitor visitor to use
    * @return result status
    */
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor visitor) {
+  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull InstructionVisitor<?> visitor) {
     return analyzeMethod(block, visitor, Collections.singleton(createMemoryState()));
   }
 
   final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
-                                            @NotNull InstructionVisitor visitor,
+                                            @NotNull InstructionVisitor<?> visitor,
                                             @NotNull Collection<? extends DfaMemoryState> initialStates) {
     ControlFlow flow = buildFlow(psiBlock);
     if (flow == null) return RunnerResult.NOT_APPLICABLE;
@@ -398,7 +398,7 @@ public class DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull StandardInstructionVisitor<?> visitor) {
+  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull InstructionVisitor<?> visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
     return analyzeBlockRecursively(block, states, visitor);
@@ -406,7 +406,7 @@ public class DataFlowRunner {
 
   public @NotNull RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                                        @NotNull Collection<? extends DfaMemoryState> states,
-                                                       @NotNull StandardInstructionVisitor<?> visitor) {
+                                                       @NotNull InstructionVisitor<?> visitor) {
     RunnerResult result = analyzeMethod(block, visitor, states);
     if (result != RunnerResult.OK) return result;
 
