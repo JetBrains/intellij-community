@@ -21,6 +21,12 @@ public final class AssertionDisabledDescriptor implements VariableDescriptor {
     return true;
   }
 
+  @Override
+  public boolean isImplicitReadPossible() {
+    // Variable may be used from CommonDataflow
+    return true;
+  }
+
   @NotNull
   @Override
   public PsiType getType(@Nullable DfaVariableValue qualifier) {

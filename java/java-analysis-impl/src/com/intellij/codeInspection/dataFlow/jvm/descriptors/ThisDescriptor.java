@@ -48,6 +48,11 @@ public final class ThisDescriptor implements VariableDescriptor {
   }
 
   @Override
+  public boolean isImplicitReadPossible() {
+    return true;
+  }
+
+  @Override
   public int hashCode() {
     return Objects.hashCode(myQualifier.getQualifiedName());
   }

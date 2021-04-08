@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.codeInspection.dataFlow.lang;
+package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.ReturnTransfer;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * Represents code block IR (list of instructions)
+ */
 public final class ControlFlow {
   private @NotNull final List<Instruction> myInstructions;
   private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;

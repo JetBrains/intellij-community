@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.dataFlow.lang;
+package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiMember;
@@ -141,9 +139,7 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
-        // Assertions disabled variable may be used from CommonDataflow
-        values.removeIf(var -> var.getDescriptor() instanceof ThisDescriptor ||
-                               var.getDescriptor() instanceof AssertionDisabledDescriptor);
+        values.removeIf(var -> !var.getDescriptor().isImplicitReadPossible());
         instruction.getVarsToFlush().addAll(values);
       }
     }
