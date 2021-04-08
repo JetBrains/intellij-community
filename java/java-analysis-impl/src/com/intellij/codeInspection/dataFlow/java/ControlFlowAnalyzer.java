@@ -21,7 +21,10 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -56,38 +59,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final PsiElement myCodeFragment;
   private final boolean myInlining;
   private final Project myProject;
-
-  /**
-   * Create control flow for given PSI block (method body, lambda expression, etc.) and return it. May return cached block.
-   * It's prohibited to change the resulting control flow (e.g. add instructions, update their indices, update flush variable lists, etc.)
-   *
-   * @param psiBlock psi-block
-   * @param targetFactory factory to bind the PSI block to
-   * @param useInliners whether to use inliners
-   * @return resulting control flow; null if cannot be built (e.g. if the code block contains unrecoverable errors)
-   */
-  @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {
-    if (!useInliners) {
-      return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
-    }
-    PsiFile file = psiBlock.getContainingFile();
-    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
-      CachedValuesManager.getCachedValue(file, () ->
-        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    return fileMap.computeIfAbsent(psiBlock, psi -> {
-      DfaValueFactory factory = new DfaValueFactory(file.getProject(), psiBlock);
-      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
-      return Optional.ofNullable(flow);
-    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
-  }
-
-  private static class CannotAnalyzeException extends RuntimeException {
-    private CannotAnalyzeException() {
-      super(null, null, false, false);
-    }
-  }
-
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
   private FList<Trap> myTrapStack = FList.emptyList();
@@ -206,28 +177,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {
-      List<DfaVariableValue> synthetics = getSynthetics(element);
+      List<DfaVariableValue> synthetics = myCurrentFlow.getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
       instruction.getVarsToFlush().addAll(synthetics);
       addInstruction(instruction);
     }
-  }
-
-  private @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
-    int startOffset = getStartOffset(element).getInstructionOffset();
-    List<DfaVariableValue> synthetics = new ArrayList<>();
-    for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)value;
-        VariableDescriptor descriptor = var.getDescriptor();
-        if (descriptor instanceof Synthetic) {
-          if (((Synthetic)descriptor).myLocation >= startOffset) {
-            synthetics.add(var);
-          }
-        }
-      }
-    }
-    return synthetics;
   }
 
   @Override
@@ -2148,20 +2102,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    */
   @NotNull
   DfaVariableValue createTempVariable(@Nullable PsiType type) {
-    if(type == null) {
-      type = PsiType.VOID;
-    }
-    return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), type));
-  }
-
-  /**
-   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
-   *
-   * @param variable to check
-   * @return true if supplied variable is a temp variable.
-   */
-  public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
-    return variable.getDescriptor() instanceof Synthetic;
+    return myCurrentFlow.createTempVariable(type);
   }
 
   /**
@@ -2172,28 +2113,34 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return ContainerUtil.exists(INLINERS, inliner -> inliner.mayInferPreciseType(expression));
   }
 
-  private static final class Synthetic implements VariableDescriptor {
-    private final int myLocation;
-    private final PsiType myType;
-
-    private Synthetic(int location, PsiType type) {
-      myLocation = location;
-      myType = type;
+  /**
+   * Create control flow for given PSI block (method body, lambda expression, etc.) and return it. May return cached block.
+   * It's prohibited to change the resulting control flow (e.g. add instructions, update their indices, update flush variable lists, etc.)
+   *
+   * @param psiBlock psi-block
+   * @param targetFactory factory to bind the PSI block to
+   * @param useInliners whether to use inliners
+   * @return resulting control flow; null if cannot be built (e.g. if the code block contains unrecoverable errors)
+   */
+  @Nullable
+  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {
+    if (!useInliners) {
+      return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
+    PsiFile file = psiBlock.getContainingFile();
+    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
+      CachedValuesManager.getCachedValue(file, () ->
+        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
+    return fileMap.computeIfAbsent(psiBlock, psi -> {
+      DfaValueFactory factory = new DfaValueFactory(file.getProject(), psiBlock);
+      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
+      return Optional.ofNullable(flow);
+    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
+  }
 
-    @Override
-    public @NotNull String toString() {
-      return "tmp$" + myLocation;
-    }
-
-    @Override
-    public @Nullable PsiType getType(@Nullable DfaVariableValue qualifier) {
-      return myType;
-    }
-
-    @Override
-    public boolean isStable() {
-      return true;
+  private static class CannotAnalyzeException extends RuntimeException {
+    private CannotAnalyzeException() {
+      super(null, null, false, false);
     }
   }
 

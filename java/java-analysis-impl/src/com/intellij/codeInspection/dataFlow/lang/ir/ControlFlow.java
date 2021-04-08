@@ -7,14 +7,18 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.SpliceInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -139,6 +143,45 @@ public final class ControlFlow {
     return myFactory;
   }
 
+  /**
+   * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(PsiType)}
+   *
+   * @param variable to check
+   * @return true if supplied variable is a temp variable.
+   */
+  public static boolean isTempVariable(@NotNull DfaVariableValue variable) {
+    return variable.getDescriptor() instanceof Synthetic;
+  }
+
+  /**
+   * Create a synthetic variable (not declared in the original code) to be used within this control flow.
+   *
+   * @param type a type of variable to create
+   * @return newly created variable
+   */
+  @NotNull
+  public DfaVariableValue createTempVariable(@Nullable PsiType type) {
+    if(type == null) {
+      type = PsiType.VOID;
+    }
+    return getFactory().getVarFactory().createVariableValue(new ControlFlow.Synthetic(getInstructionCount(), type));
+  }
+
+  public @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
+    int startOffset = getStartOffset(element).getInstructionOffset();
+    List<DfaVariableValue> synthetics = new ArrayList<>();
+    for (DfaValue value : myFactory.getValues()) {
+      if (value instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)value;
+        VariableDescriptor descriptor = var.getDescriptor();
+        if (descriptor instanceof Synthetic && ((Synthetic)descriptor).myLocation >= startOffset) {
+          synthetics.add(var);
+        }
+      }
+    }
+    return synthetics;
+  }
+
   public abstract static class ControlFlowOffset {
     public abstract int getInstructionOffset();
 
@@ -199,6 +242,31 @@ public final class ControlFlow {
     @Override
     public int getInstructionOffset() {
       return myElementMap.getInt(myElement);
+    }
+  }
+
+  public static final class Synthetic implements VariableDescriptor {
+    private final int myLocation;
+    private final PsiType myType;
+
+    private Synthetic(int location, PsiType type) {
+      myLocation = location;
+      myType = type;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "tmp$" + myLocation;
+    }
+
+    @Override
+    public @Nullable PsiType getType(@Nullable DfaVariableValue qualifier) {
+      return myType;
+    }
+
+    @Override
+    public boolean isStable() {
+      return true;
     }
   }
 }

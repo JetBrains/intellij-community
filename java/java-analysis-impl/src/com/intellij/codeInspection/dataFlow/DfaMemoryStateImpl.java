@@ -3,7 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
@@ -228,9 +228,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfTypes.BOTTOM) return; // likely uncompilable code or bad CFG
-    if (value instanceof DfaVariableValue && !ControlFlowAnalyzer.isTempVariable(var) &&
-        !ControlFlowAnalyzer.isTempVariable((DfaVariableValue)value) &&
-        (var.getQualifier() == null || !ControlFlowAnalyzer.isTempVariable(var.getQualifier()))) {
+    if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
+        !ControlFlow.isTempVariable((DfaVariableValue)value) &&
+        (var.getQualifier() == null || !ControlFlow.isTempVariable(var.getQualifier()))) {
       // assigning a = b when b is known to be null: could be ephemeral
       checkEphemeral(var, value);
     }
@@ -1414,7 +1414,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else {
       DfaVariableValue newCanonical = varClass.getCanonicalVariable();
       if (newCanonical != null && previousCanonical != null && previousCanonical != newCanonical &&
-          (ControlFlowAnalyzer.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
+          (ControlFlow.isTempVariable(previousCanonical) && !newCanonical.dependsOn(previousCanonical) ||
            newCanonical.getDepth() <= previousCanonical.getDepth())) {
         // Do not transfer to deeper qualifier. E.g. if we have two classes like (a, b.c) (a.d, e),
         // and flushing `a`, we do not convert `a.d` to `b.c.d`. Otherwise infinite qualifier explosion is possible.
