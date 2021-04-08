@@ -4,7 +4,6 @@ package com.intellij.idea;
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.AssertiveRepaintManager;
@@ -158,7 +157,7 @@ public final class StartupUtil {
         return null;
       }
 
-      Activity euaActivity = StartUpMeasurer.startActivity("eua getting", ActivityCategory.DEFAULT);
+      Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
       EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
       euaActivity.end();
       return result;
@@ -190,7 +189,7 @@ public final class StartupUtil {
   private static void runPreAppClass(@NotNull Logger log) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
-      Activity activity = StartUpMeasurer.startActivity("pre app class running", ActivityCategory.DEFAULT);
+      Activity activity = StartUpMeasurer.startActivity("pre app class running");
       try {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
@@ -214,7 +213,7 @@ public final class StartupUtil {
     activity = activity.endAndStart("main class loading scheduling");
 
     ForkJoinTask<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("main class loading", ActivityCategory.DEFAULT);
+      Activity subActivity = StartUpMeasurer.startActivity("main class loading");
       Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
       subActivity.end();
 
@@ -235,15 +234,7 @@ public final class StartupUtil {
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
     ForkJoinTask<Object> euaDocument = loadEuaDocument();
-    if (Main.isHeadless()) {
-      enableHeadlessAwtGuard();
-      enableHeadlessAwtGuard();
-    }
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, euaDocument)
-      .exceptionally(e -> {
-        StartupAbortedException.processException(new StartupAbortedException("UI initialization failed", e));
-        return null;
-      });
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, euaDocument);
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -287,7 +278,7 @@ public final class StartupUtil {
 
     // don't load EnvironmentUtil class in main thread
     shellEnvLoadFuture = ForkJoinPool.commonPool().submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("environment loading", ActivityCategory.DEFAULT);
+      Activity subActivity = StartUpMeasurer.startActivity("environment loading");
       Path envReaderFile = PathManager.findBinFile(EnvironmentUtil.READER_FILE_NAME);
       return envReaderFile == null ? null : EnvironmentUtil.loadEnvironment(envReaderFile, subActivity);
     });
@@ -301,36 +292,41 @@ public final class StartupUtil {
     }
 
     CompletableFuture<@Nullable Void> prepareUiFuture = new CompletableFuture<>();
-    initUiTask.thenRun(() -> {
-      // called in EDT, but other events in queue should be processed before patchSystem
-      EventQueue.invokeLater(() -> {
-        try {
-          patchSystem(log);
-        }
-        catch (Throwable e) {
-          prepareUiFuture.completeExceptionally(e);
-          StartupAbortedException.processException(e);
-          return;
-        }
+    initUiTask
+      .thenRun(() -> {
+        // called in EDT, but other events in queue should be processed before patchSystem
+        EventQueue.invokeLater(() -> {
+          try {
+            patchSystem(log);
+          }
+          catch (Throwable e) {
+            prepareUiFuture.completeExceptionally(e);
+            StartupAbortedException.logAndExit(e, log);
+            return;
+          }
 
-        prepareUiFuture.complete(null);
+          prepareUiFuture.complete(null);
 
-        if (!Main.isHeadless()) {
-          // not important
-          EventQueue.invokeLater(() -> {
-            //noinspection ResultOfMethodCallIgnored
-            WeakFocusStackManager.getInstance();
+          if (!Main.isHeadless()) {
+            // not important
+            EventQueue.invokeLater(() -> {
+              //noinspection ResultOfMethodCallIgnored
+              WeakFocusStackManager.getInstance();
+            });
+          }
+        });
+        if (!Main.isHeadless() && SystemInfoRt.isMac) {
+          ForkJoinPool.commonPool().execute(() -> {
+            Activity subActivity = StartUpMeasurer.startActivity("mac app init");
+            MacOSApplicationProvider.initApplication();
+            subActivity.end();
           });
         }
+      })
+      .exceptionally(e -> {
+        StartupAbortedException.logAndExit(new StartupAbortedException("UI initialization failed", e), log);
+        return null;
       });
-      if (!Main.isHeadless() && SystemInfoRt.isMac) {
-        ForkJoinPool.commonPool().execute(() -> {
-          Activity subActivity = StartUpMeasurer.startActivity("mac app init", ActivityCategory.DEFAULT);
-          MacOSApplicationProvider.initApplication();
-          subActivity.end();
-        });
-      }
-    });
     startApp(Arrays.asList(args), prepareUiFuture, log, configImportNeeded, appStarterFuture, euaDocument);
   }
 
@@ -431,7 +427,7 @@ public final class StartupUtil {
           }
 
           // UIUtil.initDefaultLaF must be called before this call (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
-          Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.DEFAULT);
+          Activity activity = StartUpMeasurer.startActivity("system font data initialization");
           JBUIScale.getSystemFontData();
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
@@ -451,13 +447,16 @@ public final class StartupUtil {
       }
     });
 
-    if (!Main.isHeadless()) {
+    if (Main.isHeadless()) {
+      enableHeadlessAwtGuard();
+    }
+    else {
       initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, ForkJoinPool.commonPool());
     }
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
-        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading", ActivityCategory.DEFAULT);
+        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
         try {
           WriteIntentLockInstrumenter.instrument();
         }
@@ -472,7 +471,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemFontsAndDnDCursors() {
-    Activity activity = StartUpMeasurer.startActivity("system font data initialization", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("system fonts loading");
     // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
     // This caches available font family names (for the default locale) to make corresponding call
@@ -515,7 +514,7 @@ public final class StartupUtil {
   }
 
   private static void updateFrameClassAndWindowIcon() {
-    Activity activity = StartUpMeasurer.startActivity("frame class updating", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("frame class updating");
     AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
 
     activity = activity.endAndStart("update window icon");
@@ -723,7 +722,7 @@ public final class StartupUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static void setupSystemLibraries() {
-    Activity subActivity = StartUpMeasurer.startActivity("system libs setup", ActivityCategory.DEFAULT);
+    Activity subActivity = StartUpMeasurer.startActivity("system libs setup");
 
     String ideTempPath = PathManager.getTempPath();
 
@@ -748,7 +747,7 @@ public final class StartupUtil {
   }
 
   private static void loadSystemLibraries(@NotNull Logger log) {
-    Activity activity = StartUpMeasurer.startActivity("system libs loading", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("system libs loading");
     JnaLoader.load(log);
     if (SystemInfoRt.isWindows) {
       //noinspection ResultOfMethodCallIgnored
@@ -758,7 +757,7 @@ public final class StartupUtil {
   }
 
   private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
-    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
 
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
@@ -867,7 +866,7 @@ public final class StartupUtil {
       return;
     }
 
-    Activity activity = StartUpMeasurer.startActivity("event queue replacing", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
     //noinspection ResultOfMethodCallIgnored
     IdeEventQueue.getInstance();

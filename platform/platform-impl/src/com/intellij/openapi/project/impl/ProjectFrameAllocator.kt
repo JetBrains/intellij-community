@@ -98,7 +98,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
       }
       catch (e: Exception) {
         if (e is StartupAbortedException || e is PluginException) {
-          StartupAbortedException.logAndExit(e)
+          StartupAbortedException.logAndExit(e, null)
         }
         else {
           logger<ProjectFrameAllocator>().error(e)
