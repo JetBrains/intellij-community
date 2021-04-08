@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.dataFlow;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlow.ControlFlowOffset;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.Trap.InsideFinally;
 import com.intellij.codeInspection.dataFlow.Trap.TryCatch;
 import com.intellij.codeInspection.dataFlow.Trap.TryFinally;
 import com.intellij.codeInspection.dataFlow.Trap.TwrFinally;
-import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow.ControlFlowOffset;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -27,9 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.psi.CommonClassNames.*;
 
@@ -56,6 +56,31 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final PsiElement myCodeFragment;
   private final boolean myInlining;
   private final Project myProject;
+
+  /**
+   * Create control flow for given PSI block (method body, lambda expression, etc.) and return it. May return cached block.
+   * It's prohibited to change the resulting control flow (e.g. add instructions, update their indices, update flush variable lists, etc.)
+   *
+   * @param psiBlock psi-block
+   * @param targetFactory factory to bind the PSI block to
+   * @param useInliners whether to use inliners
+   * @return resulting control flow; null if cannot be built (e.g. if the code block contains unrecoverable errors)
+   */
+  @Nullable
+  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {
+    if (!useInliners) {
+      return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
+    }
+    PsiFile file = psiBlock.getContainingFile();
+    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
+      CachedValuesManager.getCachedValue(file, () ->
+        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
+    return fileMap.computeIfAbsent(psiBlock, psi -> {
+      DfaValueFactory factory = new DfaValueFactory(file.getProject(), psiBlock);
+      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
+      return Optional.ofNullable(flow);
+    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
+  }
 
   private static class CannotAnalyzeException extends RuntimeException {
     private CannotAnalyzeException() {
@@ -147,6 +172,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(fqn, scope);
     if (aClass != null) return JavaPsiFacade.getElementFactory(myProject).createType(aClass);
     return JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(fqn, scope);
+  }
+
+  private void removeVariable(@Nullable PsiVariable variable) {
+    if (variable == null) return;
+    myCurrentFlow.addInstruction(new FlushVariableInstruction(PlainDescriptor.createVariableValue(getFactory(), variable)));
   }
 
   <T extends Instruction> T addInstruction(T i) {
@@ -351,23 +381,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (statement instanceof PsiDeclarationStatement) {
         for (PsiElement declaration : ((PsiDeclarationStatement)statement).getDeclaredElements()) {
           if (declaration instanceof PsiVariable) {
-            myCurrentFlow.removeVariable((PsiVariable)declaration);
+            removeVariable((PsiVariable)declaration);
           }
         }
       }
     }
     if (parent instanceof PsiCatchSection) {
-      myCurrentFlow.removeVariable(((PsiCatchSection)parent).getParameter());
+      removeVariable(((PsiCatchSection)parent).getParameter());
     }
     else if (parent instanceof PsiForeachStatement) {
-      myCurrentFlow.removeVariable(((PsiForeachStatement)parent).getIterationParameter());
+      removeVariable(((PsiForeachStatement)parent).getIterationParameter());
     }
     else if (parent instanceof PsiForStatement) {
       PsiStatement statement = ((PsiForStatement)parent).getInitialization();
       if (statement instanceof PsiDeclarationStatement) {
         for (PsiElement declaration : ((PsiDeclarationStatement)statement).getDeclaredElements()) {
           if (declaration instanceof PsiVariable) {
-            myCurrentFlow.removeVariable((PsiVariable)declaration);
+            removeVariable((PsiVariable)declaration);
           }
         }
       }
@@ -377,7 +407,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (list != null) {
         for (PsiResourceListElement resource : list) {
           if (resource instanceof PsiResourceVariable) {
-            myCurrentFlow.removeVariable((PsiVariable)resource);
+            removeVariable((PsiVariable)resource);
           }
         }
       }
@@ -579,7 +609,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     addInstruction(new GotoInstruction(offset));
 
     finishElement(statement);
-    myCurrentFlow.removeVariable(parameter);
+    removeVariable(parameter);
   }
 
   @Override public void visitForStatement(PsiForStatement statement) {
@@ -636,7 +666,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     for (PsiElement declaredVariable : declaredVariables) {
       PsiVariable psiVariable = (PsiVariable)declaredVariable;
-      myCurrentFlow.removeVariable(psiVariable);
+      removeVariable(psiVariable);
     }
   }
 

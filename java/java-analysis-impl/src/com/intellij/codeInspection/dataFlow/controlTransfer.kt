@@ -19,6 +19,7 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.*

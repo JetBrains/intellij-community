@@ -4,7 +4,9 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -179,7 +181,7 @@ public class DataFlowRunner {
 
   protected final @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock) {
     try {
-      return ControlFlow.buildFlow(psiBlock, myValueFactory, myInlining);
+      return ControlFlowAnalyzer.buildFlow(psiBlock, myValueFactory, myInlining);
     }
     catch (ProcessCanceledException ex) {
       throw ex;

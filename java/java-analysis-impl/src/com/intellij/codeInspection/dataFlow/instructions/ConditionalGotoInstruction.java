@@ -17,7 +17,11 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 

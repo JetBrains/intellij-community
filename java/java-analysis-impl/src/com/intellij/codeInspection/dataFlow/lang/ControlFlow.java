@@ -1,28 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.lang;
 
-import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.ReturnTransfer;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.SpliceInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 public final class ControlFlow {
@@ -32,7 +27,7 @@ public final class ControlFlow {
   private @NotNull final DfaValueFactory myFactory;
   private int[] myLoopNumbers;
 
-  ControlFlow(@NotNull final DfaValueFactory factory) {
+  public ControlFlow(@NotNull final DfaValueFactory factory) {
     myFactory = factory;
     myInstructions = new ArrayList<>();
     myElementToEndOffsetMap = new Object2IntOpenHashMap<>();
@@ -43,10 +38,10 @@ public final class ControlFlow {
    * Copy constructor to bind existing flow to another factory. The newly-created flow should not depend on the original factory
    * but may reuse as much of data as possible. The modifications in new flow are prohibited
    *
-   * @param flow flow to copy
+   * @param flow    flow to copy
    * @param factory factory to use
    */
-  private ControlFlow(@NotNull ControlFlow flow, @NotNull DfaValueFactory factory) {
+  public ControlFlow(@NotNull ControlFlow flow, @NotNull DfaValueFactory factory) {
     myFactory = factory;
     myElementToEndOffsetMap = flow.myElementToEndOffsetMap;
     myElementToStartOffsetMap = flow.myElementToStartOffsetMap;
@@ -87,16 +82,14 @@ public final class ControlFlow {
     return myLoopNumbers;
   }
 
-  void finish() {
+  /**
+   * Finalize current control flow. No more instructions are accepted after this call
+   */
+  public void finish() {
     addInstruction(new ReturnInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
 
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
     new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
-  }
-
-  public void removeVariable(@Nullable PsiVariable variable) {
-    if (variable == null) return;
-    addInstruction(new FlushVariableInstruction(PlainDescriptor.createVariableValue(myFactory, variable)));
   }
 
   /**
@@ -129,7 +122,11 @@ public final class ControlFlow {
     return result.toString();
   }
 
-  void makeNop(int index) {
+  /**
+   * Replaces instruction at a given index with NOP
+   * @param index instruction index to replace
+   */
+  public void makeNop(int index) {
     SpliceInstruction instruction = new SpliceInstruction(0);
     instruction.setIndex(index);
     myInstructions.set(index, instruction);
@@ -137,31 +134,6 @@ public final class ControlFlow {
 
   public @NotNull DfaValueFactory getFactory() {
     return myFactory;
-  }
-
-  /**
-   * Create control flow for given PSI block (method body, lambda expression, etc.) and return it. May return cached block.
-   * It's prohibited to change the resulting control flow (e.g. add instructions, update their indices, update flush variable lists, etc.)
-   *
-   * @param psiBlock psi-block
-   * @param targetFactory factory to bind the PSI block to
-   * @param useInliners whether to use inliners
-   * @return resulting control flow; null if cannot be built (e.g. if the code block contains unrecoverable errors)
-   */
-  @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, DfaValueFactory targetFactory, boolean useInliners) {
-    if (!useInliners) {
-      return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
-    }
-    PsiFile file = psiBlock.getContainingFile();
-    ConcurrentHashMap<PsiElement, Optional<ControlFlow>> fileMap =
-      CachedValuesManager.getCachedValue(file, () ->
-        CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
-    return fileMap.computeIfAbsent(psiBlock, psi -> {
-      DfaValueFactory factory = new DfaValueFactory(file.getProject(), psiBlock);
-      ControlFlow flow = new ControlFlowAnalyzer(factory, psiBlock, true).buildControlFlow();
-      return Optional.ofNullable(flow);
-    }).map(flow -> new ControlFlow(flow, targetFactory)).orElse(null);
   }
 
   public abstract static class ControlFlowOffset {

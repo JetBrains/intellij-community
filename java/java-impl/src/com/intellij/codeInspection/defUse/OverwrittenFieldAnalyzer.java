@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
-import com.intellij.codeInspection.dataFlow.BaseVariableAnalyzer;
-import com.intellij.codeInspection.dataFlow.ControlFlow;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.lang.BaseVariableAnalyzer;
+import com.intellij.codeInspection.dataFlow.lang.ControlFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;

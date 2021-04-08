@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlow.inliner;
+package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -62,7 +66,7 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
   private static final CallMatcher COLLECT3_TERMINAL =
-    instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier", 
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier",
                                                                     "java.util.function.BiConsumer", "java.util.function.BiConsumer");
 
   private static final CallMatcher COUNTING_COLLECTOR =
@@ -261,7 +265,7 @@ public class StreamChainInliner implements CallInliner {
 
   static class SumTerminalStep extends TerminalStep {
     private DfType myResultRange;
-    
+
     SumTerminalStep(@NotNull PsiMethodCallExpression call) {
       super(call, null);
     }

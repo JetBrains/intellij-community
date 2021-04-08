@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection.dataFlow.inliner;
+package com.intellij.codeInspection.dataFlow.java.inliner;
 
-import com.intellij.codeInspection.dataFlow.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -26,7 +26,7 @@ public class TransformInliner implements CallInliner {
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "transform").parameterCount(1),
     CallMatcher.instanceCall("one.util.streamex.BaseStreamEx", "chain").parameterCount(1)
   );
-  
+
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     if (TRANSFORM_METHODS.test(call)) {

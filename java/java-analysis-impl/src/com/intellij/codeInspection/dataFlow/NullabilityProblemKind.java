@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -240,7 +242,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       IElementType type = polyadic.getOperationTokenType();
       boolean noUnboxing = (type == JavaTokenType.PLUS && TypeUtils.isJavaLangString(polyadic.getType())) ||
                            ((type == JavaTokenType.EQEQ || type == JavaTokenType.NE) &&
-                            !ContainerUtil.exists(polyadic.getOperands(), 
+                            !ContainerUtil.exists(polyadic.getOperands(),
                                                   op -> TypeConversionUtil.isPrimitiveAndNotNull(op.getType())));
       if (!noUnboxing) {
         return createUnboxingProblem(context, expression);
@@ -543,13 +545,13 @@ public final class NullabilityProblemKind<T extends PsiElement> {
     }
 
     /**
-     * @return true if dereferenced expression has unknown nullability 
+     * @return true if dereferenced expression has unknown nullability
      * (reported in {@link DataFlowInspectionBase#TREAT_UNKNOWN_MEMBERS_AS_NULLABLE} mode).
      */
     public boolean hasUnknownNullability() {
       return myFromUnknown;
     }
-    
+
     @NotNull
     public @InspectionMessage String getMessage(Map<PsiExpression, DataFlowInspectionBase.ConstantResult> expressions) {
       if (myKind.myAlwaysNullMessage == null || myKind.myNormalMessage == null) {
