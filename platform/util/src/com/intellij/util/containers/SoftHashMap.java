@@ -63,7 +63,7 @@ public final class SoftHashMap<K,V> extends RefHashMap<K,V> {
       T t = get();
       T u = ((Key<T>)o).get();
       if (t == null || u == null) return false;
-      return keyEqual(t, u, myStrategy);
+      return keysEqual(t, u, myStrategy);
     }
 
     @Override

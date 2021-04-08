@@ -576,6 +576,35 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   @Test(timeout = TIMEOUT)
+  public void testWeakKeyMapsKeySetIsIterable() {
+    checkKeySetIterable(ContainerUtil.createWeakMap());
+    checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
+    checkKeySetIterable(ContainerUtil.createWeakKeyWeakValueMap());
+    checkKeySetIterable(ContainerUtil.createConcurrentWeakMap());
+  }
+
+  private static void checkKeySetIterable(@NotNull Map<Object, Object> map) {
+    for (int i=0; i<10; i++) {
+      for (int k=0;k<i;k++) {
+        map.put(new Object(), new Object());
+      }
+      checkKeySetIterable(map.keySet());
+    }
+  }
+
+  private static void checkKeySetIterable(@NotNull Set<Object> set) {
+    boolean found;
+    do {
+      found = false;
+      for (Object o : set) {
+        found = true;
+        assertNotNull(o);
+      }
+      GCUtil.tryGcSoftlyReachableObjects(()->set.isEmpty());
+    } while (found);
+  }
+
+  @Test(timeout = TIMEOUT)
   public void testWeakKeyIntValueMapTossed() {
     ObjectIntMap<Object> map = ContainerUtil.createWeakKeyIntValueMap();
     checkKeyTossedEventually(map);

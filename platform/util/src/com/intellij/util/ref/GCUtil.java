@@ -26,6 +26,11 @@ public final class GCUtil {
    */
   @TestOnly
   public static void tryGcSoftlyReachableObjects() {
+    tryGcSoftlyReachableObjects(()->false);
+  }
+
+  @TestOnly
+  public static void tryGcSoftlyReachableObjects(@NotNull BooleanSupplier stop) {
     //long started = System.nanoTime();
     ReferenceQueue<Object> q = new ReferenceQueue<>();
     SoftReference<Object> ref = new SoftReference<>(new Object(), q);
@@ -33,11 +38,10 @@ public final class GCUtil {
     System.gc();
 
     StringBuilder log = new StringBuilder();
-    if (!allocateTonsOfMemory(log, EmptyRunnable.getInstance(), () -> ref.isEnqueued() || ref.get() == null)) {
+    if (!allocateTonsOfMemory(log, EmptyRunnable.getInstance(), () -> ref.isEnqueued() || ref.get() == null || stop.getAsBoolean())) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("GCUtil.tryGcSoftlyReachableObjects: giving up. Log:\n" + log);
     }
-
 
     //System.out.println("Done gc'ing refs:" + ((System.nanoTime() - started) / 1000000));
   }

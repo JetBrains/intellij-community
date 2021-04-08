@@ -1,8 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.HashCommon;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -20,14 +21,13 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @NotNull
   private final HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
-  private boolean processingQueue;
 
   RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
   }
 
-  RefHashMap(int initialCapacity, float loadFactor) {
+  private RefHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, HashingStrategy.canonical());
   }
 
@@ -43,73 +43,61 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     this(4, 0.8f, hashingStrategy);
   }
 
-  static <K> boolean keyEqual(K k1, K k2, HashingStrategy<? super K> strategy) {
+  static <K> boolean keysEqual(K k1, K k2, @NotNull HashingStrategy<? super K> strategy) {
     return k1 == k2 || strategy.equals(k1, k2);
   }
 
-  private final class MyMap extends THashMap<Key<K>, V> {
+  private class MyMap extends Object2ObjectOpenHashMap<Key<K>, V> {
     private MyMap(int initialCapacity, float loadFactor) {
-      super(initialCapacity, loadFactor, new TObjectHashingStrategy<Key<K>>() {
-        @Override
-        public int computeHashCode(final Key<K> key) {
-          return key.hashCode(); // use stored hashCode
-        }
-
-        @Override
-        public boolean equals(final Key<K> o1, final Key<K> o2) {
-          return o1 == o2 || keyEqual(o1.get(), o2.get(), myStrategy);
-        }
-      });
+      super(initialCapacity, loadFactor);
     }
 
     @Override
-    public void compact() {
-      // do not compact the map during many gced references removal because it's bad for performance
-      if (!processingQueue) {
-        super.compact();
-      }
-    }
-
-    private void compactIfNecessary() {
-      if (_deadkeys > _size && capacity() > 42) {
-        // Compact if more than 50% of all keys are dead. Also, don't trash small maps
-        compact();
-      }
-    }
-
-    @Override
-    protected void rehash(int newCapacity) {
+    protected void rehash(int newN) {
       // rehash should discard gced keys
       // because otherwise there is a remote probability of
       // having two (Weak|Soft)Keys with accidentally equal hashCodes and different but gced key values
-      int oldCapacity = _set.length;
-      Object[] oldKeys = _set;
-      V[] oldVals = _values;
-
-      _set = new Object[newCapacity];
-      _values = (V[])new Object[newCapacity];
-
-      for (int i = oldCapacity; i-- > 0; ) {
-        Object o = oldKeys[i];
-        if (o == null || o == REMOVED) continue;
-        Key<K> k = (Key<K>)o;
-        K key = k.get();
-        if (key == null) continue;
-        int index = insertionIndex(k);
-        if (index < 0) {
-          throwObjectContractViolation(_set[-index - 1], o);
-          // make 'key' alive till this point to not allow 'o.referent' to be gced
-          if (key == _set) throw new AssertionError();
+      assert newN != 0;
+      Object[] key = this.key;
+      Object[] value = this.value;
+      int mask = newN - 1; // Note that this is used by the hashing macro
+      Key<K>[] newKey = new Key[newN + 1];
+      Object[] newValue = new Object[newN + 1];
+      int pos;
+      int keysToProcess = size;
+      for (int i = n; i >= 0 && keysToProcess > 0; i--) {
+        Key<K> k = (Key<K>)key[i];
+        if (k == null) {
+          continue;
         }
-        _set[index] = o;
-        _values[index] = oldVals[i];
+        keysToProcess--;
+        K referent = k.get();
+        if (referent == null) {
+          size--;
+          continue;
+        }
+        if (!(newKey[pos = HashCommon.mix(k.hashCode()) & mask] == null)) {
+          while (!(newKey[pos = (pos + 1) & mask] == null)) ;
+        }
+        newKey[pos] = k;
+        newValue[pos] = value[i];
+        // avoid inserting gced keys into new table
+        ObjectUtils.reachabilityFence(referent);
       }
+      newValue[newN] = value[n];
+      n = newN;
+      this.mask = mask;
+      maxFill = HashCommon.maxFill(n, f);
+      this.key = newKey;
+      this.value = (V[])newValue;
     }
   }
 
   @FunctionalInterface
   interface Key<T> {
     T get();
+    int hashCode();
+    boolean equals(Object o);
   }
 
   @NotNull
@@ -139,7 +127,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       if (!(o instanceof Key)) return false;
       K t = myObject;
       K u = ((Key<K>)o).get();
-      return keyEqual(t, u, myStrategy);
+      return keysEqual(t, u, myStrategy);
     }
 
     @Override
@@ -151,18 +139,11 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   // returns true if some refs were tossed
   boolean processQueue() {
     boolean processed = false;
-    try {
-      processingQueue = true;
-      Key<K> wk;
-      while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
-        removeKey(wk);
-        processed = true;
-      }
+    Key<K> wk;
+    while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
+      removeKey(wk);
+      processed = true;
     }
-    finally {
-      processingQueue = false;
-    }
-    myMap.compactIfNecessary();
     return processed;
   }
 
@@ -281,7 +262,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
       Entry<K,V> e = (Entry<K,V>)o;
-      return keyEqual(key, e.getKey(), myStrategy) && Objects.equals(getValue(), e.getValue());
+      return keysEqual(key, e.getKey(), myStrategy) && Objects.equals(getValue(), e.getValue());
     }
 
     @Override
@@ -386,12 +367,13 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
   }
 
-
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
-    if (es == null) entrySet = es = new EntrySet();
+    if (es == null) {
+      entrySet = es = new EntrySet();
+    }
     return es;
   }
 }
