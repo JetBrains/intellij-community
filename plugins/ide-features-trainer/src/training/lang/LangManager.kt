@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.xmlb.annotations.XMap
 import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
 import training.util.courseCanBeUsed
@@ -55,6 +56,7 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
 
   fun setLearningProjectPath(langSupport: LangSupport, path: String) {
     state.languageToProjectMap[langSupport.primaryLanguage] = path
+    state.intIncrementModificationCount()
   }
 
   fun getLangSupportById(languageId: String): LangSupport? {
@@ -85,6 +87,8 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
   // Note: languageName - it is language Id actually
   class State : BaseState() {
     var languageName by string()
+
+    @get:XMap
     val languageToProjectMap by linkedMap<String, String>()
   }
 }
