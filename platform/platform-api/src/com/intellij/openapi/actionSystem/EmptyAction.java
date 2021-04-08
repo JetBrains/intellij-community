@@ -83,7 +83,7 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  public static class MyDelegatingAction extends AnAction implements ActionWithDelegate<AnAction> {
+  public static class MyDelegatingAction extends AnAction implements ActionWithDelegate<AnAction>, UpdateInBackground {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -108,6 +108,11 @@ public final class EmptyAction extends AnAction {
     }
 
     @Override
+    public boolean isUpdateInBackground() {
+      return myDelegate instanceof UpdateInBackground && ((UpdateInBackground)myDelegate).isUpdateInBackground();
+    }
+
+    @Override
     public boolean isInInjectedContext() {
       return myDelegate.isInInjectedContext();
     }
@@ -119,7 +124,7 @@ public final class EmptyAction extends AnAction {
     }
   }
 
-  public static class MyDelegatingActionGroup extends ActionGroup {
+  public static class MyDelegatingActionGroup extends ActionGroup implements UpdateInBackground {
     @NotNull private final ActionGroup myDelegate;
 
     public MyDelegatingActionGroup(@NotNull ActionGroup action) {
@@ -161,6 +166,11 @@ public final class EmptyAction extends AnAction {
     @Override
     public boolean isDumbAware() {
       return myDelegate.isDumbAware();
+    }
+
+    @Override
+    public boolean isUpdateInBackground() {
+      return myDelegate instanceof UpdateInBackground && ((UpdateInBackground)myDelegate).isUpdateInBackground();
     }
 
     @Override

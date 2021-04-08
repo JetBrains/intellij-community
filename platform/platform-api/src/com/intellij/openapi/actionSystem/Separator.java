@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  * Represents a separator.
  */
 @SuppressWarnings("ComponentNotRegistered")
-public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
+public final class Separator extends AnAction implements DumbAware, UpdateInBackground, LightEditCompatible {
 
   private static final Separator ourInstance = new Separator();
   private final Supplier<@NlsContexts.Separator String> myDynamicText;
