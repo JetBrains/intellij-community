@@ -45,7 +45,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
       }
     }
 
-    if (dialog("Change Project Icon", panel).showAndGet()) {
+    if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
       val darkIconSvg = File("$projectPath/.idea/icon_dark.svg")
       val iconSvg: File = File("$projectPath/.idea/icon.svg")
       val darkIconPng = File("$projectPath/.idea/icon_dark.png")
@@ -55,13 +55,13 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
         FileUtil.copy(File(ui.pathToDarkIcon!!.path), darkIconSvg)
         VfsUtil.markDirtyAndRefresh(false, false, false, darkIconSvg)
         FileUtil.delete(darkIconPng)
-        RecentProjectIconHelper.refreshProjectIcon(ui.pathToDarkIcon!!.path)
+        RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
       if (ui.pathToIcon != null) {
         FileUtil.copy(File(ui.pathToIcon!!.path), iconSvg)
         VfsUtil.markDirtyAndRefresh(false, false, false, iconSvg)
         FileUtil.delete(iconPng)
-        RecentProjectIconHelper.refreshProjectIcon(ui.pathToIcon!!.path)
+        RecentProjectIconHelper.refreshProjectIcon(projectPath)
       }
     }
   }
