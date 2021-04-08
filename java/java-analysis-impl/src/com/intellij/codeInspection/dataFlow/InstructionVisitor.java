@@ -18,10 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
-import com.intellij.codeInspection.dataFlow.value.DfaCondition;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -71,7 +68,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(instruction.getLExpression()), PsiArrayAccessExpression.class);
     if (arrayAccess != null) {
       PsiExpression array = arrayAccess.getArrayExpression();
-      DfaValue value = factory.createValue(array);
+      DfaValue value = DfaExpressionFactory.getExpressionDfaValue(factory, array);
       if (value instanceof DfaVariableValue) {
         for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables().toArray(new DfaVariableValue[0])) {
           if (qualified.isFlushableByCalls()) {

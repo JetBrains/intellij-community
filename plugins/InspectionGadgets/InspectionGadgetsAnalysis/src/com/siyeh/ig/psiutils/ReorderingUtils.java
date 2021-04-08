@@ -310,8 +310,8 @@ public final class ReorderingUtils {
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
-          DfaValue leftVal = myFactory.createValue(left);
-          DfaValue rightVal = myFactory.createValue(right);
+          DfaValue leftVal = DfaExpressionFactory.getExpressionDfaValue(myFactory, left);
+          DfaValue rightVal = DfaExpressionFactory.getExpressionDfaValue(myFactory, right);
           if (leftVal == null || rightVal == null) return false;
           DfaCondition value1 = leftVal.cond(relationType, rightVal);
           DfaCondition value2 = rightVal.cond(Objects.requireNonNull(relationType.getFlipped()), leftVal);
@@ -430,8 +430,8 @@ public final class ReorderingUtils {
         return false;
       }
       if (element instanceof PsiSwitchExpression) {
-        // We cannot correctly process possible NPE in switch selector expression inside 
-        // ConditionCoveredByFurtherConditionInspection.computeOperandValues, 
+        // We cannot correctly process possible NPE in switch selector expression inside
+        // ConditionCoveredByFurtherConditionInspection.computeOperandValues,
         // so let's conservatively assume that the exception is possible
         return false;
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
@@ -86,7 +87,7 @@ import java.util.Set;
     DfaValue qualifierValue = null;
     if (call instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
-      qualifierValue = factory.createValue(qualifier);
+      qualifierValue = DfaExpressionFactory.getExpressionDfaValue(factory, qualifier);
     }
     if (qualifierValue == null) {
       qualifierValue = factory.getUnknown();
@@ -98,7 +99,7 @@ import java.util.Set;
     for (int i = 0; i < parameters.length; i++) {
       DfaValue argValue = null;
       if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
-        argValue = factory.createValue(args[i]);
+        argValue = DfaExpressionFactory.getExpressionDfaValue(factory, args[i]);
       }
       if (argValue == null) {
         argValue = factory.getUnknown();

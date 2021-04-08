@@ -192,7 +192,7 @@ public class StandardInstructionVisitor<EXPR extends PsiElement> extends Instruc
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = DfIntType.extractRange(memState.getDfType(index));
-    DfaValue arrayElementValue = runner.getFactory().getExpressionFactory().getArrayElementValue(array, rangeSet);
+    DfaValue arrayElementValue = DfaExpressionFactory.getArrayElementValue(runner.getFactory(), array, rangeSet);
     if (!DfaTypeValue.isUnknown(arrayElementValue)) {
       result = arrayElementValue;
     }

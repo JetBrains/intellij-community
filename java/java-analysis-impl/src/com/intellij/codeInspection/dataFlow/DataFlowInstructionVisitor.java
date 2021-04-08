@@ -116,7 +116,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
            ((PsiAssignmentExpression)rExpression).getOperationTokenType().equals(JavaTokenType.EQ)) {
       rExpression = ((PsiAssignmentExpression)rExpression).getRExpression();
     }
-    DfaValue dest = runner.getFactory().createValue(rExpression);
+    DfaValue dest = DfaExpressionFactory.getExpressionDfaValue(runner.getFactory(), rExpression);
     if (dest == null) return false;
     DfType dfType = dest.getDfType();
 

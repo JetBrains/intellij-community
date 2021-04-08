@@ -17,7 +17,6 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ public class DfaValueFactory {
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myBoxedFactory = new DfaWrappedValue.Factory(this);
-    myExpressionFactory = new DfaExpressionFactory(this);
     myBinOpFactory = new DfaBinOpValue.Factory(this);
     myTypeValueFactory = new DfaTypeValue.Factory(this);
   }
@@ -77,12 +75,6 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
-  }
-
-  @Nullable
-  @Contract("null -> null")
-  public DfaValue createValue(PsiExpression psiExpression) {
-    return myExpressionFactory.getExpressionDfaValue(psiExpression);
   }
 
   @NotNull
@@ -204,7 +196,6 @@ public class DfaValueFactory {
   private final DfaVariableValue.Factory myVarFactory;
   private final DfaWrappedValue.Factory myBoxedFactory;
   private final DfaBinOpValue.Factory myBinOpFactory;
-  private final DfaExpressionFactory myExpressionFactory;
   private final DfaTypeValue.Factory myTypeValueFactory;
   private final DfaValue mySentinelValue = new DfaValue(this) {
     @Override
@@ -229,9 +220,6 @@ public class DfaValueFactory {
   }
 
   @NotNull
-  public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
-
-  @NotNull
   public DfaBinOpValue.Factory getBinOpFactory() {
     return myBinOpFactory;
   }
@@ -240,7 +228,7 @@ public class DfaValueFactory {
   public DfaValue createCommonValue(PsiExpression @NotNull [] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
-      DfaValue expressionValue = createValue(expression);
+      DfaValue expressionValue = DfaExpressionFactory.getExpressionDfaValue(this, expression);
       if (expressionValue == null) {
         expressionValue = getObjectType(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
