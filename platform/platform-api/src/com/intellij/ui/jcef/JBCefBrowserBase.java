@@ -151,7 +151,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @Nullable private final CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
   private final ReentrantLock myCookieManagerLock = new ReentrantLock();
-  protected volatile boolean myIsCefBrowserCreated;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @Nullable private volatile String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
@@ -210,7 +209,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       cefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
         @Override
         public void onAfterCreated(CefBrowser browser) {
-          myIsCefBrowserCreated = true;
           LoadDeferrer loader = myLoadDeferrer;
           if (loader != null) {
             loader.load();
@@ -218,11 +216,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           }
         }
       }, getCefBrowser());
-
-      // check if the native browser has already been created (no onAfterCreated will be called then)
-      if (cefBrowser instanceof CefNativeAdapter && ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0) {
-        myIsCefBrowserCreated = true;
-      }
 
       cefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
@@ -280,7 +273,6 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myLoadHandler = null;
       myRequestHandler = null;
       myContextMenuHandler = null;
-      myIsCefBrowserCreated = true; // if the browser comes from the outer - consider its native browser created
     }
   }
 
@@ -288,7 +280,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * Loads URL.
    */
   public final void loadURL(@NotNull String url) {
-    if (myIsCefBrowserCreated) {
+    if (isCefBrowserCreated()) {
       loadUrlImpl(url);
     }
     else {
@@ -303,7 +295,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * @param url  a dummy URL that may affect restriction policy applied to the content
    */
   public final void loadHTML(@NotNull String html, @NotNull String url) {
-    if (myIsCefBrowserCreated) {
+    if (isCefBrowserCreated()) {
       loadHtmlImpl(html, url);
     }
     else {
@@ -382,7 +374,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   final boolean isCefBrowserCreated() {
-    return myIsCefBrowserCreated;
+    assert myCefBrowser instanceof CefNativeAdapter;
+    // [tav] todo: this can be thread race prone
+    return ((CefNativeAdapter)myCefBrowser).getNativeRef("CefBrowser") != 0;
   }
 
   @Override

@@ -7,7 +7,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
-import org.cef.callback.CefNativeAdapter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -66,8 +65,7 @@ class JBCefOsrComponent extends JPanel {
   @Override
   public void addNotify() {
     super.addNotify();
-    // [tav] todo: this check is actually not thread safe
-    if (((CefNativeAdapter)myBrowser.getCefBrowser()).getNativeRef("CefBrowser") == 0) {
+    if (!myBrowser.isCefBrowserCreated()) {
       myBrowser.getCefBrowser().createImmediately();
     }
   }
