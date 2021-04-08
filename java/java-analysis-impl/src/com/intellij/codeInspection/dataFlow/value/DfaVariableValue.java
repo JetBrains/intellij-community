@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,7 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   @Nullable
-  public PsiModifierListOwner getPsiVariable() {
+  public PsiElement getPsiVariable() {
     return myDescriptor.getPsiElement();
   }
 
@@ -189,7 +190,7 @@ public final class DfaVariableValue extends DfaValue {
     if(myDescriptor instanceof SpecialField) {
       return dfType.meet(((SpecialField)myDescriptor).getDefaultValue(false));
     }
-    PsiModifierListOwner psi = getPsiVariable();
+    PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiVariable(), PsiModifierListOwner.class);
     if (type instanceof PsiPrimitiveType) {
       if (TypeConversionUtil.isIntegralNumberType(type)) {
         LongRangeSet fromType = LongRangeSet.fromType(type);

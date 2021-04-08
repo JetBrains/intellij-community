@@ -374,7 +374,7 @@ public final class DfaPsiUtil {
             if (instruction instanceof FinishElementInstruction) {
               Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
               vars.removeIf(v -> {
-                PsiModifierListOwner variable = v.getPsiVariable();
+                PsiElement variable = v.getPsiVariable();
                 return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
               });
             }

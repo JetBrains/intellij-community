@@ -223,7 +223,7 @@ public enum SpecialField implements VariableDescriptor {
   public boolean isStable() {
     return myFinal;
   }
-  
+
   abstract boolean isMyQualifierType(PsiType type);
 
   /**
@@ -280,12 +280,12 @@ public enum SpecialField implements VariableDescriptor {
     }
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
-      PsiModifierListOwner psiVariable = variableValue.getPsiVariable();
-      if (psiVariable instanceof PsiField &&
-          factory.canTrustFieldInitializer((PsiField)psiVariable) &&
+      PsiField psiVariable = ObjectUtils.tryCast(variableValue.getPsiVariable(), PsiField.class);
+      if (psiVariable != null &&
+          factory.canTrustFieldInitializer(psiVariable) &&
           psiVariable.hasModifierProperty(PsiModifier.STATIC) &&
           psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiExpression initializer = ((PsiField)psiVariable).getInitializer();
+        PsiExpression initializer = psiVariable.getInitializer();
         if (initializer != null) {
           DfType dfType = fromInitializer(initializer);
           if (dfType != DfTypes.TOP) {
@@ -302,8 +302,8 @@ public enum SpecialField implements VariableDescriptor {
   /**
    * Returns a dfType that describes any possible value this special field may have
    *
-   * @param forAccessor if true, the default value for accessor result should be returned 
-   *                    (may differ from internal representation of value) 
+   * @param forAccessor if true, the default value for accessor result should be returned
+   *                    (may differ from internal representation of value)
    * @return a dfType for the default value
    */
   @NotNull
@@ -391,7 +391,7 @@ public enum SpecialField implements VariableDescriptor {
   /**
    * Returns a special field which corresponds to given qualifier type
    * (currently it's assumed that only one special field may exist for given qualifier type)
-   * 
+   *
    * @param type a qualifier type
    * @return a special field; null if no special field is available for given type
    */
@@ -421,7 +421,7 @@ public enum SpecialField implements VariableDescriptor {
     }
     return fromQualifierType(value.getType());
   }
-  
+
   public @NotNull @Nls String getPresentationName() {
     return JavaAnalysisBundle.message(myTitleKey);
   }

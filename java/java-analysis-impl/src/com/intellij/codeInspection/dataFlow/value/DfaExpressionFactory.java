@@ -256,11 +256,11 @@ public class DfaExpressionFactory {
       return value == null ? myFactory.getUnknown() : value;
     }
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
-    PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
-    if (!(arrayPsiVar instanceof PsiVariable)) return myFactory.getUnknown();
-    PsiType arrayType = ((PsiVariable)arrayPsiVar).getType();
+    PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
+    if (arrayPsiVar == null) return myFactory.getUnknown();
+    PsiType arrayType = arrayPsiVar.getType();
     PsiType targetType = arrayType instanceof PsiArrayType ? ((PsiArrayType)arrayType).getComponentType() : null;
-    PsiExpression[] elements = ExpressionUtils.getConstantArrayElements((PsiVariable)arrayPsiVar);
+    PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(arrayPsiVar);
     if (elements == null || elements.length == 0) return myFactory.getUnknown();
     indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
     if (indexSet.isEmpty() || indexSet.isCardinalityBigger(100)) return myFactory.getUnknown();
@@ -279,9 +279,9 @@ public class DfaExpressionFactory {
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiType type = arrayDfaVar.getType();
     if (!(type instanceof PsiArrayType)) return null;
-    PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();
-    if (arrayPsiVar instanceof PsiVariable) {
-      PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement((PsiVariable)arrayPsiVar, index);
+    PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
+    if (arrayPsiVar != null) {
+      PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement(arrayPsiVar, index);
       if (constantArrayElement != null) {
         return getAdvancedExpressionDfaValue(constantArrayElement, ((PsiArrayType)type).getComponentType());
       }

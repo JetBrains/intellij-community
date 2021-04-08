@@ -12,8 +12,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
@@ -78,7 +78,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
     if (instruction instanceof PushInstruction) {
       final DfaValue var = ((PushInstruction)instruction).getValue();
       if (var instanceof DfaVariableValue) {
-        final PsiModifierListOwner psiVar = ((DfaVariableValue)var).getPsiVariable();
+        final PsiElement psiVar = ((DfaVariableValue)var).getPsiVariable();
         if (psiVar instanceof PsiParameter) {
           myUsedParameters.add((PsiParameter)psiVar);
         }
@@ -88,7 +88,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
     if (instruction instanceof AssignInstruction) {
       final DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
       if (value instanceof DfaVariableValue) {
-        final PsiModifierListOwner psiVariable = ((DfaVariableValue)value).getPsiVariable();
+        final PsiElement psiVariable = ((DfaVariableValue)value).getPsiVariable();
         if (psiVariable instanceof PsiParameter) {
           myPossiblyViolatedParameters.remove(psiVariable);
         }
@@ -133,7 +133,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
 
     @Override
     protected void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize, boolean shouldMarkFlushed) {
-      final PsiModifierListOwner psi = variable.getPsiVariable();
+      final PsiElement psi = variable.getPsiVariable();
       if (psi instanceof PsiParameter && myPossiblyViolatedParameters.contains(psi)) return;
       super.flushVariable(variable, canonicalize, shouldMarkFlushed);
     }

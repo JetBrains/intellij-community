@@ -234,7 +234,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
     @Override
     protected boolean isModificationAllowed(DfaVariableValue variable) {
-      PsiModifierListOwner owner = variable.getPsiVariable();
+      PsiElement owner = variable.getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
   }

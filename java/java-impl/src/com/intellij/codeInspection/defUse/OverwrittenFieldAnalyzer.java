@@ -92,7 +92,8 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
         // This might be incorrect in rare cases but allows finding many useful bugs.
         readVariables = StreamEx.of(myFactory.getValues())
           .select(DfaVariableValue.class)
-          .filter(value -> value.getPsiVariable() instanceof PsiField && value.getPsiVariable().hasModifierProperty(PsiModifier.STATIC));
+          .filter(value -> value.getPsiVariable() instanceof PsiField &&
+                           ((PsiField)value.getPsiVariable()).hasModifierProperty(PsiModifier.STATIC));
       }
       else if (instruction instanceof FinishElementInstruction) {
         readVariables = StreamEx.of(((FinishElementInstruction)instruction).getVarsToFlush());

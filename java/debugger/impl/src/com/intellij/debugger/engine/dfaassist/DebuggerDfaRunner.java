@@ -146,7 +146,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         }
         Value qualifierValue = findJdiValue(var.getQualifier());
         if (qualifierValue == null) return null;
-        PsiModifierListOwner element = descriptor.getPsiElement();
+        PsiElement element = descriptor.getPsiElement();
         if (element instanceof PsiField && qualifierValue instanceof ObjectReference) {
           ReferenceType type = ((ObjectReference)qualifierValue).referenceType();
           PsiClass psiClass = ((PsiField)element).getContainingClass();
@@ -171,7 +171,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         // Assume that assertions are enabled if we cannot fetch the status
         return myLocation.virtualMachine().mirrorOf(status == ThreeState.NO);
       }
-      PsiModifierListOwner psi = var.getPsiVariable();
+      PsiElement psi = var.getPsiVariable();
       if (psi instanceof PsiClass) {
         // this; probably qualified
         PsiClass currentClass = PsiTreeUtil.getParentOfType(myBody, PsiClass.class);
@@ -201,7 +201,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
           }
         }
       }
-      if (psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
+      if (psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass psiClass = ((PsiField)psi).getContainingClass();
         if (psiClass != null) {
           String name = psiClass.getQualifiedName();

@@ -83,16 +83,16 @@ public class StandardInstructionVisitor<EXPR extends PsiElement> extends Instruc
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
 
-      PsiModifierListOwner psi = var.getPsiVariable();
+      PsiElement psi = var.getPsiVariable();
       if (dfaSource instanceof DfaTypeValue &&
-          ((psi instanceof PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) ||
+          ((psi instanceof PsiField && ((PsiField)psi).hasModifierProperty(PsiModifier.STATIC)) ||
            (var.getQualifier() != null && !DfReferenceType.isLocal(memState.getDfType(var.getQualifier()))))) {
         DfType dfType = dfaSource.getDfType();
         if (dfType instanceof DfReferenceType) {
           dfaSource = dfaSource.getFactory().fromDfType(((DfReferenceType)dfType).dropLocality());
         }
       }
-      if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
+      if (!(psi instanceof PsiField) || !((PsiField)psi).hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
       if (var.getInherentNullability() == Nullability.NULLABLE &&
@@ -770,7 +770,7 @@ public class StandardInstructionVisitor<EXPR extends PsiElement> extends Instruc
                                                  DfaMemoryState state,
                                                  DfaValueFactory factory, DfaValue precalculated) {
     if (precalculated instanceof DfaVariableValue && qualifierValue != null) {
-      PsiModifierListOwner psi = ((DfaVariableValue)precalculated).getPsiVariable();
+      PsiElement psi = ((DfaVariableValue)precalculated).getPsiVariable();
       // Perform constant folding for getClass() call.
       if (psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
         TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifierValue));

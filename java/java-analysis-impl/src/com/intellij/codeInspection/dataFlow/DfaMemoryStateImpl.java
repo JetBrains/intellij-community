@@ -953,8 +953,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean equalizeTypesOnGetClass(DfaVariableValue dfaLeft, DfaVariableValue dfaRight) {
-    PsiModifierListOwner leftPsi = dfaLeft.getPsiVariable();
-    PsiModifierListOwner rightPsi = dfaRight.getPsiVariable();
+    PsiElement leftPsi = dfaLeft.getPsiVariable();
+    PsiElement rightPsi = dfaRight.getPsiVariable();
     if (leftPsi != rightPsi || !(leftPsi instanceof PsiMethod) || !PsiTypesUtil.isGetClass((PsiMethod)leftPsi)) return true;
     DfaVariableValue leftQualifier = dfaLeft.getQualifier();
     DfaVariableValue rightQualifier = dfaRight.getQualifier();
@@ -968,7 +968,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     EqClass eqClass = getEqClass(variable);
     List<DfaVariableValue> variables = eqClass == null ? Collections.singletonList(variable) : eqClass.asList();
     for (DfaVariableValue var : variables) {
-      PsiModifierListOwner psi = var.getPsiVariable();
+      PsiElement psi = var.getPsiVariable();
       DfaVariableValue qualifier = var.getQualifier();
       if (qualifier != null && psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
         DfaTypeValue typeValue = getFactory().fromDfType(TypeConstraints.exact(value).asDfType());
@@ -1127,7 +1127,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean isUnstableValue(DfaValue value) {
     if (!(value instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)value;
-    PsiModifierListOwner owner = var.getPsiVariable();
+    PsiElement owner = var.getPsiVariable();
     if (!(owner instanceof PsiMethod)) return false;
     if (var.getType() instanceof PsiPrimitiveType) return false;
     if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
@@ -1355,7 +1355,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void flushQualifiedMethods(@NotNull DfaVariableValue variable) {
-    PsiModifierListOwner psiVariable = variable.getPsiVariable();
+    PsiElement psiVariable = variable.getPsiVariable();
     DfaVariableValue qualifier = variable.getQualifier();
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write

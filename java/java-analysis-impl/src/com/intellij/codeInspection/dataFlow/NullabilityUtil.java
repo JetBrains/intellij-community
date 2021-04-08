@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -32,7 +33,7 @@ public final class NullabilityUtil {
     if (value.getDescriptor() == SpecialField.OPTIONAL_VALUE) {
       return DfaNullability.NULLABLE;
     }
-    PsiModifierListOwner var = value.getPsiVariable();
+    PsiModifierListOwner var = ObjectUtils.tryCast(value.getPsiVariable(), PsiModifierListOwner.class);
     if (value.getType() instanceof PsiPrimitiveType) {
       return DfaNullability.UNKNOWN;
     }

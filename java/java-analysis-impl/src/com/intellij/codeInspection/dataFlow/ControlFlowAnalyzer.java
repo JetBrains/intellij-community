@@ -804,7 +804,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     });
     for (DfaValue value : getFactory().getValues()) {
       if(value instanceof DfaVariableValue) {
-        PsiModifierListOwner var = ((DfaVariableValue)value).getPsiVariable();
+        PsiElement var = ((DfaVariableValue)value).getPsiVariable();
         if (var instanceof PsiVariable && variables.contains(var)) {
           escapedVars.add((DfaVariableValue)value);
         }
