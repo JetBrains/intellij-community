@@ -534,8 +534,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
-    if (StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
-      staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, true));
+    try {
+      if (StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
+        staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, true));
+      }
+    }
+    catch (Exception e) {
+      LOG.error("Exception while checking for stale records", e);
     }
   }
 
