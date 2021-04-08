@@ -100,6 +100,30 @@ class PyCodeFenceTest : PyTestCase() {
     """.trimIndent())
   }
 
+  fun testDoctestInjected() {
+    myFixture.configureByText("a.md", """
+      ```doctest
+      foo = 1
+      f<caret>
+
+      ```
+    """.trimIndent())
+    myFixture.completeBasic()
+    assertContainsElements(lookupStrings, "foo")
+  }
+
+  fun testDefaultPythonDialectsInCompletion() {
+    myFixture.configureByText("a.md", """
+      ```<caret>
+      foo = 1
+      f
+
+      ```
+    """.trimIndent())
+    myFixture.completeBasic()
+    assertContainsElements(lookupStrings, "doctest", "python")
+  }
+
   private val lookupStrings: List<String>
     get() = myFixture.lookupElementStrings ?: emptyList()
 }
