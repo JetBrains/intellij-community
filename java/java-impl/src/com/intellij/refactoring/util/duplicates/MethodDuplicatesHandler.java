@@ -47,6 +47,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,7 +70,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    return false;
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null
+           && getCannotRefactorMessage(PsiTreeUtil.getParentOfType(element, PsiMember.class)) == null;
   }
 
   @Override
