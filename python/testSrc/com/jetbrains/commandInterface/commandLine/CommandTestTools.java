@@ -15,10 +15,10 @@
  */
 package com.jetbrains.commandInterface.commandLine;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.commandInterface.command.*;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.PythonTestUtil;
@@ -85,8 +85,8 @@ final class CommandTestTools {
   /**
    * Hack to register file type (not registered for some reason?)
    */
-  static void initFileType() {
-    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associateExtension(CommandLineFileType.INSTANCE, CommandLineFileType.EXTENSION));
+  static void initFileType(@NotNull Disposable parentDisposable) {
+    CodeInsightTestFixtureImpl.associateExtensionTemporarily(CommandLineFileType.INSTANCE, CommandLineFileType.EXTENSION, parentDisposable);
   }
 
   /**

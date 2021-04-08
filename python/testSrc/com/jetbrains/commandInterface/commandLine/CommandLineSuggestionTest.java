@@ -16,12 +16,12 @@
 package com.jetbrains.commandInterface.commandLine;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import java.util.HashSet;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -35,7 +35,7 @@ public final class CommandLineSuggestionTest extends PyTestCase {
    * Ensures suggestions are correct
    */
   public void testSuggestions() {
-    CommandTestTools.initFileType();
+    CommandTestTools.initFileType(getTestRootDisposable());
     CommandTestTools.createFileByText(myFixture, "command positional_ar --a");
 
     ensureSuggestions("command", "command");
