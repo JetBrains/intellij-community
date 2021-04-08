@@ -98,7 +98,6 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    *
    * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
    */
-  @ApiStatus.Experimental
   @Nullable
   GutterIconRenderer getGutterIconRenderer();
 

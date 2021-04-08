@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +102,6 @@ public interface EditorCustomElementRenderer {
    * This method takes preference over {@link #getContextMenuGroupId(Inlay)}, i.e. if it returns a non-null value, the latter method won't
    * be called.
    */
-  @ApiStatus.Experimental
   @Nullable
   default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
     return null;
@@ -116,7 +114,6 @@ public interface EditorCustomElementRenderer {
    * Returned provider should have a meaningful implementation of {@code equals} method - {@link Inlay#update()} will update the inlay's
    * provider (only) if newly returned instance is not equal to the previously defined one.
    */
-  @ApiStatus.Experimental
   @Nullable
   default GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
     return null;
