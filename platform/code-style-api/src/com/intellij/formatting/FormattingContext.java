@@ -4,6 +4,8 @@ package com.intellij.formatting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,7 +18,7 @@ import java.util.Objects;
 /**
  * Represents a context of current formatting operation
  */
-public class FormattingContext {
+public class FormattingContext extends UserDataHolderBase {
   private final @NotNull PsiElement myPsiElement;
   private final @NotNull TextRange myFormattingRange;
   private final @NotNull CodeStyleSettings myCodeStyleSettings;

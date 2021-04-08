@@ -284,6 +284,9 @@
     <projectService serviceInterface="com.intellij.application.options.codeStyle.cache.CodeStyleCachingService"
                     serviceImplementation="com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl"/>
 
+    <projectService serviceInterface="com.intellij.formatting.service.FormattingNotificationService"
+                    serviceImplementation="com.intellij.formatting.service.FormattingUiNotificationService"/>
+
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"/>
 
