@@ -16,15 +16,17 @@ import training.util.trainerPluginConfigName
 internal class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    if (!isLearningProject(project, langSupport)) return
-    CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
-    removeFromRecentProjects(project)
-
-    val learnProjectState = LearnProjectState.instance
-    val way = learnProjectState.firstTimeOpenedWay
-    if (way != null) {
-      StatisticBase.logNonLearningProjectOpened(way)
-      learnProjectState.firstTimeOpenedWay = null
+    if (isLearningProject(project, langSupport)) {
+      CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
+      removeFromRecentProjects(project)
+    }
+    else {
+      val learnProjectState = LearnProjectState.instance
+      val way = learnProjectState.firstTimeOpenedWay
+      if (way != null) {
+        StatisticBase.logNonLearningProjectOpened(way)
+        learnProjectState.firstTimeOpenedWay = null
+      }
     }
   }
 
