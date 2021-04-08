@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.statistic
 
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
@@ -160,7 +159,9 @@ internal class StatisticBase : CounterUsagesCollector() {
     }
 
     fun logLearnProjectOpenedForTheFirstTime(way: LearnProjectOpeningWay) {
-      if (RecentProjectsManagerBase.instanceEx.getRecentPaths().isEmpty()) {
+      val langManager = LangManager.getInstance()
+      val langSupport = langManager.getLangSupport() ?: return
+      if (langManager.getLearningProjectPath(langSupport) == null) {
         LearnProjectState.instance.firstTimeOpenedWay = way
         learnProjectOpenedFirstTimeEvent.log(way, courseLanguage())
       }
