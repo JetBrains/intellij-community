@@ -100,6 +100,10 @@ object AdditionalKotlinArtifacts {
         findLibrary(RepoLocation.MAVEN_REPOSITORY, "jsr305.xml", "com.google.code.findbugs", "jsr305")
     }
 
+    val junit3: File by lazy {
+        findLibrary(RepoLocation.MAVEN_REPOSITORY, "JUnit3.xml", "junit", "junit")
+    }
+
     val parcelizeRuntime: File by lazy {
         KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/parcelize-runtime.jar").also { check(it.exists()) }
     }

@@ -13,21 +13,21 @@ abstract class <lineMarker descr="*"><lineMarker descr="Run Test">KBase</lineMar
 }
 
 
-class <lineMarker descr="*">KTest</lineMarker> : KBase() {
+class <lineMarker descr="Run Test">KTest</lineMarker> : KBase() {
     @Test
-    fun <lineMarker descr="*">testBar</lineMarker>() {
+    fun <lineMarker descr="Run Test">testBar</lineMarker>() {
 
     }
 }
 
-class <lineMarker descr="*">KTest2</lineMarker> : KBase() {
+class <lineMarker descr="Run Test">KTest2</lineMarker> : KBase() {
     @Test
-    fun <lineMarker descr="*">testBaz</lineMarker>() {
+    fun <lineMarker descr="Run Test">testBaz</lineMarker>() {
 
     }
 }
 
-abstract class <lineMarker descr="*"><lineMarker descr="Run Test">AbstractClassWithoutInheritors</lineMarker></lineMarker> : TestCase() {
+abstract class <lineMarker descr="Run Test"><lineMarker descr="Run Test">AbstractClassWithoutInheritors</lineMarker></lineMarker> : TestCase() {
     // NOTE: showing line markers for abstract method, which has no inheritors is not ideal, because those methods cannot actually be run
     // Sadly, run configurations can actually be created for them (same in Java), so this behaviour is consistent with context menu
     @Test

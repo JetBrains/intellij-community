@@ -287,6 +287,16 @@ public class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("jUnit3TestFile.kt")
+        public void testJUnit3TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
+        }
+
+        @TestMetadata("jUnit4TestFile.kt")
+        public void testJUnit4TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");

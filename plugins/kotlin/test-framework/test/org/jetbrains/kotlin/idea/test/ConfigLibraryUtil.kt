@@ -39,6 +39,8 @@ object ConfigLibraryUtil {
 
     private val ATTACHABLE_LIBRARIES = mapOf(
         "JUnit" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
+        "JUnit3" to AdditionalKotlinArtifacts.junit3,
+        "JUnit4" to File(PathUtil.getJarPathForClass(junit.framework.TestCase::class.java)),
         "TestNG" to File(PathUtil.getJarPathForClass(org.testng.annotations.Test::class.java))
     )
 

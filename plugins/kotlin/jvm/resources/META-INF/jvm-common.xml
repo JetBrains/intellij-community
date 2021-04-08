@@ -189,6 +189,10 @@
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JvmIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.JsIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.CommonIdePlatformKindTooling"/>
+
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.samWithReceiver.ide.IdeSamWithReceiverComponentContributor"/>
 
@@ -210,6 +214,14 @@
         <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldExpressionCodegenExtension"/>
         <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
         <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
+
+        <lightTestFramework id="junit3LightTestFramework" order="before junit4LightTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit3LightTestFramework"/>
+        <lightTestFramework id="junit4LightTestFramework" order="before lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.JUnit4LightTestFramework"/>
+        <lightTestFramework id="lightClassDelegateTestFramework" implementation="org.jetbrains.kotlin.idea.platform.testintegration.LightClassDelegateTestFramework"/>
     </extensions>
+    <extensionPoints>
+      <extensionPoint qualifiedName="org.jetbrains.kotlin.lightTestFramework"
+                      interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
+    </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

@@ -5,13 +5,10 @@
 
 package org.jetbrains.kotlin.idea.core.platform.impl
 
-import com.intellij.codeInsight.TestFrameworks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
+import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
@@ -20,6 +17,10 @@ import org.jetbrains.kotlin.idea.framework.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor.Companion.getTestStateIcon
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.platform.isKotlinTestDeclaration
+import org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework
+import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkResult
+import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
+import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
@@ -51,32 +52,28 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         return JavaRuntimeDetectionUtil::getJavaRuntimeVersion
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
-        val (urls, framework) = when (declaration) {
-            is KtClassOrObject -> {
-                val lightClass = declaration.toLightClass() ?: return null
-                val framework = TestFrameworks.detectFramework(lightClass)
-                if (framework?.isTestClass(lightClass) == false) {
-                    return null
-                }
-                listOf("java:suite://${lightClass.qualifiedName}") to framework
+    private fun calculateUrlsToFramework(declaration: KtNamedDeclaration): Pair<List<String>, TestFramework>? {
+        for (lightTestFramework in LightTestFramework.EXTENSION_NAME.extensionList) {
+            val framework = when (val result = lightTestFramework.detectFramework(declaration)) {
+                is ResolvedLightTestFrameworkResult -> result.testFramework
+                is UnsureLightTestFrameworkResult -> continue
+                is NoLightTestFrameworkResult -> return null
             }
-
-            is KtNamedFunction -> {
-                val lightMethod = declaration.toLightMethods().firstOrNull() ?: return null
-                val lightClass = lightMethod.containingClass as? KtLightClass ?: return null
-                val framework = TestFrameworks.detectFramework(lightClass)
-                if (framework?.isTestMethod(lightMethod, false) == false) {
-                    return null
-                }
-                listOf(
-                    "java:test://${lightClass.qualifiedName}/${lightMethod.name}",
-                    "java:test://${lightClass.qualifiedName}.${lightMethod.name}"
+            val qualifiedName = lightTestFramework.qualifiedName(declaration) ?: return null
+            return when(declaration) {
+                is KtClassOrObject -> listOf("java:suite://$qualifiedName") to framework
+                is KtNamedFunction -> listOf(
+                    "java:test://$qualifiedName/${declaration.name}",
+                    "java:test://$qualifiedName.${declaration.name}"
                 ) to framework
+                else -> null
             }
-
-            else -> return null
         }
+        return null
+    }
+
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptorProvider: () -> DeclarationDescriptor?): Icon? {
+        val (urls, framework) = calculateUrlsToFramework(declaration) ?: return null
 
         framework?.let {
             return getTestStateIcon(urls, declaration.project, strict = false, it.icon)
