@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,12 @@ package org.jetbrains.kotlin.idea.editor;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
-import com.intellij.codeInsight.highlighting.BraceMatcher;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -40,7 +35,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.KtNodeTypes;
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens;
@@ -108,12 +102,13 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
                     return Result.CONTINUE;
                 }
 
-                HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+                HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
                 while (!iterator.atEnd() && iterator.getTokenType() == TokenType.WHITE_SPACE) {
                     iterator.retreat();
                 }
 
-                if (iterator.atEnd() || !(KotlinTypedHandlerInner.SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER.contains(iterator.getTokenType()))) {
+                if (iterator.atEnd() ||
+                    !(KotlinTypedHandlerInner.SUPPRESS_AUTO_INSERT_CLOSE_BRACE_AFTER.contains(iterator.getTokenType()))) {
                     AutoPopupController.getInstance(project).autoPopupParameterInfo(editor, null);
                     return Result.CONTINUE;
                 }
@@ -129,8 +124,8 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
                     if (parent != null && KotlinTypedHandlerInner.CONTROL_FLOW_EXPRESSIONS.contains(parent.getNode().getElementType())) {
                         ASTNode nonWhitespaceSibling = FormatterUtil.getPreviousNonWhitespaceSibling(leaf.getNode());
                         if (nonWhitespaceSibling != null && nonWhitespaceSibling.getStartOffset() == tokenBeforeBraceOffset) {
-                            EditorModificationUtil.insertStringAtCaret(editor, "{", false, true);
-                            indentBrace(project, editor);
+                            EditorModificationUtilEx.insertStringAtCaret(editor, "{", false, true);
+                            TypedHandler.indentBrace(project, editor, '{');
 
                             return Result.STOP;
                         }
@@ -139,7 +134,7 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
                         && parent instanceof KtFunctionLiteral
                         && document.getLineNumber(offset) == document.getLineNumber(parent.getTextRange().getStartOffset())
                     ) {
-                        EditorModificationUtil.insertStringAtCaret(editor, "{} ", false, false);
+                        EditorModificationUtilEx.insertStringAtCaret(editor, "{} ", false, false);
                         editor.getCaretModel().moveToOffset(offset + 1);
                         return Result.STOP;
                     }
@@ -172,7 +167,7 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
         int offset = editor.getCaretModel().getOffset();
         if (offset == 0) return;
 
-        HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
+        HighlighterIterator iterator = editor.getHighlighter().createIterator(offset - 1);
         IElementType tokenType = iterator.getTokenType();
         if (KtTokens.COMMENTS.contains(tokenType)
             || tokenType == KtTokens.REGULAR_STRING_PART
@@ -266,11 +261,9 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
             kotlinLTTyped = false;
             LtGtTypingUtils.handleKotlinAutoCloseLT(editor);
             return Result.STOP;
-        }
-        else if (c == ',' || c == ')') {
+        } else if (c == ',' || c == ')') {
             dataClassValParameterInsert(project, editor, file, /*beforeType = */ false);
-        }
-        else if (c == '{' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
+        } else if (c == '{' && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
             int offset = editor.getCaretModel().getOffset();
@@ -294,36 +287,32 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
                         lastInLongTemplateEntry.getParent().getTextLength() == currentElement.getTextLength() + "${}".length();
 
                 if (!isSimpleLongTemplateEntry) {
-                    boolean isAfterTypedDollar = previousDollarInStringOffset != null && previousDollarInStringOffset.intValue() == offset - 1;
+                    boolean isAfterTypedDollar =
+                            previousDollarInStringOffset != null && previousDollarInStringOffset.intValue() == offset - 1;
                     if (isAfterTypedDollar) {
                         editor.getDocument().insertString(offset, "}");
                         return Result.STOP;
                     }
                 }
             }
-        }
-        else if (c == ':') {
+        } else if (c == ':') {
             if (autoIndentCase(editor, project, file, KtClassOrObject.class) ||
                 autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
                 return Result.STOP;
             }
-        }
-        else if (c == '.') {
+        } else if (c == '.') {
             if (autoIndentCase(editor, project, file, KtQualifiedExpression.class)) {
                 return Result.STOP;
             }
-        }
-        else if (c == '|') {
+        } else if (c == '|') {
             if (autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
                 return Result.STOP;
             }
-        }
-        else if (c == '&') {
+        } else if (c == '&') {
             if (autoIndentCase(editor, project, file, KtOperationReferenceExpression.class)) {
                 return Result.STOP;
             }
-        }
-        else if (c == '$') {
+        } else if (c == '$') {
             int offset = editor.getCaretModel().getOffset();
             PsiElement element = file.findElementAt(offset);
             if (element instanceof LeafPsiElement && ((LeafPsiElement) element).getElementType() == KtTokens.REGULAR_STRING_PART) {
@@ -380,46 +369,6 @@ public class KotlinTypedHandler extends TypedHandlerDelegate {
         if (typeReference.getTextLength() == 0) return;
 
         document.insertString(leftElement.getTextOffset(), "val ");
-    }
-
-    /**
-     * Copied from
-     *
-     * @see com.intellij.codeInsight.editorActions.TypedHandler#indentBrace(Project, Editor, char)
-     */
-    @SuppressWarnings("JavadocReference")
-    private static void indentBrace(@NotNull Project project, @NotNull Editor editor) {
-        int offset = editor.getCaretModel().getOffset() - 1;
-        Document document = editor.getDocument();
-        CharSequence chars = document.getCharsSequence();
-        if (offset < 0 || chars.charAt(offset) != '{') return;
-
-        int spaceStart = CharArrayUtil.shiftBackward(chars, offset - 1, " \t");
-        if (spaceStart < 0 || chars.charAt(spaceStart) == '\n' || chars.charAt(spaceStart) == '\r') {
-            PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-            documentManager.commitDocument(document);
-
-            PsiFile file = documentManager.getPsiFile(document);
-            if (file == null || !file.isWritable()) return;
-            PsiElement element = file.findElementAt(offset);
-            if (element == null) return;
-
-            EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-            HighlighterIterator iterator = highlighter.createIterator(offset);
-
-            FileType fileType = file.getFileType();
-            BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
-            boolean isBrace =
-                    braceMatcher.isLBraceToken(iterator, chars, fileType) || braceMatcher.isRBraceToken(iterator, chars, fileType);
-            if (element.getNode() != null && isBrace) {
-                ApplicationManager.getApplication().runWriteAction(() -> {
-                    int newOffset = CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
-                    editor.getCaretModel().moveToOffset(newOffset + 1);
-                    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-                    editor.getSelectionModel().removeSelection();
-                });
-            }
-        }
     }
 
     private static boolean autoIndentCase(Editor editor, Project project, PsiFile file, Class<?> kclass) {
