@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.ComponentInfo
@@ -18,12 +18,10 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-
-
-private const val PERIOD_DELAY = 24 * 60
+private const val PERIOD_DELAY = 24 * 60L
 private const val INITIAL_DELAY = PERIOD_DELAY
 
-private val EDT_EXECUTOR = Executor { ApplicationManager.getApplication().invokeLater(it) }
+private val EDT_EXECUTOR = Executor(ApplicationManager.getApplication()::invokeLater)
 
 internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracker {
   override fun initialize() {
@@ -31,15 +29,12 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
       return
     }
 
-    AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay({ logConfigStateEvents() }, INITIAL_DELAY.toLong(), PERIOD_DELAY.toLong(), TimeUnit.MINUTES)
+    AppExecutorUtil.getAppScheduledExecutorService()
+      .scheduleWithFixedDelay({ logConfigStateEvents() }, INITIAL_DELAY, PERIOD_DELAY, TimeUnit.MINUTES)
   }
 
   override fun reportNow(): CompletableFuture<Void> {
     return logConfigStateEvents()
-  }
-
-  companion object {
-    val LOG = logger<FeatureUsageSettingsEventScheduler>()
   }
 }
 
@@ -78,7 +73,9 @@ private fun logInitializedProjectComponents(componentManager: ComponentManager):
   return logInitializedComponentsAndContinue(componentManager as? Project, components, ArrayDeque(components.keys))
 }
 
-private fun logInitializedComponentsAndContinue(project: Project?, components: Map<String, ComponentInfo>, names: ArrayDeque<String>): CompletableFuture<Void?> {
+private fun logInitializedComponentsAndContinue(project: Project?,
+                                                components: Map<String, ComponentInfo>,
+                                                names: ArrayDeque<String>): CompletableFuture<Void?> {
   while (true) {
     val nextComponentName = names.pollFirst() ?: return CompletableFuture.completedFuture(null)
     val future = logInitializedComponent(project, components.get(nextComponentName) ?: continue, nextComponentName) ?: continue
@@ -96,12 +93,12 @@ private fun logInitializedComponent(project: Project?, info: ComponentInfo, name
   }
 
   val component = info.component as? PersistentStateComponent<*> ?: return null
-  return CompletableFuture.runAsync(Runnable {
+  return CompletableFuture.runAsync({
     try {
       component.state?.let { FeatureUsageSettingsEvents.logConfigurationState(name, it, project) }
     }
     catch (e: Exception) {
-      FeatureUsageSettingsEventScheduler.LOG.warn("Error during configuration recording", e)
+      logger<FeatureUsageSettingsEventScheduler>().warn("Error during configuration recording", e)
     }
   }, EDT_EXECUTOR)
 }
