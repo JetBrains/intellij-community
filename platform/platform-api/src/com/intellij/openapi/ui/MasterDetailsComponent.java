@@ -959,7 +959,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(
-        myActionGroup, dataContext, ActionPlaces.UNKNOWN, false,
+        myActionGroup, dataContext, null, false,
         false, myActionGroup.getTemplatePresentation().getText(), myTree,
         true, myPreselection != null ? myPreselection.getDefaultIndex() : 0, true);
       final ListPopup listPopup = popupFactory.createListPopup(step);
