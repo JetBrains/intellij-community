@@ -591,7 +591,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
     indentBrace(project, editor, ')');
   }
 
-  private static void indentBrace(@NotNull final Project project, @NotNull final Editor editor, final char braceChar) {
+  public static void indentBrace(@NotNull final Project project, @NotNull final Editor editor, final char braceChar) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     final Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
