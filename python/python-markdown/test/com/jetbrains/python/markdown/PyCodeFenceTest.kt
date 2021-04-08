@@ -63,6 +63,43 @@ class PyCodeFenceTest : PyTestCase() {
     assertContainsElements(lookupStrings, "foo")
   }
 
+  fun testPyConTypeEnter() {
+    myFixture.configureByText("a.md", """
+      ```pycon
+      >>> "Hello, World!"<caret>
+      'Hello, World!'
+
+      ```
+    """.trimIndent())
+    myFixture.type("\n")
+    myFixture.checkResult("""
+      ```pycon
+      >>> "Hello, World!"
+      <caret>
+      'Hello, World!'
+
+      ```
+    """.trimIndent())
+  }
+
+  fun testPyConReformat() {
+    myFixture.configureByText("a.md", """
+      ```pycon
+      >>> 1
+      >>> 2
+      
+      ```
+    """.trimIndent())
+    reformatFile()
+    myFixture.checkResult("""
+      ```pycon
+      >>> 1
+      >>> 2
+      
+      ```
+    """.trimIndent())
+  }
+
   private val lookupStrings: List<String>
     get() = myFixture.lookupElementStrings ?: emptyList()
 }
