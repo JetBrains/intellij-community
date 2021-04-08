@@ -139,7 +139,7 @@ final class LiveVariablesAnalyzer extends BaseVariableAnalyzer {
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
-        values.removeIf(var -> !var.getDescriptor().isImplicitReadPossible());
+        values.removeIf(var -> var.getDescriptor().isImplicitReadPossible());
         instruction.getVarsToFlush().addAll(values);
       }
     }
