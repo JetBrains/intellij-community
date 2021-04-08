@@ -106,7 +106,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
         null
       }
     })
-      .onThread(ProgressRunner.ThreadToUse.POOLED)
+      .onThread(ProgressRunner.ThreadToUse.FJ)
       .modal()
       .withProgress(progress)
 

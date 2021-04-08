@@ -6,7 +6,9 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.getProjectOriginUrl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -33,7 +35,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.regex.Pattern
 
 open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
@@ -77,29 +78,29 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       !projectName.isNullOrEmpty() && name == projectName || isOriginsEqual(originUrl, getProjectOriginUrl(path))
     }
 
-    val project = ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }
-
-    if (project != null) {
-      findAndNavigateToReference(project, parameters)
+    ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }?.let {
+      findAndNavigateToReference(it, parameters)
       return
     }
 
     val actions = RecentProjectListActionProvider.getInstance().getActions()
-    val recentProjectAction =
-      actions
-        .filterIsInstance(ReopenProjectAction::class.java)
-        .find { check.invoke(it.projectName, Paths.get(it.projectPath)) }
-      ?: return
+    val recentProjectAction = actions.asSequence()
+                                .filterIsInstance(ReopenProjectAction::class.java)
+                                .find { check.invoke(it.projectName, Path.of(it.projectPath)) }
+                              ?: return
 
-
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      val openProject = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
-      StartupManager.getInstance(openProject).runAfterOpened {
-        DumbService.getInstance(openProject).runWhenSmart {
-          findAndNavigateToReference(openProject, parameters)
+    RecentProjectsManagerBase.instanceEx.openProject(Path.of(recentProjectAction.projectPath), OpenProjectTask())
+      .thenAccept { project ->
+        if (project != null) {
+          ApplicationManager.getApplication().invokeLater({
+            StartupManager.getInstance(project).runAfterOpened {
+              DumbService.getInstance(project).runWhenSmart {
+                findAndNavigateToReference(project, parameters)
+              }
+            }
+          }, ModalityState.NON_MODAL, project.disposed)
         }
       }
-    }, ModalityState.NON_MODAL)
   }
 }
 

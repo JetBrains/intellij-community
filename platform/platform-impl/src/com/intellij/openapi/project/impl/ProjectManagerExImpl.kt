@@ -93,7 +93,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           val lastFocusedFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame
           projectToClose = lastFocusedFrame?.project
           if (projectToClose == null || projectToClose is LightEditCompatible) {
-            projectToClose = openProjects[openProjects.size - 1]
+            projectToClose = openProjects.last()
           }
         }
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034

@@ -7,7 +7,10 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -37,7 +40,7 @@ import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.util.text.nullize
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
@@ -47,6 +50,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.imageio.IIOImage
@@ -309,17 +314,19 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   // open for Rider
-  open fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
+  open fun openProject(projectFile: Path, openProjectOptions: OpenProjectTask): CompletableFuture<Project?> {
     if (ProjectUtil.isValidProjectPath(projectFile)) {
-      return ProjectUtil.findAndFocusExistingProjectForPath(projectFile)
-             ?: ProjectManagerEx.getInstanceEx().openProject(projectFile, openProjectOptions)
+      ProjectUtil.findAndFocusExistingProjectForPath(projectFile)?.let {
+        return CompletableFuture.completedFuture(it)
+      }
+      return ProjectManagerEx.getInstanceEx().openProjectAsync(projectFile, openProjectOptions)
     }
     else {
       // If .idea is missing in the recent project's dir; this might mean, for instance, that 'git clean' was called.
       // Reopening such a project should be similar to opening the dir first time (and trying to import known project formats)
       // IDEA-144453 IDEA rejects opening recent project if there are no .idea subfolder
       // CPP-12106 Auto-load CMakeLists.txt on opening from Recent projects when .idea and cmake-build-debug were deleted
-      return ProjectUtil.openOrImport(projectFile, openProjectOptions)
+      return ProjectUtil.openOrImportAsync(projectFile, openProjectOptions)
     }
   }
 
@@ -341,13 +348,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
 
     override fun projectClosing(project: Project) {
-      if (ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+      val app = ApplicationManagerEx.getApplicationEx()
+      if (app.isExitInProgress) {
         // appClosing updates project info (even more - on project closed full screen state maybe not correct)
         return
       }
 
       val path = manager.getProjectPath(project) ?: return
-      if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      if (!app.isHeadlessEnvironment) {
         manager.updateProjectInfo(project, WindowManager.getInstance() as WindowManagerImpl, writLastProjectInfo = false)
       }
       manager.nameCache.put(path, project.name)
@@ -408,33 +416,51 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun reopenLastProjectsOnStart(): Boolean {
+  override fun reopenLastProjectsOnStart(): CompletableFuture<Boolean> {
     val openPaths = lastOpenedProjects
+    if (lastOpenedProjects.isEmpty()) {
+      return CompletableFuture.completedFuture(false)
+    }
 
     disableUpdatingRecentInfo.set(true)
-    try {
-      // https://youtrack.jetbrains.com/issue/IDEA-121163
-      // pre-allocate frames in reversed order
-      if (openPaths.size > 1 && !ApplicationManager.getApplication().isHeadlessEnvironment && openMultiple(openPaths)) {
-        return true
+    // https://youtrack.jetbrains.com/issue/IDEA-121163
+    // pre-allocate frames in reversed order
+    val future: CompletableFuture<Boolean>
+    if (openPaths.size == 1 ||
+        ApplicationManager.getApplication().isHeadlessEnvironment ||
+        !System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
+        WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
+      future = openOneByOne(java.util.List.copyOf(lastOpenedProjects), index = 0, someProjectWasOpened = false)
+    }
+    else {
+      future = openMultiple(openPaths)
+    }
+    return future
+      .whenComplete { _, _ ->
+        disableUpdatingRecentInfo.set(false)
       }
+  }
 
-      var someProjectWasOpened = false
-      for ((key, value) in openPaths) {
-        val options = OpenProjectTask(forceOpenInNewFrame = true,
-                                      showWelcomeScreen = false,
-                                      frameManager = value.frame,
-                                      projectWorkspaceId = value.projectWorkspaceId)
-        val project = openProject(Path.of(key), options)
-        if (!someProjectWasOpened) {
-          someProjectWasOpened = project != null
+  private fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
+                           index: Int,
+                           someProjectWasOpened: Boolean): CompletableFuture<Boolean> {
+    val (key, value) = openPaths.get(index)
+    val options = OpenProjectTask(
+      forceOpenInNewFrame = true,
+      showWelcomeScreen = false,
+      frameManager = value.frame,
+      projectWorkspaceId = value.projectWorkspaceId
+    )
+    return openProject(Path.of(key), options)
+      .thenCompose { project ->
+        val nextIndex = index + 1
+        if (nextIndex == openPaths.size) {
+          CompletableFuture.completedFuture(someProjectWasOpened || project != null)
+        }
+        else {
+          openOneByOne(openPaths, index = index + 1, someProjectWasOpened = someProjectWasOpened || project != null)
         }
       }
-      return someProjectWasOpened
-    }
-    finally {
-      disableUpdatingRecentInfo.set(false)
-    }
   }
 
   override fun suggestNewProjectLocation(): String {
@@ -442,17 +468,12 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   // open for rider
-  protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): Boolean {
-    if (!System.getProperty("idea.open.multi.projects.correctly", "true").toBoolean() ||
-        WindowManagerEx.getInstanceEx().getFrameHelper(null) != null) {
-      return false
-    }
-
+  protected open fun openMultiple(openPaths: List<Entry<String, RecentProjectMetaInfo>>): CompletableFuture<Boolean> {
     val reversedList = ArrayList<Pair<Path, RecentProjectMetaInfo>>(openPaths.size)
     for (entry in openPaths.reversed()) {
       val path = Path.of(entry.key)
       if (entry.value.frame == null || !ProjectUtil.isValidProjectPath(path)) {
-        return false
+        return CompletableFuture.completedFuture(false)
       }
 
       reversedList.add(Pair(path, entry.value))
@@ -461,7 +482,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     // ok, no non-existent project paths and every info has frame
     val first = openPaths.first().value
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(openPaths.size)
-    invokeAndWaitIfNeeded {
+    return CompletableFuture.runAsync({
       for ((path, info) in reversedList) {
         val frameInfo = info.frame!!
         val isActive = info == first
@@ -476,33 +497,34 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
           MyProjectUiFrameManager(ideFrame)
         }
         taskList.add(Pair(path, OpenProjectTask(forceOpenInNewFrame = true,
-                                                showWelcomeScreen = false,
-                                                frameManager = frameManager,
-                                                projectWorkspaceId = info.projectWorkspaceId)))
+          showWelcomeScreen = false,
+          frameManager = frameManager,
+          projectWorkspaceId = info.projectWorkspaceId)))
       }
-    }
+    }, ApplicationManager.getApplication()::invokeLater)
+      .thenApplyAsync({
+        taskList.reverse()
 
-    taskList.reverse()
-
-    val projectManager = ProjectManagerEx.getInstanceEx()
-    val iterator = taskList.iterator()
-    while (iterator.hasNext()) {
-      val entry = iterator.next()
-      try {
-        projectManager.openProject(entry.first, entry.second)
-      }
-      catch (e: Exception) {
-        @Suppress("SSBasedInspection")
-        (entry.second.frameManager as MyProjectUiFrameManager?)?.dispose()
+        val projectManager = ProjectManagerEx.getInstanceEx()
+        val iterator = taskList.iterator()
         while (iterator.hasNext()) {
-          @Suppress("SSBasedInspection")
-          (iterator.next().second.frameManager as MyProjectUiFrameManager?)?.dispose()
-        }
+          val entry = iterator.next()
+          try {
+            projectManager.openProject(entry.first, entry.second)
+          }
+          catch (e: Exception) {
+            @Suppress("SSBasedInspection")
+            (entry.second.frameManager as MyProjectUiFrameManager?)?.dispose()
+            while (iterator.hasNext()) {
+              @Suppress("SSBasedInspection")
+              (iterator.next().second.frameManager as MyProjectUiFrameManager?)?.dispose()
+            }
 
-        throw e
-      }
-    }
-    return true
+            throw e
+          }
+        }
+        true
+      }, ForkJoinPool.commonPool())
   }
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>
@@ -633,7 +655,7 @@ int32 "extendedState"
     val frame = frameHelper.frame!!
     val width = frame.width
     val height = frame.height
-    val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)
+    val image = ImageUtil.createImage(frame.graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
     UISettings.setupAntialiasing(image.graphics)
     frame.paint(image.graphics)
     val selfieFile = ProjectSelfieUtil.getSelfieLocation(workspaceId)

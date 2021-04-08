@@ -39,6 +39,7 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 import javax.swing.JOptionPane
 
@@ -143,20 +144,24 @@ open class IdeStarter : ApplicationStarter {
         LifecycleUsageTriggerCollector.onIdeStart()
       }
 
-      if (needToOpenProject) {
-        val project = when {
-          !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
-          !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
-          else -> null
-        }
-        lifecyclePublisher.appStarting(project)
-
-        if (project == null && willReopenRecentProjectOnStart && !recentProjectManager.reopenLastProjectsOnStart()) {
-          WelcomeFrame.showIfNoProjectOpened()
-        }
-      }
-      else {
+      if (!needToOpenProject) {
         lifecyclePublisher.appStarting(null)
+        return
+      }
+
+      val project = when {
+        !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
+        !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
+        else -> null
+      }
+      lifecyclePublisher.appStarting(project)
+
+      if (project == null && willReopenRecentProjectOnStart) {
+        recentProjectManager.reopenLastProjectsOnStart().thenAccept { isOpened ->
+          if (!isOpened) {
+            WelcomeFrame.showIfNoProjectOpened()
+          }
+        }
       }
     }
   }
@@ -219,11 +224,15 @@ open class IdeStarter : ApplicationStarter {
 
       if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
         val recentProjectManager = RecentProjectsManager.getInstance()
-        if (!recentProjectManager.willReopenProjectOnStart() || !recentProjectManager.reopenLastProjectsOnStart()) {
-          ApplicationManager.getApplication().invokeLater {
-            LightEditService.getInstance().showEditorWindow()
+        (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
+        else CompletableFuture.completedFuture(true))
+          .thenAccept { isOpened ->
+            if (!isOpened) {
+              ApplicationManager.getApplication().invokeLater {
+                LightEditService.getInstance().showEditorWindow()
+              }
+            }
           }
-        }
       }
     }
   }
