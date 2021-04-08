@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.proxy;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -36,6 +36,8 @@ public final class CommonProxy extends ProxySelector {
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
   static {
+    // https://youtrack.jetbrains.com/issue/IDEA-262173
+    System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     ProxySelector.setDefault(ourInstance);
   }
 
