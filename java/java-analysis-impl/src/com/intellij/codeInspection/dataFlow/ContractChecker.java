@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruct
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -139,7 +140,7 @@ final class ContractChecker {
       DfaValue comparisonValue = constraint.getComparisonValue(factory);
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
-        DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i]);
+        DfaVariableValue dfaParam = PlainDescriptor.createVariableValue(factory, parameters[i]);
         initialState.applyCondition(dfaParam.cond(RelationType.equivalence(!negated), comparisonValue));
       }
     }

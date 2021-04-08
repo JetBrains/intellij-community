@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
@@ -101,7 +102,7 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to evaluate given expression and push its result on stack 
+   * Generate instructions to evaluate given expression and push its result on stack
    * checking for custom nullability problem which cannot be found automatically from context.
    * <p>
    * Stack before: ...
@@ -114,7 +115,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushExpression(@NotNull PsiExpression expression, @Nullable NullabilityProblemKind<? super PsiExpression> kind) {
-    if (kind == null) { 
+    if (kind == null) {
       return pushExpression(expression);
     }
     myAnalyzer.addCustomNullabilityProblem(expression, kind);
@@ -595,7 +596,7 @@ public class CFGBuilder {
    * Stack before: ... qualifier arg1 ... argN
    * <p>
    * Stack after: ... method result
-   * 
+   *
    * @param call call to add
    * @return this builder
    */
@@ -614,7 +615,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder assignTo(PsiVariable var) {
-    return pushForWrite(getFactory().getVarFactory().createVariableValue(var)).swap().assign();
+    return pushForWrite(PlainDescriptor.createVariableValue(getFactory(), var)).swap().assign();
   }
 
   /**
@@ -762,7 +763,8 @@ public class CFGBuilder {
         pushArgs.run();
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
         inlineLambda(lambda, resultNullability);
-        StreamEx.of(parameters).forEach(p -> add(new FlushVariableInstruction(getFactory().getVarFactory().createVariableValue(p))));
+        StreamEx.of(parameters).forEach(p -> add(new FlushVariableInstruction(
+          PlainDescriptor.createVariableValue(getFactory(), p))));
         return true;
       }
     }
@@ -831,7 +833,7 @@ public class CFGBuilder {
     PsiElement body = lambda.getBody();
     PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
     if (expression != null) {
-      NullabilityProblemKind<PsiExpression> kind = 
+      NullabilityProblemKind<PsiExpression> kind =
         resultNullability == Nullability.NOT_NULL ? NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem;
       myAnalyzer.addCustomNullabilityProblem(expression, kind);
       pushExpression(expression);

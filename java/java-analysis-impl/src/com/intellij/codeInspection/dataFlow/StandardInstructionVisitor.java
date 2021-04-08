@@ -3,6 +3,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
@@ -192,7 +194,7 @@ public class StandardInstructionVisitor<EXPR extends PsiElement> extends Instruc
 
     DfaValue result = instruction.getValue();
     LongRangeSet rangeSet = DfIntType.extractRange(memState.getDfType(index));
-    DfaValue arrayElementValue = DfaExpressionFactory.getArrayElementValue(runner.getFactory(), array, rangeSet);
+    DfaValue arrayElementValue = ArrayElementDescriptor.getArrayElementValue(runner.getFactory(), array, rangeSet);
     if (!DfaTypeValue.isUnknown(arrayElementValue)) {
       result = arrayElementValue;
     }

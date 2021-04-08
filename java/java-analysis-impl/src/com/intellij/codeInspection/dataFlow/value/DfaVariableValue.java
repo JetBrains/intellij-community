@@ -21,12 +21,16 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -50,32 +54,12 @@ public final class DfaVariableValue extends DfaValue {
     }
 
     @NotNull
-    public DfaVariableValue createVariableValue(PsiVariable variable) {
-      DfaVariableValue qualifier = null;
-      if (variable instanceof PsiField && !(variable.hasModifierProperty(PsiModifier.STATIC))) {
-        qualifier = createThisValue(((PsiField)variable).getContainingClass());
-      }
-      return createVariableValue(new DfaExpressionFactory.PlainDescriptor(variable), qualifier);
-    }
-
-    /**
-     * Creates a variable representing "this" value with given class as a context
-     * @param aClass a class to bind "this" value to
-     * @return a DFA variable
-     */
-    @Contract("null -> null; !null -> !null")
-    public DfaVariableValue createThisValue(@Nullable PsiClass aClass) {
-      if (aClass == null) return null;
-      return createVariableValue(new DfaExpressionFactory.ThisDescriptor(aClass));
-    }
-
-    @NotNull
     public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor) {
       return createVariableValue(descriptor, null);
     }
 
     @NotNull
-    DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
+    public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
       return createVariableValue(descriptor, qualifier, VariableDescriptor::getType);
     }
 
@@ -112,7 +96,7 @@ public final class DfaVariableValue extends DfaValue {
     myDescriptor = descriptor;
     myQualifier = qualifier;
     myVarType = type;
-    if (myDescriptor instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+    if (myDescriptor instanceof AssertionDisabledDescriptor) {
       myFactory.setAssertionDisabled(this);
     }
   }

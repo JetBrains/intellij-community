@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.java.JavaLanguage;
@@ -30,7 +32,7 @@ public class DfaValueFactory {
   private @Nullable DfaVariableValue myAssertionDisabled;
   private final @NotNull Map<PsiElement, List<DfaVariableValue>> myVariablesInBlock =
     FactoryMap.create(block -> ContainerUtil.map(PsiTreeUtil.findChildrenOfType(block, PsiVariable.class),
-                                                 getVarFactory()::createVariableValue));
+                                                 variable -> PlainDescriptor.createVariableValue(this, variable)));
 
   /**
    * @param project a project in which context the analysis is performed

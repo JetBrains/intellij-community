@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -261,7 +262,7 @@ public class OptionalChainInliner implements CallInliner {
           return;
         }
         // Restore stack for common invokeFunction
-        StreamEx.of(parameters).map(builder.getFactory().getVarFactory()::createVariableValue).forEach(builder::push);
+        StreamEx.of(parameters).map(variable -> PlainDescriptor.createVariableValue(builder.getFactory(), variable)).forEach(builder::push);
       }
     }
     builder

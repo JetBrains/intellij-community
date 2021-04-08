@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
@@ -121,8 +122,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
-          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
+          DfaVariableValue var1 = PlainDescriptor.createVariableValue(getFactory(), parameters[0]);
+          DfaVariableValue var2 = PlainDescriptor.createVariableValue(getFactory(), parameters[1]);
           state.applyCondition(var1.eq(var2));
           return state;
         }

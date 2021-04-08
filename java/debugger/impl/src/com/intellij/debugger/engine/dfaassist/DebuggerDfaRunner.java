@@ -2,6 +2,8 @@
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -157,8 +159,8 @@ class DebuggerDfaRunner extends DataFlowRunner {
             }
           }
         }
-        if (descriptor instanceof DfaExpressionFactory.ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
-          int index = ((DfaExpressionFactory.ArrayElementDescriptor)descriptor).getIndex();
+        if (descriptor instanceof ArrayElementDescriptor && qualifierValue instanceof ArrayReference) {
+          int index = ((ArrayElementDescriptor)descriptor).getIndex();
           int length = ((ArrayReference)qualifierValue).length();
           if (index >= 0 && index < length) {
             return wrap(((ArrayReference)qualifierValue).getValue(index));
@@ -166,7 +168,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         }
         return null;
       }
-      if (var.getDescriptor() instanceof DfaExpressionFactory.AssertionDisabledDescriptor) {
+      if (var.getDescriptor() instanceof AssertionDisabledDescriptor) {
         ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(myLocation);
         // Assume that assertions are enabled if we cannot fetch the status
         return myLocation.virtualMachine().mirrorOf(status == ThreeState.NO);

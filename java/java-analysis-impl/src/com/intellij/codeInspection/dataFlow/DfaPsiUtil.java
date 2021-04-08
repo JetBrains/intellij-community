@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -382,7 +383,8 @@ public final class DfaPsiUtil {
                 (isCallExposingNonInitializedFields(instruction) ||
                  instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
+                if (!instructionState.getMemoryState().isNotNull(
+                  PlainDescriptor.createVariableValue(getFactory(), field))) {
                   map.put(field, false);
                 }
                 else if (!map.containsKey(field)) {
@@ -615,5 +617,17 @@ public final class DfaPsiUtil {
     Object value = expr.getValue();
     if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
     return DfTypes.constant(value, type);
+  }
+
+  @NotNull
+  public static PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
+    if (member instanceof PsiMember && qualifier != null) {
+      PsiClass fieldClass = ((PsiMember)member).getContainingClass();
+      PsiClassType classType = ObjectUtils.tryCast(qualifier.getType(), PsiClassType.class);
+      if (classType != null && InheritanceUtil.isInheritorOrSelf(classType.resolve(), fieldClass, true)) {
+        return TypeConversionUtil.getSuperClassSubstitutor(fieldClass, classType);
+      }
+    }
+    return PsiSubstitutor.EMPTY;
   }
 }

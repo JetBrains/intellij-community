@@ -4,9 +4,9 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -429,7 +429,7 @@ public class DataFlowRunner {
       }
     }
     if (psiBlock instanceof PsiClass) {
-      DfaVariableValue thisValue = getFactory().getVarFactory().createThisValue((PsiClass)psiBlock);
+      DfaVariableValue thisValue = ThisDescriptor.createThisValue(getFactory(), (PsiClass)psiBlock);
       // In class initializer this variable is local until escaped
       for (DfaMemoryState state : initialStates) {
         state.meetDfType(thisValue, DfTypes.LOCAL_OBJECT);
@@ -448,8 +448,8 @@ public class DataFlowRunner {
 
   private static @Nullable DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
     DfaValueFactory factory = var.getFactory();
-    if (var.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor && var.getType() != null) {
-      PsiClass aClass = ((DfaExpressionFactory.ThisDescriptor)var.getDescriptor()).getPsiElement();
+    if (var.getDescriptor() instanceof ThisDescriptor && var.getType() != null) {
+      PsiClass aClass = ((ThisDescriptor)var.getDescriptor()).getPsiElement();
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state

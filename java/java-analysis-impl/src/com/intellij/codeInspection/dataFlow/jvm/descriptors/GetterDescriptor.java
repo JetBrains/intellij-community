@@ -1,0 +1,93 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.dataFlow.jvm.descriptors;
+
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
+/**
+ * A descriptor that represents a getter-like method (without arguments)
+ */
+public final class GetterDescriptor implements VariableDescriptor {
+  private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+    CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
+    CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
+    CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
+    CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
+                             "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass",
+                             "getSimpleName", "getCanonicalName")
+  );
+  private final @NotNull PsiMethod myGetter;
+  private final boolean myStable;
+
+  public GetterDescriptor(@NotNull PsiMethod getter) {
+    myGetter = getter;
+    if (STABLE_METHODS.methodMatches(getter) || getter instanceof LightRecordMethod) {
+      myStable = true;
+    }
+    else {
+      PsiField field = PsiUtil.canBeOverridden(getter) ? null : PropertyUtil.getFieldOfGetter(getter);
+      myStable = field != null && field.hasModifierProperty(PsiModifier.FINAL);
+    }
+  }
+
+  @NotNull
+  @Override
+  public String toString() {
+    return myGetter.getName();
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType(@Nullable DfaVariableValue qualifier) {
+    return DfaPsiUtil.getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
+  }
+
+  @NotNull
+  @Override
+  public PsiMethod getPsiElement() {
+    return myGetter;
+  }
+
+  @Override
+  public boolean isStable() {
+    return myStable;
+  }
+
+  @Override
+  public boolean isCall() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+    if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
+      return factory.getVarFactory().createVariableValue(this);
+    }
+    return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(myGetter.getName());
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this || (obj instanceof GetterDescriptor && ((GetterDescriptor)obj).myGetter == myGetter);
+  }
+}

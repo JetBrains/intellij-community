@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -98,7 +99,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
     if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
       DfaMemoryState memState = instructionState.getMemoryState();
       for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
-        final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter);
+        final DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), parameter);
         if (memState.isNotNull(dfaVar)) {
           myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
         }
@@ -122,7 +123,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
     protected MyDfaMemoryState(DfaValueFactory factory) {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
-        recordVariableType(getFactory().getVarFactory().createVariableValue(parameter),
+        recordVariableType(PlainDescriptor.createVariableValue(getFactory(), parameter),
                            DfaNullability.NULLABLE.asDfType());
       }
     }

@@ -8,11 +8,12 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -176,10 +177,10 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
       myObjectType = PsiType.getJavaLangObject(methodClass.getManager(), methodClass.getResolveScope());
       if (myClassType == null || myStringType == null) return;
       DfaValueFactory factory = getFactory();
-      DfaVariableValue dfaMethod = factory.getVarFactory().createVariableValue(methodParameter);
-      myDfaMethodName = (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getNameMethod).createValue(factory, dfaMethod);
+      DfaVariableValue dfaMethod = PlainDescriptor.createVariableValue(factory, methodParameter);
+      myDfaMethodName = (DfaVariableValue)new GetterDescriptor(getNameMethod).createValue(factory, dfaMethod);
       myDfaMethodDeclaringClass =
-        (DfaVariableValue)new DfaExpressionFactory.GetterDescriptor(getDeclaringClassMethod).createValue(factory, dfaMethod);
+        (DfaVariableValue)new GetterDescriptor(getDeclaringClassMethod).createValue(factory, dfaMethod);
     }
 
     @Override

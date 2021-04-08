@@ -18,6 +18,7 @@
 package com.intellij.codeInspection.dataFlow
 
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.psi.*
@@ -176,7 +177,7 @@ internal class ControlTransferHandler(val state: DfaMemoryState, val runner: Dat
 
   private fun stateForCatchClause(param: PsiParameter, constraint: TypeConstraint): DfaMemoryState {
     val catchingCopy = state.createCopy()
-    val value = runner.factory.varFactory.createVariableValue(param)
+    val value = PlainDescriptor.createVariableValue(runner.factory, param)
     catchingCopy.meetDfType(value, constraint.asDfType().meet(DfaNullability.NOT_NULL.asDfType()))
     return catchingCopy
   }

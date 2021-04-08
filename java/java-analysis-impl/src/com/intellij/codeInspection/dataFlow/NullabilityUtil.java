@@ -6,7 +6,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -27,7 +27,7 @@ public final class NullabilityUtil {
 
   @NotNull
   public static DfaNullability calcCanBeNull(DfaVariableValue value) {
-    if (value.getDescriptor() instanceof DfaExpressionFactory.ThisDescriptor) {
+    if (value.getDescriptor() instanceof ThisDescriptor) {
       return DfaNullability.NOT_NULL;
     }
     if (value.getDescriptor() == SpecialField.OPTIONAL_VALUE) {

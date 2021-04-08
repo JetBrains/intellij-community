@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
@@ -95,7 +96,7 @@ public final class ControlFlow {
 
   public void removeVariable(@Nullable PsiVariable variable) {
     if (variable == null) return;
-    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable)));
+    addInstruction(new FlushVariableInstruction(PlainDescriptor.createVariableValue(myFactory, variable)));
   }
 
   /**
