@@ -18,16 +18,16 @@ package com.intellij.codeInspection.dataFlow.instructions;
 
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 public class ConditionalGotoInstruction extends Instruction implements BranchingInstruction {
   private ControlFlow.ControlFlowOffset myOffset;
   private final boolean myIsNegated;
-  private final PsiExpression myExpression;
+  private final PsiElement myAnchor;
 
-  public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset offset, boolean isNegated, @Nullable PsiExpression psiAnchor) {
-    myExpression = psiAnchor;
+  public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset offset, boolean isNegated, @Nullable PsiElement psiAnchor) {
+    myAnchor = psiAnchor;
     myOffset = offset;
     myIsNegated = isNegated;
   }
@@ -37,8 +37,8 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
   }
 
   @Nullable
-  public PsiExpression getPsiAnchor() {
-    return myExpression;
+  public PsiElement getPsiAnchor() {
+    return myAnchor;
   }
 
   @Override
@@ -53,7 +53,7 @@ public class ConditionalGotoInstruction extends Instruction implements Branching
   public boolean isTarget(boolean whenTrueOnStack, Instruction target) {
     return target.getIndex() == (whenTrueOnStack == myIsNegated ? getIndex() + 1 : getOffset());
   }
-  
+
   public int getOffset() {
     return myOffset.getInstructionOffset();
   }

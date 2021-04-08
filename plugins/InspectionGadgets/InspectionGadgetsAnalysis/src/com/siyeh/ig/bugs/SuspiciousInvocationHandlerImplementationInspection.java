@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -79,12 +81,12 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         DfaVariableValue methodName = runner.myDfaMethodName;
         if (methodName == null) return;
         Map<String, Map<PsiExpression, DfType>> returnMap = new TreeMap<>();
-        RunnerResult result = runner.analyzeMethod(body, new StandardInstructionVisitor() {
+        RunnerResult result = runner.analyzeMethod(body, new JavaDfaInstructionVisitor(new DfaInterceptor<>() {
           @Override
-          protected void checkReturnValue(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @NotNull PsiParameterListOwner context,
-                                          @NotNull DfaMemoryState state) {
+          public void beforeValueReturn(@NotNull DfaValue value,
+                                        @Nullable PsiExpression expression,
+                                        @NotNull PsiElement context,
+                                        @NotNull DfaMemoryState state) {
             if (context != method) return;
             String name = state.getDfType(methodName).getConstantOfType(String.class);
             if (name == null) {
@@ -97,7 +99,7 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
             }
             returnMap.computeIfAbsent(name, k -> new HashMap<>()).merge(expression, type, DfType::join);
           }
-        });
+        }));
         if (result != RunnerResult.OK) return;
         Set<PsiExpression> reportedAnchors = new HashSet<>();
         returnMap.forEach((name, map) -> {

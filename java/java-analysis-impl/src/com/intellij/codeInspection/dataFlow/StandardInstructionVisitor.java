@@ -3,6 +3,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
@@ -33,18 +35,19 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * @author peter
  */
-public class StandardInstructionVisitor extends InstructionVisitor {
+public class StandardInstructionVisitor<EXPR extends PsiElement> extends InstructionVisitor<EXPR> {
   private static final Logger LOG = Logger.getInstance(StandardInstructionVisitor.class);
   private final boolean myStopAnalysisOnNpe;
 
-  final Set<InstanceofInstruction> myReachable = new HashSet<>();
-  final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
+  protected final Set<InstanceofInstruction> myReachable = new HashSet<>();
+  protected final Set<InstanceofInstruction> myUsefulInstanceofs = new HashSet<>();
 
-  public StandardInstructionVisitor() {
-    myStopAnalysisOnNpe = false;
+  public StandardInstructionVisitor(@NotNull DfaLanguageSupport<EXPR> support, @Nullable DfaInterceptor<EXPR> interceptor) {
+    this(support, interceptor, false);
   }
 
-  protected StandardInstructionVisitor(boolean stopAnalysisOnNpe) {
+  protected StandardInstructionVisitor(@NotNull DfaLanguageSupport<EXPR> support, @Nullable DfaInterceptor<EXPR> interceptor, boolean stopAnalysisOnNpe) {
+    super(support, interceptor);
     myStopAnalysisOnNpe = stopAnalysisOnNpe;
   }
 
@@ -509,7 +512,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (instruction.getMutationSignature().mutatesArg(paramIndex)) {
         DfType dfType = memState.getDfType(arg);
         if (!Mutability.fromDfType(dfType).canBeModified() &&
-            // Empty array cannot be modified at all    
+            // Empty array cannot be modified at all
             !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
           reportMutabilityViolation(false, anchor);
           if (dfType instanceof DfReferenceType) {

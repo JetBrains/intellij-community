@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -62,7 +63,7 @@ final class NullParameterConstraintChecker extends DataFlowRunner {
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
     NullParameterConstraintChecker checker = new NullParameterConstraintChecker(method.getProject(), nullableParameters);
-    checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
+    checker.analyzeMethod(method.getBody(), new JavaDfaInstructionVisitor(null));
 
     return checker.myPossiblyViolatedParameters
       .stream()

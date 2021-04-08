@@ -5,6 +5,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -164,11 +166,11 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       }
     };
     Map<PsiExpression, ThreeState> values = new HashMap<>();
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
+    class MyVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
       @Override
       protected ThreeState checkNotNullable(DfaMemoryState state,
-                                         @NotNull DfaValue value,
-                                         @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+                                            @NotNull DfaValue value,
+                                            @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
         if (value instanceof DfaVariableValue) {
           DfType dfType = state.getDfType(value);
           if (dfType instanceof DfReferenceType) {
@@ -179,11 +181,10 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       }
 
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        super.beforeExpressionPush(value, expression, range, state);
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @Nullable TextRange range,
+                                       @NotNull DfaMemoryState state) {
         if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
         ThreeState old = values.get(expression);
         if (old == ThreeState.UNSURE) return;
@@ -194,8 +195,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         }
         values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
       }
-    };
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
+    }
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, new MyVisitor());
     return result == RunnerResult.OK ? values : Collections.emptyMap();
   }
 }

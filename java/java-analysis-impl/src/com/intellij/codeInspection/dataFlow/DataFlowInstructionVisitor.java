@@ -3,6 +3,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
+final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
   private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
@@ -94,10 +96,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void beforeConditionalJump(ConditionalGotoInstruction instruction, boolean isTrueBranch) {
-    PsiExpression anchor = instruction.getPsiAnchor();
-    if (anchor != null && PsiImplUtil.getSwitchLabel(anchor) != null) {
-      mySwitchLabelsReachability.merge(anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
+  public void beforeConditionalJump(@NotNull PsiElement anchor, boolean isTrueBranch) {
+    if (anchor instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)anchor) != null) {
+      mySwitchLabelsReachability.merge((PsiExpression)anchor, ThreeState.fromBoolean(isTrueBranch), ThreeState::merge);
     }
   }
 
@@ -176,7 +177,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   Map<PsiMethodReferenceExpression, ConstantResult> getMethodReferenceResults() {
     return myMethodReferenceResults;
   }
-  
+
   Map<PsiExpression, ThreeState> getSwitchLabelsReachability() {
     return mySwitchLabelsReachability;
   }
@@ -220,10 +221,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void beforeExpressionPush(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @Nullable TextRange range,
-                                      @NotNull DfaMemoryState memState) {
+  public void beforeExpressionPush(@NotNull DfaValue value,
+                                   @NotNull PsiExpression expression,
+                                   @Nullable TextRange range,
+                                   @NotNull DfaMemoryState memState) {
     if (!expression.isPhysical()) {
       Application application = ApplicationManager.getApplication();
       if (application.isEAP() || application.isInternal() || application.isUnitTestMode()) {
@@ -255,9 +256,12 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
-                                                 @NotNull PsiMethodReferenceExpression methodRef,
-                                                 @NotNull DfaMemoryState state) {
+  public void beforeValueReturn(@NotNull DfaValue value,
+                                @Nullable PsiExpression expression,
+                                @NotNull PsiElement context,
+                                @NotNull DfaMemoryState state) {
+    PsiMethodReferenceExpression methodRef = tryCast(context, PsiMethodReferenceExpression.class);
+    if (methodRef == null) return;
     if (OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
       processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
@@ -441,7 +445,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       return myRange == null ? text : myRange.substring(text);
     }
   }
-  
+
   static class ArgResultEquality {
     boolean argsEqual;
     boolean firstArgEqualToResult;
@@ -457,7 +461,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       return new ArgResultEquality(argsEqual && other.argsEqual, firstArgEqualToResult && other.firstArgEqualToResult,
                                    secondArgEqualToResult && other.secondArgEqualToResult);
     }
-    
+
     boolean hasEquality() {
       return argsEqual || firstArgEqualToResult || secondArgEqualToResult;
     }

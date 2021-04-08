@@ -4,7 +4,8 @@ package com.intellij.debugger.engine.dfaassist;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -20,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-class DebuggerInstructionVisitor extends StandardInstructionVisitor {
+class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
   private static final TokenSet BOOLEAN_TOKENS = TokenSet.create(
     JavaTokenType.ANDAND, JavaTokenType.OROR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.OR, JavaTokenType.EQEQ, JavaTokenType.NE);
-  
+
   private final Map<PsiExpression, DfaHint> myHints = new HashMap<>();
 
   DebuggerInstructionVisitor() {
@@ -37,10 +38,10 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void beforeExpressionPush(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @Nullable TextRange range,
-                                      @NotNull DfaMemoryState state) {
+  public void beforeExpressionPush(@NotNull DfaValue value,
+                                   @NotNull PsiExpression expression,
+                                   @Nullable TextRange range,
+                                   @NotNull DfaMemoryState state) {
     if (range != null || !shouldTrackExpressionValue(expression)) return;
     DfaHint hint = DfaHint.ANY_VALUE;
     DfType dfType = state.getDfType(value);
@@ -98,7 +99,7 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
     }
     return super.checkNotNullable(state, value, problem);
   }
-  
+
   private static boolean shouldTrackExpressionValue(@NotNull PsiExpression expr) {
     if (BoolUtils.isNegated(expr)) {
       // It's enough to report for parent only
@@ -120,7 +121,7 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
     }
     return true;
   }
-  
+
   void cleanup() {
     myHints.entrySet().removeIf(e -> {
       PsiExpression expr = e.getKey();
@@ -130,9 +131,9 @@ class DebuggerInstructionVisitor extends StandardInstructionVisitor {
       return result != null && result.getExpressionValues(expr).size() == 1;
     });
   }
-  
+
   @NotNull
   Map<PsiExpression, DfaHint> getHints() {
     return myHints;
-  } 
+  }
 }

@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.project.Project;
@@ -153,10 +155,10 @@ public final class GuessManagerImpl extends GuessManager {
       TypeConstraint constraint = TypeConstraints.BOTTOM;
 
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @Nullable TextRange range,
+                                       @NotNull DfaMemoryState state) {
         if (expression == forPlace && range == null) {
           if (!(value instanceof DfaVariableValue) || ((DfaVariableValue)value).isFlushableByCalls()) {
             value = runner.getFactory().getVarFactory().createVariableValue(new ExpressionVariableDescriptor(expression));
@@ -183,7 +185,7 @@ public final class GuessManagerImpl extends GuessManager {
 
   @NotNull
   private static GuessManagerRunner createRunner(boolean honorAssignments, PsiElement scope) {
-    return new GuessManagerRunner(scope.getProject(), honorAssignments); 
+    return new GuessManagerRunner(scope.getProject(), honorAssignments);
   }
 
   private static class GuessManagerRunner extends DataFlowRunner {
@@ -218,8 +220,8 @@ public final class GuessManagerImpl extends GuessManager {
     protected void afterInstruction(Instruction instruction) {
       super.afterInstruction(instruction);
       if (myPlaceVisited && myLoopNumbers[instruction.getIndex()] == 0) {
-        // We cancel the analysis first time we exit all the loops 
-        // after the target expression is visited (in this case, 
+        // We cancel the analysis first time we exit all the loops
+        // after the target expression is visited (in this case,
         // we can be sure we'll not reach it again)
         cancel();
       }
@@ -541,7 +543,7 @@ public final class GuessManagerImpl extends GuessManager {
     }
   }
 
-  abstract static class CastTrackingVisitor extends StandardInstructionVisitor {
+  abstract static class CastTrackingVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
     @Override
     public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       DfaValue value = memState.pop();
@@ -601,10 +603,10 @@ public final class GuessManagerImpl extends GuessManager {
     }
 
     @Override
-    protected void beforeExpressionPush(@NotNull DfaValue value,
-                                        @NotNull PsiExpression expression,
-                                        @Nullable TextRange range,
-                                        @NotNull DfaMemoryState state) {
+    public void beforeExpressionPush(@NotNull DfaValue value,
+                                     @NotNull PsiExpression expression,
+                                     @Nullable TextRange range,
+                                     @NotNull DfaMemoryState state) {
       if (range == null && myForPlace == expression) {
         ((DfaMemoryStateImpl)state).forRecordedVariableTypes((var, dfType) -> {
           myResult.merge(var, TypeConstraint.fromDfType(dfType), TypeConstraint::join);

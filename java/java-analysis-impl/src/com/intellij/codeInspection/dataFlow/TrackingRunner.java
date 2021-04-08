@@ -9,6 +9,8 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
@@ -132,17 +134,14 @@ public final class TrackingRunner extends DataFlowRunner {
 
   private boolean analyze(PsiExpression expression, PsiElement body) {
     List<DfaMemoryState> endOfInitializerStates = new ArrayList<>();
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor(true) {
+    var visitor = new JavaDfaInstructionVisitor(new DfaInterceptor<>() {
       @Override
-      public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
-                                                         DataFlowRunner runner,
-                                                         DfaMemoryState state) {
-        if (!instruction.isStatic()) {
+      public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
+        if (!isStatic) {
           endOfInitializerStates.add(state.createCopy());
         }
-        return super.visitEndOfInitializer(instruction, runner, state);
       }
-    };
+    }, true);
     RunnerResult result = analyzeMethodRecursively(body, visitor);
     if (result != RunnerResult.OK) return false;
     if (body instanceof PsiClass) {
@@ -637,7 +636,7 @@ public final class TrackingRunner extends DataFlowRunner {
           if (push != null && push.myInstruction instanceof ExpressionPushingInstruction) {
             ExpressionPushingInstruction<?> instruction = (ExpressionPushingInstruction<?>)push.myInstruction;
             if (instruction.getExpressionRange() == null) {
-              PsiExpression operand = instruction.getExpression();
+              PsiExpression operand = (PsiExpression)instruction.getExpression();
               if (operand != null && expression.equals(PsiUtil.skipParenthesizedExprUp(operand.getParent()))) {
                 int i = IntStreamEx.ofIndices(((PsiPolyadicExpression)expression).getOperands(), e -> PsiTreeUtil.isAncestor(e, operand, false))
                     .findFirst().orElse(-1);
@@ -1213,7 +1212,7 @@ public final class TrackingRunner extends DataFlowRunner {
           }
         }
         else {
-          message = JavaAnalysisBundle.message("dfa.find.cause.nullability.explicitly.annotated", 
+          message = JavaAnalysisBundle.message("dfa.find.cause.nullability.explicitly.annotated",
                                                memberKind.subject(), name, nullability.getPresentationName());
         }
         if (info.getAnnotation().getContainingFile() == anchor.getContainingFile()) {
@@ -1316,7 +1315,7 @@ public final class TrackingRunner extends DataFlowRunner {
     if (contracts.isEmpty()) {
       return JavaAnalysisBundle.message("dfa.find.cause.contract.kind.explicit");
     }
-    if (contracts.stream().allMatch(c -> c instanceof StandardMethodContract)) {
+    if (ContainerUtil.and(contracts, c -> c instanceof StandardMethodContract)) {
       return JavaAnalysisBundle.message("dfa.find.cause.contract.kind.inferred");
     }
     return JavaAnalysisBundle.message("dfa.find.cause.contract.kind.hard.coded");

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * A visitor which cancels a dataflow once side effect occurs
  * @see DataFlowRunner#cancel()
  */
-public class SideEffectVisitor extends StandardInstructionVisitor {
+public class SideEffectVisitor extends JavaDfaInstructionVisitor {
   /**
    * Override this method to allow some variable modifications which do not count as side effects
    *

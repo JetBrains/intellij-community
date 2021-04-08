@@ -396,7 +396,7 @@ public class DataFlowRunner {
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
-  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull StandardInstructionVisitor visitor) {
+  public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull StandardInstructionVisitor<?> visitor) {
     Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
     if (states == null) return RunnerResult.NOT_APPLICABLE;
     return analyzeBlockRecursively(block, states, visitor);
@@ -404,7 +404,7 @@ public class DataFlowRunner {
 
   public @NotNull RunnerResult analyzeBlockRecursively(@NotNull PsiElement block,
                                                        @NotNull Collection<? extends DfaMemoryState> states,
-                                                       @NotNull StandardInstructionVisitor visitor) {
+                                                       @NotNull StandardInstructionVisitor<?> visitor) {
     RunnerResult result = analyzeMethod(block, visitor, states);
     if (result != RunnerResult.OK) return result;
 

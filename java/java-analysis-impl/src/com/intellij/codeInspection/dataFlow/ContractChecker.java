@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstrai
 import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -17,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -24,7 +27,7 @@ import java.util.*;
 * @author peter
 */
 final class ContractChecker {
-  private static class ContractCheckerVisitor extends StandardInstructionVisitor {
+  private static class ContractCheckerVisitor extends JavaDfaInstructionVisitor implements DfaInterceptor<PsiExpression> {
     private final PsiMethod myMethod;
     private final StandardMethodContract myContract;
     private final boolean myOwnContract;
@@ -41,11 +44,11 @@ final class ContractChecker {
     }
 
     @Override
-    protected void checkReturnValue(@NotNull DfaValue value,
-                                    @NotNull PsiExpression expression,
-                                    @NotNull PsiParameterListOwner context,
-                                    @NotNull DfaMemoryState state) {
-      if (context != myMethod || state.isEphemeral()) return;
+    public void beforeValueReturn(@NotNull DfaValue value,
+                                  @Nullable PsiExpression expression,
+                                  @NotNull PsiElement context,
+                                  @NotNull DfaMemoryState state) {
+      if (context != myMethod || expression == null || state.isEphemeral()) return;
       if (!myContract.getReturnValue().isValueCompatible(state, value)) {
         myViolations.add(expression);
       } else {

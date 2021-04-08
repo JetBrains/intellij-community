@@ -3,6 +3,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -182,17 +184,18 @@ public final class DfaUtil {
     if (body == null) return Nullability.UNKNOWN;
 
     final DataFlowRunner dfaRunner = new DataFlowRunner(owner.getProject());
-    final class BlockNullabilityVisitor extends StandardInstructionVisitor {
+
+    final class BlockNullabilityInterceptor implements DfaInterceptor<PsiExpression> {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;
 
       @Override
-      protected void checkReturnValue(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @NotNull PsiParameterListOwner context,
-                                      @NotNull DfaMemoryState state) {
-        if (context == owner) {
+      public void beforeValueReturn(@NotNull DfaValue value,
+                                    @Nullable PsiExpression expression,
+                                    @NotNull PsiElement context,
+                                    @NotNull DfaMemoryState state) {
+        if (context == owner && expression != null) {
           if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
             hasNotNulls = true;
           }
@@ -205,14 +208,14 @@ public final class DfaUtil {
         }
       }
     }
-    BlockNullabilityVisitor visitor = new BlockNullabilityVisitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
+    var interceptor = new BlockNullabilityInterceptor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(interceptor));
 
     if (rc == RunnerResult.OK) {
-      if (visitor.hasNulls) {
+      if (interceptor.hasNulls) {
         return suppressNullable ? Nullability.UNKNOWN : Nullability.NULLABLE;
       }
-      if (visitor.hasNotNulls && !visitor.hasUnknowns) {
+      if (interceptor.hasNotNulls && !interceptor.hasUnknowns) {
         return Nullability.NOT_NULL;
       }
     }
@@ -417,7 +420,7 @@ public final class DfaUtil {
    * @param poset input poset (mutable)
    * @param predicate non-strict partial order over the input poset
    * @param <T> type of poset elements
-   * @return the longest strong upwards antichain contained in the poset (input poset object with some elements removed)   
+   * @return the longest strong upwards antichain contained in the poset (input poset object with some elements removed)
    */
   public static <T, C extends Collection<T>> C upwardsAntichain(@NotNull C poset, @NotNull BiPredicate<T, T> predicate) {
     for (Iterator<T> iterator = poset.iterator(); iterator.hasNext(); ) {

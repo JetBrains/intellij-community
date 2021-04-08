@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.instructions.FinishElementInstructio
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -393,7 +394,7 @@ public final class DfaPsiUtil {
             return super.acceptInstruction(visitor, instructionState);
           }
         };
-        final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
+        final RunnerResult rc = dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(null));
         Set<PsiField> notNullFields = new HashSet<>();
         if (rc == RunnerResult.OK) {
           for (Map.Entry<PsiField, Boolean> entry : map.entrySet()) {
@@ -455,12 +456,12 @@ public final class DfaPsiUtil {
             constructor.accept(visitor);
           }
         }
- 
+
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           if (initializer.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
             initializer.accept(visitor);
           }
-        } 
+        }
 
         return Result.create(result, psiClass);
       }

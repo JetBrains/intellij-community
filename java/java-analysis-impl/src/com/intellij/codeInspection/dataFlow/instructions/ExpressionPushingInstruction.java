@@ -2,20 +2,19 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An instruction which pushes a result of {@link PsiExpression} (or its part) evaluation to the stack
- *
+ * An instruction which pushes a result of expression {@link PsiElement} (or its part) evaluation to the stack
  */
-public abstract class ExpressionPushingInstruction<T extends PsiExpression> extends Instruction {
+public abstract class ExpressionPushingInstruction<T extends PsiElement> extends Instruction {
   private final T myExpression;
 
   protected ExpressionPushingInstruction(T expression) {
     myExpression = expression;
   }
-  
+
   /**
    * @return a PsiExpression which result is pushed to the stack, or null if this instruction is not bound to any particular PsiExpression
    */

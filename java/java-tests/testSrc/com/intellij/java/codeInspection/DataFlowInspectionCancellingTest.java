@@ -3,7 +3,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.StandardInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiFileFactory;
@@ -49,7 +49,7 @@ public class DataFlowInspectionCancellingTest extends DataFlowInspectionTestCase
     Predicate<StackTraceElement> stackTraceElementCondition =
       ste -> ste.getClassName().equals(ControlFlowAnalyzer.class.getName()) && ste.getMethodName().equals("processTryWithResources");
     BombedProgressIndicator.explodeOnStackElement(stackTraceElementCondition).runBombed(() -> {
-      runner.analyzeMethod(body, new StandardInstructionVisitor());
+      runner.analyzeMethod(body, new JavaDfaInstructionVisitor(null));
       fail("Should not be reachable");
     });
   }

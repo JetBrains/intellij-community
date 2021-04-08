@@ -354,7 +354,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         FactDefinition<T> right = findFact(((DfaBinOpValue)value).getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
           LongRangeBinOp op = ((DfaBinOpValue)value).getOperation();
-          @SuppressWarnings("unchecked") 
+          @SuppressWarnings("unchecked")
           T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, PsiType.LONG.equals(value.getType()));
           return new FactDefinition<>(null, Objects.requireNonNull(result));
         }
@@ -399,7 +399,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
     PsiExpression getExpression() {
       if (myInstruction instanceof ExpressionPushingInstruction &&
           ((ExpressionPushingInstruction<?>)myInstruction).getExpressionRange() == null) {
-        return ((ExpressionPushingInstruction<?>)myInstruction).getExpression();
+        return (PsiExpression)((ExpressionPushingInstruction<?>)myInstruction).getExpression();
       }
       if (myInstruction instanceof ConditionalGotoInstruction) {
         return ObjectUtils.tryCast(((ConditionalGotoInstruction)myInstruction).getPsiAnchor(), PsiExpression.class);

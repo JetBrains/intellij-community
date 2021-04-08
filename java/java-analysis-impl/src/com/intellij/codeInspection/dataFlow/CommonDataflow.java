@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
@@ -212,12 +213,12 @@ public final class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
     DataFlowRunner runner = new DataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
-    CommonDataflowVisitor visitor = new CommonDataflowVisitor();
-    RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
+    var interceptor = new CommonDataflowInterceptor();
+    RunnerResult result = runner.analyzeMethodRecursively(block, new JavaDfaInstructionVisitor(interceptor));
     if (result != RunnerResult.OK) return new DataflowResult(result);
-    if (!(block instanceof PsiClass)) return visitor.myResult;
-    DataflowResult dfr = visitor.myResult.copy();
-    List<DfaMemoryState> states = visitor.myEndOfInitializerStates;
+    if (!(block instanceof PsiClass)) return interceptor.myResult;
+    DataflowResult dfr = interceptor.myResult.copy();
+    List<DfaMemoryState> states = interceptor.myEndOfInitializerStates;
     for (PsiMethod method : ((PsiClass)block).getConstructors()) {
       List<DfaMemoryState> initialStates;
       PsiCodeBlock body = method.getBody();
@@ -228,10 +229,10 @@ public final class CommonDataflow {
       } else {
         initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
       }
-      if(runner.analyzeBlockRecursively(body, initialStates, visitor) == RunnerResult.OK) {
-        dfr = visitor.myResult.copy();
+      if(runner.analyzeBlockRecursively(body, initialStates, new JavaDfaInstructionVisitor(interceptor)) == RunnerResult.OK) {
+        dfr = interceptor.myResult.copy();
       } else {
-        visitor.myResult = dfr;
+        interceptor.myResult = dfr;
       }
     }
     return dfr;
@@ -328,22 +329,19 @@ public final class CommonDataflow {
     return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
-  private static class CommonDataflowVisitor extends StandardInstructionVisitor {
+  private static class CommonDataflowInterceptor implements DfaInterceptor<PsiExpression> {
     private DataflowResult myResult = new DataflowResult(RunnerResult.OK);
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
     @Override
-    public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
-                                                       DataFlowRunner runner,
-                                                       DfaMemoryState state) {
-      if (!instruction.isStatic()) {
+    public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
+      if (!isStatic) {
         myEndOfInitializerStates.add(state.createCopy());
       }
-      return super.visitEndOfInitializer(instruction, runner, state);
     }
 
     @Override
-    protected void beforeExpressionPush(@NotNull DfaValue value,
+    public void beforeExpressionPush(@NotNull DfaValue value,
                                      @NotNull PsiExpression expression,
                                      @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {

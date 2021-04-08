@@ -3,13 +3,17 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.*
+import com.intellij.codeInspection.dataFlow.DataFlowRunner
+import com.intellij.codeInspection.dataFlow.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.DfaNullability
+import com.intellij.codeInspection.dataFlow.RunnerResult
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.controlFlow.*
-import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
@@ -242,7 +246,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       var nullability = DfaNullability.NOT_NULL
 
-      class Visitor : StandardInstructionVisitor() {
+      class Interceptor : DfaInterceptor<PsiExpression> {
         override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, range: TextRange?, state: DfaMemoryState) {
           if (expr in expressionSet) {
             val expressionNullability = when {
@@ -255,7 +259,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
         }
       }
 
-      val visitor = Visitor()
+      val visitor = JavaDfaInstructionVisitor(Interceptor())
       val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
       return if (runnerState == RunnerResult.OK) {
         DfaNullability.toNullability(nullability)

@@ -11,6 +11,8 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
@@ -442,13 +444,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnedExpressions.isEmpty()) return true;
 
     final DataFlowRunner dfaRunner = new DataFlowRunner(myProject);
-    final StandardInstructionVisitor returnChecker = new StandardInstructionVisitor() {
+    final var returnChecker = new DfaInterceptor<PsiExpression>() {
       @Override
-      protected void checkReturnValue(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @NotNull PsiParameterListOwner context,
-                                      @NotNull DfaMemoryState state) {
-        if (context == myCodeFragmentMember &&
+      public void beforeValueReturn(@NotNull DfaValue value,
+                                    @Nullable PsiExpression expression,
+                                    @NotNull PsiElement context,
+                                    @NotNull DfaMemoryState state) {
+        if (context == myCodeFragmentMember && expression != null &&
             returnedExpressions.stream().anyMatch(ret -> PsiTreeUtil.isAncestor(ret, expression, false))) {
           boolean result = nullsExpected ? state.isNull(value) : state.isNotNull(value);
           if (!result) {
@@ -457,7 +459,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
-    return dfaRunner.analyzeMethod(body, returnChecker) == RunnerResult.OK;
+    return dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(returnChecker)) == RunnerResult.OK;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -478,24 +480,23 @@ public class ExtractMethodProcessor implements MatchProvider {
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final DataFlowRunner dfaRunner = new DataFlowRunner(block.getProject());
 
-    class Visitor extends StandardInstructionVisitor {
+    var interceptor = new DfaInterceptor<PsiExpression>() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
 
       @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
+      public void beforeExpressionPush(@NotNull DfaValue value,
+                                       @NotNull PsiExpression expression,
+                                       @Nullable TextRange range,
+                                       @NotNull DfaMemoryState state) {
         if (expression == expr && range == null) {
           myVisited = true;
           myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
       }
-    }
-    Visitor visitor = new Visitor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
-    return rc == RunnerResult.OK && visitor.myVisited ? DfaNullability.toNullability(visitor.myNullability) : Nullability.UNKNOWN;
+    };
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, new JavaDfaInstructionVisitor(interceptor));
+    return rc == RunnerResult.OK && interceptor.myVisited ? DfaNullability.toNullability(interceptor.myNullability) : Nullability.UNKNOWN;
   }
 
   protected boolean checkOutputVariablesCount() {

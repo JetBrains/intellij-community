@@ -16,6 +16,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -31,6 +33,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -124,8 +127,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           return state;
         }
       };
-      ComparatorVisitor visitor = new ComparatorVisitor(owner);
-      if (runner.analyzeMethod(body, visitor) != RunnerResult.OK) return;
+      var visitor = new ComparatorInterceptor(owner);
+      if (runner.analyzeMethod(body, new JavaDfaInstructionVisitor(visitor)) != RunnerResult.OK) return;
       if (visitor.myRange.contains(0) || visitor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (visitor.myContexts.size() == 1) {
@@ -149,21 +152,21 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                     InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.reflexive"));
     }
 
-    private static final class ComparatorVisitor extends StandardInstructionVisitor {
+    private static final class ComparatorInterceptor implements DfaInterceptor<PsiExpression> {
       private final PsiParameterListOwner myOwner;
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
 
-      private ComparatorVisitor(PsiParameterListOwner owner) {
+      private ComparatorInterceptor(PsiParameterListOwner owner) {
         myOwner = owner;
       }
 
       @Override
-      protected void checkReturnValue(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @NotNull PsiParameterListOwner owner,
-                                      @NotNull DfaMemoryState state) {
-        if (owner != myOwner) return;
+      public void beforeValueReturn(@NotNull DfaValue value,
+                                    @Nullable PsiExpression expression,
+                                    @NotNull PsiElement owner,
+                                    @NotNull DfaMemoryState state) {
+        if (owner != myOwner || expression == null) return;
         myContexts.add(expression);
         myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
       }
