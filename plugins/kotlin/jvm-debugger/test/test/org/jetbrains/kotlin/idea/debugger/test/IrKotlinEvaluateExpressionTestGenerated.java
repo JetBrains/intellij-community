@@ -334,6 +334,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
         }
 
+        @TestMetadata("lambdaWithDestructuring.kt")
+        public void testLambdaWithDestructuring() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
+        }
+
         @TestMetadata("localClass.kt")
         public void testLocalClass() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/localClass.kt");

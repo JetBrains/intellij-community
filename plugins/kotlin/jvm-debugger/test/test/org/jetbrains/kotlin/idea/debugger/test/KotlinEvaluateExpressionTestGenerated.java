@@ -333,6 +333,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
             runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
         }
 
+        @TestMetadata("lambdaWithDestructuring.kt")
+        public void testLambdaWithDestructuring() throws Exception {
+            runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
+        }
+
         @TestMetadata("localClass.kt")
         public void testLocalClass() throws Exception {
             runTest("testData/evaluation/singleBreakpoint/localClass.kt");
