@@ -88,7 +88,7 @@ public final class DfaWrappedValue extends DfaValue {
         DfType dfType;
         DfType fieldValue = specialFieldValue.getDfType();
         if (specialField == SpecialField.STRING_LENGTH && fieldValue.isConst(0)) {
-          dfType = DfTypes.constant("", JavaPsiFacade.getElementFactory(specialFieldValue.getFactory().getProject())
+          dfType = DfTypes.referenceConstant("", JavaPsiFacade.getElementFactory(specialFieldValue.getFactory().getProject())
             .createTypeByFQClassName(JAVA_LANG_STRING));
         }
         else {

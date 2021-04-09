@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,16 +17,14 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
 
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
-  private final @NotNull PsiType myPsiType;
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
   private final @Nullable SpecialField mySpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myDropConstantOnWiden;
 
-  DfReferenceConstantType(@NotNull Object constant, @NotNull PsiType psiType, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
+  DfReferenceConstantType(@NotNull Object constant, @NotNull TypeConstraint type, boolean dropConstantOnWiden) {
     super(constant);
-    myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
     mySpecialField = SpecialField.fromQualifierType(this);
@@ -54,17 +51,11 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
       if (type.isSuperType(this)) return this;
       TypeConstraint constraint = type.getConstraint().meet(myConstraint);
       if (constraint != TypeConstraints.BOTTOM) {
-        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), myPsiType, constraint, myDropConstantOnWiden);
+        DfReferenceConstantType subConstant = new DfReferenceConstantType(getValue(), constraint, myDropConstantOnWiden);
         if (type.isSuperType(subConstant)) return subConstant;
       }
     }
     return BOTTOM;
-  }
-
-  @NotNull
-  @Override
-  public PsiType getPsiType() {
-    return myPsiType;
   }
 
   @NotNull

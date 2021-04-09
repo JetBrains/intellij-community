@@ -1499,7 +1499,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     startElement(expression);
     PsiTypeElement operand = expression.getOperand();
-    DfType classConstant = DfTypes.constant(operand.getType(), expression.getType());
+    DfType classConstant = DfTypes.referenceConstant(operand.getType(), expression.getType());
     addInstruction(new PushValueInstruction(classConstant, expression));
     finishElement(expression);
   }
@@ -1926,7 +1926,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(operand, unboxedType);
     PsiType resultType = TypeConversionUtil.binaryNumericPromotion(unboxedType, PsiType.INT);
     Object addend = TypeConversionUtil.computeCastTo(1, resultType);
-    addInstruction(new PushValueInstruction(DfTypes.constant(addend, resultType)));
+    addInstruction(new PushValueInstruction(DfTypes.primitiveConstant(addend)));
     addInstruction(new BinopInstruction(token, null, resultType));
     if (!unboxedType.equals(resultType)) {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));

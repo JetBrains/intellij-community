@@ -348,7 +348,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
       }
       if (jdiValue instanceof StringReference) {
         PsiType stringType = myPsiFactory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, myBody.getResolveScope());
-        return DfTypes.constant(((StringReference)jdiValue).value(), stringType);
+        return DfTypes.referenceConstant(((StringReference)jdiValue).value(), stringType);
       }
       if (jdiValue instanceof ObjectReference) {
         ReferenceType type = ((ObjectReference)jdiValue).referenceType();
@@ -360,7 +360,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
             if (enumClass != null && enumClass.isEnum()) {
               PsiField enumConst = enumClass.findFieldByName(enumConstantName, false);
               if (enumConst instanceof PsiEnumConstant) {
-                return DfTypes.constant(enumConst, psiType);
+                return DfTypes.referenceConstant(enumConst, psiType);
               }
             }
           }

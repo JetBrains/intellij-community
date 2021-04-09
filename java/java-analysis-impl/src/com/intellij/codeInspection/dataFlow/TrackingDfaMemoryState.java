@@ -11,7 +11,6 @@ import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,11 +59,11 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       }
       if (type instanceof DfAntiConstantType) {
         Set<?> notValues = ((DfAntiConstantType<?>)type).getNotValues();
-        PsiType varType = var.getType();
-        if (!notValues.isEmpty() && varType != null) {
+        if (!notValues.isEmpty()) {
+          DfType dfType = var.getDfType();
           for (Object notValue : notValues) {
             result.computeIfAbsent(var, k -> new HashSet<>()).add(
-              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, varType))));
+              new Relation(RelationType.NE, getFactory().fromDfType(DfTypes.constant(notValue, dfType))));
           }
         }
       }
@@ -355,7 +354,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
           LongRangeBinOp op = ((DfaBinOpValue)value).getOperation();
           @SuppressWarnings("unchecked")
-          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, PsiType.LONG.equals(value.getType()));
+          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, value.getDfType() instanceof DfLongType);
           return new FactDefinition<>(null, Objects.requireNonNull(result));
         }
       }

@@ -172,7 +172,8 @@ public final class CustomMethodHandlers {
               (arguments, state, factory, method) -> collectionView(arguments.myQualifier, factory, method))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterTypes("T[]"), CustomMethodHandlers::collectionToArray)
     .register(instanceCall(JAVA_UTIL_COLLECTION, "toArray").parameterCount(0), CustomMethodHandlers::collectionToArray)
-    .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray);
+    .register(instanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0), CustomMethodHandlers::stringToCharArray)
+    .register(exactInstanceCall(JAVA_LANG_OBJECT, "getClass").parameterCount(0), toValue(CustomMethodHandlers::objectGetClass));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -346,7 +347,7 @@ public final class CustomMethodHandlers {
     if (collectionsClass == null) return TOP;
     PsiField field = collectionsClass.findFieldByName(fieldName, false);
     if (field == null) return TOP;
-    return constant(field, field.getType());
+    return referenceConstant(field, field.getType());
   }
 
   private static @Nullable DfaValue substring(DfaCallArguments args, DfaMemoryState state, DfaValueFactory factory, PsiType stringType) {
@@ -419,7 +420,20 @@ public final class CustomMethodHandlers {
     DfType dfType = state.getDfType(qualifier);
     PsiEnumConstant value = dfType.getConstantOfType(PsiEnumConstant.class);
     if (value != null) {
-      return constant(value.getName(), type);
+      return referenceConstant(value.getName(), type);
+    }
+    return TOP;
+  }
+
+  private static @NotNull DfType objectGetClass(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
+    DfaValue qualifier = arguments.myQualifier;
+    TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifier));
+    if (fact instanceof TypeConstraint.Exact) {
+      PsiType qualifierType = fact.getPsiType(factory.getProject());
+      PsiType classType = method.getReturnType();
+      if (classType != null && qualifierType != null) {
+        return referenceConstant(qualifierType, classType);
+      }
     }
     return TOP;
   }

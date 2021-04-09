@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -35,7 +36,7 @@ public final class NullabilityUtil {
       return DfaNullability.NULLABLE;
     }
     PsiModifierListOwner var = ObjectUtils.tryCast(value.getPsiVariable(), PsiModifierListOwner.class);
-    if (value.getType() instanceof PsiPrimitiveType) {
+    if (value.getDfType() instanceof DfPrimitiveType) {
       return DfaNullability.UNKNOWN;
     }
     if (var instanceof PsiField && DfaUtil.hasInitializationHacks((PsiField)var)) {

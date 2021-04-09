@@ -241,9 +241,9 @@ final class StateMerger {
       }
       if (dfType instanceof DfAntiConstantType) {
         Set<?> notValues = ((DfAntiConstantType<?>)dfType).getNotValues();
-        if (!notValues.isEmpty() && var.getType() != null) {
+        if (!notValues.isEmpty()) {
           for (Object notValue : notValues) {
-            result.add(new EqualityFact(var, false, var.getFactory().fromDfType(DfTypes.constant(notValue, var.getType()))));
+            result.add(new EqualityFact(var, false, var.getFactory().fromDfType(DfTypes.constant(notValue, var.getDfType()))));
           }
         }
       }

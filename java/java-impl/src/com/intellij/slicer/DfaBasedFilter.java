@@ -59,8 +59,9 @@ final class DfaBasedFilter {
       DfConstantType<?> dfConstantType = (DfConstantType<?>)myDfType;
       Object constValue = dfConstantType.getValue();
       if (!(constValue instanceof PsiElement)) {
+        PsiPrimitiveType targetType = dfConstantType instanceof DfPrimitiveType ? ((DfPrimitiveType)dfConstantType).getPsiType() : null;
         Object literalValue = ((PsiLiteralValue)element).getValue();
-        Object value = constValue == null ? literalValue : TypeConversionUtil.computeCastTo(literalValue, dfConstantType.getPsiType());
+        Object value = targetType == null ? literalValue : TypeConversionUtil.computeCastTo(literalValue, targetType);
         return Objects.equals(value, constValue);
       }
     }

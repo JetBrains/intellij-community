@@ -40,10 +40,11 @@ public interface DfIntegralType extends DfPrimitiveType {
   @NotNull DfType meetRange(@NotNull LongRangeSet range);
 
   /**
-   * Cast this type to the specified primitive type 
+   * Cast this type to the specified primitive type
    * @param type target type
    * @return result of the cast
    */
+  @Override
   default @NotNull DfType castTo(@NotNull PsiPrimitiveType type) {
     if (!TypeConversionUtil.isIntegralNumberType(type)) {
       return DfPrimitiveType.super.castTo(type);

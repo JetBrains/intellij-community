@@ -17,7 +17,7 @@ import java.util.Objects;
  */
 public abstract class DfConstantType<T> implements DfType {
   private final T myValue;
-  
+
   DfConstantType(T value) {
     myValue = value;
   }
@@ -26,9 +26,6 @@ public abstract class DfConstantType<T> implements DfType {
   public boolean isSuperType(@NotNull DfType other) {
     return other.equals(this) || other == DfTypes.BOTTOM;
   }
-
-  @NotNull
-  public abstract PsiType getPsiType();
 
   @NotNull
   @Override
@@ -50,7 +47,7 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public boolean equals(Object obj) {
-    return obj == this || 
+    return obj == this ||
            obj != null && obj.getClass() == getClass() && Objects.equals(((DfConstantType<?>)obj).myValue, myValue);
   }
 

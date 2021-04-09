@@ -393,7 +393,7 @@ public enum SpecialField implements VariableDescriptor {
       return dfType;
     }
     if (this == STRING_LENGTH && fieldValue.isConst(0)) {
-      return DfTypes.constant("", exactResultType);
+      return DfTypes.referenceConstant("", exactResultType);
     }
     return dfType.meet(TypeConstraints.exact(exactResultType).asDfType());
   }

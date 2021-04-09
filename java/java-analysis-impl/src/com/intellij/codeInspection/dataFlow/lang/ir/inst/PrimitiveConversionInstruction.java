@@ -2,6 +2,8 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
@@ -10,8 +12,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,14 +35,14 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
     if (value instanceof DfaBinOpValue) {
       value = ((DfaBinOpValue)value).tryReduceOnCast(state, type);
     }
-    if (value instanceof DfaVariableValue &&
-        (type.equals(value.getType()) ||
-         TypeConversionUtil.isSafeConversion(type, value.getType()) &&
-         TypeConversionUtil.isSafeConversion(PsiType.INT, type))) {
-      return value;
-    }
 
     DfType dfType = state.getDfType(value);
+    if (value instanceof DfaVariableValue && dfType instanceof DfIntegralType) {
+      LongRangeSet set = LongRangeSet.fromType(type);
+      if (set != null && !LongRangeSet.all().equals(set) && ((DfIntegralType)dfType).meetRange(set).equals(dfType)) {
+        return value;
+      }
+    }
     if (dfType instanceof DfPrimitiveType) {
       return factory.fromDfType(((DfPrimitiveType)dfType).castTo(type));
     }

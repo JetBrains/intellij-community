@@ -160,12 +160,12 @@ class AnalysisStartingPoint {
     if (constant instanceof PsiClassObjectAccessExpression) {
       PsiClassObjectAccessExpression classObject = (PsiClassObjectAccessExpression)constant;
       PsiTypeElement operand = classObject.getOperand();
-      return DfTypes.constant(operand.getType(), classObject.getType());
+      return DfTypes.referenceConstant(operand.getType(), classObject.getType());
     }
     if (constant instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)constant).resolve();
       if (target instanceof PsiEnumConstant) {
-        return DfTypes.constant(target, Objects.requireNonNull(constant.getType()));
+        return DfTypes.referenceConstant(target, Objects.requireNonNull(constant.getType()));
       }
     }
     if (ExpressionUtils.isNullLiteral(constant)) {
