@@ -148,7 +148,10 @@ public final class StartupUtil {
 
   private static @NotNull CompletableFuture<@Nullable("if accepted") Object> scheduleEuaDocumentLoading() {
     return CompletableFuture.supplyAsync(() -> {
-      if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      String vendorAsProperty = System.getProperty("idea.vendor.name", "");
+      if (vendorAsProperty.isEmpty()
+          ? !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()
+          : !"JetBrains".equals(vendorAsProperty)) {
         return null;
       }
 
