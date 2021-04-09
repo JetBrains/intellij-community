@@ -139,7 +139,8 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public boolean onCursorChange(CefBrowser browser, int cursorType) {
-    return false;
+    SwingUtilities.invokeLater(() -> myComponent.setCursor(new Cursor(cursorType)));
+    return true;
   }
 
   @Override
