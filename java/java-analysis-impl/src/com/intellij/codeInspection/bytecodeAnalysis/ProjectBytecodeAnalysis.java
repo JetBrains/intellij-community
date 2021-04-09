@@ -112,6 +112,7 @@ public class ProjectBytecodeAnalysis {
       if (listOwner instanceof PsiMethod) {
         List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
+        correctMethodAnnotations((PsiMethod)listOwner, primaryKey, methodAnnotations);
         return toPsi(primaryKey, methodAnnotations);
       }
       else if (listOwner instanceof PsiParameter) {
@@ -138,6 +139,32 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
+  private static void correctMethodAnnotations(PsiMethod listOwner, EKey primaryKey, MethodAnnotations methodAnnotations) {
+    if (methodAnnotations.mutates.isPure()) {
+      String contractValues = methodAnnotations.contractsValues.get(primaryKey);
+      if (contractValues == null) return;
+      List<StandardMethodContract> contracts;
+      try {
+        contracts = StandardMethodContract.parseContract(contractValues);
+      }
+      catch (StandardMethodContract.ParseException ignore) {
+        return;
+      }
+      if (!ContainerUtil.exists(contracts, c -> c.getReturnValue().equals(ContractReturnValue.returnNew()))) {
+        return;
+      }
+      PsiType returnType = listOwner.getReturnType();
+      if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+          InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_MAP)) {
+        // We consider collection/map size as collection field
+        // Also, we consider the return value of pure -> new method as local object
+        // As a result, collection wrappers produced by methods may be marked as local
+        // while still depend on something else. Let's remove contracts conservatively in this case.
+        methodAnnotations.contractsValues.remove(primaryKey);
+      }
+    }
+  }
+
   /**
    * Converts inferred method annotations to Psi annotations
    *
@@ -150,9 +177,9 @@ public class ProjectBytecodeAnalysis {
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     MutationSignature mutationSignature = methodAnnotations.mutates;
     Map<String, String> annotationParameters = new LinkedHashMap<>();
-    String contractValues = methodAnnotations.contractsValues.get(primaryKey);
-    if (contractValues != null) {
-      annotationParameters.put("value", contractValues);
+    String contractValues = methodAnnotations.contractsValues.getOrDefault(primaryKey, "");
+    if (!contractValues.isEmpty()) {
+      annotationParameters.put("value", "\"" + contractValues + '"');
     }
     if (mutationSignature.isPure()) {
       annotationParameters.put("pure", "true");
@@ -297,7 +324,7 @@ public class ProjectBytecodeAnalysis {
     collectEquations(Collections.singletonList(failureKey), failureSolver);
     if (failureSolver.solve().get(failureKey) == Value.Fail) {
       // Always failing method
-      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
+      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "", "->fail"));
     }
     else {
       Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
@@ -447,7 +474,7 @@ public class ProjectBytecodeAnalysis {
     for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || 
+      if (value == Value.Top || value == Value.Bot ||
           (value == Value.Fail && !methodAnnotations.mutates.isPure())) {
         continue;
       }
@@ -498,9 +525,7 @@ public class ProjectBytecodeAnalysis {
                             .distinct()
                             .map(str -> str.replace(" ", "")) // for compatibility with existing tests
                             .joining(";");
-    if (!result.isEmpty()) {
-      contracts.put(methodKey, '"' + result + '"');
-    }
+    contracts.put(methodKey, result);
   }
 
   private void removeConstraintFromNonNullParameter(@NotNull EKey methodKey,
