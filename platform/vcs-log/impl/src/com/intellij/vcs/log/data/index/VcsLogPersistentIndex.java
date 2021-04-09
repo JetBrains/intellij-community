@@ -55,7 +55,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 @NonNls
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 16;
+  private static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -295,7 +295,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final String PARENTS = "parents";
     private static final String COMMITTERS = "committers";
     private static final String TIMESTAMPS = "timestamps";
-    private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
     @NotNull public final PersistentMap<Integer, List<Integer>> parents;
@@ -327,9 +326,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                           storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        StorageId messagesStorageId = new StorageId(projectName, INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
-        messages = new PersistentHashMap<>(messagesStorageId.getStorageFile(MESSAGES), EnumeratorIntegerDescriptor.INSTANCE,
-                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, messagesStorageId.getVersion(),
+        messages = new PersistentHashMap<>(storageId.getStorageFile(MESSAGES), EnumeratorIntegerDescriptor.INSTANCE,
+                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE, storageId.getVersion(),
                                            storageLockContext);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
