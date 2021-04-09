@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -47,8 +48,9 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
   }
 
   public boolean isGeneratedConstructor(String qualifiedName, String methodSignature) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (myState.myIgnoreImplicitConstructors || myState.myIgnoreEmptyPrivateConstructors) {
-      PsiClass psiClass = ReadAction.compute(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(myProject), qualifiedName));
+      PsiClass psiClass = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(myProject), qualifiedName));
       return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, methodSignature, myState.myIgnoreImplicitConstructors, myState.myIgnoreEmptyPrivateConstructors);
     }
     return false;
