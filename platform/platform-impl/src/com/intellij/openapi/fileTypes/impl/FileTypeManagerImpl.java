@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.plugins.PluginConflictReporter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.scratch.ScratchUtil;
@@ -339,7 +340,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (bean.implementationClass == null) continue;
 
       if (myPendingFileTypes.containsKey(bean.name)) {
-        LOG.error(new PluginException("Trying to override already registered file type '" + bean.name+"'", bean.getPluginId()));
+        handleFileTypesConflict(bean, myPendingFileTypes.get(bean.name));
         continue;
       }
 
@@ -362,6 +363,27 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         myPendingAssociations.addAssociation(matcher, oldBean);
       }
     }
+  }
+
+  private static void handleFileTypesConflict(FileTypeBean bean, FileTypeBean otherBean) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      PluginConflictReporter conflictReporter = application.getService(PluginConflictReporter.class);
+      if (conflictReporter != null) {
+        Set<PluginId> conflictingPlugins = new HashSet<>();
+        if (bean.getPluginId() != null) {
+          conflictingPlugins.add(bean.getPluginId());
+        }
+        if (otherBean.getPluginId() != null) {
+          conflictingPlugins.add(otherBean.getPluginId());
+        }
+        boolean hasConflictWithPlatform = bean.getPluginId() == null || otherBean.getPluginId() == null;
+        conflictReporter.reportConflict(conflictingPlugins, hasConflictWithPlatform);
+        return;
+      }
+    }
+
+    LOG.error(new PluginException("Trying to override already registered file type '" + bean.name + "'", bean.getPluginId()));
   }
 
   private static void initializeMatchers(@NotNull Object context, @NotNull FileTypeBean bean) {
