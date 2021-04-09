@@ -48,7 +48,6 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
   }
 
   fun <T> send(messageId: Int, message: ByteBuf, results: MutableList<Promise<Pair<Client, T>>>? = null) {
-    message.retain()
     forEachClient(object : Consumer<Client> {
       private var first: Boolean = false
 
@@ -63,7 +62,9 @@ class ClientManager(private val listener: ClientListener?, val exceptionHandler:
         }
       }
     })
-    message.release()
+    if (message.refCnt() > 0) {
+      message.release()
+    }
   }
 
   fun disconnectClient(channel: Channel, client: Client, closeChannel: Boolean): Boolean {
