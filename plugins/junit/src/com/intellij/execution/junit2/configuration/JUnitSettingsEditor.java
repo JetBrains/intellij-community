@@ -64,7 +64,7 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     scopeFragment.addSettingsEditorListener(editor -> {
 
       boolean disableModuleClasspath = testKind.disableModuleClasspath(scopeFragment.getSelectedVariant() == TestSearchScope.WHOLE_PROJECT);
-      moduleClasspath.setSelected(!disableModuleClasspath);
+      moduleClasspath.setSelected(!disableModuleClasspath && moduleClasspath.isInitiallyVisible(mySettings));
       if (disableModuleClasspath) {
         moduleClasspath.component().setSelectedModule(null);
       }
