@@ -213,7 +213,6 @@ public final class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
     activity = activity.endAndStart("main class loading scheduling");
-
     ForkJoinTask<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
       Activity subActivity = StartUpMeasurer.startActivity("main class loading");
       Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
@@ -419,34 +418,40 @@ public final class StartupUtil {
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
     Activity activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)");
     CompletableFuture<Void> initUiFuture = CompletableFuture.runAsync(() -> {
-      checkHiDPISettings();
-      blockATKWrapper();
+        checkHiDPISettings();
+        blockATKWrapper();
 
-      //noinspection SpellCheckingInspection
-      System.setProperty("sun.awt.noerasebackground", "true");
-      if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-      }
-      activityQueue.updateThreadName();
-    }, ForkJoinPool.commonPool())
-    .thenRunAsync(() -> {
-      try {
+        //noinspection SpellCheckingInspection
+        System.setProperty("sun.awt.noerasebackground", "true");
+        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+        }
+
+        Activity activity = StartUpMeasurer.startActivity("awt toolkit creating");
+        Toolkit.getDefaultToolkit();
+        activity.end();
+
+        activityQueue.updateThreadName();
+      }, ForkJoinPool.commonPool())
+      .thenRunAsync(() -> {
         activityQueue.end();
         // it is required even if headless because some tests creates configurable, so, our LaF is expected
         Activity activity = StartUpMeasurer.startActivity("LaF initialization");
-        UIManager.setLookAndFeel(new IntelliJLaf());
+        try {
+          UIManager.setLookAndFeel(new IntelliJLaf());
+        }
+        catch (UnsupportedLookAndFeelException e) {
+          throw new RuntimeException(e);
+        }
+
         activity = activity.endAndStart("system font data initialization");
         JBUIScale.getSystemFontData(null);
         activity = activity.endAndStart("init JBUIScale");
         JBUIScale.scale(1f);
         activity.end();
-      }
-      catch (UnsupportedLookAndFeelException e) {
-        throw new RuntimeException(e);
-      }
 
-      StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
-    }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
+        StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
+      }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
