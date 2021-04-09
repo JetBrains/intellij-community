@@ -2,8 +2,11 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
+import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.runChild
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
@@ -70,7 +73,6 @@ open class IdeStarter : ApplicationStarter {
 
   override fun main(args: List<String>) {
     val app = ApplicationManagerEx.getApplicationEx()
-
     assert(!app.isDispatchThread)
 
     if (app.isLightEditMode && !app.isHeadlessEnvironment) {
@@ -81,34 +83,28 @@ open class IdeStarter : ApplicationStarter {
       }
     }
 
-    val frameInitActivity = startActivity("frame initialization")
-
-    val windowManager = WindowManagerEx.getInstanceEx()
-    runActivity("IdeEventQueue informing about WindowManager") {
-      IdeEventQueue.getInstance().setWindowManager(windowManager)
-    }
-
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    openProjectIfNeeded(args, app, frameInitActivity, lifecyclePublisher)
+    openProjectIfNeeded(args, app, lifecyclePublisher)
+      .thenRun {
+        reportPluginErrors()
 
-    reportPluginErrors()
+        if (!app.isHeadlessEnvironment) {
+          postOpenUiTasks(app)
+        }
 
-    if (!app.isHeadlessEnvironment) {
-      postOpenUiTasks(app)
-    }
+        StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+        lifecyclePublisher.appStarted()
 
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
-    lifecyclePublisher.appStarted()
-
-    if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
-      AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-    }
+        if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
+          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+        }
+      }
   }
 
   protected open fun openProjectIfNeeded(args: List<String>,
                                          app: ApplicationEx,
-                                         frameInitActivity: Activity,
-                                         lifecyclePublisher: AppLifecycleListener) {
+                                         lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
+    val frameInitActivity = startActivity("frame initialization")
     frameInitActivity.runChild("app frame created callback") {
       lifecyclePublisher.appFrameCreated(args)
     }
@@ -118,8 +114,9 @@ open class IdeStarter : ApplicationStarter {
       frameInitActivity.end()
 
       LifecycleUsageTriggerCollector.onIdeStart()
+      @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(null)
-      return
+      return CompletableFuture.completedFuture(null)
     }
 
     if (JetBrainsProtocolHandler.appStartedWithCommand()) {
@@ -133,6 +130,7 @@ open class IdeStarter : ApplicationStarter {
         !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
+      @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(project)
     }
     else {
@@ -146,8 +144,9 @@ open class IdeStarter : ApplicationStarter {
       }
 
       if (!needToOpenProject) {
+        @Suppress("DEPRECATION")
         lifecyclePublisher.appStarting(null)
-        return
+        return CompletableFuture.completedFuture(null)
       }
 
       val project = when {
@@ -155,16 +154,19 @@ open class IdeStarter : ApplicationStarter {
         !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
+      @Suppress("DEPRECATION")
       lifecyclePublisher.appStarting(project)
 
       if (project == null && willReopenRecentProjectOnStart) {
-        recentProjectManager.reopenLastProjectsOnStart().thenAccept { isOpened ->
-          if (!isOpened) {
-            WelcomeFrame.showIfNoProjectOpened()
+        return recentProjectManager.reopenLastProjectsOnStart()
+          .thenAccept { isOpened ->
+            if (!isOpened) {
+              WelcomeFrame.showIfNoProjectOpened()
+            }
           }
-        }
       }
     }
+    return CompletableFuture.completedFuture(null)
   }
 
   private fun showWizardAndWelcomeFrame(lifecyclePublisher: AppLifecycleListener, willOpenProject: Boolean): Boolean {
@@ -215,26 +217,27 @@ open class IdeStarter : ApplicationStarter {
   internal class StandaloneLightEditStarter : IdeStarter() {
     override fun openProjectIfNeeded(args: List<String>,
                                      app: ApplicationEx,
-                                     frameInitActivity: Activity,
-                                     lifecyclePublisher: AppLifecycleListener) {
+                                     lifecyclePublisher: AppLifecycleListener): CompletableFuture<*> {
       val project = when {
         !filesToLoad.isEmpty() -> ProjectUtil.tryOpenFiles(null, filesToLoad, "MacMenu")
         !args.isEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
 
-      if (project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
-        val recentProjectManager = RecentProjectsManager.getInstance()
-        (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
-        else CompletableFuture.completedFuture(true))
-          .thenAccept { isOpened ->
-            if (!isOpened) {
-              ApplicationManager.getApplication().invokeLater {
-                LightEditService.getInstance().showEditorWindow()
-              }
+      if (project != null || JetBrainsProtocolHandler.appStartedWithCommand()) {
+        return CompletableFuture.completedFuture(null)
+      }
+
+      val recentProjectManager = RecentProjectsManager.getInstance()
+      return (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart()
+      else CompletableFuture.completedFuture(true))
+        .thenAccept { isOpened ->
+          if (!isOpened) {
+            ApplicationManager.getApplication().invokeLater {
+              LightEditService.getInstance().showEditorWindow()
             }
           }
-      }
+        }
     }
   }
 }

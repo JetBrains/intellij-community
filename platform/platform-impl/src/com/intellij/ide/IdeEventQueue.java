@@ -117,7 +117,6 @@ public final class IdeEventQueue extends EventQueue {
   private AWTEvent myCurrentSequencedEvent;
   private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
-  private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = new HashSet<>();
@@ -273,10 +272,6 @@ public final class IdeEventQueue extends EventQueue {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public void setWindowManager(@NotNull WindowManagerEx windowManager) {
-    myWindowManager = windowManager;
   }
 
   public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
@@ -718,7 +713,7 @@ public final class IdeEventQueue extends EventQueue {
     myEventCount++;
 
     if (e instanceof WindowEvent) {
-      processAppActivationEvent((WindowEvent)e, myWindowManager);
+      processAppActivationEvent((WindowEvent)e);
     }
 
     myKeyboardBusy = e instanceof KeyEvent || myKeyboardEventsPosted.get() > myKeyboardEventsDispatched.get();
@@ -759,8 +754,10 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (e instanceof ComponentEvent && myWindowManager != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myWindowManager.dispatchComponentEvent((ComponentEvent)e);
+    if (e instanceof ComponentEvent &&
+        LoadingState.COMPONENTS_LOADED.isOccurred() &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      (WindowManagerEx.getInstanceEx()).dispatchComponentEvent((ComponentEvent)e);
     }
 
     if (e instanceof KeyEvent) {
@@ -860,7 +857,7 @@ public final class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static void processAppActivationEvent(@NotNull WindowEvent event, @Nullable WindowManagerEx windowManager) {
+  private static void processAppActivationEvent(@NotNull WindowEvent event) {
     ApplicationActivationStateManager.updateState(event);
 
     if (event.getID() != WindowEvent.WINDOW_DEACTIVATED && event.getID() != WindowEvent.WINDOW_LOST_FOCUS) {
@@ -873,6 +870,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
+    WindowManagerEx windowManager = WindowManagerEx.getInstanceEx();
     if (windowManager == null) {
       return;
     }

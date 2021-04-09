@@ -32,8 +32,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPointAction.ActionProvider {
-
+final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPointAction.ActionProvider {
   private static final String NEXT_RUN_KEY_BUILD = "NextRunPlatformUpdateBuild";
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
 
@@ -49,7 +48,7 @@ public class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoin
 
   private static boolean myEnableUpdateAction = true;
 
-  public static class LifecycleListener implements AppLifecycleListener {
+  static final class LifecycleListener implements AppLifecycleListener {
     @Override
     public void appStarted() {
       preparePrevPlatformUpdate();
