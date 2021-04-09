@@ -6,7 +6,6 @@ import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.util.projectWizard.*
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
@@ -19,8 +18,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.SystemProperties
 import org.jetbrains.kotlin.idea.framework.KotlinTemplatesFactory
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.UiEditorUsageStats
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.div
@@ -41,7 +40,6 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.asHtml
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep.FirstWizardStepComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.runWithProgressBar
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.SecondStepWizardComponent
-import java.io.File
 import javax.swing.JButton
 import javax.swing.JComponent
 import com.intellij.openapi.module.Module as IdeaModule
@@ -224,7 +222,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
     }
 
     private fun initDefaultValues() {
-        val suggestedProjectParentLocation = suggestProjectLocation()
+        val suggestedProjectParentLocation = RecentProjectsManager.getInstance().suggestNewProjectLocation()
         val suggestedProjectName = ProjectWizardUtil.findNonExistingFileName(suggestedProjectParentLocation, "untitled", "")
         wizard.context.writeSettings {
             StructurePlugin.name.reference.setValue(suggestedProjectName)
@@ -242,17 +240,6 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
         if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
         val usernameAsGroupId = username.trim().toLowerCase().split("\\s+".toRegex()).joinToString(separator = ".")
         return "me.$usernameAsGroupId"
-    }
-
-    // copied from com.intellij.ide.util.projectWizard.WizardContext.getProjectFileDirectory
-    private fun suggestProjectLocation(): String {
-        val lastProjectLocation = RecentProjectsManager.getInstance().lastProjectCreationLocation
-        if (lastProjectLocation != null) {
-            return lastProjectLocation.replace('/', File.separatorChar)
-        }
-        val userHome = SystemProperties.getUserHome()
-        val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
-        return userHome.replace('/', File.separatorChar) + File.separator + productName.replace(" ", "") + "Projects"
     }
 
     companion object {
