@@ -126,15 +126,16 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
   }
 
   @Override
-  public void copyPathToTarget(File file) {
+  public void copyPathToTarget(Iterable<File> pathFiles) {
     if (myClasspathDirectory != null && myHostClasspathDirectory != null) {
-      Path targetPath = myHostClasspathDirectory.resolve(file.getName());
-      if (!targetPath.toFile().exists()) {
-        try {
-          FileUtil.copyFileOrDir(file, targetPath.toFile());
-        }
-        catch (IOException e) {
-          // ignore
+      for (File file : pathFiles) {
+        File targetFile = myHostClasspathDirectory.resolve(file.getName()).toFile();
+        if (!targetFile.exists()) {
+          try {
+            FileUtil.copyFileOrDir(file, targetFile);
+          }
+          catch (IOException ignored) {
+          }
         }
       }
     }

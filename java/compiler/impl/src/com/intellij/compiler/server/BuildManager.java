@@ -101,6 +101,7 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.tools.JavaCompiler;
@@ -1411,8 +1412,7 @@ public final class BuildManager implements Disposable {
     }
 
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      final List<String> args = provider.getVMArguments();
-      for (String arg : args) {
+      for (String arg : provider.getVMArguments()) {
         cmdLine.addParameter(arg); // TODO path parameters
       }
     }
@@ -1457,10 +1457,7 @@ public final class BuildManager implements Disposable {
     cmdLine.addClasspathParameter(cp, isProfilingMode ? Collections.singletonList("yjp-controller-api-redist.jar") : Collections.emptyList());
 
     for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      List<String> pluginPaths = buildProcessParametersProvider.getAdditionalPluginPaths();
-      for (String path : pluginPaths) {
-        cmdLine.copyPathToTarget(new File(path));
-      }
+      cmdLine.copyPathToTarget(Iterators.map(buildProcessParametersProvider.getAdditionalPluginPaths(), File::new));
     }
 
     cmdLine.addParameter(BuildMain.class.getName());
