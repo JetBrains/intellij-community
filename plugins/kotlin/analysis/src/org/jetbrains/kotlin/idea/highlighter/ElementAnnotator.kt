@@ -149,7 +149,8 @@ internal class ElementAnnotator(
                         else -> null
                     },
                     highlightType = when (factory) {
-                        in Errors.UNUSED_ELEMENT_DIAGNOSTICS -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                        in Errors.UNUSED_ELEMENT_DIAGNOSTICS, Errors.UNUSED_DESTRUCTURED_PARAMETER_ENTRY ->
+                            ProblemHighlightType.LIKE_UNUSED_SYMBOL
                         Errors.UNUSED_ANONYMOUS_PARAMETER -> ProblemHighlightType.WEAK_WARNING
                         else -> null
                     }
