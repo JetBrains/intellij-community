@@ -233,7 +233,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
 
       @Override
-      protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+      protected @NotNull JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
         JComponent component = super.createCustomComponent(action, presentation);
         if (component instanceof ActionButton) {
           ((ActionButton)component).setLook(editorButtonLook);

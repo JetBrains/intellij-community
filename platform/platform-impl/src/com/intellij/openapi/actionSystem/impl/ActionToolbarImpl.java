@@ -349,7 +349,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
+      String warningReported = "ActionToolbarImpl.customComponentWarningReported";
       customComponent = createCustomComponent((CustomComponentAction)action, presentation);
+      if (customComponent.getParent() != null && customComponent.getClientProperty(warningReported) == null) {
+        customComponent.putClientProperty(warningReported, true);
+        LOG.warn(action.getClass().getSimpleName() + ".component.getParent() != null in '" + myPlace + "' toolbar. " +
+                 "Custom components shall not be reused.");
+      }
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
@@ -368,7 +374,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return customComponent;
   }
 
-  protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+  protected @NotNull JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
     JComponent result = action.createCustomComponent(presentation, myPlace, getDataContext());
     ToolbarActionTracker.followToolbarComponent(presentation, result, getComponent());
     return result;
