@@ -219,11 +219,11 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"
                      key="inspection.u.element.as.psi.display.name"/>
-    <localInspection language="UAST" shortName="UsePrimitiveTypes"
+    <localInspection language="UAST" shortName="UsePrimitiveTypesEquals"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesInspection"
-                     key="inspection.use.primitive.types.display.name"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"
+                     key="inspection.use.primitive.types.equals.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection shortName="HighlightVisitorInternal"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

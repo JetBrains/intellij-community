@@ -10,7 +10,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
-public class UsePrimitiveTypesInspection extends DevKitUastInspectionBase {
+public class UsePrimitiveTypesEqualsInspection extends DevKitUastInspectionBase {
 
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
