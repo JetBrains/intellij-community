@@ -588,7 +588,10 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   void clearAllIndices() {
-    if (!myInitialized) return;
+    if (!myInitialized) {
+      LOG.error("stub index cleaning called when index is not yet initialized");
+      return;
+    }
     for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
       try {
         index.clear();

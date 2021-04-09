@@ -93,7 +93,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     try {
       inputMappings = snapshotInputMappings == null ? null : snapshotInputMappings.compute();
     } catch (IOException e) {
-      clearAndDispose();
+      tryDispose();
       throw e;
     }
     mySnapshotInputMappings = inputMappings;
@@ -121,7 +121,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         }
       }
       catch (IOException e) {
-        clearAndDispose();
+        tryDispose();
         throw e;
       }
     } else {
