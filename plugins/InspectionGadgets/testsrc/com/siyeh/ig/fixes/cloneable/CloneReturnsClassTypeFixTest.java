@@ -18,6 +18,7 @@ public class CloneReturnsClassTypeFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() { doTest("Change return type to 'Simple'"); }
   public void testReturnNull() { doTest("Change return type to 'ReturnNull'"); }
+  public void testTypeUseAnnotation() { doTest("Change return type to 'TypeUseAnnotation'"); }
   public void testCast() { doTest("Change return type to 'Cast'"); }
   public void testAnonymousClass() { doTest("Change return type to 'B'"); }
   public void testNested() { doTest("Change return type to 'Nested'"); }

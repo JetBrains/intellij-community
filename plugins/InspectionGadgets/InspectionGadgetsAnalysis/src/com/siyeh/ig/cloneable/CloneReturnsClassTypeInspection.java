@@ -65,7 +65,8 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       if (!(element instanceof PsiTypeElement)) {
         return;
       }
-      final PsiElement parent = element.getParent();
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      final PsiElement parent = typeElement.getParent();
       if (!(parent instanceof PsiMethod)) {
         return;
       }
@@ -96,7 +97,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
                                               commentTracker);
         }
       });
-      element.replace(newTypeElement);
+      typeElement.getFirstChild().replace(newTypeElement.getFirstChild());
     }
   }
 
