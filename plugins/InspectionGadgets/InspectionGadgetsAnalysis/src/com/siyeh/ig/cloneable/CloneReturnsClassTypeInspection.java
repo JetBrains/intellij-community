@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -84,11 +84,16 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
         public void visitReturnStatement(PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
           final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
-          if (returnValue == null || newType.equals(returnValue.getType())) {
+          if (returnValue == null) {
             return;
           }
-          CommentTracker commentTracker = new CommentTracker();
-          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.text(returnValue) + ';', commentTracker);
+          final PsiType type = returnValue.getType();
+          if (newType.equals(type) || PsiType.NULL.equals(type)) {
+            return;
+          }
+          final CommentTracker commentTracker = new CommentTracker();
+          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.text(returnValue) + ';',
+                                              commentTracker);
         }
       });
       element.replace(newTypeElement);
