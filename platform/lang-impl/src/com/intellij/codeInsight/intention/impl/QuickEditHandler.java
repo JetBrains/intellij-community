@@ -275,7 +275,9 @@ public class QuickEditHandler extends UserDataHolderBase implements Disposable, 
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal) return;
-      if (!myEditChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getOldLength()))) return;
+      InjectedFileChangesHandler injectedFileChangesHandler =
+        Objects.requireNonNull(myEditChangesHandler, "seems that 'myEditChangesHandler' was not initialized");
+      if (!injectedFileChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getOldLength()))) return;
       ApplicationManager.getApplication().invokeLater(() -> {
         Component owner = FocusManager.getCurrentManager().getFocusOwner();
         closeEditor();

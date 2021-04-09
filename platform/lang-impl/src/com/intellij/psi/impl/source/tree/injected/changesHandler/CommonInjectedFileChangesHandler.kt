@@ -104,6 +104,7 @@ open class CommonInjectedFileChangesHandler(
 
   override fun commitToOriginal(e: DocumentEvent) {
     val text = myFragmentDocument.text
+    LOG.debug { "commitToOriginal: $e text='${text.esclbr()}'" }
     val map = markers.groupByTo(LinkedHashMap()) { it.host }
 
     val documentManager = PsiDocumentManager.getInstance(myProject)
@@ -133,12 +134,16 @@ open class CommonInjectedFileChangesHandler(
         workingRange = workingRange union currentHost.contentRange
       }
     }
-    
+
     if (!markers.all { it.isValid() }) {
       workingRange?.let { workingRange ->
+        LOG.logMarkers("before rebuild")
         rebuildMarkers(workingRange)
+        LOG.logMarkers("after rebuild")
       }
     }
+    else
+      LOG.logMarkers("markers were not rebuilt")
   }
 
   private fun updateHostOrFail(currentHost: PsiLanguageInjectionHost,
@@ -182,7 +187,8 @@ open class CommonInjectedFileChangesHandler(
                 " endOffset = ${shred.innerRange.endOffset}," +
                 " textLength = ${myFragmentDocument.textLength}",
                 Attachment("host", shred.host?.text?.esclbr() ?: "<null>"),
-                Attachment("fragment document", this.myFragmentDocument.text.esclbr())
+                Attachment("fragment document", this.myFragmentDocument.text.esclbr()),
+                Attachment("markers", markers.joinToString("\n", transform = ::markerString))
       )
     }
     return myFragmentDocument.createRangeMarker(shred.innerRange)
