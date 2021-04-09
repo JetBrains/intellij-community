@@ -2,6 +2,9 @@
 package com.intellij.formatting.commandLine;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.service.CoreFormattingService;
+import com.intellij.formatting.service.FormattingService;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -146,6 +149,10 @@ public final class FileSetFormatter extends FileSetProcessor {
   }
 
   private static boolean isFormattingSupported(@NotNull PsiFile file) {
-    return LanguageFormatting.INSTANCE.forContext(file) != null;
+    FormattingService formattingService = FormattingServiceUtil.findService(file, true, true);
+    if (formattingService instanceof CoreFormattingService) {
+      return LanguageFormatting.INSTANCE.forContext(file) != null;
+    }
+    return true;
   }
 }
