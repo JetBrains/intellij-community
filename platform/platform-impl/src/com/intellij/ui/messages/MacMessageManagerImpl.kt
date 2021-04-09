@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("EnumEntryName")
 
 package com.intellij.ui.messages
@@ -22,8 +22,12 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ui.UIUtil
 import com.sun.jna.Callback
-import java.awt.*
-import java.awt.event.WindowEvent
+import java.awt.Component
+import java.awt.Dialog
+import java.awt.Toolkit
+import java.awt.Window
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.lang.reflect.Proxy
 import javax.swing.JDialog
 import javax.swing.SwingUtilities
@@ -60,10 +64,16 @@ private class MessageInfo(val title: String,
                           val doNotAskDialogOption: DoNotAskOption?) {
   val message = MacMessageHelper.stripHtmlMessage(message)
 
-  val window: Window
-  val visibleWindow: Window
-  val nativeWindow: ID
-  var mainHandler = {}
+  val window: Window?
+  val nativeWindow: ID?
+  val menuWindow: ID
+  var alertWindow: ID? = null
+
+  var disposer = {}
+
+  lateinit var dialog: MyDialog
+  var result: Int? = null
+  var suppress = false
 
   init {
     var popupWindow: Window? = null
@@ -72,22 +82,33 @@ private class MessageInfo(val title: String,
       popupWindow = SwingUtilities.getWindowAncestor(popup.content)
     }
     if (popupWindow == null) {
-      this.window = window ?: JBMacMessages.getForemostWindow()
+      val parentWindow = window ?: JBMacMessages.getForemostWindow()
+      val visibleWindow = getVisibleWindow(parentWindow)
+      if (visibleWindow != null && visibleWindow.parent == null && visibleWindow.ownedWindows.all { !it.isVisible }) {
+        this.window = visibleWindow
+        this.nativeWindow = MacUtil.getWindowFromJavaWindow(visibleWindow)
+      }
+      else {
+        this.window = null
+        this.nativeWindow = null
+      }
+      this.menuWindow = MacUtil.getWindowFromJavaWindow(getOwner(parentWindow))
     }
     else {
-      this.window = popupWindow
+      this.window = null
+      this.nativeWindow = null
+      this.menuWindow = MacUtil.getWindowFromJavaWindow(getOwner(popupWindow))
     }
-    this.visibleWindow = getVisibleWindow(this.window)
-    this.nativeWindow = MacUtil.getWindowFromJavaWindow(this.visibleWindow)
   }
 }
 
-private fun getVisibleWindow(window: Window): Window {
+private fun getVisibleWindow(window: Window): Window? {
   if (!window.isVisible) {
     val parent = window.parent
     if (parent is Window) {
       return getVisibleWindow(parent)
     }
+    return null
   }
   return window
 }
@@ -118,10 +139,8 @@ class MacMessageHelper {
 
 @Service
 private class NativeMacMessageManager : MacMessages() {
-  private var myInfo: MessageInfo? = null
-  private var myDialog: MyDialog? = null
-  private var myResult: Int? = null
-  private var mySuppress: Boolean = false
+  private val myInfos = ArrayList<MessageInfo?>()
+  private val myLock = Object()
 
   private fun getJBMessages() = service<JBMacMessages>()
 
@@ -198,57 +217,54 @@ private class NativeMacMessageManager : MacMessages() {
                                 fallback: () -> Int): Int {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
+    val index = addInfoWithId(info)
 
-    if (myInfo != null) {
-      LOG.error("=== MacAlert: attempt to show new alert during showing another alert ===")
-      return fallback()
+    if (index != 0) {
+      LOG.info("=== MacAlert: show alert during show another alert ===", Throwable())
     }
 
-    info.mainHandler = {
-      Foundation.invoke(Foundation.invoke(info.nativeWindow, "delegate"), "activateWindowMenuBar")
-      myDialog!!.orderAboveSiblings()
-
-      info.mainHandler = {
-        myDialog!!.orderAboveSiblings()
-      }
-    }
-
-    myInfo = info
-    myResult = null
-
-    var disposer = {}
-
-    myDialog = MyDialog(info.window) {
+    info.dialog = MyDialog(info.window) {
       val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSJavaAlertDelegate"), "alloc"), "init")
-      Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"), ID.NIL,
-                        false)
-      disposer = {
+      Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"),
+                        Foundation.invoke("NSNumber", "numberWithInt:", index), false)
+      info.disposer = {
         Foundation.cfRelease(delegate)
         Foundation.executeOnMainThread(false, false) {
-          Foundation.invoke(Foundation.invoke(info.nativeWindow, "delegate"), "activateWindowMenuBar")
+          Foundation.invoke(Foundation.invoke(info.menuWindow, "delegate"), "activateWindowMenuBar")
         }
       }
     }
 
+    info.dialog.addComponentListener(object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent) {
+        info.dialog.removeComponentListener(this)
+        Foundation.executeOnMainThread(false, false) {
+          Foundation.invoke(Foundation.invoke(info.menuWindow, "delegate"), "activateWindowMenuBar")
+        }
+      }
+    })
+
     try {
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
       StackingPopupDispatcher.getInstance().hidePersistentPopups()
-      myDialog!!.show()
+      info.dialog.show()
     }
     finally {
-      disposer()
+      info.disposer()
       StackingPopupDispatcher.getInstance().restorePersistentPopups()
       IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
-      myInfo = null
-      myDialog = null
+
+      synchronized(myLock) {
+        myInfos[index] = null
+      }
     }
 
-    if (myResult != null) {
-      val result = myResult!! - 1000
+    if (info.result != null) {
+      val result = info.result!! - 1000
 
       if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
-        if (result != Messages.CANCEL || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-          doNotAskDialogOption.setToBeShown(!mySuppress, result)
+        if (result == Messages.OK || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+          doNotAskDialogOption.setToBeShown(!info.suppress, result)
         }
       }
 
@@ -259,23 +275,41 @@ private class NativeMacMessageManager : MacMessages() {
     return fallback()
   }
 
-  private fun ourParentIsTopLevelWindowWithoutChildren(): Boolean {
-    val window = myInfo!!.visibleWindow
-    return window.parent == null && window.ownedWindows.all { it == myDialog || !it.isVisible }
+  private fun addInfoWithId(newInfo: MessageInfo): Int {
+    synchronized(myLock) {
+      for ((index, info) in myInfos.withIndex()) {
+        if (info == null) {
+          myInfos[index] = newInfo
+          return index
+        }
+      }
+      myInfos.add(newInfo)
+      return myInfos.size - 1
+    }
+  }
+
+  private fun getInfo(index: Int): MessageInfo {
+    synchronized(myLock) {
+      return myInfos[index]!!
+    }
   }
 
   private val SHOW_ALERT = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
-      val info = myInfo!!
+      val index = Foundation.invoke(params, "intValue").toInt()
+      val info = getInfo(index)
       val ownerWindow = getActualWindow(info.nativeWindow)
-      val runModal = ownerWindow == null || !ourParentIsTopLevelWindowWithoutChildren()  /* prevent z-order issues with other children of our parent */
 
       val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
       val alertWindow = Foundation.invoke(alert, "window")
+      info.alertWindow = alertWindow
 
-      if (!runModal) {
-        myDialog!!.setHandler(alertWindow.toLong())
+      if (ownerWindow != null) {
+        info.dialog.setHandler(alertWindow.toLong())
+      }
+      else {
+        Foundation.invoke(alertWindow, "setBackgroundColor:", Foundation.invoke(info.menuWindow, "backgroundColor"))
       }
 
       Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
@@ -316,12 +350,17 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alertWindow, "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
       }
 
-      if (runModal) {
-        setResult(alert, Foundation.invoke(alert, "runModal"))
+      if (info.defaultOptionIndex <= 0 && info.buttons.size == 3 && info.buttons[1] != "Cancel") {
+        val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", 1)
+        Foundation.invoke(button, "setKeyEquivalent:", Foundation.nsString(" "))
+      }
+
+      if (ownerWindow == null) {
+        setResult(alert, Foundation.invoke(alert, "runModal"), index, false)
       }
       else {
         Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", ownerWindow, self,
-                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ID.NIL)
+                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), params)
       }
     }
   }
@@ -329,21 +368,33 @@ private class NativeMacMessageManager : MacMessages() {
   private val ALERT_DID_END = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, alert: ID, returnCode: ID, contextInfo: ID) {
-      setResult(alert, returnCode)
+      setResult(alert, returnCode, Foundation.invoke(contextInfo, "intValue").toInt(), true)
     }
   }
 
-  private fun setResult(alert: ID, returnCode: ID) {
-    myResult = returnCode.toInt()
-    mySuppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
-    myDialog!!.close()
+  private fun setResult(alert: ID, returnCode: ID, index: Int, resetHandler: Boolean) {
+    val info = getInfo(index)
+    info.result = returnCode.toInt()
+    info.suppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
+    info.dialog.close(resetHandler)
     Foundation.cfRelease(alert)
   }
 
   private val ALERT_CHANGE_JUST_MAIN = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String) {
-      myInfo!!.mainHandler()
+      val info = synchronized(myLock) {
+        myInfos.find {
+          it != null && self == it.alertWindow
+        }
+      }
+      info?.dialog?.orderAboveSiblings()
+    }
+  }
+
+  private val ALERT_DEFAULT_CALLBACK = object : Callback {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    fun callback(self: ID, selector: String) {
     }
   }
 
@@ -361,11 +412,19 @@ private class NativeMacMessageManager : MacMessages() {
                                                           Foundation.createSelector("_changeJustMain"), ALERT_CHANGE_JUST_MAIN, "v")) {
       throw RuntimeException("Unable to add `_changeJustMain` method to Objective-C _NSAlertPanel class")
     }
+    if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("_NSAlertContentView"),
+                                                          Foundation.createSelector("deliverJavaMouseEvent:"), ALERT_DEFAULT_CALLBACK, "v*")) {
+      throw RuntimeException("Unable to add `deliverJavaMouseEvent:` method to Objective-C _NSAlertContentView class")
+    }
+    if (SystemInfo.isMacOSBigSur && !Foundation.addMethod(Foundation.getObjcClass("NSAlert"),
+                                                          Foundation.createSelector("setEnabled:"), ALERT_DEFAULT_CALLBACK, "v*")) {
+      throw RuntimeException("Unable to add `setEnabled:` method to Objective-C NSAlert class")
+    }
   }
 }
 
-private fun getActualWindow(window: ID): ID? {
-  if (!Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
+private fun getActualWindow(window: ID?): ID? {
+  if (window == null || !Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
     return null
   }
   return window
@@ -379,7 +438,11 @@ private fun enableEscapeToCloseTheMessage(alert: ID) {
   }
 }
 
-private class MyDialog(parent: Window, private val runnable: () -> Unit) : JDialog(parent, ModalityType.APPLICATION_MODAL) {
+private fun getOwner(window: Window): Window {
+  return window.owner?.let { getOwner(it) } ?: window
+}
+
+private class MyDialog(parent: Window?, private val runnable: () -> Unit) : JDialog(parent, ModalityType.APPLICATION_MODAL) {
   private var myPlatformWindow: Any? = null
 
   init {
@@ -432,24 +495,23 @@ private class MyDialog(parent: Window, private val runnable: () -> Unit) : JDial
     }
     super.hide()
     if (blockedWindows != null) {
-      val owner = getOwner(this)
       for (window in blockedWindows) {
-        if (owner === getOwner(window)) {
+        if (window.isVisible) {
           window.toFront()
         }
       }
     }
   }
 
-  private fun getOwner(window: Window): Window {
-    return window.owner?.let { getOwner(it) } ?: window
+  fun setHandler(value: Long) {
+    UIUtil.invokeLaterIfNeeded(Runnable { setHandlerValue(value) })
   }
 
-  fun setHandler(handler: Long) {
+  fun setHandlerValue(value: Long) {
     try {
       ReflectionUtil.getDeclaredMethod(Class.forName("sun.lwawt.macosx.CFRetainedResource"), "setPtr",
-                                       Long::class.javaPrimitiveType)!!.invoke(myPlatformWindow, handler)
-      ReflectionUtil.getDeclaredField(myPlatformWindow!!.javaClass.getSuperclass(), "visible")!!.setBoolean(myPlatformWindow, handler != 0L)
+                                       Long::class.javaPrimitiveType)!!.invoke(myPlatformWindow, value)
+      ReflectionUtil.getDeclaredField(myPlatformWindow!!.javaClass.getSuperclass(), "visible")!!.setBoolean(myPlatformWindow, value != 0L)
     }
     catch (e: Throwable) {
       LOG.error(e)
@@ -465,15 +527,13 @@ private class MyDialog(parent: Window, private val runnable: () -> Unit) : JDial
     }
   }
 
-  fun close() {
-    setHandler(0)
-
-    try {
-      ReflectionUtil.getDeclaredMethod(Class.forName("sun.lwawt.LWToolkit"), "postEvent",
-                                       AWTEvent::class.java)!!.invoke(null, WindowEvent(this, WindowEvent.WINDOW_CLOSING))
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-    }
+  fun close(resetHandler: Boolean) {
+    UIUtil.invokeLaterIfNeeded(Runnable {
+      if (resetHandler) {
+        setHandlerValue(0)
+      }
+      @Suppress("SSBasedInspection")
+      dispose()
+    })
   }
 }
