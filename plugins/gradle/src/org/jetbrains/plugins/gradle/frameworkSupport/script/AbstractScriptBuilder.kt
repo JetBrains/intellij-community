@@ -10,6 +10,7 @@ abstract class AbstractScriptBuilder : ScriptBuilder {
   private val lines = ArrayList<String>()
 
   override fun generate(root: BlockElement): String {
+    lines.clear()
     root.statements.forEach { add(it, 0, true) }
     val joiner = StringJoiner("\n")
     lines.forEach(joiner::add)
