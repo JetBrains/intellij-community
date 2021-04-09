@@ -9,14 +9,15 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.TextWithMnemonic
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-@ApiStatus.Experimental
+/**
+ * See [com.intellij.execution.impl.DefaultExecutorGroup]
+ */
 abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
   private val customSettingsLock = ReentrantReadWriteLock()
   private val executorId2customSettings = mutableMapOf<String, Settings>() //guarded by lock
@@ -49,6 +50,15 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
     }
   }
 
+  /**
+   * When any of [ExecutorGroup.childExecutors] started, [ProxyExecutor] associated with the selected [Settings] instance is used.
+   * That [ProxyExecutor] is passed through the whole execution system just like any other executor (e.g: [com.intellij.execution.executors.DefaultDebugExecutor].
+   *
+   * You can access the selected [Settings] by calling [ExecutorGroup.getRegisteredSettings] from the appropriate method of your own
+   * [com.intellij.execution.configuration.RunConfigurationExtensionBase] implementation.
+   *
+   * see [com.intellij.execution.RunConfigurationExtension.updateJavaParameters(T, JavaParameters, RunnerSettings, Executor)]
+   */
   fun getRegisteredSettings(proxyExecutorId: String): Settings? {
     return customSettingsLock.read {
       executorId2customSettings[proxyExecutorId]
@@ -99,7 +109,6 @@ abstract class ExecutorGroup<Settings : RunExecutorSettings> : Executor() {
   }
 }
 
-@ApiStatus.Experimental
 interface RunExecutorSettings {
   val icon: Icon
   val actionName: String
