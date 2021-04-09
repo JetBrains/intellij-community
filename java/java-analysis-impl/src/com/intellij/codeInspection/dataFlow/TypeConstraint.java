@@ -96,6 +96,12 @@ public interface TypeConstraint {
   }
 
   /**
+   * @param className fully-qualified class name to check
+   * @return true if all types that satisfy this constraint are subtypes of a given class name
+   */
+  boolean isSubtypeOf(@NotNull String className);
+
+  /**
    * @return true if the types represented by this constraint are known to be compared by .equals() within DFA algorithm
    */
   default boolean isComparedByEquals() {
@@ -159,10 +165,24 @@ public interface TypeConstraint {
   }
 
   /**
-   * @return type that represents unboxed type of this type
+   * @return true if this constraint always represents an array type
+   */
+  default boolean isArray() {
+    return false;
+  }
+
+  /**
+   * @return type that represents unboxed type of this type; {@link DfTypes#BOTTOM} if this constraint is not primitive wrapper
    */
   default DfType getUnboxedType() {
-    return DfTypes.TOP;
+    return DfTypes.BOTTOM;
+  }
+
+  /**
+   * @return true if this type always represents a primitive wrapper
+   */
+  default boolean isPrimitiveWrapper() {
+    return false;
   }
 
   /**
@@ -206,6 +226,11 @@ public interface TypeConstraint {
     @Override
     default boolean isExact(@NotNull String className) {
       return className.equals(toString());
+    }
+
+    @Override
+    default boolean isSubtypeOf(@NotNull String className) {
+      return isExact(className) || superTypes().anyMatch(st -> st.isExact(className));
     }
 
     /**
@@ -531,6 +556,11 @@ public interface TypeConstraint {
     }
 
     @Override
+    public boolean isArray() {
+      return instanceOfTypes().anyMatch(Exact::isArray);
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -567,6 +597,11 @@ public interface TypeConstraint {
         .removeValues(Set::isEmpty)
         .mapKeyValue((prefix, set) -> StreamEx.of(set).map(Exact::toShortString).sorted().joining(", ", prefix, ""))
         .joining("\n");
+    }
+
+    @Override
+    public boolean isSubtypeOf(@NotNull String className) {
+      return instanceOfTypes().anyMatch(ex -> ex.isSubtypeOf(className));
     }
   }
 }

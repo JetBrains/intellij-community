@@ -236,11 +236,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
     void finish() {
       if (myChanged) {
         DfaVariableValue[] distinctValues = StreamEx.ofValues(myCanonicalMap)
-            .filter(v -> v.getType() != null && !TypeConstraints.exact(v.getType()).isComparedByEquals())
+            .filter(v -> !TypeConstraint.fromDfType(v.getDfType()).isComparedByEquals())
             .toArray(new DfaVariableValue[0]);
         EntryStream.ofPairs(distinctValues)
-          .filterKeyValue(
-            (left, right) -> Objects.requireNonNull(left.getType()).isConvertibleFrom(Objects.requireNonNull(right.getType())))
+          .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfTypes.BOTTOM)
           .limit(20) // avoid too complex state
           .forKeyValue((left, right) -> myMemState.applyCondition(left.cond(RelationType.NE, right)));
       }

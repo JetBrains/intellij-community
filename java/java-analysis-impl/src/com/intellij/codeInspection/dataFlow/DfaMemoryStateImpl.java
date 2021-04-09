@@ -15,10 +15,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -743,7 +745,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return relationType.isSubRelation(constantRelation);
       }
       if (canBeNaN(leftType) || canBeNaN(rightType)) {
-        if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue && !(dfaLeft.getType() instanceof PsiPrimitiveType)) {
+        if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue && !(dfaLeft.getDfType() instanceof DfPrimitiveType)) {
           return !dfaRelation.isNonEquality();
         }
         applyEquivalenceRelation(relationType, dfaLeft, dfaRight);
@@ -791,7 +793,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaValue leftRight = binOp.getRight();
     LongRangeSet leftRange = DfLongType.extractRange(getDfType(leftLeft));
     LongRangeSet rightRange = DfLongType.extractRange(getDfType(leftRight));
-    boolean isLong = PsiType.LONG.equals(binOp.getType());
+    boolean isLong = binOp.getDfType() instanceof DfLongType;
     LongRangeSet rightNegated = rightRange.negate(isLong);
     LongRangeSet rightCorrected = op == LongRangeBinOp.MINUS ? rightNegated : rightRange;
 
@@ -986,7 +988,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (constant.getValue() instanceof PsiType) {
       if (!processGetClass(value, (PsiType)constant.getValue(), false)) return false;
     }
-    SpecialField field = SpecialField.fromQualifierType(constant.getPsiType());
+    SpecialField field = SpecialField.fromQualifierType(constant);
     if (field != null) {
       if (!meetDfType(field.createValue(getFactory(), value), field.fromConstant(constant.getValue()))) return false;
     }
@@ -1023,7 +1025,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private boolean applyRelationRangeToClass(EqClass eqClass, LongRangeSet range, RelationType relationType) {
     LongRangeSet appliedRange = range.fromRelation(relationType);
     for (DfaVariableValue var : eqClass.asList()) {
-      DfType rangeType = DfTypes.rangeClamped(appliedRange, PsiType.LONG.equals(var.getType()));
+      DfType rangeType = DfTypes.rangeClamped(appliedRange, var.getDfType() instanceof DfLongType);
       if (!meetDfType(var, rangeType)) return false;
     }
     return true;
@@ -1046,14 +1048,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {
-    if (dfaLeft instanceof DfaVariableValue && !TypeConversionUtil.isPrimitiveWrapper(dfaLeft.getType()) ||
-        dfaRight instanceof DfaVariableValue && !TypeConversionUtil.isPrimitiveWrapper(dfaRight.getType())) {
+    TypeConstraint leftConstraint = TypeConstraint.fromDfType(dfaLeft.getDfType());
+    TypeConstraint rightConstraint = TypeConstraint.fromDfType(dfaRight.getDfType());
+    if (dfaLeft instanceof DfaVariableValue && !leftConstraint.isPrimitiveWrapper() ||
+        dfaRight instanceof DfaVariableValue && !rightConstraint.isPrimitiveWrapper()) {
       return true;
     }
-    PsiType leftType = getPsiType(dfaLeft);
-    PsiType rightType = getPsiType(dfaRight);
-    if (TypeConversionUtil.isPrimitiveWrapper(leftType) &&
-        TypeConversionUtil.isPrimitiveWrapper(rightType) && !leftType.equals(rightType)) {
+    if (leftConstraint.isPrimitiveWrapper() &&
+        rightConstraint.isPrimitiveWrapper() && leftConstraint.meet(rightConstraint) == TypeConstraints.BOTTOM) {
       // Boxes of different type (e.g. Long and Integer), cannot be equal even if unboxed values are equal
       return negated;
     }
@@ -1065,7 +1067,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (leftDfType instanceof DfConstantType && rightDfType instanceof DfConstantType) {
       return leftDfType.equals(rightDfType) != negated;
     }
-    if (negated && (PsiType.FLOAT.equals(unboxedLeft.getType()) || PsiType.DOUBLE.equals(unboxedLeft.getType()))) {
+    if (negated && leftDfType instanceof DfFloatingPointType) {
       // If floating point wrappers are not equal, unboxed versions could still be equal if they are 0.0 and -0.0
       return true;
     }
@@ -1074,8 +1076,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @Nullable PsiType getPsiType(@NotNull DfaValue value) {
-    PsiType type = DfaTypeValue.toPsiType(getFactory().getProject(), getDfType(value));
-    return type == null ? value.getType() : type;
+    return DfaTypeValue.toPsiType(getFactory().getProject(), getDfType(value));
   }
 
   private static boolean isNaN(final DfaValue dfa) {
@@ -1131,7 +1132,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue var = (DfaVariableValue)value;
     PsiElement owner = var.getPsiVariable();
     if (!(owner instanceof PsiMethod)) return false;
-    if (var.getType() instanceof PsiPrimitiveType) return false;
+    if (var.getDfType() instanceof DfPrimitiveType) return false;
     if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
     if (isNull(var)) return false;
     return true;
@@ -1154,12 +1155,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (leftType == null || rightType == null) return binOp.getDfType();
     LongRangeSet left = leftType.getRange();
     LongRangeSet right = rightType.getRange();
-    boolean isLong = PsiType.LONG.equals(binOp.getType());
     LongRangeBinOp op = binOp.getOperation();
     DfIntegralType result = ObjectUtils.tryCast(leftType.eval(rightType, op), DfIntegralType.class);
     if (result == null) {
       result = binOp.getDfType();
     }
+    boolean isLong = result instanceof DfLongType;
     if (op == LongRangeBinOp.MINUS) {
       RelationType rel = getRelation(binOp.getLeft(), binOp.getRight());
       if (rel == RelationType.NE) {
@@ -1185,7 +1186,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
       return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
-    if (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+    if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
       return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
     }
     if (value instanceof DfaTypeValue) {

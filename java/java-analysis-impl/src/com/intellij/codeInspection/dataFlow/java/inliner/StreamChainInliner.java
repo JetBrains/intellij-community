@@ -774,7 +774,7 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
-    PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType());
+    PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType(), false);
     PsiMethodCallExpression sourceCall = tryCast(PsiUtil.skipParenthesizedExprDown(originalQualifier), PsiMethodCallExpression.class);
     if(STREAM_GENERATE.test(sourceCall)) {
       PsiExpression fn = sourceCall.getArgumentList().getExpressions()[0];

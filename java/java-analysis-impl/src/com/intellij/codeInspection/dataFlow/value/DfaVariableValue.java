@@ -20,18 +20,15 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
@@ -177,20 +174,10 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   private DfType calcInherentType() {
-    PsiType type = getType();
-    DfType dfType = DfTypes.typedObject(type, Nullability.UNKNOWN);
-    if(myDescriptor instanceof SpecialField) {
-      return dfType.meet(((SpecialField)myDescriptor).getDefaultValue(false));
-    }
+    DfType dfType = getDfType();
     PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiVariable(), PsiModifierListOwner.class);
-    if (type instanceof PsiPrimitiveType) {
-      if (TypeConversionUtil.isIntegralNumberType(type)) {
-        LongRangeSet fromType = LongRangeSet.fromType(type);
-        if (fromType != null) {
-          LongRangeSet range = LongRangeSet.fromPsiElement(psi).intersect(fromType);
-          return type.equals(PsiType.LONG) ? DfTypes.longRange(range) : DfTypes.intRange(range);
-        }
-      }
+    if (dfType instanceof DfIntegralType) {
+      return ((DfIntegralType)dfType).meetRange(LongRangeSet.fromPsiElement(psi));
     }
     if (dfType instanceof DfReferenceType) {
       if (psi != null) {

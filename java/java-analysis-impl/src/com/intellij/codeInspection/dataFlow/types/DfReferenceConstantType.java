@@ -30,7 +30,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     myPsiType = psiType;
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
-    mySpecialField = SpecialField.fromQualifierType(psiType);
+    mySpecialField = SpecialField.fromQualifierType(this);
     mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
     myDropConstantOnWiden = dropConstantOnWiden;
   }

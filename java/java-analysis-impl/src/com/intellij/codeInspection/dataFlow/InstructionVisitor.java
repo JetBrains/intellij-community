@@ -26,10 +26,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -178,7 +175,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         HardcodedContracts.isKnownNoParameterLeak(method) ||
         (instruction.getMutationSignature().isPure() ||
          instruction.getMutationSignature().equals(MutationSignature.pure().alsoMutatesArg(paramIndex))) &&
-        !mayLeakFromType(instruction.getResultType());
+        !mayLeakFromType(typedObject(instruction.getResultType(), Nullability.UNKNOWN));
       if (!parameterMayNotLeak) {
         // If we write to local object only, it should not leak
         arg = dropLocality(arg, memState);
@@ -243,8 +240,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         }
       }
     }
-    if (!(value.getType() instanceof PsiArrayType) &&
-        (TypeConstraint.fromDfType(dfType).isComparedByEquals() || mayLeakThis(instruction, memState, argValues))) {
+    TypeConstraint constraint = TypeConstraint.fromDfType(dfType);
+    if (!constraint.isArray() && (constraint.isComparedByEquals() || mayLeakThis(instruction, memState, argValues))) {
       value = dropLocality(value, memState);
     }
     return value;
@@ -257,7 +254,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       args[i] = memState.pop();
     }
     DfaValue value = instruction.eval(runner.getFactory(), memState, args);
-    if (value instanceof DfaVariableValue && mayLeakFromType(value.getType())) {
+    if (value instanceof DfaVariableValue && mayLeakFromType(value.getDfType())) {
       DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
       if (qualifier != null) {
         dropLocality(qualifier, memState);
@@ -271,25 +268,31 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                      @NotNull DfaMemoryState memState, DfaValue @Nullable [] argValues) {
     MutationSignature signature = instruction.getMutationSignature();
     if (signature == MutationSignature.unknown()) return true;
-    if (mayLeakFromType(instruction.getResultType())) return true;
+    if (mayLeakFromType(typedObject(instruction.getResultType(), Nullability.UNKNOWN))) return true;
     if (argValues == null) {
       return signature.isPure() || signature.equals(MutationSignature.pure().alsoMutatesThis());
     }
     for (int i = 0; i < argValues.length; i++) {
       if (signature.mutatesArg(i)) {
-        PsiType type = memState.getPsiType(argValues[i]);
+        DfType type = memState.getDfType(argValues[i]);
         if (mayLeakFromType(type)) return true;
       }
     }
     return false;
   }
 
-  private static boolean mayLeakFromType(PsiType type) {
+  private static boolean mayLeakFromType(@NotNull DfType type) {
+    if (type == BOTTOM) return false;
     // Complex value from field or method return call may contain back-reference to the object, so
     // local value could leak. Do not drop locality only for some simple values.
-    if (type == null) return true;
-    type = type.getDeepComponentType();
-    return !(type instanceof PsiPrimitiveType) && !TypeUtils.isJavaLangString(type);
+    while (true) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      DfType arrayComponentType = constraint.getArrayComponentType();
+      if (arrayComponentType == BOTTOM) {
+        return !(type instanceof DfPrimitiveType) && !constraint.isExact(CommonClassNames.JAVA_LANG_STRING);
+      }
+      type = arrayComponentType;
+    }
   }
 
   private Set<DfaCallState> addContractResults(MethodContract contract,

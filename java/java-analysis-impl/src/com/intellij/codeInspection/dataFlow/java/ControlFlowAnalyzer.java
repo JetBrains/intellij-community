@@ -891,8 +891,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression selector = PsiUtil.skipParenthesizedExprDown(switchBlock.getExpression());
     DfaVariableValue expressionValue = null;
     boolean syntheticVar = true;
+    PsiType targetType = null;
     if (selector != null) {
-      PsiType targetType = selector.getType();
+      targetType = selector.getType();
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(targetType);
       if (unboxedType != null) {
         targetType = unboxedType;
@@ -941,7 +942,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(new PushInstruction(expressionValue, null));
                     caseValue.accept(this);
                     addInstruction(new BinopInstruction(
-                      TypeUtils.isJavaLangString(expressionValue.getType()) ? BinopInstruction.STRING_EQUALITY_BY_CONTENT :
+                      TypeUtils.isJavaLangString(targetType) ? BinopInstruction.STRING_EQUALITY_BY_CONTENT :
                       JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
                   }
                   else {

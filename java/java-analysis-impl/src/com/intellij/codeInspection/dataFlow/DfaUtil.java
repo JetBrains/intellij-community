@@ -370,13 +370,13 @@ public final class DfaUtil {
   }
 
   public static DfaValue boxUnbox(DfaValue value, @NotNull DfType type) {
-    if (TypeConstraint.fromDfType(type).getUnboxedType() instanceof DfPrimitiveType) {
+    if (TypeConstraint.fromDfType(type).isPrimitiveWrapper()) {
       if (value.getDfType() instanceof DfPrimitiveType) {
         return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
       }
     }
     if (type instanceof DfPrimitiveType) {
-      if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).getUnboxedType() instanceof DfPrimitiveType) {
+      if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {

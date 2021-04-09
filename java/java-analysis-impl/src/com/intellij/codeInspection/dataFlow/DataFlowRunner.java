@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -450,12 +449,12 @@ public class DataFlowRunner {
 
   private static @Nullable DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
     DfaValueFactory factory = var.getFactory();
-    if (var.getDescriptor() instanceof ThisDescriptor && var.getType() != null) {
+    if (var.getDescriptor() instanceof ThisDescriptor) {
       PsiClass aClass = ((ThisDescriptor)var.getDescriptor()).getPsiElement();
       if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
         // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
         // as fields may not contribute to the visible state
-        DfType dfType = DfTypes.typedObject(var.getType(), Nullability.NOT_NULL).meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
+        DfType dfType = var.getDfType().meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
         return factory.fromDfType(dfType);
       }
       return null;

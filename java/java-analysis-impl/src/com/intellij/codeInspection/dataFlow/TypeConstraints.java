@@ -27,6 +27,7 @@ public final class TypeConstraints {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return this;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return other; }
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return true; }
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return BOTTOM; }
     @Override public String toString() { return ""; }
   };
@@ -37,6 +38,7 @@ public final class TypeConstraints {
     @NotNull @Override public TypeConstraint join(@NotNull TypeConstraint other) { return other;}
     @NotNull @Override public TypeConstraint meet(@NotNull TypeConstraint other) { return this;}
     @Override public boolean isSuperConstraintOf(@NotNull TypeConstraint other) { return other == this; }
+    @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return TOP; }
     @Override public String toString() { return "<impossible type>"; }
   };
@@ -229,6 +231,11 @@ public final class TypeConstraints {
     }
 
     @Override
+    public boolean isArray() {
+      return true;
+    }
+
+    @Override
     public StreamEx<Exact> superTypes() {
       return StreamEx.<Exact>of(ArraySuperInterface.values()).append(EXACTLY_OBJECT);
     }
@@ -318,7 +325,7 @@ public final class TypeConstraints {
     @Override
     public DfType getUnboxedType() {
       String name = myClass.getQualifiedName();
-      if (name == null) return DfTypes.TOP;
+      if (name == null) return DfTypes.BOTTOM;
       switch (name) {
         case CommonClassNames.JAVA_LANG_BOOLEAN:
           return DfTypes.BOOLEAN;
@@ -337,8 +344,14 @@ public final class TypeConstraints {
         case CommonClassNames.JAVA_LANG_CHARACTER:
           return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.CHAR)));
         default:
-          return DfTypes.TOP;
+          return DfTypes.BOTTOM;
       }
+    }
+
+    @Override
+    public boolean isPrimitiveWrapper() {
+      String name = myClass.getQualifiedName();
+      return name != null && TypeConversionUtil.isPrimitiveWrapper(name);
     }
 
     @Override
@@ -488,6 +501,11 @@ public final class TypeConstraints {
     @Override
     public @NotNull DfType getArrayComponentType() {
       return myComponent.instanceOf().asDfType();
+    }
+
+    @Override
+    public boolean isArray() {
+      return true;
     }
   }
 

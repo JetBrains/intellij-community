@@ -111,8 +111,8 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
     if (!(target instanceof DfaVariableValue)) return false;
     DfaVariableValue var = (DfaVariableValue)target;
-    if (!(var.getPsiVariable() instanceof PsiField) || var.getQualifier() == null ||
-        !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
+    PsiField field = tryCast(var.getPsiVariable(), PsiField.class);
+    if (field == null || var.getQualifier() == null || !(var.getQualifier().getDescriptor() instanceof ThisDescriptor)) {
       return false;
     }
 
@@ -126,7 +126,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
     if (dest == null) return false;
     DfType dfType = dest.getDfType();
 
-    PsiType type = var.getType();
+    PsiType type = field.getType();
     boolean isDefaultValue = dfType.isConst(PsiTypesUtil.getDefaultValue(type)) ||
                              dfType.isConst(0) && TypeConversionUtil.isIntegralNumberType(type);
     if (!isDefaultValue) return false;

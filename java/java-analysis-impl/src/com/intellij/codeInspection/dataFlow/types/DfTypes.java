@@ -496,7 +496,7 @@ public final class DfTypes {
   public static DfType typedObject(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return TOP;
     if (type instanceof PsiPrimitiveType) {
-      if (type.equals(PsiType.VOID)) return TOP;
+      if (type.equals(PsiType.VOID)) return BOTTOM;
       if (type.equals(PsiType.BOOLEAN)) return BOOLEAN;
       if (type.equals(PsiType.INT)) return INT;
       if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){

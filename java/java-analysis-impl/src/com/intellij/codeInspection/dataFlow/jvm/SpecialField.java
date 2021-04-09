@@ -11,15 +11,10 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.*;
 
 import java.util.Objects;
@@ -37,8 +32,8 @@ import static com.intellij.psi.CommonClassNames.*;
 public enum SpecialField implements VariableDescriptor {
   ARRAY_LENGTH("length", "special.field.array.length", true) {
     @Override
-    boolean isMyQualifierType(PsiType type) {
-      return type instanceof PsiArrayType;
+    boolean isMyQualifierType(DfType type) {
+      return TypeConstraint.fromDfType(type).isArray();
     }
 
     @Override
@@ -76,8 +71,8 @@ public enum SpecialField implements VariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(PsiType type) {
-      return TypeUtils.isJavaLangString(type);
+    boolean isMyQualifierType(DfType type) {
+      return TypeConstraint.fromDfType(type).isExact(JAVA_LANG_STRING);
     }
 
     @Override
@@ -99,13 +94,9 @@ public enum SpecialField implements VariableDescriptor {
     private final CallMatcher SIZE_METHODS = CallMatcher.anyOf(CallMatcher.instanceCall(JAVA_UTIL_COLLECTION, "size").parameterCount(0),
                                                                CallMatcher.instanceCall(JAVA_UTIL_MAP, "size").parameterCount(0));
     @Override
-    boolean isMyQualifierType(PsiType type) {
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
-      if (psiClass == null) return false;
-      return !InheritanceUtil.processSupers(psiClass, true, cls -> {
-        String qualifiedName = cls.getQualifiedName();
-        return !JAVA_UTIL_MAP.equals(qualifiedName) && !JAVA_UTIL_COLLECTION.equals(qualifiedName);
-      });
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isSubtypeOf(JAVA_UTIL_MAP) || constraint.isSubtypeOf(JAVA_UTIL_COLLECTION);
     }
 
     @Override
@@ -149,14 +140,9 @@ public enum SpecialField implements VariableDescriptor {
     @Override
     public @NotNull DfType getFromQualifier(@NotNull DfType dfType) {
       DfType fromQualifier = super.getFromQualifier(dfType);
-      if (dfType instanceof DfReferenceType) {
-        TypeConstraint constraint = ((DfReferenceType)dfType).getConstraint();
-        if (constraint.isExact()) {
-          PsiPrimitiveType primitiveType = PsiJavaParserFacadeImpl.getPrimitiveType(PsiTypesUtil.unboxIfPossible(constraint.toString()));
-          if (primitiveType != null) {
-            return fromQualifier.meet(DfTypes.typedObject(primitiveType, Nullability.NOT_NULL));
-          }
-        }
+      DfType unboxedType = TypeConstraint.fromDfType(dfType).getUnboxedType();
+      if (unboxedType != DfTypes.BOTTOM) {
+        return fromQualifier.meet(unboxedType);
       }
       return fromQualifier;
     }
@@ -168,8 +154,8 @@ public enum SpecialField implements VariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(PsiType type) {
-      return TypeConversionUtil.isPrimitiveWrapper(type);
+    boolean isMyQualifierType(DfType type) {
+      return TypeConstraint.fromDfType(type).isPrimitiveWrapper();
     }
 
     @Override
@@ -192,21 +178,19 @@ public enum SpecialField implements VariableDescriptor {
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
       if (qualifier == null) return DfTypes.TOP;
       TypeConstraint qualifierType = TypeConstraint.fromDfType(qualifier.getDfType());
-      PsiElement context = qualifier.getPsiVariable();
-      if (context == null) return DfTypes.TOP;
       String type = null;
       if (qualifierType.isExact(OptionalUtil.OPTIONAL_INT)) {
         type = JAVA_LANG_INTEGER;
       }
-      if (qualifierType.isExact(OptionalUtil.OPTIONAL_LONG)) {
+      else if (qualifierType.isExact(OptionalUtil.OPTIONAL_LONG)) {
         type = JAVA_LANG_LONG;
       }
-      if (qualifierType.isExact(OptionalUtil.OPTIONAL_DOUBLE)) {
+      else if (qualifierType.isExact(OptionalUtil.OPTIONAL_DOUBLE)) {
         type = JAVA_LANG_DOUBLE;
       }
       if (type != null) {
-        return DfTypes.typedObject(JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(
-          type, context), Nullability.UNKNOWN);
+        return DfTypes.typedObject(JavaPsiFacade.getElementFactory(qualifier.getFactory().getProject())
+                                     .createTypeFromText(type, null), Nullability.UNKNOWN);
       }
       return DfTypes.OBJECT_OR_NULL;
     }
@@ -218,8 +202,13 @@ public enum SpecialField implements VariableDescriptor {
     }
 
     @Override
-    boolean isMyQualifierType(PsiType type) {
-      return TypeUtils.isOptional(type);
+    boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isExact(JAVA_UTIL_OPTIONAL) ||
+             constraint.isExact(OptionalUtil.OPTIONAL_DOUBLE) ||
+             constraint.isExact(OptionalUtil.OPTIONAL_INT) ||
+             constraint.isExact(OptionalUtil.OPTIONAL_LONG) ||
+             constraint.isSubtypeOf(OptionalUtil.GUAVA_OPTIONAL);
     }
 
     @Override
@@ -255,7 +244,7 @@ public enum SpecialField implements VariableDescriptor {
     return myFinal;
   }
 
-  abstract boolean isMyQualifierType(PsiType type);
+  abstract boolean isMyQualifierType(DfType type);
 
   /**
    * Checks whether supplied accessor (field or method) can be used to read this special field
@@ -428,13 +417,14 @@ public enum SpecialField implements VariableDescriptor {
    * Returns a special field which corresponds to given qualifier type
    * (currently it's assumed that only one special field may exist for given qualifier type)
    *
-   * @param type a qualifier type
+   * @param type a qualifier df type
    * @return a special field; null if no special field is available for given type
    */
-  @Contract("null -> null")
   @Nullable
-  public static SpecialField fromQualifierType(PsiType type) {
-    if (type == null) return null;
+  public static SpecialField fromQualifierType(@NotNull DfType type) {
+    if (type instanceof DfReferenceType && ((DfReferenceType)type).getSpecialField() != null) {
+      return ((DfReferenceType)type).getSpecialField();
+    }
     for (SpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
@@ -451,11 +441,7 @@ public enum SpecialField implements VariableDescriptor {
    */
   @Nullable
   public static SpecialField fromQualifier(@NotNull DfaValue value) {
-    DfReferenceType dfType = ObjectUtils.tryCast(value.getDfType(), DfReferenceType.class);
-    if (dfType != null && dfType.getSpecialField() != null) {
-      return dfType.getSpecialField();
-    }
-    return fromQualifierType(value.getType());
+    return fromQualifierType(value.getDfType());
   }
 
   public @NotNull @Nls String getPresentationName() {

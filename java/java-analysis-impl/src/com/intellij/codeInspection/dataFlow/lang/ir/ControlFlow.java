@@ -2,11 +2,14 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.ReturnTransfer;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.PushInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.SpliceInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -257,6 +260,11 @@ public final class ControlFlow {
     @Override
     public @NotNull String toString() {
       return "tmp$" + myLocation;
+    }
+
+    @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      return DfTypes.typedObject(myType, Nullability.UNKNOWN);
     }
 
     @Override
