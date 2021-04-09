@@ -59,7 +59,7 @@ class KeyHashLog<Key> implements Closeable {
   }
 
   @NotNull
-  private static AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) {
+  private static AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) throws IOException {
     return new AppendableStorageBackedByResizableMappedFile<>(dataFile,
                                                               size,
                                                               null,

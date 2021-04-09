@@ -183,6 +183,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
   }
 
   public void testPersistentMapWithoutChunks() throws IOException {
+    myMap.closeAndClean(); // todo rewrite test properly
     PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     try {
       myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
