@@ -975,7 +975,7 @@ public final class EditorUtil {
    * NOTE: if editor is an {@link EditorWindow}, corresponding offset is treated as an offset in injected editor, but returned position
    * is always related to host editor.
    *
-   * @see Inlay#isRelatedToPrecedingText()
+   * @see InlayProperties#relatesToPrecedingText(boolean)
    */
   @NotNull
   public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {

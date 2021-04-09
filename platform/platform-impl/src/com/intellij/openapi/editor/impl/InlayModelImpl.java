@@ -28,16 +28,24 @@ import java.util.function.Supplier;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
-  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator.comparingInt((InlineInlayImpl i) -> i.getOffset())
+
+  private static final Comparator<InlineInlayImpl> INLINE_ELEMENTS_COMPARATOR = Comparator
+    .comparingInt((InlineInlayImpl i) -> i.getOffset())
     .thenComparing(i -> i.isRelatedToPrecedingText())
     .thenComparing(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator.comparingInt(i -> -i.myPriority);
-  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator.comparing((BlockInlayImpl i) -> i.getPlacement())
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_PRIORITY_COMPARATOR = Comparator
+    .comparingInt(i -> -i.myPriority);
+  private static final Comparator<BlockInlayImpl> BLOCK_ELEMENTS_COMPARATOR = Comparator
+    .comparing((BlockInlayImpl i) -> i.getPlacement())
     .thenComparing(i -> i.getPlacement() == Inlay.Placement.ABOVE_LINE ? i.myPriority : -i.myPriority);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR =
-    Comparator.comparingInt((AfterLineEndInlayImpl i) -> i.getOffset()).thenComparing(i -> !i.isSoftWrappable()).thenComparingInt(i -> i.myOrder);
-  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR =
-    Comparator.comparing((AfterLineEndInlayImpl i) -> !i.isSoftWrappable()).thenComparingInt(i -> i.myOrder);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
+    .comparingInt((AfterLineEndInlayImpl i) -> i.getOffset())
+    .thenComparing(i -> !i.isSoftWrappable())
+    .thenComparingInt(i -> i.myOrder);
+  private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
+    .comparing((AfterLineEndInlayImpl i) -> !i.isSoftWrappable())
+    .thenComparingInt(i -> i.myOrder);
+
   private static final Processor<InlayImpl> UPDATE_PROCESSOR = inlay -> {
     inlay.update();
     return true;
@@ -144,6 +152,14 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay;
   }
 
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           @NotNull InlayProperties properties,
+                                                                           @NotNull T renderer) {
+    return addInlineElement(offset, properties.isRelatedToPrecedingText(), properties.getPriority(), renderer);
+  }
+
   @Override
   public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addBlockElement(int offset,
                                                                                    boolean relatesToPrecedingText,
@@ -153,19 +169,24 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return addBlockElement(offset, relatesToPrecedingText, showAbove, false, priority, renderer);
   }
 
-  /**
-   * Add block inlay and specify its relationship with collapsed foldings.
-   *
-   * This method may be removed in future.
-   *
-   * @param showWhenFolded if true the returned inlay will be shown even if corresponding offset is in collapsed area
-   */
+  @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
-                                                                          boolean relatesToPrecedingText,
-                                                                          boolean showAbove,
-                                                                          boolean showWhenFolded,
-                                                                          int priority,
+                                                                          @NotNull InlayProperties properties,
                                                                           @NotNull T renderer) {
+    return addBlockElement(offset,
+                           properties.isRelatedToPrecedingText(),
+                           properties.isShownAbove(),
+                           properties.isShownWhenFolded(),
+                           properties.getPriority(),
+                           renderer);
+  }
+
+  private <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           boolean showAbove,
+                                                                           boolean showWhenFolded,
+                                                                           int priority,
+                                                                           @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     offset = Math.max(0, Math.min(myEditor.getDocument().getTextLength(), offset));
     BlockInlayImpl<T> inlay = new BlockInlayImpl<>(myEditor, offset, relatesToPrecedingText, showAbove, showWhenFolded, priority, renderer);
@@ -180,6 +201,13 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
    return addAfterLineEndElement(offset, relatesToPrecedingText, false, true, renderer);
   }
 
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                 @NotNull InlayProperties properties,
+                                                                                 @NotNull T renderer) {
+    return addAfterLineEndElement(offset, properties.isRelatedToPrecedingText(), false, true, renderer);
+  }
+
 
   public @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndDebuggerHint(int offset,
                                                                                                boolean insertFirst,
@@ -187,7 +215,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return addAfterLineEndElement(offset, false, insertFirst, false, renderer);
   }
 
-  private  @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+  private @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                            boolean relatesToPrecedingText,
                                                                                            boolean insertFirst,
                                                                                            boolean softWrappable,
@@ -195,7 +223,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, insertFirst, softWrappable, renderer);
+    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, insertFirst, softWrappable,
+                                                                 renderer);
     notifyAdded(inlay);
     return inlay;
   }
@@ -203,7 +232,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true,
+                                                        INLINE_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -230,8 +260,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
-                                                    BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+    List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset,
+                                                       inlay -> type.isInstance(inlay.myRenderer), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
