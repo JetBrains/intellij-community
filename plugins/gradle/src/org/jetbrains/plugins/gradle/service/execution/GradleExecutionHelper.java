@@ -16,15 +16,14 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
@@ -118,7 +117,7 @@ public class GradleExecutionHelper {
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
         try {
-          return f.fun(connection);
+          return maybeApplyUserDirWorkaround(() -> f.fun(connection), projectDir);
         }
         catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
@@ -131,6 +130,23 @@ public class GradleExecutionHelper {
           throw externalSystemException;
         }
       });
+  }
+
+  public static <T> T maybeApplyUserDirWorkaround(@NotNull Computable<T> action, String projectDir) {
+    String userDir = null;
+    try {
+      if (!PlatformUtils.isFleetBackend() && Registry.is("gradle.tooling.adjust.user.dir", true)) {
+        userDir = System.getProperty("user.dir");
+        if (userDir != null) System.setProperty("user.dir", projectDir);
+      }
+      return action.compute();
+    }
+    finally {
+      if (userDir != null) {
+        // restore original user.dir property
+        System.setProperty("user.dir", userDir);
+      }
+    }
   }
 
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
