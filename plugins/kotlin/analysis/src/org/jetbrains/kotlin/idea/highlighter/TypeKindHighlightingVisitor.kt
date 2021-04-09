@@ -30,17 +30,7 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         if (!NameHighlighter.namesHighlightingEnabled) return
 
         val referenceTarget = computeReferencedDescriptor(expression) ?: return
-
-        val key = attributeKeyForObjectAccess(expression) ?: when (referenceTarget) {
-            is TypeParameterDescriptor -> TYPE_PARAMETER
-            is TypeAliasDescriptor -> TYPE_ALIAS
-            !is ClassDescriptor -> return
-            else -> when (referenceTarget.kind) {
-                ClassKind.ANNOTATION_CLASS -> ANNOTATION
-                else -> textAttributesKeyForClassDeclaration(referenceTarget)
-            }
-        }
-
+        val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
         highlightName(computeHighlightingRangeForUsage(expression, referenceTarget), key)
     }
 
@@ -88,7 +78,7 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
             highlightName(
                 identifier,
                 attributeKeyForDeclarationFromExtensions(classOrObject, classDescriptor)
-                    ?: textAttributesKeyForClassDeclaration(classDescriptor)
+                    ?: calculateClassReferenceAttributes(classDescriptor)
             )
         }
         super.visitClassOrObject(classOrObject)
@@ -98,10 +88,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val identifier = typeAlias.nameIdentifier
         val descriptor = bindingContext.get(BindingContext.TYPE_ALIAS, typeAlias)
         if (identifier != null && descriptor != null) {
-            highlightName(
-                identifier,
-                attributeKeyForDeclarationFromExtensions(identifier, descriptor) ?: TYPE_ALIAS
-            )
+            val key = attributeKeyForDeclarationFromExtensions(identifier, descriptor)
+                ?: calculateTypeAliasReferenceAttributes(descriptor)
+
+            highlightName(identifier, key)
         }
         super.visitTypeAlias(typeAlias)
     }
@@ -110,12 +100,28 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         // Do nothing: 'dynamic' is highlighted as a keyword
     }
 
-    private fun textAttributesKeyForClassDeclaration(descriptor: ClassDescriptor): TextAttributesKey = when (descriptor.kind) {
-        ClassKind.INTERFACE -> TRAIT
-        ClassKind.ANNOTATION_CLASS -> ANNOTATION
-        ClassKind.OBJECT -> OBJECT
-        ClassKind.ENUM_CLASS -> ENUM
-        ClassKind.ENUM_ENTRY -> ENUM_ENTRY
-        else -> if (descriptor.modality === Modality.ABSTRACT) ABSTRACT_CLASS else CLASS
+    private fun calculateClassReferenceAttributes(target: ClassDescriptor): TextAttributesKey {
+        return when (target.kind) {
+            ClassKind.ANNOTATION_CLASS -> ANNOTATION
+            ClassKind.INTERFACE -> TRAIT
+            ClassKind.OBJECT -> OBJECT
+            ClassKind.ENUM_CLASS -> ENUM
+            ClassKind.ENUM_ENTRY -> ENUM_ENTRY
+            else -> if (target.modality === Modality.ABSTRACT) ABSTRACT_CLASS else CLASS
+        }
+    }
+
+    private fun calculateTypeAliasReferenceAttributes(target: TypeAliasDescriptor): TextAttributesKey {
+        val aliasedTarget = target.expandedType.constructor.declarationDescriptor
+        return if (aliasedTarget is ClassDescriptor && aliasedTarget.kind == ClassKind.ANNOTATION_CLASS) ANNOTATION else TYPE_ALIAS
+    }
+
+    private fun calculateDeclarationReferenceAttributes(target: DeclarationDescriptor): TextAttributesKey? {
+        return when (target) {
+            is TypeParameterDescriptor -> TYPE_PARAMETER
+            is TypeAliasDescriptor -> calculateTypeAliasReferenceAttributes(target)
+            is ClassDescriptor -> calculateClassReferenceAttributes(target)
+            else -> null
+        }
     }
 }

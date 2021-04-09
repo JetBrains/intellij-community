@@ -151,6 +151,11 @@ public class PerformanceHighlightingTestGenerated extends AbstractPerformanceHig
         runTest("../idea/tests/testData/highlighter/TypeAlias.kt");
     }
 
+    @TestMetadata("TypeAlias2.kt")
+    public void testTypeAlias2() throws Exception {
+        runTest("../idea/tests/testData/highlighter/TypeAlias2.kt");
+    }
+
     @TestMetadata("TypesAndAnnotations.kt")
     public void testTypesAndAnnotations() throws Exception {
         runTest("../idea/tests/testData/highlighter/TypesAndAnnotations.kt");

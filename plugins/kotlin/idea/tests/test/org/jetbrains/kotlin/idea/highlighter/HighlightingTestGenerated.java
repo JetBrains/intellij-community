@@ -151,6 +151,11 @@ public class HighlightingTestGenerated extends AbstractHighlightingTest {
         runTest("testData/highlighter/TypeAlias.kt");
     }
 
+    @TestMetadata("TypeAlias2.kt")
+    public void testTypeAlias2() throws Exception {
+        runTest("testData/highlighter/TypeAlias2.kt");
+    }
+
     @TestMetadata("TypesAndAnnotations.kt")
     public void testTypesAndAnnotations() throws Exception {
         runTest("testData/highlighter/TypesAndAnnotations.kt");
