@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.ApiStatus
 
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(CommonUiProperties.COLUMN_ID_ORDER)
 
@@ -57,7 +58,8 @@ internal fun VcsLogUiProperties.updateOrder(newOrder: List<VcsLogColumn<*>>) {
   set(CommonUiProperties.COLUMN_ID_ORDER, newOrder.map { it.id }.distinct())
 }
 
-internal fun VcsLogColumn<*>.isVisible(properties: VcsLogUiProperties): Boolean = withColumnProperties { columnProperties ->
+@ApiStatus.Internal
+fun VcsLogColumn<*>.isVisible(properties: VcsLogUiProperties): Boolean = withColumnProperties { columnProperties ->
   properties.getPropertyValue(columnProperties.visibility, true)
 }
 
