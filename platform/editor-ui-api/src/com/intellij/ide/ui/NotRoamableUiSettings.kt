@@ -70,7 +70,7 @@ class NotRoamableUiOptions : BaseState() {
   var fontScale by property(0f)
 
   init {
-    val fontData = JBUIScale.getSystemFontData()
+    val fontData = JBUIScale.getSystemFontData(null)
     fontFace = fontData.key
     fontSize = fontData.value
     fontScale = UISettings.defFontScale
@@ -80,7 +80,7 @@ class NotRoamableUiOptions : BaseState() {
 private class FontFilter : SerializationFilter {
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
     val settings = bean as NotRoamableUiOptions
-    val fontData = JBUIScale.getSystemFontData()
+    val fontData = JBUIScale.getSystemFontData(null)
     if ("fontFace" == accessor.name) {
       return fontData.key != settings.fontFace
     }

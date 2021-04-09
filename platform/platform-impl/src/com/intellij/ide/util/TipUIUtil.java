@@ -47,11 +47,17 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
 
 import static com.intellij.util.ui.UIUtil.drawImage;
 
@@ -459,7 +465,7 @@ public final class TipUIUtil {
 
       String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
       URL resource = TipUIUtil.class.getClassLoader().getResource("tips/css/" + fileName);
-      kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
+      kit.getStyleSheet().addStyleSheet(StartupUiUtil.loadStyleSheet(resource));
       setEditorKit(kit);
     }
 

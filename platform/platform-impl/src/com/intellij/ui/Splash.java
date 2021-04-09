@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -96,7 +95,7 @@ public final class Splash extends Window {
       progressSlidePainter.startPreloading();
     }
     StartUpMeasurer.addInstantEvent("splash shown");
-    Activity activity = StartUpMeasurer.startActivity("splash set visible", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("splash set visible");
     setVisible(visible);
     activity.end();
     if (visible) {

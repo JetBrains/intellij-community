@@ -32,18 +32,7 @@ public final class SplashManager {
   private static JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static void show(String @NotNull [] args, boolean visible) {
-    for (String arg : args) {
-      if (CommandLineArgs.SPLASH.equals(arg)) {
-        System.setProperty(CommandLineArgs.SPLASH, "true");
-        return;
-      }
-      else if (CommandLineArgs.NO_SPLASH.equals(arg)) {
-        System.setProperty(CommandLineArgs.SPLASH, "false");
-        return;
-      }
-    }
-
+  public static void scheduleShow() {
     Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.DEFAULT);
     try {
       PROJECT_FRAME = createFrameIfPossible();
@@ -69,7 +58,7 @@ public final class SplashManager {
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
       if (splash != null) {
-        splash.initAndShow(visible);
+        splash.initAndShow(true);
       }
       activity.end();
     });
@@ -115,7 +104,7 @@ public final class SplashManager {
     }
 
     StartUpMeasurer.addInstantEvent("frame shown");
-    Activity activity = StartUpMeasurer.startActivity("frame set visible", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("frame set visible");
     frame.setVisible(true);
     activity.end();
     return frame;

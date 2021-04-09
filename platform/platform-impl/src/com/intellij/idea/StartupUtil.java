@@ -21,6 +21,7 @@ import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -41,6 +42,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -62,7 +64,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -76,7 +77,6 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -93,7 +93,6 @@ public final class StartupUtil {
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static SocketLock socketLock;
-  private static final AtomicBoolean isLaFForPreStartupSet = new AtomicBoolean();
   private static Future<@Nullable Boolean> shellEnvLoadFuture;
 
   private StartupUtil() { }
@@ -147,17 +146,21 @@ public final class StartupUtil {
     return shellEnvLoadFuture;
   }
 
-  private static @NotNull ForkJoinTask<@Nullable Object> scheduleEuaDocumentLoading() {
-    return ForkJoinPool.commonPool().submit(() -> {
+  private static @NotNull CompletableFuture<@Nullable("if accepted") Object> scheduleEuaDocumentLoading() {
+    return CompletableFuture.supplyAsync(() -> {
       if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
         return null;
       }
 
-      Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
-      EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
-      euaActivity.end();
-      return result;
-    });
+      Activity activity = StartUpMeasurer.startActivity("eua getting");
+      EndUserAgreement.Document document = EndUserAgreement.getLatestDocument();
+      activity = activity.endAndStart("eua is accepted checking");
+      if (document.isAccepted()) {
+        document = null;
+      }
+      activity.end();
+      return document;
+    }, ForkJoinPool.commonPool());
   }
 
   public interface AppStarter {
@@ -230,28 +233,28 @@ public final class StartupUtil {
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
     CompletableFuture<?> initUiTask = scheduleInitUi();
-    ForkJoinTask<@Nullable Object> euaDocument;
+    CompletableFuture<Boolean> agreementDialogWasShown;
     if (Main.isHeadless()) {
-      euaDocument = null;
+      agreementDialogWasShown = initUiTask.thenApply(__ -> true);
+      enableHeadlessAwtGuard();
     }
     else {
-      euaDocument = scheduleEuaDocumentLoading();
-      // UIUtil.initDefaultLaF must be called before this call
-      // (required for getSystemFontData(), and getSystemFontData() can be called to compute scale also)
-      initUiTask.thenRun(() -> {
-        // called in EDT
-        Activity subActivity = StartUpMeasurer.startActivity("system font data initialization");
-        JBUIScale.getSystemFontData();
-        subActivity = subActivity.endAndStart("init JBUIScale");
-        JBUIScale.scale(1f);
-
-        showSplashIfNeeded(args, euaDocument, subActivity);
-
-        // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
-        EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
-
-        ForkJoinPool.commonPool().execute(() -> {
-          loadSystemFontsAndDnDCursors();
+      CompletableFuture<@Nullable("if accepted") Object> euaDocumentFuture = scheduleEuaDocumentLoading();
+      agreementDialogWasShown = initUiTask.thenCompose(o -> {
+        return euaDocumentFuture.thenApplyAsync(euaDocument -> {
+          boolean result = showEuaAndScheduleSplashIfNeeded(args, euaDocument);
+          ForkJoinPool.commonPool().execute(() -> {
+            updateFrameClassAndWindowIcon();
+            loadSystemFontsAndDnDCursors();
+          });
+          return result;
+        }, it -> {
+          if (EventQueue.isDispatchThread()) {
+            it.run();
+          }
+          else {
+            EventQueue.invokeLater(it);
+          }
         });
       });
     }
@@ -311,43 +314,48 @@ public final class StartupUtil {
       runPreAppClass(log);
     }
 
-    CompletableFuture<@Nullable Void> prepareUiFuture = new CompletableFuture<>();
-    initUiTask
-      .thenRun(() -> {
-        // called in EDT, but other events in queue should be processed before patchSystem
-        EventQueue.invokeLater(() -> {
-          try {
-            patchSystem(log);
-          }
-          catch (Throwable e) {
-            prepareUiFuture.completeExceptionally(e);
-            StartupAbortedException.logAndExit(e, log);
-            return;
-          }
+    // maybe called in EDT, but other events in queue should be processed before patchSystem
+    CompletableFuture<@Nullable Void> prepareUiFuture = agreementDialogWasShown
+      .thenRunAsync(() -> {
+        try {
+          patchSystem(log);
+        }
+        catch (RuntimeException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e);
+        }
 
-          prepareUiFuture.complete(null);
+        if (!Main.isHeadless()) {
+          // not important
+          EventQueue.invokeLater(() -> {
+            // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater
+            // (to allow other queued events to be executed)
+            StartupUiUtil.configureHtmlKitStylesheet();
+            //noinspection ResultOfMethodCallIgnored
+            WeakFocusStackManager.getInstance();
+          });
 
-          if (!Main.isHeadless()) {
-            // not important
-            EventQueue.invokeLater(() -> {
-              //noinspection ResultOfMethodCallIgnored
-              WeakFocusStackManager.getInstance();
+          if (SystemInfoRt.isMac) {
+            ForkJoinPool.commonPool().execute(() -> {
+              Activity subActivity = StartUpMeasurer.startActivity("mac app init");
+              MacOSApplicationProvider.initApplication();
+              subActivity.end();
             });
           }
-        });
-        if (!Main.isHeadless() && SystemInfoRt.isMac) {
-          ForkJoinPool.commonPool().execute(() -> {
-            Activity subActivity = StartUpMeasurer.startActivity("mac app init");
-            MacOSApplicationProvider.initApplication();
-            subActivity.end();
-          });
         }
-      })
+      }, it -> EventQueue.invokeLater(it) /* don't use method reference */ )
       .exceptionally(e -> {
         StartupAbortedException.logAndExit(new StartupAbortedException("UI initialization failed", e), log);
         return null;
       });
-    startApp(Arrays.asList(args), prepareUiFuture, log, configImportNeeded, appStarterFuture, euaDocument);
+
+    if (!Main.isHeadless() && configImportNeeded) {
+      prepareUiFuture.join();
+      importConfig(Arrays.asList(args), log, appStarterFuture, agreementDialogWasShown);
+    }
+    getAppStarter(appStarterFuture).start(Arrays.asList(args), prepareUiFuture);
   }
 
   private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
@@ -357,43 +365,32 @@ public final class StartupUtil {
     return result;
   }
 
-  private static void startApp(@NotNull List<String> args,
-                               @NotNull CompletableFuture<?> prepareUiFuture,
-                               @NotNull Logger log,
-                               boolean configImportNeeded,
-                               @NotNull ForkJoinTask<AppStarter> appStarterFuture,
-                               @Nullable ForkJoinTask<@Nullable Object> euaDocument) throws Exception {
-    if (!Main.isHeadless()) {
-      Activity activity = StartUpMeasurer.startActivity("eua showing");
-      Object document = euaDocument == null ? null : euaDocument.join();
-      boolean agreementDialogWasShown = document != null &&
-                                        showUserAgreementAndConsentsIfNeeded(log, prepareUiFuture, (EndUserAgreement.Document)document);
-
-      if (configImportNeeded) {
-        activity = activity.endAndStart("screen reader checking");
-        runInEdtAndWait(prepareUiFuture, log, AccessibilityUtils::enableScreenReaderSupportIfNecessary);
-      }
-
-      if (configImportNeeded) {
-        activity = activity.endAndStart("config importing");
-        AppStarter appStarter = getAppStarter(appStarterFuture);
-        appStarter.beforeImportConfigs();
-        Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(prepareUiFuture, log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, args, log));
-        appStarter.importFinished(newConfigDir);
-
-        if (!ConfigImportHelper.isConfigImported()) {
-          // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
-          EventQueue.invokeAndWait(() -> {
-            runStartupWizard(appStarter);
-          });
-        }
-        PluginManagerCore.scheduleDescriptorLoading();
-      }
-      activity.end();
+  private static void importConfig(@NotNull List<String> args,
+                                   @NotNull Logger log,
+                                   @NotNull ForkJoinTask<AppStarter> appStarterFuture,
+                                   @NotNull CompletableFuture<Boolean> agreementDialogWasShown) throws Exception {
+    Activity activity = StartUpMeasurer.startActivity("screen reader checking");
+    try {
+      EventQueue.invokeAndWait(AccessibilityUtils::enableScreenReaderSupportIfNecessary);
     }
+    catch (Throwable e) {
+      log.error(e);
+    }
+    activity.end();
 
-    getAppStarter(appStarterFuture).start(args, prepareUiFuture);
+    activity = StartUpMeasurer.startActivity("config importing");
+    AppStarter appStarter = getAppStarter(appStarterFuture);
+    appStarter.beforeImportConfigs();
+    Path newConfigDir = PathManager.getConfigDir();
+    EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown.join(), newConfigDir, args, log));
+    appStarter.importFinished(newConfigDir);
+
+    if (!ConfigImportHelper.isConfigImported()) {
+      // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
+      EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+    }
+    activity.end();
+    PluginManagerCore.scheduleDescriptorLoading();
   }
 
   /**
@@ -417,42 +414,36 @@ public final class StartupUtil {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> initUiFuture = new CompletableFuture<>();
-    ForkJoinPool.commonPool().execute(() -> {
+    Activity activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)");
+    CompletableFuture<Void> initUiFuture = CompletableFuture.runAsync(() -> {
+      checkHiDPISettings();
+      blockATKWrapper();
+
+      //noinspection SpellCheckingInspection
+      System.setProperty("sun.awt.noerasebackground", "true");
+      if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
+        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
+      }
+      activityQueue.updateThreadName();
+    }, ForkJoinPool.commonPool())
+    .thenRunAsync(() -> {
       try {
-        checkHiDPISettings();
-
-        //noinspection SpellCheckingInspection
-        System.setProperty("sun.awt.noerasebackground", "true");
-        if (System.getProperty("com.jetbrains.suppressWindowRaise") == null) {
-          System.setProperty("com.jetbrains.suppressWindowRaise", "true");
-        }
-
-        EventQueue.invokeLater(() -> {
-          try {
-            // it is required even if headless because some tests creates configurable, so, our LaF is expected
-            StartupUiUtil.initDefaultLaF();
-          }
-          catch (Throwable e) {
-            initUiFuture.completeExceptionally(e);
-            return;
-          }
-
-          initUiFuture.complete(null);
-          StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
-        });
+        activityQueue.end();
+        // it is required even if headless because some tests creates configurable, so, our LaF is expected
+        Activity activity = StartUpMeasurer.startActivity("LaF initialization");
+        UIManager.setLookAndFeel(new IntelliJLaf());
+        activity = activity.endAndStart("system font data initialization");
+        JBUIScale.getSystemFontData(null);
+        activity = activity.endAndStart("init JBUIScale");
+        JBUIScale.scale(1f);
+        activity.end();
       }
-      catch (Throwable e) {
-        initUiFuture.completeExceptionally(e);
+      catch (UnsupportedLookAndFeelException e) {
+        throw new RuntimeException(e);
       }
-    });
 
-    if (Main.isHeadless()) {
-      enableHeadlessAwtGuard();
-    }
-    else {
-      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, ForkJoinPool.commonPool());
-    }
+      StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
+    }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
       return CompletableFuture.allOf(initUiFuture, CompletableFuture.runAsync(() -> {
@@ -470,6 +461,27 @@ public final class StartupUtil {
     }
   }
 
+  /*
+   * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
+   * which is called from Toolkit.getDefaultToolkit().
+   */
+  private static void blockATKWrapper() {
+    // registry must be not used here, because this method called before application loading
+    //noinspection SpellCheckingInspection
+    if (!SystemInfoRt.isLinux || !Boolean.parseBoolean(System.getProperty("linux.jdk.accessibility.atkwrapper.block", "true"))) {
+      return;
+    }
+
+    Activity activity = StartUpMeasurer.startActivity("atk wrapper blocking");
+    if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
+      // Replace AtkWrapper with a dummy Object. It'll be instantiated & garbage collected right away, a NOP.
+      System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+      Logger.getInstance(StartupUiUtil.class).info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
+    }
+    activity.end();
+  }
+
+
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
     // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
@@ -485,32 +497,51 @@ public final class StartupUtil {
   }
 
   @SuppressWarnings("SpellCheckingInspection")
-  private static void showSplashIfNeeded(@NotNull String @NotNull [] args,
-                                         @Nullable ForkJoinTask<@Nullable Object> euaDocument,
-                                         @NotNull Activity activity) {
-    // product specifies `splash` VM properties, `nosplash` is deprecated property, it should be checked first
-    if (Boolean.getBoolean(CommandLineArgs.NO_SPLASH) || !Boolean.getBoolean(CommandLineArgs.SPLASH) || Main.isLightEdit()) {
-      return;
+  private static boolean showEuaAndScheduleSplashIfNeeded(@NotNull String @NotNull [] args, @Nullable Object euaDocument) {
+    Activity activity = StartUpMeasurer.startActivity("eua showing");
+    EndUserAgreement.Document document = (EndUserAgreement.Document)euaDocument;
+
+    EndUserAgreement.updateCachedContentToLatestBundledVersion();
+    if (document != null) {
+      Agreements.showEndUserAndDataSharingAgreements(document);
+    }
+    else if (ConsentOptions.getInstance().getConsents().getValue()) {
+      Agreements.showDataSharingAgreement();
+    }
+    activity.end();
+
+    if (!Main.isLightEdit()) {
+      int showSplash = -1;
+      for (String arg : args) {
+        if (CommandLineArgs.SPLASH.equals(arg)) {
+          showSplash = 1;
+          break;
+        }
+        else if (CommandLineArgs.NO_SPLASH.equals(arg)) {
+          showSplash = 0;
+          break;
+        }
+      }
+
+      if (showSplash == -1) {
+        // product specifies `splash` VM properties, `nosplash` is deprecated property, it should be checked first
+        if (Boolean.getBoolean(CommandLineArgs.NO_SPLASH)) {
+          showSplash = 0;
+        }
+        else if (Boolean.getBoolean(CommandLineArgs.SPLASH)) {
+          showSplash = 1;
+        }
+      }
+
+      if (showSplash == 1) {
+        Activity prepareSplashActivity = StartUpMeasurer.startActivity("splash preparation");
+        SplashManager.scheduleShow();
+        prepareSplashActivity.end();
+      }
     }
 
-    Activity prepareSplashActivity = activity.endAndStart("splash preparation");
-    Activity prepareSplashQueueActivity = prepareSplashActivity.startChild("splash preparation (in queue)");
-    EventQueue.invokeLater(() -> {
-      prepareSplashQueueActivity.end();
-      Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
-      boolean isEulaAccepted;
-      try {
-        EndUserAgreement.Document document = euaDocument == null ? null : (EndUserAgreement.Document)euaDocument.join();
-        isEulaAccepted = document == null || document.isAccepted();
-      }
-      catch (Exception ignore) {
-        isEulaAccepted = true;
-      }
-      eulaActivity.end();
-
-      SplashManager.show(args, isEulaAccepted);
-      prepareSplashActivity.end();
-    });
+    // agreementDialogWasShown
+    return document != null;
   }
 
   private static void updateFrameClassAndWindowIcon() {
@@ -853,7 +884,7 @@ public final class StartupUtil {
       }
     }
     else if (Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
-        new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+      new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
     }
 
     PluginManagerCore.invalidatePlugins();
@@ -862,14 +893,14 @@ public final class StartupUtil {
 
   // must be called from EDT
   private static void patchSystem(@NotNull Logger log) throws Throwable {
-    if (!isLaFForPreStartupSet.compareAndSet(false, true)) {
-      return;
-    }
-
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
-    //noinspection ResultOfMethodCallIgnored
-    IdeEventQueue.getInstance();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
+
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof DarculaLaf) {
+      ((DarculaLaf)lookAndFeel).ideEventQueueInitialized(eventQueue);
+    }
 
     if (!Main.isHeadless()) {
       if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
@@ -890,42 +921,6 @@ public final class StartupUtil {
       IconManager.activate(new CoreIconManager());
     }
     activity.end();
-  }
-
-  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
-                                                              @NotNull CompletableFuture<?> prepareUiFuture,
-                                                              @NotNull EndUserAgreement.Document agreement) {
-    boolean dialogWasShown = false;
-    EndUserAgreement.updateCachedContentToLatestBundledVersion();
-    if (!agreement.isAccepted()) {
-      // todo: does not seem to request focus when shown
-      runInEdtAndWait(prepareUiFuture, log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement));
-      dialogWasShown = true;
-    }
-    else if (ConsentOptions.getInstance().getConsents().getValue()) {
-      runInEdtAndWait(prepareUiFuture, log, Agreements.INSTANCE::showDataSharingAgreement);
-    }
-    return dialogWasShown;
-  }
-
-  public static void runInEdtAndWait(@NotNull CompletableFuture<?> prepareUiFuture, @Nullable Logger log, @NotNull Runnable runnable) {
-    prepareUiFuture.join();
-    try {
-      EventQueue.invokeAndWait(() -> {
-        if (!isLaFForPreStartupSet.get()) {
-          try {
-            UIManager.setLookAndFeel(IntelliJLaf.class.getName());
-          }
-          catch (Throwable e) {
-            (log == null ? Logger.getInstance(StartupUtil.class) : log).warn(e);
-          }
-        }
-        runnable.run();
-      });
-    }
-    catch (InterruptedException | InvocationTargetException e) {
-      (log == null ? Logger.getInstance(StartupUtil.class) : log).warn(e);
-    }
   }
 
   public static @NotNull Path canonicalPath(@NotNull String path) {

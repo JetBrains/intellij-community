@@ -5,12 +5,12 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
-import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -47,6 +47,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.*
 import java.util.function.BiFunction
+import javax.swing.UIManager
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
@@ -67,6 +68,8 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
     runActivity("create app") {
       val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
       ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine()) { app ->
+        (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
+
         loadAndInitPluginFuture
           .thenAcceptAsync({ plugins ->
             runActivity("app component registration") {
@@ -332,7 +335,7 @@ private fun handleExternalCommand(args: List<String>, currentDirectory: String?)
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 fun initConfigurationStore(app: ApplicationImpl) {
-  var activity = startActivity("beforeApplicationLoaded")
+  var activity = StartUpMeasurer.startActivity("beforeApplicationLoaded")
   val configPath = PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
@@ -451,7 +454,7 @@ private fun executePreloadActivity(activity: PreloadingActivity, descriptor: Plu
 }
 
 private fun executePreloadActivities(app: ApplicationImpl) {
-  val activity = StartUpMeasurer.startActivity("preloading activity executing", ActivityCategory.DEFAULT)
+  val activity = StartUpMeasurer.startActivity("preloading activity executing")
   val list = mutableListOf<Pair<PreloadingActivity, PluginDescriptor>>()
   val extensionPoint = app.extensionArea.getExtensionPoint<PreloadingActivity>("com.intellij.preloadingActivity")
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, pluginDescriptor ->

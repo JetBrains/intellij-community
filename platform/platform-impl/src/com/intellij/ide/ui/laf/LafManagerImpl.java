@@ -64,10 +64,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -89,13 +86,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static final String HIGH_CONTRAST_THEME_ID = "JetBrainsHighContrastTheme";
   private static final String DARCULA_EDITOR_THEME_KEY = "Darcula.SavedEditorTheme";
   private static final String DEFAULT_EDITOR_THEME_KEY = "Default.SavedEditorTheme";
-
-  @NonNls private static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
-    "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
-    "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
-    "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
-    "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
-    "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
   @PropertyKey(resourceBundle = IdeBundle.BUNDLE)
   @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
@@ -826,7 +816,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     fixPopupWeight();
     fixMenuIssues(uiDefaults);
 
-    initInputMapDefaults(uiDefaults);
+    StartupUiUtil.initInputMapDefaults(uiDefaults);
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
@@ -871,7 +861,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     @SuppressWarnings("SpellCheckingInspection")
     final String face = "Helvetica Neue";
     // ui font
-    initFontDefaults(defaults, getFont(face, 13, Font.PLAIN));
+    StartupUiUtil.initFontDefaults(defaults, getFont(face, 13, Font.PLAIN));
     for (Object key : new ArrayList<>(defaults.keySet())) {
       if (!(key instanceof String) || !Strings.endsWithIgnoreCase(((String)key), "font")) {
         continue;
@@ -1061,7 +1051,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
+      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
       JBUIScale.setUserScaleFactor(JBUIScale.getFontScale(uiSettings.getFontSize()));
     }
     else {
@@ -1073,7 +1063,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference();
     Map<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
-      for (String resource : ourPatchableFontResources) {
+      for (String resource : StartupUiUtil.ourPatchableFontResources) {
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
@@ -1085,7 +1075,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     Map<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<>();
-      for (String resource : ourPatchableFontResources) {
+      for (String resource : StartupUiUtil.ourPatchableFontResources) {
         lfDefaults.put(resource, defaults.get(resource));
       }
       myStoredDefaults.put(lf, lfDefaults);
@@ -1156,65 +1146,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     for (Window aChildren : children) {
       repaintUI(aChildren);
     }
-  }
-
-  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {
-    String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
-    String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
-    String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
-    // Ctrl+Ins, Shift+Ins, Shift+Del
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey);
-    // Ctrl+C, Ctrl+V, Ctrl+X
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
-  }
-
-  public static void initInputMapDefaults(UIDefaults defaults) {
-    // Make ENTER work in JTrees
-    InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
-    if (treeInputMap != null) { // it's really possible. For example,  GTK+ doesn't have such map
-      treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle");
-    }
-    // Cut/Copy/Paste in JTextAreas
-    InputMap textAreaInputMap = (InputMap)defaults.get("TextArea.focusInputMap");
-    if (textAreaInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textAreaInputMap, false);
-    }
-    // Cut/Copy/Paste in JTextFields
-    InputMap textFieldInputMap = (InputMap)defaults.get("TextField.focusInputMap");
-    if (textFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textFieldInputMap, false);
-    }
-    // Cut/Copy/Paste in JPasswordField
-    InputMap passwordFieldInputMap = (InputMap)defaults.get("PasswordField.focusInputMap");
-    if (passwordFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(passwordFieldInputMap, false);
-    }
-    // Cut/Copy/Paste in JTables
-    InputMap tableInputMap = (InputMap)defaults.get("Table.ancestorInputMap");
-    if (tableInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(tableInputMap, true);
-    }
-  }
-
-  public static void initFontDefaults(@NotNull UIDefaults defaults, @NotNull FontUIResource uiFont) {
-    defaults.put("Tree.ancestorInputMap", null);
-    FontUIResource textFont = new FontUIResource(uiFont);
-    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, uiFont.getSize());
-
-    for (String fontResource : ourPatchableFontResources) {
-      defaults.put(fontResource, uiFont);
-    }
-
-    if (!SystemInfoRt.isMac) {
-      defaults.put("PasswordField.font", monoFont);
-    }
-    defaults.put("TextArea.font", monoFont);
-    defaults.put("TextPane.font", textFont);
-    defaults.put("EditorPane.font", textFont);
   }
 
   private static final class OurPopupFactory extends PopupFactory {

@@ -6,7 +6,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -24,14 +24,14 @@ public final class IdeaLaf extends MetalLookAndFeel {
   @Override
   public void initComponentDefaults(UIDefaults defaults) {
     super.initComponentDefaults(defaults);
-    LafManagerImpl.initInputMapDefaults(defaults);
+    StartupUiUtil.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData();
-    LafManagerImpl.initFontDefaults(defaults, UIUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
+    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(defaults);
+    StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   static void initIdeaDefaults(UIDefaults defaults) {
     defaults.put("Menu.maxGutterIconWidth", 18);
     defaults.put("MenuItem.maxGutterIconWidth", 18);

@@ -66,13 +66,10 @@ import java.awt.print.PrinterGraphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -1942,19 +1939,7 @@ public final class UIUtil {
   }
 
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    if (url == null) {
-      return null;
-    }
-
-    try {
-      StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
-      return styleSheet;
-    }
-    catch (IOException e) {
-      getLogger().warn(url + " loading failed", e);
-      return null;
-    }
+    return StartupUiUtil.loadStyleSheet(url);
   }
 
   public static @NotNull HTMLEditorKit getHTMLEditorKit() {
@@ -2018,17 +2003,14 @@ public final class UIUtil {
         // this might happen e.g. if we're running under newer runtime, forbidding access to sun.font package
         getLogger().warn(e);
         // this might not give the same result, but we have no choice here
-        return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+        return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
       }
     }
     return font instanceof FontUIResource ? (FontUIResource)font : new FontUIResource(font);
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    // On macOS font fallback is implemented in JDK by default
-    // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
-    Font fontWithFallback = SystemInfoRt.isMac ? new Font(familyName, style, size) : new StyleContext().getFont(familyName, style, size);
-    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+    return StartupUiUtil.getFontWithFallback(familyName, style, size);
   }
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
@@ -2381,22 +2363,7 @@ public final class UIUtil {
   }
 
   public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    List<T> result = new ArrayList<>();
-    findComponentsOfType(parent, cls, result);
-    return result;
-  }
-
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent, @NotNull Class<T> cls, @NotNull List<? super T> result) {
-    if (parent == null) return;
-    if (cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings("unchecked") final T t = (T)parent;
-      result.add(t);
-    }
-    for (Component c : parent.getComponents()) {
-      if (c instanceof JComponent) {
-        findComponentsOfType((JComponent)c, cls, result);
-      }
-    }
+    return ComponentUtil.findComponentsOfType(parent, cls);
   }
 
   public static class TextPainter {

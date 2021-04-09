@@ -16,8 +16,8 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingHelper
-import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.event.ActionListener
@@ -29,6 +29,12 @@ import javax.swing.text.html.HTMLDocument
 import kotlin.system.exitProcess
 
 class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Boolean, val useRtfPane: Boolean = true) {
+  companion object {
+    @JvmStatic
+    fun create(htmlText: String = "", exitOnCancel: Boolean = true, useRtfPane: Boolean = true): AgreementUi {
+      return AgreementUi(htmlText, exitOnCancel, useRtfPane).createDialog()
+    }
+  }
 
   private val bundle
     get() = ResourceBundle.getBundle("messages.AgreementsBundle")
@@ -48,7 +54,6 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
 
   private fun createDialog(): AgreementUi {
     val dialogWrapper = object : DialogWrapper(true) {
-
       init {
         init()
       }
@@ -61,7 +66,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
         return buttonsPanel
       }
 
-      override fun createCenterPanel(): JComponent? {
+      override fun createCenterPanel(): JComponent {
         val centerPanel = JPanel(BorderLayout(0, 0))
         if (useRtfPane) {
           htmlRtfPane = HtmlRtfPane()
@@ -134,7 +139,7 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
       //use Darcula styles for JEditorPane until IDEA-256700 is fixed
       val kit = JBHtmlEditorKit(false)
       val resource = DarculaLaf::class.java.getResource(if (JBUIScale.isUsrHiDPI()) "darcula@2x.css" else "darcula.css")
-      kit.styleSheet.addStyleSheet(UIUtil.loadStyleSheet(resource))
+      kit.styleSheet.addStyleSheet(StartupUiUtil.loadStyleSheet(resource))
       editorKit = kit
       text = htmlText
 
@@ -257,11 +262,4 @@ class AgreementUi private constructor(val htmlText: String, val exitOnCancel: Bo
     dialog!!.isModal = true
     return dialog!!
   }
-
-  companion object {
-    fun create(htmlText: String = "", exitOnCancel: Boolean = true, useRtfPane: Boolean = true): AgreementUi {
-      return AgreementUi(htmlText, exitOnCancel, useRtfPane).createDialog()
-    }
-  }
-
 }
