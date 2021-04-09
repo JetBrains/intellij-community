@@ -1,5 +1,6 @@
 package com.intellij.completion.ml.util
 
+import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.completion.ml.features.MLCompletionWeigher
 import com.intellij.completion.ml.sorting.FeatureUtils
 import com.intellij.internal.statistic.utils.PluginType
@@ -7,7 +8,6 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.WeighingComparable
 
 object RelevanceUtil {
   private val LOG = logger<RelevanceUtil>()
@@ -79,12 +79,13 @@ object RelevanceUtil {
   }
 
   private fun MutableMap<String, Any>.addProximityValues(prefix: String, proximity: Any) {
-    if (proximity !is WeighingComparable<*, *>) {
-      LOG.error("Unexpected value type of `$prefix`: ${proximity.javaClass.simpleName}")
+    val weights = MLWeigherUtil.extractWeightsOrNull(proximity)
+    if (weights == null) {
+      LOG.error("Unexpected comparable type for `$prefix` weigher: ${proximity.javaClass.simpleName}")
       return
     }
 
-    for ((name, weight) in proximity.weights) {
+    for ((name, weight) in weights) {
       this["${prefix}_$name"] = weight
     }
   }
