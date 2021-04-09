@@ -32,7 +32,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
                                                       @Nullable StorageLockContext lockContext,
                                                       int pageSize,
                                                       boolean valuesAreBufferAligned,
-                                                      @NotNull DataExternalizer<Data> dataDescriptor) {
+                                                      @NotNull DataExternalizer<Data> dataDescriptor) throws IOException {
     super(file, initialSize, lockContext, pageSize, valuesAreBufferAligned);
     myDataDescriptor = dataDescriptor;
     myFileLength = (int)length();
