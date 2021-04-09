@@ -174,7 +174,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myValidationAlarm.cancelAllRequests();
     myValidationAlarm.addRequest(() -> {
       if (myComponent != null) {
-        validateResultOnBackgroundThread();
+        try {
+          RunnerAndConfigurationSettings snapshot = createSnapshot(false);
+          snapshot.setName(getNameText());
+          validateResultOnBackgroundThread(snapshot);
+        }
+        catch (ConfigurationException e) {
+          setValidationResult(createValidationResult(null, e));
+        }
       }
     }, 100, modalityState);
   }
@@ -216,21 +223,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public boolean isStoredInFile() {
     return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isStoredInFile();
   }
-  
-  private void validateResultOnBackgroundThread() {
-    getValidateAction()
+
+  private void validateResultOnBackgroundThread(RunnerAndConfigurationSettings snapshot) {
+    getValidateAction(snapshot)
       .expireWith(getEditor())
       .coalesceBy(getEditor())
-      .finishOnUiThread(ModalityState.current(), result -> {
-        myLastValidationResult = result;
-        if (myComponent != null && !isInplaceValidationSupported()) {
-          myComponent.updateValidationResultVisibility(result);
-        }
-        for (ValidationListner listener : myValidationListeners) {
-          listener.validationCompleted(result);
-        }
-      })
+      .finishOnUiThread(ModalityState.current(), this::setValidationResult)
       .submit(NonUrgentExecutor.getInstance());
+  }
+
+  private void setValidationResult(ValidationResult result) {
+    myLastValidationResult = result;
+    if (myComponent != null && !isInplaceValidationSupported()) {
+      myComponent.updateValidationResultVisibility(result);
+    }
+    for (ValidationListner listener : myValidationListeners) {
+      listener.validationCompleted(result);
+    }
   }
 
   public boolean isValid() {
@@ -240,12 +249,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myLastValidationResult == null;
   }
 
-  private NonBlockingReadAction<ValidationResult> getValidateAction() {
+  private NonBlockingReadAction<ValidationResult> getValidateAction(RunnerAndConfigurationSettings snapshot) {
     return ReadAction.nonBlocking(() -> {
-      RunnerAndConfigurationSettings snapshot = null;
       try {
-        snapshot = createSnapshot(false);
-        snapshot.setName(getNameText());
         snapshot.checkSettings(myExecutor);
         for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
           ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), snapshot.getConfiguration());
