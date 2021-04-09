@@ -88,12 +88,12 @@ class MixedSearchListModel extends SearchListModel {
       SearchEverywhereFoundElementInfo info = listElements.get(i);
       if (info.getContributor() == contributor && info.getElement().equals(item)) {
         listElements.remove(i);
+        int newSize = getSize();
+        if (myMaxFrozenIndex >= newSize) myMaxFrozenIndex = newSize - 1;
         fireIntervalRemoved(this, i, i);
         return;
       }
     }
-
-    if (myMaxFrozenIndex >= getSize()) myMaxFrozenIndex = getSize() - 1;
   }
 
   @Override
