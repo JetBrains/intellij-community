@@ -68,7 +68,7 @@ public abstract class HistoryDialogModel {
   protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
     return ReadAction.compute(() -> {
       myGateway.registerUnsavedDocuments(myVcs);
-      String path = myFile.getPath();
+      String path = myGateway.getPathOrUrl(myFile);
       RootEntry root = myGateway.createTransientRootEntry();
       RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
 
