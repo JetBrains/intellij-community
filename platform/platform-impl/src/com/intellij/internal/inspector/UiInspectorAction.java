@@ -617,7 +617,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             return Pair.create(entry.getValue(), field.getName());
           }
         }
-        catch (IllegalAccessException e) {
+        catch (Exception e) {
           //skip
         }
       }
