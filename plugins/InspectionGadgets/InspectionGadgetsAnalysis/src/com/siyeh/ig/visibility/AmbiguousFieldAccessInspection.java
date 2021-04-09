@@ -16,9 +16,11 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,52 +30,14 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class AmbiguousFieldAccessInspection extends BaseInspection {
 
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    final PsiClass fieldClass = (PsiClass)infos[0];
-    final PsiVariable variable = (PsiVariable)infos[1];
-    if (variable instanceof PsiLocalVariable) {
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.local.variable.problem.descriptor", fieldClass.getName());
-    }
-    else if (variable instanceof PsiParameter) {
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.parameter.problem.descriptor", fieldClass.getName());
-    }
-    else {
-      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.field.problem.descriptor", fieldClass.getName());
-    }
-  }
+  private static final Logger LOGGER = Logger.getInstance(AmbiguousFieldAccessInspection.class);
 
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new AmbiguousFieldAccessFix();
-  }
-
-  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-      final String newExpressionText = "super." + referenceExpression.getText();
-      PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new AmbiguousFieldAccessVisitor();
   }
 
@@ -117,5 +81,85 @@ public class AmbiguousFieldAccessInspection extends BaseInspection {
       }
       registerError(expression, fieldClass, variable);
     }
+  }
+
+  @Override
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
+    return new AmbiguousFieldAccessFix();
+  }
+
+  private static class AmbiguousFieldAccessFix extends InspectionGadgetsFix {
+
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("ambiguous.field.access.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      final String newExpressionText = "super." + referenceExpression.getText();
+      PsiReplacementUtil.replaceExpression(referenceExpression, newExpressionText);
+    }
+
+  }
+
+  @Override
+  protected @NotNull String buildErrorString(Object... infos) {
+    final PsiClass fieldClass = (PsiClass)infos[0];
+    final PsiVariable variable = (PsiVariable)infos[1];
+    if (variable instanceof PsiLocalVariable) {
+      final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.local.variable.problem.descriptor",
+                                             fieldClass.getName(),
+                                             localVariable.getName());
+    }
+    else if (variable instanceof PsiParameter) {
+      final PsiParameter parameter = (PsiParameter)variable;
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.parameter.problem.descriptor",
+                                             fieldClass.getName(),
+                                             parameter.getName(),
+                                             getMethodName(parameter));
+    }
+    else if (variable instanceof PsiField) {
+      final PsiField actualField = (PsiField)variable;
+      return InspectionGadgetsBundle.message("ambiguous.field.access.hides.field.problem.descriptor",
+                                             fieldClass.getName(),
+                                             getFqFieldName(actualField));
+    }
+    LOGGER.error("Variable of " + variable.getClass() + " is neither PsiLocalVariable, nor PsiParameter, nor PsiField");
+    return "";
+  }
+
+  private static @NotNull String getFqFieldName(@NotNull PsiField field) {
+    final String fieldName = field.getName();
+
+    final PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return fieldName;
+
+    final String classFqName = containingClass.getQualifiedName();
+    if (classFqName == null) return fieldName;
+
+    return Objects.requireNonNullElse(classFqName, "") + "#" + fieldName;
+  }
+
+  private static @NotNull String getMethodName(PsiParameter parameter) {
+    final PsiMethod method = ObjectUtils.tryCast(parameter.getDeclarationScope(), PsiMethod.class);
+    if (method == null) return "";
+
+    final String methodName = method.getName();
+
+    final PsiClass enclosingClass = method.getContainingClass();
+    if (enclosingClass == null) return methodName;
+
+    final String classFqName = enclosingClass.getQualifiedName();
+    if (classFqName == null) return methodName;
+
+    return classFqName + "#" + methodName;
   }
 }
