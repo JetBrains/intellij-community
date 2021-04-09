@@ -27,14 +27,18 @@ public class ReturnInstruction extends ControlTransferInstruction {
   private final PsiElement myAnchor;
 
   public ReturnInstruction(@NotNull DfaControlTransferValue transfer, @Nullable PsiElement anchor) {
-    super(transfer);
+    this(transfer, anchor, true);
+  }
+
+  private ReturnInstruction(@NotNull DfaControlTransferValue transfer, @Nullable PsiElement anchor, boolean linkTraps) {
+    super(transfer, linkTraps);
     myAnchor = anchor;
   }
 
   @NotNull
   @Override
   public Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor);
+    var instruction = new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor, false);
     instruction.setIndex(getIndex());
     return instruction;
   }
