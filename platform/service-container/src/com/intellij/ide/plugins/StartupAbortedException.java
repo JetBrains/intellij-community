@@ -67,7 +67,7 @@ public final class StartupAbortedException extends RuntimeException {
       ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
       if (conflictException != null) {
         PluginConflictReporter pluginConflictReporter = ApplicationManager.getApplication().getService(PluginConflictReporter.class);
-        pluginConflictReporter.reportConflictByClasses(conflictException.getConflictingClasses());
+        pluginConflictReporter.reportConflict(conflictException.getConflictingPluginIds(), conflictException.isConflictWithPlatform());
       }
     }
 
