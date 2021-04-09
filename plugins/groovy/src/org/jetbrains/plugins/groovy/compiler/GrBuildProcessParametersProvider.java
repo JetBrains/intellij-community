@@ -17,6 +17,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 final class GrBuildProcessParametersProvider extends BuildProcessParametersProvider {
   private final Project myProject;
@@ -43,11 +44,26 @@ final class GrBuildProcessParametersProvider extends BuildProcessParametersProvi
   }
 
   @Override
-  public @NotNull List<String> getAdditionalPluginPaths() {
-    Path jarPath = PathManager.getJarForClass(GroovyBuilder.class);
-    if (jarPath == null) {
-      return Collections.emptyList();
+  public @NotNull Iterable<String> getAdditionalPluginPaths() {
+    final Path jarPath = PathManager.getJarForClass(GroovyBuilder.class);
+    if (jarPath != null) {
+      final Supplier<List<String>> roots = lazy(() -> GroovyRtJarPaths.getGroovyRtRoots(jarPath.toFile()));
+      return () -> roots.get().iterator();
     }
-    return GroovyRtJarPaths.getGroovyRtRoots(jarPath.toFile());
+    return Collections.emptyList();
+  }
+
+  private static <T> Supplier<T> lazy(Supplier<T> calculation) {
+    return new Supplier<>() {
+      T cached = null;
+      @Override
+      public T get() {
+        T val = cached;
+        if (val == null) {
+          cached = val = calculation.get();
+        }
+        return val;
+      }
+    };
   }
 }

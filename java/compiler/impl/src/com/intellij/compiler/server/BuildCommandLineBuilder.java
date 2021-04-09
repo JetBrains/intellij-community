@@ -42,6 +42,6 @@ interface BuildCommandLineBuilder {
   default void setupAdditionalVMOptions() {
   }
 
-  default void copyPathToTarget(File file) {
+  default void copyPathToTarget(Iterable<File> pathFiles) {
   }
 }
