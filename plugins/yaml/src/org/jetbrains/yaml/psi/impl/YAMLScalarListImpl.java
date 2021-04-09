@@ -10,6 +10,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,14 +64,20 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
     long endingEndls = StreamEx.iterate(child.getTreeNext(), it -> it.getTreeNext())
       .takeWhile(Objects::nonNull)
       .takeWhile(it -> isEolOrNull(it)).count();
-    
-    if (feen == -1 && isEol(child) && isEolOrNull(child.getTreeNext())) {
+
+    if (feen == -1 &&
+        isEol(child) &&
+        isEolOrNull(child.getTreeNext()) &&
+         !(YAMLTokenTypes.INDENT.equals(ObjectUtils.doIfNotNull(child.getTreePrev(), ASTNode::getElementType)) &&
+           getLinesNodes().size() <= 2)) {
       return false;
     }
-    if(feen != -1 && endingEndls < feen) return true;
-    
+    if (feen != -1 && endingEndls < feen) return true;
+
     ASTNode next = TreeUtil.findSibling(child.getTreeNext(), NON_SPACE_VALUES);
-    if (isEol(next) && isEolOrNull(TreeUtil.findSibling(next.getTreeNext(), NON_SPACE_VALUES)) && getChompingIndicator() == ChompingIndicator.STRIP) {
+    if (isEol(next) &&
+        isEolOrNull(TreeUtil.findSibling(next.getTreeNext(), NON_SPACE_VALUES)) &&
+        getChompingIndicator() == ChompingIndicator.STRIP) {
       return false;
     }
 

@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,10 +159,37 @@ public abstract class YAMLBlockScalarImpl extends YAMLScalarImpl implements YAML
     if (firstLine != null) {
       return YAMLUtil.getIndentInThisLine(firstLine.getPsi());
     }
+    else {
+      List<ASTNode> line = CollectionsKt.getOrNull(getLinesNodes(), 1);
+      if (line != null) {
+        ASTNode lineIndentElement = ContainerUtil.find(line, l -> l.getElementType().equals(YAMLTokenTypes.INDENT));
+        if (lineIndentElement != null) {
+          return lineIndentElement.getTextLength();
+        }
+      }
+    }
     return 0;
   }
 
-  /** See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>*/
+  protected @NotNull List<List<ASTNode>> getLinesNodes() {
+    List<List<ASTNode>> result = new SmartList<>();
+    List<ASTNode> currentLine = new SmartList<>();
+    for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      currentLine.add(child);
+      if (isEol(child)) {
+        result.add(currentLine);
+        currentLine = new SmartList<>();
+      }
+    }
+    if (!currentLine.isEmpty()) {
+      result.add(currentLine);
+    }
+    return result;
+  }
+
+  /**
+   * See <a href="http://www.yaml.org/spec/1.2/spec.html#id2794534">8.1.1.2. Block Chomping Indicator</a>
+   */
   @NotNull
   protected final ChompingIndicator getChompingIndicator() {
     Boolean forceKeepChomping = getContainingFile().getOriginalFile().getUserData(FORCE_KEEP_CHOMPING);
