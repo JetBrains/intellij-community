@@ -423,6 +423,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       changed = true
       update()
     }
+
+    info.addValidationListener {
+      tree.repaint()
+    }
   }
 
   protected fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
