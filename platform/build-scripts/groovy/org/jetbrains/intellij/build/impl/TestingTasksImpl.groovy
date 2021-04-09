@@ -13,6 +13,7 @@ import org.apache.tools.ant.types.Path
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -532,11 +533,8 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven',
-                         // Kotlin compiler distribution also includes Kotlin plugin
-                         // which shouldn't be accidentally used in runtime
-                         // since proper version is being built from source
-                         'cleanSetupKotlinCompiler')
+      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
+      context.kotlinBinaries.setUpPlugin(context, true)
     }
   }
 

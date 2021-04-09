@@ -167,7 +167,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
   @Override
   List<Path> getAdditionalPluginPaths(@NotNull BuildContext context) {
-    return [Path.of(context.paths.kotlinHome).toAbsolutePath().normalize()]
+    return [context.kotlinBinaries.setUpPlugin(context)]
   }
 
   @Override

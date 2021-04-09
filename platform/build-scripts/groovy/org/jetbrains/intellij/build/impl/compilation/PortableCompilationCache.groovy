@@ -173,7 +173,7 @@ final class PortableCompilationCache {
     }
   }
 
-  boolean isCompilationRequired() {
+  private boolean isCompilationRequired() {
     return forceRebuild || isLocalCacheUsed() || isRemoteCacheStale()
   }
 

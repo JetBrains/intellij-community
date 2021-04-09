@@ -11,9 +11,10 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.GradleRunner
-import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -48,6 +49,8 @@ class CompilationContextImpl implements CompilationContext {
   final Map<String, String> oldToNewModuleName
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
+  KotlinBinaries kotlinBinaries
+  private final CompilationTasks compilationTasks
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
@@ -70,21 +73,13 @@ class CompilationContextImpl implements CompilationContext {
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def gradleJdk = toCanonicalPath(JdkUtils.computeJdkHome(messages, '1.8', null, "JDK_18_x64"))
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, gradleJdk)
-    if (!options.skipDependencySetup) {
-      if (!options.isInDevelopmentMode) {
-        setupCompilationDependencies(gradle, options)
-      }
-      else {
-        gradle.run('Setting up Kotlin compiler', 'setupKotlinCompiler')
-      }
-    }
-
     projectHome = toCanonicalPath(projectHome)
-    def kotlinCompilerHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin-compiler/Kotlin")
-    def model = loadProject(projectHome, kotlinCompilerHome, messages, options, ant)
+    def kotlinBinaries = new KotlinBinaries(projectHome, communityHome, options, messages)
+    kotlinBinaries.setUpCompilerIfRequired(gradle, ant)
+    def model = loadProject(projectHome, kotlinBinaries, messages)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinCompilerHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinBinaries, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
@@ -156,7 +151,7 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
-                                 String projectHome, String jdkHome, String kotlinCompilerHome, BuildMessages messages,
+                                 String projectHome, String jdkHome, KotlinBinaries kotlinBinaries, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
@@ -169,24 +164,23 @@ class CompilationContextImpl implements CompilationContext {
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinCompilerHome)
+    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome)
+    this.kotlinBinaries = kotlinBinaries
+    this.compilationTasks = CompilationTasks.create(this)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
     return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
-                                      paths.kotlinCompilerHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
+                                      kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String kotlinCompilerHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
-    if (!options.useCompiledClassesFromProjectOutput && options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null) {
-      //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
-      ensureKotlinJpsPluginIsAddedToClassPath(kotlinCompilerHome, ant, messages)
-    }
-
+  private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
     def model = JpsElementFactory.instance.createModel()
     def pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
-    pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinCompilerHome/kotlinc")
+    if (kotlinBinaries.isCompilerRequired()) {
+      pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", "$kotlinBinaries.compilerHome/kotlinc")
+    }
     pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), ".m2/repository").absolutePath))
 
     def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
@@ -196,36 +190,13 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private static boolean dependenciesInstalled
-  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options) {
+  static void setupCompilationDependencies(GradleRunner gradle, BuildOptions options, boolean isKotlinCompilerRequired = true) {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      String[] args = ['setupJdks', 'setupKotlinCompiler']
+      String[] args = ['setupJdks']
+      if (isKotlinCompilerRequired) args += KotlinBinaries.SET_UP_COMPILER_GRADLE_TASK
       if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
       gradle.run('Setting up compilation dependencies', args)
-    }
-  }
-
-  private static void ensureKotlinJpsPluginIsAddedToClassPath(String kotlinCompilerHomePath, AntBuilder ant, BuildMessages messages) {
-    if (CompilationContextImpl.class.getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
-      return
-    }
-
-    def kotlinPluginLibPath = "$kotlinCompilerHomePath/lib"
-    def kotlincLibPath = "$kotlinCompilerHomePath/kotlinc/lib"
-    if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
-        def completePath = "$kotlinPluginLibPath/$it"
-        if (new File(completePath).exists()) {
-          BuildUtils.addToJpsClassPath(completePath, ant)
-        }
-      }
-      ["kotlin-stdlib.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
-      }
-    }
-    else {
-      messages.error(
-        "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew setupKotlinCompiler` in dependencies module to download Kotlin JARs")
     }
   }
 
@@ -239,14 +210,8 @@ class CompilationContextImpl implements CompilationContext {
 
     def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
-    def classesOutput = classesOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchivesMetadata != null) {
-      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
-      outputDirectoriesToKeep.add(classesDirName)
-    }
-    else if (options.pathToCompiledClassesArchive != null) {
-      unpackCompiledClasses(messages, ant, classesOutput, options)
+    if (compilationTasks.areCompiledClassesProvided()) {
       outputDirectoriesToKeep.add(classesDirName)
     }
 
@@ -274,11 +239,13 @@ class CompilationContextImpl implements CompilationContext {
     else {
       messages.info("cleanOutput step was skipped")
     }
+    compilationTasks.reuseCompiledClassesIfProvided()
   }
 
   static final String CLASSES_DIR_NAME = "classes"
 
-  private String classesOutputDirectory() {
+  @Lazy
+  String classesOutputDirectory = {
     String classesOutput
     if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
       classesOutput = options.projectClassesOutputDirectory
@@ -292,16 +259,15 @@ class CompilationContextImpl implements CompilationContext {
     }
     if (options.useCompiledClassesFromProjectOutput) {
       def outputDir = getProjectOutputDirectory()
+      classesOutput = outputDir.absolutePath
       if (!outputDir.exists()) {
-        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
+        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $classesOutput doesn't exist")
       }
     }
-    return classesOutput
-  }
+    classesOutput
+  }()
 
-  /**
-   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
-   */
+  @Override
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
   }
@@ -336,19 +302,6 @@ class CompilationContextImpl implements CompilationContext {
         }
       }
     }
-  }
-
-  @CompileDynamic
-  private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
-    messages.block("Unpack compiled classes archive") {
-      FileUtil.delete(new File(classesOutput))
-      ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
-    }
-  }
-
-  @CompileStatic
-  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
-    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -506,12 +459,10 @@ class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinCompilerHome) {
+  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome) {
     super(Paths.get(communityHome).toAbsolutePath().normalize(), Paths.get(buildOutputRoot).toAbsolutePath().normalize())
-
     this.projectHome = projectHome
     this.jdkHome = jdkHome
-    this.kotlinCompilerHome = kotlinCompilerHome
     artifacts = "${this.buildOutputRoot}/artifacts"
   }
 }

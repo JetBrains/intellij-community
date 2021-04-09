@@ -15,9 +15,12 @@
  */
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
@@ -39,7 +42,6 @@ class CompilationTasksImpl extends CompilationTasks {
     }
     else if (jpsCache.canBeUsed) {
       context.messages.info("JPS remote cache will be used")
-      jpsCache.downloadCacheAndCompileProject()
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
@@ -91,10 +93,8 @@ class CompilationTasksImpl extends CompilationTasks {
   @Override
   void buildProjectArtifacts(Collection<String> artifactNames) {
     if (!artifactNames.isEmpty()) {
-      boolean buildIncludedModules = !context.options.useCompiledClassesFromProjectOutput &&
-                                     context.options.pathToCompiledClassesArchive == null &&
-                                     context.options.pathToCompiledClassesArchivesMetadata == null
       try {
+        def buildIncludedModules = !areCompiledClassesProvided()
         new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
       }
       catch (Throwable e) {
@@ -118,5 +118,34 @@ class CompilationTasksImpl extends CompilationTasks {
     resolveProjectDependencies()
     context.compilationData.statisticsReported = false
     compileAllModulesAndTests()
+  }
+
+  @Override
+  boolean areCompiledClassesProvided() {
+    return !context.kotlinBinaries.isCompilerRequired() || jpsCache.canBeUsed
+  }
+
+  @Override
+  void reuseCompiledClassesIfProvided() {
+    if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.classesOutputDirectory, context.options)
+    }
+    else if (context.options.pathToCompiledClassesArchive != null) {
+      unpackCompiledClasses(context.classesOutputDirectory)
+    }
+    else if (jpsCache.canBeUsed) {
+      jpsCache.downloadCacheAndCompileProject()
+    }
+    else if (!context.options.useCompiledClassesFromProjectOutput) {
+      context.messages.warning("Compiled classes cannot be reused")
+    }
+  }
+
+  @CompileDynamic
+  private void unpackCompiledClasses(String classesOutput) {
+    context.messages.block("Unpack compiled classes archive") {
+      FileUtil.delete(new File(classesOutput))
+      context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput)
+    }
   }
 }

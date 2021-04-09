@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -75,7 +76,7 @@ final class BuildContextImpl extends BuildContext {
 
     bundledJreManager = new BundledJreManager(this)
 
-    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
+    buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
     systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
@@ -94,8 +95,8 @@ final class BuildContextImpl extends BuildContext {
     return List.copyOf(distFiles)
   }
 
-  private String readSnapshotBuildNumber() {
-    return Files.readString(paths.communityHomeDir.resolve("build.txt")).trim()
+  static String readSnapshotBuildNumber(Path communityHome) {
+    return Files.readString(communityHome.resolve("build.txt")).trim()
   }
 
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
@@ -163,6 +164,21 @@ final class BuildContextImpl extends BuildContext {
   @Override
   JpsCompilationData getCompilationData() {
     compilationContext.compilationData
+  }
+
+  @Override
+  KotlinBinaries getKotlinBinaries() {
+    return compilationContext.kotlinBinaries
+  }
+
+  @Override
+  File getProjectOutputDirectory() {
+    return compilationContext.projectOutputDirectory
+  }
+
+  @Override
+  String getClassesOutputDirectory() {
+    return compilationContext.classesOutputDirectory
   }
 
   @Override
