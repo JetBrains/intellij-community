@@ -128,6 +128,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void refreshProject() {
+    if (myProject.isDefault()) return;
     FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
     for (VirtualFile openVirtualFile : fileEditorManager.getOpenFiles()) {
       fileEditorManager.updateFilePresentation(openVirtualFile);
