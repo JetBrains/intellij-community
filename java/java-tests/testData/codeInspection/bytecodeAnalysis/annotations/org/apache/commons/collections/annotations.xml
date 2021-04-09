@@ -36,7 +36,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.Bag synchronizedBag(org.apache.commons.collections.Bag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -46,7 +45,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.Bag transformedBag(org.apache.commons.collections.Bag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -92,7 +90,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag synchronizedSortedBag(org.apache.commons.collections.SortedBag)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -102,7 +99,6 @@
     </item>
     <item name='org.apache.commons.collections.BagUtils org.apache.commons.collections.SortedBag transformedSortedBag(org.apache.commons.collections.SortedBag, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -395,7 +391,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer blockingBuffer(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -405,7 +400,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer blockingBuffer(org.apache.commons.collections.Buffer, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -415,7 +409,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer boundedBuffer(org.apache.commons.collections.Buffer, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -425,7 +418,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer boundedBuffer(org.apache.commons.collections.Buffer, int, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -447,7 +439,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer synchronizedBuffer(org.apache.commons.collections.Buffer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -457,7 +448,6 @@
     </item>
     <item name='org.apache.commons.collections.BufferUtils org.apache.commons.collections.Buffer transformedBuffer(org.apache.commons.collections.Buffer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -892,7 +882,6 @@
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.util.Collection synchronizedCollection(java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -902,7 +891,6 @@
     </item>
     <item name='org.apache.commons.collections.CollectionUtils java.util.Collection transformedCollection(java.util.Collection, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1969,7 +1957,6 @@
     </item>
     <item name='org.apache.commons.collections.FastArrayList.SubList java.util.List subList(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2013,21 +2000,18 @@
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastHashMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2136,21 +2120,18 @@
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.FastTreeMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2644,7 +2625,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List fixedSizeList(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2662,7 +2642,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List lazyList(java.util.List, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2728,7 +2707,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List synchronizedList(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2738,7 +2716,6 @@
     </item>
     <item name='org.apache.commons.collections.ListUtils java.util.List transformedList(java.util.List, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2934,7 +2911,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map fixedSizeMap(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2964,7 +2940,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map lazyMap(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2977,7 +2952,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map lazyMap(java.util.Map, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2999,7 +2973,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map multiValueMap(java.util.Map, java.lang.Class)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3009,7 +2982,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map multiValueMap(java.util.Map, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3051,7 +3023,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map synchronizedMap(java.util.Map)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3061,7 +3032,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map synchronizedSortedMap(java.util.SortedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3071,7 +3041,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.Map transformedMap(java.util.Map, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3122,7 +3091,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap fixedSizeSortedMap(java.util.SortedMap)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3132,7 +3100,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap lazySortedMap(java.util.SortedMap, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3145,7 +3112,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap lazySortedMap(java.util.SortedMap, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3167,7 +3133,6 @@
     </item>
     <item name='org.apache.commons.collections.MapUtils java.util.SortedMap transformedSortedMap(java.util.SortedMap, org.apache.commons.collections.Transformer, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3650,7 +3615,6 @@
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3673,14 +3637,12 @@
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.SequencedHashMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3791,7 +3753,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.Set synchronizedSet(java.util.Set)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3801,7 +3762,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.Set transformedSet(java.util.Set, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3847,7 +3807,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.SortedSet synchronizedSortedSet(java.util.SortedSet)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3857,7 +3816,6 @@
     </item>
     <item name='org.apache.commons.collections.SetUtils java.util.SortedSet transformedSortedSet(java.util.SortedSet, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3921,21 +3879,18 @@
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Collection values()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.StaticBucketMap java.util.Set keySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -1959,7 +1959,6 @@
     </item>
     <item name='java.lang.invoke.MethodType java.util.List&lt;java.lang.Class&lt;?&gt;&gt; parameterList()'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
