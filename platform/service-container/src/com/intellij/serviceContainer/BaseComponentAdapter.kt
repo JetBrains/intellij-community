@@ -155,9 +155,13 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
   protected abstract fun <T : Any> doCreateInstance(componentManager: ComponentManagerImpl, implementationClass: Class<T>, indicator: ProgressIndicator?): T
 
   @Synchronized
-  fun <T : Any> replaceInstance(instance: T, parentDisposable: Disposable?): T? {
+  fun <T : Any> replaceInstance(keyAsClass: Class<*>,
+                                instance: T,
+                                parentDisposable: Disposable?,
+                                hotCache: MutableMap<Class<*>, Any?>?): T? {
     val old = initializedInstance
     initializedInstance = instance
+    hotCache?.put(keyAsClass, instance)
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, Disposable {
@@ -166,6 +170,14 @@ internal abstract class BaseComponentAdapter(internal val componentManager: Comp
             Disposer.dispose(instance)
           }
           initializedInstance = old
+          if (hotCache != null) {
+            if (old == null) {
+              hotCache.remove(keyAsClass)
+            }
+            else {
+              hotCache.put(keyAsClass, old)
+            }
+          }
         }
       })
     }

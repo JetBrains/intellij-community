@@ -28,19 +28,16 @@ fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instan
   (this as ComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
-/**
- * Returns old instance.
- */
 @TestOnly
-fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?): T? {
-  return (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?) {
+  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @TestOnly
 @Deprecated("Pass parentDisposable")
-fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T): T? {
-  return (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)
+fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T) {
+  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, null)
 }
 
 @TestOnly

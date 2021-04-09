@@ -38,6 +38,5 @@ internal fun throwAlreadyDisposedError(serviceDescription: String, componentMana
 }
 
 internal fun isLightService(serviceClass: Class<*>): Boolean {
-  // to avoid potentially expensive isAnnotationPresent call, first we check isInterface
   return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }

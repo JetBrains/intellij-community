@@ -23,8 +23,7 @@ internal class ConstructorParameterResolver {
                    expectedType: Class<*>,
                    pluginId: PluginId,
                    isExtensionSupported: Boolean): Boolean {
-    if (isLightService(expectedType) ||
-        expectedType === ComponentManager::class.java ||
+    if (expectedType === ComponentManager::class.java ||
         findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId) != null) {
       return true
     }

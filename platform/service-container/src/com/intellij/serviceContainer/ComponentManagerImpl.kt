@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("DeprecatedCallableAddReplaceWith")
+@file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.*
@@ -129,6 +129,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   private val componentKeyToAdapter = ConcurrentHashMap<Any, ComponentAdapter>()
   private val componentAdapters = LinkedHashSetWrapper<ComponentAdapter>()
+  private val serviceInstanceHotCache = ConcurrentHashMap<Class<*>, Any?>()
 
   protected val containerState = AtomicReference(ContainerState.PRE_INIT)
 
@@ -157,7 +158,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   internal var componentContainerIsReadonly: String? = null
 
   protected open val componentStore: IComponentStore
-    get() = doGetService(IComponentStore::class.java, createIfNeeded = true)!!
+    get() = getService(IComponentStore::class.java)!!
 
   init {
     if (setExtensionsRootArea) {
@@ -370,10 +371,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @TestOnly
-  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?): T? {
+  fun <T : Any> replaceComponentInstance(componentKey: Class<T>, componentImplementation: T, parentDisposable: Disposable?) {
     checkState()
     val adapter = getComponentAdapter(componentKey) as MyComponentAdapter
-    return adapter.replaceInstance(componentImplementation, parentDisposable)
+    adapter.replaceInstance(componentKey, componentImplementation, parentDisposable, null)
   }
 
   private fun registerComponent(config: ComponentConfig, pluginDescriptor: PluginDescriptor) {
@@ -464,6 +465,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun <T : Any> getComponent(interfaceClass: Class<T>): T? {
     checkState()
+
     val adapter = getComponentAdapter(interfaceClass)
     if (adapter == null) {
       checkCanceledIfNotInClassInit()
@@ -494,9 +496,19 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  final override fun <T : Any> getService(serviceClass: Class<T>) = doGetService(serviceClass, true)
+  final override fun <T : Any> getService(serviceClass: Class<T>): T? {
+    // `computeIfAbsent` cannot be used because of recursive update
+    var result = serviceInstanceHotCache.get(serviceClass)
+    if (result == null) {
+      result = doGetService(serviceClass, true) ?: return null
+      serviceInstanceHotCache.putIfAbsent(serviceClass, result)
+    }
+    @Suppress("UNCHECKED_CAST")
+    return result as T?
+  }
 
-  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>) = doGetService(serviceClass, false)
+  @Suppress("UNCHECKED_CAST")
+  final override fun <T : Any> getServiceIfCreated(serviceClass: Class<T>): T? = serviceInstanceHotCache.get(serviceClass) as T?
 
   private fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     val key = serviceClass.name
@@ -520,7 +532,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       return if (createIfNeeded) getOrCreateLightService(serviceClass) else null
     }
 
-    val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
     checkCanceledIfNotInClassInit()
 
     // if container is fully disposed, all adapters maybe removed
@@ -528,7 +539,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       if (!createIfNeeded) {
         return null
       }
-      throwAlreadyDisposedError(serviceClass.name, this, indicator)
+      throwAlreadyDisposedError(serviceClass.name, this, ProgressIndicatorProvider.getGlobalProgressIndicator())
     }
 
     if (parent != null) {
@@ -539,8 +550,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       }
     }
 
-    if (isLightServiceSupported &&
-        !serviceClass.isInterface && !Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)) {
+    if (isLightServiceSupported && !serviceClass.isInterface && !Modifier.isFinal(serviceClass.modifiers) &&
+        serviceClass.isAnnotationPresent(Service::class.java)) {
       throw PluginException.createByClass("Light service class $serviceClass must be final", null, serviceClass)
     }
 
@@ -675,6 +686,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     else {
       registerAdapter(adapter, pluginDescriptor)
     }
+    serviceInstanceHotCache.remove(serviceInterface)
   }
 
   /**
@@ -689,6 +701,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     descriptor.serviceInterface = serviceKey
     descriptor.serviceImplementation = instance.javaClass.name
     componentKeyToAdapter.put(serviceKey, ServiceComponentAdapter(descriptor, pluginDescriptor, this, instance.javaClass, instance))
+    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   @TestOnly
@@ -701,11 +714,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       componentKeyToAdapter.put(key, adapter)
       Disposer.register(parentDisposable, Disposable {
         componentKeyToAdapter.remove(key)
+        serviceInstanceHotCache.remove(serviceInterface)
       })
+      serviceInstanceHotCache.put(serviceInterface, instance)
     }
     else {
       val adapter = componentKeyToAdapter.get(serviceInterface.name) as ServiceComponentAdapter
-      adapter.replaceInstance(instance, parentDisposable)
+      adapter.replaceInstance(serviceInterface, instance, parentDisposable, serviceInstanceHotCache)
     }
   }
 
@@ -713,9 +728,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun <T : Any> replaceRegularServiceInstance(serviceInterface: Class<T>, instance: T) {
     checkState()
     val adapter = componentKeyToAdapter.get(serviceInterface.name) as ServiceComponentAdapter
-    (adapter.replaceInstance(instance, serviceParentDisposable) as? Disposable)?.let {
+    (adapter.replaceInstance(serviceInterface, instance, serviceParentDisposable, serviceInstanceHotCache) as? Disposable)?.let {
       Disposer.dispose(it)
     }
+    serviceInstanceHotCache.put(serviceInterface, instance)
   }
 
   private fun <T : Any> createLightService(serviceClass: Class<T>): T {
@@ -853,11 +869,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
     checkState()
 
-    if (services.isNotEmpty()) {
+    if (!services.isEmpty()) {
       val stateStore = stateStore
       for (service in services) {
         val adapter = (componentKeyToAdapter.remove(service.`interface`) ?: continue) as ServiceComponentAdapter
         val instance = adapter.getInitializedInstance() ?: continue
+        val implClass = instance.javaClass
+        clearServiceHotCacheOnUnload(implClass)
         if (instance is Disposable) {
           Disposer.dispose(instance)
         }
@@ -869,19 +887,53 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val stateStore = stateStore
       val iterator = componentKeyToAdapter.values.iterator()
       while (iterator.hasNext()) {
-        val adapter = iterator.next()
-        if (adapter is LightServiceComponentAdapter) {
-          val instance = adapter.getComponentInstance(null)
-          if ((instance.javaClass as? PluginAwareClassLoader)?.pluginId == pluginId) {
-            if (instance is Disposable) {
-              Disposer.dispose(instance)
-            }
-            stateStore.unloadComponent(instance)
-            iterator.remove()
+        val adapter = iterator.next() as? LightServiceComponentAdapter ?: continue
+        val instance = adapter.getComponentInstance(null)
+        serviceInstanceHotCache.remove(instance.javaClass)
+        if ((instance.javaClass.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
+          if (instance is Disposable) {
+            Disposer.dispose(instance)
           }
+          stateStore.unloadComponent(instance)
+          iterator.remove()
         }
       }
     }
+  }
+
+  private fun clearServiceHotCacheOnUnload(implClass: Class<Any>) {
+    if (serviceInstanceHotCache.remove(implClass) != null || Modifier.isFinal(implClass.modifiers)) {
+      return
+    }
+
+    for (it in implClass.interfaces) {
+      if (serviceInstanceHotCache.remove(it) != null) {
+        return
+      }
+    }
+
+    var aClass: Class<*> = implClass.superclass
+    if (aClass === Object::class.java) {
+      return
+    }
+
+    do {
+      if (serviceInstanceHotCache.remove(aClass) != null) {
+        return
+      }
+
+      for (it in aClass.interfaces) {
+        if (serviceInstanceHotCache.remove(it) != null) {
+          return
+        }
+      }
+
+      aClass = aClass.superclass ?: break
+      if (aClass === Object::class.java) {
+        return
+      }
+    }
+    while (true)
   }
 
   @Internal
@@ -891,12 +943,12 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun preloadServices(plugins: List<IdeaPluginDescriptorImpl>,
                       activityPrefix: String,
                       onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
-    val asyncPreloadedServices = mutableListOf<RecursiveAction>()
-    val syncPreloadedServices = mutableListOf<RecursiveAction>()
+    val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
+    val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
       serviceLoop@
       for (service in getContainerDescriptor(plugin).services) {
-        val list = when (service.preload) {
+        val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {
               continue@serviceLoop
@@ -926,22 +978,26 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
           else -> throw IllegalStateException("Unknown preload mode ${service.preload}")
         }
 
-        list.add(object : RecursiveAction() {
-          override fun compute() {
-            if (isServicePreloadingCancelled || isDisposed) {
-              return
-            }
+        list.add(ForkJoinTask.adapt task@{
+          if (isServicePreloadingCancelled || isDisposed) {
+            return@task
+          }
 
-            val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
-            try {
-              adapter.getInstance<Any>(this@ComponentManagerImpl, null)
+          val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return@task
+          try {
+            val instance = adapter.getInstance<Any>(this, null)
+            if (instance != null) {
+              val implClass = instance.javaClass
+              if (Modifier.isFinal(implClass.modifiers)) {
+                serviceInstanceHotCache.putIfAbsent(implClass, instance)
+              }
             }
-            catch (ignore: AlreadyDisposedException) {
-            }
-            catch (e: StartupAbortedException) {
-              isServicePreloadingCancelled = true
-              throw e
-            }
+          }
+          catch (ignore: AlreadyDisposedException) {
+          }
+          catch (e: StartupAbortedException) {
+            isServicePreloadingCancelled = true
+            throw e
           }
         })
       }
@@ -1010,6 +1066,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     // release references to services instances
     componentKeyToAdapter.clear()
     componentAdapters.clear()
+    serviceInstanceHotCache.clear()
 
     val messageBus = messageBus
     if (messageBus != null) {
