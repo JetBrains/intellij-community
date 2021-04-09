@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
@@ -23,7 +21,8 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@State(name = "RecentTaskRepositories", storages = @Storage("other.xml"))
+@State(name = "RecentTaskRepositories", storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE))
+@Service(Service.Level.APP)
 public final class RecentTaskRepositories implements PersistentStateComponent<Element>, Disposable {
   private final Set<TaskRepository> myRepositories = new ObjectOpenCustomHashSet<>(HASHING_STRATEGY);
 
