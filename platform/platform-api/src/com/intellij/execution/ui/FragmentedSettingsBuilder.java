@@ -64,6 +64,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
   private final Collection<? extends SettingsEditorFragment<Settings, ?>> myFragments;
   private final SettingsEditorFragment<Settings, ?> myMain;
+  private int myGroupInset;
   private DropDownLink<String> myLinkLabel;
   private String myConfigId; // for FUS
 
@@ -98,6 +99,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
     buildBeforeRun(fragments);
     addLine(buildHeader(fragments));
+    myGroupInset = myMain == null ? 0 : GROUP_INSET;
     if (myMain != null && myMain.component() != null) {
       addLine(myMain.component());
     }
@@ -121,6 +123,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (SettingsEditorFragment<Settings, ?> group : subGroups) {
       addLine(group.getComponent());
     }
+    myGroupInset = 0;
     if (myMain == null) {
       myConstraints.weighty = 1;
       myPanel.add(new JPanel(), myConstraints);
@@ -133,7 +136,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   private void addLine(Component component, int top, int left, int bottom) {
-    myConstraints.insets = JBUI.insets(top, left, bottom, 0);
+    myConstraints.insets = JBUI.insets(top, left + myGroupInset, bottom, 0);
     myPanel.add(component, myConstraints.clone());
     myConstraints.gridy++;
     myConstraints.insets = JBUI.insetsTop(top);
