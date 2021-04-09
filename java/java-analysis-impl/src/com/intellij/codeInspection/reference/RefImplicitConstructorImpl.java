@@ -45,7 +45,12 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   @NotNull
   @Override
   public String getName() {
-    return JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", getOwnerClass().getName());
+    if (isValid()) {
+      RefClass ownerClass = getOwnerClass();
+      LOG.assertTrue(ownerClass != null);
+      return JavaAnalysisBundle.message("inspection.reference.implicit.constructor.name", ownerClass.getName());
+    }
+    return super.getName();
   }
 
   @Override
