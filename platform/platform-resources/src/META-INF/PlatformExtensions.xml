@@ -962,6 +962,10 @@
       <description>Use mixed list of results on All tab in Search Everywhere (instead of Files/Classes/Actions groups)</description>
     </experimentalFeature>
 
+    <experimentalFeature id="new.project.wizard" percentOfUsers="0">
+      <description>New project wizard</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
 
     <postStartupActivity implementation="com.intellij.diagnostic.AnalyzePendingSnapshotActivity"/>
@@ -1184,6 +1188,17 @@
     <notificationGroup id="Language Plugins Notifications" displayType="BALLOON"/>
     <applicationService serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowToolbarProvider"/>
     <startupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowToolbarActivity"/>
+
+    <moduleType implementationClass="com.intellij.ide.NewProjectModuleType" id="newWizard.newProjectType" order="first"/>
+    <moduleType implementationClass="com.intellij.ide.NewWizardEmptyModuleType" id="newWizard.emptyProjectType" order="after newWizard.newProjectType"/>
+
+    <newProjectWizard implementation="com.intellij.ide.HTMLNewProjectWizard"/>
+
+    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleKotlin"/>
+    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.GradleGroovy"/>
+    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Maven"/>
+    <newProjectWizard.buildSystem implementation="com.intellij.ide.wizard.Intellij"/>
+
     <applicationService serviceImplementation="com.intellij.terminal.TerminalUiSettingsManager"/>
 
     <settingsEntryPointActionProvider implementation="com.intellij.openapi.updateSettings.impl.UpdateSettingsEntryPointActionProvider" order="first"/>

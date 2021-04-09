@@ -2137,6 +2137,9 @@
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
     <readerModeProvider implementation="com.intellij.ide.impl.JavaInlaysReaderModeProvider"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
+
+    <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
+    <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.KotlinNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

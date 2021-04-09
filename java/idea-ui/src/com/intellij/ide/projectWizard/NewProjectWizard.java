@@ -19,14 +19,20 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * @author Dmitry Avdeev
@@ -53,7 +59,10 @@ public class NewProjectWizard extends AbstractProjectWizard {
     mySequence.addCommonStep(projectTypeStep);
     ChooseTemplateStep chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
     mySequence.addCommonStep(chooseTemplateStep);
-    mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);
+    //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
+    Predicate<Set<String>> predicate = strings -> !Experiments.getInstance().isFeatureEnabled("new.project.wizard") ||
+                                                  !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
+    mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
     }
@@ -61,6 +70,11 @@ public class NewProjectWizard extends AbstractProjectWizard {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
+  }
+
+  @Override
+  protected @Nullable Border createContentPaneBorder() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? JBUI.Borders.empty() : super.createContentPaneBorder();
   }
 
   @Nullable
