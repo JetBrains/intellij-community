@@ -28,8 +28,8 @@ val VirtualFile.isKotlinWorksheet: Boolean
     get() = name.endsWith(".$KOTLIN_WORKSHEET_EXTENSION")
 
 val VirtualFile.isKotlinScratch: Boolean
-    get() = ScratchFileService.getInstance().getRootType(this) is ScratchRootType
-            && KotlinParserDefinition.STD_SCRIPT_SUFFIX == this.extension
+    get() = KotlinParserDefinition.STD_SCRIPT_SUFFIX == this.extension &&
+        ScratchFileService.getInstance().getRootType(this) is ScratchRootType
 
 @TestOnly
 fun getScratchEditorForSelectedFile(fileManager: FileEditorManager, virtualFile: VirtualFile): KtScratchFileEditorWithPreview? {

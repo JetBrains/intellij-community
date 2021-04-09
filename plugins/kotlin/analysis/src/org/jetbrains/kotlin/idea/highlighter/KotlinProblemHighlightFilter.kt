@@ -22,9 +22,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 
 class KotlinProblemHighlightFilter : ProblemHighlightFilter() {
 
-    override fun shouldHighlight(psiFile: PsiFile): Boolean {
-        if (psiFile.fileType == KotlinFileType.INSTANCE && !KotlinHighlightingUtil.shouldHighlight(psiFile)) return false
-
-        return true
-    }
+    override fun shouldHighlight(psiFile: PsiFile): Boolean =
+        psiFile.fileType != KotlinFileType.INSTANCE || KotlinHighlightingUtil.shouldHighlight(psiFile)
 }

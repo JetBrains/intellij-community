@@ -25,31 +25,29 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ScratchRunLineMarkerContributor : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
-        val ktFile = element.containingFile as? KtFile
-        if (ktFile?.isScript() != true) return null
-        val file = ktFile.virtualFile
-        if (!(file.isKotlinScratch || file.isKotlinWorksheet)) return null
+        element.containingFile.safeAs<KtFile>()?.takeIf {
+            val file = it.virtualFile
+            file.isKotlinWorksheet || file.isKotlinScratch || it.isScript()
+        }  ?: return null
 
         val declaration = element.getStrictParentOfType<KtNamedDeclaration>()
         if (declaration != null && declaration !is KtParameter && declaration.nameIdentifier == element) {
             return isLastExecutedExpression(element)
         }
 
-        val scriptInitializer = element.getParentOfType<KtScriptInitializer>(true)?.body
-        if (scriptInitializer != null) {
-            if (scriptInitializer.findDescendantOfType<LeafPsiElement>() == element) {
-                return isLastExecutedExpression(element)
-            }
-            return null
+        element.getParentOfType<KtScriptInitializer>(true)?.body?.let { scriptInitializer ->
+            return if (scriptInitializer.findDescendantOfType<LeafPsiElement>() == element) {
+                isLastExecutedExpression(element)
+            } else null
         }
 
         // Show arrow for last added empty line
         if (declaration is KtScript && element is PsiWhiteSpace) {
-            val expression = getLastExecutedExpression(element)
-            if (expression == null) {
+            getLastExecutedExpression(element)?.let { _ ->
                 if (element.getLineNumber() == element.containingFile.getLineCount() ||
                     element.getLineNumber(false) == element.containingFile.getLineCount()
                 ) return Info(RunScratchFromHereAction())
@@ -64,10 +62,9 @@ class ScratchRunLineMarkerContributor : RunLineMarkerContributor() {
             return null
         }
 
-        if (PsiTreeUtil.isAncestor(expression.element, element, false)) {
-            return Info(RunScratchFromHereAction())
-        }
-        return null
+        return if (PsiTreeUtil.isAncestor(expression.element, element, false)) {
+            Info(RunScratchFromHereAction())
+        } else null
     }
 
     private fun getLastExecutedExpression(element: PsiElement): ScratchExpression? {
