@@ -28,34 +28,28 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    updateEntitySource()
+    if (project.isDefault || !WorkspaceModel.isEnabled) return
+    val app = ApplicationManager.getApplication()
+    app.invokeAndWait { app.runWriteAction(::updateEntitySource) }
   }
 
   override fun loadState(state: ExternalStorageConfiguration) {
     super.loadState(state)
-    updateEntitySource()
+    if (project.isDefault || !WorkspaceModel.isEnabled) return
+    val app = ApplicationManager.getApplication()
+    app.invokeLater { app.runWriteAction(::updateEntitySource) }
   }
 
   private fun updateEntitySource() {
     val value = state.enabled
-    if (project.isDefault || !WorkspaceModel.isEnabled) return
-    val runnable = Runnable {
-      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-        val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-        entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
-          val source = entity.entitySource
-          if (source is JpsImportedEntitySource) {
-            updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
-          }
+    WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+      val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
+      entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+        val source = entity.entitySource
+        if (source is JpsImportedEntitySource) {
+          updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
         }
       }
-    }
-    val app = ApplicationManager.getApplication()
-    if (!app.isDispatchThread && app.isReadAccessAllowed) {
-      app.invokeLater { app.runWriteAction(runnable) }
-    }
-    else {
-      WriteAction.runAndWait<RuntimeException> { runnable.run() }
     }
   }
 }
