@@ -18,10 +18,6 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.ShowErrorDescriptionHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -33,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.event.KeyEvent;
 
 public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
-  private boolean myRequestFocus = false;
+  private boolean myRequestFocus;
 
   public ShowErrorDescriptionAction() {
     setEnabledInModalContext(true);
@@ -47,14 +43,7 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
 
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file) && isEnabled(project, editor);
-  }
-
-  private static boolean isEnabled(Project project, Editor editor) {
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    HighlightInfo info =
-      ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
-    return info != null && info.getDescription() != null;
+    return ShowErrorDescriptionHandler.findInfoUnderCaret(project, editor) != null;
   }
 
   @Override
