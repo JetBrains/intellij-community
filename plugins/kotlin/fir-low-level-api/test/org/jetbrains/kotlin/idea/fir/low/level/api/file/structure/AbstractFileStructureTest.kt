@@ -56,6 +56,9 @@ abstract class AbstractFileStructureTest : KotlinLightCodeInsightFixtureTestCase
                             ktDeclaration.parent.addAfter(comment, ktDeclaration)
                         }
                     }
+                    is KtTypeAlias -> {
+                        ktDeclaration.addAfter(comment, ktDeclaration.getTypeReference())
+                    }
                     else -> error("Unsupported declaration $ktDeclaration")
                 }
             }

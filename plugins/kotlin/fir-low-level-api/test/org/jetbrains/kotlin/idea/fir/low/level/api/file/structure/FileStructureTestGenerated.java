@@ -36,6 +36,26 @@ public class FileStructureTestGenerated extends AbstractFileStructureTest {
         runTest("testdata/fileStructure/classMemberProperty.kt");
     }
 
+    @TestMetadata("declarationsInPropertyInit.kt")
+    public void testDeclarationsInPropertyInit() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/declarationsInPropertyInit.kt");
+    }
+
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/enumClass.kt");
+    }
+
+    @TestMetadata("enumClassWithBody.kt")
+    public void testEnumClassWithBody() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/enumClassWithBody.kt");
+    }
+
+    @TestMetadata("initBlock.kt")
+    public void testInitBlock() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/initBlock.kt");
+    }
+
     @TestMetadata("localClass.kt")
     public void testLocalClass() throws Exception {
         runTest("testdata/fileStructure/localClass.kt");
@@ -54,6 +74,11 @@ public class FileStructureTestGenerated extends AbstractFileStructureTest {
     @TestMetadata("nestedClasses.kt")
     public void testNestedClasses() throws Exception {
         runTest("testdata/fileStructure/nestedClasses.kt");
+    }
+
+    @TestMetadata("propertyAccessors.kt")
+    public void testPropertyAccessors() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/propertyAccessors.kt");
     }
 
     @TestMetadata("topLevelExpressionBodyFunWithType.kt")
@@ -79,5 +104,10 @@ public class FileStructureTestGenerated extends AbstractFileStructureTest {
     @TestMetadata("topLevelUnitFun.kt")
     public void testTopLevelUnitFun() throws Exception {
         runTest("testdata/fileStructure/topLevelUnitFun.kt");
+    }
+
+    @TestMetadata("typeAlias.kt")
+    public void testTypeAlias() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/fileStructure/typeAlias.kt");
     }
 }
