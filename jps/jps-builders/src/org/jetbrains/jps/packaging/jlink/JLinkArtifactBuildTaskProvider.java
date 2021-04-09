@@ -28,6 +28,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -128,7 +129,7 @@ public final class JLinkArtifactBuildTaskProvider extends ArtifactBuildTaskProvi
         commands.add("--verbose");
       }
       commands.add("--module-path");
-      commands.add(artifactOutputPath);
+      commands.add(String.join(File.pathSeparator, artifactOutputPath, Paths.get(sdkHomePath, "jmods").toString()));
       commands.add("--add-modules");
       commands.add(modulesSequence);
       addOption(commands, "--output", runtimeImagePath.toString());
