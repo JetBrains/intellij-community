@@ -1,8 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-AllowBreakAndContinueInsideWhen
+
 fun test() {
     // Comment 1
     loop@ while (true) {
         // Comment 2
-        for (i in -10..10) {
+        loop1@ for (i in -10..10) {
             // Comment 3
             if (i < 0) {
                 // Comment 4
@@ -18,7 +20,7 @@ fun test() {
                     i == 0 -> {
                         i.hashCode()
                         // Comment 7
-                        break
+                        break@loop1
                     }
                     i > 5 -> {
                         // Comment 8
@@ -26,7 +28,7 @@ fun test() {
                     }
                     else -> {
                         // Comment 9
-                        continue
+                        continue@loop1
                     }
                 }
             }

@@ -1,3 +1,5 @@
+// COMPILER_ARGUMENTS: -XXLanguage:-AllowBreakAndContinueInsideWhen
+
 fun test() {
     // Comment 1
     loop@ while (true) {
@@ -14,20 +16,16 @@ fun test() {
                 }
             } else {
                 // Comment 6
-                when {
-                    i == 0 -> {
-                        i.hashCode()
-                        // Comment 7
-                        break
-                    }
-                    i > 5 -> {
-                        // Comment 8
-                        i.hashCode()
-                    }
-                    else -> {
-                        // Comment 9
-                        continue
-                    }
+                <caret>if (i == 0) {
+                    i.hashCode()
+                    // Comment 7
+                    break
+                } else if (i > 5) {
+                    // Comment 8
+                    i.hashCode()
+                } else {
+                    // Comment 9
+                    continue
                 }
             }
         }
