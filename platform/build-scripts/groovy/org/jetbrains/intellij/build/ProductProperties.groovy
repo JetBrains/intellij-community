@@ -4,8 +4,10 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
+import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
+import java.util.function.BiPredicate
 
 /**
  * Describes distribution of an IntelliJ-based IDE. Override this class and call {@link BuildTasks#buildProduct} from a build script to build
@@ -172,9 +174,14 @@ abstract class ProductProperties {
   abstract MacDistributionCustomizer createMacCustomizer(String projectHome)
 
   /**
-   * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
+   * If {@code true} a zip archive containing sources of modules included into the product will be produced.
    */
   boolean buildSourcesArchive = false
+
+  /**
+   * Determines sources of which modules should be included into the sources archive if {@link #buildSourcesArchive} is {@code true}
+   */
+  BiPredicate<JpsModule, BuildContext> includeIntoSourcesArchiveFilter = { true } as BiPredicate<JpsModule, BuildContext>
 
   /**
    * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
