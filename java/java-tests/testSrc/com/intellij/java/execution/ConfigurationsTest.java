@@ -565,6 +565,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       @SuppressWarnings("UnusedDeclaration")
       final JavaParameters parameters = ((TestPackage)state).getJavaParameters();
       LocalTargetEnvironment environment = new LocalTargetEnvironment(new LocalTargetEnvironmentRequest());
+      ((TestPackage)state).resolveServerSocketPort(environment);
       final SearchForTestsTask task = ((TestPackage)state).createSearchingForTestsTask(environment);
       assertNotNull(task);
       Project project = configuration.getProject();
