@@ -40,7 +40,8 @@ class JBCefOsrComponent extends JPanel {
 
     setFocusable(true);
     setRequestFocusEnabled(true);
-
+    // [tav] todo: so far the browser component can not be traversed out
+    setFocusTraversalKeysEnabled(false);
     addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
