@@ -28,6 +28,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -141,6 +142,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     // That's for reparse routines
     myProject.registerService(PomModel.class, new PomModelImpl(myProject));
+    Registry.getInstance().markAsLoaded();
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
