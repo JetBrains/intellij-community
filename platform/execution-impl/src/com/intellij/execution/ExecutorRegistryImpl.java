@@ -13,10 +13,12 @@ import com.intellij.execution.impl.ExecutionManagerImplKt;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.segmentedRunDebugWidget.RunToolbarExecutorGroup;
+import com.intellij.execution.segmentedRunDebugWidget.RunToolbarExecutorGroupAction;
+import com.intellij.execution.segmentedRunDebugWidget.RunToolbarGroupProcessAction;
+import com.intellij.execution.segmentedRunDebugWidget.RunToolbarProcessAction;
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess;
-import com.intellij.execution.stateWidget.StateWidget;
-import com.intellij.execution.stateWidget.StateWidgetAdditionActionsHolder;
-import com.intellij.execution.stateWidget.StateWidgetGroup;
+import com.intellij.execution.stateWidget.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
@@ -49,7 +51,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private final Set<String> myContextActionIdSet = new HashSet<>();
   private final Map<String, AnAction> myIdToAction = new HashMap<>();
   private final Map<String, AnAction> myContextActionIdToAction = new HashMap<>();
-  private final Map<String, AnAction> myStateWidgetIdToAction = new HashMap<>();
+
+  private final Map<String, AnAction> myRunWidgetIdToAction = new HashMap<>();
 
   public ExecutorRegistryImpl() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
@@ -121,29 +124,32 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     if(StateWidgetProcess.isAvailable()) {
       StateWidgetProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup) {
+
           ExecutorGroup<?> executorGroup = (ExecutorGroup<?>)executor;
-          if(process.getShowInBar()) {
-            ActionGroup wrappedAction = new SplitButtonAction(new StateWidgetGroup(executorGroup, ExecutorAction::new, process));
+          if (process.getShowInBar()) {
+            ActionGroup wrappedAction = new RunToolbarExecutorGroupAction(
+              new RunToolbarExecutorGroup(executorGroup, (ex) -> new RunToolbarGroupProcessAction(process, ex), process));
             Presentation presentation = wrappedAction.getTemplatePresentation();
             presentation.setIcon(executor.getIcon());
             presentation.setText(process.getName());
             presentation.setDescription(executor.getDescription());
 
-            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.STATE_WIDGET_GROUP,
-                                  myStateWidgetIdToAction);
+            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.RUN_WIDGET_GROUP,
+                                  myRunWidgetIdToAction);
+          } else {
+            RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
+
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
+                                  myRunWidgetIdToAction);
+            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
+                                  myRunWidgetIdToAction);
           }
 
-          StateWidgetAdditionActionsHolder holder = new StateWidgetAdditionActionsHolder(executorGroup, process);
-
-          registerActionInGroup(actionManager, StateWidgetAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(), process.getMoreActionSubGroupName(),
-                                myStateWidgetIdToAction);
-          registerActionInGroup(actionManager, StateWidgetAdditionActionsHolder.getAdditionActionChooserGroupId(process), holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
-                                myStateWidgetIdToAction);
         }
         else {
-          ExecutorAction wrappedAction = new StateWidget(executor, process);
-          registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.STATE_WIDGET_GROUP,
-                                myStateWidgetIdToAction);
+          ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
+          registerActionInGroup(actionManager, process.getActionId(), wrappedAction, StateWidgetProcess.RUN_WIDGET_GROUP,
+                                myRunWidgetIdToAction);
         }
       });
     }
@@ -192,12 +198,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     unregisterAction(newConfigurationContextActionId(executor), RUN_CONTEXT_GROUP_MORE, myContextActionIdToAction);
 
     StateWidgetProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
-      unregisterAction(process.getActionId(), StateWidgetProcess.STATE_WIDGET_GROUP, myStateWidgetIdToAction);
+      unregisterAction(process.getActionId(), StateWidgetProcess.RUN_WIDGET_GROUP, myRunWidgetIdToAction);
+
       if (executor instanceof ExecutorGroup) {
-        unregisterAction(StateWidgetAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),
-                         myStateWidgetIdToAction);
-        unregisterAction(StateWidgetAdditionActionsHolder.getAdditionActionChooserGroupId(process), process.getMoreActionSubGroupName(),
-                         myStateWidgetIdToAction);
+        unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionId(process), process.getMoreActionSubGroupName(),
+                         myRunWidgetIdToAction);
+        unregisterAction(RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process), process.getMoreActionSubGroupName(),
+                         myRunWidgetIdToAction);
       }
     });
   }
@@ -267,7 +274,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(project);
+      RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
       boolean hideDisabledExecutorButtons = false;
       String text;
@@ -340,8 +347,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     @Nullable
-    private static RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull Project project) {
-      return RunManager.getInstance(project).getSelectedConfiguration();
+    protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      if(e.getProject() == null ) return null;
+      return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
     }
 
     private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
@@ -356,7 +364,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
-      RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
+      RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(e);
       if (selectedConfiguration != null) {
         run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
       }

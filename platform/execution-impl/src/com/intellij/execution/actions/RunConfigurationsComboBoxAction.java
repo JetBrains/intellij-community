@@ -56,7 +56,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       else {
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
-                           RunManager.getInstance(project).getSelectedConfiguration(),
+                           getSelectedConfiguration(e),
                            project,
                            presentation,
                            e.getPlace());
@@ -66,6 +66,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     catch (IndexNotReadyException e1) {
       presentation.setEnabled(false);
     }
+  }
+
+
+  protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(AnActionEvent e) {
+    Project project = e.getProject();
+    return project == null ? null : RunManager.getInstance(project).getSelectedConfiguration();
   }
 
   protected static void updatePresentation(@Nullable ExecutionTarget target,
@@ -133,40 +139,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
-    ComboBoxButton button = new ComboBoxButton(presentation) {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension d = super.getPreferredSize();
-        d.width = Math.max(d.width, JBUIScale.scale(75));
-        return d;
-      }
-
-      @Override
-      protected void doShiftClick() {
-        DataContext context = DataManager.getInstance().getDataContext(this);
-        final Project project = CommonDataKeys.PROJECT.getData(context);
-        if (project != null && !ActionUtil.isDumbMode(project)) {
-          new EditConfigurationsDialog(project).show();
-          return;
-        }
-        super.doShiftClick();
-      }
-
-      @Override
-      protected void fireActionPerformed(ActionEvent event) {
-        if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
-          performWhenButton(this, ActionPlaces.UNKNOWN);
-          return;
-        }
-
-        super.fireActionPerformed(event);
-      }
-
-      @Override
-      protected boolean isArrowVisible(@NotNull Presentation presentation) {
-        return !Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE));
-      }
-    };
+    ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     Border border = UIUtil.isUnderDefaultMacTheme() ?
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
@@ -229,6 +202,48 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
     return new SelectConfigAction(configuration, project);
   }
+
+  public class RunConfigurationsComboBoxButton extends ComboBoxButton {
+
+    public RunConfigurationsComboBoxButton(@NotNull Presentation presentation) {
+      super(presentation);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension d = super.getPreferredSize();
+      d.width = Math.max(d.width, JBUIScale.scale(75));
+      return d;
+    }
+
+    @Override
+    protected void doShiftClick() {
+      DataContext context = DataManager.getInstance().getDataContext(this);
+      final Project project = CommonDataKeys.PROJECT.getData(context);
+      if (project != null && !ActionUtil.isDumbMode(project)) {
+        new EditConfigurationsDialog(project).show();
+        return;
+      }
+      super.doShiftClick();
+    }
+
+    @Override
+    protected void fireActionPerformed(ActionEvent event) {
+      if (Boolean.TRUE.equals(getPresentation().getClientProperty(BUTTON_MODE))) {
+        performWhenButton(this, ActionPlaces.UNKNOWN);
+        return;
+      }
+
+      super.fireActionPerformed(event);
+    }
+
+    @Override
+    protected boolean isArrowVisible(@NotNull Presentation presentation) {
+      return !Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE));
+    }
+  }
+
+
 
   private static final class SaveTemporaryAction extends DumbAwareAction {
     SaveTemporaryAction() {

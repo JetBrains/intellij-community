@@ -3,14 +3,14 @@ package com.intellij.execution.stateWidget
 
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
-import com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager
+import com.intellij.execution.segmentedRunDebugWidget.environment
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 
-internal class StateWidgetAdditionAction(val executorGroup: ExecutorGroup<*>,
-                                         val process: StateWidgetProcess, val selectedAction: () -> AnAction?) : AnAction() {
+internal class RunToolbarAdditionAction(val executorGroup: ExecutorGroup<*>,
+                                        val process: StateWidgetProcess, val selectedAction: () -> AnAction?) : AnAction() {
 
   init {
     updatePresentation(templatePresentation)
@@ -18,8 +18,9 @@ internal class StateWidgetAdditionAction(val executorGroup: ExecutorGroup<*>,
 
   override fun update(e: AnActionEvent) {
     updatePresentation(e.presentation)
+
     e.project?.let {
-      e.presentation.isEnabled = StateWidgetManager.getInstance(it).getExecutionsCount() == 0
+      e.presentation.isEnabled = e.environment() == null
     }
   }
 

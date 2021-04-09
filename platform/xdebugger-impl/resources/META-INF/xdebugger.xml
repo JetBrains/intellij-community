@@ -93,17 +93,17 @@
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
     </group>
 
-    <group id="StateWidgetDebugMoreActionGroupName">
+    <group id="RunToolbarDebugMoreActionGroupName">
       <separator text="Debug"/>
-      <group id="StateWidgetDebugMoreActionSubGroupName"/>
+      <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
-      <add-to-group group-id="StateWidgetMoreActionGroup"/>
+      <add-to-group group-id="RunWidgetMoreActionGroup"/>
     </group>
 
-    <group id="StateWidgetDebuggerAdditionalActions">
-      <action id="StateWidgetResumeAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetResumeAction" icon="AllIcons.Actions.Resume"/>
-      <action id="StateWidgetPauseAction" class="com.intellij.xdebugger.impl.stateWidget.StateWidgetPauseAction" icon="AllIcons.Actions.Pause"/>
-      <add-to-group group-id="StateWidgetAdditionalActions"/>
+    <group id="RunToolbarDebuggerAdditionalActions">
+      <action id="RunToolbarResumeAction" class="com.intellij.xdebugger.impl.stateWidget.RunToolbarResumeAction" icon="AllIcons.Actions.Resume"/>
+      <action id="RunToolbarPauseAction" class="com.intellij.xdebugger.impl.stateWidget.RunToolbarPauseAction" icon="AllIcons.Actions.Pause"/>
+      <add-to-group group-id="RunToolbarAdditionalProcessActions"/>
     </group>
 
     <group id="MemoryView.SettingsPopupActionGroup">

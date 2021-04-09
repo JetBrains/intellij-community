@@ -9,26 +9,24 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
-class StateWidgetStopAction : StopAction() {
-  override fun update(e: AnActionEvent) {
-    e.project?.let {
-      val stateWidgetManager = StateWidgetManager.getInstance(it)
-      if(stateWidgetManager.getExecutionsCount() == 0) {
-        e.presentation.isEnabledAndVisible = false
-        return
-      }
-      e.presentation.isEnabledAndVisible = true
-    }
+class RunToolbarMainMultipleStopAction : StopAction(), RunToolbarAction {
+  override fun getFlexibleType(): RunToolbarAction.FlexibleType = RunToolbarAction.FlexibleType.Flexible
 
+  override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.presentation.isEnabled && e.presentation.isVisible
+                                         && e.isItRunToolbarMainSlot()
+                                         && !e.isOpened() && e.project?.let {
+      val state = RunToolbarSlotManager.getInstance(it).getState()
+      state.isActive() && !state.isSingleMain()
+    } ?: false
   }
 
-  override fun getActionIcon(e: AnActionEvent): Icon {
+ override fun getActionIcon(e: AnActionEvent): Icon {
     e.project?.let { project ->
-      val stateWidgetManager = StateWidgetManager.getInstance(project)
-      if(stateWidgetManager.getActiveProcesses().size == 1) {
-        stateWidgetManager.getActiveProcesses().firstOrNull()?.getStopIcon()?.let {
+      val activeProcesses = RunToolbarSlotManager.getInstance(project).activeProcesses
+      if(activeProcesses.processes.size == 1) {
+        activeProcesses.processes.keys.firstOrNull()?.getStopIcon()?.let {
           return it
         }
       }
@@ -40,12 +38,12 @@ class StateWidgetStopAction : StopAction() {
   override fun getDisplayName(project: Project?, descriptor: RunContentDescriptor?): @BuildEventsNls.Title String? {
     val itemName = super.getDisplayName(project, descriptor)
 
-    return project?.let {  prj ->
+    return /*project?.let {  prj ->
       descriptor?.let { runContentDescriptor ->
         StateWidgetManager.getInstance(prj).getExecutionByExecutionId(runContentDescriptor.executionId)?.executor?.actionName?.let {
           ExecutionBundle.message("state.widget.stop.action.item.name", it, itemName)
         }
       }
-    } ?: itemName
+    } ?: */itemName
   }
 }

@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public final class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 

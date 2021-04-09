@@ -3,11 +3,12 @@ package com.intellij.execution.stateWidget
 
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.executors.ExecutorGroup
+import com.intellij.execution.segmentedRunDebugWidget.RunToolbarProcessAction
 import com.intellij.execution.stateExecutionWidget.StateWidgetProcess
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
-internal class StateWidgetAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: StateWidgetProcess) {
+internal class RunToolbarAdditionActionsHolder(val executorGroup: ExecutorGroup<*>, val process: StateWidgetProcess) {
   companion object {
     @JvmStatic
     fun getAdditionActionId(process: StateWidgetProcess) = "${process.moreActionSubGroupName}_additionAction"
@@ -18,9 +19,9 @@ internal class StateWidgetAdditionActionsHolder(val executorGroup: ExecutorGroup
 
   private var selectedAction: AnAction? = null
 
-  val moreActionChooserGroup: StateWidgetChooserAdditionGroup =
-    StateWidgetChooserAdditionGroup(executorGroup, process) { ex ->
-      object : ExecutorRegistryImpl.ExecutorAction(ex) {
+  val moreActionChooserGroup: RunToolbarChooserAdditionGroup =
+    RunToolbarChooserAdditionGroup(executorGroup, process) { ex ->
+      object : RunToolbarProcessAction(process, ex) {
         override fun actionPerformed(e: AnActionEvent) {
           super.actionPerformed(e)
           selectedAction = this
@@ -33,7 +34,7 @@ internal class StateWidgetAdditionActionsHolder(val executorGroup: ExecutorGroup
       }
     }
 
-  val additionAction: StateWidgetAdditionAction = StateWidgetAdditionAction(executorGroup, process) { selectedAction }
+  val additionAction: RunToolbarAdditionAction = RunToolbarAdditionAction(executorGroup, process) { selectedAction }
 
   init {
     selectedAction = moreActionChooserGroup.getChildren(null)?.getOrNull(0)

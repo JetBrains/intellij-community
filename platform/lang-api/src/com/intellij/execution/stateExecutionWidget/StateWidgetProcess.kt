@@ -3,10 +3,9 @@ package com.intellij.execution.stateExecutionWidget
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.JBColor
 import org.jetbrains.annotations.Nls
-import java.util.function.Predicate
 import javax.swing.Icon
-import kotlin.streams.toList
 
 
 interface StateWidgetProcess {
@@ -14,8 +13,10 @@ interface StateWidgetProcess {
     private const val runDebugKey = "ide.new.navbar"
     private const val runDebugRerunAvailable = "ide.new.navbar.rerun.available"
 
-    const val STATE_WIDGET_MORE_ACTION_GROUP = "StateWidgetMoreActionGroup"
-    const val STATE_WIDGET_GROUP = "StateWidgetProcessesActionGroup"
+    const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
+    const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
+
+    const val ACTIVE_STATE_BUTTONS_COUNT = 4
 
     @JvmStatic
     fun isAvailable(): Boolean {
@@ -42,6 +43,8 @@ interface StateWidgetProcess {
   val ID: String
   val executorId: String
   val name: @Nls String
+
+
   val actionId: String
   val moreActionGroupName: String
   val moreActionSubGroupName: String
@@ -50,4 +53,6 @@ interface StateWidgetProcess {
 
   fun rerunAvailable(): Boolean = false
   fun getStopIcon(): Icon? = null
+
+  val pillColor: JBColor
 }
