@@ -4,23 +4,19 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfLongType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.LongStreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.rangeClamped;
 
 /**
  * A descriptor that represents an array element with fixed index
@@ -42,6 +38,13 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     if (qualifier == null) return null;
     PsiType qualifierType = qualifier.getType();
     return qualifierType instanceof PsiArrayType ? ((PsiArrayType)qualifierType).getComponentType() : null;
+  }
+
+  @Override
+  public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+    if (qualifier == null) return DfTypes.TOP;
+    TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
+    return constraint.getArrayComponentType();
   }
 
   @NotNull
@@ -77,13 +80,13 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
   public static @Nullable DfaValue getArrayElementValue(@NotNull DfaValueFactory factory, @Nullable DfaValue array, int index) {
     if (!(array instanceof DfaVariableValue) || index < 0) return null;
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
-    PsiType type = arrayDfaVar.getType();
-    if (!(type instanceof PsiArrayType)) return null;
+    DfType componentType = TypeConstraint.fromDfType(arrayDfaVar.getDfType()).getArrayComponentType();
+    if (componentType == DfTypes.BOTTOM) return null;
     PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
     if (arrayPsiVar != null) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement(arrayPsiVar, index);
       if (constantArrayElement != null) {
-        return getAdvancedExpressionDfaValue(factory, constantArrayElement, ((PsiArrayType)type).getComponentType());
+        return getAdvancedExpressionDfaValue(factory, constantArrayElement, componentType);
       }
     }
     return new ArrayElementDescriptor(index).createValue(factory, arrayDfaVar);
@@ -110,8 +113,8 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
     if (arrayPsiVar == null) return factory.getUnknown();
-    PsiType arrayType = arrayPsiVar.getType();
-    PsiType targetType = arrayType instanceof PsiArrayType ? ((PsiArrayType)arrayType).getComponentType() : null;
+    DfType arrayType = arrayDfaVar.getDfType();
+    DfType targetType = TypeConstraint.fromDfType(arrayType).getArrayComponentType();
     PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(arrayPsiVar);
     if (elements == null || elements.length == 0) return factory.getUnknown();
     indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
@@ -127,7 +130,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
   @NotNull
   private static DfaValue getAdvancedExpressionDfaValue(@NotNull DfaValueFactory factory,
                                                         @Nullable PsiExpression expression,
-                                                        @Nullable PsiType targetType) {
+                                                        @NotNull DfType targetType) {
     if (expression == null) return factory.getUnknown();
     DfaValue value = DfaExpressionFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {
@@ -144,12 +147,11 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
                                   .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
-    if (type instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !type.equals(targetType)) {
-      if (TypeConversionUtil.isIntegralNumberType(targetType)) {
-        LongRangeSet range = DfLongType.extractRange(dfType);
-        return factory.fromDfType(rangeClamped(range.castTo((PsiPrimitiveType)targetType), PsiType.LONG.equals(targetType)));
+    if (dfType instanceof DfPrimitiveType && targetType instanceof DfPrimitiveType && dfType.meet(targetType) == DfTypes.BOTTOM) {
+      if (targetType instanceof DfIntegralType) {
+        if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiType.LONG));
       }
-      return factory.fromDfType(DfTypes.typedObject(targetType, Nullability.UNKNOWN));
+      return factory.fromDfType(targetType);
     }
     return DfaUtil.boxUnbox(factory.fromDfType(dfType), targetType);
   }

@@ -140,6 +140,13 @@ public enum SpecialField implements VariableDescriptor {
     }
 
     @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      if (qualifier == null) return DfTypes.TOP;
+      TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
+      return constraint.getUnboxedType();
+    }
+
+    @Override
     public @NotNull DfType getFromQualifier(@NotNull DfType dfType) {
       DfType fromQualifier = super.getFromQualifier(dfType);
       if (dfType instanceof DfReferenceType) {
@@ -179,6 +186,29 @@ public enum SpecialField implements VariableDescriptor {
         return ((PsiPrimitiveType)type).getBoxedType(Objects.requireNonNull(((PsiClassType)optionalType).resolve()));
       }
       return type;
+    }
+
+    @Override
+    public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+      if (qualifier == null) return DfTypes.TOP;
+      TypeConstraint qualifierType = TypeConstraint.fromDfType(qualifier.getDfType());
+      PsiElement context = qualifier.getPsiVariable();
+      if (context == null) return DfTypes.TOP;
+      String type = null;
+      if (qualifierType.isExact(OptionalUtil.OPTIONAL_INT)) {
+        type = JAVA_LANG_INTEGER;
+      }
+      if (qualifierType.isExact(OptionalUtil.OPTIONAL_LONG)) {
+        type = JAVA_LANG_LONG;
+      }
+      if (qualifierType.isExact(OptionalUtil.OPTIONAL_DOUBLE)) {
+        type = JAVA_LANG_DOUBLE;
+      }
+      if (type != null) {
+        return DfTypes.typedObject(JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(
+          type, context), Nullability.UNKNOWN);
+      }
+      return DfTypes.OBJECT_OR_NULL;
     }
 
     @NotNull
@@ -315,6 +345,11 @@ public enum SpecialField implements VariableDescriptor {
   @Override
   public PsiType getType(DfaVariableValue variableValue) {
     return PsiType.INT;
+  }
+
+  @Override
+  public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
+    return getDefaultValue(false);
   }
 
   @NotNull

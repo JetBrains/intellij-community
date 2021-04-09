@@ -412,10 +412,10 @@ public abstract class ContractValue {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
       if (left.getDfType() instanceof DfPrimitiveType) {
-        right = DfaUtil.boxUnbox(right, left.getType());
+        right = DfaUtil.boxUnbox(right, left.getDfType());
       }
       if (right.getDfType() instanceof DfPrimitiveType) {
-        left = DfaUtil.boxUnbox(left, right.getType());
+        left = DfaUtil.boxUnbox(left, right.getDfType());
       }
       return left.cond(myRelationType, right);
     }

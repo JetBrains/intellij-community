@@ -84,6 +84,7 @@ public final class DfaVariableValue extends DfaValue {
 
   @NotNull private final VariableDescriptor myDescriptor;
   @Nullable private final PsiType myVarType;
+  @NotNull private final DfType myDfType;
   @Nullable private final DfaVariableValue myQualifier;
   private DfType myInherentType;
   private final List<DfaVariableValue> myDependents = new SmartList<>();
@@ -96,6 +97,7 @@ public final class DfaVariableValue extends DfaValue {
     myDescriptor = descriptor;
     myQualifier = qualifier;
     myVarType = type;
+    myDfType = descriptor.getDfType(qualifier);
     if (myDescriptor instanceof AssertionDisabledDescriptor) {
       myFactory.setAssertionDisabled(this);
     }
@@ -121,6 +123,12 @@ public final class DfaVariableValue extends DfaValue {
   @Nullable
   public PsiType getType() {
     return myVarType;
+  }
+
+  @NotNull
+  @Override
+  public DfType getDfType() {
+    return myDfType;
   }
 
   @Override

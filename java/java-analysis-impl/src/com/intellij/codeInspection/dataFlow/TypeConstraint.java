@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -87,6 +88,14 @@ public interface TypeConstraint {
   }
 
   /**
+   * @param className fully-qualified class name to check
+   * @return true if this constraint represents a class with a given class name
+   */
+  default boolean isExact(@NotNull String className) {
+    return false;
+  }
+
+  /**
    * @return true if the types represented by this constraint are known to be compared by .equals() within DFA algorithm
    */
   default boolean isComparedByEquals() {
@@ -143,10 +152,17 @@ public interface TypeConstraint {
   }
 
   /**
-   * @return an array component type for an array type; BOTTOM if this type is not always an array type or primitive array
+   * @return an array component type for an array type; BOTTOM if this type is not always an array type
    */
-  default @NotNull TypeConstraint getArrayComponent() {
-    return TypeConstraints.BOTTOM;
+  default @NotNull DfType getArrayComponentType() {
+    return DfTypes.BOTTOM;
+  }
+
+  /**
+   * @return type that represents unboxed type of this type
+   */
+  default DfType getUnboxedType() {
+    return DfTypes.TOP;
   }
 
   /**
@@ -185,6 +201,11 @@ public interface TypeConstraint {
     @Override
     default boolean isExact() {
       return true;
+    }
+
+    @Override
+    default boolean isExact(@NotNull String className) {
+      return className.equals(toString());
     }
 
     /**
@@ -286,7 +307,7 @@ public interface TypeConstraint {
 
     @Override
     public boolean isResolved() {
-      return myInstanceOf.stream().allMatch(Exact::isResolved);
+      return ContainerUtil.and(myInstanceOf, Exact::isResolved);
     }
 
     @Override
@@ -504,10 +525,9 @@ public interface TypeConstraint {
     }
 
     @Override
-    public @NotNull TypeConstraint getArrayComponent() {
-      return instanceOfTypes().map(Exact::getArrayComponent)
-        .map(type -> type instanceof Exact ? ((Exact)type).instanceOf() : TypeConstraints.BOTTOM)
-        .reduce(TypeConstraint::meet).orElse(TypeConstraints.BOTTOM);
+    public @NotNull DfType getArrayComponentType() {
+      return instanceOfTypes().map(Exact::getArrayComponentType)
+        .reduce(DfType::meet).orElse(DfTypes.BOTTOM);
     }
 
     @Override

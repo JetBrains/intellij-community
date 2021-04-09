@@ -1,6 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -215,6 +219,11 @@ public final class TypeConstraints {
     }
 
     @Override
+    public @NotNull DfType getArrayComponentType() {
+      return DfTypes.typedObject(myType, Nullability.UNKNOWN);
+    }
+
+    @Override
     public boolean isFinal() {
       return true;
     }
@@ -307,6 +316,32 @@ public final class TypeConstraints {
     }
 
     @Override
+    public DfType getUnboxedType() {
+      String name = myClass.getQualifiedName();
+      if (name == null) return DfTypes.TOP;
+      switch (name) {
+        case CommonClassNames.JAVA_LANG_BOOLEAN:
+          return DfTypes.BOOLEAN;
+        case CommonClassNames.JAVA_LANG_INTEGER:
+          return DfTypes.INT;
+        case CommonClassNames.JAVA_LANG_LONG:
+          return DfTypes.LONG;
+        case CommonClassNames.JAVA_LANG_DOUBLE:
+          return DfTypes.DOUBLE;
+        case CommonClassNames.JAVA_LANG_FLOAT:
+          return DfTypes.FLOAT;
+        case CommonClassNames.JAVA_LANG_BYTE:
+          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.BYTE)));
+        case CommonClassNames.JAVA_LANG_SHORT:
+          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.SHORT)));
+        case CommonClassNames.JAVA_LANG_CHARACTER:
+          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.CHAR)));
+        default:
+          return DfTypes.TOP;
+      }
+    }
+
+    @Override
     public boolean canBeInstantiated() {
       // Abstract final type is incorrect. We, however, assume that final wins: it can be instantiated
       // otherwise TypeConstraints.instanceOf(type) would return impossible type
@@ -384,7 +419,7 @@ public final class TypeConstraints {
         if (myClass.isInterface() && !otherClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         if (otherClass.isInterface() && !myClass.hasModifierProperty(PsiModifier.FINAL)) return true;
         PsiManager manager = myClass.getManager();
-        return manager.areElementsEquivalent(myClass, otherClass) || 
+        return manager.areElementsEquivalent(myClass, otherClass) ||
                otherClass.isInheritor(myClass, true) ||
                myClass.isInheritor(otherClass, true);
       }
@@ -451,8 +486,8 @@ public final class TypeConstraints {
     }
 
     @Override
-    public @NotNull Exact getArrayComponent() {
-      return myComponent;
+    public @NotNull DfType getArrayComponentType() {
+      return myComponent.instanceOf().asDfType();
     }
   }
 

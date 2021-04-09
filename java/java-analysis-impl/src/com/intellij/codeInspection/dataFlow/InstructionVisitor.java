@@ -583,18 +583,15 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (!(dfaDest instanceof DfaVariableValue)) return;
     DfaVariableValue qualifier = ((DfaVariableValue)dfaDest).getQualifier();
     if (qualifier == null) return;
-    TypeConstraint toType = TypeConstraint.fromDfType(memState.getDfType(qualifier)).getArrayComponent();
-    if (toType == TypeConstraints.BOTTOM) return;
-    if (toType instanceof TypeConstraint.Exact) {
-      toType = ((TypeConstraint.Exact)toType).instanceOf();
-    }
-    TypeConstraint fromType = TypeConstraint.fromDfType(memState.getDfType(dfaSource));
-    TypeConstraint meet = fromType.meet(toType);
-    if (meet != TypeConstraints.BOTTOM) return;
+    DfType toType = TypeConstraint.fromDfType(memState.getDfType(qualifier)).getArrayComponentType();
+    if (toType == BOTTOM) return;
+    DfType fromType = memState.getDfType(dfaSource);
+    DfType meet = fromType.meet(toType);
+    if (meet != BOTTOM) return;
     Project project = lValue.getProject();
     PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
-    PsiType psiFromType = fromType.getPsiType(project);
-    PsiType psiToType = toType.getPsiType(project);
+    PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
+    PsiType psiToType = TypeConstraint.fromDfType(toType).getPsiType(project);
     if (psiFromType == null || psiToType == null) return;
     processArrayStoreTypeMismatch(assignmentExpression, psiFromType, psiToType);
   }

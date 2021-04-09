@@ -8,7 +8,9 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
@@ -364,17 +366,21 @@ public final class DfaUtil {
   }
 
   public static DfaValue boxUnbox(DfaValue value, @Nullable PsiType type) {
-    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
-      if (TypeConversionUtil.isPrimitiveAndNotNull(value.getType())) {
-        return value.getFactory().getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, value);
+    return boxUnbox(value, DfTypes.typedObject(type, Nullability.UNKNOWN));
+  }
+
+  public static DfaValue boxUnbox(DfaValue value, @NotNull DfType type) {
+    if (TypeConstraint.fromDfType(type).getUnboxedType() instanceof DfPrimitiveType) {
+      if (value.getDfType() instanceof DfPrimitiveType) {
+        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
       }
     }
-    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaWrappedValue || TypeConversionUtil.isPrimitiveWrapper(value.getType())) {
+    if (type instanceof DfPrimitiveType) {
+      if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).getUnboxedType() instanceof DfPrimitiveType) {
         return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {
-        return value.getFactory().getObjectType(type, Nullability.NOT_NULL);
+        return value.getFactory().fromDfType(type);
       }
     }
     return value;

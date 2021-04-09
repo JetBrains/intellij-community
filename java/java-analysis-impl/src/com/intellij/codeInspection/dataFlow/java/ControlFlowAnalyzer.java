@@ -223,7 +223,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, resType);
       if (isAssignmentDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
-        checkZeroDivisor();
+        checkZeroDivisor(resType);
       }
       addInstruction(new BinopInstruction(sign, expression.isPhysical() ? expression : null, resType));
       generateBoxingUnboxingInstructionFor(rExpr, resType, type, false);
@@ -1356,9 +1356,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return op == JavaTokenType.PERCEQ || op == JavaTokenType.DIVEQ;
   }
 
-  private void checkZeroDivisor() {
+  private void checkZeroDivisor(PsiType resType) {
     addInstruction(new DupInstruction());
-    addInstruction(new PushValueInstruction(DfTypes.longValue(0)));
+    addInstruction(new PushValueInstruction(PsiType.LONG.equals(resType) ? DfTypes.longValue(0) : DfTypes.intValue(0)));
     addInstruction(new BinopInstruction(JavaTokenType.NE, null, PsiType.BOOLEAN));
     ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
     addInstruction(ifNonZero);
@@ -1379,7 +1379,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (isBinaryDivision(op) && rType != null && PsiType.LONG.isAssignableFrom(rType)) {
         Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
         if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
-          checkZeroDivisor();
+          checkZeroDivisor(rType);
         }
       }
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
@@ -1553,15 +1553,30 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
       if (variable != null) {
         DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
+        DfaValue expr = DfaExpressionFactory.getExpressionDfaValue(getFactory(), operand);
+        if (expr instanceof DfaVariableValue) {
+          builder.push(expr);
+        }
+        else {
+          DfaVariableValue tmp = createTempVariable(operand.getType());
+          builder
+            .pushForWrite(tmp)
+            .pushExpression(operand)
+            .assign();
+        }
         builder
-          .pushForWrite(dfaVar)
-          .pushExpression(operand)
-          .assign()
+          .dup()
           .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
           .isInstance(expression, operand, type)
-          .dup()
           .ifConditionIs(false)
-          .flush(dfaVar)
+          .pop()
+          .push(DfTypes.FALSE)
+          .elseBranch()
+          .pushForWrite(dfaVar)
+          .swap()
+          .assign()
+          .pop()
+          .push(DfTypes.TRUE)
           .end();
       } else {
         builder
