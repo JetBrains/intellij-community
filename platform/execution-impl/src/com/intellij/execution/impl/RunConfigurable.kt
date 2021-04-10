@@ -270,6 +270,12 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun selectConfiguration(configuration: RunConfiguration): Boolean {
+    val node = findNode(configuration) ?: return false
+    TreeUtil.selectInTree(node, true, tree)
+    return true
+  }
+
+  private fun findNode(configuration: RunConfiguration): DefaultMutableTreeNode? {
     val enumeration = root.breadthFirstEnumeration()
     while (enumeration.hasMoreElements()) {
       val node = enumeration.nextElement() as DefaultMutableTreeNode
@@ -280,12 +286,11 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       if (userObject is RunnerAndConfigurationSettingsImpl) {
         val otherConfiguration = (userObject as RunnerAndConfigurationSettings).configuration
         if (otherConfiguration.factory?.type?.id == configuration.factory?.type?.id && otherConfiguration.name == configuration.name) {
-          TreeUtil.selectInTree(node, true, tree)
-          return true
+          return node
         }
       }
     }
-    return false
+    return null
   }
 
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
@@ -419,7 +424,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
     info.addValidationListener {
-      tree.repaint()
+      val node = findNode(info.configuration) ?: return@addValidationListener
+      treeModel.nodeChanged(node)
     }
   }
 
