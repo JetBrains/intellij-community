@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher.QualifiedNameMatcher;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -135,12 +136,27 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     doTestBasicCompletion();
   }
 
-  private void doTestBasicCompletion() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
+  // PY-48219
+  public void testAttributesNotLimitedByDunderAll() {
+    assertContainsElements(doBasicCompletion(), "mod.foo");
+  }
+
+  // PY-48219
+  public void testAliasAttributesNotLimitedByDunderAll() {
+    doTestBasicCompletion();
+  }
+
+  @Nullable
+  private List<String> doBasicCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
     myFixture.configureByFile("main.py");
     myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    return myFixture.getLookupElementStrings();
+  }
+
+  private void doTestBasicCompletion() {
+    doBasicCompletion();
+    myFixture.checkResultByFile(getTestName(false) + "/main.after.py");
   }
 
   @Override
