@@ -19,6 +19,6 @@ public final class EqualsAndHashCodeCallSuperHandler {
       return false;
     }
 
-    return "callSuper".equals(psiNameValuePair.getName()) && "EqualsAndHashCode".equals(PsiAnnotationSearchUtil.getSimpleNameOf(psiAnnotation));
+    return "callSuper".equals(psiNameValuePair.getName()) && "EqualsAndHashCode".equals(PsiAnnotationSearchUtil.getShortNameOf(psiAnnotation));
   }
 }
