@@ -108,6 +108,9 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (file == null || !file.isValid()) return null;
 
     Project project = e.getProject();
+    if (PSI_FILE.is(dataId)) {
+      return getPsiFile(e, file);
+    }
     if (dataId.equals(injectedId(EDITOR.getName()))) {
       if (project != null &&
           PsiDocumentManager.getInstance(project).isCommitted(e.getDocument()) &&

@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
@@ -93,7 +94,10 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
     if (answer != null && answer != NullResult.Initial) {
-      return answer == NullResult.Final ? null : answer;
+      if (answer == NullResult.Final) return null;
+      answer = DataValidators.validOrNull(answer, dataId, this);
+      if (answer != null) return answer;
+      // allow slow data providers and rules to re-calc the value
     }
     else if (answer == null) {
       if (dataId == AnActionEvent.uninjectedId(dataId)) {
@@ -112,7 +116,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     GetDataRule rule = dataManager.getDataRule(dataId);
     answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
-      Object o = myCachedData.get(dataId2);
+      Object o = dataId2 == dataId ? null : myCachedData.get(dataId2);
       return o == NullResult.Initial || o == NullResult.Final ? null : o;
     }, dataId, null, rule);
 
