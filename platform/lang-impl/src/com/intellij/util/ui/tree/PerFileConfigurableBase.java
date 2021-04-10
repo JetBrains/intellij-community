@@ -147,9 +147,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   @Override
   public JComponent createComponent() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
-    myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+    myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
+    myTable = new JBTable(myModel) {
       @SuppressWarnings("unchecked")
       @Override
       public String getToolTipText(@NotNull MouseEvent event) {
@@ -382,6 +384,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myModel == null) {
+      throw new AssertionError("createComponent() was not called first");
+    }
     HashMap<VirtualFile, T> map = new HashMap<>();
     for (Pair<Object, T> p : myModel.data) {
       if (p.second != null) {
