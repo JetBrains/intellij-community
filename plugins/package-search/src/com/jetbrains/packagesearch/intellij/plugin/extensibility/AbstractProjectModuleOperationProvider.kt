@@ -11,7 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-internal abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
+abstract class AbstractProjectModuleOperationProvider : ProjectModuleOperationProvider {
 
     override fun addDependencyToProject(
         operationMetadata: DependencyOperationMetadata,

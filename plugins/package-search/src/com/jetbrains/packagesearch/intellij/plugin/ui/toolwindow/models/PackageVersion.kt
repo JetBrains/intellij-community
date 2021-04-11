@@ -7,7 +7,7 @@ import com.jetbrains.packagesearch.intellij.plugin.version.looksLikeStableVersio
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-internal sealed class PackageVersion(
+sealed class PackageVersion(
     open val versionName: String,
     open val isStable: Boolean
 ) : Comparable<PackageVersion> {
@@ -43,7 +43,7 @@ internal sealed class PackageVersion(
 
     companion object {
 
-        fun from(rawVersion: StandardV2Version): PackageVersion {
+        internal fun from(rawVersion: StandardV2Version): PackageVersion {
             if (rawVersion.version.isBlank()) return Missing
             return Named(rawVersion.version.trim(), rawVersion.stable)
         }

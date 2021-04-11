@@ -26,9 +26,4 @@ internal object MavenProjectModuleType : ProjectModuleType {
 
     override fun scopes(project: Project): List<String> =
         packageSearchMavenConfigurationForProject(project).getMavenScopes()
-
-    override fun providesSupportFor(dependency: StandardV2Package): Boolean {
-        // For Maven modules, allow working with any dependency that is not an MPP root
-        return dependency.mpp?.moduleType == null || dependency.mpp.moduleType != MppModuleType.ROOT
-    }
 }

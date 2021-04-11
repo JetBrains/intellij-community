@@ -1,6 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-internal data class RepositoryOperationMetadata(
+data class RepositoryOperationMetadata(
     val module: ProjectModule,
     val groupId: String,
     val artifactId: String,

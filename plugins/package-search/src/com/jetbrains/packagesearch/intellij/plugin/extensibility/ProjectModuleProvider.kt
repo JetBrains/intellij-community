@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import kotlin.streams.asSequence
 
-internal interface ProjectModuleProvider {
+interface ProjectModuleProvider {
 
     companion object {
 

@@ -11,7 +11,7 @@ import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.reactive.flowInto
 import kotlin.streams.asSequence
 
-internal interface ModuleChangesSignalProvider {
+interface ModuleChangesSignalProvider {
 
     companion object {
 
@@ -34,4 +34,4 @@ internal interface ModuleChangesSignalProvider {
     fun listenToModuleChanges(project: Project, lifetime: Lifetime): IVoidSource
 }
 
-internal fun MessageBus.connect(lifetime: Lifetime): MessageBusConnection = connect(lifetime.createNestedDisposable())
+fun MessageBus.connect(lifetime: Lifetime): MessageBusConnection = connect(lifetime.createNestedDisposable())

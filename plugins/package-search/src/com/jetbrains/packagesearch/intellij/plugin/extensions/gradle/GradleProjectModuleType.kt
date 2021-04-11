@@ -26,8 +26,4 @@ internal object GradleProjectModuleType : ProjectModuleType {
 
     override fun scopes(project: Project): List<String> = packageSearchGradleConfigurationForProject(project).getGradleScopes()
 
-    override fun providesSupportFor(dependency: StandardV2Package): Boolean {
-        // For Gradle modules, allow working with any dependency that is not an MPP root
-        return dependency.mpp?.moduleType == null || dependency.mpp.moduleType != MppModuleType.ROOT
-    }
 }

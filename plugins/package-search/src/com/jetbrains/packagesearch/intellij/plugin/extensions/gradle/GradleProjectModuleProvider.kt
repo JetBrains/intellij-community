@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType.GRADLE_GROOVY
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
@@ -65,7 +65,7 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
             nativeModule = nativeModule,
             parent = null,
             buildFile = buildVirtualFile,
-            buildSystemType = GRADLE_GROOVY,
+            buildSystemType = BuildSystemType.GRADLE_GROOVY,
             moduleType = GradleProjectModuleType
         ).apply {
             getNavigatableDependency = createNavigatableDependencyCallback(project, buildVirtualFile)
@@ -119,7 +119,7 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
                 nativeModule = nativeModule,
                 parent = currentModule,
                 buildFile = projectBuildFile,
-                buildSystemType = GRADLE_GROOVY,
+                buildSystemType = BuildSystemType.GRADLE_GROOVY,
                 moduleType = GradleProjectModuleType
             )
 

@@ -3,7 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.extensions.maven
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType.MAVEN
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
@@ -33,7 +33,7 @@ internal class MavenProjectModuleProvider : ProjectModuleProvider {
                 nativeModule = module,
                 parent = null,
                 buildFile = mavenProject.file,
-                buildSystemType = MAVEN,
+                buildSystemType = BuildSystemType.MAVEN,
                 moduleType = MavenProjectModuleType
             ).apply {
                 getNavigatableDependency = createNavigatableDependencyCallback(project, mavenProject)

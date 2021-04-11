@@ -1,6 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-internal data class DependencyOperationMetadata(
+data class DependencyOperationMetadata(
     val module: ProjectModule,
     val groupId: String,
     val artifactId: String,

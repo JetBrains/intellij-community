@@ -1,14 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.project.Project
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import javax.swing.Icon
 
 enum class ProjectModuleTypeTerm {
     SCOPE
 }
 
-internal interface ProjectModuleType {
+interface ProjectModuleType {
 
     val icon: Icon?
     val packageIcon: Icon?
@@ -16,6 +15,4 @@ internal interface ProjectModuleType {
 
     fun scopes(project: Project): List<String>
     fun defaultScope(project: Project): String
-
-    fun providesSupportFor(dependency: StandardV2Package): Boolean
 }
