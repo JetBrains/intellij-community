@@ -12,7 +12,7 @@ public class TestOnlyTest {
   static String someString(String someStr) { return someStr + "Foo"; }
 
   @TestOnly
-  <warning descr="@VisibleForTesting makes little sense on @TestOnly code">@VisibleForTesting</warning>
+  @<warning descr="@VisibleForTesting makes little sense on @TestOnly code">VisibleForTesting</warning>
   static String doubleAnn() { return "Foo"; }
 
   static class Bar {

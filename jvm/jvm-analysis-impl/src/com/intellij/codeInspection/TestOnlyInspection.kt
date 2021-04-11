@@ -44,15 +44,14 @@ class TestOnlyInspection : AbstractBaseUastLocalInspectionTool() {
     private fun checkDoubleAnnotation(elem: UDeclaration) {
       val vft = elem.uAnnotations.find { visibleForTestingAnnotations.contains(it.qualifiedName) } ?: return
       if (isDirectlyTestOnly(elem)) {
-        val vftSourcePsi = vft.sourcePsi ?: return
+        val toHighlight = vft.uastAnchor.sourcePsiElement ?: return
         val vftJavaPsi = vft.javaPsi ?: return
         val elemJavaPsi = elem.javaPsi
         holder.registerProblem(
-          vftSourcePsi,
+          toHighlight,
           JvmAnalysisBundle.message("jvm.inspections.testonly.visiblefortesting"),
           RemoveAnnotationQuickFix(vftJavaPsi, elemJavaPsi as PsiModifierListOwner)
         )
-        return
       }
       return
     }
