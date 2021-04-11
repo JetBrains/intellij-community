@@ -865,6 +865,7 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
+    setupBundledMaven()
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchApplicationInfo())
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
