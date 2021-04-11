@@ -66,6 +66,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private static final String SECONDARY_SHORTCUT = "SecondaryActions.shortcut";
 
+  private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
+  private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
+
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
       ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();
@@ -349,10 +352,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      String warningReported = "ActionToolbarImpl.customComponentWarningReported";
       customComponent = createCustomComponent((CustomComponentAction)action, presentation);
-      if (customComponent.getParent() != null && customComponent.getClientProperty(warningReported) == null) {
-        customComponent.putClientProperty(warningReported, true);
+      if (customComponent.getParent() != null && customComponent.getClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING) == null) {
+        customComponent.putClientProperty(SUPPRESS_ACTION_COMPONENT_WARNING, true);
         LOG.warn(action.getClass().getSimpleName() + ".component.getParent() != null in '" + myPlace + "' toolbar. " +
                  "Custom components shall not be reused.");
       }
@@ -1290,7 +1292,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setTargetComponent(final JComponent component) {
+  public void setTargetComponent(@Nullable JComponent component) {
+    if (myTargetComponent == null) {
+      putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
+    }
     myTargetComponent = component;
 
     if (myTargetComponent != null) {
@@ -1329,6 +1334,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull DataContext getDataContext() {
+    if (myTargetComponent == null && getClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING) == null) {
+      putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
+      LOG.warn("'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
+               "Toolbar actions that need local UI context would be incorrectly disabled. " +
+               "Please call toolbar.setTargetComponent() explicitly.");
+    }
     Component target = myTargetComponent != null ? myTargetComponent : getFocusedComponentInWindowOrSelf(this);
     return DataManager.getInstance().getDataContext(target);
   }

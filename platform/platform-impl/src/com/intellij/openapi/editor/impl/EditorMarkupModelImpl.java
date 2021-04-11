@@ -178,6 +178,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
+
+      @Override
+      public void addNotify() {
+        setTargetComponent(editor.getContentComponent());
+        super.addNotify();
+      }
+
       @Override
       protected void paintComponent(Graphics g) {
         editorButtonLook.paintBackground(g, this, myEditor.getBackgroundColor());

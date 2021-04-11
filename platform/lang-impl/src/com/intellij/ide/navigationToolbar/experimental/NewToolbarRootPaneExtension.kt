@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -72,6 +71,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
                                                                         if (c is ActionGroup) c else DefaultActionGroup(c),
                                                                         true) as ActionToolbarImpl
+      toolbar.targetComponent = null
       toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
       panel.add(toolbar, if (c is CustomComponentAction) "$layoutConstrains, shrink 0" else layoutConstrains)
       ApplicationManager.getApplication().invokeLater { toolbar.updateActionsImmediately(true) }

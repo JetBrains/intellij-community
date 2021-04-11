@@ -254,6 +254,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
       .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
+    toolBar.setTargetComponent(null);
     toolBar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
 
     DefaultActionGroup menuGroup = new DefaultActionGroup();
