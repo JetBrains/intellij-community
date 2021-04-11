@@ -203,7 +203,7 @@ final class PortableCompilationCache {
   }
 
   private def compileProject() {
-    // ensure that JBR and Kotlin plugin are downloaded before compilation
+    // ensure that JBR and Kotlin compiler are downloaded before compilation
     CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
     def jps = new JpsCompilationRunner(context)
     try {

@@ -28,7 +28,7 @@ public class KtUastCallMatcherTest extends UastCallMatcherTestBase {
     super.tuneFixture(moduleBuilder);
     //TODO check if adding kotlin-stdlib is redundant
     String kotlinDir = PathManager.getHomePath().replace(File.separatorChar, '/') +
-                       "/community/build/dependencies/build/kotlin/Kotlin/kotlinc/lib";
+                       "/out/artifacts/KotlinPlugin/kotlinc/lib";
     moduleBuilder.addLibraryJars("kotlin-stdlib", kotlinDir, "kotlin-stdlib.jar");
   }
 

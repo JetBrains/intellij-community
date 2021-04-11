@@ -695,7 +695,7 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
           }
         }
         else {
-          // Support for unpacked plugins in classpath. E.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          // Support for unpacked plugins in classpath. E.g. .../out/artifacts/KotlinPlugin/lib/kotlin-plugin.jar
           DescriptorLoadingContext().use { loadingContext ->
             val descriptor = PluginDescriptorLoader.loadDescriptorFromJar(file = file,
                                                                           fileName = pathName,
