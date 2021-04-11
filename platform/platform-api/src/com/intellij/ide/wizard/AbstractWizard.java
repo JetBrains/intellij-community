@@ -113,7 +113,8 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return super.createSouthPanel();
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0));
+    int inset = isNewWizard() ? 15 : 0;
+    panel.setBorder(BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
 
@@ -127,7 +128,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       int index = 0;
       JPanel leftPanel = new JPanel();
-      if (ApplicationInfo.contextHelpAvailable()) {
+      if (ApplicationInfo.contextHelpAvailable() && !isNewWizard()) {
         leftPanel.add(myHelpButton);
         TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
