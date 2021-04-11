@@ -57,24 +57,31 @@ public class NewProjectWizard extends AbstractProjectWizard {
     ProjectTypeStep projectTypeStep = new ProjectTypeStep(myWizardContext, this, modulesProvider);
     Disposer.register(getDisposable(), projectTypeStep);
     mySequence.addCommonStep(projectTypeStep);
-    ChooseTemplateStep chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
-    mySequence.addCommonStep(chooseTemplateStep);
+    ChooseTemplateStep chooseTemplateStep = null;
+    if (!isNewWizard()) {
+      chooseTemplateStep = new ChooseTemplateStep(myWizardContext, projectTypeStep);
+      mySequence.addCommonStep(chooseTemplateStep);
+    }
     //hacky: new wizard module ID should starts with newWizard, to be removed later, on migrating on new API.
-    Predicate<Set<String>> predicate = strings -> !Experiments.getInstance().isFeatureEnabled("new.project.wizard") ||
+    Predicate<Set<String>> predicate = strings -> !isNewWizard() ||
                                                   !ContainerUtil.exists(strings, type -> type.startsWith("newWizard"));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), predicate);
     for (ModuleWizardStep step : mySequence.getAllSteps()) {
       addStep(step);
     }
-    if (myWizardContext.isCreatingNewProject() && Registry.is("new.project.load.remote.templates")) {
+    if (myWizardContext.isCreatingNewProject() && Registry.is("new.project.load.remote.templates") && !isNewWizard()) {
       projectTypeStep.loadRemoteTemplates(chooseTemplateStep);
     }
     super.init();
   }
 
+  private static boolean isNewWizard() {
+    return Experiments.getInstance().isFeatureEnabled("new.project.wizard");
+  }
+
   @Override
   protected @Nullable Border createContentPaneBorder() {
-    return Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? JBUI.Borders.empty() : super.createContentPaneBorder();
+    return isNewWizard() ? JBUI.Borders.empty() : super.createContentPaneBorder();
   }
 
   @Nullable
