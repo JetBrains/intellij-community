@@ -57,7 +57,7 @@ public class MarkdownReferenceProvider extends PsiReferenceContributor {
         staticProvider.setRelativePathsAllowed(false);
         staticProvider.createReferences(element, offsetInElement, path, references, ARE_REFERENCES_SOFT);
 
-        ContentRootRelatedMissedExtensionFileReference.Companion.createReference(element, references, ARE_REFERENCES_SOFT);
+        ContentRootRelatedMissingExtensionFileReference.Companion.createReference(element, references, ARE_REFERENCES_SOFT);
 
         myAnchorPathReferenceProvider.createReferences(element, references, ARE_REFERENCES_SOFT);
 

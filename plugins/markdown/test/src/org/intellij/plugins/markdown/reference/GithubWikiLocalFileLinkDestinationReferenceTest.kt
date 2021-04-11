@@ -25,17 +25,17 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
 
   fun testHeader() = testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
 
-  fun testInRootWithMissedExtension() = testIsReferenceToFile("stub_in_root.md")
+  fun testInRootWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
 
-  fun testInDirWithMissedExtension() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
+  fun testInDirWithMissingExtension() = testIsReferenceToFile("topDir", "stub_in_top_dir.md")
 
-  fun testRepeatedExtensionWithMissedExtension() = testIsReferenceToFile("topDir", "stub_with_repeated_extension.md.md")
+  fun testRepeatedExtensionWithMissingExtension() = testIsReferenceToFile("topDir", "stub_with_repeated_extension.md.md")
 
-  fun testWithHeaderWithMissedExtension() = testIsReferenceToFile("stub_in_root.md")
+  fun testWithHeaderWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
 
-  fun testWithNonexistentHeaderWithMissedExtension() = testIsReferenceToFile("stub_in_root.md")
+  fun testWithNonexistentHeaderWithMissingExtension() = testIsReferenceToFile("stub_in_root.md")
 
-  fun testHeaderWithMissedExtension() = testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
+  fun testHeaderWithMissingExtension() = testIsReferenceToHeader(Path.of("stub_in_root.md"), "header")
 
   fun testIsNotReferenceBecauseOfWrongPathPrefix() = testIsNotReferenceToFile("stub_in_root.md")
 
@@ -45,13 +45,13 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
 
   fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeader() = testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceBecauseOfWrongPathPrefixWithMissedExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  fun testIsNotReferenceBecauseOfWrongPathPrefixWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtHeaderWithMissedExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  fun testIsNotReferenceToFileBecauseCaretIsAtHeaderWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeaderWithMissedExtension() = testIsNotReferenceToFile("stub_in_root.md")
+  fun testIsNotReferenceToFileBecauseCaretIsAtNonexistentHeaderWithMissingExtension() = testIsNotReferenceToFile("stub_in_root.md")
 
-  fun testRenameWithMissedExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
+  fun testRenameWithMissingExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
 
   fun testRenameWithExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed.md")
 
@@ -59,10 +59,10 @@ class GithubWikiLocalFileLinkDestinationReferenceTest : BaseLinkDestinationRefer
 
   fun testRenameNotRenamedBecauseOfFullMatchWithOtherFile() = testRenameFile(Path.of("topDir", "stub_in_top_dir.md.md"), "renamed")
 
-  fun testRenameRepeatedExtensionWithMissedExtension() = testRenameFile(Path.of("topDir", "stub_with_repeated_extension.md.md"),
-                                                                        "renamed.md.md")
+  fun testRenameRepeatedExtensionWithMissingExtension() = testRenameFile(Path.of("topDir", "stub_with_repeated_extension.md.md"),
+                                                                         "renamed.md.md")
 
-  fun testRenameExtensionRemovalWithMissedExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed")
+  fun testRenameExtensionRemovalWithMissingExtension() = testRenameFile(Path.of("stub_in_root.md"), "renamed")
 
   fun testRenameExtensionIntroduction() = testRenameFile(Path.of("stub_without_extension"), "renamed.md")
 }

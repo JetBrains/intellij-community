@@ -4,8 +4,9 @@ package org.intellij.plugins.markdown.reference
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import java.nio.file.Path
 
-class MissedExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationReferenceTestCase() {
-  override fun getTestDataPath() = Path.of(MarkdownTestingUtil.TEST_DATA_PATH, "reference", "linkDestination", "missedExtension").toString()
+class MissingExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationReferenceTestCase() {
+  override fun getTestDataPath() = Path.of(MarkdownTestingUtil.TEST_DATA_PATH, "reference", "linkDestination",
+                                           "missingExtension").toString()
 
   override fun getLinksFilePath(): String = Path.of("topDir", "links.md").toString()
 

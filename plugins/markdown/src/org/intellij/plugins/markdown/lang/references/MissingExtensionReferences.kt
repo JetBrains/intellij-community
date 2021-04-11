@@ -12,16 +12,16 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 
-abstract class MissedExtensionFileReferenceBase(element: PsiElement,
-                                                private val myFileReference: FileReference,
-                                                soft: Boolean) : PsiReferenceBase<PsiElement>(element, myFileReference.rangeInElement,
-                                                                                              soft) {
+abstract class MissingExtensionFileReferenceBase(element: PsiElement,
+                                                 private val myFileReference: FileReference,
+                                                 soft: Boolean) : PsiReferenceBase<PsiElement>(element, myFileReference.rangeInElement,
+                                                                                               soft) {
   protected val path get() = myFileReference.fileReferenceSet.pathString + '.' + MarkdownFileType.INSTANCE.defaultExtension
   protected val containingFile: VirtualFile? get() = element.containingFile?.virtualFile
 
   override fun resolve(): PsiElement? {
     val referencedFile = findReferencedFile() ?: return null
-    return if (referencedFile.run { parent.findChild(nameWithoutExtension) } == null) {
+    return if (referencedFile.parent.findChild(referencedFile.nameWithoutExtension) == null) {
       PsiUtilCore.getPsiFile(element.project, referencedFile)
     }
     else {
@@ -43,27 +43,27 @@ abstract class MissedExtensionFileReferenceBase(element: PsiElement,
 }
 
 private inline fun createReference(references: MutableList<PsiReference>,
-                                   constructor: (FileReference) -> MissedExtensionFileReferenceBase) {
+                                   constructor: (FileReference) -> MissingExtensionFileReferenceBase) {
   MarkdownAnchorPathReferenceProvider.findFileReference(references)?.let { references.add(constructor(it)) }
 }
 
-class RelativeMissedExtensionFileReference private constructor(element: PsiElement,
-                                                               fileReference: FileReference,
-                                                               soft: Boolean) : MissedExtensionFileReferenceBase(element, fileReference,
-                                                                                                                 soft) {
+class RelativeMissingExtensionFileReference private constructor(element: PsiElement,
+                                                                fileReference: FileReference,
+                                                                soft: Boolean) : MissingExtensionFileReferenceBase(element, fileReference,
+                                                                                                                   soft) {
   override fun findReferencedFile() = VfsUtilCore.findRelativeFile(path, containingFile)
 
   companion object {
     fun createReference(element: PsiElement, references: MutableList<PsiReference>, soft: Boolean) =
-      createReference(references) { RelativeMissedExtensionFileReference(element, it, soft) }
+      createReference(references) { RelativeMissingExtensionFileReference(element, it, soft) }
   }
 }
 
-class ContentRootRelatedMissedExtensionFileReference private constructor(element: PsiElement,
-                                                                         fileReference: FileReference,
-                                                                         soft: Boolean) : MissedExtensionFileReferenceBase(element,
-                                                                                                                           fileReference,
-                                                                                                                           soft) {
+class ContentRootRelatedMissingExtensionFileReference private constructor(element: PsiElement,
+                                                                          fileReference: FileReference,
+                                                                          soft: Boolean) : MissingExtensionFileReferenceBase(element,
+                                                                                                                             fileReference,
+                                                                                                                             soft) {
   override fun findReferencedFile(): VirtualFile? {
     return ProjectRootManager.getInstance(element.project).fileIndex
       .getContentRootForFile(containingFile ?: return null)?.findFileByRelativePath(path)
@@ -71,6 +71,6 @@ class ContentRootRelatedMissedExtensionFileReference private constructor(element
 
   companion object {
     fun createReference(element: PsiElement, references: MutableList<PsiReference>, soft: Boolean) =
-      createReference(references) { ContentRootRelatedMissedExtensionFileReference(element, it, soft) }
+      createReference(references) { ContentRootRelatedMissingExtensionFileReference(element, it, soft) }
   }
 }

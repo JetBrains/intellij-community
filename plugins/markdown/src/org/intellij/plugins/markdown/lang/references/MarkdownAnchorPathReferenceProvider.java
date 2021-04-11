@@ -28,7 +28,7 @@ public class MarkdownAnchorPathReferenceProvider implements PathReferenceProvide
       fileReference = findFileReference(references);
       if (fileReference == null || fileReference.resolve() == null) {
         for (PsiReference reference : references) {
-          if (reference instanceof MissedExtensionFileReferenceBase) {
+          if (reference instanceof MissingExtensionFileReferenceBase) {
             fileReference = reference;
             break;
           }

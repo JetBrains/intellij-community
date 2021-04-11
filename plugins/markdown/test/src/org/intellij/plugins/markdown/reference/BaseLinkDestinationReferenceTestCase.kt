@@ -6,10 +6,16 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import junit.framework.TestCase
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
 import org.junit.Assert.assertNotEquals
 import java.nio.file.Path
+
+private fun <T> T?.convertToNonNullWithAssert(): T {
+  TestCase.assertNotNull(this)
+  return this!!
+}
 
 abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
   override fun setUp() {
@@ -17,9 +23,8 @@ abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
     myFixture.copyDirectoryToProject("", "")
   }
 
-  private fun findFile(path: Path) = with(myFixture) {
-    findFileInTempDir(path.toString()).let { if (it.isDirectory) psiManager.findDirectory(it)!! else PsiUtilCore.getPsiFile(project, it) }
-  }
+  private fun findFile(path: Path): PsiFileSystemItem? = PsiUtilCore.findFileSystemItem(project,
+                                                                                        myFixture.findFileInTempDir(path.toString()))
 
   protected open fun getLinksFilePath(): String? = null
 
@@ -35,13 +40,12 @@ abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
       assertNotEquals(indexOfLink, -1)
       file.findReferenceAt(editor.caretModel.allCarets.map(Caret::getOffset).first { it >= indexOfLink })
     }
-    assertions(reference, findFile(filePath))
+    assertions(reference, findFile(filePath).convertToNonNullWithAssert())
   }
 
   protected fun testIsReferenceToFile(targetPathFirst: String, vararg targetPathMore: String) =
     testReferenceToFile(targetPathFirst, *targetPathMore) { reference, file ->
-      assertNotNull(reference)
-      assertTrue(reference!!.isReferenceTo(file))
+      assertTrue(reference.convertToNonNullWithAssert().isReferenceTo(file))
     }
 
   protected fun testIsNotReferenceToFile(undesiredTargetPathFirst: String, vararg undesiredTargetPathMore: String) =
@@ -51,18 +55,16 @@ abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
 
   protected fun testIsReferenceToHeader(filePath: Path, headerName: String) =
     testReferenceToFile(filePath) { reference, file ->
-      assertNotNull(reference)
-      val header = assertInstanceOf(reference!!.resolve(), MarkdownHeaderImpl::class.java)
+      val header = assertInstanceOf(reference.convertToNonNullWithAssert().resolve(), MarkdownHeaderImpl::class.java)
       assertTrue(myFixture.psiManager.areElementsEquivalent(file, header.containingFile))
       assertEquals(headerName, header.name)
     }
 
   protected fun testRenameFile(path: Path, newName: String) {
-    val element = findFile(path)
     val testName = getTestName(true)
     val extension = MarkdownFileType.INSTANCE.defaultExtension
     myFixture.configureByFile("$testName.$extension")
-    myFixture.renameElement(element, newName)
+    myFixture.renameElement(findFile(path).convertToNonNullWithAssert(), newName)
 
     myFixture.checkResultByFile("${testName}After.$extension")
   }

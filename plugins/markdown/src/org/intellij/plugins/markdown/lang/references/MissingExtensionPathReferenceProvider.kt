@@ -6,9 +6,9 @@ import com.intellij.openapi.paths.PathReferenceProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 
-class MissedExtensionPathReferenceProvider : PathReferenceProvider {
+class MissingExtensionPathReferenceProvider : PathReferenceProvider {
   override fun createReferences(psiElement: PsiElement, references: MutableList<PsiReference>, soft: Boolean): Boolean {
-    RelativeMissedExtensionFileReference.createReference(psiElement, references, soft)
+    RelativeMissingExtensionFileReference.createReference(psiElement, references, soft)
     return false
   }
 
