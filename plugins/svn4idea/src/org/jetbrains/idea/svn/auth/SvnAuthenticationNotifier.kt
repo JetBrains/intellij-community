@@ -262,9 +262,9 @@ class SvnAuthenticationNotifier(project: Project) :
           for (proxy in select) {
             if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP == proxy.type()) {
               val address = proxy.address() as InetSocketAddress
-              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostName, address.port)
+              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostString, address.port)
               if (password == null) {
-                CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
+                CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
                 proxyToRelease = proxy
               }
             }
@@ -293,7 +293,7 @@ class SvnAuthenticationNotifier(project: Project) :
       finally {
         if (!interactive && configuration.isUseDefaultProxy && proxyToRelease != null) {
           val address = proxyToRelease.address() as InetSocketAddress
-          CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
+          CommonProxy.getInstance().noAuthentication("http", address.hostString, address.port)
         }
       }
 

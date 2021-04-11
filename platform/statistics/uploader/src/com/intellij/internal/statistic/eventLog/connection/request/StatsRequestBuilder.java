@@ -109,7 +109,7 @@ public class StatsRequestBuilder {
       SocketAddress proxyAddress = proxy.address();
       if (proxyAddress instanceof InetSocketAddress) {
         InetSocketAddress address = (InetSocketAddress)proxyAddress;
-        String hostName = address.getHostName();
+        String hostName = address.getHostString();
         int port = address.getPort();
         builder.setProxy(new HttpHost(hostName, port));
 
