@@ -232,8 +232,15 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     boolean viaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, getStartOffset(), getEndOffset());
     if (viaDiff) {
       try {
-        line = event.getLineNumberBeforeUpdate(getStartOffset());
-        line = translatedViaDiff(event, line);
+        line = PersistentRangeMarker.translateOffsetViaDiff((DocumentEventImpl)e, getStartOffset());
+        if (line < 0 || line >= getDocument().getLineCount()) {
+          invalidate(e);
+        }
+        else {
+          DocumentEx document = getDocument();
+          setIntervalStart(document.getLineStartOffset(line));
+          setIntervalEnd(document.getLineEndOffset(line));
+        }
       }
       catch (FilesTooBigForDiffException exception) {
         viaDiff = false;
@@ -253,19 +260,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), line));
       setIntervalEnd(getDocument().getLineEndOffset(line));
     }
-  }
-
-  private int translatedViaDiff(@NotNull DocumentEventImpl e, int line) throws FilesTooBigForDiffException {
-    line = e.translateLineViaDiff(line);
-    if (line < 0 || line >= getDocument().getLineCount()) {
-      invalidate(e);
-    }
-    else {
-      DocumentEx document = getDocument();
-      setIntervalStart(document.getLineStartOffset(line));
-      setIntervalEnd(document.getLineEndOffset(line));
-    }
-    return line;
   }
 
   // Called after the range was shifted from e.getMoveOffset() to e.getOffset()

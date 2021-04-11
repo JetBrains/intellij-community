@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
@@ -70,7 +69,8 @@ public class LineNumberBeforeUpdateStressTest extends LightPlatformTestCase {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       for (int i = 0; i < expectedResults.length; i++) {
-        assertEquals("Wrong result for offset " + i, expectedResults[i], ((DocumentEventImpl)event).getLineNumberBeforeUpdate(i));
+        int line = PersistentRangeMarker.computeLineBeforeUpdateForTest((DocumentEventImpl)event, i);
+        assertEquals("Wrong result for offset " + i, expectedResults[i], line);
       }
     }
   }
