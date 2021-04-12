@@ -10,6 +10,8 @@ import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -47,12 +49,17 @@ class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(browserRequest, preferLocalFileUrl);
       if (!urls.isEmpty()) {
         BaseOpenInBrowserActionKt.chooseUrl(urls).onSuccess((url) -> {
-          OpenInRightSplitAction.Companion.openInRightSplit(
-            project,
-            new WebPreviewVirtualFile(virtualFile, url),
-            null,
-            false
-          );
+          WebPreviewVirtualFile file = new WebPreviewVirtualFile(virtualFile, url);
+          if (!FileEditorManager.getInstance(project).isFileOpen(file)) {
+            OpenInRightSplitAction.Companion.openInRightSplit(
+              project,
+              file,
+              null,
+              false
+            );
+          } else {
+            FileEditorManagerEx.getInstanceEx(project).openFileWithProviders(file, false, true);
+          }
         });
       }
     }

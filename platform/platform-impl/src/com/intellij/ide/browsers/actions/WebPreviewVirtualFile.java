@@ -35,4 +35,21 @@ public class WebPreviewVirtualFile extends LightVirtualFile implements NotSuitab
   public Url getPreviewUrl() {
     return myPreviewUrl;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WebPreviewVirtualFile file = (WebPreviewVirtualFile)o;
+
+    if (!myFile.equals(file.myFile)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myFile.hashCode() * 31 + 1;
+  }
 }
