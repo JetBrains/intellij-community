@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.problems.Problem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -233,6 +235,13 @@ abstract class AbstractKotlinHighlightVisitor: HighlightVisitor {
             annotateDiagnostics(element, holder, diagnosticsForElement)
         }
     }
+
+    private fun convertToProblems(
+        infos: Collection<HighlightInfo>,
+        file: VirtualFile,
+        hasErrorElement: Boolean = true
+    ): List<Problem> =
+        infos.filter { it.severity == HighlightSeverity.ERROR }.map { ProblemImpl(file, it, hasErrorElement) }
 
     companion object {
         private val LOG = Logger.getInstance(AbstractKotlinHighlightVisitor::class.java)

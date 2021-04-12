@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api.fir
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.LightCodeInsightTestCase
+import com.intellij.testFramework.LightJavaCodeInsightTestCase
 import org.jetbrains.kotlin.idea.addExternalTestFiles
 import org.jetbrains.kotlin.idea.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
@@ -34,7 +34,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaGetter
 
-abstract class AbstractResolveCallTest : @Suppress("DEPRECATION") LightCodeInsightTestCase() {
+abstract class AbstractResolveCallTest : @Suppress("DEPRECATION") LightJavaCodeInsightTestCase() {
     override fun getTestDataPath(): String = KotlinRoot.DIR.slashedPath
 
     protected fun doTest(path: String) {

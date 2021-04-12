@@ -70,9 +70,9 @@ class KtorServerTemplate : Template() {
     override val interceptionPoints: List<InterceptionPoint<Any>> = listOf(imports, routes, elements)
     override val settings: List<TemplateSetting<*, *>> = listOf()
 
-   private object DEPENDENCIES {
-       val KTOR_SERVER_NETTY = ktorArtifactDependency("ktor-server-netty")
-   }
+    private object DEPENDENCIES {
+        val KTOR_SERVER_NETTY = ktorArtifactDependency("ktor-server-netty")
+    }
 }
 
 private fun ktorArtifactDependency(@NonNls name: String) = ArtifactBasedLibraryDependencyIR(
