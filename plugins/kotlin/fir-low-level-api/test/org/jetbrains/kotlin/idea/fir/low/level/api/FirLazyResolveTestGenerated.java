@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("fir-low-level-api")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/testData/fir/lazyResolve")
+@TestMetadata("../idea/tests/testData/fir/lazyResolve")
 public abstract class FirLazyResolveTestGenerated extends AbstractFirLazyResolveTest {
 
 }

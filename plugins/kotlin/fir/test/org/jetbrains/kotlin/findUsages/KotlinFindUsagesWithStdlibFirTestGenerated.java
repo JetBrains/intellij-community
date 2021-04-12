@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestRoot("fir")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/testData/findUsages/stdlibUsages")
+@TestMetadata("../idea/tests/testData/findUsages/stdlibUsages")
 public class KotlinFindUsagesWithStdlibFirTestGenerated extends AbstractKotlinFindUsagesWithStdlibFirTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -28,6 +28,6 @@ public class KotlinFindUsagesWithStdlibFirTestGenerated extends AbstractKotlinFi
 
     @TestMetadata("LibraryMemberFunctionUsagesInStdlib.0.kt")
     public void testLibraryMemberFunctionUsagesInStdlib() throws Exception {
-        runTest("../idea/testData/findUsages/stdlibUsages/LibraryMemberFunctionUsagesInStdlib.0.kt");
+        runTest("../idea/tests/testData/findUsages/stdlibUsages/LibraryMemberFunctionUsagesInStdlib.0.kt");
     }
 }

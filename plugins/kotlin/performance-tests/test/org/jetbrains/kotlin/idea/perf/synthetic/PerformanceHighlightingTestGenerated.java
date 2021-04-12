@@ -65,7 +65,7 @@ public class PerformanceHighlightingTestGenerated extends AbstractPerformanceHig
 
     @TestMetadata("InaccessibleExpression.kt")
     public void testInaccessibleExpression() throws Exception {
-        runTest("../idea/testData/highlighter/InaccessibleExpression.kt");
+        runTest("../idea/tests/testData/highlighter/InaccessibleExpression.kt");
     }
 
     @TestMetadata("InvokeCall.kt")
