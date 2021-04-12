@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle.service.execution
+package org.jetbrains.plugins.gradle.service.execution.wsl
 
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
@@ -12,20 +13,21 @@ import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo.Resolved
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.pom.Navigatable
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
+import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
 
 @ApiStatus.Internal
-class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
+class GradleOnWslExecutionAware : GradleExecutionAware {
   override fun prepareExecution(
     task: ExternalSystemTask,
     externalProjectPath: String,
@@ -36,7 +38,7 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     if (isPreviewMode) return
     val wslDistribution = resolveWslDistribution(externalProjectPath) ?: return
     // wait for JVM resolution and run common JVM checks
-    val sdkInfo = GradleExecutionAware().prepareJvmForExecution(task, externalProjectPath, taskNotificationListener, project)
+    val sdkInfo = LocalGradleExecutionAware().prepareJvmForExecution(task, externalProjectPath, taskNotificationListener, project)
     if (sdkInfo !is Resolved) return
     val homePath = sdkInfo.homePath ?: return
     val jdkWslDistribution = WslPath.getDistributionByWindowsUncPath(homePath)
@@ -49,18 +51,31 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   override fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
     val projectPath = runConfiguration.settings.externalProjectPath
-    return getWslEnvironmentProvider(projectPath)
+    val gradleRunConfiguration = runConfiguration as? GradleRunConfiguration ?: return null
+    val targetName = gradleRunConfiguration.options.remoteTarget
+    return getWslEnvironmentProvider(project, projectPath, targetName)
   }
 
   override fun getEnvironmentConfigurationProvider(projectPath: String,
                                                    isPreviewMode: Boolean,
                                                    project: Project): TargetEnvironmentConfigurationProvider? {
-    return getWslEnvironmentProvider(projectPath)
+    return getWslEnvironmentProvider(project, projectPath, null)
   }
 
   override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
     val projectPath = runConfiguration.settings.externalProjectPath
     return resolveWslDistribution(projectPath) != null
+  }
+
+  override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? {
+    val wslDistribution = resolveWslDistribution(projectPath) ?: return null
+    return WslBuildLayoutParameters(wslDistribution, project, projectPath)
+  }
+
+  override fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean {
+    val wslDistribution = resolveWslDistribution(project.basePath ?: return false) ?: return false
+    val windowsPath = wslDistribution.getWindowsPath(homePath) ?: return false
+    return LocalGradleExecutionAware().isGradleInstallationHomeDir(project, windowsPath)
   }
 
   private fun getTargetPathMapper(projectPath: String): PathMapper? {
@@ -75,10 +90,13 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     }
   }
 
-  private fun getWslEnvironmentProvider(path: String): GradleServerConfigurationProvider? {
+  private fun getWslEnvironmentProvider(project: Project, path: String, targetName: String?): GradleServerConfigurationProvider? {
     val wslDistribution = resolveWslDistribution(path) ?: return null
     return object : GradleServerConfigurationProvider {
-      override val environmentConfiguration = WslTargetEnvironmentConfiguration(wslDistribution)
+      override val environmentConfiguration by lazy {
+        val targetEnvironmentConfiguration = targetName?.let { TargetEnvironmentsManager.getInstance(project).targets.findByName(it) }
+        targetEnvironmentConfiguration ?: WslTargetEnvironmentConfiguration(wslDistribution)
+      }
       override val pathMapper = getTargetPathMapper(path)
       override fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort {
         return HostPort(wslDistribution.wslIp, 0)
@@ -87,7 +105,7 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   }
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {
-    if (!WslDistributionManager.isWslPath(path)) return null
+    if (!SystemInfo.isWindows || !WslDistributionManager.isWslPath(path)) return null
     return WslPath.getDistributionByWindowsUncPath(path)
   }
 

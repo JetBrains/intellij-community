@@ -27,7 +27,7 @@ import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
 fun validateJavaHome(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion) {
-  val gradleProperties = getGradleProperties(externalProjectPath)
+  val gradleProperties = getGradleProperties(project, externalProjectPath)
   val javaHomeProperty = gradleProperties.javaHomeProperty
   if (javaHomeProperty != null) {
     val javaHome = javaHomeProperty.value

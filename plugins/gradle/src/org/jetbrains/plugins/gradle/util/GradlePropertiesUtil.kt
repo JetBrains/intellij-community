@@ -3,10 +3,11 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.util.environment.Environment
+import com.intellij.openapi.project.Project
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.isFile
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleProperties.EMPTY
 import org.jetbrains.plugins.gradle.util.GradleProperties.GradleProperty
 import java.nio.file.Path
@@ -18,26 +19,24 @@ const val GRADLE_CACHE_DIR_NAME = ".gradle"
 const val PROPERTIES_FILE_NAME = "gradle.properties"
 const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
 
-fun getGradleProperties(externalProjectPath: Path): GradleProperties {
-  return getPossiblePropertiesFiles(externalProjectPath)
+fun getGradleProperties(project: Project, externalProjectPath: Path): GradleProperties {
+  return getPossiblePropertiesFiles(project, externalProjectPath)
     .asSequence()
     .map { it.toAbsolutePath().normalize() }
     .map(::loadGradleProperties)
     .reduce(::mergeGradleProperties)
 }
 
-private fun getPossiblePropertiesFiles(externalProjectPath: Path): List<Path> {
+private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
   return listOfNotNull(
-    getGradleServiceDirectoryPath(),
+    getGradleServiceDirectoryPath(project),
     getGradleHomePropertiesPath(),
     getGradleProjectPropertiesPath(externalProjectPath)
   )
 }
 
-private fun getGradleServiceDirectoryPath(): Path? {
-  val systemSettings = GradleSystemSettings.getInstance()
-  val gradleUserHome = systemSettings.serviceDirectoryPath
-  if (gradleUserHome == null) return null
+private fun getGradleServiceDirectoryPath(project: Project): Path? {
+  val gradleUserHome = GradleLocalSettings.getInstance(project).gradleUserHome ?: return null
   return Paths.get(gradleUserHome, PROPERTIES_FILE_NAME)
 }
 

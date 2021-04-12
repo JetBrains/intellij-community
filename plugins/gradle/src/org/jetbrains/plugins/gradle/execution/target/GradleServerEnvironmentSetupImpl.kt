@@ -72,7 +72,15 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     else environmentConfiguration.createEnvironmentFactory(project)
 
     environmentConfiguration.runtimes.findByType(GradleRuntimeTargetConfiguration::class.java)?.homePath?.nullize(true)?.also {
-      targetBuildParametersBuilder.useInstallation(it)
+      val localGradleHomePath = it
+      val targetGradleHomePath: String
+      if (targetPathMapper?.canReplaceLocal(localGradleHomePath) == true) {
+        targetGradleHomePath = targetPathMapper.convertToRemote(localGradleHomePath)
+      }
+      else {
+        targetGradleHomePath = localGradleHomePath
+      }
+      targetBuildParametersBuilder.useInstallation(targetGradleHomePath)
     }
 
     progressIndicator.checkCanceled()
