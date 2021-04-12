@@ -17,14 +17,13 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import com.intellij.psi.util.PsiEditorUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1189,5 +1188,14 @@ public class CommonCodeStyleSettings {
 
   void setSoftMargins(List<Integer> values) {
     mySoftMargins.setValues(values);
+  }
+
+  /**
+   * @deprecated Use {@link CodeStyle#getLocalLanguageSettings(Editor, int)}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
+    return CodeStyle.getLocalLanguageSettings(editor, tailOffset);
   }
 }
