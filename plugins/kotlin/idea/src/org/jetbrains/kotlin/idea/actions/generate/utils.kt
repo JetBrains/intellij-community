@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -67,6 +68,6 @@ fun confirmMemberRewrite(targetClass: KtClass, vararg descriptors: FunctionDescr
 
 fun generateFunctionSkeleton(descriptor: FunctionDescriptor, targetClass: KtClassOrObject): KtNamedFunction {
     return OverrideMemberChooserObject
-        .create(targetClass.project, descriptor, descriptor, OverrideMemberChooserObject.BodyType.FROM_TEMPLATE)
+        .create(targetClass.project, descriptor, descriptor, BodyType.FROM_TEMPLATE)
         .generateMember(targetClass, false) as KtNamedFunction
 }

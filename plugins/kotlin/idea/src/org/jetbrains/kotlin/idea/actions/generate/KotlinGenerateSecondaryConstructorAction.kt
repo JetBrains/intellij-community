@@ -120,7 +120,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
                 return emptyList()
             }
 
-            insertMembersAfter(editor, targetClass, prototypes, findAnchor())
+            insertMembersAfterAndReformat(editor, targetClass, prototypes, findAnchor())
         }
     }
 
