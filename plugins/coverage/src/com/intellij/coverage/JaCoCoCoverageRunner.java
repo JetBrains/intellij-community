@@ -184,7 +184,7 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
   }
 
   @Override
@@ -194,7 +194,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters javaParameters,
                                      boolean collectLineInfo,
                                      boolean isSampling,
-                                     String sourceMapPath) {
+                                     String sourceMapPath,
+                                     @Nullable Project project) {
     String path;
     try {
       path = AgentJar.extractToTempLocation().getAbsolutePath();

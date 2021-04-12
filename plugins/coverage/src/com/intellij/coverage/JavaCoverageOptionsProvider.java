@@ -49,9 +49,9 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
 
   public boolean isGeneratedConstructor(String qualifiedName, String methodSignature) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (myState.myIgnoreImplicitConstructors || myState.myIgnoreEmptyPrivateConstructors) {
+    if (myState.myIgnoreImplicitConstructors) {
       PsiClass psiClass = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(myProject), qualifiedName));
-      return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, methodSignature, myState.myIgnoreImplicitConstructors, myState.myIgnoreEmptyPrivateConstructors);
+      return PackageAnnotator.isGeneratedDefaultConstructor(psiClass, methodSignature);
     }
     return false;
   }

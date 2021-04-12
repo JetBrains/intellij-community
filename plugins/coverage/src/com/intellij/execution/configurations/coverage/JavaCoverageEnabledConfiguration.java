@@ -12,6 +12,7 @@ import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -70,7 +71,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     return null;
   }
 
-  public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
+  public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     try {
       if (runner instanceof JavaCoverageRunner) {
@@ -85,6 +86,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
         final JavaCoverageRunner javaCoverageRunner = (JavaCoverageRunner)runner;
         final String[] patterns = getPatterns();
         final String[] excludePatterns = getExcludePatterns();
+        final Project project = configuration.getProject();
         CoverageLogger.logStarted(javaCoverageRunner, isSampling(), isTrackPerTestCoverage(),
                                   patterns == null ? 0 : patterns.length,
                                   excludePatterns == null ? 0 : excludePatterns.length);
@@ -94,7 +96,8 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
                                                   javaParameters,
                                                   isTrackPerTestCoverage() && !isSampling(),
                                                   isSampling(),
-                                                  sourceMapPath);
+                                                  sourceMapPath,
+                                                  project);
       }
     }
     catch (IOException e) {

@@ -7,6 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.java.JavaTargetParameter;
 import com.intellij.execution.target.java.TargetPaths;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ClassData;
@@ -64,7 +65,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null, null);
   }
 
   @Override
@@ -74,7 +75,8 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
-                                     @Nullable String sourceMapPath) {
+                                     @Nullable String sourceMapPath,
+                                     @Nullable final Project project) {
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
     List<Function<TargetEnvironmentRequest, JavaTargetParameter>> targetParameters =
@@ -93,6 +95,14 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       targetParameters.add(request -> {
         return JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true");
       });
+    }
+    if (project != null) {
+      final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+      if (optionsProvider.ignoreEmptyPrivateConstructors()) {
+        targetParameters.add(request -> {
+          return JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true");
+        });
+      }
     }
   }
 
