@@ -20,16 +20,7 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.instance as
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor =
-        object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
-            listOf(KotlinArtifacts.kotlinStdlib, KotlinArtifacts.kotlinCoroutinesExperimentalCompat),
-            listOf(KotlinArtifacts.kotlinStdlibSources)
-        ) {
-            override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-                super.configureModule(module, model, contentEntry)
-                MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-            }
-        }
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     override fun setUp() {
         super.setUp()
