@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.FileCodeStyleProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
@@ -188,8 +189,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation started for " + file.getName());
         }
-        @SuppressWarnings("deprecation")
-        CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
+        CodeStyleSettings currSettings = getCurrentSettings(file);
         myOldTrackerSetting = currSettings.getModificationTracker().getModificationCount();
         if (currSettings != mySettingsManager.getTemporarySettings()) {
           TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
@@ -216,6 +216,15 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
       finally {
         myComputationLock.unlock();
       }
+    }
+
+    @SuppressWarnings("deprecation")
+    private CodeStyleSettings getCurrentSettings(@NotNull PsiFile file) {
+      CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
+      if (result != null) {
+        return result;
+      }
+      return mySettingsManager.getCurrentSettings();
     }
 
     @Nullable

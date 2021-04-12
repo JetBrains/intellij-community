@@ -89,11 +89,6 @@ public final class CodeStyle {
       return tempSettings;
     }
 
-    CodeStyleSettings result = FileCodeStyleProvider.EP_NAME.computeSafeIfAny(provider -> provider.getSettings(file));
-    if (result != null) {
-      return result;
-    }
-
     PsiFile settingsFile = getSettingsPsi(file);
     if (settingsFile == null) {
       return getSettings(project);
