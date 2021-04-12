@@ -41,7 +41,7 @@ private fun _importProject(projectPath: String, project: Project) {
     GradleSettings.getInstance(project).gradleVmOptions =
         "-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
 
-    gradleProjectSettings.setupGradleProjectSettings(Paths.get(projectPath))
+    gradleProjectSettings.setupGradleProjectSettings(project, Paths.get(projectPath))
     gradleProjectSettings.gradleJvm = GRADLE_JDK_NAME
 
     GradleSettings.getInstance(project).getLinkedProjectSettings(projectPath)?.let { linkedProjectSettings ->
