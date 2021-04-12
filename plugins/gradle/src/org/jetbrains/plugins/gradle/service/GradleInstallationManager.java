@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -15,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -25,6 +27,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +63,7 @@ import static org.jetbrains.plugins.gradle.util.GradleJvmUtil.nonblockingResolve
 /**
  * Provides discovery utilities about Gradle build environment/layout based on current system environment and IDE configuration.
  */
-public class GradleInstallationManager {
+public class GradleInstallationManager implements Disposable {
 
   public static final Pattern GRADLE_JAR_FILE_PATTERN;
   public static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
@@ -80,6 +83,10 @@ public class GradleInstallationManager {
     GRADLE_ENV_PROPERTY_NAME = System.getProperty("gradle.home.env.key", "GRADLE_HOME");
   }
 
+  @Override
+  public void dispose() {
+  }
+
   public static GradleInstallationManager getInstance() {
     return ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
@@ -88,13 +95,30 @@ public class GradleInstallationManager {
   private final Map<String, BuildLayoutParameters> myBuildLayoutParametersCache = new ConcurrentHashMap<>();
 
   public GradleInstallationManager() {
-    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
         myBuildLayoutParametersCache.remove(workingDir);
       }
+    };
+
+    MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    appConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        if (ProjectManager.getInstance().getOpenProjects().length == 1) {
+          ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, GradleInstallationManager.this);
+        }
+      }
+
+      @Override
+      public void projectClosed(@NotNull Project project) {
+        if (ProjectManager.getInstance().getOpenProjects().length == 0) {
+          ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener);
+        }
+      }
     });
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    appConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         myBuildLayoutParametersCache.clear();
