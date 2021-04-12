@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxPopupState;
@@ -29,7 +30,7 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  * @author Eugene Zhuravlev
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
-  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
+  private final @Nullable Project myProject;
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
 
   @Nullable private JButton mySetUpButton;
@@ -123,6 +124,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @NotNull SdkListModelBuilder modelBuilder,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
     super(modelBuilder);
+    myProject = project;
     myOnNewSdkAdded = sdk -> {
       if (onNewSdkAdded != null) {
         onNewSdkAdded.consume(sdk);
@@ -245,7 +247,10 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
   @Nullable
   public Sdk getSelectedJdk() {
-    final JdkComboBoxItem selectedItem = getSelectedItem();
+    JdkComboBoxItem selectedItem = getSelectedItem();
+    if (selectedItem instanceof ProjectJdkComboBoxItem && myProject != null) {
+      return ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
     return selectedItem != null? selectedItem.getJdk() : null;
   }
 
@@ -286,7 +291,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
     if (dialogWrapper == null) {
-      LOG.warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
+      Logger.getInstance(JdkComboBox.class)
+        .warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
       return;
     }
 
