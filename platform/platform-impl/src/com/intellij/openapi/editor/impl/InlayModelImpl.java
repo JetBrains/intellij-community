@@ -41,9 +41,11 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR = Comparator
     .comparingInt((AfterLineEndInlayImpl i) -> i.getOffset())
     .thenComparing(i -> !i.isSoftWrappable())
+    .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
   private static final Comparator<AfterLineEndInlayImpl> AFTER_LINE_END_ELEMENTS_COMPARATOR = Comparator
     .comparing((AfterLineEndInlayImpl i) -> !i.isSoftWrappable())
+    .thenComparingInt(i -> -i.myPriority)
     .thenComparingInt(i -> i.myOrder);
 
   private static final Processor<InlayImpl> UPDATE_PROCESSOR = inlay -> {
@@ -198,32 +200,27 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public <T extends EditorCustomElementRenderer> @NotNull Inlay<T> addAfterLineEndElement(int offset,
                                                                                           boolean relatesToPrecedingText,
                                                                                           @NotNull T renderer) {
-   return addAfterLineEndElement(offset, relatesToPrecedingText, false, true, renderer);
+   return addAfterLineEndElement(offset, relatesToPrecedingText, true, 0, renderer);
   }
 
   @Override
   public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                  @NotNull InlayProperties properties,
                                                                                  @NotNull T renderer) {
-    return addAfterLineEndElement(offset, properties.isRelatedToPrecedingText(), false, true, renderer);
+    return addAfterLineEndElement(offset, properties.isRelatedToPrecedingText(), !properties.isSoftWrappingDisabled(),
+                                  properties.getPriority(), renderer);
   }
 
-
-  public @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndDebuggerHint(int offset,
-                                                                                               boolean insertFirst,
-                                                                                               @NotNull T renderer) {
-    return addAfterLineEndElement(offset, false, insertFirst, false, renderer);
-  }
 
   private @NotNull <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
                                                                                            boolean relatesToPrecedingText,
-                                                                                           boolean insertFirst,
                                                                                            boolean softWrappable,
+                                                                                           int priority,
                                                                                            @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     offset = Math.max(0, Math.min(document.getTextLength(), offset));
-    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, insertFirst, softWrappable,
+    AfterLineEndInlayImpl<T> inlay = new AfterLineEndInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority,
                                                                  renderer);
     notifyAdded(inlay);
     return inlay;

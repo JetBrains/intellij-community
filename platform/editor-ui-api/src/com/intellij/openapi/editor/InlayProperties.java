@@ -19,6 +19,7 @@ public final class InlayProperties {
   private boolean myShowAbove;
   private int myPriority;
   private boolean myShowWhenFolded;
+  private boolean myDisableSoftWrapping;
 
   /**
    * Creates a default set of inlay properties.
@@ -50,9 +51,9 @@ public final class InlayProperties {
   }
 
   /**
-   * This property applies to 'inline' and 'block' inlays, and impacts the visual order adjacent inlays are displayed. For 'inline' ones,
-   * higher priority means the inlay will be shown closer to the left, for 'block' ones - closer to the line of text (for inlays related
-   * to the same visual line).
+   * This property impacts the visual order in which adjacent inlays are displayed. For 'inline' and 'after line end' ones, higher priority
+   * means the inlay will be shown closer to the left, for 'block' ones - closer to the line of text (for inlays related to the same visual
+   * line).
    */
   public InlayProperties priority(int value) {
     myPriority = value;
@@ -65,6 +66,15 @@ public final class InlayProperties {
    */
   public InlayProperties showWhenFolded(boolean value) {
     myShowWhenFolded = value;
+    return this;
+  }
+
+  /**
+   * 'After line end' inlays with this property won't be moved to the next visual line, even if they don't fit editor visible area. They
+   * also will be displayed to the left of inlays with enabled soft wrapping, regardless of their {@link #priority(int) priorities}.
+   */
+  public InlayProperties disableSoftWrapping(boolean value) {
+    myDisableSoftWrapping = value;
     return this;
   }
 
@@ -94,5 +104,12 @@ public final class InlayProperties {
    */
   public boolean isShownWhenFolded() {
     return myShowWhenFolded;
+  }
+
+  /**
+   * @see #disableSoftWrapping(boolean)
+   */
+  public boolean isSoftWrappingDisabled() {
+    return myDisableSoftWrapping;
   }
 }
