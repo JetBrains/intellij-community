@@ -2,14 +2,9 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
-import com.intellij.codeInsight.navigation.SingleTargetElementInfo
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.model.psi.impl.PsiOrigin
-import com.intellij.model.psi.impl.TargetData
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
@@ -37,43 +32,6 @@ private fun <X : Any> fromHostEditor(editor: Editor, offset: Int, function: (edi
     return null
   }
   return function(editor.delegate, editor.document.injectedToHost(offset))
-}
-
-internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
-  return when (this) {
-    is TargetData.Declared -> {
-      DeclarationCtrlMouseInfo(declaration)
-    }
-    is TargetData.Referenced -> {
-      val ranges = listOf(references.first().absoluteRange)
-      val targets = this@ctrlMouseInfo.targets
-      if (targets.isEmpty()) {
-        return null
-      }
-      val singleTarget = targets.singleOrNull()
-      if (singleTarget != null) {
-        SingleSymbolCtrlMouseInfo(singleTarget.symbol, ranges)
-      }
-      else {
-        MultipleTargetElementsInfo(ranges)
-      }
-    }
-    is TargetData.Evaluator -> {
-      val singleTargetElement = targetElements.singleOrNull()
-      if (singleTargetElement != null) {
-        when (origin) {
-          is PsiOrigin.Leaf -> SingleTargetElementInfo(origin.leaf, singleTargetElement)
-          is PsiOrigin.Reference -> SingleTargetElementInfo(origin.reference, singleTargetElement)
-        }
-      }
-      else {
-        when (origin) {
-          is PsiOrigin.Leaf -> MultipleTargetElementsInfo(origin.leaf)
-          is PsiOrigin.Reference -> MultipleTargetElementsInfo(origin.reference)
-        }
-      }
-    }
-  }
 }
 
 internal fun gtdTargetNavigatable(targetElement: PsiElement): Navigatable {
