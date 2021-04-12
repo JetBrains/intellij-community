@@ -131,7 +131,7 @@ public class GitLineHandler extends GitTextHandler {
     if (!isCr) logOutput(line, outputType);
 
     if (OUTPUT_LOG.isDebugEnabled()) {
-      OUTPUT_LOG.debug(String.format("%s (%s):'%s'", getCommand(), outputType, line));
+      OUTPUT_LOG.debug(String.format("%s %% %s (%s):'%s'", getCommand(), this.hashCode(), outputType, line));
     }
 
     myLineListeners.getMulticaster().onLineAvailable(line, outputType);
