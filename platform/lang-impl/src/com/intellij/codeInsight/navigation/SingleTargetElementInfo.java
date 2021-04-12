@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -6,9 +6,12 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,21 +19,25 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @ApiStatus.Internal
 public class SingleTargetElementInfo extends BaseCtrlMouseInfo {
 
   private final @NotNull PsiElement myElementAtPointer;
   private final @NotNull PsiElement myTargetElement;
 
-  public SingleTargetElementInfo(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
-    super(elementAtPointer);
+  public SingleTargetElementInfo(@NotNull List<TextRange> absoluteRanges,
+                                 @NotNull PsiElement elementAtPointer,
+                                 @NotNull PsiElement targetElement) {
+    super(absoluteRanges);
     myElementAtPointer = elementAtPointer;
     myTargetElement = targetElement;
   }
 
-  public SingleTargetElementInfo(@NotNull PsiReference reference, @NotNull PsiElement targetElement) {
-    super(ReferenceRange.getAbsoluteRanges(reference));
-    myElementAtPointer = reference.getElement();
+  public SingleTargetElementInfo(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
+    super(elementAtPointer);
+    myElementAtPointer = elementAtPointer;
     myTargetElement = targetElement;
   }
 

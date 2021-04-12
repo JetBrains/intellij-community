@@ -8,8 +8,6 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
-import com.intellij.psi.ReferenceRange
 import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -98,16 +96,9 @@ private sealed class DeclarationOrReference {
 
   class Evaluator(private val offset: Int, val evaluatorData: TargetData.Evaluator) : DeclarationOrReference() {
     override val rangeWithOffset: TextRange by lazy(LazyThreadSafetyMode.NONE) {
-      when (val origin: PsiOrigin = evaluatorData.origin) {
-        is PsiOrigin.Reference -> findRangeWithOffset(origin.reference)
-        is PsiOrigin.Leaf -> origin.leaf.textRange
-      }
-    }
-
-    private fun findRangeWithOffset(reference: PsiReference): TextRange {
-      return ReferenceRange.getAbsoluteRanges(reference).find {
+      evaluatorData.origin.absoluteRanges.find {
         it.containsOffset(offset)
-      } ?: error("One of the reference ranges must contain offset at this point")
+      } ?: error("One of the ranges must contain offset at this point")
     }
   }
 }

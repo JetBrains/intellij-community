@@ -1,12 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
+import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolService
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.ReferenceRange
 
 internal data class DeclaredReferencedData(
   val declaredData: TargetData?,
@@ -49,6 +52,22 @@ internal sealed class TargetData {
 }
 
 internal sealed class PsiOrigin {
-  class Leaf(val leaf: PsiElement) : PsiOrigin()
-  class Reference(val reference: PsiReference) : PsiOrigin()
+
+  abstract val absoluteRanges: List<TextRange>
+
+  abstract val elementAtPointer: PsiElement
+
+  class Leaf(val leaf: PsiElement) : PsiOrigin() {
+
+    override val absoluteRanges: List<TextRange> get() = BaseCtrlMouseInfo.getReferenceRanges(leaf)
+
+    override val elementAtPointer: PsiElement get() = leaf
+  }
+
+  class Reference(val reference: PsiReference) : PsiOrigin() {
+
+    override val absoluteRanges: List<TextRange> get() = ReferenceRange.getAbsoluteRanges(reference)
+
+    override val elementAtPointer: PsiElement get() = reference.element
+  }
 }

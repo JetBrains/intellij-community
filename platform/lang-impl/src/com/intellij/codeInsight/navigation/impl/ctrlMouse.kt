@@ -37,15 +37,9 @@ private fun ctrlMouseInfo(origin: PsiOrigin, targetElements: Collection<PsiEleme
   require(targetElements.isNotEmpty())
   val singleTargetElement = targetElements.singleOrNull()
   return if (singleTargetElement != null) {
-    when (origin) {
-      is PsiOrigin.Leaf -> SingleTargetElementInfo(origin.leaf, singleTargetElement)
-      is PsiOrigin.Reference -> SingleTargetElementInfo(origin.reference, singleTargetElement)
-    }
+    SingleTargetElementInfo(origin.absoluteRanges, origin.elementAtPointer, singleTargetElement)
   }
   else {
-    when (origin) {
-      is PsiOrigin.Leaf -> MultipleTargetElementsInfo(origin.leaf)
-      is PsiOrigin.Reference -> MultipleTargetElementsInfo(origin.reference)
-    }
+    MultipleTargetElementsInfo(origin.absoluteRanges)
   }
 }
