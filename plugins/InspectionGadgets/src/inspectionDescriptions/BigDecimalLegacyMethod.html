@@ -1,7 +1,15 @@
 <html>
 <body>
-Reports calls to <b>divide()</b> or <b>setScale()</b> that use the old <b>int</b> constants for specifying the rounding mode.
-Since JDK 1.5 methods taking a <b>RoundingMode</b> <b>enum</b> parameter are available instead.
+Reports calls to <code>BigDecimal.divide()</code> or <code>BigDecimal.setScale()</code> which use the integer constants to specify the rounding mode.
+Since JDK 1.5 methods taking a <code>RoundingMode</code> <code>enum</code> parameter are available and should be prefered instead.
+<p>Example:</p>
+<pre>
+  new BigDecimal("42").setScale(2, BigDecimal.ROUND_FLOOR);
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  new BigDecimal("42").setScale(2, RoundingMode.FLOOR);
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
