@@ -256,6 +256,10 @@ public final class StartupUtil {
       importConfig(Arrays.asList(args), log, appStarterFuture, agreementDialogWasShown);
     }
     getAppStarter(appStarterFuture).start(Arrays.asList(args), prepareUiFuture);
+
+    // prevent JVM from exiting - because in FJP pool "all worker threads are initialized with {@link Thread#isDaemon} set {@code true}"
+    // cannot change `AppStarter.start` method signature for now to return CompletableFuture
+    ForkJoinPool.commonPool().awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
   /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
