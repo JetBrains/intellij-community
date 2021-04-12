@@ -10,8 +10,8 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun addGroup(group: String): BSB
   fun addVersion(version: String): BSB
 
-  fun addDependency(scope: String, dependency: String): BSB
-  fun addDependency(scope: String, dependency: Expression): BSB
+  fun addDependency(scope: String, dependency: String, sourceSet: String? = null): BSB
+  fun addDependency(scope: String, dependency: Expression, sourceSet: String? = null): BSB
 
   fun addApiDependency(dependency: String, sourceSet: String? = null): BSB
   fun addApiDependency(dependency: Expression, sourceSet: String? = null): BSB

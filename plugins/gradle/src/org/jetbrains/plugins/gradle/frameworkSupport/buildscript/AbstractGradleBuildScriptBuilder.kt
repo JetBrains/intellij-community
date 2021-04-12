@@ -22,41 +22,35 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun addVersion(version: String) =
     withPrefix { assign("version", version) }
 
-  override fun addDependency(scope: String, dependency: String) =
-    addDependency(scope, string(dependency))
+  override fun addDependency(scope: String, dependency: String, sourceSet: String?) =
+    addDependency(scope, string(dependency), sourceSet)
 
-  override fun addDependency(scope: String, dependency: Expression) =
-    withDependency { call(scope, dependency) }
-
-  private fun dependencyScope(sourceSet: String?, scope: String) =
-    when (sourceSet) {
-      null -> scope
-      else -> sourceSet + scope.capitalize()
-    }
+  override fun addDependency(scope: String, dependency: Expression, sourceSet: String?) = apply {
+    val dependencyScope = if (sourceSet == null) scope else sourceSet + scope.capitalize()
+    withDependency { call(dependencyScope, dependency) }
+  }
 
   override fun addApiDependency(dependency: String, sourceSet: String?) =
     addApiDependency(string(dependency), sourceSet)
 
   override fun addApiDependency(dependency: Expression, sourceSet: String?) =
-    addDependency(dependencyScope(sourceSet, "api"), dependency)
+    addDependency("api", dependency, sourceSet)
 
   override fun addImplementationDependency(dependency: String, sourceSet: String?) =
     addImplementationDependency(string(dependency), sourceSet)
 
-  override fun addImplementationDependency(dependency: Expression, sourceSet: String?) =
-    when (isSupportedImplementationScope(gradleVersion)) {
-      true -> addDependency(dependencyScope(sourceSet, "implementation"), dependency)
-      else -> addDependency(dependencyScope(sourceSet, "compile"), dependency)
-    }
+  override fun addImplementationDependency(dependency: Expression, sourceSet: String?) = apply {
+    val scope = if (isSupportedImplementationScope(gradleVersion)) "implementation" else "compile"
+    addDependency(scope, dependency, sourceSet)
+  }
 
   override fun addRuntimeOnlyDependency(dependency: String, sourceSet: String?) =
     addRuntimeOnlyDependency(string(dependency), sourceSet)
 
-  override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) =
-    when (isSupportedRuntimeOnlyScope(gradleVersion)) {
-      true -> addDependency(dependencyScope(sourceSet, "runtimeOnly"), dependency)
-      else -> addDependency(dependencyScope(sourceSet, "runtime"), dependency)
-    }
+  override fun addRuntimeOnlyDependency(dependency: Expression, sourceSet: String?) = apply {
+    val scope = if (isSupportedRuntimeOnlyScope(gradleVersion)) "runtimeOnly" else "runtime"
+    addDependency(scope, dependency, sourceSet)
+  }
 
   override fun addTestImplementationDependency(dependency: String) =
     addImplementationDependency(dependency, sourceSet = "test")
@@ -137,10 +131,8 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
-  override fun withJUnit() = when (isSupportedJUnit5(gradleVersion)) {
-    true -> withJUnit5()
-    else -> withJUnit4()
-  }
+  override fun withJUnit() =
+    if (isSupportedJUnit5(gradleVersion)) withJUnit5() else withJUnit4()
 
   override fun withJUnit4() = apply {
     withMavenCentral()
