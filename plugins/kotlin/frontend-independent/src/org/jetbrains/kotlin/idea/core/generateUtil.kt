@@ -6,17 +6,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.utils.ifEmpty
 import kotlin.math.min
 
 fun moveCaretIntoGeneratedElement(editor: Editor, element: PsiElement) {
@@ -202,30 +199,25 @@ private fun removeAfterOffset(offset: Int, whiteSpace: PsiWhiteSpace): PsiElemen
     return whiteSpace
 }
 
-@JvmOverloads
 fun <T : KtDeclaration> insertMembersAfter(
     editor: Editor?,
     classOrObject: KtClassOrObject,
     members: Collection<T>,
     anchor: PsiElement? = null,
-    getAnchor: (KtDeclaration) -> PsiElement? = { null }
-): List<T> {
+    getAnchor: (KtDeclaration) -> PsiElement? = { null },
+): List<SmartPsiElementPointer<T>> {
     members.ifEmpty { return emptyList() }
-    val project = classOrObject.project
-    return runWriteAction {
-        val insertedMembers = SmartList<SmartPsiElementPointer<T>>()
-        fun insertedMembersElements() = insertedMembers.mapNotNull { it.element }
+    val insertedMembers = SmartList<SmartPsiElementPointer<T>>()
+    val (parameters, otherMembers) = members.partition { it is KtParameter }
 
-        val (parameters, otherMembers) = members.partition { it is KtParameter }
+    parameters.mapNotNullTo(insertedMembers) {
+        if (classOrObject !is KtClass) return@mapNotNullTo null
 
-        parameters.mapNotNullTo(insertedMembers) {
-            if (classOrObject !is KtClass) return@mapNotNullTo null
-
-            @Suppress("UNCHECKED_CAST")
-            SmartPointerManager.createPointer(
-                classOrObject.createPrimaryConstructorParameterListIfAbsent().addParameter(it as KtParameter) as T
-            )
-        }
+        @Suppress("UNCHECKED_CAST")
+        SmartPointerManager.createPointer(
+            classOrObject.createPrimaryConstructorParameterListIfAbsent().addParameter(it as KtParameter) as T
+        )
+    }
 
         if (otherMembers.isNotEmpty()) {
             val psiFactory = KtPsiFactory(project)
@@ -244,7 +236,7 @@ fun <T : KtDeclaration> insertMembersAfter(
                 tailComments.reversed().map { body.addAfter(it, lBrace) }
             }
 
-            var afterAnchor = anchor ?: findInsertAfterAnchor(editor, body) ?: return@runWriteAction emptyList<T>()
+            var afterAnchor = anchor ?: findInsertAfterAnchor(editor, body) ?: return emptyList()
             otherMembers.mapTo(insertedMembers) {
                 afterAnchor = getAnchor(it) ?: afterAnchor
 
@@ -264,27 +256,12 @@ fun <T : KtDeclaration> insertMembersAfter(
                     }
                 }
 
-                it.removeModifier(KtTokens.EXTERNAL_KEYWORD)
+            it.removeModifier(KtTokens.EXTERNAL_KEYWORD)
 
-                @Suppress("UNCHECKED_CAST")
-                SmartPointerManager.createPointer((body.addAfter(it, afterAnchor) as T).apply { afterAnchor = this })
-            }
+            @Suppress("UNCHECKED_CAST")
+            SmartPointerManager.createPointer((body.addAfter(it, afterAnchor) as T).apply { afterAnchor = this })
         }
-
-        ShortenReferences.DEFAULT.process(insertedMembersElements())
-
-        val firstElement = insertedMembersElements().firstOrNull() ?: return@runWriteAction emptyList()
-        if (editor != null) {
-            moveCaretIntoGeneratedElement(editor, firstElement)
-        }
-
-        val codeStyleManager = CodeStyleManager.getInstance(project)
-        insertedMembersElements().forEach { codeStyleManager.reformat(it) }
-
-        insertedMembersElements().toList()
     }
-}
 
-fun <T : KtDeclaration> insertMember(editor: Editor?, classOrObject: KtClassOrObject, declaration: T, anchor: PsiElement? = null): T {
-    return insertMembersAfter(editor, classOrObject, listOf(declaration), anchor).single()
+    return insertedMembers
 }
