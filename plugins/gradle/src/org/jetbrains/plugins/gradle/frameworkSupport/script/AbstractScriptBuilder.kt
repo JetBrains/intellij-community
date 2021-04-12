@@ -78,11 +78,14 @@ abstract class AbstractScriptBuilder : ScriptBuilder {
       NewLineElement -> {
         add("", indent, isNewLine)
       }
+      else -> {
+        error("Unsupported element: ${element.javaClass}")
+      }
     }
   }
 
-  protected fun add(arguments: List<ArgumentElement>, indent: Int) {
-    for ((i, argument) in arguments.withIndex()) {
+  protected fun add(elements: List<ScriptElement>, indent: Int) {
+    for ((i, argument) in elements.withIndex()) {
       if (i != 0) {
         add(", ", indent, false)
       }

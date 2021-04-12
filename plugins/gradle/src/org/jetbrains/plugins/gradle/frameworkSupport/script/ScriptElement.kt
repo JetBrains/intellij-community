@@ -10,9 +10,10 @@ sealed class ScriptElement {
     data class PlusAssignElement(val name: String, val value: Expression) : Statement()
     sealed class Expression : Statement() {
       data class StringElement(val value: String) : Expression()
+      data class ListElement(val elements: List<Expression>) : Expression()
       data class CodeElement(val text: List<String>) : Expression()
       data class InfixCall(val left: Expression, val name: String, val right: Expression) : Expression()
-      data class CallElement(val name: String, val arguments: List<ArgumentElement>) : Expression()
+      data class CallElement(val name: Expression, val arguments: List<ArgumentElement>) : Expression()
       data class BlockElement(val statements: List<Statement>) : Expression() {
         fun isEmpty(): Boolean = statements.all { it is BlockElement && it.isEmpty() }
       }

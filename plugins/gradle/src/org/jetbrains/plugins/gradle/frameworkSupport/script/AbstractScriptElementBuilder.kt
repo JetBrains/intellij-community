@@ -15,18 +15,24 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun string(value: String) = StringElement(value)
 
+  override fun list(elements: List<Expression>) = ListElement(elements)
+  override fun list(vararg elements: Expression) = list(elements.toList())
+  override fun list(vararg elements: String) = list(elements.map(::string))
+
   override fun code(text: List<String>) = CodeElement(text)
   override fun code(vararg text: String) = code(text.toList())
 
   override fun assign(name: String, value: Expression) = AssignElement(name, value)
   override fun assign(name: String, value: String) = assign(name, string(value))
 
+  override fun assignIfNotNull(name: String, expression: Expression?) = expression?.let { assign(name, it) }
   override fun assignIfNotNull(name: String, value: String?) = value?.let { assign(name, it) }
 
   override fun plusAssign(name: String, value: Expression) = PlusAssignElement(name, value)
   override fun plusAssign(name: String, value: String) = plusAssign(name, string(value))
 
-  override fun call(name: String, arguments: List<ArgumentElement>) = CallElement(name, arguments)
+  override fun call(name: Expression, arguments: List<ArgumentElement>) = CallElement(name, arguments)
+  override fun call(name: String, arguments: List<ArgumentElement>) = call(code(name), arguments)
   override fun call(name: String, arguments: List<ArgumentElement>, configure: ScriptTreeBuilder.() -> Unit) =
     call(name, arguments + argument(configure))
 

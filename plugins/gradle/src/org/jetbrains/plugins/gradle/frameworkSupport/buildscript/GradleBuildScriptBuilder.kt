@@ -44,7 +44,12 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withKotlinJsPlugin(): BSB
   fun withKotlinMultiplatformPlugin(): BSB
   fun withGroovyPlugin(): BSB
-  fun withApplicationPlugin(mainClassName: String): BSB
+  fun withApplicationPlugin(
+    mainClass: String? = null,
+    mainModule: String? = null,
+    executableDir: String? = null,
+    defaultJvmArgs: List<String>? = null
+  ): BSB
 
   fun withJUnit(): BSB
   fun withJUnit4(): BSB

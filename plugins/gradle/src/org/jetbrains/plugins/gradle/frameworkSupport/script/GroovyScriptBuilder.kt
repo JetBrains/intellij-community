@@ -2,14 +2,13 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.CallElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.StringElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.script
 
 class GroovyScriptBuilder : AbstractScriptBuilder() {
   override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
-    when {
-      element is ArgumentElement -> {
+    when (element) {
+      is ArgumentElement -> {
         if (element.name != null) {
           add(element.name, indent, isNewLine)
           add(": ", indent, false)
@@ -17,7 +16,7 @@ class GroovyScriptBuilder : AbstractScriptBuilder() {
           return
         }
       }
-      element is CallElement -> {
+      is CallElement -> {
         if (isNewLine && element.arguments.isNotEmpty() && !hasTrailingBlock(element.arguments)) {
           add(element.name, indent, isNewLine)
           add(" ", indent, false)
@@ -25,11 +24,17 @@ class GroovyScriptBuilder : AbstractScriptBuilder() {
           return
         }
       }
-      element is StringElement -> {
+      is StringElement -> {
         if ('$' !in element.value && '\'' !in element.value) {
           add("'${element.value}'", indent, isNewLine)
           return
         }
+      }
+      is ListElement -> {
+        add("[", indent, isNewLine)
+        add(element.elements, indent)
+        add("]", indent, false)
+        return
       }
     }
     super.add(element, indent, isNewLine)

@@ -14,17 +14,23 @@ interface ScriptElementBuilder {
 
   fun string(value: String): StringElement
 
+  fun list(elements: List<Expression>) : ListElement
+  fun list(vararg elements: Expression) : ListElement
+  fun list(vararg elements: String) : ListElement
+
   fun code(text: List<String>): CodeElement
   fun code(vararg text: String): CodeElement
 
   fun assign(name: String, value: Expression): AssignElement
   fun assign(name: String, value: String): AssignElement
 
+  fun assignIfNotNull(name: String, expression: Expression?): AssignElement?
   fun assignIfNotNull(name: String, value: String?): AssignElement?
 
   fun plusAssign(name: String, value: Expression): PlusAssignElement
   fun plusAssign(name: String, value: String): PlusAssignElement
 
+  fun call(name: Expression, arguments: List<ArgumentElement>): CallElement
   fun call(name: String, arguments: List<ArgumentElement>): CallElement
   fun call(name: String, arguments: List<ArgumentElement>, configure: ScriptTreeBuilder.() -> Unit): CallElement
 

@@ -38,10 +38,11 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
   override fun newLine() = process { super.newLine() }
   override fun string(value: String) = process { super.string(value) }
+  override fun list(elements: List<Expression>) = process(elements) { super.list(elements) }
   override fun code(text: List<String>) = process { super.code(text) }
   override fun assign(name: String, value: Expression) = process(value) { super.assign(name, value) }
   override fun plusAssign(name: String, value: Expression) = process(value) { super.plusAssign(name, value) }
-  override fun call(name: String, arguments: List<ArgumentElement>) = process(arguments) { super.call(name, arguments) }
+  override fun call(name: Expression, arguments: List<ArgumentElement>) = process(arguments + name) { super.call(name, arguments) }
   override fun infixCall(left: Expression, name: String, right: Expression) = process(left, right) { super.infixCall(left, name, right) }
   override fun argument(name: String?, value: Expression) = process(value) { super.argument(name, value) }
   override fun block(configure: ScriptTreeBuilder.() -> Unit) = process { super.block(configure) }

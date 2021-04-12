@@ -169,4 +169,44 @@ class GradleBuildScriptBuilderTest {
         }
       """.trimIndent())
   }
+
+  @Test
+  fun `test application plugin building`() {
+    assertThat(buildscript(GradleVersion.current()) {
+      withApplicationPlugin()
+    }).isEqualTo("""
+        plugins {
+            id 'application'
+        }
+      """.trimIndent())
+    assertThat(buildscript(GradleVersion.current()) {
+      withApplicationPlugin("MyMain")
+    }).isEqualTo("""
+        plugins {
+            id 'application'
+        }
+        
+        application {
+            mainClass = 'MyMain'
+        }
+      """.trimIndent())
+    assertThat(buildscript(GradleVersion.current()) {
+      withApplicationPlugin(
+        mainClass = "org.gradle.sample.Main",
+        mainModule = "org.gradle.sample.app",
+        executableDir = "custom_bin_dir",
+        defaultJvmArgs = listOf("-Dgreeting.language=en"))
+    }).isEqualTo("""
+        plugins {
+            id 'application'
+        }
+        
+        application {
+            mainModule = 'org.gradle.sample.app'
+            mainClass = 'org.gradle.sample.Main'
+            executableDir = 'custom_bin_dir'
+            applicationDefaultJvmArgs = ['-Dgreeting.language=en']
+        }
+      """.trimIndent())
+  }
 }

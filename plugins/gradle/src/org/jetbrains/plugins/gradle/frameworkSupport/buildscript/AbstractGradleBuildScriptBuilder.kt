@@ -120,9 +120,21 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     addImplementationDependency("org.codehaus.groovy:groovy-all:$groovyVersion")
   }
 
-  override fun withApplicationPlugin(mainClassName: String) = apply {
+  override fun withApplicationPlugin(
+    mainClass: String?,
+    mainModule: String?,
+    executableDir: String?,
+    defaultJvmArgs: List<String>?
+  ) = apply {
     withPlugin("application")
-    withPostfix { assign("mainClassName", mainClassName) }
+    withPostfix {
+      callIfNotEmpty("application") {
+        assignIfNotNull("mainModule", mainModule)
+        assignIfNotNull("mainClass", mainClass)
+        assignIfNotNull("executableDir", executableDir)
+        assignIfNotNull("applicationDefaultJvmArgs", defaultJvmArgs?.toTypedArray()?.let(::list))
+      }
+    }
   }
 
   override fun withJUnit() = when (isSupportedJUnit5(gradleVersion)) {
