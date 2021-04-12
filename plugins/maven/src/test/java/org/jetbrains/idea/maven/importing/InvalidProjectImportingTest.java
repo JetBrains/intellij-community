@@ -30,6 +30,106 @@ import java.util.List;
 
 public class InvalidProjectImportingTest extends MavenImportingTestCase {
 
+  public void testResetDependenciesWhenProjectContainsErrors() {
+    //Registry.get("maven.server.debug").setValue(true);
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>jar</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>somegroup</groupId>" +
+                          "    <artifactId>artifact</artifactId>" +
+                          "    <version>1.0</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithErrors();
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
+
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>jar</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>somegroup</groupId>" +
+                          "    <artifactId>artifact</artifactId>" +
+                          "    <version>2.0</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithErrors();
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: somegroup:artifact:2.0");
+  }
+
+  public void testShouldNotResetDependenciesWhenProjectContainsUnrecoverableErrors() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>jar</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>somegroup</groupId>" +
+                          "    <artifactId>artifact</artifactId>" +
+                          "    <version>1.0</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithErrors();
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
+
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<packaging>jar</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "</modules>");
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+                          "" +
+                          "  <dependency>" +
+                          "    <groupId>somegroup</groupId>" +
+                          "    <artifactId>artifact</artifactId>" +
+                          "    <version>2.0" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProjectWithErrors();
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0");
+  }
+
   public void testUnknownProblemWithEmptyFile() throws IOException {
     createProjectPom("");
     WriteAction.runAndWait(() -> myProjectPom.setBinaryContent(new byte[0]));

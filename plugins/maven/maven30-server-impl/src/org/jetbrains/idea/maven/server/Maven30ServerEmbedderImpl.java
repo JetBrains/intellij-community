@@ -698,7 +698,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
               }
 
               project.setArtifacts(artifacts);
-              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, buildingResult.getProblems()));
             }
           }
         }
