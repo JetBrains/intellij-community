@@ -504,7 +504,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (iteratedValue instanceof PsiMethodCallExpression && LIST_INITIALIZER.test((PsiMethodCallExpression)iteratedValue)) {
       expressions = ((PsiMethodCallExpression)iteratedValue).getArgumentList().getExpressions();
     }
-    return expressions == null ? getFactory().getUnknown() : getFactory().createCommonValue(expressions, type);
+    return expressions == null ? getFactory().getUnknown() : DfaExpressionFactory.createCommonValue(getFactory(), expressions, type);
   }
 
   @Override public void visitForeachStatement(PsiForeachStatement statement) {

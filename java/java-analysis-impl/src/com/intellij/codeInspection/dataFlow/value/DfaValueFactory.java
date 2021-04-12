@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -225,20 +224,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaBinOpValue.Factory getBinOpFactory() {
     return myBinOpFactory;
-  }
-
-  @NotNull
-  public DfaValue createCommonValue(PsiExpression @NotNull [] expressions, PsiType targetType) {
-    DfaValue loopElement = null;
-    for (PsiExpression expression : expressions) {
-      DfaValue expressionValue = DfaExpressionFactory.getExpressionDfaValue(this, expression);
-      if (expressionValue == null) {
-        expressionValue = getObjectType(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
-      }
-      loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
-      if (DfaTypeValue.isUnknown(loopElement)) break;
-    }
-    return loopElement == null ? getUnknown() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {

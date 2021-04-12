@@ -10,6 +10,8 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescript
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
@@ -210,5 +212,19 @@ public class DfaExpressionFactory {
       return contract.isTrivial() && contract.getReturnValue().equals(ContractReturnValue.returnNew());
     }
     return contracts.isEmpty();
+  }
+
+  @NotNull
+  public static DfaValue createCommonValue(DfaValueFactory factory, PsiExpression @NotNull [] expressions, PsiType targetType) {
+    DfaValue loopElement = null;
+    for (PsiExpression expression : expressions) {
+      DfaValue expressionValue = getExpressionDfaValue(factory, expression);
+      if (expressionValue == null) {
+        expressionValue = factory.fromDfType(DfTypes.typedObject(expression.getType(), NullabilityUtil.getExpressionNullability(expression)));
+      }
+      loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
+      if (DfaTypeValue.isUnknown(loopElement)) break;
+    }
+    return loopElement == null ? factory.getUnknown() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 }

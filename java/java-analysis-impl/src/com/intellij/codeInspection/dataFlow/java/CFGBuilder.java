@@ -840,7 +840,7 @@ public class CFGBuilder {
     return this;
   }
 
-  public CFGBuilder loopOver(PsiExpression[] expressions, DfaVariableValue targetVariable) {
+  public CFGBuilder loopOver(PsiExpression[] expressions, DfaVariableValue targetVariable, @Nullable PsiType type) {
     DfaValueFactory factory = getFactory();
     if (expressions.length > ControlFlowAnalyzer.MAX_UNROLL_SIZE) {
       for (PsiExpression expression : expressions) {
@@ -850,7 +850,7 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      DfaValue commonValue = factory.createCommonValue(expressions, targetVariable.getType());
+      DfaValue commonValue = DfaExpressionFactory.createCommonValue(factory, expressions, type);
       if (DfaTypeValue.isUnknown(commonValue)) {
         flush(targetVariable).push(targetVariable);
       } else {
@@ -860,7 +860,7 @@ public class CFGBuilder {
       push(factory.getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
-        boxUnbox(expression, targetVariable.getType());
+        boxUnbox(expression, type);
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));

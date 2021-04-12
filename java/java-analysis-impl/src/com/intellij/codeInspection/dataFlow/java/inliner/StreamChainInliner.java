@@ -804,7 +804,7 @@ public class StreamChainInliner implements CallInliner {
       } else {
         builder
           .chain(firstStep::before)
-          .loopOver(args, builder.createTempVariable(inType))
+          .loopOver(args, builder.createTempVariable(inType), inType)
           .chain(firstStep::iteration).end();
         return;
       }
