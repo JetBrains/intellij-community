@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiStubSuppressor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -900,7 +901,7 @@ public final class PyUtil {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
       final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
-      if (initStub != null) {
+      if (initStub != null && !PyiStubSuppressor.isIgnoredStub(initStub)) {
         return initStub;
       }
       final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);

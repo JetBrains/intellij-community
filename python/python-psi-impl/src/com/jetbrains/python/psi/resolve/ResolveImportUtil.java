@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.pyi.PyiStubSuppressor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,7 +415,10 @@ public final class ResolveImportUtil {
   private static PsiFile findPyFileInDir(PsiDirectory dir, String referencedName, boolean withoutStubs) {
     PsiFile file = null;
     if (!withoutStubs) {
-      file = dir.findFile(referencedName + PyNames.DOT_PYI);
+      final var stub = dir.findFile(referencedName + PyNames.DOT_PYI);
+      if (!PyiStubSuppressor.isIgnoredStub(stub)) {
+        file =  stub;
+      }
     }
     if (file == null) {
       file = dir.findFile(referencedName + PyNames.DOT_PY);
