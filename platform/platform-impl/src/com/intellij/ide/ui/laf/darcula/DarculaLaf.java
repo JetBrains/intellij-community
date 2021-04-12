@@ -35,6 +35,8 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -53,24 +55,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   protected Disposable myDisposable;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
-
-  protected BasicLookAndFeel createBaseLookAndFeel() {
-    try {
-      if (SystemInfoRt.isMac) {
-        final String name = UIManager.getSystemLookAndFeelClassName();
-        Constructor<?> constructor = Class.forName(name).getDeclaredConstructor();
-        constructor.setAccessible(true);
-        return (BasicLookAndFeel)constructor.newInstance();
-      }
-      else {
-        return new IdeaLaf();
-      }
-    }
-    catch (Exception e) {
-      log(e);
-    }
-    return null;
-  }
 
   private void callInit(String method, UIDefaults defaults) {
     try {
@@ -98,8 +82,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     Logger.getInstance(DarculaLaf.class).error(e);
   }
 
-  @NotNull
-  private static Font toFont(UIDefaults defaults, Object key) {
+  private static @NotNull Font toFont(UIDefaults defaults, Object key) {
     Object value = defaults.get(key);
     if (value instanceof Font) {
       return (Font)value;
@@ -393,12 +376,21 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Override
   public void initialize() {
-    base = createBaseLookAndFeel();
-
     try {
-      base.initialize();
+      if (SystemInfoRt.isMac) {
+        Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
+        base = (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
+      }
+      else {
+        base = new IdeaLaf();
+      }
+
+      if (base != null) {
+        base.initialize();
+      }
     }
-    catch (Exception ignore) {
+    catch (Throwable e) {
+      Logger.getInstance(DarculaLaf.class).error(e);
     }
 
     if (LoadingState.LAF_INITIALIZED.isOccurred()) {

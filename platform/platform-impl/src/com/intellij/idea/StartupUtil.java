@@ -110,102 +110,6 @@ public final class StartupUtil {
     Main.setFlags(args);
     CommandLineArgs.parse(args);
 
-    prepareApp(args, mainClass);
-  }
-
-  /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
-    return LISTENER.apply(currentDirectory, args);
-  }
-
-  public static boolean isUsingSeparateWriteThread() {
-    return Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY);
-  }
-
-  // called by the app after startup
-  public static synchronized void addExternalInstanceListener(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
-    if (socketLock == null) throw new AssertionError("Not initialized yet");
-    socketLock.setCommandProcessor(processor);
-  }
-
-  // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static synchronized @Nullable BuiltInServer getServer() {
-    return socketLock == null ? null : socketLock.getServer();
-  }
-
-  public static synchronized @NotNull CompletableFuture<BuiltInServer> getServerFuture() {
-    CompletableFuture<BuiltInServer> serverFuture = socketLock == null ? null : socketLock.getServerFuture();
-    return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
-  }
-
-  public static @NotNull Future<@Nullable Boolean> getShellEnvLoadingFuture() {
-    return shellEnvLoadFuture;
-  }
-
-  private static @NotNull CompletableFuture<@Nullable("if accepted") Object> scheduleEuaDocumentLoading() {
-    return CompletableFuture.supplyAsync(() -> {
-      String vendorAsProperty = System.getProperty("idea.vendor.name", "");
-      if (vendorAsProperty.isEmpty()
-          ? !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()
-          : !"JetBrains".equals(vendorAsProperty)) {
-        return null;
-      }
-
-      Activity activity = StartUpMeasurer.startActivity("eua getting");
-      EndUserAgreement.Document document = EndUserAgreement.getLatestDocument();
-      activity = activity.endAndStart("eua is accepted checking");
-      if (document.isAccepted()) {
-        document = null;
-      }
-      activity.end();
-      return document;
-    }, ForkJoinPool.commonPool());
-  }
-
-  public interface AppStarter {
-    /* called from IDE init thread */
-    void start(@NotNull List<String> args, @NotNull CompletionStage<?> prepareUiFuture);
-
-    /* called from IDE init thread */
-    default void beforeImportConfigs() {}
-
-    /* called from EDT */
-    default void beforeStartupWizard() {}
-
-    /* called from EDT */
-    default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
-
-    /* called from IDE init thread */
-    default void importFinished(@NotNull Path newConfigDir) {}
-
-    /* called from EDT */
-    default int customizeIdeWizardDialog(@NotNull List<? extends AbstractCustomizeWizardStep> steps) {
-      return -1;
-    }
-  }
-
-  private static void runPreAppClass(@NotNull Logger log) {
-    String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
-    if (classBeforeAppProperty != null) {
-      Activity activity = StartUpMeasurer.startActivity("pre app class running");
-      try {
-        Class<?> clazz = Class.forName(classBeforeAppProperty);
-        Method invokeMethod = clazz.getDeclaredMethod("invoke");
-        invokeMethod.setAccessible(true);
-        invokeMethod.invoke(null);
-      }
-      catch (Exception e) {
-        log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
-      }
-      activity.end();
-    }
-  }
-
-  private static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
     LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
@@ -358,6 +262,98 @@ public final class StartupUtil {
       importConfig(Arrays.asList(args), log, appStarterFuture, agreementDialogWasShown);
     }
     getAppStarter(appStarterFuture).start(Arrays.asList(args), prepareUiFuture);
+  }
+
+  /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
+  @SuppressWarnings("UnusedDeclaration")
+  public static int processWindowsLauncherCommandLine(String currentDirectory, String[] args) {
+    return LISTENER.apply(currentDirectory, args);
+  }
+
+  public static boolean isUsingSeparateWriteThread() {
+    return Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY);
+  }
+
+  // called by the app after startup
+  public static synchronized void addExternalInstanceListener(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
+    if (socketLock == null) throw new AssertionError("Not initialized yet");
+    socketLock.setCommandProcessor(processor);
+  }
+
+  // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public static synchronized @Nullable BuiltInServer getServer() {
+    return socketLock == null ? null : socketLock.getServer();
+  }
+
+  public static synchronized @NotNull CompletableFuture<BuiltInServer> getServerFuture() {
+    CompletableFuture<BuiltInServer> serverFuture = socketLock == null ? null : socketLock.getServerFuture();
+    return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
+  }
+
+  public static @NotNull Future<@Nullable Boolean> getShellEnvLoadingFuture() {
+    return shellEnvLoadFuture;
+  }
+
+  private static @NotNull CompletableFuture<@Nullable("if accepted") Object> scheduleEuaDocumentLoading() {
+    return CompletableFuture.supplyAsync(() -> {
+      String vendorAsProperty = System.getProperty("idea.vendor.name", "");
+      if (vendorAsProperty.isEmpty()
+          ? !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()
+          : !"JetBrains".equals(vendorAsProperty)) {
+        return null;
+      }
+
+      Activity activity = StartUpMeasurer.startActivity("eua getting");
+      EndUserAgreement.Document document = EndUserAgreement.getLatestDocument();
+      activity = activity.endAndStart("eua is accepted checking");
+      if (document.isAccepted()) {
+        document = null;
+      }
+      activity.end();
+      return document;
+    }, ForkJoinPool.commonPool());
+  }
+
+  public interface AppStarter {
+    /* called from IDE init thread */
+    void start(@NotNull List<String> args, @NotNull CompletionStage<?> prepareUiFuture);
+
+    /* called from IDE init thread */
+    default void beforeImportConfigs() {}
+
+    /* called from EDT */
+    default void beforeStartupWizard() {}
+
+    /* called from EDT */
+    default void startupWizardFinished(@NotNull CustomizeIDEWizardStepsProvider provider) {}
+
+    /* called from IDE init thread */
+    default void importFinished(@NotNull Path newConfigDir) {}
+
+    /* called from EDT */
+    default int customizeIdeWizardDialog(@NotNull List<? extends AbstractCustomizeWizardStep> steps) {
+      return -1;
+    }
+  }
+
+  private static void runPreAppClass(@NotNull Logger log) {
+    String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
+    if (classBeforeAppProperty != null) {
+      Activity activity = StartUpMeasurer.startActivity("pre app class running");
+      try {
+        Class<?> clazz = Class.forName(classBeforeAppProperty);
+        Method invokeMethod = clazz.getDeclaredMethod("invoke");
+        invokeMethod.setAccessible(true);
+        invokeMethod.invoke(null);
+      }
+      catch (Exception e) {
+        log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
+      }
+      activity.end();
+    }
   }
 
   private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {

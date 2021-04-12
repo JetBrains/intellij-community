@@ -114,20 +114,4 @@ public final class LazyInitializer {
     @Override
     public abstract @NotNull T initialize();
   }
-
-  public static final class MutableNotNullValue<T> extends LazyValue<@NotNull T> {
-    public MutableNotNullValue(@NotNull Supplier<@NotNull ? extends T> supplier) {
-      super(supplier);
-    }
-
-    @Override
-    public @NotNull T get() {
-      return super.get();
-    }
-
-    @Override
-    public void set(@NotNull T value) {
-      super.set(value);
-    }
-  }
 }
