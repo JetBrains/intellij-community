@@ -971,8 +971,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  protected class JBTableHeader extends JTableHeader {
-
+  protected class JBTableHeader extends JTableHeader implements ComponentWithExpandableItems<TableColumn> {
+    private final ExpandableItemsHandler<TableColumn> myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
     private final Color disabledForeground = JBColor.namedColor("TableHeader.disabledForeground", JBColor.gray);
 
     public JBTableHeader() {
@@ -1011,6 +1011,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       };
       setDefaultRenderer(newRenderer);
+    }
+
+    @Override
+    public @NotNull ExpandableItemsHandler<TableColumn> getExpandableItemsHandler() {
+      return myExpandableItemsHandler;
+    }
+
+    @Override
+    public void setExpandableItemsEnabled(boolean enabled) {
+      myExpandableItemsHandler.setEnabled(enabled);
     }
 
     @Override
