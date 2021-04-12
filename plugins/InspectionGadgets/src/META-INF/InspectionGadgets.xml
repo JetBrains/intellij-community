@@ -1601,8 +1601,8 @@
                       implementationClass="com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection"/>
 
     <!--group.names.naming.conventions-->
-    <localInspection groupPath="Java" language="JAVA" shortName="NewClassNamingConvention" bundle="messages.InspectionGadgetsBundle" key="class.naming.convention.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="NewClassNamingConvention" bundle="messages.InspectionGadgetsBundle" key="class.naming.convention.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.class" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
     <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
@@ -1615,9 +1615,9 @@
     <naming.convention.class implementation="com.siyeh.ig.naming.AbstractClassNamingConvention" id="AbstractClassNamingConvention" order="after InterfaceNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.ClassNamingConvention" id="ClassNamingConvention" order="last"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="NewMethodNamingConvention" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="NewMethodNamingConvention" bundle="messages.InspectionGadgetsBundle"
                      key="new.method.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.NewMethodNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.MethodNamingConventionMerger"/>
     <naming.convention.method implementation="com.siyeh.ig.naming.InstanceMethodNamingConvention" id="InstanceMethodNamingConvention" order="last"/>
@@ -1626,20 +1626,20 @@
     <naming.convention.method implementation="com.siyeh.ig.junit.JUnit4MethodNamingConvention" id="JUnit4MethodNamingConvention" order="before NativeMethodNamingConvention"/>
     <naming.convention.method implementation="com.siyeh.ig.junit.JUnit3MethodNamingConvention" id="JUnit3MethodNamingConvention" order="before JUnit4MethodNamingConvention"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="BooleanMethodNameMustStartWithQuestion" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="BooleanMethodNameMustStartWithQuestion" bundle="messages.InspectionGadgetsBundle"
                      key="boolean.method.name.must.start.with.question.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.BooleanMethodNameMustStartWithQuestionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ClassNamePrefixedWithPackageName" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="ClassNamePrefixedWithPackageName" bundle="messages.InspectionGadgetsBundle"
                      key="class.name.prefixed.with.package.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.class" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.ClassNamePrefixedWithPackageNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ClassNameSameAsAncestorName" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="ClassNameSameAsAncestorName" bundle="messages.InspectionGadgetsBundle"
                      key="class.name.same.as.ancestor.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.class" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.ClassNameSameAsAncestorNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ConfusingMainMethod" bundle="messages.InspectionGadgetsBundle" key="confusing.main.method.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.ConfusingMainMethodInspection"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="FieldNamingConvention" bundle="messages.InspectionGadgetsBundle"
@@ -1657,50 +1657,50 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.DollarSignInNameInspection"/>
 
-    <localInspection groupPath="Java" language="JAVA" suppressId="ExceptionClassNameDoesntEndWithException" shortName="ExceptionNameDoesntEndWithException"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" suppressId="ExceptionClassNameDoesntEndWithException" shortName="ExceptionNameDoesntEndWithException"
                      bundle="messages.InspectionGadgetsBundle" key="exception.name.doesnt.end.with.exception.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.class" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.ExceptionNameDoesntEndWithExceptionInspection"/>
 
     <localInspection groupPath="Java" language="JAVA" shortName="LambdaParameterNamingConvention"
                      bundle="messages.InspectionGadgetsBundle" key="lambda.parameter.naming.convention.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.LambdaParameterNamingConventionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LambdaUnfriendlyMethodOverload"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="LambdaUnfriendlyMethodOverload"
                      bundle="messages.InspectionGadgetsBundle" key="lambda.unfriendly.method.overload.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.method" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.LambdaUnfriendlyMethodOverloadInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalVariableNamingConvention" bundle="messages.InspectionGadgetsBundle"
                      key="local.variable.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.LocalVariableNamingConventionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MethodNameSameAsClassName" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="MethodNameSameAsClassName" bundle="messages.InspectionGadgetsBundle"
                      key="method.name.same.as.class.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.MethodNameSameAsClassNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MethodNameSameAsParentName" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="MethodNameSameAsParentName" bundle="messages.InspectionGadgetsBundle"
                      key="method.name.same.as.parent.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.MethodNameSameAsParentNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MethodNamesDifferingOnlyByCase" shortName="MisspelledMethodName"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" suppressId="MethodNamesDifferingOnlyByCase" shortName="MisspelledMethodName"
                      bundle="messages.InspectionGadgetsBundle" key="method.names.differ.only.by.case.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions.method" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.naming.MisspelledMethodNameInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NonBooleanMethodNameMayNotStartWithQuestion" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="NonBooleanMethodNameMayNotStartWithQuestion" bundle="messages.InspectionGadgetsBundle"
                      key="non.boolean.method.name.must.not.start.with.question.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NonExceptionNameEndsWithException" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="NonExceptionNameEndsWithException" bundle="messages.InspectionGadgetsBundle"
                      key="non.exception.name.ends.with.exception.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.class" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.NonExceptionNameEndsWithExceptionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="OverloadedMethodsWithSameNumberOfParameters" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="OverloadedMethodsWithSameNumberOfParameters" bundle="messages.InspectionGadgetsBundle"
                      key="overloaded.methods.with.same.number.parameters.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.OverloadedMethodsWithSameNumberOfParametersInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="OverloadedVarargsMethod" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.naming.conventions" language="JAVA" shortName="OverloadedVarargsMethod" bundle="messages.InspectionGadgetsBundle"
                      key="overloaded.vararg.method.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.naming.conventions" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.naming.conventions.method" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.naming.OverloadedVarargsMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="PackageNamingConvention" bundle="messages.InspectionGadgetsBundle"
                       key="package.naming.convention.display.name" groupBundle="messages.InspectionsBundle"
