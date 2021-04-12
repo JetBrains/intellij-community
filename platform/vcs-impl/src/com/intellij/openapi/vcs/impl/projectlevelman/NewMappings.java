@@ -120,7 +120,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
-    LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setMapping path = '" + path + "' vcs = " + activeVcsName, new Throwable());
+    }
     final VcsDirectoryMapping newMapping = new VcsDirectoryMapping(path, activeVcsName);
 
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
@@ -416,7 +418,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void setDirectoryMappings(@NotNull List<? extends VcsDirectoryMapping> items) {
-    LOG.debug("setDirectoryMappings, size: " + items.size());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("setDirectoryMappings, size: " + items.size(), new Throwable());
+    }
 
     updateVcsMappings(items);
   }
@@ -480,7 +484,9 @@ public final class NewMappings implements Disposable {
   }
 
   public void removeDirectoryMapping(@NotNull VcsDirectoryMapping mapping) {
-    LOG.debug("remove mapping: " + mapping.getDirectory());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("remove mapping: " + mapping.getDirectory(), new Throwable());
+    }
 
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
     newMappings.remove(mapping);
@@ -585,6 +591,10 @@ public final class NewMappings implements Disposable {
   }
 
   public void beingUnregistered(final String name) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("beingUnregistered " + name, new Throwable());
+    }
+
     List<VcsDirectoryMapping> newMappings = new ArrayList<>(myMappings);
     newMappings.removeIf(mapping -> Objects.equals(mapping.getVcs(), name));
 
