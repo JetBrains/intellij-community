@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -12,19 +12,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 public abstract class ExpandableItemsHandlerFactory {
-  public static ExpandableItemsHandler<Integer> install(JList list) {
-    ExpandableItemsHandlerFactory i = getInstance();
-    return i == null ? (ExpandableItemsHandler<Integer>)NULL : i.doInstall(list);
-  }
-
-  public static ExpandableItemsHandler<Integer> install(JTree tree) {
-    ExpandableItemsHandlerFactory i = getInstance();
-    return i == null ? (ExpandableItemsHandler<Integer>)NULL : i.doInstall(tree);
-  }
-
-  public static ExpandableItemsHandler<TableCell> install(JTable table) {
-    ExpandableItemsHandlerFactory i = getInstance();
-    return i == null ? (ExpandableItemsHandler<TableCell>)NULL : i.doInstall(table);
+  @SuppressWarnings("unchecked")
+  public static <T> @NotNull ExpandableItemsHandler<T> install(@NotNull JComponent component) {
+    ExpandableItemsHandlerFactory factory = getInstance();
+    ExpandableItemsHandler<?> handler = factory == null ? null : factory.doInstall(component);
+    return (ExpandableItemsHandler<T>)(handler == null ? NULL : handler);
   }
 
   @Nullable
@@ -33,13 +25,9 @@ public abstract class ExpandableItemsHandlerFactory {
     return app == null || !Registry.is("ide.windowSystem.showListItemsPopup") ? null : app.getService(ExpandableItemsHandlerFactory.class);
   }
 
-  protected abstract ExpandableItemsHandler<Integer> doInstall(JList list);
+  protected abstract @Nullable ExpandableItemsHandler<?> doInstall(@NotNull JComponent component);
 
-  protected abstract ExpandableItemsHandler<Integer> doInstall(JTree tree);
-
-  protected abstract ExpandableItemsHandler<TableCell> doInstall(JTable table);
-
-  private static final ExpandableItemsHandler NULL = new ExpandableItemsHandler<>() {
+  private static final ExpandableItemsHandler<?> NULL = new ExpandableItemsHandler<>() {
     @Override
     public void setEnabled(boolean enabled) {
     }

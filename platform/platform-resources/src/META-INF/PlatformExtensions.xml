@@ -213,7 +213,7 @@
     <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
     <applicationService serviceInterface="com.intellij.ui.ExpandableItemsHandlerFactory"
-                        serviceImplementation="com.intellij.ui.ExpandTipHandlerFactoryImpl"/>
+                        serviceImplementation="com.intellij.ui.ExpandableItemsHandlerFactoryImpl"/>
     <applicationService
         serviceInterface="com.intellij.openapi.ui.messages.MessagesService"
         serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
