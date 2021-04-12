@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,8 +104,6 @@ public class EditorSearchSession implements SearchSession,
     myComponent = SearchReplaceComponent
       .buildFor(project, myEditor.getContentComponent())
       .addPrimarySearchActions(createPrimarySearchActions())
-      .addSecondarySearchActions(createSecondarySearchActions())
-      .addPrimarySearchActions(new ToggleSelectionOnlyAction())
       .addExtraSearchActions(new ToggleMatchCase(),
                              new ToggleWholeWordsOnlyAction(),
                              new ToggleRegex(),
@@ -119,7 +118,6 @@ public class EditorSearchSession implements SearchSession,
       .withDataProvider(this)
       .withCloseAction(this::close)
       .withReplaceAction(this::replaceCurrent)
-      .withSecondarySearchActionsIsModifiedGetter(() -> myFindModel.getSearchContext() != FindModel.SearchContext.ANY)
       .build();
 
     myComponent.addListener(this);
@@ -211,20 +209,20 @@ public class EditorSearchSession implements SearchSession,
       new AddOccurrenceAction(),
       new RemoveOccurrenceAction(),
       new SelectAllAction(),
-      new Separator()
+      new Separator(),
+      new ToggleSelectionOnlyAction(),
+      new ShowFilterPopupGroup()
     };
   }
 
+  /**
+   * @deprecated Won't be used anymore
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated
   @NotNull
   protected AnAction[] createSecondarySearchActions() {
-    return new AnAction[] {
-      new ToggleAnywhereAction(),
-      new ToggleInCommentsAction(),
-      new ToggleInLiteralsOnlyAction(),
-      new ToggleExceptCommentsAction(),
-      new ToggleExceptLiteralsAction(),
-      new ToggleExceptCommentsAndLiteralsAction()
-    };
+    return AnAction.EMPTY_ARRAY;
   }
 
   private void saveInitialSelection() {
