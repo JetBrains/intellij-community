@@ -18,16 +18,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.toList
 
-internal class LocalBuildLayoutParameters(private val project: Project,
-                                          private val projectPath: String) : BuildLayoutParameters {
+internal open class LocalBuildLayoutParameters(private val project: Project,
+                                               private val projectPath: String) : BuildLayoutParameters {
   override val gradleHome: String? by lazy { findGradleHome() }
   override val gradleVersion: GradleVersion? by lazy { guessGradleVersion() }
   override val gradleUserHome: String by lazy { findGradleUserHomeDir() }
 
-  private val gradleSettings = GradleSettings.getInstance(project)
-  private val gradleProjectSettings = gradleSettings.getLinkedProjectSettings(projectPath)
+  protected open fun getGradleProjectSettings() = getGradleSettings().getLinkedProjectSettings(projectPath)
+  private fun getGradleSettings() = GradleSettings.getInstance(project)
+
   private val wrapperConfiguration: WrapperConfiguration? by lazy {
-    val distributionType = gradleProjectSettings?.distributionType ?: return@lazy null
+    val distributionType = getGradleProjectSettings()?.distributionType ?: return@lazy null
     when (distributionType) {
       DistributionType.DEFAULT_WRAPPED -> GradleUtil.getWrapperConfiguration(projectPath)
       DistributionType.BUNDLED -> WrapperConfiguration().apply {
@@ -38,6 +39,7 @@ internal class LocalBuildLayoutParameters(private val project: Project,
   }
 
   private fun findGradleHome(): String? {
+    val gradleProjectSettings = getGradleProjectSettings()
     val distributionType = gradleProjectSettings?.distributionType
                            ?: return GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)?.path
     if (distributionType == DistributionType.LOCAL) return gradleProjectSettings.gradleHome
@@ -61,7 +63,7 @@ internal class LocalBuildLayoutParameters(private val project: Project,
   }
 
   private fun guessGradleVersion(): GradleVersion? {
-    val distributionType = gradleProjectSettings?.distributionType ?: return null
+    val distributionType = getGradleProjectSettings()?.distributionType ?: return null
     when (distributionType) {
       DistributionType.BUNDLED -> return GradleVersion.current()
       DistributionType.LOCAL -> {
@@ -79,6 +81,9 @@ internal class LocalBuildLayoutParameters(private val project: Project,
             return GradleInstallationManager.parseDistributionVersion(path)
           }
         }
+        else {
+          return gradleVersion
+        }
       }
       DistributionType.WRAPPED -> return null
     }
@@ -86,7 +91,7 @@ internal class LocalBuildLayoutParameters(private val project: Project,
   }
 
   private fun findGradleUserHomeDir(): String =
-    gradleSettings.serviceDirectoryPath ?: org.gradle.initialization.BuildLayoutParameters().gradleUserHomeDir.path
+    getGradleSettings().serviceDirectoryPath ?: org.gradle.initialization.BuildLayoutParameters().gradleUserHomeDir.path
 
   companion object {
     private val log = logger<LocalGradleExecutionAware>()

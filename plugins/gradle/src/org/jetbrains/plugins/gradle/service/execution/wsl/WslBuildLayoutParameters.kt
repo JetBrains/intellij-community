@@ -51,6 +51,9 @@ internal class WslBuildLayoutParameters(private val wslDistribution: WSLDistribu
             return GradleInstallationManager.parseDistributionVersion(path)
           }
         }
+        else {
+          return gradleVersion
+        }
       }
       DistributionType.WRAPPED -> return null
     }
