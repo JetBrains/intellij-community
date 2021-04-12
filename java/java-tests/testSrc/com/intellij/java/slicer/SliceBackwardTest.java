@@ -147,4 +147,5 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testRecordComponent2() throws Exception { doTest();}
   public void testRecordComponent3() throws Exception { doTest();}
   public void testOptionalAsContainer() throws Exception { doTest();}
+  public void testUnmodifiableList() throws Exception { doTest();}
 }

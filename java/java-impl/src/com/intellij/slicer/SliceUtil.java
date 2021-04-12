@@ -174,12 +174,13 @@ final class SliceUtil {
           }
         }
       }
-      if (method != null && builder.hasNesting()) {
+      if (method != null) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
         boolean hasFlownParameter = false;
         for (int i = 0; i < parameters.length; i++) {
           Flow paramAnno = isParamFlowAnnotated(method, i);
           if (paramAnno != null && !parameters[i].isVarArgs()) {
+            if (!builder.hasNesting() && !paramAnno.sourceIsContainer()) continue;
             PsiExpression[] args = call.getArgumentList().getExpressions();
             if (args.length > i) {
               JavaSliceBuilder argBuilder = builder.updateNesting(paramAnno);
