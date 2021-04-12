@@ -347,6 +347,12 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
           return@task
         }
       }
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH) {
+        if (projectDir != null && PlatformProjectOpenProcessor.attachToProject(projectToClose, projectDir, callback)) {
+          result = true
+          return@task
+        }
+      }
       else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
         // not in a new window
         result = true
