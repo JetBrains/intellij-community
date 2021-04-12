@@ -48,9 +48,7 @@ import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
-import training.learn.course.Lesson
 import training.learn.course.LessonProperties
-import training.learn.lesson.LessonListener
 import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
@@ -92,7 +90,6 @@ class PythonOnboardingTour :
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
-      addEndLessonListener()
       configurations().forEach { runManager().removeConfiguration(it) }
 
       val root = ProjectRootManager.getInstance(project).contentRoots[0]
@@ -135,37 +132,28 @@ class PythonOnboardingTour :
     return if (isSingleProject) PythonLessonsBundle.message("python.onboarding.return.to.welcome") else ""
   }
 
-  private fun TaskRuntimeContext.addEndLessonListener() {
-    val listener = object  : LessonListener {
-      override fun lessonPassed(lesson: Lesson) {
-        invokeLater {
-          val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
-                                                        PythonLessonsBundle.message("python.onboarding.finish.text", returnToWelcomeScreenRemark()))
-            .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
-            .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
-            .icon(FeaturesTrainerIcons.Img.PluginIcon)
-            .show(project)
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    if (!lessonPassed) return
+    invokeLater {
+      val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
+                                                    PythonLessonsBundle.message("python.onboarding.finish.text",
+                                                                                returnToWelcomeScreenRemark()))
+        .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
+        .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
+        .icon(FeaturesTrainerIcons.Img.PluginIcon)
+        .show(project)
 
-          when (result) {
-            Messages.YES -> invokeLater {
-              LessonManager.instance.stopLesson()
-              val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
-              invokeActionForFocusContext(closeAction)
-            }
-            Messages.NO -> invokeLater {
-              LearningUiManager.resetModulesView()
-            }
-          }
+      when (result) {
+        Messages.YES -> invokeLater {
+          LessonManager.instance.stopLesson()
+          val closeAction = ActionManager.getInstance().getAction("CloseProject") ?: error("No close project action found")
+          invokeActionForFocusContext(closeAction)
         }
-      }
-
-      override fun lessonStopped(lesson: Lesson) {
-        invokeLater {
-          removeLessonListener(this)
+        Messages.NO -> invokeLater {
+          LearningUiManager.resetModulesView()
         }
       }
     }
-    addLessonListener(listener)
   }
 
   private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
