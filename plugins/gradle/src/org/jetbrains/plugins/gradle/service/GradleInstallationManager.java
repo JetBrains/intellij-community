@@ -113,6 +113,7 @@ public class GradleInstallationManager implements Disposable {
 
       @Override
       public void projectClosed(@NotNull Project project) {
+        myBuildLayoutParametersCache.clear();
         if (ProjectManager.getInstance().getOpenProjects().length == 0) {
           ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener);
         }
