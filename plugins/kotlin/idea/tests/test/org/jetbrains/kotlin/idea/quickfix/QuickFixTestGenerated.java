@@ -7899,9 +7899,8 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         }
     }
 
-    @TestMetadata("idea/testData/quickfix/inlineClass")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/inlineClass")
     public static class InlineClass extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -7909,12 +7908,12 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("inlineClassDeprecated.kt")
         public void testInlineClassDeprecated() throws Exception {
-            runTest("idea/testData/quickfix/inlineClass/inlineClassDeprecated.kt");
+            runTest("testData/quickfix/inlineClass/inlineClassDeprecated.kt");
         }
 
         @TestMetadata("inlineClassDeprecated_js.kt")
         public void testInlineClassDeprecated_js() throws Exception {
-            runTest("idea/testData/quickfix/inlineClass/inlineClassDeprecated_js.kt");
+            runTest("testData/quickfix/inlineClass/inlineClassDeprecated_js.kt");
         }
     }
 
@@ -11460,7 +11459,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("addParenthesisForSealedClass2.kt")
         public void testAddParenthesisForSealedClass2() throws Exception {
-            runTest("idea/testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
+            runTest("testData/quickfix/supertypeInitialization/addParenthesisForSealedClass2.kt");
         }
 
         @TestMetadata("baseConstructorError.kt")
