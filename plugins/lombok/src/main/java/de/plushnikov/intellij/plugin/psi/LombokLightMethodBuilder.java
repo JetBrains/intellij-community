@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -141,9 +140,11 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
 
   @Override
   public PsiCodeBlock getBody() {
-    if (null == myBodyCodeBlock) {
+    String bodyAsText = myBodyAsText;
+    if (null == myBodyCodeBlock && bodyAsText != null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
-      myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + StringUtil.notNullize(myBodyAsText) + "}", this);
+      myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + myBodyAsText + "}", this);
+      myBodyAsText = null;
     }
     return myBodyCodeBlock;
   }
