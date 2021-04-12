@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
@@ -48,5 +50,12 @@ public class MavenProjectReaderResult {
     this.nativeMavenProject = nativeMavenProject;
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
+  }
+
+
+  public static boolean shouldResetDependenciesAndFolders(MavenProjectReaderResult result) {
+    if (Registry.is("maven.always.reset")) return true;
+    MavenProjectProblem unrecoverable = ContainerUtil.find(result.readingProblems, it -> !it.isRecoverable());
+    return unrecoverable == null;
   }
 }
