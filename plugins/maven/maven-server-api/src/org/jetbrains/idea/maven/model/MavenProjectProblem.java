@@ -23,24 +23,33 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 
 public class MavenProjectProblem implements Serializable {
+  //todo: this enum values are write-only now
   public enum ProblemType {
     SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES
   }
 
+  private final boolean myRecoverable;
   private final String myPath;
   private final String myDescription;
   private final ProblemType myType;
 
+  public static MavenProjectProblem createStructureProblem(String path, String description, boolean recoverable) {
+    return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE, recoverable);
+  }
+
   public static MavenProjectProblem createStructureProblem(String path, String description) {
-    return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE);
+    return createProblem(path, description, MavenProjectProblem.ProblemType.STRUCTURE, false);
   }
 
   public static MavenProjectProblem createSyntaxProblem(String path, MavenProjectProblem.ProblemType type) {
-    return createProblem(path, MessageFormat.format("''{0}'' has syntax errors", new File(path).getName()) , type);
+    return createProblem(path, MessageFormat.format("''{0}'' has syntax errors", new File(path).getName()), type, false);
   }
 
-  public static MavenProjectProblem createProblem(String path, String description, MavenProjectProblem.ProblemType type) {
-    return new MavenProjectProblem(path, description, type);
+  public static MavenProjectProblem createProblem(String path,
+                                                  String description,
+                                                  MavenProjectProblem.ProblemType type,
+                                                  boolean recoverable) {
+    return new MavenProjectProblem(path, description, type, recoverable);
   }
 
   public static Collection<MavenProjectProblem> createProblemsList() {
@@ -51,14 +60,19 @@ public class MavenProjectProblem implements Serializable {
     return new LinkedHashSet<MavenProjectProblem>(copyThis);
   }
 
-  public MavenProjectProblem(String path, String description, ProblemType type) {
+  public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable) {
     myPath = path;
     myDescription = description;
     myType = type;
+    myRecoverable = recoverable;
   }
 
   public String getPath() {
     return myPath;
+  }
+
+  public boolean isRecoverable() {
+    return myRecoverable;
   }
 
   public String getDescription() {
