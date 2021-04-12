@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ui.JBUI
 import java.awt.*
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
@@ -112,12 +111,11 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
 
           var component = super.createCustomComponent(action, presentation)
 
-          if(component is JPanel && action is ComboBoxAction) {
-            if(component.getComponentCount() == 1) {
-              val cmp = component.getComponent(0)
-              if(cmp is JComponent) {
-                component = cmp
-              }
+          if (action is ComboBoxAction && component is JPanel && component.getComponentCount() == 1) {
+            val child = component.getComponent(0) as? JComponent
+            if (child != null) {
+              component.remove(child)
+              component = child
             }
           }
 
