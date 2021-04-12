@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
+import org.jetbrains.plugins.gradle.service.execution.LocalBuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -614,10 +615,19 @@ public class GradleInstallationManager implements Disposable {
   public static GradleVersion guessGradleVersion(@NotNull GradleProjectSettings settings) {
     DistributionType distributionType = settings.getDistributionType();
     if (distributionType == null) return null;
+    BuildLayoutParameters buildLayoutParameters;
     Project project = findProject(settings);
-    if (project == null) return null;
-
-    BuildLayoutParameters buildLayoutParameters = getInstance().guessBuildLayoutParameters(project, settings.getExternalProjectPath());
+    if (project == null)  {
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      buildLayoutParameters = new LocalBuildLayoutParameters(defaultProject, settings.getExternalProjectPath()) {
+        @Override
+        public GradleProjectSettings getGradleProjectSettings() {
+          return settings;
+        }
+      };
+    } else {
+      buildLayoutParameters = getInstance().guessBuildLayoutParameters(project, settings.getExternalProjectPath());
+    }
     return buildLayoutParameters.getGradleVersion();
   }
 
