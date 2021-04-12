@@ -61,7 +61,7 @@ public class JUnit4TestListener extends RunListener {
 
   @Override
   public void testRunStarted(Description description) {
-    if (myRootName != null && !myRootName.startsWith("[")) {
+    if (myRootName != null && !myRootName.equals("null") && !myRootName.startsWith("[")) {
       JUnitTestTreeNodeManager.TestNodePresentation rootNodePresentation = NODE_NAMES_MANAGER.getRootNodePresentation(myRootName);
 
       myPrintStream.println("##teamcity[rootName name = '" + escapeName(rootNodePresentation.getName()) +
