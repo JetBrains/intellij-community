@@ -16,8 +16,8 @@
 
 <body>
 <p>
-  This inspection checks whether any type-conversion with the functions <code>string()</code>, <code>number()</code> or
-  <code>boolean()</code> is redundant, i.e. whether the type of argument is the same as the functions return type or if
+  Reports type-conversions with functions <code>string()</code>, <code>number()</code> or
+  <code>boolean()</code>, which are redundant. I.e. whether the type of argument is the same as the functions return type or if
   the expected type of the expression is of type "any". While such an explicit conversion may sometimes be intentional
   to emphasize the type, this can usually be safely removed.
 </p>
