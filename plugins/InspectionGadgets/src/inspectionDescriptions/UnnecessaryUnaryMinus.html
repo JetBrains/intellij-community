@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports any unnecessary unary minuses.
+Reports any unnecessary unary minuses. Such expressions could be unnecessary hard to understand and bug-prone.
 <p>
-For example:
-<code><pre>
+<p><b>Example:</b></p>
+<pre><code>
     i += -8;
     i = i + -8;
-</pre></code>
-could be replaced by:
-<code><pre>
+</code></pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre><code>
     i -= 8;
     i = i - 8;
-</pre></code>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

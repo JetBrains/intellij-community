@@ -1,7 +1,19 @@
 <html>
 <body>
-Reports on any expressions of type char which are used in
-addition or subtraction expressions.
+Reports on any expressions of type <code>char</code> which are used in addition or subtraction expressions. 
+Such code is not necessarily a problem, but may result in bugs e.g., 
+if usage as string is expected instead.
+<p><b>Example:</b><code>int a = 'a' + 42;</code></p>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<code>int a = (int) 'a' + 42;</code>
+
+<p>or <b>example</b> in the <code>String</code> context:
+<pre><code>
+  int i1 = 1;
+  int i2 = 2;
+  System.out.println (i2 + '-' + i1 + " = " + (i2 - i1));</code></pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<code>System.out.println (i2 + "-" + i1 + " = " + (i2 - i1));</code>
 <!-- tooltip end -->
 <p>
 

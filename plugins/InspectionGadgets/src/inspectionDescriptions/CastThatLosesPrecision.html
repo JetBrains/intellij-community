@@ -3,15 +3,19 @@
 Reports any cast operations between primitive numeric types which may
 result in loss of precision. Such casts are not necessarily a problem, but may result in difficult to
 trace bugs if the loss of precision is unexpected.
+<p><b>Example:</b><pre><code>
+  int a = 420;
+  byte b = (byte) a;
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to indicate that this inspection should ignore casts from
-<b>int</b> to <b>char</b>.
+<code>int</code> to <code>char</code>.
 This type of cast is often used when implementing I/O operations, because the
-<b>read()</b> method of the class
-<b>java.io.Reader</b> returns an <b>int</b>.
+<code>read()</code> method of the class
+<code>java.io.Reader</code> returns an <code>int</code>.
 <p>
-  Use the second checkbox below to ignore casts of constant values 128-255 from <b>int</b> to <b>byte</b>.
+  Use the second checkbox below to ignore casts of constant values 128-255 from <code>int</code> to <code>byte</code>.
   Such values will overflow to negative numbers that still fit inside a byte.
 </body>
 </html>
