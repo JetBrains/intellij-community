@@ -202,7 +202,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     // TODO: replace with isCreatingNewLinkedProject when GradleModuleBuilder will be removed
     if (myParentProject == null) {
       GradleProjectImportUtil.setupGradleSettings(settings);
-      GradleProjectImportUtil.setupGradleProjectSettings(projectSettings, rootProjectPath);
+      GradleProjectImportUtil.setupGradleProjectSettings(projectSettings, project, rootProjectPath);
     }
     GradleVersion gradleVersion = suggestGradleVersion(project);
     if (isCreatingNewLinkedProject) {

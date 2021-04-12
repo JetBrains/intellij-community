@@ -21,9 +21,10 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -102,9 +103,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void reset() {
     if (myServiceDirectoryPathField != null) {
-      File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
-      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir.getPath());
-
+      BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
+      String gradleUserHomeDir = buildLayoutParameters.getGradleUserHome();
+      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
       myServiceDirectoryPathField.setText(myInitialSettings.getServiceDirectoryPath());
     }
 
@@ -172,6 +173,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return myInitialSettings;
   }
 
+  /**
+   * @deprecated obsolete unused method
+   */
+  @Deprecated
   public IdeaGradleSystemSettingsControlBuilder dropServiceDirectory() {
     dropServiceDirectory = true;
     return this;
@@ -270,7 +275,8 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   }
 
   private boolean moveVMOptionsToGradleProperties(@NotNull String vmOptions, @NotNull GradleSettings settings) {
-    File gradleUserHomeDir = new BuildLayoutParameters().getGradleUserHomeDir();
+    BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(settings.getProject());
+    File gradleUserHomeDir = new File(buildLayoutParameters.getGradleUserHome());
     if (myServiceDirectoryPathField != null) {
       String fieldText = trimIfPossible(myServiceDirectoryPathField.getText());
       if (fieldText != null) gradleUserHomeDir = new File(fieldText);

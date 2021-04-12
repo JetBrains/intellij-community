@@ -16,23 +16,22 @@ import java.nio.file.Paths
 const val USE_GRADLE_JAVA_HOME = "#GRADLE_JAVA_HOME"
 
 fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
-  val projectRootManager = ProjectRootManager.getInstance(project)
-  val projectSdk = projectRootManager.projectSdk
-  return nonblockingResolveGradleJvmInfo(projectSdk, externalProjectPath, gradleJvm)
+  val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+  return nonblockingResolveGradleJvmInfo(project, projectSdk, externalProjectPath, gradleJvm)
 }
 
-fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
+fun SdkLookupProvider.nonblockingResolveGradleJvmInfo(project: Project, projectSdk: Sdk?, externalProjectPath: String?, gradleJvm: String?): SdkInfo {
   return when (gradleJvm) {
-    USE_GRADLE_JAVA_HOME -> createJdkInfo(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(externalProjectPath))
+    USE_GRADLE_JAVA_HOME -> createJdkInfo(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(project, externalProjectPath))
     else -> nonblockingResolveJdkInfo(projectSdk, gradleJvm)
   }
 }
 
-fun getGradleJavaHome(externalProjectPath: String?): String? {
+fun getGradleJavaHome(project: Project, externalProjectPath: String?): String? {
   if (externalProjectPath == null) {
     return null
   }
-  val properties = getGradleProperties(Paths.get(externalProjectPath))
+  val properties = getGradleProperties(project, Paths.get(externalProjectPath))
   val javaHomeProperty = properties.javaHomeProperty ?: return null
   return javaHomeProperty.value
 }

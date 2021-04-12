@@ -282,7 +282,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private void deduceGradleHomeIfPossible() {
     if (myGradleHomePathField == null) return;
 
-    File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome();
+    File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(myProjectRef.get());
     if (gradleHome == null) {
       new DelayedBalloonInfo(MessageType.WARNING, LocationSettingType.UNKNOWN, BALLOON_DELAY_MILLIS).run();
       return;
@@ -401,7 +401,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         deduceGradleHomeIfPossible();
       }
       else {
-        if (GradleInstallationManager.getInstance().isGradleSdkHome(myGradleHomePathField.getText())) {
+        Project project = myProjectRef.get();
+        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, myGradleHomePathField.getText())) {
           myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
         }
         else {
@@ -444,7 +445,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleHomeSettingType = LocationSettingType.UNKNOWN;
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.empty", gradleHomePath));
       }
-      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(new File(gradleHomePath))) {
+      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), new File(gradleHomePath))) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath));
@@ -458,11 +459,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private @NotNull SdkInfo getSelectedGradleJvmInfo(@NotNull SdkComboBox comboBox) {
-    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(comboBox.getModel().getProject());
+    Project project = comboBox.getModel().getProject();
+    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(project);
     String externalProjectPath = myInitialSettings.getExternalProjectPath();
     Sdk projectSdk = comboBox.getModel().getSdksModel().getProjectSdk();
     String gradleJvm = getSelectedGradleJvmReference(comboBox, sdkLookupProvider);
-    return nonblockingResolveGradleJvmInfo(sdkLookupProvider, projectSdk, externalProjectPath, gradleJvm);
+    return nonblockingResolveGradleJvmInfo(sdkLookupProvider, project, projectSdk, externalProjectPath, gradleJvm);
   }
 
   @Override
@@ -472,11 +474,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
       File gradleHomeFile = new File(gradleHomePath);
       String finalGradleHomePath;
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(gradleHomeFile)) {
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomeFile)) {
         finalGradleHomePath = gradleHomePath;
       }
       else {
-        finalGradleHomePath = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(gradleHomePath);
+        finalGradleHomePath = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(myProjectRef.get(), gradleHomePath);
         if (finalGradleHomePath != null) {
           SwingUtilities.invokeLater(() -> {
             myGradleHomePathField.setText(finalGradleHomePath);
@@ -607,11 +609,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
     else {
       File gradleHomeFile = new File(gradleHome);
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(gradleHomeFile)) {
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomeFile)) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
       }
       else {
-        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(gradleHome) != null
+        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(project, gradleHome) != null
                                   ? LocationSettingType.EXPLICIT_CORRECT
                                   : LocationSettingType.EXPLICIT_INCORRECT;
       }
@@ -668,10 +670,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     setupProjectSdksModel(sdksModel, project, projectSdk);
     recreateGradleJdkComboBox(project, sdksModel);
 
-    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(myGradleJdkComboBox.getModel().getProject());
+    SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(project);
     String externalProjectPath = myInitialSettings.getExternalProjectPath();
     addUsefulGradleJvmReferences(myGradleJdkComboBox, externalProjectPath);
-    setSelectedGradleJvmReference(myGradleJdkComboBox, sdkLookupProvider, externalProjectPath, settings.getGradleJvm());
+    setSelectedGradleJvmReference(myGradleJdkComboBox, sdkLookupProvider, project, externalProjectPath, settings.getGradleJvm());
   }
 
   private void recreateGradleJdkComboBox(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
