@@ -55,7 +55,7 @@ private fun gotoDeclarationOrUsagesInner(file: PsiFile, offset: Int): GTDUAction
 }
 
 private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
-  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return null
   return referencedData?.toGTDActionData(file.project)?.toGTDUActionData() // GTD of referenced symbols
          ?: (referencedData)?.let { ShowUsagesGTDUActionData(file.project, it) } // SU of referenced symbols if nowhere to navigate
          ?: declaredData?.let { ShowUsagesGTDUActionData(file.project, it) } // SU of declared symbols

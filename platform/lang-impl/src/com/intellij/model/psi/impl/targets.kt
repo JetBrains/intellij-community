@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 @Experimental
 fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
   val (declaredData, referencedData) = declaredReferencedData(file, offset)
+                                       ?: return emptyList()
   val data = referencedData
              ?: declaredData
              ?: return emptyList()
@@ -33,16 +34,14 @@ fun targetSymbols(file: PsiFile, offset: Int): Collection<Symbol> {
  */
 @Experimental
 fun targetDeclarationAndReferenceSymbols(file: PsiFile, offset: Int): Pair<Collection<Symbol>, Collection<Symbol>> {
-  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return Pair(emptyList(), emptyList())
   return (declaredData?.targets?.map { it.symbol } ?: emptyList()) to (referencedData?.targets?.map { it.symbol } ?: emptyList())
 }
 
-private val emptyData = DeclaredReferencedData(null, null)
-
-internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData {
+internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferencedData? {
   val allDeclarationsOrReferences: List<DeclarationOrReference> = declarationsOrReferences(file, offset)
   if (allDeclarationsOrReferences.isEmpty()) {
-    return emptyData
+    return null
   }
 
   val withMinimalRanges: Collection<DeclarationOrReference> = chooseByRange(

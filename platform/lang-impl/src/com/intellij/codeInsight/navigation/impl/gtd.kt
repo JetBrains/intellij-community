@@ -71,7 +71,7 @@ private fun gotoDeclarationInner(file: PsiFile, offset: Int): GTDActionData? {
 }
 
 private fun fromTargetData(file: PsiFile, offset: Int): GTDActionData? {
-  val (declaredData, referencedData) = declaredReferencedData(file, offset)
+  val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return null
   val targetData = referencedData   // prefer referenced because GTD follows references first
                    ?: declaredData  // offer navigation between declarations of the declared symbol
                    ?: return null
