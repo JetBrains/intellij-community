@@ -40,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileWithOneLanguage;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -276,13 +277,30 @@ public final class TypedHandler extends TypedActionHandlerBase {
   private static boolean isAutoPopup(@NotNull Editor editor, @NotNull PsiFile file, char charTyped) {
     final int offset = editor.getCaretModel().getOffset() - 1;
     if (offset >= 0) {
-      final PsiElement element = file.findElementAt(offset);
-      if (element != null) {
-        for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(element.getLanguage(), file.getProject())) {
-          if (contributor.invokeAutoPopup(element, charTyped)) {
-            LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
-            return true;
+      PsiElement element;
+      Language language;
+      if (file instanceof PsiFileWithOneLanguage) {
+        element = null;
+        language = file.getLanguage();
+      }
+      else {
+        element = file.findElementAt(offset);
+        if (element == null) {
+          return false;
+        }
+        language = element.getLanguage();
+      }
+
+      for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(language, file.getProject())) {
+        if (element == null) {
+          element = file.findElementAt(offset);
+          if (element == null) {
+            return false;
           }
+        }
+        if (contributor.invokeAutoPopup(element, charTyped)) {
+          LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
+          return true;
         }
       }
     }
