@@ -3,6 +3,7 @@
 @file:ApiStatus.Internal
 package com.intellij.idea
 
+import com.intellij.BundleBase
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
 import com.intellij.icons.AllIcons
@@ -35,9 +36,9 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
+import com.intellij.util.ui.EDT
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
-import java.awt.EventQueue
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -52,61 +53,61 @@ private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
+  val args = processProgramArguments(rawArgs)
+
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFutureActivity = initAppActivity.startChild("plugin descriptor init waiting")
   val loadAndInitPluginFuture = PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
   loadAndInitPluginFuture.thenRun(loadAndInitPluginFutureActivity::end)
 
-  // use main thread, avoid thread switching
-  (prepareUiFuture as CompletableFuture<*>).join()
+  prepareUiFuture.thenComposeAsync({
+    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread()
+                                                                                          ?: throw IllegalStateException("Init UI first"))
+    (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
 
-  val args = processProgramArguments(rawArgs)
-  EventQueue.invokeLater {
-    runActivity("create app") {
-      val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-      ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine()) { app ->
-        (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
-
-        loadAndInitPluginFuture
-          .thenAcceptAsync({ plugins ->
-            runActivity("app component registration") {
-              app.registerComponents(plugins, app, null)
-            }
-
-            if (args.isEmpty()) {
-              startApp(app, IdeStarter(), initAppActivity, plugins, args)
-            }
-            else {
-              // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
-              findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
-            }
-
-            if (!Main.isHeadless()) {
-              ForkJoinPool.commonPool().execute {
-                runActivity("icons preloading") {
-                  if (isInternal) {
-                    IconLoader.setStrictGlobally(true)
-                  }
-
-                  AsyncProcessIcon("")
-                  AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-                  AnimatedIcon.FS()
-                }
-
-                runActivity("migLayout") {
-                  // IDEA-170295
-                  PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
-                }
-              }
-            }
-          }, { if (EventQueue.isDispatchThread()) ForkJoinPool.commonPool().execute(it) else it.run() })
-          .exceptionally {
-            StartupAbortedException.processException(it)
-            null
-          }
-      }
+    if (isInternal) {
+      BundleBase.assertOnMissedKeys(true)
     }
-  }
+
+    loadAndInitPluginFuture
+      .thenAccept { plugins ->
+        runActivity("app component registration") {
+          app.registerComponents(plugins, app, null)
+        }
+
+        if (args.isEmpty()) {
+          startApp(app, IdeStarter(), initAppActivity, plugins, args)
+        }
+        else {
+          // `ApplicationStarter` is an extension, so to find a starter extensions must be registered first
+          findCustomAppStarterAndStart(plugins, args, app, initAppActivity)
+        }
+
+        if (!Main.isHeadless()) {
+          ForkJoinPool.commonPool().execute {
+            runActivity("icons preloading") {
+              if (isInternal) {
+                IconLoader.setStrictGlobally(true)
+              }
+
+              AsyncProcessIcon("")
+              AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+              AnimatedIcon.FS()
+            }
+
+            runActivity("migLayout") {
+              // IDEA-170295
+              PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+            }
+          }
+        }
+      }
+  }, Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() } )
+    .exceptionally {
+      StartupAbortedException.processException(it)
+      null
+    }
 }
 
 private fun startApp(app: ApplicationImpl,

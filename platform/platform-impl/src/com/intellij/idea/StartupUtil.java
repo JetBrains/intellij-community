@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.AWTExceptionHandler;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -40,6 +41,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -477,9 +479,20 @@ public final class StartupUtil {
         catch (UnsupportedLookAndFeelException e) {
           throw new RuntimeException(e);
         }
-        activity.end();
 
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
+
+        activity = activity.endAndStart("awt thread busy notification");
+        // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
+        // that thread was chosen because we know for sure it's running
+        Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
+        // needed for EDT not to exit suddenly
+        AWTAutoShutdown.getInstance().notifyThreadBusy(thread);
+        ShutDownTracker.getInstance().registerShutdownTask(() -> {
+          // allow for EDT to exit
+          AWTAutoShutdown.getInstance().notifyThreadFree(thread);
+        });
+        activity.end();
       }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
@@ -954,6 +967,10 @@ public final class StartupUtil {
         }
       }
     }
+
+    // do not crash AWT on exceptions
+    AWTExceptionHandler.register();
+
     activity.end();
   }
 

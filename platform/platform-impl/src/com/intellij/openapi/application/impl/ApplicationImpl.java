@@ -111,20 +111,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
-    this(isInternal, isUnitTestMode, isHeadless, isCommandLine, null);
-  }
-
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine, Consumer<ApplicationImpl> initTask) {
     super(null);
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
     registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    if (initTask != null) {
-      // myLock is a final field, we cannot do init in EDT and set it later
-      initTask.accept(this);
-    }
 
     if (isUnitTestMode || isInternal) {
       BundleBase.assertOnMissedKeys(true);
@@ -147,6 +138,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
     if (!isUnitTestMode && !isHeadless) {
       Disposable uiRootDisposable = Disposer.newDisposable();
+      //noinspection deprecation
       Disposer.register(this, uiRootDisposable, "ui");
     }
 
@@ -155,7 +147,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
       // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
       // that thread was chosen because we know for sure it's running
-      Thread thread = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).getPeriodicTasksThread();
+      Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
       AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
       Disposer.register(this, () -> {
         AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
@@ -170,6 +162,47 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  // this constructor must be called only by ApplicationLoader
+  public ApplicationImpl(boolean isInternal,
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine,
+                         @NotNull Thread edtThread) {
+    super(null);
+
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+
+    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
+
+    myIsInternal = isInternal;
+    myTestModeFlag = isUnitTestMode;
+    myHeadlessMode = isHeadless;
+    myCommandLineMode = isCommandLine;
+
+    mySaveAllowed = !(isUnitTestMode || isHeadless);
+
+    if (!isUnitTestMode && !isHeadless) {
+      Disposable uiRootDisposable = Disposer.newDisposable();
+      //noinspection deprecation
+      Disposer.register(this, uiRootDisposable, "ui");
+    }
+
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
+    myLock = new ReadMostlyRWLock(edtThread);
+    // Acquire IW lock on EDT indefinitely in legacy mode
+    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
+      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass()));
+    }
+    activity.end();
+
+    NoSwingUnderWriteAction.watchForEvents(this);
+
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
   }
 
   /**
