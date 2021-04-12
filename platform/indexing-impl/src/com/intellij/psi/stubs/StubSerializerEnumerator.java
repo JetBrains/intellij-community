@@ -129,16 +129,6 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return myIdToName.get(getClassId(serializer));
   }
 
-  void copyFrom(@Nullable StubSerializerEnumerator helper) throws IOException {
-    if (helper == null) {
-      return;
-    }
-
-    for (Map.Entry<String, Supplier<ObjectStubSerializer<?, ? extends Stub>>> entry : helper.myNameToLazySerializer.entrySet()) {
-      assignId(entry.getValue(), entry.getKey());
-    }
-  }
-
   private @NotNull ObjectStubSerializer<?, ? extends Stub> instantiateSerializer(int id,
                                                                                  @NotNull MissingSerializerReporter reporter) throws SerializerNotFoundException {
     String name = myIdToName.get(id);
