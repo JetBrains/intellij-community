@@ -148,6 +148,11 @@ public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCode
             runTest("testData/checker/codeFragments/unusedEquals.kt");
         }
 
+        @TestMetadata("unusedEquals2.kt")
+        public void testUnusedEquals2() throws Exception {
+            runTest("testData/checker/codeFragments/unusedEquals2.kt");
+        }
+
         @TestMetadata("withoutBodyFunction.kt")
         public void testWithoutBodyFunction() throws Exception {
             runTest("testData/checker/codeFragments/withoutBodyFunction.kt");

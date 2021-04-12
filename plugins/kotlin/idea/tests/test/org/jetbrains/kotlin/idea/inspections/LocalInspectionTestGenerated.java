@@ -7801,6 +7801,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
         }
 
+        @TestMetadata("hasOuterClassCompanionObjectReference.kt")
+        public void testHasOuterClassCompanionObjectReference() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassCompanionObjectReference.kt");
+        }
+
         @TestMetadata("hasOuterClassMemberReference.kt")
         public void testHasOuterClassMemberReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference.kt");
@@ -7836,6 +7841,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt");
         }
 
+        @TestMetadata("hasOuterClassObjectReference.kt")
+        public void testHasOuterClassObjectReference() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassObjectReference.kt");
+        }
+
         @TestMetadata("hasOuterClassTypeReference.kt")
         public void testHasOuterClassTypeReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassTypeReference.kt");
@@ -7854,6 +7864,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("hasSuperJavaClassMemberReference2.kt")
         public void testHasSuperJavaClassMemberReference2() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasSuperJavaClassMemberReference2.kt");
+        }
+
+        @TestMetadata("inAnonymousObject.kt")
+        public void testInAnonymousObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/inAnonymousObject.kt");
         }
 
         @TestMetadata("inInnerClass.kt")

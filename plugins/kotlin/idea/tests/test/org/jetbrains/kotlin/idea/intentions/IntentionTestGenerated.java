@@ -2767,9 +2767,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep.kt");
                 }
 
+                @TestMetadata("withLoopDeep13.kt")
+                public void testWithLoopDeep13() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/withLoopDeep13.kt");
+                }
+
                 @TestMetadata("withLoopDeepAndComments.kt")
                 public void testWithLoopDeepAndComments() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments.kt");
+                }
+
+                @TestMetadata("withLoopDeepAndComments13.kt")
+                public void testWithLoopDeepAndComments13() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/withLoopDeepAndComments13.kt");
                 }
 
                 @TestMetadata("withLoopExistingLabel.kt")
