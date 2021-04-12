@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
+import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyReferenceExpression
@@ -74,7 +74,9 @@ class PyModuleNameCompletionContributor : CompletionContributor() {
   }
 
   private fun shouldDoCompletion(parameters: CompletionParameters): Boolean {
-    if (!ENABLED) return false
+    if (!ENABLED || PythonRuntimeService.getInstance().isInPydevConsole(parameters.originalFile)) {
+      return false
+    }
 
     val element = parameters.position
     val parent = element.parent

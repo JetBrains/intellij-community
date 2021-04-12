@@ -17,12 +17,12 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.search.PySearchUtilBase
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
@@ -176,4 +176,10 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
     })
   }
 
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (PythonRuntimeService.getInstance().isInPydevConsole(parameters.originalFile)) {
+      return
+    }
+    super.fillCompletionVariants(parameters, result)
+  }
 }
