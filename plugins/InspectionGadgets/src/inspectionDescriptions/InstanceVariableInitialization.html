@@ -1,13 +1,17 @@
 <html>
 <body>
 Reports instance variables which are not guaranteed to be initialized upon object initialization.
-<p>
-Note: This inspection uses a very conservative dataflow algorithm, and may report instance variables
-as uninitialized incorrectly. Variables reported as initialized will always be initialized.
-<!-- tooltip end -->
-<p>
-Use the checkbox below to indicate whether you want uninitialized primitive fields to be reported.
-<p>
+<p>Example:</p>
+<pre>
+  class Foo {
+    public int bar;
 
+    static { }
+  }
+</pre>
+Note: this inspection uses a very conservative dataflow algorithm, and may report instance variables as uninitialized incorrectly. Variables
+reported as initialized will always be initialized.
+<!-- tooltip end -->
+<p>Use the checkbox below to indicate whether you want uninitialized primitive fields to be reported.</p>
 </body>
 </html>
