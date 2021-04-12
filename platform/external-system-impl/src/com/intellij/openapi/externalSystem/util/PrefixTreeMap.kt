@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.util.containers.FList
-import java.util.*
-import kotlin.NoSuchElementException
-import kotlin.collections.LinkedHashMap
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -116,11 +113,11 @@ internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
     fun getEntries(): Sequence<Map.Entry<FList<K>, V>> {
       return sequence {
         if (value.isPresent) {
-          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
+          yield(java.util.Map.entry(FList.emptyList(), value.get()))
         }
         for ((key, child) in children) {
           for ((path, value) in child.getEntries()) {
-            yield(AbstractMap.SimpleImmutableEntry(path.prepend(key), value))
+            yield(java.util.Map.entry(path.prepend(key), value))
           }
         }
       }
@@ -129,19 +126,20 @@ internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
     fun getAllAncestors(path: FList<K>): Sequence<Map.Entry<FList<K>, V>> {
       return sequence {
         if (value.isPresent) {
-          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
+          yield(java.util.Map.entry(FList.emptyList(), value.get()))
         }
         if (path.isEmpty()) return@sequence
         val (head, tail) = path
         val child = children[head] ?: return@sequence
         for ((relative, value) in child.getAllAncestors(tail)) {
-          yield(AbstractMap.SimpleImmutableEntry(relative.prepend(head), value))
+          yield(java.util.Map.entry(relative.prepend(head), value))
         }
       }
     }
 
-    fun getAllDescendants(path: FList<K>) =
-      root.get(path)?.getEntries()?.map { AbstractMap.SimpleImmutableEntry(path + it.key, it.value) } ?: emptySequence()
+    fun getAllDescendants(path: FList<K>): Sequence<MutableMap.MutableEntry<List<K>, V>> {
+      return root.get(path)?.getEntries()?.map { java.util.Map.entry(path + it.key, it.value) } ?: emptySequence()
+    }
   }
 
   private class Value<out T> private constructor(val isPresent: Boolean, private val value: Any?) {

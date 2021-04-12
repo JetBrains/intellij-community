@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.concurrency;
 
 /*
@@ -1488,7 +1488,7 @@ final class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             for (Node<K,V> p; (p = it.advance()) != null; ) {
                 K k = p.key;
                 V v = p.val;
-                Map.Entry<K,V> e = new AbstractMap.SimpleImmutableEntry<>(k, v);
+                Map.Entry<K,V> e = Map.entry(k, v);
                 if (function.test(e) && replaceNode(k, null, v) != null)
                     removed = true;
             }

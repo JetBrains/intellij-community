@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
@@ -24,7 +24,6 @@ import java.nio.file.ClosedWatchServiceException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
@@ -200,7 +199,7 @@ fun parseQuery(url: URI): Map<String, List<String?>> {
       val index = it.indexOf('=')
       val key = if (index > 0) it.substring(0, index) else it
       val value = if (index > 0 && it.length > index + 1) it.substring(index + 1) else null
-      AbstractMap.SimpleImmutableEntry(key, value)
+      java.util.Map.entry(key, value)
     }
     .groupBy(keySelector = { it.key }, valueTransform = { it.value })
 }

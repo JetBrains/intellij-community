@@ -685,7 +685,7 @@ final class DistributionJARsBuilder {
           }
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(), pluginXml: pluginXml.toString()))
         }
-        toArchive.add(new AbstractMap.SimpleImmutableEntry(directory, destFile))
+        toArchive.add(Map.entry(directory, destFile))
       }
 
       BuildHelper.bulkZipWithPrefix(buildContext, pluginsToPublishDir, toArchive, compressPluginArchive)

@@ -30,7 +30,7 @@ public final class PreferencesReadUtil {
         settingsValuePlist = settingsValue.getPlist();
       }
     }
-    return settingsValuePlist != null ? new AbstractMap.SimpleImmutableEntry<>(scopeName, settingsValuePlist) : null;
+    return settingsValuePlist != null ? Map.entry(scopeName, settingsValuePlist) : null;
   }
 
   @Nullable

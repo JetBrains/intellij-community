@@ -137,7 +137,7 @@ public class VSCBundle extends Bundle {
     //noinspection SSBasedInspection
     return configToScopes.get(FileUtilRt.toSystemIndependentName(
       Objects.requireNonNull(FileUtilRt.getRelativePath(bundleFile, file)))).stream()
-      .map(scope -> new AbstractMap.SimpleImmutableEntry<>(scope, fromJson))
+      .map(scope -> Map.entry(scope, fromJson))
       .collect(Collectors.toList());
   }
 

@@ -176,7 +176,7 @@ public final class ConsentOptions {
       allDefaults.remove(STATISTICS_OPTION_ID);
     }
     if (allDefaults.isEmpty()) {
-      return new AbstractMap.SimpleImmutableEntry<>(Collections.emptyList(), Boolean.FALSE);
+      return Map.entry(Collections.emptyList(), Boolean.FALSE);
     }
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
@@ -189,7 +189,7 @@ public final class ConsentOptions {
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
     boolean confirmationEnabled = Boolean.parseBoolean(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
-    return new AbstractMap.SimpleImmutableEntry<>(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
+    return Map.entry(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
   public void setConsents(@NotNull Collection<Consent> confirmedByUser) {

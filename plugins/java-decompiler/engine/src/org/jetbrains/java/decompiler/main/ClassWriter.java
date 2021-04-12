@@ -502,7 +502,7 @@ public class ClassWriter {
   }
 
   private static boolean isVarArgRecord(StructClass cl) {
-    String canonicalConstructorDescriptor = 
+    String canonicalConstructorDescriptor =
       cl.getRecordComponents().stream().map(c -> c.getDescriptor()).collect(Collectors.joining("", "(", ")V"));
     StructMethod init = cl.getMethod(CodeConstants.INIT_NAME, canonicalConstructorDescriptor);
     return init != null && init.hasModifier(CodeConstants.ACC_VARARGS);

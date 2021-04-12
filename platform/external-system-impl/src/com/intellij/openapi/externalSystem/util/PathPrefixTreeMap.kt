@@ -1,7 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util
-
-import java.util.*
 
 /**
  * [PrefixTreeMap] uses keys, that is specified by the paths.
@@ -42,7 +40,7 @@ class PathPrefixTreeMap<V>(
   fun getAllAncestorValues(path: String) = delegate.getAllAncestorValues(path.toPrefixList())
 
   private fun Iterable<Map.Entry<List<String>, V>>.toPathEntries(): List<Map.Entry<String, V>> {
-    return map { AbstractMap.SimpleImmutableEntry(it.key.joinToString(pathSeparator), it.value) }
+    return map { java.util.Map.entry(it.key.joinToString(pathSeparator), it.value) }
   }
 
   private fun Iterable<List<String>>.toPathKeys() = map { it.joinToString(pathSeparator) }
