@@ -134,20 +134,27 @@ public abstract class HistoryDialogModel {
     return myRightEntryCache[0];
   }
 
-  public void selectRevisions(int first, int second) {
+  public boolean selectRevisions(int first, int second) {
+    int l, r;
     if (first == second) {
-      myRightRevisionIndex = -1;
-      myLeftRevisionIndex = first == -1 ? 0 : first;
+      r = -1;
+      l = first == -1 ? 0 : first;
     }
     else {
-      myRightRevisionIndex = first;
-      myLeftRevisionIndex = second;
+      r = first;
+      l = second;
     }
+    if (myRightRevisionIndex == r && myLeftRevisionIndex == l) {
+      return false;
+    }
+    myRightRevisionIndex = r;
+    myLeftRevisionIndex = l;
     resetEntriesCache();
+    return true;
   }
 
-  public void resetSelection() {
-    selectRevisions(0, 0);
+  public boolean resetSelection() {
+    return selectRevisions(0, 0);
   }
 
   public boolean isCurrentRevisionSelected() {
