@@ -10,15 +10,13 @@
 
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantStringOperationMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.abstraction.UseOfConcreteClassMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.jdk.ForwardCompatibilityInspectionMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="messages.InspectionGadgetsBundle" key="boolean.parameter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.BooleanParameterInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CastToConcreteClass" bundle="messages.InspectionGadgetsBundle" key="cast.to.concrete.class.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.abstraction.CastToConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassReferencesSubclass" bundle="messages.InspectionGadgetsBundle"
                      key="class.references.subclass.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
@@ -30,19 +28,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="FeatureEnvy" bundle="messages.InspectionGadgetsBundle" key="feature.envy.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.FeatureEnvyInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="InstanceVariableOfConcreteClass" bundle="messages.InspectionGadgetsBundle"
-                     key="instance.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.InstanceVariableOfConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ChainOfInstanceofChecks" shortName="InstanceofChain" bundle="messages.InspectionGadgetsBundle"
                      key="chain.of.instanceof.checks.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InstanceofChainInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="InstanceofConcreteClass" alternativeId="InstanceofInterfaces"
-                     shortName="InstanceofInterfaces" bundle="messages.InspectionGadgetsBundle"
-                     key="instanceof.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.InstanceofInterfacesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="InstanceofThis" bundle="messages.InspectionGadgetsBundle" key="instanceof.check.for.this.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.InstanceofThisInspection"/>
@@ -50,10 +39,6 @@
                      key="interface.clashes.with.object.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.InterfaceMethodClashesWithObjectInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LocalVariableOfConcreteClass" bundle="messages.InspectionGadgetsBundle"
-                     key="local.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.LocalVariableOfConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MagicNumber" bundle="messages.InspectionGadgetsBundle" key="magic.number.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.MagicNumberInspection"/>
@@ -61,10 +46,10 @@
                      key="method.only.used.from.inner.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.MethodOnlyUsedFromInnerClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="MethodReturnOfConcreteClass" bundle="messages.InspectionGadgetsBundle"
-                     key="method.return.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="UseOfConcreteClass" bundle="messages.InspectionGadgetsBundle"
+                     key="concrete.class.use.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.MethodReturnOfConcreteClassInspection"/>
+                     implementationClass="com.siyeh.ig.abstraction.UseOfConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalUsedAsFieldOrParameterType" bundle="messages.InspectionGadgetsBundle"
                      key="optional.used.as.field.or.parameter.type.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="true" level="WARNING"
@@ -72,10 +57,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="OverlyStrongTypeCast" bundle="messages.InspectionGadgetsBundle" key="overly.strong.type.cast.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.OverlyStrongTypeCastInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="MethodParameterOfConcreteClass" shortName="ParameterOfConcreteClass"
-                     bundle="messages.InspectionGadgetsBundle" key="concrete.class.method.parameter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.abstraction.ParameterOfConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PublicMethodNotExposedInInterface" bundle="messages.InspectionGadgetsBundle"
                      key="public.method.not.in.interface.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
@@ -84,10 +65,6 @@
                       key="static.method.only.used.in.one.class.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.abstraction.StaticMethodOnlyUsedInOneClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StaticVariableOfConcreteClass" bundle="messages.InspectionGadgetsBundle"
-                     key="static.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.StaticVariableOfConcreteClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TypeMayBeWeakened" bundle="messages.InspectionGadgetsBundle"
                      key="inspection.type.may.be.weakened.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"

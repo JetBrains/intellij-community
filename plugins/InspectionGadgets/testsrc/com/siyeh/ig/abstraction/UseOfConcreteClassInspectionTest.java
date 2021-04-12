@@ -18,13 +18,10 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
-/**
- * @author Bas Leijdekkers
- */
-public class ParameterOfConcreteClassInspectionTest extends LightJavaInspectionTestCase {
+public class UseOfConcreteClassInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ParameterOfConcreteClassInspection();
+    return new UseOfConcreteClassInspection();
   }
 
   @Override
@@ -32,13 +29,37 @@ public class ParameterOfConcreteClassInspectionTest extends LightJavaInspectionT
     return new String[] {"class A {}"};
   }
 
-  public void testNoWarnOnForeach() {
+  public void testForeach() {
     doMemberTest("void m(java.util.List<A> l) {" +
-                 "  for (A a : l) {}" +
+                 "  for (/*Local variable 'a' of concrete class 'A'*/A/**/ a : l) {}" +
                  "}");
   }
 
-  public void testSimple() {
+  public void testLocal() {
+    doMemberTest("void m() {/*Local variable 'a' of concrete class 'A'*/A/**/ a;}");
+  }
+
+  public void testParameter() {
     doMemberTest("void m(/*Parameter 'a' of concrete class 'A'*/A/**/ a) {}");
+  }
+
+  public void testStaticField() {
+    doMemberTest("static /*Static field 'myA' of concrete class 'A'*/A/**/ myA;");
+  }
+
+  public void testInstanceField() {
+    doMemberTest("/*Instance field 'myA' of concrete class 'A'*/A/**/ myA;");
+  }
+
+  public void testMethodReturn() {
+    doMemberTest("/*Method returns a concrete class 'A'*/A/**/ getA() {return null;}");
+  }
+
+  public void testInstanceofInterfaces() {
+    doTest();
+  }
+
+  public void testCastToConcreteClass() {
+    doTest();
   }
 }
