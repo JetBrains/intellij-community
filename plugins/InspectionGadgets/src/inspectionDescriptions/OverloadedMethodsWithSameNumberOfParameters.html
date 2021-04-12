@@ -1,7 +1,14 @@
 <html>
 <body>
-Reports on cases where multiple methods in the same class are declared
-with an identical name and the same number of parameters.
+Reports same named methods in the same class when they also have the same number of parameters. 
+Such overloads may be very confusing, as it can be not clear which overload gets called.
+<p><b>Example:</b>
+  <pre><code>
+  class Main {
+    public static void execute(Runnable r) {}
+    public static &lt;T&gt; void execute(RunnableFuture&lt;T&gt; c) {}
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to ignore overloaded methods whose parameter types are definitely incompatible.

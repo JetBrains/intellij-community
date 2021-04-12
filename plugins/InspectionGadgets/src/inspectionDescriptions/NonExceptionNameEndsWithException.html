@@ -1,8 +1,11 @@
 <html>
 <body>
-Reports non-exception classes whose names end with 'Exception'.
+Reports non-<code>exception</code> classes whose names end with '<code>Exception</code>'.
+Such classes may cause confusion by breaking a common naming convention, and
+are often the sign that developer forgot <code>extends Exception</code> clause.
+<p><b>Example:</b>
+  <pre><code>public class NotStartedException {}</code></pre>
+<p>Quick-fix to rename the class is suggested only in the editor..</p>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

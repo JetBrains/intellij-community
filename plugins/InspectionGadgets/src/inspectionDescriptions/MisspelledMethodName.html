@@ -2,6 +2,14 @@
 <body>
 Reports on cases where multiple methods of a class have names which differ only by
 case. Such method names may be very confusing.
+<p><b>Example:</b> <pre>
+  <code>
+    public int hashcode() {//reported, should be hashCode probably?
+       return 0;
+    }
+  </code>
+</pre>
+<p>Quick-fix to rename the method is suggested only in the editor.</p>
 <!-- tooltip end -->
 <p>Use the checkbox below to ignore methods overriding or implementing a method from a superclass.
 <p>
