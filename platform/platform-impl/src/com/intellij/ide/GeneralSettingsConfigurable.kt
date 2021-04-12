@@ -83,6 +83,9 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"), GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
               radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"), GeneralSettings.OPEN_PROJECT_ASK)
+              if (PlatformUtils.isPyCharmDs()) {
+                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"), GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
+              }
             }
           }
         }
