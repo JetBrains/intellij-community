@@ -1,16 +1,15 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.configuration
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.plugins.gradle.model.ExternalProject
-import java.io.File
 import java.util.*
+import kotlin.io.path.*
 
 internal class GradlePropertiesFileFacade(private val baseDir: String) {
 
@@ -36,25 +35,26 @@ internal class GradlePropertiesFileFacade(private val baseDir: String) {
         addProperty(KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING, true.toString())
     }
 
+    @OptIn(ExperimentalPathApi::class)
     private fun addProperty(key: String, value: String) {
-        val projectPropertiesFile = File(baseDir, GRADLE_PROPERTIES_FILE_NAME)
+        val projectPropertiesPath = Path(baseDir, GRADLE_PROPERTIES_FILE_NAME)
 
         val keyValue = "$key=$value"
 
-        val updatedText = if (projectPropertiesFile.exists()) {
-            projectPropertiesFile.readText() + System.lineSeparator() + keyValue
+        val updatedText = if (projectPropertiesPath.exists()) {
+            projectPropertiesPath.readText() + System.lineSeparator() + keyValue
         } else {
             keyValue
         }
 
-        projectPropertiesFile.writeText(updatedText)
+        projectPropertiesPath.writeText(updatedText)
     }
 
     companion object {
 
-        fun forProject(project: Project) = GradlePropertiesFileFacade(ExternalSystemApiUtil.toCanonicalPath(project.basePath!!))
+        fun forProject(project: Project) = GradlePropertiesFileFacade(project.basePath!!)
 
-        fun forExternalProject(externalProject: ExternalProject) = GradlePropertiesFileFacade(externalProject.projectDir.canonicalPath)
+        fun forExternalProject(externalProject: ExternalProject) = GradlePropertiesFileFacade(externalProject.projectDir.path)
 
         const val KOTLIN_CODE_STYLE_GRADLE_SETTING = "kotlin.code.style"
         const val KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING = "kotlin.import.noCommonSourceSets"
