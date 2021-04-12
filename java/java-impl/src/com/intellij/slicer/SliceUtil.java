@@ -151,19 +151,20 @@ final class SliceUtil {
       }
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
-      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue((PsiMethodCallExpression)expression);
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(call);
       if (returnedValue != null) {
         if (!builder.process(returnedValue, processor)) {
           return false;
         }
       }
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+      PsiMethod method = call.resolveMethod();
       Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
         String target = anno.target();
         if (target.equals(Flow.DEFAULT_TARGET)) target = Flow.RETURN_METHOD_TARGET;
         if (target.equals(Flow.RETURN_METHOD_TARGET)) {
-          PsiExpression qualifier = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+          PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (qualifier != null) {
             builder = builder.updateNesting(anno);
             String source = anno.source();
@@ -173,7 +174,25 @@ final class SliceUtil {
           }
         }
       }
-      return processMethodReturnValue((PsiMethodCallExpression)expression, processor, builder);
+      if (method != null && builder.hasNesting()) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        boolean hasFlownParameter = false;
+        for (int i = 0; i < parameters.length; i++) {
+          Flow paramAnno = isParamFlowAnnotated(method, i);
+          if (paramAnno != null && !parameters[i].isVarArgs()) {
+            PsiExpression[] args = call.getArgumentList().getExpressions();
+            if (args.length > i) {
+              JavaSliceBuilder argBuilder = builder.updateNesting(paramAnno);
+              if (!argBuilder.process(args[i], processor)) {
+                return false;
+              }
+              hasFlownParameter = true;
+            }
+          }
+        }
+        if (hasFlownParameter) return true;
+      }
+      return processMethodReturnValue(call, processor, builder);
     }
     if (expression instanceof PsiConditionalExpression) {
       PsiConditionalExpression conditional = (PsiConditionalExpression)expression;

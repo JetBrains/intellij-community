@@ -1,5 +1,3 @@
-import javax.swing.*;
-
 class Foo {
     void foo(String <caret>s) {
     }
@@ -14,4 +12,7 @@ class Foo {
             }
         });
     }
+}
+class SwingUtilities {
+  static void invokeLater(Runnable runnable) {}
 }

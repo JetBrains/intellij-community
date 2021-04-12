@@ -3311,16 +3311,37 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; of(T) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional java.util.Optional&lt;T&gt; ofNullable(T) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.Optional T get()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Optional T orElse(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;!null -&gt; !null&quot;"/>
       <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.Optional T orElse(T) 0'>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="targetIsContainer" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Properties java.lang.String getProperty(java.lang.String) 0'>
