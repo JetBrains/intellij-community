@@ -89,6 +89,7 @@ public abstract class GitTextHandler extends GitHandler {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         final int exitCode = event.getExitCode();
+        OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), GitTextHandler.this.hashCode(), exitCode));
         try {
           setExitCode(exitCode);
           GitTextHandler.this.processTerminated(exitCode);
@@ -106,7 +107,7 @@ public abstract class GitTextHandler extends GitHandler {
       @Override
       public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
         if (OUTPUT_LOG.isDebugEnabled()) {
-          OUTPUT_LOG.debug(String.format("%s (%s):'%s'", getCommand(), outputType, event.getText()));
+          OUTPUT_LOG.debug(String.format("%s %% %s (%s):'%s'", getCommand(), GitTextHandler.this.hashCode(), outputType, event.getText()));
         }
 
         GitTextHandler.this.onTextAvailable(event.getText(), outputType);

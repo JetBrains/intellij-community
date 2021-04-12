@@ -115,6 +115,7 @@ public class GitBinaryHandler extends GitHandler {
       }
       exitCode = 255;
     }
+    OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), this.hashCode(), exitCode));
     setExitCode(exitCode);
     listeners().processTerminated(exitCode);
   }
