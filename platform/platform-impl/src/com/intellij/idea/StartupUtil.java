@@ -223,15 +223,7 @@ public final class StartupUtil {
     // maybe called in EDT, but other events in queue should be processed before patchSystem
     CompletableFuture<@Nullable Void> prepareUiFuture = agreementDialogWasShown
       .thenRunAsync(() -> {
-        try {
-          patchSystem(log);
-        }
-        catch (RuntimeException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          throw new RuntimeException(e);
-        }
+        patchSystem(log);
 
         if (!Main.isHeadless()) {
           // not important
@@ -431,19 +423,60 @@ public final class StartupUtil {
       }, ForkJoinPool.commonPool())
       .thenRunAsync(() -> {
         activityQueue.end();
-        // it is required even if headless because some tests creates configurable, so, our LaF is expected
-        Activity activity = StartUpMeasurer.startActivity("LaF initialization");
+
+        Activity activity = null;
+        // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+        if (!Main.isHeadless()) {
+          // IdeaLaF uses AllIcons - icon manager must be activated
+          activity = StartUpMeasurer.startActivity("icon manager activation");
+          try {
+            IconManager.activate(new CoreIconManager());
+          }
+          catch (RuntimeException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        activity = activity == null ? StartUpMeasurer.startActivity("base LaF creation") : activity.endAndStart("base LaF creation");
+        LookAndFeel baseLaF;
         try {
-          UIManager.setLookAndFeel(new IntelliJLaf());
+          baseLaF = DarculaLaf.createBaseLaF();
+        }
+        catch (RuntimeException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e);
+        }
+
+        activity = activity.endAndStart("base LaF initialization");
+        // as stated in javadoc - `getDefaults` should only be invoked ... after initialize has been invoked
+        baseLaF.initialize();
+
+        // to compute system scale factor on non-macOS (JRE HiDpi is not enabled) we need to know system font data,
+        // and to compute system font data we need to know `Label.font` ui default (that's why we compute base LaF first)
+        activity = activity.endAndStart("system font data initialization");
+        JBUIScale.getSystemFontData(() -> {
+          Activity subActivity = StartUpMeasurer.startActivity("base LaF defaults getting");
+          UIDefaults result = baseLaF.getDefaults();
+          subActivity.end();
+          return result;
+        });
+
+        activity = activity.endAndStart("scale initialization");
+        JBUIScale.scale(1f);
+
+        activity = activity.endAndStart("LaF initialization");
+        // it is required even if headless because some tests creates configurable, so, our LaF is expected
+        try {
+          UIManager.setLookAndFeel(new IntelliJLaf(baseLaF));
         }
         catch (UnsupportedLookAndFeelException e) {
           throw new RuntimeException(e);
         }
-
-        activity = activity.endAndStart("system font data initialization");
-        JBUIScale.getSystemFontData(null);
-        activity = activity.endAndStart("init JBUIScale");
-        JBUIScale.scale(1f);
         activity.end();
 
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
@@ -896,7 +929,7 @@ public final class StartupUtil {
   }
 
   // must be called from EDT
-  private static void patchSystem(@NotNull Logger log) throws Throwable {
+  private static void patchSystem(@NotNull Logger log) {
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -920,9 +953,6 @@ public final class StartupUtil {
           X11UiUtil.patchDetectedWm(wmName);
         }
       }
-
-      activity = activity.endAndStart("icon manager activation");
-      IconManager.activate(new CoreIconManager());
     }
     activity.end();
   }

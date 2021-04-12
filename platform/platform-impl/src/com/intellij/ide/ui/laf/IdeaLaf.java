@@ -27,7 +27,7 @@ public final class IdeaLaf extends MetalLookAndFeel {
     StartupUiUtil.initInputMapDefaults(defaults);
     initIdeaDefaults(defaults);
 
-    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(defaults);
+    Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
     StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
   }
 

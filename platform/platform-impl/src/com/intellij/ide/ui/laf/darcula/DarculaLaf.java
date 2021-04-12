@@ -19,6 +19,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,11 +51,20 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   private static final Object SYSTEM = new Object();
   public static final @NlsSafe String NAME = "Darcula";
   private static final @NlsSafe String DESCRIPTION = "IntelliJ Dark Look and Feel";
-  private BasicLookAndFeel base;
+  private LookAndFeel base;
+  private boolean isBaseInitialized;
 
   protected Disposable myDisposable;
   private final UserDataHolderBase myUserData = new UserDataHolderBase();
   private static boolean myAltPressed;
+
+  public DarculaLaf(@NotNull LookAndFeel base) {
+    this.base = base;
+    isBaseInitialized = true;
+  }
+
+  public DarculaLaf() {
+  }
 
   private void callInit(String method, UIDefaults defaults) {
     try {
@@ -376,21 +386,16 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
   @Override
   public void initialize() {
-    try {
-      if (SystemInfoRt.isMac) {
-        Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
-        base = (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
-      }
-      else {
-        base = new IdeaLaf();
-      }
-
-      if (base != null) {
+    if (!isBaseInitialized) {
+      try {
+        if (base == null) {
+          base = createBaseLaF();
+        }
         base.initialize();
       }
-    }
-    catch (Throwable e) {
-      Logger.getInstance(DarculaLaf.class).error(e);
+      catch (Throwable e) {
+        Logger.getInstance(DarculaLaf.class).error(e);
+      }
     }
 
     if (LoadingState.LAF_INITIALIZED.isOccurred()) {
@@ -398,12 +403,25 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
+  @ApiStatus.Internal
+  public static @NotNull LookAndFeel createBaseLaF() throws Throwable {
+    if (SystemInfoRt.isMac) {
+      Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
+      return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
+    }
+    else {
+      return new IdeaLaf();
+    }
+  }
+
+  @ApiStatus.Internal
   public void appCreated(@NotNull Disposable parent) {
     if (myDisposable != null) {
       Disposer.register(parent, myDisposable);
     }
   }
 
+  @ApiStatus.Internal
   public final void ideEventQueueInitialized(@NotNull IdeEventQueue eventQueue) {
     if (myDisposable == null) {
       myDisposable = Disposer.newDisposable();
@@ -471,7 +489,8 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   @Override
   public void uninitialize() {
     try {
-      base.initialize();
+      isBaseInitialized = false;
+      base.uninitialize();
     }
     catch (Exception ignore) {
     }

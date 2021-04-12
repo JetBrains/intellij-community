@@ -1,3 +1,8 @@
+# 33
+
+ * Rename `init JBUIScale` to `scale initialization`.
+ * Add `base LaF creation`, `base LaF initialization`, `base LaF defaults getting`.
+
 # 32
 
  * `prepareAppInitActivities` is removed in favour if `items`.

@@ -20,7 +20,8 @@ import java.util.function.Function;
 
 public interface IconManager {
   static @NotNull IconManager getInstance() {
-    return IconManagerHelper.instance;
+    IconManager result = IconManagerHelper.instance;
+    return result == null ? DummyIconManager.INSTANCE : result;
   }
 
   // Icon Loader is quite heavy, better to not instantiate class unless required
@@ -86,7 +87,7 @@ public interface IconManager {
 
 final class IconManagerHelper {
   private static final AtomicBoolean isActivated = new AtomicBoolean();
-  static volatile IconManager instance = DummyIconManager.INSTANCE;
+  static volatile IconManager instance;
 
   static void activate(@Nullable IconManager impl) throws Throwable {
     if (!isActivated.compareAndSet(false, true)) {
@@ -104,7 +105,7 @@ final class IconManagerHelper {
 
   static void deactivate() {
     if (isActivated.compareAndSet(true, false)) {
-      instance = DummyIconManager.INSTANCE;
+      instance = null;
     }
   }
 }
