@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
+ * Copyright 2010-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,12 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
+import org.jetbrains.kotlin.idea.caches.resolve.util.isInDumbMode
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -47,28 +49,47 @@ object KotlinHighlightingUtil {
             return shouldHighlight(psiFileOrigin)
         }
 
-        if (ktFile.isScript()) {
+        val shouldCheckScript = ktFile.shouldCheckScript()
+        if (shouldCheckScript == true) {
             return shouldHighlightScript(ktFile)
         }
 
-        return ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
+        return if (shouldCheckScript != null) ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
+        else ProjectRootsUtil.isInContent(
+            element = ktFile,
+            includeProjectSource = true,
+            includeLibrarySource = true,
+            includeLibraryClasses = true,
+            includeScriptDependencies = true,
+            includeScriptsOutsideSourceRoots = true,
+        )
     }
 
     fun shouldHighlightErrors(ktFile: KtFile): Boolean {
         if (ktFile.isCompiled) {
             return false
         }
+
         if (ktFile is KtCodeFragment && ktFile.context != null) {
             return true
         }
 
-        if (ktFile.isScript()) {
+        val canCheckScript = ktFile.shouldCheckScript()
+        if (canCheckScript == true) {
             return shouldHighlightScript(ktFile)
         }
 
-        return ProjectRootsUtil.isInProjectSource(ktFile)
+        return ProjectRootsUtil.isInProjectSource(ktFile, includeScriptsOutsideSourceRoots = canCheckScript == null)
     }
 
+    private fun KtFile.shouldCheckScript(): Boolean? = runReadAction {
+        when {
+            // to avoid SNRE from stub (KTIJ-7633)
+            project.isInDumbMode() -> null
+            isScript() -> true
+            else -> false
+        }
+    }
 
     @Suppress("DEPRECATION")
     private fun shouldHighlightScript(ktFile: KtFile): Boolean {
