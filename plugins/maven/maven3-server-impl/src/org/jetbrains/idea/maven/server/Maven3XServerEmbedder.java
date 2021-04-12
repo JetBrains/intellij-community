@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,7 +10,6 @@ import com.intellij.util.ReflectionUtilRt;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.commons.cli.ParseException;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -480,7 +479,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   private static Collection<String> collectProfilesIds(List<Profile> profiles) {
-    Collection<String> result = new THashSet<String>();
+    Collection<String> result = new HashSet<String>();
     for (Profile each : profiles) {
       if (each.getId() != null) {
         result.add(each.getId());
@@ -727,17 +726,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
               continue;
             }
 
-            List<Exception> exceptions = new ArrayList<Exception>();
+
+            List<ModelProblem> modelProblems = new ArrayList<ModelProblem>();
+
             if (buildingResult.getProblems() != null) {
-              for (ModelProblem problem : buildingResult.getProblems()) {
-                if (problem.getException() != null) {
-                  exceptions.add(problem.getException());
-                }
-                else {
-                  exceptions.add(new RuntimeException(problem.getMessage()));
-                }
-              }
+              modelProblems.addAll(buildingResult.getProblems());
             }
+
+            List<Exception> exceptions = new ArrayList<Exception>();
 
             loadExtensions(project, exceptions);
 
@@ -755,7 +751,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
               boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph")==null;
               Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
               project.setArtifacts(artifacts);
-              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions));
+              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
             }
           }
         }
@@ -1055,12 +1051,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
 
-    validate(file, result.getExceptions(), problems, unresolvedArtifacts);
+    collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
 
     MavenProject mavenProject = result.getMavenProject();
-    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
+    if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.<MavenId>emptySet());
 
     MavenModel model = new MavenModel();
     try {
@@ -1084,7 +1079,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
     }
     catch (Exception e) {
-      validate(mavenProject.getFile(), Collections.singleton(e), problems, null);
+      collectProblems(mavenProject.getFile(), Collections.singleton(e),
+                      result == null ? Collections.<ModelProblem>emptyList() : result.getModelProblems(), problems);
     }
 
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
@@ -1100,13 +1096,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerExecutionResult.ProjectData data =
       new MavenServerExecutionResult.ProjectData(model, MavenModelConverter.convertToMap(mavenProject.getModel()), holder,
                                                  activatedProfiles);
-    return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
+    return new MavenServerExecutionResult(data, problems, Collections.<MavenId>emptySet());
   }
 
-  private void validate(@Nullable File file,
-                        @NotNull Collection<Exception> exceptions,
-                        @NotNull Collection<MavenProjectProblem> problems,
-                        @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
+  private void collectProblems(@Nullable File file,
+                               @NotNull Collection<? extends Exception> exceptions,
+                               @NotNull List<? extends ModelProblem> modelProblems,
+                               @NotNull Collection<? super MavenProjectProblem> collector) throws RemoteException {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
@@ -1126,40 +1122,59 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
         if (modelValidationResult != null) {
-          for (Object eachValidationProblem : modelValidationResult.getMessages()) {
-            problems.add(MavenProjectProblem.createStructureProblem(path, (String)eachValidationProblem));
+          for (String eachValidationProblem : modelValidationResult.getMessages()) {
+            collector.add(MavenProjectProblem.createStructureProblem(path, eachValidationProblem));
           }
         }
         else {
-          problems.add(MavenProjectProblem.createStructureProblem(path, each.getCause().getMessage()));
+          collector.add(MavenProjectProblem.createStructureProblem(path, each.getCause().getMessage()));
         }
       }
       else if (each instanceof ProjectBuildingException) {
         String causeMessage = each.getCause() != null ? each.getCause().getMessage() : each.getMessage();
-        problems.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
+        collector.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
       }
       else if (each.getStackTrace().length > 0 && each.getClass().getPackage().getName().equals("groovy.lang")) {
         myConsoleWrapper.error("Maven server structure problem", each);
         StackTraceElement traceElement = each.getStackTrace()[0];
-        problems.add(MavenProjectProblem.createStructureProblem(
+        collector.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
       else {
         myConsoleWrapper.error("Maven server structure problem", each);
-        problems.add(MavenProjectProblem.createStructureProblem(path, each.getMessage()));
+        collector.add(MavenProjectProblem.createStructureProblem(path, each.getMessage(), true));
       }
     }
-    if (unresolvedArtifacts != null) {
-      unresolvedArtifacts.addAll(retrieveUnresolvedArtifactIds());
-    }
-  }
+    for (ModelProblem problem : modelProblems) {
 
-  private Set<MavenId> retrieveUnresolvedArtifactIds() {
-    Set<MavenId> result = new THashSet<MavenId>();
-    // TODO collect unresolved artifacts
-    //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
-    //((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
-    return result;
+      String source;
+      if (!StringUtilRt.isEmptyOrSpaces(problem.getSource())) {
+        source = problem.getSource() +
+                 ":" +
+                 problem.getLineNumber() +
+                 ":" +
+                 problem.getColumnNumber();
+      }
+      else {
+        source = file == null ? "" : file.getPath();
+        ;
+      }
+      myConsoleWrapper.error("Maven model problem: " +
+                             problem.getMessage() +
+                             " at " +
+                             problem.getSource() +
+                             ":" +
+                             problem.getLineNumber() +
+                             ":" +
+                             problem.getColumnNumber());
+      if (problem.getException() != null) {
+        myConsoleWrapper.error("Maven model problem", problem.getException());
+        collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage()));
+      }
+      else {
+        collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
+      }
+    }
   }
 
   @NotNull

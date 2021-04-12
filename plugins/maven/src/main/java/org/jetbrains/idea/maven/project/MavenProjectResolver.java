@@ -154,7 +154,10 @@ public class MavenProjectResolver {
       }
 
       if (mavenProjectCandidate == null) continue;
-      MavenProjectChanges changes = mavenProjectCandidate.set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
+
+
+      MavenProjectChanges changes = mavenProjectCandidate
+        .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
       if (result.nativeMavenProject != null) {
         for (MavenImporter eachImporter : mavenProjectCandidate.getSuitableImporters()) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
