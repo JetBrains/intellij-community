@@ -1,8 +1,17 @@
 <html>
 <body>
-Reports any classes which is only depended on and only depends on one module which
-is different from the module containing the class. Such class could be moved into
-that module.
+Reports any class in module which:
+<ul>
+  <li>doesn't depend on any other class in this module</li>
+  <li>depends on classes from another module</li>
+  <li>is a dependency only for some classes from this other module</li>
+</ul>
+<p>
+Such class could be moved into the module on which it depends.
+<p>
+  Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
+  <em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
+</p>
 <!-- tooltip end -->
 <p>
 </body>
