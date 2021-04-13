@@ -33,11 +33,12 @@ import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.PicoContainer
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -47,6 +48,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal val LOG = logger<ComponentManagerImpl>()
 private val constructorParameterResolver = ConstructorParameterResolver()
+private val methodLookup = MethodHandles.lookup()
+private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 
 @Internal
 abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
@@ -757,9 +760,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     try {
       if (parent == null) {
-        val constructor = aClass.getDeclaredConstructor()
-        constructor.isAccessible = true
-        return constructor.newInstance()
+        @Suppress("UNCHECKED_CAST")
+        return MethodHandles.privateLookupIn(aClass, methodLookup).findConstructor(aClass, emptyConstructorMethodType).invoke() as T
       }
       else {
         val constructors: Array<Constructor<*>> = aClass.declaredConstructors
@@ -1255,7 +1257,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     }
   }
 
-  final override fun getActivityCategory(isExtension: Boolean): @NotNull ActivityCategory {
+  final override fun getActivityCategory(isExtension: Boolean): ActivityCategory {
     return when {
       parent == null -> if (isExtension) ActivityCategory.APP_EXTENSION else ActivityCategory.APP_SERVICE
       parent.parent == null -> if (isExtension) ActivityCategory.PROJECT_EXTENSION else ActivityCategory.PROJECT_SERVICE
