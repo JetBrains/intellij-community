@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "multiple.loggers.problem.descriptor");
+    return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
   }
 
   @Override
@@ -75,18 +74,11 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     return new ClassWithMultipleLoggersVisitor();
   }
 
-  private class ClassWithMultipleLoggersVisitor
-    extends BaseInspectionVisitor {
+  private class ClassWithMultipleLoggersVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
-        return;
-      }
       if (aClass instanceof PsiTypeParameter) {
-        return;
-      }
-      if (aClass.getContainingClass() != null) {
         return;
       }
       int numLoggers = 0;
@@ -102,9 +94,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     }
 
     private boolean isLogger(PsiVariable variable) {
-      final PsiType type = variable.getType();
-      final String text = type.getCanonicalText();
-      return loggerNames.contains(text);
+      return loggerNames.contains(variable.getType().getCanonicalText());
     }
   }
 }
