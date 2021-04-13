@@ -1860,6 +1860,20 @@ public final class ContainerUtil {
   }
 
   /**
+   * @param iterator an input iterator to process
+   * @param mapping a side-effect free function which transforms iterable elements
+   * @return read-only list consisting of the elements from the iterator converted by mapping
+   */
+  @Contract(pure = true)
+  public static @NotNull <T, V> List<V> map(@NotNull Iterator<? extends T> iterator, @NotNull Function<? super T, ? extends V> mapping) {
+    List<V> result = new ArrayList<>();
+    while (iterator.hasNext()) {
+      result.add(mapping.fun(iterator.next()));
+    }
+    return result.isEmpty() ? emptyList() : result;
+  }
+
+  /**
    * @param collection an input collection to process
    * @param mapping a side-effect free function which transforms iterable elements
    * @return read-only list consisting of the elements from the input collection converted by mapping
