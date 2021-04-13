@@ -1,6 +1,14 @@
 <html>
 <body>
 Reports any inspection suppression comments or annotations.
+
+<p>Example:</p>
+<pre>
+    @SuppressWarnings("unused")
+    static Stream&lt;String&gt; stringProvider() {
+        return Stream.of("foo", "bar");
+    }
+</pre>
 <!-- tooltip end -->
 <p>
 
