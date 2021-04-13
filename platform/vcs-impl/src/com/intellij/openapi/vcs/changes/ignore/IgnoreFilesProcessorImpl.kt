@@ -27,6 +27,9 @@ import kotlin.concurrent.write
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
+/**
+ * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
+ */
 class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 

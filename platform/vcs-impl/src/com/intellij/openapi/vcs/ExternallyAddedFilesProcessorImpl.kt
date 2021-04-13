@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -25,13 +25,15 @@ import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 internal const val ASKED_ADD_EXTERNAL_FILES_PROPERTY = "ASKED_ADD_EXTERNAL_FILES" //NON-NLS
 
 private val LOG = logger<ExternallyAddedFilesProcessorImpl>()
 
+/**
+ * Extend [VcsVFSListener] to automatically add/propose to add into VCS files that were created not by IDE (externally created).
+ */
 internal class ExternallyAddedFilesProcessorImpl(project: Project,
                                                  private val parentDisposable: Disposable,
                                                  private val vcs: AbstractVcs,

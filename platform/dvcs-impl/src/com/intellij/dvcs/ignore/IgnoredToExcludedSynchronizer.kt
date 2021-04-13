@@ -52,7 +52,12 @@ private val excludeAction = object : MarkExcludeRootAction() {
   fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
 }
 
-// Not internal service. Can be used directly in related modules.
+/**
+ * Shows [EditorNotifications] in .ignore files with suggestion to exclude ignored directories.
+ * Silently excludes them if [VcsConfiguration.MARK_IGNORED_AS_EXCLUDED] is enabled.
+ *
+ * Not internal service. Can be used directly in related modules.
+ */
 @Service
 class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
 

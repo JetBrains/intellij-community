@@ -27,6 +27,11 @@ private val configurationFilesExtensionsOutsideStoreDirectory =
 internal const val SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
 internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHARE_PROJECT_CONFIGURATION_FILES" //NON-NLS
 
+/**
+ * Component for managing project configuration files: add/propose to add potentially shared project configuration files to VCS.
+ *
+ * Overrides behavior of [VcsConfiguration.StandardConfirmation.ADD] flag for project configuration files (ex: .idea/misc.xml).
+ */
 class ProjectConfigurationFilesProcessorImpl(project: Project,
                                              private val parentDisposable: Disposable,
                                              private val vcsName: String,
@@ -47,6 +52,10 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     }
   }
 
+  /**
+   * Remove project configuration files from "Add to VCS" dialog.
+   * Schedule notification or silent addition instead.
+   */
   fun filterNotProjectConfigurationFiles(files: List<VirtualFile>): List<VirtualFile> {
     val projectConfigurationFiles = doFilterFiles(files)
 
