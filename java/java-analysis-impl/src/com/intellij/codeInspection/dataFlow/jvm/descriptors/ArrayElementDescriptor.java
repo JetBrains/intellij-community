@@ -2,9 +2,7 @@
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -32,19 +30,28 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     return myIndex;
   }
 
-  @Nullable
-  @Override
-  public PsiType getType(@Nullable DfaVariableValue qualifier) {
-    if (qualifier == null) return null;
-    PsiType qualifierType = qualifier.getType();
-    return qualifierType instanceof PsiArrayType ? ((PsiArrayType)qualifierType).getComponentType() : null;
-  }
-
   @Override
   public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
     if (qualifier == null) return DfTypes.TOP;
     TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
     return constraint.getArrayComponentType();
+  }
+
+  @Override
+  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+    DfaVariableValue qualifier = thisValue.getQualifier();
+    DfType dfType = getDfType(qualifier);
+    if (qualifier != null && dfType instanceof DfReferenceType) {
+      PsiVarDescriptor descriptor = ObjectUtils.tryCast(qualifier.getDescriptor(), PsiVarDescriptor.class);
+      if (descriptor != null) {
+        PsiType psiType = descriptor.getType(qualifier);
+        if (psiType instanceof PsiArrayType) {
+          PsiType componentType = ((PsiArrayType)psiType).getComponentType();
+          return dfType.meet(DfaNullability.fromNullability(DfaPsiUtil.getTypeNullability(componentType)).asDfType());
+        }
+      }
+    }
+    return dfType;
   }
 
   @NotNull

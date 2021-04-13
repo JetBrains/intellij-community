@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +26,6 @@ public final class AssertionDisabledDescriptor implements VariableDescriptor {
   public boolean isImplicitReadPossible() {
     // Variable may be used from CommonDataflow
     return true;
-  }
-
-  @NotNull
-  @Override
-  public PsiType getType(@Nullable DfaVariableValue qualifier) {
-    return PsiType.BOOLEAN;
   }
 
   @Override

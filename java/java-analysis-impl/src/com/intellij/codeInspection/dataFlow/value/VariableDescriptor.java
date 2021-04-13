@@ -1,16 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,14 +59,7 @@ public interface VariableDescriptor {
     if (qualifier instanceof DfaVariableValue) {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
-    PsiType type = getType(null);
-    PsiModifierListOwner element = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
-    LongRangeSet range = LongRangeSet.fromPsiElement(element);
-    DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, element));
-    if (dfType instanceof DfIntegralType) {
-      dfType = ((DfIntegralType)dfType).meetRange(range);
-    }
-    return factory.fromDfType(dfType);
+    return factory.getUnknown();
   }
 
   /**
@@ -86,15 +71,23 @@ public interface VariableDescriptor {
   }
 
   /**
-   * Returns the type of the value which is qualified by given qualifier and described by this descriptor
+   * Returns the DfType of the value which is qualified by given qualifier and described by this descriptor
    * @param qualifier qualifier (may be null if absent)
-   * @return type of the value
+   * @return DfType of the value. Every instance of the variable described by this descriptor must be a subtype
+   * of this type.
    */
-  @Nullable
-  PsiType getType(@Nullable DfaVariableValue qualifier);
-
   @NotNull
-  default DfType getDfType(@Nullable DfaVariableValue qualifier) {
-    return DfTypes.typedObject(getType(qualifier), Nullability.UNKNOWN);
+  DfType getDfType(@Nullable DfaVariableValue qualifier);
+
+  /**
+   * Returns the DfType the value with this descriptor has at the beginning of the interpretation
+   * @param thisValue DfaVariableValue representing the current variable
+   * @return Initial DfType of the value. May differ from {@link #getDfType(DfaVariableValue)} result,
+   * as additional information like initial nullability or range may be known from annotations, which
+   * may change later if the value is reassigned.
+   */
+  @NotNull
+  default DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+    return getDfType(thisValue.getQualifier());
   }
 }

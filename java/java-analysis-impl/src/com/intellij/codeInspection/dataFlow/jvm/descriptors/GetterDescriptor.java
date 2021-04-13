@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
+import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PropertyUtil;
@@ -19,7 +19,7 @@ import java.util.Objects;
 /**
  * A descriptor that represents a getter-like method (without arguments)
  */
-public final class GetterDescriptor implements VariableDescriptor {
+public final class GetterDescriptor extends PsiVarDescriptor {
   private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
     CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
@@ -52,8 +52,8 @@ public final class GetterDescriptor implements VariableDescriptor {
 
   @Nullable
   @Override
-  public PsiType getType(@Nullable DfaVariableValue qualifier) {
-    return DfaPsiUtil.getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
+  PsiType getType(@Nullable DfaVariableValue qualifier) {
+    return getSubstitutor(myGetter, qualifier).substitute(myGetter.getReturnType());
   }
 
   @NotNull
@@ -78,7 +78,7 @@ public final class GetterDescriptor implements VariableDescriptor {
     if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier, forAccessor);
   }
 
   @Override
@@ -89,5 +89,11 @@ public final class GetterDescriptor implements VariableDescriptor {
   @Override
   public boolean equals(Object obj) {
     return obj == this || (obj instanceof GetterDescriptor && ((GetterDescriptor)obj).myGetter == myGetter);
+  }
+
+  @Override
+  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var, @NotNull DfaVariableValue value) {
+    PsiType type = getType(value.getQualifier());
+    return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var));
   }
 }

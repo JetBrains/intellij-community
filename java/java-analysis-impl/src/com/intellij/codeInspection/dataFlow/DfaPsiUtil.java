@@ -619,16 +619,4 @@ public final class DfaPsiUtil {
     if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
     return DfTypes.constant(value, type);
   }
-
-  @NotNull
-  public static PsiSubstitutor getSubstitutor(PsiElement member, @Nullable DfaVariableValue qualifier) {
-    if (member instanceof PsiMember && qualifier != null) {
-      PsiClass fieldClass = ((PsiMember)member).getContainingClass();
-      PsiClassType classType = ObjectUtils.tryCast(qualifier.getType(), PsiClassType.class);
-      if (classType != null && InheritanceUtil.isInheritorOrSelf(classType.resolve(), fieldClass, true)) {
-        return TypeConversionUtil.getSuperClassSubstitutor(fieldClass, classType);
-      }
-    }
-    return PsiSubstitutor.EMPTY;
-  }
 }

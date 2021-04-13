@@ -268,11 +268,6 @@ public final class ControlFlow {
     }
 
     @Override
-    public @Nullable PsiType getType(@Nullable DfaVariableValue qualifier) {
-      return myType;
-    }
-
-    @Override
     public boolean isStable() {
       return true;
     }

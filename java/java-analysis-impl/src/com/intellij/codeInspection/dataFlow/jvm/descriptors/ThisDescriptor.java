@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -20,7 +19,7 @@ import java.util.Objects;
 /**
  * A variable descriptor that represents 'this' reference
  */
-public final class ThisDescriptor implements VariableDescriptor {
+public final class ThisDescriptor extends PsiVarDescriptor {
   @NotNull
   private final PsiClass myQualifier;
 
@@ -36,13 +35,13 @@ public final class ThisDescriptor implements VariableDescriptor {
 
   @NotNull
   @Override
-  public PsiType getType(@Nullable DfaVariableValue qualifier) {
+  PsiType getType(@Nullable DfaVariableValue qualifier) {
     return new PsiImmediateClassType(myQualifier, PsiSubstitutor.EMPTY);
   }
 
   @Override
   public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-    return DfTypes.typedObject(new PsiImmediateClassType(myQualifier, PsiSubstitutor.EMPTY), Nullability.NOT_NULL);
+    return DfTypes.typedObject(getType(qualifier), Nullability.NOT_NULL);
   }
 
   @Override

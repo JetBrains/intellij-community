@@ -17,8 +17,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
 
-import java.util.Objects;
-
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
@@ -126,11 +124,6 @@ public enum SpecialField implements VariableDescriptor {
     );
 
     @Override
-    public PsiPrimitiveType getType(DfaVariableValue variableValue) {
-      return PsiPrimitiveType.getUnboxedType(variableValue.getType());
-    }
-
-    @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
       if (qualifier == null) return DfTypes.TOP;
       TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
@@ -165,16 +158,6 @@ public enum SpecialField implements VariableDescriptor {
   },
   OPTIONAL_VALUE("value", "special.field.optional.value", true) {
     @Override
-    public PsiType getType(DfaVariableValue variableValue) {
-      PsiType optionalType = variableValue.getType();
-      PsiType type = OptionalUtil.getOptionalElementType(optionalType);
-      if (type instanceof PsiPrimitiveType) {
-        return ((PsiPrimitiveType)type).getBoxedType(Objects.requireNonNull(((PsiClassType)optionalType).resolve()));
-      }
-      return type;
-    }
-
-    @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
       if (qualifier == null) return DfTypes.TOP;
       TypeConstraint qualifierType = TypeConstraint.fromDfType(qualifier.getDfType());
@@ -193,6 +176,11 @@ public enum SpecialField implements VariableDescriptor {
                                      .createTypeFromText(type, null), Nullability.UNKNOWN);
       }
       return DfTypes.OBJECT_OR_NULL;
+    }
+
+    @Override
+    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+      return getDfType(thisValue.getQualifier()).meet(DfaNullability.NULLABLE.asDfType());
     }
 
     @NotNull
@@ -329,11 +317,6 @@ public enum SpecialField implements VariableDescriptor {
   @NotNull
   public DfType getDefaultValue(boolean forAccessor) {
     return DfTypes.intRange(LongRangeSet.indexRange());
-  }
-
-  @Override
-  public PsiType getType(DfaVariableValue variableValue) {
-    return PsiType.INT;
   }
 
   @Override

@@ -18,18 +18,10 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -57,14 +49,14 @@ public final class DfaVariableValue extends DfaValue {
 
     @NotNull
     public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
-      return createVariableValue(descriptor, qualifier, VariableDescriptor::getType);
+      return createVariableValue(descriptor, qualifier, VariableDescriptor::getDfType);
     }
 
     @NotNull
     DfaVariableValue createVariableValue(
       @NotNull VariableDescriptor descriptor,
       @Nullable DfaVariableValue qualifier,
-      @NotNull BiFunction<? super @NotNull VariableDescriptor, ? super @Nullable DfaVariableValue, @Nullable PsiType> typeSupplier) {
+      @NotNull BiFunction<? super @NotNull VariableDescriptor, ? super @Nullable DfaVariableValue, @NotNull DfType> typeSupplier) {
       Pair<VariableDescriptor, DfaVariableValue> key = Pair.create(descriptor, qualifier);
       DfaVariableValue var = myExistingVars.get(key);
       if (var == null) {
@@ -80,7 +72,6 @@ public final class DfaVariableValue extends DfaValue {
   }
 
   @NotNull private final VariableDescriptor myDescriptor;
-  @Nullable private final PsiType myVarType;
   @NotNull private final DfType myDfType;
   @Nullable private final DfaVariableValue myQualifier;
   private DfType myInherentType;
@@ -89,12 +80,11 @@ public final class DfaVariableValue extends DfaValue {
   private DfaVariableValue(@NotNull VariableDescriptor descriptor,
                            @NotNull DfaValueFactory factory,
                            @Nullable DfaVariableValue qualifier,
-                           @Nullable PsiType type) {
+                           @NotNull DfType type) {
     super(factory);
     myDescriptor = descriptor;
     myQualifier = qualifier;
-    myVarType = type;
-    myDfType = descriptor.getDfType(qualifier);
+    myDfType = type;
     if (myDescriptor instanceof AssertionDisabledDescriptor) {
       myFactory.setAssertionDisabled(this);
     }
@@ -113,13 +103,7 @@ public final class DfaVariableValue extends DfaValue {
   @Override
   public DfaVariableValue bindToFactory(@NotNull DfaValueFactory factory) {
     return factory.getVarFactory().createVariableValue(myDescriptor, myQualifier == null ? null : myQualifier.bindToFactory(factory),
-                                                       (descriptor, value) -> myVarType);
-  }
-
-  @Override
-  @Nullable
-  public PsiType getType() {
-    return myVarType;
+                                                       (descriptor, value) -> myDfType);
   }
 
   @NotNull
@@ -168,24 +152,9 @@ public final class DfaVariableValue extends DfaValue {
 
   public DfType getInherentType() {
     if(myInherentType == null) {
-      myInherentType = calcInherentType();
+      myInherentType = myDescriptor.getInitialDfType(this);
     }
     return myInherentType;
-  }
-
-  private DfType calcInherentType() {
-    DfType dfType = getDfType();
-    PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiVariable(), PsiModifierListOwner.class);
-    if (dfType instanceof DfIntegralType) {
-      return ((DfIntegralType)dfType).meetRange(LongRangeSet.fromPsiElement(psi));
-    }
-    if (dfType instanceof DfReferenceType) {
-      if (psi != null) {
-        dfType = dfType.meet(Mutability.getMutability(psi).asDfType());
-      }
-      dfType = dfType.meet(NullabilityUtil.calcCanBeNull(this).asDfType());
-    }
-    return dfType;
   }
 
   @NotNull

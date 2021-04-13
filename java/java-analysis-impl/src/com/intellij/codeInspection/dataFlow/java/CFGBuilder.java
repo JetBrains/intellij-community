@@ -823,16 +823,17 @@ public class CFGBuilder {
   private CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullability resultNullability) {
     PsiElement body = lambda.getBody();
     PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    PsiType psiType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     if (expression != null) {
       NullabilityProblemKind<PsiExpression> kind =
         resultNullability == Nullability.NOT_NULL ? NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem;
       myAnalyzer.addCustomNullabilityProblem(expression, kind);
       pushExpression(expression);
       myAnalyzer.removeCustomNullabilityProblem(expression);
-      boxUnbox(expression, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+      boxUnbox(expression, psiType);
     } else if(body instanceof PsiCodeBlock) {
-      DfaVariableValue variable = createTempVariable(LambdaUtil.getFunctionalInterfaceReturnType(lambda));
-      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullability, variable);
+      DfaVariableValue variable = createTempVariable(psiType);
+      myAnalyzer.inlineBlock((PsiCodeBlock)body, resultNullability, variable, psiType);
       push(variable);
     } else {
       pushUnknown();

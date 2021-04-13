@@ -878,8 +878,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       pushUnknown();
     } else {
       startElement(expression);
-      DfaVariableValue resultVariable = createTempVariable(expression.getType());
-      enterExpressionBlock(body, Nullability.UNKNOWN, resultVariable);
+      PsiType expressionType = expression.getType();
+      DfaVariableValue resultVariable = createTempVariable(expressionType);
+      enterExpressionBlock(body, Nullability.UNKNOWN, resultVariable, expressionType);
       processSwitch(expression);
       exitExpressionBlock();
       addInstruction(new PushInstruction(resultVariable, expression));
@@ -2065,19 +2066,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param block block to inline
    * @param resultNullability desired nullability returned by block return statement
    * @param target a variable to store the block result (returned via {@code return} statement)
+   * @param type resulting type
    */
-  void inlineBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
-    enterExpressionBlock(block, resultNullability, target);
+  void inlineBlock(@NotNull PsiCodeBlock block,
+                   @NotNull Nullability resultNullability,
+                   @NotNull DfaVariableValue target,
+                   @Nullable PsiType type) {
+    enterExpressionBlock(block, resultNullability, target, type);
     block.accept(this);
     exitExpressionBlock();
   }
 
-  private void enterExpressionBlock(@NotNull PsiCodeBlock block, @NotNull Nullability resultNullability, @NotNull DfaVariableValue target) {
+  private void enterExpressionBlock(@NotNull PsiCodeBlock block,
+                                    @NotNull Nullability resultNullability,
+                                    @NotNull DfaVariableValue target,
+                                    @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new Trap.InsideInlinedBlock(block));
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
     myExpressionBlockContext =
-      new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target);
+      new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
     startElement(block);
   }
 
@@ -2166,15 +2174,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final @NotNull PsiCodeBlock myCodeBlock;
     final boolean myForceNonNullBlockResult;
     final @NotNull DfaVariableValue myTarget;
+    private final @Nullable PsiType myTargetType;
 
     ExpressionBlockContext(@Nullable ExpressionBlockContext previousBlock,
                            @NotNull PsiCodeBlock codeBlock,
                            boolean forceNonNullBlockResult,
-                           @NotNull DfaVariableValue target) {
+                           @NotNull DfaVariableValue target,
+                           @Nullable PsiType targetType) {
       myPreviousBlock = previousBlock;
       myCodeBlock = codeBlock;
       myForceNonNullBlockResult = forceNonNullBlockResult;
       myTarget = target;
+      myTargetType = targetType;
     }
 
     boolean isSwitch() {
@@ -2190,7 +2201,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
         returnValue.accept(analyzer);
         analyzer.removeCustomNullabilityProblem(returnValue);
-        analyzer.generateBoxingUnboxingInstructionFor(returnValue, myTarget.getType());
+        analyzer.generateBoxingUnboxingInstructionFor(returnValue, myTargetType);
         analyzer.addInstruction(new AssignInstruction(returnValue, null));
         analyzer.addInstruction(new PopInstruction());
       }
