@@ -86,10 +86,10 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
   }
 }
 
-class IdeActivityDefinition @JvmOverloads constructor(val group: EventLogGroup,
-                                                      val activityName: String?,
-                                                      startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                                                      finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
+class IdeActivityDefinition constructor(val group: EventLogGroup,
+                                        val activityName: String?,
+                                        startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                                        finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
   val started = group.registerVarargEvent(appendActivityName(activityName, "started"), activityId, *startEventAdditionalFields)
   val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs,
                                            *finishEventAdditionalFields)

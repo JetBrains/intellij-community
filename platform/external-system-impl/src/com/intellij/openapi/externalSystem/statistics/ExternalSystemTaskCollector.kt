@@ -20,7 +20,7 @@ class ExternalSystemTaskCollector : CounterUsagesCollector() {
 
 
     @JvmField
-    val EXTERNAL_TASK_ACTIVITY = IdeActivityDefinition(GROUP, startEventAdditionalFields = arrayOf(TASK_ID_FIELD,
+    val EXTERNAL_TASK_ACTIVITY = GROUP.registerIdeActivity(null, startEventAdditionalFields = arrayOf(TASK_ID_FIELD,
                                                                                                    TARGET_FIELD,
                                                                                                    EXTERNAL_SYSTEM_ID))
   }

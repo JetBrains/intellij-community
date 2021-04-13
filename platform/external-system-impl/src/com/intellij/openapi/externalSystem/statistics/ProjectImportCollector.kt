@@ -15,7 +15,7 @@ class ProjectImportCollector : CounterUsagesCollector() {
     val TASK_CLASS = EventFields.Class("task_class")
 
     @JvmField
-    val IMPORT_ACTIVITY = IdeActivityDefinition(GROUP, null, startEventAdditionalFields=arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS, EventFields.PluginInfo))
+    val IMPORT_ACTIVITY = GROUP.registerIdeActivity( null, startEventAdditionalFields=arrayOf(EXTERNAL_SYSTEM_ID, TASK_CLASS, EventFields.PluginInfo))
   }
 
   override fun getGroup(): EventLogGroup {

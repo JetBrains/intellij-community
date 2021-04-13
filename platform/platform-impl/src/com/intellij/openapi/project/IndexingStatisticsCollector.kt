@@ -14,7 +14,7 @@ class IndexingStatisticsCollector : CounterUsagesCollector() {
     val STAGE_CLASS = EventFields.Class("stage_class")
 
     @JvmField
-    val INDEXING_ACTIVITY = IdeActivityDefinition(GROUP, null, startEventAdditionalFields = arrayOf(EventFields.PluginInfo))
+    val INDEXING_ACTIVITY = GROUP.registerIdeActivity( null, startEventAdditionalFields = arrayOf(EventFields.PluginInfo))
 
     @JvmField
     val INDEXING_STAGE = INDEXING_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS))

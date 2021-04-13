@@ -14,7 +14,7 @@ class ProjectTaskManagerStatisticsCollector : CounterUsagesCollector() {
     val TASK_RUNNER = EventFields.StringListValidatedByCustomRule("task_runner_class","class_name")
 
     @JvmField
-    val BUILD_ACTIVITY = IdeActivityDefinition(GROUP, null, startEventAdditionalFields = arrayOf(TASK_RUNNER, EventFields.PluginInfo))
+    val BUILD_ACTIVITY = GROUP.registerIdeActivity( null, startEventAdditionalFields = arrayOf(TASK_RUNNER, EventFields.PluginInfo))
   }
 
   override fun getGroup(): EventLogGroup {

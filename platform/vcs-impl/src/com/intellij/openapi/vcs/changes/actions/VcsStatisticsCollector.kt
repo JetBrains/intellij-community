@@ -15,13 +15,13 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     val GROUP = EventLogGroup("vcs", 8)
 
     @JvmField
-    val UPDATE_ACTIVITY = IdeActivityDefinition(GROUP, "update")
+    val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
 
     @JvmField
-    val FETCH_ACTIVITY = IdeActivityDefinition(GROUP, "fetch")
+    val FETCH_ACTIVITY = GROUP.registerIdeActivity("fetch")
 
     @JvmField
-    val COMMIT_ACTIVITY = IdeActivityDefinition(GROUP, "commit")
+    val COMMIT_ACTIVITY = GROUP.registerIdeActivity("commit")
 
     private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
     private val CHANGES_DELTA = EventFields.Int("changesDelta")

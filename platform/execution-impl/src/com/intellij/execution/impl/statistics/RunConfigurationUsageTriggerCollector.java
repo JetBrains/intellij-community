@@ -42,7 +42,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  private static final IdeActivityDefinition ACTIVITY_GROUP = new IdeActivityDefinition(GROUP, null,
+  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity( null,
                                                                                         new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
