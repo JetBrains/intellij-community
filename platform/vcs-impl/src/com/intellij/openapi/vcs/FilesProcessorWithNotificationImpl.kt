@@ -25,7 +25,7 @@ abstract class FilesProcessorWithNotificationImpl(
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
-  abstract val forAllProjectsActionText: String?
+  open val forAllProjectsActionText: String? = null
   abstract val muteActionText: String
 
   @NlsContexts.NotificationTitle
@@ -81,7 +81,7 @@ abstract class FilesProcessorWithNotificationImpl(
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     expireNotification()
     clearFiles()
@@ -89,7 +89,7 @@ abstract class FilesProcessorWithNotificationImpl(
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
     doActionOnChosenFiles(acquireValidFiles())
-    rememberForCurrentProject()
+    setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
@@ -113,21 +113,15 @@ abstract class FilesProcessorWithNotificationImpl(
     }
 
 
-  abstract fun rememberForAllProjects()
+  protected open fun rememberForAllProjects(): Unit = throw UnsupportedOperationException()
 
-  protected open fun rememberForCurrentProject() {
-    setForCurrentProject(true)
+  protected open fun setForCurrentProject(isEnabled: Boolean) {
+    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, isEnabled) }
   }
 
-  protected fun setForCurrentProject(value: Boolean) {
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, value) }
-  }
-
-  private fun getForCurrentProject(): Boolean =
+  override fun needDoForCurrentProject() =
     doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
 
   protected fun notAskedBefore() = !wasAskedBefore()
   protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
-
-  override fun needDoForCurrentProject() = getForCurrentProject()
 }

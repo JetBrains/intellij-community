@@ -125,7 +125,6 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   override val showActionText: String = VcsBundle.message("external.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("external.files.add.notification.action.add")
-  override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.message("external.files.add.notification.action.mute")
 
   override val viewFilesDialogTitle: String? = VcsBundle.message("external.files.add.view.dialog.title", vcs.displayName)
@@ -138,8 +137,8 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     addChosenFiles(files)
   }
 
-  override fun rememberForCurrentProject() {
-    vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
+  override fun setForCurrentProject(isEnabled: Boolean) {
+    if (isEnabled) vcsManager.getStandardConfirmation(ADD, vcs).value = DO_ACTION_SILENTLY
     VcsConfiguration.getInstance(project).ADD_EXTERNAL_FILES_SILENTLY = true
   }
 
@@ -155,8 +154,6 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
       .filter { isUnder(parents, it) }
       .toSet()
   }
-
-  override fun rememberForAllProjects() {}
 
   private fun isUnder(parents: Set<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 

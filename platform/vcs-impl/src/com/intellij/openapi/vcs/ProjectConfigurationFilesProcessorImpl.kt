@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -65,7 +64,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
       val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {
-        PropertiesComponent.getInstance(project).setValue(SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, VcsImplUtil.isProjectSharedInVcs(project))
+        setForCurrentProject(VcsImplUtil.isProjectSharedInVcs(project))
         processFiles(unversionedProjectConfigurationFiles.toList())
       }
     }
@@ -101,11 +100,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
   override val forCurrentProjectActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.add")
 
 
-  override val forAllProjectsActionText: String? = null
   override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
   override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
-
-  override fun rememberForAllProjects() {}
 
   private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
     configDir != null && VfsUtilCore.isAncestor(configDir, file, true)
