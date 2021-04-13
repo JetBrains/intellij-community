@@ -21,7 +21,7 @@ abstract class FilesProcessorWithNotificationImpl(
   abstract val notificationDisplayId: String
 
   abstract val askedBeforeProperty: String
-  abstract val doForCurrentProjectProperty: String?
+  abstract val doForCurrentProjectProperty: String
 
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
@@ -116,11 +116,11 @@ abstract class FilesProcessorWithNotificationImpl(
   protected open fun rememberForAllProjects(): Unit = throw UnsupportedOperationException()
 
   protected open fun setForCurrentProject(isEnabled: Boolean) {
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, isEnabled) }
+    PropertiesComponent.getInstance(project).setValue(doForCurrentProjectProperty, isEnabled)
   }
 
   override fun needDoForCurrentProject() =
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
+    PropertiesComponent.getInstance(project).getBoolean(doForCurrentProjectProperty, false)
 
   protected fun notAskedBefore() = !wasAskedBefore()
   protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)

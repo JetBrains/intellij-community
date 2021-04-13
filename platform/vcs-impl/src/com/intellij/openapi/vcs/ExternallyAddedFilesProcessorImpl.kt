@@ -121,7 +121,7 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
 
   override val notificationDisplayId: String = VcsNotificationIdsHolder.EXTERNALLY_ADDED_FILES
   override val askedBeforeProperty = ASKED_ADD_EXTERNAL_FILES_PROPERTY
-  override val doForCurrentProjectProperty: String? = null
+  override val doForCurrentProjectProperty: String get() = throw UnsupportedOperationException() // usages overridden
 
   override val showActionText: String = VcsBundle.message("external.files.add.notification.action.view")
   override val forCurrentProjectActionText: String = VcsBundle.message("external.files.add.notification.action.add")
