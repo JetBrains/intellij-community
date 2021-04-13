@@ -61,12 +61,11 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     if (!upToDate) return
     if (!needProcessExternalFiles()) return
 
-    val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }
-
+    val files: Set<VirtualFile>
     UNPROCESSED_FILES_LOCK.write {
-      unprocessedFiles.removeAll(files)
+      files = unprocessedFiles.toHashSet()
+      unprocessedFiles.clear()
     }
-
     if (files.isEmpty()) return
 
     if (needDoForCurrentProject()) {
