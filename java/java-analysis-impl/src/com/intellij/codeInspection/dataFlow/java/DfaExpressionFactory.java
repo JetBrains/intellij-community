@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +109,7 @@ public class DfaExpressionFactory {
     if (target instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable)target;
       if (!PsiUtil.isAccessedForWriting(refExpr)) {
-        DfaValue constValue = factory.getConstantFromVariable(variable);
+        DfaValue constValue = getConstantFromVariable(factory, variable);
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, variable)) return constValue;
       }
     }
@@ -226,5 +228,46 @@ public class DfaExpressionFactory {
       if (DfaTypeValue.isUnknown(loopElement)) break;
     }
     return loopElement == null ? factory.getUnknown() : DfaUtil.boxUnbox(loopElement, targetType);
+  }
+
+  /**
+   * @param factory factory to create new values
+   * @param variable variable to create a constant based on its value
+   * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
+   */
+  @Nullable
+  private static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
+    if (!variable.hasModifierProperty(PsiModifier.FINAL) || DfaUtil.ignoreInitializer(variable)) return null;
+    Object value = variable.computeConstantValue();
+    PsiType type = variable.getType();
+    if (value == null) {
+      Boolean boo = computeJavaLangBooleanFieldReference(variable);
+      if (boo != null) {
+        DfaValue unboxed = factory.getBoolean(boo);
+        return factory.getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
+      }
+      if (DfaUtil.isEmptyCollectionConstantField(variable)) {
+        return factory.getConstant(variable, type);
+      }
+      PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
+      initializer = PsiUtil.skipParenthesizedExprDown(initializer);
+      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
+        return factory.getNull();
+      }
+      if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
+        return factory.getConstant(variable, type);
+      }
+      return null;
+    }
+    return factory.getConstant(value, type);
+  }
+
+  @Nullable
+  private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
+    if (!(variable instanceof PsiField)) return null;
+    PsiClass psiClass = ((PsiField)variable).getContainingClass();
+    if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
+    @NonNls String name = variable.getName();
+    return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
   }
 }

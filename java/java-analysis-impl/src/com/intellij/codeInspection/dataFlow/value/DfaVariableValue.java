@@ -152,7 +152,7 @@ public final class DfaVariableValue extends DfaValue {
 
   public DfType getInherentType() {
     if(myInherentType == null) {
-      myInherentType = myDescriptor.getInitialDfType(this);
+      myInherentType = myDescriptor.getInitialDfType(this, getFactory().getContext());
     }
     return myInherentType;
   }

@@ -82,12 +82,14 @@ public interface VariableDescriptor {
   /**
    * Returns the DfType the value with this descriptor has at the beginning of the interpretation
    * @param thisValue DfaVariableValue representing the current variable
+   * @param context
    * @return Initial DfType of the value. May differ from {@link #getDfType(DfaVariableValue)} result,
    * as additional information like initial nullability or range may be known from annotations, which
    * may change later if the value is reassigned.
    */
   @NotNull
-  default DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+  default DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+                                  @Nullable PsiElement context) {
     return getDfType(thisValue.getQualifier());
   }
 }

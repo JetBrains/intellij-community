@@ -179,7 +179,8 @@ public enum SpecialField implements VariableDescriptor {
     }
 
     @Override
-    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+    public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+                                            @Nullable PsiElement context) {
       return getDfType(thisValue.getQualifier()).meet(DfaNullability.NULLABLE.asDfType());
     }
 
@@ -290,7 +291,7 @@ public enum SpecialField implements VariableDescriptor {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiField psiVariable = ObjectUtils.tryCast(variableValue.getPsiVariable(), PsiField.class);
       if (psiVariable != null &&
-          factory.canTrustFieldInitializer(psiVariable) &&
+          FieldChecker.getChecker(factory.getContext()).canTrustFieldInitializer(psiVariable) &&
           psiVariable.hasModifierProperty(PsiModifier.STATIC) &&
           psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
         PsiExpression initializer = psiVariable.getInitializer();

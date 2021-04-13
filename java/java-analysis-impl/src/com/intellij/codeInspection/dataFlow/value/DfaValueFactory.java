@@ -3,23 +3,19 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
+import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
+import com.intellij.codeInspection.dataFlow.TransferTarget;
+import com.intellij.codeInspection.dataFlow.Trap;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiFieldImpl;
-import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiEnumConstant;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
-import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +23,9 @@ import java.util.*;
 
 public class DfaValueFactory {
   private final @NotNull List<DfaValue> myValues = new ArrayList<>();
-  private final @NotNull FieldChecker myFieldChecker;
   private final @NotNull Project myProject;
+  private final @Nullable PsiElement myContext;
   private @Nullable DfaVariableValue myAssertionDisabled;
-  private final @NotNull Map<PsiElement, List<DfaVariableValue>> myVariablesInBlock =
-    FactoryMap.create(block -> ContainerUtil.map(PsiTreeUtil.findChildrenOfType(block, PsiVariable.class),
-                                                 variable -> PlainDescriptor.createVariableValue(this, variable)));
 
   /**
    * @param project a project in which context the analysis is performed
@@ -40,7 +33,7 @@ public class DfaValueFactory {
    */
   public DfaValueFactory(@NotNull Project project, @Nullable PsiElement context) {
     myProject = project;
-    myFieldChecker = new FieldChecker(context);
+    myContext = context;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myBoxedFactory = new DfaWrappedValue.Factory(this);
@@ -48,8 +41,8 @@ public class DfaValueFactory {
     myTypeValueFactory = new DfaTypeValue.Factory(this);
   }
 
-  public boolean canTrustFieldInitializer(PsiField field) {
-    return myFieldChecker.canTrustFieldInitializer(field);
+  public @Nullable PsiElement getContext() {
+    return myContext;
   }
 
   @NotNull
@@ -69,10 +62,6 @@ public class DfaValueFactory {
   int registerValue(DfaValue value) {
     myValues.add(value);
     return myValues.size() - 1;
-  }
-
-  public @NotNull List<DfaVariableValue> getVariablesInBlock(@Nullable PsiElement block) {
-    return block == null ? Collections.emptyList() : myVariablesInBlock.get(block);
   }
 
   public DfaValue getValue(int id) {
@@ -133,49 +122,9 @@ public class DfaValueFactory {
     return fromDfType(DfTypes.constant(value, type));
   }
 
-  /**
-   * @param variable variable to create a constant based on its value
-   * @return a value that represents a constant created from variable; null if variable cannot be represented as a constant
-   */
-  @Nullable
-  public DfaValue getConstantFromVariable(PsiVariable variable) {
-    if (!variable.hasModifierProperty(PsiModifier.FINAL) || DfaUtil.ignoreInitializer(variable)) return null;
-    Object value = variable.computeConstantValue();
-    PsiType type = variable.getType();
-    if (value == null) {
-      Boolean boo = computeJavaLangBooleanFieldReference(variable);
-      if (boo != null) {
-        DfaValue unboxed = getBoolean(boo);
-        return getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
-      }
-      if (DfaUtil.isEmptyCollectionConstantField(variable)) {
-        return getConstant(variable, type);
-      }
-      PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
-      initializer = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
-        return getNull();
-      }
-      if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
-        return getConstant(variable, type);
-      }
-      return null;
-    }
-    return getConstant(value, type);
-  }
-
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  @Nullable
-  private static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
-    if (!(variable instanceof PsiField)) return null;
-    PsiClass psiClass = ((PsiField)variable).getContainingClass();
-    if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
-    @NonNls String name = variable.getName();
-    return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
   }
 
   @NotNull
@@ -226,104 +175,4 @@ public class DfaValueFactory {
     return myBinOpFactory;
   }
 
-  private static class ClassInitializationInfo {
-    private static final CallMatcher SAFE_CALLS =
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNull");
-
-    final boolean myCanInstantiateItself;
-    final boolean myCtorsCallMethods;
-    final boolean mySuperCtorsCallMethods;
-
-    ClassInitializationInfo(@NotNull PsiClass psiClass) {
-      // Indirect instantiation via other class is still possible, but hopefully unlikely
-      boolean canInstantiateItself = false;
-      for (PsiElement child = psiClass.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiMember && ((PsiMember)child).hasModifierProperty(PsiModifier.STATIC) &&
-            SyntaxTraverser.psiTraverser(child).filter(PsiNewExpression.class)
-              .filterMap(PsiNewExpression::getClassReference)
-              .find(classRef -> classRef.isReferenceTo(psiClass)) != null) {
-          canInstantiateItself = true;
-          break;
-        }
-      }
-      myCanInstantiateItself = canInstantiateItself;
-      mySuperCtorsCallMethods =
-        !InheritanceUtil.processSupers(psiClass, false, superClass -> !canCallMethodsInConstructors(superClass, true));
-      myCtorsCallMethods = canCallMethodsInConstructors(psiClass, false);
-    }
-
-    private static boolean canCallMethodsInConstructors(@NotNull PsiClass aClass, boolean virtual) {
-      boolean inByteCode = false;
-      if (aClass instanceof PsiCompiledElement) {
-        inByteCode = true;
-        PsiElement navigationElement = aClass.getNavigationElement();
-        if (navigationElement instanceof PsiClass) {
-          aClass = (PsiClass)navigationElement;
-        }
-      }
-      for (PsiMethod constructor : aClass.getConstructors()) {
-        if (inByteCode && JavaMethodContractUtil.isPure(constructor) &&
-            !JavaMethodContractUtil.hasExplicitContractAnnotation(constructor)) {
-          // While pure constructor may call pure overridable method, our current implementation
-          // of bytecode inference will not infer the constructor purity in this case.
-          // So if we inferred a constructor purity from bytecode we can currently rely that
-          // no overridable methods are called there.
-          continue;
-        }
-        if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
-
-        PsiCodeBlock body = constructor.getBody();
-        if (body == null) continue;
-
-        for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
-          PsiReferenceExpression methodExpression = call.getMethodExpression();
-          if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
-          if (SAFE_CALLS.test(call)) continue;
-          if (!virtual) return true;
-
-          PsiMethod target = call.resolveMethod();
-          if (target != null && PsiUtil.canBeOverridden(target)) return true;
-        }
-      }
-
-      return false;
-    }
-  }
-
-  private static class FieldChecker {
-    private final boolean myTrustDirectFieldInitializers;
-    private final boolean myTrustFieldInitializersInConstructors;
-    private final boolean myCanInstantiateItself;
-    private final PsiClass myClass;
-
-    FieldChecker(PsiElement context) {
-      PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      PsiClass contextClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
-      myClass = contextClass;
-      if (method == null || myClass == null) {
-        myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
-        return;
-      }
-      // Indirect instantiation via other class is still possible, but hopefully unlikely
-      ClassInitializationInfo info = CachedValuesManager.getCachedValue(contextClass, () -> CachedValueProvider.Result
-        .create(new ClassInitializationInfo(contextClass), PsiModificationTracker.MODIFICATION_COUNT));
-      myCanInstantiateItself = info.myCanInstantiateItself;
-      if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
-        myTrustDirectFieldInitializers = true;
-        myTrustFieldInitializersInConstructors = false;
-        return;
-      }
-      myTrustFieldInitializersInConstructors = !info.mySuperCtorsCallMethods && !info.myCtorsCallMethods;
-      myTrustDirectFieldInitializers = !info.mySuperCtorsCallMethods;
-    }
-
-    boolean canTrustFieldInitializer(PsiField field) {
-      if (field.hasInitializer()) {
-        boolean staticField = field.hasModifierProperty(PsiModifier.STATIC);
-        if (staticField && myClass != null && field.getContainingClass() != myClass) return true;
-        return myTrustDirectFieldInitializers && (!myCanInstantiateItself || !staticField);
-      }
-      return myTrustFieldInitializersInConstructors;
-    }
-  }
 }

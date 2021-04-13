@@ -22,6 +22,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 import com.intellij.psi.*
 import com.intellij.util.containers.FList
 
@@ -46,9 +47,10 @@ interface TransferTarget {
 data class ExceptionTransfer(val throwable: TypeConstraint) : TransferTarget {
   override fun toString(): String = "Exception($throwable)"
 }
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val block: PsiElement?) : TransferTarget {
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val varsToFlush: List<VariableDescriptor>) : TransferTarget {
   override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
-    runner.factory.getVariablesInBlock(block).forEach(state::flushVariable)
+    val varFactory = runner.factory.varFactory
+    varsToFlush.forEach { desc -> state.flushVariable(varFactory.createVariableValue(desc)) }
     return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
   }
 

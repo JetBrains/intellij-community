@@ -61,7 +61,8 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
   }
 
   @Override
-  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+                                          @Nullable PsiElement context) {
     DfType dfType = getDfType(thisValue.getQualifier());
     PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
     if (psi == null) return dfType;
@@ -70,12 +71,14 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
     }
     if (dfType instanceof DfReferenceType) {
       dfType = dfType.meet(Mutability.getMutability(psi).asDfType());
-      dfType = dfType.meet(calcCanBeNull(psi, thisValue).asDfType());
+      dfType = dfType.meet(calcCanBeNull(psi, thisValue, context).asDfType());
     }
     return dfType;
   }
 
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var, @NotNull DfaVariableValue value) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
+                                        @NotNull DfaVariableValue value,
+                                        @Nullable PsiElement context) {
     return DfaNullability.UNKNOWN;
   }
 }

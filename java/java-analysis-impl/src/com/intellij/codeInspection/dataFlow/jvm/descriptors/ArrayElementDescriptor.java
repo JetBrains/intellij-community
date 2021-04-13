@@ -38,7 +38,8 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
   }
 
   @Override
-  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue) {
+  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+                                          @Nullable PsiElement context) {
     DfaVariableValue qualifier = thisValue.getQualifier();
     DfType dfType = getDfType(qualifier);
     if (qualifier != null && dfType instanceof DfReferenceType) {

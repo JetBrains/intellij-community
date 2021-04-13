@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -1226,7 +1227,7 @@ public final class TrackingRunner extends DataFlowRunner {
         }
         return new CauseItem(message, anchor);
       }
-      if (owner instanceof PsiField && getFactory().canTrustFieldInitializer((PsiField)owner)) {
+      if (owner instanceof PsiField && FieldChecker.getChecker(getFactory().getContext()).canTrustFieldInitializer((PsiField)owner)) {
         Pair<PsiExpression, Nullability> fieldNullability =
           NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)owner);
         if (fieldNullability.second == DfaNullability.toNullability(nullability)) {

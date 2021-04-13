@@ -413,7 +413,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void jumpOut(PsiElement exitedStatement) {
     if (exitedStatement != null && PsiTreeUtil.isAncestor(myCodeFragment, exitedStatement, false)) {
-      controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), exitedStatement),
+      controlTransfer(createTransfer(exitedStatement, exitedStatement),
                       getTrapsInsideElement(exitedStatement));
     } else {
       // Jumping out of analyzed code fragment
@@ -435,7 +435,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement continuedStatement = statement.findContinuedStatement();
     if (continuedStatement instanceof PsiLoopStatement && PsiTreeUtil.isAncestor(myCodeFragment, continuedStatement, true)) {
       PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
-      controlTransfer(new InstructionTransfer(getEndOffset(body), body), getTrapsInsideElement(body));
+      controlTransfer(createTransfer(body, body), getTrapsInsideElement(body));
     } else {
       // Jumping out of analyzed code fragment
       controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
@@ -1078,7 +1078,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     processTryWithResources(resourceList, tryBlock);
 
-    InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(statement), tryBlock);
+    InstructionTransfer gotoEnd = createTransfer(statement, tryBlock);
     FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
     controlTransfer(gotoEnd, singleFinally);
 
@@ -1105,6 +1105,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(statement);
+  }
+
+  @NotNull
+  private InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
+    List<PlainDescriptor> varsToFlush = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(blockToFlush, PsiVariable.class),
+                                                  variable -> new PlainDescriptor(variable));
+    return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
   }
 
   void pushTrap(Trap elem) {
@@ -1136,7 +1143,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (twrFinallyDescriptor != null) {
-      InstructionTransfer gotoEnd = new InstructionTransfer(getEndOffset(resourceList), tryBlock);
+      InstructionTransfer gotoEnd = createTransfer(resourceList, tryBlock);
       controlTransfer(gotoEnd, FList.createFromReversed(ContainerUtil.createMaybeSingletonList(twrFinallyDescriptor)));
       popTrap(TwrFinally.class);
       pushTrap(new InsideFinally(resourceList));

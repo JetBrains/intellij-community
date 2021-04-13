@@ -92,7 +92,9 @@ public final class GetterDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var, @NotNull DfaVariableValue value) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
+                                        @NotNull DfaVariableValue value,
+                                        @Nullable PsiElement context) {
     PsiType type = getType(value.getQualifier());
     return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var));
   }

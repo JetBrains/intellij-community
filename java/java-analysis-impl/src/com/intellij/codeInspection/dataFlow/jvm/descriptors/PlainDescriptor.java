@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -88,7 +89,9 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var, @NotNull DfaVariableValue value) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
+                                        @NotNull DfaVariableValue value,
+                                        @Nullable PsiElement context) {
     if (var instanceof PsiField && DfaUtil.hasInitializationHacks((PsiField)var)) {
       return DfaNullability.FLUSHED;
     }
@@ -109,7 +112,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
       }
     }
 
-    if (var instanceof PsiField && value.getFactory().canTrustFieldInitializer((PsiField)var)) {
+    if (var instanceof PsiField && FieldChecker.getChecker(context).canTrustFieldInitializer((PsiField)var)) {
       return DfaNullability.fromNullability(NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)var).second);
     }
     return DfaNullability.UNKNOWN;
