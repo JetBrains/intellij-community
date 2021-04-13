@@ -82,7 +82,8 @@ class LazyClassLoader extends ClassLoader implements Closeable {
 
     @Override
     public Class<?> findClass(String name) throws ClassNotFoundException {
-      return super.findClass(name);
+      final Class<?> loaded = findLoadedClass(name);
+      return loaded != null? loaded : super.findClass(name);
     }
 
     @Override
