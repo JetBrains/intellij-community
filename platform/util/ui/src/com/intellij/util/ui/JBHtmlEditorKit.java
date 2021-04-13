@@ -120,8 +120,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
 
   public static StyleSheet createStyleSheet() {
     StyleSheet style = new StyleSheet();
-    style.addStyleSheet(StartupUiUtil.isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle")
-                                                       : StartupUiUtil.getDefaultHtmlKitCss());
+    style.addStyleSheet((StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle"));
     style.addStyleSheet(ourCommonStyle);
     return style;
   }
