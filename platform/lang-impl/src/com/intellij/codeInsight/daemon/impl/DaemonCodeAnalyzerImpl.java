@@ -393,11 +393,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       assert progress.isCanceled() && progress.isDisposed();
     }
     catch (Throwable e) {
-      if (e instanceof ExecutionException) e = e.getCause();
+      Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
       if (progress.isCanceled() && progress.isRunning()) {
-        e.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
+        unwrapped.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
       }
-      ExceptionUtil.rethrow(e);
+      ExceptionUtil.rethrow(unwrapped);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);

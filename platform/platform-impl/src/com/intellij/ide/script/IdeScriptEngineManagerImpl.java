@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.text.StringHash;
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -232,9 +233,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
           return myEngine.eval(script);
         }
         catch (Throwable ex) {
-          //noinspection InstanceofCatchParameter
-          while (ex instanceof ScriptException && ex.getCause() != null) ex = ex.getCause();
-          throw new IdeScriptException(ex);
+          throw new IdeScriptException(ExceptionUtilRt.unwrapException(ex, ScriptException.class));
         }
       });
     }
