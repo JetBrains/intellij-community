@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,13 +275,20 @@ public class JDParser {
     int curPos = 0;
     int firstLineToKeepIndents = -1;
     int minIndentWhitespaces = Integer.MAX_VALUE;
+    boolean isInMultilineTodo = false;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
       curPos += token.length();
 
-      if (containsTagToKeepIndentsAfter(getLineWithoutAsterisk(token)) && firstLineToKeepIndents < 0) {
-        firstLineToKeepIndents = list.size();
+      String lineWithoutAsterisk = getLineWithoutAsterisk(token);
+      if (!isInMultilineTodo) {
+        if (isMultilineTodoStart(lineWithoutAsterisk)) {
+          isInMultilineTodo = true;
+        }
+        else if (containsTagToKeepIndentsAfter(lineWithoutAsterisk) && firstLineToKeepIndents < 0) {
+          firstLineToKeepIndents = list.size();
+        }
       }
 
       if (firstLineToKeepIndents >= 0) {
@@ -289,26 +298,27 @@ public class JDParser {
       if ("\n".equals(token)) {
         if (!first) {
           list.add("");
-          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          if (markers != null) markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
         }
         first = false;
       }
       else {
         first = true;
-        if (p2nl) {
-          if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
-            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
-            markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
-            continue;
-          }
+        if (isInMultilineTodo && StringUtil.isEmpty(lineWithoutAsterisk)) {
+          isInMultilineTodo = false;
         }
-        if (preCount == 0 && firstLineToKeepIndents < 0) token = token.trim();
+        if (p2nl && isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
+          list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
+          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          continue;
+        }
+        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo) token = token.trim();
 
         list.add(token);
 
         if (markers != null) {
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0);
+          markers.add(Boolean.valueOf(preCount > 0) || firstLineToKeepIndents >= 0 || isInMultilineTodo);
           if (lineHasClosingPreTag(token)) preCount--;
         }
 
@@ -353,6 +363,18 @@ public class JDParser {
       }
     }
     return null;
+  }
+
+  private static boolean isMultilineTodoStart(@NotNull String line) {
+    if (TodoConfiguration.getInstance().isMultiLine()) {
+      for (TodoPattern todoPattern : TodoConfiguration.getInstance().getTodoPatterns()) {
+        Pattern p = todoPattern.getPattern();
+        if (p != null) {
+          return p.matcher(line.trim()).matches();
+        }
+      }
+    }
+    return false;
   }
 
   private static int getIndentWhitespaces(@NotNull String line) {

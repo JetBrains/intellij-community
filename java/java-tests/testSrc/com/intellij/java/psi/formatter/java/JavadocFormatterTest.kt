@@ -2,6 +2,7 @@
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
@@ -1541,5 +1542,44 @@ public class Test {
       }
       """.trimIndent()
     )
+  }
+
+  fun testIdea198240() {
+    val config = TodoConfiguration.getInstance()
+    val currFlag = config.isMultiLine;
+    try {
+      config.isMultiLine = true
+      doTextTest(
+        """
+        public class Test {
+            /**
+             * TODO This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             *   @param i Parameter
+             */
+            void foo(int i) { }
+        }
+        """.trimIndent(),
+
+        """
+        public class Test {
+            /**
+             * TODO This is a long to do comment which
+             *   takes multiple lines. Indentation of these
+             *   lines should remain.
+             *
+             * @param i Parameter
+             */
+            void foo(int i) {
+            }
+        }
+        """.trimIndent()
+      )
+    }
+    finally {
+      config.isMultiLine = currFlag;
+    }
   }
 }
