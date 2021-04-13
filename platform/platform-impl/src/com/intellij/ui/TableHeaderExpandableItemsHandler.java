@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ public class TableHeaderExpandableItemsHandler extends AbstractExpandableItemsHa
     AppUIUtil.targetToDevice(comp, myComponent);
 
     Rectangle rect = TableUtil.getColumnBounds(myComponent, index);
-    rect.width = comp.getPreferredSize().width;
+    rect.width = comp.getPreferredSize().width + JBUI.scale(5);
     if (rect.height > 0) rect.height--;
     return Pair.create(comp, rect);
   }
