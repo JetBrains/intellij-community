@@ -1,15 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.TreeBackedLighterAST;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +36,9 @@ import java.util.Collections;
 import java.util.List;
 
 public final class StubTreeBuilder {
+
+  private static final Logger LOG = Logger.getInstance(StubTreeBuilder.class);
+
   private static final Key<Stub> stubElementKey = Key.create("stub.tree.for.file.content");
 
   private StubTreeBuilder() { }
@@ -83,19 +89,31 @@ public final class StubTreeBuilder {
     return buildStubTree(inputData, type);
   }
 
+  private static <T> @Nullable T handleStubBuilderException(@NotNull FileContent inputData,
+                                                            @NotNull StubBuilderType stubBuilderType,
+                                                            @NotNull ThrowableComputable<T, Exception> builder) {
+    try {
+      return builder.compute();
+    }
+    catch (Exception e) {
+      LOG.error(PluginException.createByClass("Failed to build stub tree for " + inputData.getFileName(), e,
+                                              stubBuilderType.getClassToBlameInCaseOfException()));
+      return null;
+    }
+  }
+
   @Nullable
   public static Stub buildStubTree(@NotNull FileContent inputData, @NotNull StubBuilderType stubBuilderType) {
     Stub data = inputData.getUserData(stubElementKey);
     if (data != null) return data;
 
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (inputData) {
       data = inputData.getUserData(stubElementKey);
       if (data != null) return data;
 
       final BinaryFileStubBuilder builder = stubBuilderType.getBinaryFileStubBuilder();
       if (builder != null) {
-        data = builder.buildStubTree(inputData);
+        data = handleStubBuilderException(inputData, stubBuilderType, () -> builder.buildStubTree(inputData));
         if (data instanceof PsiFileStubImpl && !((PsiFileStubImpl<?>)data).rootsAreSet()) {
           ((PsiFileStubImpl<?>)data).setStubRoots(new PsiFileStub[]{(PsiFileStubImpl<?>)data});
         }
@@ -118,7 +136,8 @@ public final class StubTreeBuilder {
             if (stubBuilder instanceof LightStubBuilder) {
               LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
             }
-            data = stubBuilder.buildStubTree(psi);
+            PsiFile finalPsi = psi;
+            data = handleStubBuilderException(inputData, stubBuilderType, () -> stubBuilder.buildStubTree(finalPsi));
 
             List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
             List<PsiFileStub<?>> stubs = new ArrayList<>(stubbedRoots.size());
@@ -131,7 +150,7 @@ public final class StubTreeBuilder {
               if (stubbedRootBuilder instanceof LightStubBuilder) {
                 LightStubBuilder.FORCED_AST.set(new TreeBackedLighterAST(secondaryPsi.getNode()));
               }
-              StubElement<?> element = stubbedRootBuilder.buildStubTree(secondaryPsi);
+              StubElement<?> element = handleStubBuilderException(inputData, stubBuilderType, () -> stubbedRootBuilder.buildStubTree(secondaryPsi));
               if (element instanceof PsiFileStub) {
                 stubs.add((PsiFileStub<?>)element);
               }
