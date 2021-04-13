@@ -60,7 +60,8 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
     return files - projectConfigurationFiles
   }
 
-  override fun unchangedFileStatusChanged() {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (!upToDate) return
     if (foundProjectConfigurationFiles.compareAndSet(true, false)) {
       val unversionedProjectConfigurationFiles = doFilterFiles(ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles)
       if (unversionedProjectConfigurationFiles.isNotEmpty()) {

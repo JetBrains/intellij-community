@@ -57,7 +57,8 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
     }
   }
 
-  override fun unchangedFileStatusChanged() {
+  override fun unchangedFileStatusChanged(upToDate: Boolean) {
+    if (!upToDate) return
     if (!needProcessExternalFiles()) return
 
     val files = UNPROCESSED_FILES_LOCK.read { unprocessedFiles.toHashSet() }

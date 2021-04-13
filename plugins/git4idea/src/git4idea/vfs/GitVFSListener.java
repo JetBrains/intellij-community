@@ -316,9 +316,8 @@ public final class GitVFSListener extends VcsVFSListener {
   }
 
   @TestOnly
-  public void waitForAllEventsProcessedInTestMode() {
+  public void waitForExternalFilesEventsProcessedInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    ((ChangeListManagerImpl)myChangeListManager).waitEverythingDoneInTestMode();
     myExternalFilesProcessor.waitForEventsProcessedInTestMode();
   }
 

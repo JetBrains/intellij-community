@@ -447,8 +447,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
         myUpdateException = null;
         myAdditionalInfo = null;
 
-        myDelayedNotificator.changedFileStatusChanged();
-        myDelayedNotificator.unchangedFileStatusChanged();
+        myDelayedNotificator.changedFileStatusChanged(true);
+        myDelayedNotificator.unchangedFileStatusChanged(true);
         myDelayedNotificator.changeListUpdateDone();
         ((ChangesViewEx)myChangesViewManager).refreshImmediately();
       }
@@ -542,7 +542,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
               final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
               myComposite = dataHolder.getComposite();
               if (statusChanged) {
-                myDelayedNotificator.unchangedFileStatusChanged();
+                boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
+                myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
               }
               LOG.debug("[update] - success");
             }
@@ -574,7 +575,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
       finally {
         dirtyScopeManager.changesProcessed();
 
-        myDelayedNotificator.changedFileStatusChanged();
+        myDelayedNotificator.changedFileStatusChanged(!isInUpdate());
         myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
@@ -1076,7 +1077,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
    * Notify that {@link VcsManagedFilesHolder} state was changed.
    */
   public void notifyUnchangedFileStatusChanged() {
-    myDelayedNotificator.unchangedFileStatusChanged();
+    boolean isUnchangedUpdating = isInUpdate() || isUnversionedInUpdateMode() || isIgnoredInUpdateMode();
+    myDelayedNotificator.unchangedFileStatusChanged(!isUnchangedUpdating);
     myDelayedNotificator.changeListUpdateDone();
   }
 
