@@ -123,6 +123,9 @@ object GithubApiRequests {
         .withOperationName("get information for repository $username/$repoName")
 
     @JvmStatic
+    fun get(url: String) = Get.Optional.json<GithubRepoDetailed>(url).withOperationName("get information for repository $url")
+
+    @JvmStatic
     fun delete(server: GithubServerPath, username: String, repoName: String) =
       delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
 
