@@ -17,7 +17,7 @@ private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
 
 @ApiStatus.Internal
 class StructuredIdeActivity constructor(private val projectOrNullForApplication: Project?,
-                                        private val ideActivityGroup: IdeActivityGroup) {
+                                        private val ideActivityDefinition: IdeActivityDefinition) {
   private val id = counter.incrementAndGet()
 
   private var state = IdeActivityState.NOT_STARTED
@@ -28,13 +28,13 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
     if (!LOG.assertTrue(state == IdeActivityState.NOT_STARTED, state.name)) return this
     state = IdeActivityState.STARTED
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityGroup.activityId.with(id))
+    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
 
     startedTimestamp = System.nanoTime()
-    ideActivityGroup.started.log(projectOrNullForApplication, data)
+    ideActivityDefinition.started.log(projectOrNullForApplication, data)
     return this
   }
 
@@ -43,11 +43,11 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
     state = IdeActivityState.STARTED
     startedTimestamp = System.nanoTime()
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityGroup.activityId.with(id))
+    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
 
     dataSupplier().then { additionalData ->
       data.addAll(additionalData)
-      ideActivityGroup.started.log(projectOrNullForApplication, data)
+      ideActivityDefinition.started.log(projectOrNullForApplication, data)
     }
 
     return this
@@ -57,7 +57,7 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
   fun stageStarted(stage: VarargEventId, dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
     if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityGroup.activityId.with(id))
+    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
@@ -71,13 +71,13 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
     if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
     state = IdeActivityState.FINISHED
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityGroup.activityId.with(id))
+    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
 
     data.add(EventFields.DurationMs.with(TimeoutUtil.getDurationMillis(startedTimestamp)))
-    ideActivityGroup.finished.log(projectOrNullForApplication, data)
+    ideActivityDefinition.finished.log(projectOrNullForApplication, data)
     return this
   }
 
@@ -86,10 +86,10 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
   }
 }
 
-class IdeActivityGroup @JvmOverloads constructor(val group: EventLogGroup,
-                                                 val activityName: String? = null,
-                                                 startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                                                 finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
+class IdeActivityDefinition @JvmOverloads constructor(val group: EventLogGroup,
+                                                      val activityName: String?,
+                                                      startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                                                      finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
   val started = group.registerVarargEvent(appendActivityName(activityName, "started"), activityId, *startEventAdditionalFields)
   val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs,
                                            *finishEventAdditionalFields)

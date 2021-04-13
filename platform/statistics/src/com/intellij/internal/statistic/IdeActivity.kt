@@ -14,7 +14,7 @@ import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(IdeActivity::class.java)
 
-enum class IdeActivityState { NOT_STARTED, STARTED, FINISHED }
+internal enum class IdeActivityState { NOT_STARTED, STARTED, FINISHED }
 
 @Deprecated("Use com.intellij.internal.statistic.StructuredIdeActivity instead")
 @ApiStatus.Internal

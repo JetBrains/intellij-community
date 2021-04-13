@@ -10,7 +10,7 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.execution.target.TargetEnvironmentsManager;
-import com.intellij.internal.statistic.IdeActivityGroup;
+import com.intellij.internal.statistic.IdeActivityDefinition;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -42,13 +42,13 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  private static final IdeActivityGroup ACTIVITY_GROUP = new IdeActivityGroup(GROUP, null,
-                                                                              new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
-                                                                                TARGET,
-                                                                                RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
-                                                                                RunConfigurationTypeUsagesCollector.ID_FIELD,
-                                                                                EventFields.PluginInfo},
-                                                                              new EventField<?>[]{FINISH_TYPE});
+  private static final IdeActivityDefinition ACTIVITY_GROUP = new IdeActivityDefinition(GROUP, null,
+                                                                                        new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
+                                                                                          TARGET,
+                                                                                          RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
+                                                                                          RunConfigurationTypeUsagesCollector.ID_FIELD,
+                                                                                          EventFields.PluginInfo},
+                                                                                        new EventField<?>[]{FINISH_TYPE});
 
   public static final VarargEventId UI_SHOWN_STAGE = ACTIVITY_GROUP.registerStage("ui.shown");
 

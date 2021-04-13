@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector
-import com.intellij.internal.statistic.IdeActivityGroup
+import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -20,12 +20,9 @@ class ExternalSystemTaskCollector : CounterUsagesCollector() {
 
 
     @JvmField
-    val EXTERNAL_TASK_ACTIVITY = IdeActivityGroup(GROUP, startEventAdditionalFields = arrayOf(TASK_ID_FIELD,
-                                                                                              TARGET_FIELD,
-                                                                                              EXTERNAL_SYSTEM_ID))
-
-    //@JvmField
-    //val INDEXING_STAGE = INDEXING_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS))
+    val EXTERNAL_TASK_ACTIVITY = IdeActivityDefinition(GROUP, startEventAdditionalFields = arrayOf(TASK_ID_FIELD,
+                                                                                                   TARGET_FIELD,
+                                                                                                   EXTERNAL_SYSTEM_ID))
   }
 
   override fun getGroup(): EventLogGroup {

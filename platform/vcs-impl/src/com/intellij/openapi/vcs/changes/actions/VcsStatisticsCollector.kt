@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.internal.statistic.IdeActivityGroup
+import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -15,13 +15,13 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     val GROUP = EventLogGroup("vcs", 8)
 
     @JvmField
-    val UPDATE_ACTIVITY = IdeActivityGroup(GROUP, "update")
+    val UPDATE_ACTIVITY = IdeActivityDefinition(GROUP, "update")
 
     @JvmField
-    val FETCH_ACTIVITY = IdeActivityGroup(GROUP, "fetch")
+    val FETCH_ACTIVITY = IdeActivityDefinition(GROUP, "fetch")
 
     @JvmField
-    val COMMIT_ACTIVITY = IdeActivityGroup(GROUP, "commit")
+    val COMMIT_ACTIVITY = IdeActivityDefinition(GROUP, "commit")
 
     private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
     private val CHANGES_DELTA = EventFields.Int("changesDelta")
