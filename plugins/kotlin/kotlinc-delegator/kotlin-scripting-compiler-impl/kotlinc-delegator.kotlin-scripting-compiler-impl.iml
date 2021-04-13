@@ -7,13 +7,13 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:1.4.32-release-371" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:1.4.32-release-380" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-371/kotlin-scripting-compiler-impl-1.4.32-release-371.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-380/kotlin-scripting-compiler-impl-1.4.32-release-380.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-371/kotlin-scripting-compiler-impl-1.4.32-release-371-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/1.4.32-release-380/kotlin-scripting-compiler-impl-1.4.32-release-380-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
