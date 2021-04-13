@@ -236,11 +236,10 @@ Includes the following features:</p>
     </group>
 
     <group id="FileImportGroup" popup="true">
-      <add-to-group group-id="PrintExportGroup" relative-to-action="FileExportGroup" anchor="before"/>
       <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.ImportFromDocxAction"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.ImportFromDocxAction">
-        <add-to-group group-id="FileImportGroup"/>
       </action>
+      <add-to-group group-id="PrintExportGroup" relative-to-action="FileExportGroup" anchor="before"/>
     </group>
   </actions>
 </idea-plugin>
