@@ -122,7 +122,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
     if (synchronizationTurnOff()) return
-    if (!VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED && wasAskedBefore()) return
+    if (mutedForCurrentProject()) return
 
     processIgnored(ignoredPaths)
   }
