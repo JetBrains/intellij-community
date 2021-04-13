@@ -90,12 +90,8 @@ public final class TransactionGuardImpl extends TransactionGuard {
    */
   public void performUserActivity(Runnable activity) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AccessToken token = startActivity(true);
-    try {
+    try (AccessToken ignore = startActivity(true)) {
       activity.run();
-    }
-    finally {
-      token.finish();
     }
   }
 
