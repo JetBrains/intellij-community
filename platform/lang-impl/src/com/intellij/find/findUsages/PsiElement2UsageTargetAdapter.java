@@ -47,6 +47,7 @@ public class PsiElement2UsageTargetAdapter
   private final SmartPsiElementPointer<?> myPointer;
   @NotNull protected final FindUsagesOptions myOptions;
   private String myPresentableText;
+  private String myLocationText;
   private Icon myIcon;
 
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options, boolean update) {
@@ -269,6 +270,7 @@ public class PsiElement2UsageTargetAdapter
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       myIcon = presentation == null ? null : presentation.getIcon(true);
       myPresentableText = presentation == null ? UsageViewUtil.createNodeText(element) : presentation.getPresentableText();
+      myLocationText = presentation == null ? null : StringUtil.nullize(presentation.getLocationString());
       if (myIcon == null) {
         if (element instanceof PsiMetaOwner) {
           final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
@@ -292,6 +294,11 @@ public class PsiElement2UsageTargetAdapter
   @Override
   public String getPresentableText() {
     return myPresentableText;
+  }
+
+  @Override
+  public @Nullable String getLocationString() {
+    return myLocationText;
   }
 
   @Override

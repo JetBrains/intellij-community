@@ -117,6 +117,8 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
         final String text = presentation.getPresentableText();
         append(text == null ? "" : text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        final String locationString = presentation.getLocationString();
+        append(locationString == null ? "" : " " + locationString, SimpleTextAttributes.GRAY_ATTRIBUTES);
         setIcon(presentation.getIcon(expanded));
       }
       else if (treeNode instanceof GroupNode) {
