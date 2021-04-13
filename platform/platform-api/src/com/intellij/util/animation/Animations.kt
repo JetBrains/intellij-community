@@ -6,6 +6,7 @@ package com.intellij.util.animation
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.Rectangle
 import java.util.function.Consumer
 import java.util.function.DoubleConsumer
@@ -57,6 +58,10 @@ fun animation(from: Double, to: Double, consumer: DoubleConsumer): Animation {
   return Animation(DoubleConsumer { value ->
     consumer.accept(from + value * (to - from))
   })
+}
+
+fun animation(from: Point, to: Point, consumer: Consumer<Point>): Animation {
+  return Animation(DoublePointFunction(from, to), consumer)
 }
 
 fun animation(from: Rectangle, to: Rectangle, consumer: Consumer<Rectangle>): Animation {
@@ -135,6 +140,19 @@ class DoubleColorFunction(
     blue.apply(value),
     alpha.apply(value)
   )
+}
+
+class DoublePointFunction(
+  val from: Point,
+  val to: Point
+) : DoubleFunction<Point> {
+
+  private val x = range(from.x, to.x)
+  private val y = range(from.y, to.y)
+
+  override fun apply(value: Double): Point {
+    return Point(x.apply(value), y.apply(value))
+  }
 }
 
 class DoubleDimensionFunction(
