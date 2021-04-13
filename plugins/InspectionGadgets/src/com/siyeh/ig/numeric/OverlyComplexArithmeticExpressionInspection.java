@@ -84,9 +84,8 @@ public class OverlyComplexArithmeticExpressionInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
@@ -122,12 +121,13 @@ public class OverlyComplexArithmeticExpressionInspection
       if (!isArithmetic(expression)) {
         return 1;
       }
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        return countTerms(lhs) + countTerms(rhs);
+      if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression poly = (PsiPolyadicExpression)expression;
+        int count = 0;
+        for (PsiExpression operand : poly.getOperands()) {
+          count += countTerms(operand);
+        }
+        return count;
       }
       else if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression =
@@ -150,13 +150,12 @@ public class OverlyComplexArithmeticExpressionInspection
     }
 
     private boolean isArithmetic(PsiExpression expression) {
-      if (expression instanceof PsiBinaryExpression) {
+      if (expression instanceof PsiPolyadicExpression) {
         final PsiType type = expression.getType();
         if (TypeUtils.isJavaLangString(type)) {
           return false; //ignore string concatenations
         }
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
+        final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
         return arithmeticTokens.contains(binaryExpression.getOperationTokenType());
       }
       else if (expression instanceof PsiPrefixExpression) {
