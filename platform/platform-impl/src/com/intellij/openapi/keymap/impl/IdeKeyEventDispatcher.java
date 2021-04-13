@@ -3,10 +3,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.KeyboardAwareFocusOwner;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -689,10 +686,13 @@ public final class IdeKeyEventDispatcher {
       long startedAt = chosen.third;
       processor.onUpdatePassed(e, action, actionEvent);
 
+      int eventCount = IdeEventQueue.getInstance().getEventCount();
       if (context instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
-        ((DataManagerImpl.MyDataContext)context).setEventCount(IdeEventQueue.getInstance().getEventCount());
+        ((DataManagerImpl.MyDataContext)context).setEventCount(eventCount);
       }
-      actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+      try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
+        actionManager.fireBeforeActionPerformed(action, actionEvent.getDataContext(), actionEvent);
+      }
       if (isContextComponentNotVisible(actionEvent)) {
         logTimeMillis(startedAt, action);
         return;
@@ -701,8 +701,11 @@ public final class IdeKeyEventDispatcher {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
         myIgnoreNextKeyTypedEvent = true;
       }
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(
-        () -> processor.performAction(e, action, actionEvent));
+      LOG.assertTrue(eventCount == IdeEventQueue.getInstance().getEventCount(),
+                     "Event counts do not match: " + eventCount + " != " + IdeEventQueue.getInstance().getEventCount());
+      try (AccessToken ignore = ((TransactionGuardImpl)TransactionGuard.getInstance()).startActivity(true)) {
+        processor.performAction(e, action, actionEvent);
+      }
       actionManager.fireAfterActionPerformed(action, actionEvent.getDataContext(), actionEvent);
       logTimeMillis(startedAt, action);
       return;
