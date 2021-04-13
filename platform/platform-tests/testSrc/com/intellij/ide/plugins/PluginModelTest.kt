@@ -59,8 +59,7 @@ class PluginModelTest {
       val descriptor = moduleMetaInfo.pluginDescriptor ?: continue
       val pluginXml = moduleMetaInfo.pluginDescriptorFile ?: continue
 
-      val id = descriptor.getChild("id")?.text
-               ?: descriptor.getChild("name")?.text
+      val id = descriptor.getChild("id")?.text ?: descriptor.getChild("name")?.text
       if (id == null) {
         checker.errors.add(PluginValidationError("Plugin id is not specified in ${homePath.relativize(pluginXml)}"))
         continue

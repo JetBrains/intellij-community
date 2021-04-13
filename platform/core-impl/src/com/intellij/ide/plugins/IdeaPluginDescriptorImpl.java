@@ -190,7 +190,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (this == mainDescriptor) {
       moduleLoop:
       for (PluginContentDescriptor.ModuleItem module : contentDescriptor.modules) {
-        String descriptorFile = module.name + ".xml";
+        String descriptorFile = module.configFile == null ? module.name + ".xml" : module.configFile;
         if (pluginDependencies != null) {
           for (PluginDependency dependency : pluginDependencies) {
             if (descriptorFile.equals(dependency.configFile)) {
@@ -201,16 +201,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         }
 
         // inject as xi:include does
-        try {
-          Element moduleElement = pathResolver.resolvePath(dataLoader, descriptorFile, context.getXmlFactory());
-          if (moduleElement == null) {
-            throw new RuntimeException("Plugin " + this + " misses optional descriptor " + descriptorFile);
-          }
-          doRead(moduleElement, context, mainDescriptor);
+        Element moduleElement = pathResolver.resolvePath(dataLoader, descriptorFile, context.getXmlFactory());
+        if (moduleElement == null) {
+          throw new RuntimeException("Plugin " + this + " misses optional descriptor " + descriptorFile);
         }
-        catch (JDOMException e) {
-          throw new RuntimeException(e);
-        }
+        doRead(moduleElement, context, mainDescriptor);
 
         module.isInjected = true;
       }
@@ -219,8 +214,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private void readEssentialPluginInformation(@NotNull Element element,
-                                              @NotNull DescriptorListLoadingContext context) {
+  private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
     XmlReader.readMetaInfo(this, element);
     if (descriptionChildText == null) {
       descriptionChildText = element.getChildTextTrim("description");
