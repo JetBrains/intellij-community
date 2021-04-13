@@ -29,6 +29,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -40,7 +41,10 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.io.InputStream;
@@ -50,6 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC)
@@ -186,7 +191,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         AbstractFileType fileType = (AbstractFileType)ftd.fileType;
         root.setAttribute("binary", String.valueOf(fileType.isBinary()));
-        if (!StringUtil.isEmpty(fileType.getDefaultExtension())) {
+        if (!Strings.isEmpty(fileType.getDefaultExtension())) {
           root.setAttribute("default_extension", fileType.getDefaultExtension());
         }
         root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
@@ -429,10 +434,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static void initializeMatchers(@NotNull Object context, @NotNull FileTypeBean bean) {
-    bean.addMatchers(parseExtensions(context, StringUtil.notNullize(bean.extensions)));
-    bean.addMatchers(parse(context, StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
-    bean.addMatchers(parse(context, StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
-    bean.addMatchers(parse(context, StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
+    bean.addMatchers(parseExtensions(context, Strings.notNullize(bean.extensions)));
+    bean.addMatchers(parse(context, Strings.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
+    bean.addMatchers(parse(context, Strings.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
+    bean.addMatchers(parse(context, Strings.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
   }
 
   private void instantiatePendingFileTypes() {
@@ -859,7 +864,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   public String getIgnoredFilesList() {
     Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
-    return masks.isEmpty() ? "" : StringUtil.join(masks, ";") + ";";
+    return masks.isEmpty() ? "" : String.join(";", masks) + ";";
   }
 
   @Override
@@ -962,7 +967,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     for (Element element : state.getChildren()) {
       if (ELEMENT_IGNORE_FILES.equals(element.getName())) {
-        myIgnoredPatterns.setIgnoreMasks(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_LIST)));
+        myIgnoredPatterns.setIgnoreMasks(Strings.notNullize(element.getAttributeValue(ATTRIBUTE_LIST)));
       }
       else if (ELEMENT_EXTENSION_MAP.equals(element.getName())) {
         readGlobalMappings(element, false);
@@ -1145,7 +1150,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else {
       String[] strings = ArrayUtil.toStringArray(masks);
       Arrays.sort(strings);
-      ignoreFiles = StringUtil.join(strings, ";") + ";";
+      ignoreFiles = String.join(";", strings) + ";";
     }
 
     if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
@@ -1247,10 +1252,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     List<FileNameMatcher> list = new ArrayList<>(StringUtil.countChars(semicolonDelimitedTokens, ';')+1);
     while (tokenizer.hasMoreTokens()) {
       String ext = tokenizer.nextToken().trim();
-      if (StringUtil.isEmpty(ext)) {
+      if (Strings.isEmpty(ext)) {
         throw new InvalidDataException("Token must not be empty but got: '"+semicolonDelimitedTokens+"' in "+context);
       }
-      list.add(matcherFactory.fun(ext));
+      list.add(matcherFactory.apply(ext));
     }
     return list;
   }
@@ -1318,9 +1323,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
                                   @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
-                                  @NotNull Function<? super FileType, ? extends String> getter) {
+                                  @NotNull Function<? super FileType, String> getter) {
     FileType newFileType = newFtd.fileType;
-    String name = getter.fun(newFileType);
+    String name = getter.apply(newFileType);
     FileTypeWithDescriptor prevFtd = names.put(name, newFtd);
     if (prevFtd != null
         // should be able to override AbstractFileType silently
@@ -1369,7 +1374,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                                 boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
-    String extensionsStr = StringUtil.notNullize(typeElement.getAttributeValue("extensions"));
+    String extensionsStr = Objects.requireNonNullElse(typeElement.getAttributeValue("extensions"), "");
     if (isDefault && !extensionsStr.isEmpty()) {
       // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);
@@ -1441,7 +1446,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
                                             @Nullable String name,
                                             @Nullable @NlsContexts.Label String description,
                                             @Nullable String iconPath) {
-    if (!StringUtil.isEmptyOrSpaces(iconPath)) {
+    if (!Strings.isEmptyOrSpaces(iconPath)) {
       fileType.setIconPath(iconPath);
     }
     if (description != null) {
