@@ -2,10 +2,14 @@
 package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.ProjectScope
@@ -15,8 +19,10 @@ import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
+import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JList
+import javax.swing.JWindow
 
 abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBundle.message("search.everywhere.lesson.name")) {
   abstract override val existedFile: String?
@@ -26,6 +32,8 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   override val lessonType: LessonType = LessonType.PROJECT
 
   private val requiredClassName = "QuadraticEquationsSolver"
+
+  private var backupPopupLocation: Point? = null
 
   override val lessonContent: LessonContext.() -> Unit = {
     task("SearchEverywhere") {
@@ -38,6 +46,14 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     task("que") {
+      before {
+        val ui = previous.ui ?: return@before
+        val popupWindow = UIUtil.getParentOfType(JWindow::class.java, ui) ?: return@before
+        val oldPopupLocation = WindowStateService.getInstance(project).getLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        if (LessonUtil.adjustPopupPosition(project, popupWindow)) {
+          backupPopupLocation = oldPopupLocation
+        }
+      }
       text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
       stateCheck { checkWordInSearch(it) }
       restoreByUi()
@@ -120,6 +136,15 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
     }
 
     epilogue()
+  }
+
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    if (backupPopupLocation != null) {
+      invokeLater {
+        WindowStateService.getInstance(project).putLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
+        backupPopupLocation = null
+      }
+    }
   }
 
   open fun LessonContext.epilogue() = Unit
