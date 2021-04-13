@@ -96,7 +96,6 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   fun getValidFiles() = with(ChangeListManager.getInstance(project)) { acquireValidFiles().filter(this::isIgnoredFile) }
 
   fun muteForCurrentProject() {
-    setForCurrentProject(false)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     clearFiles()
   }
