@@ -1,4 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("PathBasedJdomXIncluder")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -23,110 +24,6 @@ interface PathResolver {
   fun resolvePath(dataLoader: DataLoader, relativePath: String, jdomFactory: SafeJdomFactory): Element?
 }
 
-internal class PathBasedJdomXIncluder(private val context: DescriptorListLoadingContext, private val pathResolver: PathResolver) {
-  @Throws(JDOMException::class)
-  private fun resolveXIncludeElement(dataLoader: DataLoader,
-                                     linkElement: Element,
-                                     base: String?,
-                                     result: ArrayList<Element>?): List<Element?> {
-    val relativePath = linkElement.getAttributeValue(HREF) ?: throw RuntimeException("Missing href attribute")
-    linkElement.getAttributeValue(PARSE)?.let {
-      LOG.assertTrue(it == XML, "$it is not a legal value for the parse attribute")
-    }
-
-    var remoteParsed = loadXIncludeReference(dataLoader, base, relativePath, linkElement)
-    if (remoteParsed != null) {
-      val xpointer = linkElement.getAttributeValue(XPOINTER)
-      if (xpointer != null) {
-        remoteParsed = extractNeededChildren(remoteParsed, xpointer)
-      }
-    }
-    if (remoteParsed == null) {
-      return result ?: emptyList()
-    }
-
-    var newResult = result
-    if (newResult == null) {
-      newResult = ArrayList(remoteParsed.contentSize)
-    }
-    else {
-      newResult.ensureCapacity(newResult.size + remoteParsed.contentSize)
-    }
-
-    val childBase = getChildBase(base, relativePath)
-    val iterator = remoteParsed.content.iterator()
-    while (iterator.hasNext()) {
-      val content = iterator.next() as? Element ?: continue
-      iterator.remove()
-      if (isIncludeElement(content)) {
-        resolveXIncludeElement(dataLoader, content, childBase, newResult)
-      }
-      else {
-        resolveNonXIncludeElement(dataLoader, content, childBase)
-        newResult.add(content)
-      }
-    }
-    return newResult
-  }
-
-  @Throws(JDOMException::class)
-  private fun loadXIncludeReference(dataLoader: DataLoader,
-                                    base: String?,
-                                    relativePath: String,
-                                    referrerElement: Element): Element? {
-    var root: Element?
-    var readError: IOException? = null
-    try {
-      referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE)?.let {
-        // to simplify implementation, no need to support obscure and not used base attribute
-        LOG.error("Do not use xml:base attribute: $it")
-      }
-      root = pathResolver.loadXIncludeReference(dataLoader, base, relativePath, context.xmlFactory)
-    }
-    catch (e: IOException) {
-      readError = e
-      root = null
-    }
-
-    if (root == null) {
-      referrerElement.getChild("fallback", referrerElement.namespace)?.let {
-        // we don't have fallback elements with content ATM
-        return null
-      }
-
-      if (context.ignoreMissingInclude) {
-        LOG.info("$relativePath include ignored (dataLoader=$dataLoader)", readError)
-        return null
-      }
-      else {
-        throw RuntimeException("Cannot resolve $relativePath (dataLoader=$dataLoader)", readError)
-      }
-    }
-    else if (isIncludeElement(root)) {
-      throw UnsupportedOperationException("root tag of remote cannot be include")
-    }
-    else {
-      resolveNonXIncludeElement(dataLoader, root, getChildBase(base, relativePath))
-      return root
-    }
-  }
-
-  @Throws(JDOMException::class)
-  fun resolveNonXIncludeElement(dataLoader: DataLoader, original: Element, base: String?) {
-    val contentList = original.content
-    for (i in contentList.indices.reversed()) {
-      val content = contentList[i] as? Element ?: continue
-      if (isIncludeElement(content)) {
-        original.setContent(i, resolveXIncludeElement(dataLoader, content, base, null))
-      }
-      else {
-        // process child element to resolve possible includes
-        resolveNonXIncludeElement(dataLoader, content, base)
-      }
-    }
-  }
-}
-
 private const val INCLUDE = "include"
 private const val HREF = "href"
 private const val BASE = "base"
@@ -134,7 +31,118 @@ private const val PARSE = "parse"
 private const val XML = "xml"
 private const val XPOINTER = "xpointer"
 
-private val LOG = Logger.getInstance(PathBasedJdomXIncluder::class.java)
+@Suppress("SSBasedInspection")
+private val LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
+
+@Throws(JDOMException::class)
+private fun resolveXIncludeElement(context: DescriptorListLoadingContext,
+                                   pathResolver: PathResolver,
+                                   dataLoader: DataLoader,
+                                   linkElement: Element,
+                                   base: String?,
+                                   result: ArrayList<Element>?): List<Element?> {
+  val relativePath = linkElement.getAttributeValue(HREF) ?: throw RuntimeException("Missing href attribute")
+  linkElement.getAttributeValue(PARSE)?.let {
+    LOG.assertTrue(it == XML, "$it is not a legal value for the parse attribute")
+  }
+
+  var remoteParsed = loadXIncludeReference(context, pathResolver, dataLoader, base, relativePath, linkElement)
+  if (remoteParsed != null) {
+    val xpointer = linkElement.getAttributeValue(XPOINTER)
+    if (xpointer != null) {
+      remoteParsed = extractNeededChildren(remoteParsed, xpointer)
+    }
+  }
+  if (remoteParsed == null) {
+    return result ?: emptyList()
+  }
+
+  var newResult = result
+  if (newResult == null) {
+    newResult = ArrayList(remoteParsed.contentSize)
+  }
+  else {
+    newResult.ensureCapacity(newResult.size + remoteParsed.contentSize)
+  }
+
+  val childBase = getChildBase(base, relativePath)
+  val iterator = remoteParsed.content.iterator()
+  while (iterator.hasNext()) {
+    val content = iterator.next() as? Element ?: continue
+    iterator.remove()
+    if (isIncludeElement(content)) {
+      resolveXIncludeElement(context, pathResolver, dataLoader, content, childBase, newResult)
+    }
+    else {
+      resolveNonXIncludeElement(context, pathResolver, dataLoader, content, childBase)
+      newResult.add(content)
+    }
+  }
+  return newResult
+}
+
+@Throws(JDOMException::class)
+private fun loadXIncludeReference(context: DescriptorListLoadingContext,
+                                  pathResolver: PathResolver,
+                                  dataLoader: DataLoader,
+                                  base: String?,
+                                  relativePath: String,
+                                  referrerElement: Element): Element? {
+  var root: Element?
+  var readError: IOException? = null
+  try {
+    referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE)?.let {
+      // to simplify implementation, no need to support obscure and not used base attribute
+      LOG.error("Do not use xml:base attribute: $it")
+    }
+    root = pathResolver.loadXIncludeReference(dataLoader, base, relativePath, context.xmlFactory)
+  }
+  catch (e: IOException) {
+    readError = e
+    root = null
+  }
+
+  if (root == null) {
+    referrerElement.getChild("fallback", referrerElement.namespace)?.let {
+      // we don't have fallback elements with content ATM
+      return null
+    }
+
+    if (context.ignoreMissingInclude) {
+      LOG.info("$relativePath include ignored (dataLoader=$dataLoader)", readError)
+      return null
+    }
+    else {
+      throw RuntimeException("Cannot resolve $relativePath (dataLoader=$dataLoader)", readError)
+    }
+  }
+  else if (isIncludeElement(root)) {
+    throw UnsupportedOperationException("root tag of remote cannot be include")
+  }
+  else {
+    resolveNonXIncludeElement(context, pathResolver, dataLoader, root, getChildBase(base, relativePath))
+    return root
+  }
+}
+
+@Throws(JDOMException::class)
+internal fun resolveNonXIncludeElement(context: DescriptorListLoadingContext,
+                                       pathResolver: PathResolver,
+                                       dataLoader: DataLoader,
+                                       original: Element,
+                                       base: String?) {
+  val contentList = original.content
+  for (i in contentList.indices.reversed()) {
+    val content = contentList.get(i) as? Element ?: continue
+    if (isIncludeElement(content)) {
+      original.setContent(i, resolveXIncludeElement(context, pathResolver, dataLoader, content, base, null))
+    }
+    else {
+      // process child element to resolve possible includes
+      resolveNonXIncludeElement(context, pathResolver, dataLoader, content, base)
+    }
+  }
+}
 
 private fun isIncludeElement(element: Element): Boolean {
   return element.name == INCLUDE && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE

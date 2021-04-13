@@ -1,449 +1,368 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+@file:JvmName("XmlReader")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
+package com.intellij.ide.plugins
 
-import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.components.ServiceDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.messages.ListenerDescriptor;
-import org.jdom.Attribute;
-import org.jdom.Content;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.components.ServiceDescriptor
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.BeanExtensionPoint
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.messages.ListenerDescriptor
+import org.jdom.Attribute
+import org.jdom.Element
+import org.jdom.JDOMException
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.*;
+@Suppress("SSBasedInspection")
+private val LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
-final class XmlReader {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+const val APPLICATION_SERVICE = "com.intellij.applicationService"
+const val PROJECT_SERVICE = "com.intellij.projectService"
+const val MODULE_SERVICE = "com.intellij.moduleService"
 
-  static final String APPLICATION_SERVICE = "com.intellij.applicationService";
-  static final String PROJECT_SERVICE = "com.intellij.projectService";
-  static final String MODULE_SERVICE = "com.intellij.moduleService";
-  private static final @NonNls String ATTRIBUTE_AREA = "area";
+private const val ATTRIBUTE_AREA = "area"
 
-  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-  static boolean isSuitableForOs(@NotNull String os) {
-    if (os.isEmpty()) {
-      return true;
-    }
-
-    if (os.equals(IdeaPluginDescriptorImpl.OS.mac.name())) {
-      return SystemInfoRt.isMac;
-    }
-    else if (os.equals(IdeaPluginDescriptorImpl.OS.linux.name())) {
-      return SystemInfoRt.isLinux;
-    }
-    else if (os.equals(IdeaPluginDescriptorImpl.OS.windows.name())) {
-      return SystemInfoRt.isWindows;
-    }
-    else if (os.equals(IdeaPluginDescriptorImpl.OS.unix.name())) {
-      return SystemInfoRt.isUnix;
-    }
-    else if (os.equals(IdeaPluginDescriptorImpl.OS.freebsd.name())) {
-      return SystemInfoRt.isFreeBSD;
-    }
-    else {
-      throw new IllegalArgumentException("Unknown OS '" + os + "'");
-    }
+internal fun isSuitableForOs(os: String): Boolean {
+  if (os.isEmpty()) {
+    return true
   }
 
-  private static @NotNull ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
-    ServiceDescriptor descriptor = new ServiceDescriptor();
-    for (Attribute attribute : element.getAttributes()) {
-      switch (attribute.getName()) {
-        case "serviceImplementation":
-          descriptor.serviceImplementation = getNullifiedValue(attribute);
-          break;
-        case "serviceInterface":
-          descriptor.serviceInterface = getNullifiedValue(attribute);
-          break;
-        case "testServiceImplementation":
-          descriptor.testServiceImplementation = getNullifiedValue(attribute);
-          break;
-        case "headlessImplementation":
-          descriptor.headlessImplementation = getNullifiedValue(attribute);
-          break;
-        case "configurationSchemaKey":
-          descriptor.configurationSchemaKey = attribute.getValue();
-          break;
-        case "overrides":
-          descriptor.overrides = Boolean.parseBoolean(attribute.getValue());
-          break;
-        case "preload": {
-          String preload = attribute.getValue();
-          if (preload != null) {
-            switch (preload) {
-              case "true":
-                descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
-                break;
-              case "await":
-                descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
-                break;
-              case "notHeadless":
-                descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
-                break;
-              case "notLightEdit":
-                descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
-                break;
-              default:
-                LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
-                break;
-            }
+  return when (os) {
+    IdeaPluginDescriptorImpl.OS.mac.name -> SystemInfoRt.isMac
+    IdeaPluginDescriptorImpl.OS.linux.name -> SystemInfoRt.isLinux
+    IdeaPluginDescriptorImpl.OS.windows.name -> SystemInfoRt.isWindows
+    IdeaPluginDescriptorImpl.OS.unix.name -> SystemInfoRt.isUnix
+    IdeaPluginDescriptorImpl.OS.freebsd.name -> SystemInfoRt.isFreeBSD
+    else -> throw IllegalArgumentException("Unknown OS '$os'")
+  }
+}
+
+private fun readServiceDescriptor(element: Element): ServiceDescriptor {
+  val descriptor = ServiceDescriptor()
+  for (attribute in element.attributes) {
+    when (attribute.name) {
+      "serviceImplementation" -> descriptor.serviceImplementation = getNullifiedValue(attribute)
+      "serviceInterface" -> descriptor.serviceInterface = getNullifiedValue(attribute)
+      "testServiceImplementation" -> descriptor.testServiceImplementation = getNullifiedValue(attribute)
+      "headlessImplementation" -> descriptor.headlessImplementation = getNullifiedValue(attribute)
+      "configurationSchemaKey" -> descriptor.configurationSchemaKey = attribute.value
+      "overrides" -> descriptor.overrides = java.lang.Boolean.parseBoolean(attribute.value)
+      "preload" -> {
+        val preload = attribute.value
+        if (preload != null) {
+          when (preload) {
+            "true" -> descriptor.preload = ServiceDescriptor.PreloadMode.TRUE
+            "await" -> descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT
+            "notHeadless" -> descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS
+            "notLightEdit" -> descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
+            else -> LOG.error("Unknown preload mode value: ${JDOMUtil.writeElement(element)}")
           }
         }
-        break;
       }
     }
+  }
+  return descriptor
+}
 
-    return descriptor;
+internal fun readListeners(list: Element, containerDescriptor: ContainerDescriptor, mainDescriptor: IdeaPluginDescriptorImpl) {
+  val content = list.content
+  var result = containerDescriptor.listeners
+  if (result == null) {
+    result = ArrayList(content.size)
+    containerDescriptor.listeners = result
+  }
+  else {
+    (result as ArrayList<ListenerDescriptor?>).ensureCapacity(result.size + content.size)
   }
 
-  static void readListeners(@NotNull Element list, @NotNull ContainerDescriptor containerDescriptor, @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
-    List<Content> content = list.getContent();
-    List<ListenerDescriptor> result = containerDescriptor.listeners;
+  for (item in content) {
+    if (item !is Element) {
+      continue
+    }
+
+    val os = item.getAttributeValue("os")
+    if (os != null && !isSuitableForOs(os)) {
+      continue
+    }
+
+    val listenerClassName = item.getAttributeValue("class")
+    val topicClassName = item.getAttributeValue("topic")
+    if (listenerClassName == null || topicClassName == null) {
+      LOG.error("Listener descriptor is not correct: ${JDOMUtil.writeElement(item)}")
+    }
+    else {
+      result.add(ListenerDescriptor(listenerClassName, topicClassName,
+                                    getBoolean("activeInTestMode", item), getBoolean("activeInHeadlessMode", item), mainDescriptor))
+    }
+  }
+}
+
+internal fun readContent(list: Element, descriptor: IdeaPluginDescriptorImpl) {
+  val content = list.content
+  val items: MutableList<PluginContentDescriptor.ModuleItem> = ArrayList()
+  for (item in content) {
+    if (item !is Element) {
+      continue
+    }
+
+    if (item.name == "module") {
+      items.add(PluginContentDescriptor.ModuleItem(name = item.getAttributeValue("name")!!,
+                                                   packageName = item.getAttributeValue("package"),
+                                                   configFile = item.getAttributeValue("configFile")))
+    }
+    else {
+      throw RuntimeException("Unknown content item type: ${item.name}")
+    }
+  }
+  descriptor.contentDescriptor = PluginContentDescriptor(items)
+}
+
+internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptorImpl) {
+  val content = list.content
+  val items = ArrayList<ModuleDependenciesDescriptor.ModuleItem>()
+  for (item in content) {
+    if (item !is Element) {
+      continue
+
+    }
+    when (item.name) {
+      "module" -> items.add(ModuleDependenciesDescriptor.ModuleItem(item.getAttributeValue("name")!!, item.getAttributeValue("package")))
+      "plugin" -> {
+      }
+      else -> throw RuntimeException("Unknown content item type: ${item.name}")
+    }
+  }
+  descriptor.dependencyDescriptor = ModuleDependenciesDescriptor(items)
+}
+
+internal fun readIdAndName(descriptor: IdeaPluginDescriptorImpl, element: Element) {
+  var idString = if (descriptor.id == null) element.getChildTextTrim("id") else descriptor.id.idString
+  var name = element.getChildTextTrim("name")
+  if (idString == null) {
+    idString = name
+  }
+  else if (name == null) {
+    name = idString
+  }
+  descriptor.name = name
+  if (idString != null && !idString.isEmpty() && descriptor.id == null) {
+    descriptor.id = PluginId.getId(idString)
+  }
+}
+
+internal fun readMetaInfo(descriptor: IdeaPluginDescriptorImpl, element: Element) {
+  if (!element.hasAttributes()) {
+    return
+  }
+
+  for (attribute in element.attributes) {
+    when (attribute.name) {
+      "url" -> descriptor.url = getNullifiedValue(attribute)
+      "use-idea-classloader" -> descriptor.useIdeaClassLoader = java.lang.Boolean.parseBoolean(attribute.value)
+      "allow-bundled-update" -> descriptor.allowBundledUpdate = java.lang.Boolean.parseBoolean(attribute.value)
+      "implementation-detail" -> descriptor.implementationDetail = java.lang.Boolean.parseBoolean(attribute.value)
+      "require-restart" -> descriptor.requireRestart = java.lang.Boolean.parseBoolean(attribute.value)
+      "package" -> descriptor.packagePrefix = getNullifiedValue(attribute)
+      "version" -> {
+        val internalVersionString = getNullifiedValue(attribute)
+        if (internalVersionString != null) {
+          try {
+            internalVersionString.toInt()
+          }
+          catch (e: NumberFormatException) {
+            LOG.error(PluginException("Invalid value in plugin.xml format version: '$internalVersionString'", e, descriptor.id))
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun getNullifiedValue(attribute: Attribute): String? {
+  val v = attribute.value
+  return if (v == null || v.isEmpty()) null else v
+}
+
+@Throws(IOException::class, JDOMException::class)
+internal fun readDependencies(rootDescriptor: IdeaPluginDescriptorImpl,
+                              descriptor: IdeaPluginDescriptorImpl,
+                              context: DescriptorListLoadingContext,
+                              pathResolver: PathResolver,
+                              dependencies: List<PluginDependency>,
+                              dataLoader: DataLoader) {
+  var visitedFiles: MutableList<String>? = null
+  for (dependency in dependencies) {
+    if (dependency.isDisabledOrBroken) {
+      continue
+    }
+
+    // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
+    val configFile = dependency.configFile ?: continue
+    if (pathResolver.isFlat && context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
+      continue
+    }
+
+    var element: Element?
+    var resolveError: Exception? = null
+    try {
+      element = pathResolver.resolvePath(dataLoader, configFile, context.xmlFactory)
+    }
+    catch (e: IOException) {
+      resolveError = e
+      element = null
+    }
+    catch (e: JDOMException) {
+      resolveError = e
+      element = null
+    }
+    if (element == null) {
+      val message = "Plugin $rootDescriptor misses optional descriptor $configFile"
+      if (context.ignoreMissingSubDescriptor) {
+        LOG.info(message)
+        if (resolveError != null) {
+          LOG.debug(resolveError)
+        }
+      }
+      else {
+        throw RuntimeException(message, resolveError)
+      }
+      continue
+    }
+    if (visitedFiles == null) {
+      visitedFiles = context.visitedFiles
+    }
+    checkCycle(rootDescriptor, configFile, visitedFiles)
+    val subDescriptor = IdeaPluginDescriptorImpl(descriptor.path, descriptor.isBundled)
+    subDescriptor.id = rootDescriptor.id
+    subDescriptor.descriptorPath = dependency.configFile
+    visitedFiles.add(configFile)
+    if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor, dataLoader)) {
+      dependency.subDescriptor = subDescriptor
+    }
+    visitedFiles.clear()
+  }
+}
+
+private fun checkCycle(rootDescriptor: IdeaPluginDescriptorImpl,
+                       configFile: String,
+                       visitedFiles: List<String>) {
+  var i = 0
+  val n = visitedFiles.size
+  while (i < n) {
+    if (configFile == visitedFiles[i]) {
+      val cycle = visitedFiles.subList(i, visitedFiles.size)
+      throw RuntimeException("Plugin " + rootDescriptor + " optional descriptors form a cycle: " + java.lang.String.join(", ", cycle))
+    }
+    i++
+  }
+}
+
+private fun getBoolean(name: String, child: Element): Boolean {
+  val value = child.getAttributeValue(name)
+  return value == null || java.lang.Boolean.parseBoolean(value)
+}
+
+internal fun readExtensions(descriptor: IdeaPluginDescriptorImpl,
+                   epNameToExtensions: MutableMap<String?, MutableList<Element?>>?,
+                   loadingContext: DescriptorListLoadingContext,
+                   child: Element): Map<String?, MutableList<Element?>>? {
+  var result = epNameToExtensions
+  val ns = child.getAttributeValue("defaultExtensionNs")
+  for (extensionElement in child.children) {
+    val os = extensionElement.getAttributeValue("os")
+    if (os != null) {
+      extensionElement.removeAttribute("os")
+      if (!isSuitableForOs(os)) {
+        continue
+      }
+    }
+    val qualifiedExtensionPointName = loadingContext.internString(ExtensionsAreaImpl.extractPointName(extensionElement, ns))
+    var containerDescriptor: ContainerDescriptor
+    when (qualifiedExtensionPointName) {
+      APPLICATION_SERVICE -> containerDescriptor = descriptor.appContainerDescriptor
+      PROJECT_SERVICE -> containerDescriptor = descriptor.projectContainerDescriptor
+      MODULE_SERVICE -> containerDescriptor = descriptor.moduleContainerDescriptor
+      else -> {
+        if (result == null) {
+          result = LinkedHashMap()
+        }
+        result.computeIfAbsent(qualifiedExtensionPointName) { ArrayList() }.add(extensionElement)
+        continue
+      }
+    }
+    containerDescriptor.addService(readServiceDescriptor(extensionElement))
+  }
+  return result
+}
+
+/**
+ * EP cannot be added directly to root descriptor, because probably later EP list will be ignored if dependency plugin is not available.
+ *
+ * And descriptor as data container.
+ */
+internal fun readExtensionPoints(descriptor: IdeaPluginDescriptorImpl, parentElement: Element) {
+  for (child in parentElement.content) {
+    if (child !is Element) {
+      continue
+    }
+
+    val area = child.getAttributeValue(ATTRIBUTE_AREA)
+    val containerDescriptor: ContainerDescriptor = if (area == null) {
+      descriptor.appContainerDescriptor
+    }
+    else {
+      if ("IDEA_PROJECT" == area) {
+        descriptor.projectContainerDescriptor
+      }
+      else if ("IDEA_MODULE" == area) {
+        descriptor.moduleContainerDescriptor
+      }
+      else {
+        LOG.error("Unknown area: $area")
+        continue
+      }
+    }
+    val pointName = getExtensionPointName(child, descriptor.pluginId)
+    val beanClassName = child.getAttributeValue("beanClass")
+    val interfaceClassName = child.getAttributeValue("interface")
+    if (beanClassName == null && interfaceClassName == null) {
+      throw RuntimeException(
+        "Neither 'beanClass' nor 'interface' attribute is specified for extension point '$pointName' in '${descriptor.pluginId}' plugin")
+    }
+    if (beanClassName != null && interfaceClassName != null) {
+      throw RuntimeException(
+        "Both 'beanClass' and 'interface' attributes are specified for extension point '$pointName' in '${descriptor.pluginId}' plugin")
+    }
+
+    val dynamic = java.lang.Boolean.parseBoolean(child.getAttributeValue("dynamic"))
+    val point: ExtensionPointImpl<Any?> = if (interfaceClassName == null) {
+      BeanExtensionPoint(pointName, beanClassName!!, descriptor, dynamic)
+    }
+    else {
+      InterfaceExtensionPoint(pointName, interfaceClassName, descriptor, null, dynamic)
+    }
+
+    var result = containerDescriptor.extensionPoints
     if (result == null) {
-      result = new ArrayList<>(content.size());
-      containerDescriptor.listeners = result;
+      result = ArrayList()
+      containerDescriptor.extensionPoints = result
     }
-    else {
-      ((ArrayList<ListenerDescriptor>)result).ensureCapacity(result.size() + content.size());
-    }
-
-    for (Content item : content) {
-      if (!(item instanceof Element)) {
-        continue;
-      }
-
-      Element child = (Element)item;
-
-      String os = child.getAttributeValue("os");
-      if (os != null && !isSuitableForOs(os)) {
-        continue;
-      }
-
-      String listenerClassName = child.getAttributeValue("class");
-      String topicClassName = child.getAttributeValue("topic");
-      if (listenerClassName == null || topicClassName == null) {
-        LOG.error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
-      }
-      else {
-        result.add(new ListenerDescriptor(listenerClassName, topicClassName,
-                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), mainDescriptor));
-      }
-    }
+    result.add(point)
   }
+}
 
-  static void readContent(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
-    List<Content> content = list.getContent();
-    List<PluginContentDescriptor.ModuleItem> items = new ArrayList<>();
-    for (Content item : content) {
-      if (!(item instanceof Element)) {
-        continue;
-      }
-
-      Element child = (Element)item;
-      if (child.getName().equals("module")) {
-        items.add(new PluginContentDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
-                                                         child.getAttributeValue("package"), child.getAttributeValue("configFile")));
-      }
-      else {
-        throw new RuntimeException("Unknown content item type: " + child.getName());
-      }
-    }
-    descriptor.contentDescriptor = new PluginContentDescriptor(items);
+private fun getExtensionPointName(extensionPointElement: Element, effectivePluginId: PluginId): String {
+  val pointName = extensionPointElement.getAttributeValue("qualifiedName")
+  if (pointName == null) {
+    val name = extensionPointElement.getAttributeValue("name")
+               ?: throw RuntimeException("'name' attribute not specified for extension point in '$effectivePluginId' plugin")
+    return "${effectivePluginId.idString}.$name"
   }
-
-  @SuppressWarnings("DuplicatedCode")
-  static void readNewDependencies(@NotNull Element list, @NotNull IdeaPluginDescriptorImpl descriptor) {
-    List<Content> content = list.getContent();
-    List<ModuleDependenciesDescriptor.ModuleItem> items = new ArrayList<>();
-    for (Content item : content) {
-      if (!(item instanceof Element)) {
-        continue;
-      }
-
-      Element child = (Element)item;
-      switch (child.getName()) {
-        case "module":
-          items.add(new ModuleDependenciesDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
-                                                                child.getAttributeValue("package")));
-          break;
-        case "plugin":
-          // todo
-          break;
-        default:
-          throw new RuntimeException("Unknown content item type: " + child.getName());
-      }
-    }
-    descriptor.dependencyDescriptor = new ModuleDependenciesDescriptor(items);
-  }
-
-  static void readIdAndName(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
-    String idString = descriptor.id == null ? element.getChildTextTrim("id") : descriptor.id.getIdString();
-    String name = element.getChildTextTrim("name");
-    if (idString == null) {
-      idString = name;
-    }
-    else if (name == null) {
-      name = idString;
-    }
-
-    descriptor.name = name;
-    if (idString != null && !idString.isEmpty() && descriptor.id == null) {
-      descriptor.id = PluginId.getId(idString);
-    }
-  }
-
-  static void readMetaInfo(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element element) {
-    if (!element.hasAttributes()) {
-      return;
-    }
-
-    for (Attribute attribute : element.getAttributes()) {
-      switch (attribute.getName()) {
-        case "url":
-          descriptor.url = getNullifiedValue(attribute);
-          break;
-
-        case "use-idea-classloader":
-          descriptor.useIdeaClassLoader = Boolean.parseBoolean(attribute.getValue());
-          break;
-
-        case "allow-bundled-update":
-          descriptor.allowBundledUpdate = Boolean.parseBoolean(attribute.getValue());
-          break;
-
-        case "implementation-detail":
-          descriptor.implementationDetail = Boolean.parseBoolean(attribute.getValue());
-          break;
-
-        case "require-restart":
-          descriptor.requireRestart = Boolean.parseBoolean(attribute.getValue());
-          break;
-
-        case "package":
-          descriptor.packagePrefix = getNullifiedValue(attribute);
-          break;
-
-        case "version":
-          String internalVersionString = getNullifiedValue(attribute);
-          if (internalVersionString != null) {
-            try {
-              Integer.parseInt(internalVersionString);
-            }
-            catch (NumberFormatException e) {
-              LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.id));
-            }
-          }
-          break;
-      }
-    }
-  }
-
-  private static @Nullable String getNullifiedValue(Attribute attribute) {
-    String v = attribute.getValue();
-    return v == null || v.isEmpty() ? null : v;
-  }
-
-  static void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                               @NotNull IdeaPluginDescriptorImpl descriptor,
-                               @NotNull DescriptorListLoadingContext context,
-                               @NotNull PathResolver pathResolver,
-                               @NotNull List<PluginDependency> dependencies,
-                               @NotNull DataLoader dataLoader) throws IOException, JDOMException {
-    List<String> visitedFiles = null;
-    for (PluginDependency dependency : dependencies) {
-      if (dependency.isDisabledOrBroken) {
-        continue;
-      }
-
-      // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
-      String configFile = dependency.configFile;
-      if (configFile == null) {
-        continue;
-      }
-
-      if (pathResolver.isFlat() && context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
-        continue;
-      }
-
-      Element element;
-      Exception resolveError = null;
-      try {
-        element = pathResolver.resolvePath(dataLoader, configFile, context.getXmlFactory());
-      }
-      catch (IOException | JDOMException e) {
-        resolveError = e;
-        element = null;
-      }
-
-      if (element == null) {
-        String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
-        if (context.ignoreMissingSubDescriptor) {
-          LOG.info(message);
-          if (resolveError != null) {
-            LOG.debug(resolveError);
-          }
-        }
-        else {
-          throw new RuntimeException(message, resolveError);
-        }
-        continue;
-      }
-
-      if (visitedFiles == null) {
-        visitedFiles = context.getVisitedFiles();
-      }
-
-      checkCycle(rootDescriptor, configFile, visitedFiles);
-
-      IdeaPluginDescriptorImpl subDescriptor = new IdeaPluginDescriptorImpl(descriptor.path, descriptor.isBundled());
-      subDescriptor.id = rootDescriptor.id;
-      subDescriptor.descriptorPath = dependency.configFile;
-      visitedFiles.add(configFile);
-      if (subDescriptor.readExternal(element, pathResolver, context, rootDescriptor, dataLoader)) {
-        dependency.subDescriptor = subDescriptor;
-      }
-      visitedFiles.clear();
-    }
-  }
-
-  private static void checkCycle(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                 @NotNull String configFile,
-                                 @NotNull List<String> visitedFiles) {
-    for (int i = 0, n = visitedFiles.size(); i < n; i++) {
-      if (configFile.equals(visitedFiles.get(i))) {
-        List<String> cycle = visitedFiles.subList(i, visitedFiles.size());
-        throw new RuntimeException("Plugin " + rootDescriptor + " optional descriptors form a cycle: " + String.join(", ", cycle));
-      }
-    }
-  }
-
-  private static boolean getBoolean(@NotNull String name, @NotNull Element child) {
-    String value = child.getAttributeValue(name);
-    return value == null || Boolean.parseBoolean(value);
-  }
-
-  static @Nullable Map<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                             @Nullable Map<String, List<Element>> epNameToExtensions,
-                                                             @NotNull DescriptorListLoadingContext loadingContext,
-                                                             @NotNull Element child) {
-    String ns = child.getAttributeValue("defaultExtensionNs");
-    for (Element extensionElement : child.getChildren()) {
-      String os = extensionElement.getAttributeValue("os");
-      if (os != null) {
-        extensionElement.removeAttribute("os");
-        if (!isSuitableForOs(os)) {
-          continue;
-        }
-      }
-
-      String qualifiedExtensionPointName = loadingContext.internString(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
-      ContainerDescriptor containerDescriptor;
-      switch (qualifiedExtensionPointName) {
-        case APPLICATION_SERVICE:
-          containerDescriptor = descriptor.appContainerDescriptor;
-          break;
-        case PROJECT_SERVICE:
-          containerDescriptor = descriptor.projectContainerDescriptor;
-          break;
-        case MODULE_SERVICE:
-          containerDescriptor = descriptor.moduleContainerDescriptor;
-          break;
-        default:
-          if (epNameToExtensions == null) {
-            epNameToExtensions = new LinkedHashMap<>();
-          }
-          epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName, __ -> new ArrayList<>()).add(extensionElement);
-          continue;
-      }
-
-      containerDescriptor.addService(readServiceDescriptor(extensionElement));
-    }
-    return epNameToExtensions;
-  }
-
-  /**
-   * EP cannot be added directly to root descriptor, because probably later EP list will be ignored if dependency plugin is not available.
-   *
-   * And descriptor as data container.
-   */
-  static void readExtensionPoints(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element parentElement) {
-    for (Content child : parentElement.getContent()) {
-      if (!(child instanceof Element)) {
-        continue;
-      }
-
-      Element element = (Element)child;
-
-      String area = element.getAttributeValue(ATTRIBUTE_AREA);
-      ContainerDescriptor containerDescriptor;
-      if (area == null) {
-        containerDescriptor = descriptor.appContainerDescriptor;
-      }
-      else {
-        if ("IDEA_PROJECT".equals(area)) {
-          containerDescriptor = descriptor.projectContainerDescriptor;
-        }
-        else if ("IDEA_MODULE".equals(area)) {
-          containerDescriptor = descriptor.moduleContainerDescriptor;
-        }
-        else {
-          LOG.error("Unknown area: " + area);
-          continue;
-        }
-      }
-
-      String pointName = getExtensionPointName(element, descriptor.getPluginId());
-
-      String beanClassName = element.getAttributeValue("beanClass");
-      String interfaceClassName = element.getAttributeValue("interface");
-      if (beanClassName == null && interfaceClassName == null) {
-        throw new RuntimeException("Neither 'beanClass' nor 'interface' attribute is specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
-      }
-
-      if (beanClassName != null && interfaceClassName != null) {
-        throw new RuntimeException("Both 'beanClass' and 'interface' attributes are specified for extension point '" + pointName + "' in '" + descriptor.getPluginId() + "' plugin");
-      }
-
-      boolean dynamic = Boolean.parseBoolean(element.getAttributeValue("dynamic"));
-      ExtensionPointImpl<Object> point;
-      if (interfaceClassName == null) {
-        point = new BeanExtensionPoint<>(pointName, beanClassName, descriptor, dynamic);
-      }
-      else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, descriptor, null, dynamic);
-      }
-
-      List<ExtensionPointImpl<?>> result = containerDescriptor.extensionPoints;
-      if (result == null) {
-        result = new ArrayList<>();
-        containerDescriptor.extensionPoints = result;
-      }
-      result.add(point);
-    }
-  }
-
-  private static @NotNull String getExtensionPointName(@NotNull Element extensionPointElement, @NotNull PluginId effectivePluginId) {
-    String pointName = extensionPointElement.getAttributeValue("qualifiedName");
-    if (pointName == null) {
-      String name = extensionPointElement.getAttributeValue("name");
-      if (name == null) {
-        throw new RuntimeException("'name' attribute not specified for extension point in '" + effectivePluginId + "' plugin");
-      }
-
-      pointName = effectivePluginId.getIdString() + '.' + name;
-    }
-    return pointName;
-  }
+  return pointName
 }

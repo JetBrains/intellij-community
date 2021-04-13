@@ -44,18 +44,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // only for sub descriptors
   String descriptorPath;
 
-  private volatile String myDescription;
-  private @Nullable String myProductCode;
-  private @Nullable Date myReleaseDate;
-  private int myReleaseVersion;
-  private boolean myIsLicenseOptional;
-  private String myResourceBundleBaseName;
-  private String myChangeNotes;
-  private String myVersion;
-  private String myVendor;
-  private String myVendorEmail;
-  private String myVendorUrl;
-  private String myCategory;
+  private volatile String description;
+  private @Nullable String productCode;
+  private @Nullable Date releaseDate;
+  private int releaseVersion;
+  private boolean isLicenseOptional;
+  private String resourceBundleBaseName;
+  private String changeNotes;
+  private String version;
+  private String vendor;
+  private String vendorEmail;
+  private String vendorUrl;
+  private String category;
   String url;
   @Nullable List<PluginDependency> pluginDependencies;
   @Nullable List<PluginId> incompatibilities;
@@ -82,13 +82,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   boolean implementationDetail;
   boolean requireRestart;
   String packagePrefix;
-  private String mySinceBuild;
-  private String myUntilBuild;
+  private String sinceBuild;
+  private String untilBuild;
 
   private boolean isEnabled = true;
   private boolean isDeleted;
 
-  boolean incomplete;
+  boolean isIncomplete;
 
   public IdeaPluginDescriptorImpl(@NotNull Path path, boolean isBundled) {
     this.path = path;
@@ -145,7 +145,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     XmlReader.readIdAndName(this, element);
 
     // some information required for "incomplete" plugins can be in included files
-    new PathBasedJdomXIncluder(context, pathResolver).resolveNonXIncludeElement(dataLoader, element, null);
+    PathBasedJdomXIncluder.resolveNonXIncludeElement(context, pathResolver, dataLoader, element, null);
 
     if (id != null && context.isPluginDisabled(id)) {
       markAsIncomplete(context, null, null);
@@ -160,7 +160,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
 
-    if (incomplete) {
+    if (isIncomplete) {
       readEssentialPluginInformation(element, context);
       return false;
     }
@@ -172,14 +172,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return false;
     }
 
-    if (myVersion == null) {
-      myVersion = context.getDefaultVersion();
+    if (version == null) {
+      version = context.getDefaultVersion();
     }
-    if (myVendor == null) {
-      myVendor = mainDescriptor.myVendor;
+    if (vendor == null) {
+      vendor = mainDescriptor.vendor;
     }
-    if (myResourceBundleBaseName == null) {
-      myResourceBundleBaseName = mainDescriptor.myResourceBundleBaseName;
+    if (resourceBundleBaseName == null) {
+      resourceBundleBaseName = mainDescriptor.resourceBundleBaseName;
     }
 
     if (pluginDependencies != null) {
@@ -219,11 +219,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (descriptionChildText == null) {
       descriptionChildText = element.getChildTextTrim("description");
     }
-    if (myCategory == null) {
-      myCategory = element.getChildTextTrim("category");
+    if (category == null) {
+      category = element.getChildTextTrim("category");
     }
-    if (myVersion == null) {
-      myVersion = element.getChildTextTrim("version");
+    if (version == null) {
+      version = element.getChildTextTrim("version");
     }
     if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
       DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + path + " (reason: disabled)");
@@ -231,7 +231,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (pluginDependencies == null) {
       List<Element> dependsElements = element.getChildren("depends");
       for (Element dependsElement : dependsElements) {
-        readPluginDependency(context, dependsElement);
+        readOldPluginDependency(context, dependsElement);
       }
     }
     Element productElement = element.getChild("product-descriptor");
@@ -319,7 +319,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "depends":
-          if (!readPluginDependency(context, child)) {
+          if (!readOldPluginDependency(context, child)) {
             return true;
           }
           break;
@@ -329,15 +329,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "category":
-          myCategory = Strings.nullize(child.getTextTrim());
+          category = Strings.nullize(child.getTextTrim());
           break;
 
         case "change-notes":
-          myChangeNotes = Strings.nullize(child.getTextTrim());
+          changeNotes = Strings.nullize(child.getTextTrim());
           break;
 
         case "version":
-          myVersion = Strings.nullize(child.getTextTrim());
+          version = Strings.nullize(child.getTextTrim());
           break;
 
         case "description":
@@ -351,11 +351,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
                                                   "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
                                                   "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)");
           }
-          if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
+          if (resourceBundleBaseName != null && !Objects.equals(resourceBundleBaseName, value)) {
             DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
-                                                  "Old value: " + myResourceBundleBaseName + ", new value: " + value);
+                                                  "Old value: " + resourceBundleBaseName + ", new value: " + value);
           }
-          myResourceBundleBaseName = value;
+          resourceBundleBaseName = value;
           break;
 
         case "product-descriptor":
@@ -363,14 +363,14 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "vendor":
-          myVendor = Strings.nullize(child.getTextTrim());
-          myVendorEmail = Strings.nullize(child.getAttributeValue("email"));
-          myVendorUrl = Strings.nullize(child.getAttributeValue("url"));
+          vendor = Strings.nullize(child.getTextTrim());
+          vendorEmail = Strings.nullize(child.getAttributeValue("email"));
+          vendorUrl = Strings.nullize(child.getAttributeValue("url"));
           break;
 
         case "idea-version":
-          mySinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
-          myUntilBuild = Strings.nullize(child.getAttributeValue("until-build"));
+          sinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
+          untilBuild = Strings.nullize(child.getAttributeValue("until-build"));
           if (!checkCompatibility(context, () -> readEssentialPluginInformation(element, context))) {
             return true;
           }
@@ -404,10 +404,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private void readProduct(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
-    myProductCode = Strings.nullize(child.getAttributeValue("code"));
-    myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
-    myReleaseVersion = StringUtilRt.parseInt(child.getAttributeValue("release-version"), 0);
-    myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
+    productCode = Strings.nullize(child.getAttributeValue("code"));
+    releaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
+    releaseVersion = StringUtilRt.parseInt(child.getAttributeValue("release-version"), 0);
+    isLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
   }
 
   private void readPluginIncompatibility(@NotNull Element child) {
@@ -420,7 +420,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     incompatibilities.add(PluginId.getId(pluginId));
   }
 
-  private boolean readPluginDependency(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
+  private boolean readOldPluginDependency(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
     String dependencyIdString = child.getTextTrim();
     if (dependencyIdString.isEmpty()) {
       return true;
@@ -481,8 +481,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context, Runnable beforeCreateErrorCallback) {
-    String since = mySinceBuild;
-    String until = myUntilBuild;
+    String since = sinceBuild;
+    String until = untilBuild;
     if (isBundled() || (since == null && until == null)) {
       return true;
     }
@@ -499,9 +499,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return false;
   }
 
-  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable Supplier<@Nls String> shortMessage, @Nullable PluginId disabledDependency) {
-    boolean wasIncomplete = incomplete;
-    incomplete = true;
+  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context,
+                                @Nullable Supplier<@Nls String> shortMessage,
+                                @Nullable PluginId disabledDependency) {
+    boolean wasIncomplete = isIncomplete;
+    isIncomplete = true;
     setEnabled(false);
     if (id != null && !wasIncomplete) {
       PluginLoadingError pluginError = shortMessage == null ? null : PluginLoadingError.createWithoutNotification(this, shortMessage);
@@ -675,18 +677,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getDescription() {
-    @NlsSafe String result = myDescription;
+    @NlsSafe String result = description;
     if (result != null) {
       return result;
     }
 
     ResourceBundle bundle = null;
-    if (myResourceBundleBaseName != null) {
+    if (resourceBundleBaseName != null) {
       try {
-        bundle = DynamicBundle.INSTANCE.getResourceBundle(myResourceBundleBaseName, getPluginClassLoader());
+        bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName, getPluginClassLoader());
       }
       catch (MissingResourceException e) {
-        PluginManagerCore.getLogger().info("Cannot find plugin " + id + " resource-bundle: " + myResourceBundleBaseName);
+        PluginManagerCore.getLogger().info("Cannot find plugin " + id + " resource-bundle: " + resourceBundleBaseName);
       }
     }
 
@@ -696,13 +698,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     else {
       result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(descriptionChildText));
     }
-    myDescription = result;
+    description = result;
     return result;
   }
 
   @Override
   public String getChangeNotes() {
-    return myChangeNotes;
+    return changeNotes;
   }
 
   @Override
@@ -712,22 +714,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public @Nullable String getProductCode() {
-    return myProductCode;
+    return productCode;
   }
 
   @Override
   public @Nullable Date getReleaseDate() {
-    return myReleaseDate;
+    return releaseDate;
   }
 
   @Override
   public int getReleaseVersion() {
-    return myReleaseVersion;
+    return releaseVersion;
   }
 
   @Override
   public boolean isLicenseOptional() {
-    return myIsLicenseOptional;
+    return isLicenseOptional;
   }
 
   @SuppressWarnings("deprecation")
@@ -754,22 +756,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getVendor() {
-    return myVendor;
+    return vendor;
   }
 
   @Override
   public String getVersion() {
-    return myVersion;
+    return version;
   }
 
   @Override
   public String getResourceBundleBaseName() {
-    return myResourceBundleBaseName;
+    return resourceBundleBaseName;
   }
 
   @Override
   public String getCategory() {
-    return myCategory;
+    return category;
   }
 
   /*
@@ -780,7 +782,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
      (e.g. in the Plugins form) we have to set this value outside.
   */
   public void setCategory(String category) {
-    myCategory = category;
+    this.category = category;
   }
 
   public @NotNull Map<String, List<Element>> getUnsortedEpNameToExtensionElements() {
@@ -793,12 +795,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getVendorEmail() {
-    return myVendorEmail;
+    return vendorEmail;
   }
 
   @Override
   public String getVendorUrl() {
-    return myVendorUrl;
+    return vendorUrl;
   }
 
   @Override
@@ -860,12 +862,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getSinceBuild() {
-    return mySinceBuild;
+    return sinceBuild;
   }
 
   @Override
   public String getUntilBuild() {
-    return myUntilBuild;
+    return untilBuild;
   }
 
   private static void addExtensionList(@NotNull Map<String, List<Element>> map, @NotNull String name, @NotNull List<Element> list) {
@@ -917,7 +919,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
            ", id=" + id +
            ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
            ", path=" + pathString +
-           ", version=" + myVersion +
+           ", version=" + version +
            ", package=" + packagePrefix +
            ")";
   }

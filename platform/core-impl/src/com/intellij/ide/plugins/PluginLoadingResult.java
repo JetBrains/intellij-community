@@ -123,7 +123,7 @@ final class PluginLoadingResult {
       return true;
     }
 
-    if (descriptor.incomplete) {
+    if (descriptor.isIncomplete) {
       return true;
     }
 
