@@ -29,16 +29,14 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     Disposer.register(parentDisposable, this)
   }
 
-  override fun processFiles(files: Collection<VirtualFile>): Collection<VirtualFile> {
+  override fun processFiles(files: Collection<VirtualFile>) {
     val filteredFiles = doFilterFiles(files)
 
-    if (filteredFiles.isEmpty()) return files
+    if (filteredFiles.isEmpty()) return
 
     addNewFiles(filteredFiles)
 
     doProcess()
-
-    return files - filteredFiles
   }
 
   protected open fun doProcess(): Boolean {
