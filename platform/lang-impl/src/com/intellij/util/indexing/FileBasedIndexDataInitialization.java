@@ -18,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -116,12 +117,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     PersistentIndicesConfiguration.loadConfiguration();
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
+    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
+      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
-    boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     myCurrentVersionCorrupted = myCurrentVersionCorrupted || storageLayoutChanged;
 
     if (myCurrentVersionCorrupted) {

@@ -285,6 +285,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @Nullable
   protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+    if (isDisposed()) {
+      return null;
+    }
     // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
     if (mySingleEntryIndex) {
       @SuppressWarnings("unchecked")

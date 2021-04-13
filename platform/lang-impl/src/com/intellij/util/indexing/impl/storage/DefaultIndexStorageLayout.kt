@@ -22,7 +22,7 @@ object DefaultIndexStorageLayout {
   @Throws(IOException::class)
   fun <Key, Value> getLayout(indexExtension: FileBasedIndexExtension<Key, Value>,
                              contentHashEnumeratorReopen: Boolean): VfsAwareIndexStorageLayout<Key, Value> {
-    val layoutEP = getForcedLayoutEP() ?: FileBasedIndexLayoutSettings.getUsedLayout()
+    val layoutEP = getIndexLayout()
     if (layoutEP != null) {
       return layoutEP.layoutProvider.getLayout(indexExtension)
     }
@@ -37,6 +37,13 @@ object DefaultIndexStorageLayout {
     }
     else DefaultStorageLayout(indexExtension)
   }
+
+  @JvmStatic
+  fun getUsedLayoutId(): String? {
+    return getIndexLayout()?.id
+  }
+
+  private fun getIndexLayout() = getForcedLayoutEP() ?: FileBasedIndexLayoutSettings.getUsedLayout()
 
   private fun getForcedLayoutEP(): FileBasedIndexLayoutProviderBean? {
     val layout = forcedLayout ?: return null

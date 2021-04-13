@@ -128,7 +128,7 @@ class CountingTestExtension : FileBasedIndexInfrastructureExtension {
 
   override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) = Unit
 
-  override fun initialize(): FileBasedIndexInfrastructureExtension.InitializationResult =
+  override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult =
     FileBasedIndexInfrastructureExtension.InitializationResult.SUCCESSFULLY
 
   override fun resetPersistentState() = Unit

@@ -209,15 +209,19 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher.stop();
     myLock.writeLock().lock();
     try {
+      myDisposed = true;
       doDispose();
     }
     catch (StorageException e) {
       LOG.error(e);
     }
     finally {
-      myDisposed = true;
       myLock.writeLock().unlock();
     }
+  }
+
+  protected boolean isDisposed() {
+    return myDisposed;
   }
 
   protected void doDispose() throws StorageException {
@@ -239,7 +243,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
     myLock.readLock().lock();
     try {
-      if (myDisposed) {
+      if (isDisposed()) {
         return new ValueContainerImpl<>();
       }
       IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);

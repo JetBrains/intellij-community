@@ -83,7 +83,7 @@ public interface FileBasedIndexInfrastructureExtension {
    * lifecycle of an extension with {@link FileBasedIndexImpl}.
    **/
   @NotNull
-  InitializationResult initialize();
+  InitializationResult initialize(@Nullable("null if default") String indexLayoutId);
 
   /**
    * Executed when IntelliJ is requested to clear indexes. Each extension should reset its caches.
