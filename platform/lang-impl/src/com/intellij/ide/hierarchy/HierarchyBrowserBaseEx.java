@@ -64,6 +64,7 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
@@ -77,7 +78,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 
-  private String myCurrentViewType;
+  private final AtomicReference<Sheet> myCurrentSheet = new AtomicReference<>();
 
   private final Map<String, Supplier<@Nls String>> myI18nMap;
 
@@ -352,7 +353,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public void changeView(@NotNull final String typeName, boolean requestFocus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myCurrentViewType = typeName;
+    Sheet sheet = myType2Sheet.get(typeName);
+    myCurrentSheet.set(sheet);
 
     final PsiElement element = mySmartPsiElementPointer.getElement();
     if (element == null || !isApplicableElement(element)) {
@@ -369,7 +371,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     myCardLayout.show(myTreePanel, typeName);
 
-    Sheet sheet = myType2Sheet.get(typeName);
     if (sheet.myStructureTreeModel == null) {
       try {
         setWaitCursor();
@@ -461,15 +462,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @NotNull
   private OccurenceNavigator getOccurrenceNavigator() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    String currentViewType = getCurrentViewType();
-    if (currentViewType != null) {
-      OccurenceNavigator navigator = myType2Sheet.get(currentViewType).myOccurenceNavigator;
-      if (navigator != null) {
-        return navigator;
-      }
-    }
-    return EMPTY;
+    Sheet sheet = myCurrentSheet.get();
+    OccurenceNavigator navigator = sheet == null ? null : sheet.myOccurenceNavigator;
+    return navigator == null ? EMPTY : navigator;
   }
 
   @Override
@@ -542,7 +537,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected final String getCurrentViewType() {
-    return myCurrentViewType;
+    Sheet sheet = myCurrentSheet.get();
+    return sheet == null ? null : sheet.myType;
   }
 
   @Override

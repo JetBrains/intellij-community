@@ -78,7 +78,6 @@ import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
@@ -746,17 +745,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
   override val lastActiveToolWindowId: String?
-    get() = getLastActiveToolWindow(condition = null)?.id
+    get() = getLastActiveToolWindows().firstOrNull()?.id
 
-  override fun getLastActiveToolWindow(condition: Predicate<in JComponent>?): ToolWindow? {
+  fun getLastActiveToolWindows(): Iterable<ToolWindow> {
     EDT.assertIsEdt()
-    for (i in 0 until activeStack.persistentSize) {
-      val toolWindow = activeStack.peekPersistent(i).toolWindow
-      if (toolWindow.isAvailable && (condition == null || condition.test(toolWindow.component))) {
-        return toolWindow
-      }
-    }
-    return null
+    return (0 until activeStack.persistentSize).asSequence()
+      .map { activeStack.peekPersistent(it).toolWindow }
+      .filter { it.isAvailable }
+      .asIterable()
   }
 
   /**

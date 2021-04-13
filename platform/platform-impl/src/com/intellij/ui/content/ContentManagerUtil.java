@@ -5,8 +5,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.ErrorTreeView;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,21 +22,12 @@ public final class ContentManagerUtil {
     if (project == null) {
       return null;
     }
-
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    String id = toolWindowManager.getActiveToolWindowId();
-    if (id == null) {
-      if (toolWindowManager.isEditorComponentActive()) {
-        id = toolWindowManager.getLastActiveToolWindowId();
-      }
-    }
-
-    ToolWindowEx toolWindow = id != null ? (ToolWindowEx)toolWindowManager.getToolWindow(id) : null;
+    ToolWindow toolWindow = JBIterable.of(PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.getData(dataContext)).first();
     if (requiresVisibleToolWindow && (toolWindow == null || !toolWindow.isVisible())) {
       return null;
     }
 
-    ContentManager fromToolWindow = toolWindow != null ? toolWindow.getContentManager() : null;
+    ContentManager fromToolWindow = toolWindow != null ? toolWindow.getContentManagerIfCreated() : null;
     ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
     return fromContext == null ? fromToolWindow : fromContext;
   }

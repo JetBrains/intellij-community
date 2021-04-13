@@ -74,6 +74,7 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<ContentManager> NONEMPTY_CONTENT_MANAGER = DataKey.create("nonemptyContentManager");
 
   public static final DataKey<ToolWindow> TOOL_WINDOW = DataKey.create("TOOL_WINDOW");
+  public static final DataKey<ToolWindow[]> LAST_ACTIVE_TOOL_WINDOWS = DataKey.create("LAST_ACTIVE_TOOL_WINDOWS");
 
   public static final DataKey<StatusBar> STATUS_BAR = DataKey.create("STATUS_BAR");
 

@@ -13,9 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
-import java.util.function.Predicate;
 
 public abstract class ToolWindowManagerEx extends ToolWindowManager {
   /**
@@ -54,14 +52,6 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
-  }
-
-  /**
-   * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
-   */
-  public @Nullable String getLastActiveToolWindowId(@Nullable Predicate<? super JComponent> condition) {
-    ToolWindow window = getLastActiveToolWindow(component -> condition == null || condition.test(component));
-    return window == null ? null : window.getId();
   }
 
   /**

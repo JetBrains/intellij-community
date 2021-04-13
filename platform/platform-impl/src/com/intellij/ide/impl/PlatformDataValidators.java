@@ -26,5 +26,6 @@ public final class PlatformDataValidators extends DataValidators {
     Validator<Object> objectValidator = (data, dataId, source) -> true;
     registry.register(CommonDataKeys.NAVIGATABLE_ARRAY, arrayValidator(objectValidator));
     registry.register(PlatformDataKeys.SELECTED_ITEMS, arrayValidator(objectValidator));
+    registry.register(PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS, arrayValidator(objectValidator));
   }
 }

@@ -29,7 +29,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 
 // not final for android
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
@@ -127,12 +126,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
-  }
-
-  @Nullable
-  @Override
-  public ToolWindow getLastActiveToolWindow(@Nullable Predicate<? super JComponent> condition) {
-    return null;
   }
 
   @Override
