@@ -30,8 +30,7 @@ fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   val featureVersion = javaVersion.feature
   return when {
     isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
-    featureVersion >= 16 -> GradleVersion.version("7.0")
-    featureVersion in 8..15 -> GradleVersion.version("6.7")
+    featureVersion in 8..16 -> GradleVersion.version("7.0")
     // https://docs.gradle.org/5.0/release-notes.html#potential-breaking-changes
     featureVersion == 7 -> GradleVersion.version("4.10.3")
     else -> null
@@ -41,6 +40,7 @@ fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
 fun suggestJavaVersion(gradleVersion: GradleVersion): JavaVersion {
   val baseVersion = gradleVersion.baseVersion
   return when {
+    baseVersion >= GradleVersion.version("7.0") -> JavaVersion.compose(16)
     baseVersion >= GradleVersion.version("6.7") -> JavaVersion.compose(15)
     baseVersion >= GradleVersion.version("6.3") -> JavaVersion.compose(14)
     baseVersion >= GradleVersion.version("6.0") -> JavaVersion.compose(13)
