@@ -39,28 +39,35 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     return doForCurrentProject
   }
 
-  @Synchronized
   protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean {
-    return VcsUtil.removeAllFromSet(files, filesToRemove)
+    synchronized(files) {
+      return VcsUtil.removeAllFromSet(files, filesToRemove)
+    }
   }
 
-  @Synchronized
-  protected fun isFilesEmpty() = files.isEmpty()
+  protected fun isFilesEmpty(): Boolean {
+    synchronized(files) {
+      return files.isEmpty()
+    }
+  }
 
-  @Synchronized
   protected fun addNewFiles(filesToAdd: Collection<VirtualFile>) {
-    files.addAll(filesToAdd)
+    synchronized(files) {
+      files.addAll(filesToAdd)
+    }
   }
 
-  @Synchronized
   protected fun acquireValidFiles(): List<VirtualFile> {
-    files.removeAll { !it.isValid }
-    return files.toList()
+    synchronized(files) {
+      files.removeAll { !it.isValid }
+      return files.toList()
+    }
   }
 
-  @Synchronized
   protected fun clearFiles() {
-    files.clear()
+    synchronized(files) {
+      files.clear()
+    }
   }
 
   override fun dispose() {
