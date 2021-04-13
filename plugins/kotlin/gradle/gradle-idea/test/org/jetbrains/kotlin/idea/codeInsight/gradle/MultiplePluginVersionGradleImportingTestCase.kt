@@ -9,6 +9,7 @@
  */
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
@@ -144,6 +145,25 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             false,
             body
         )
+    }
+
+    fun createHighlightingCheck(
+        testLineMarkers: Boolean = true,
+        severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
+        correspondingFilePostfix: String = ""
+    ): HighlightingCheck {
+        return HighlightingCheck(
+            project = myTestFixture.project,
+            projectPath = projectPath,
+            testDataDirectory = testDataDirectory(),
+            testLineMarkers = testLineMarkers,
+            severityLevel = severityLevel,
+            correspondingFilePostfix = correspondingFilePostfix
+        )
+    }
+
+    fun checkHighligthingOnAllModules() {
+        createHighlightingCheck().invokeOnAllModules()
     }
 }
 

@@ -170,7 +170,13 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
     }
 
     fun libraryDependency(libraryName: String, scope: DependencyScope) {
-        val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>().filter { it.libraryName == libraryName }
+        libraryDependency(Regex.fromLiteral(libraryName), scope)
+    }
+
+    fun libraryDependency(libraryName: Regex, scope: DependencyScope) {
+        val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+            .filter { it.libraryName?.matches(libraryName) == true }
+
         if (libraryEntries.size > 1) {
             report("Multiple root entries for library $libraryName")
         }
@@ -179,8 +185,8 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             val candidate = rootModel.orderEntries
                 .filterIsInstance<LibraryOrderEntry>()
                 .sortedWith(Comparator { o1, o2 ->
-                    val o1len = o1?.libraryName?.commonPrefixWith(libraryName)?.length ?: 0
-                    val o2len = o2?.libraryName?.commonPrefixWith(libraryName)?.length ?: 0
+                    val o1len = o1?.libraryName?.commonPrefixWith(libraryName.toString())?.length ?: 0
+                    val o2len = o2?.libraryName?.commonPrefixWith(libraryName.toString())?.length ?: 0
                     o2len - o1len
                 }).firstOrNull()
 
@@ -188,19 +194,23 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             report("Expected library dependency $libraryName, found nothing. Most probably candidate: $candidateName")
         }
 
-        checkLibrary(libraryEntries.singleOrNull(), libraryName, scope)
+        checkLibrary(libraryEntries.singleOrNull(), libraryName.toString(), scope)
     }
 
     fun libraryDependencyByUrl(classesUrl: String, scope: DependencyScope) {
+        libraryDependencyByUrl(Regex.fromLiteral(classesUrl), scope)
+    }
+
+    fun libraryDependencyByUrl(classesUrl: Regex, scope: DependencyScope) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>().filter { entry ->
-            entry.library?.getUrls(OrderRootType.CLASSES)?.any { it == classesUrl } ?: false
+            entry.library?.getUrls(OrderRootType.CLASSES)?.any { it.matches(classesUrl) } ?: false
         }
 
         if (libraryEntries.size > 1) {
             report("Multiple entries for library $classesUrl")
         }
 
-        checkLibrary(libraryEntries.singleOrNull(), classesUrl, scope)
+        checkLibrary(libraryEntries.singleOrNull(), classesUrl.toString(), scope)
     }
 
     private fun checkLibrary(libraryEntry: LibraryOrderEntry?, id: String, scope: DependencyScope) {

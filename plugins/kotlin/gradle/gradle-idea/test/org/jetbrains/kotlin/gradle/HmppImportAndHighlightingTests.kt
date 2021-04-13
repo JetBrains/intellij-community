@@ -1,23 +1,14 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
-import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
-import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
@@ -26,7 +17,6 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
-import java.nio.file.Paths
 
 class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestCase() {
 
@@ -457,7 +447,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             }
         }
 
-        checkHighlighting()
+        checkHighligthingOnAllModules()
     }
 
     @Test
@@ -468,7 +458,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
         linkProject("$projectPath/lib-and-app")
         linkProject("$projectPath/published-lib-consumer")
 
-        checkHighlighting()
+        checkHighligthingOnAllModules()
 
         val publishTaskSettings = ExternalSystemTaskExecutionSettings()
         publishTaskSettings.externalProjectPath = "$projectPath/lib-and-app"
@@ -487,7 +477,7 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
         runInEdtAndWait { VirtualFileManager.getInstance().syncRefresh() }
         ExternalSystemUtil.refreshProject("$projectPath/published-lib-consumer", createImportSpec())
 
-        checkHighlighting(correspondingFilePostfix = ".after")
+        createHighlightingCheck(correspondingFilePostfix = ".after").invokeOnAllModules()
 
         checkProjectStructure(
             exhaustiveModuleList = true,
@@ -758,44 +748,5 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
     private fun configureAndImportProject() {
         configureByFiles()
         importProject()
-    }
-
-    private fun checkHighlighting(
-        testLineMarkers: Boolean = true,
-        severityLevel: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING,
-        correspondingFilePostfix: String = ""
-    ) {
-        val project = myTestFixture.project
-
-        val configurations =
-            mutableListOf<AbstractCodeMetaInfoRenderConfiguration>(
-                HighlightingConfiguration(
-                    renderTextAttributesKey = false,
-                    severityLevel = severityLevel,
-                    checkNoError = false
-                )
-            )
-
-        if (testLineMarkers)
-            configurations.add(LineMarkerConfiguration())
-
-        val testRoot = testDataDirectory()
-        val checker = CodeMetaInfoTestCase(configurations, false)
-
-        for (module in ModuleManager.getInstance(project).modules) {
-            for (sourceRoot in module.sourceRoots) {
-                VfsUtilCore.processFilesRecursively(sourceRoot) { file ->
-                    if (file.isDirectory || file.extension != "kt" && file.extension != "java") return@processFilesRecursively true
-                    runInEdtAndWait {
-                        checker.checkFile(
-                            file,
-                            file.findCorrespondingFileInTestDir(Paths.get(projectPath), testRoot, correspondingFilePostfix),
-                            project
-                        )
-                    }
-                    true
-                }
-            }
-        }
     }
 }
