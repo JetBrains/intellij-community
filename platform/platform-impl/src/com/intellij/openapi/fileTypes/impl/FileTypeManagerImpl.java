@@ -1611,7 +1611,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     private void register(@NotNull FileType fileType,
                           @NotNull PluginDescriptor pluginDescriptor,
                           @NotNull List<? extends FileNameMatcher> fileNameMatchers) {
-      instantiatePendingFileTypeByName(fileType.getName());
+      String typeName = fileType.getName();
+      instantiatePendingFileTypeByName(typeName);
       for (FileNameMatcher matcher : fileNameMatchers) {
         FileTypeBean pendingTypeByMatcher = myPendingAssociations.findAssociatedFileType(matcher);
         if (pendingTypeByMatcher != null) {
@@ -1622,9 +1623,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
 
-      StandardFileType type = myStandardFileTypes.get(fileType.getName());
+      StandardFileType type = myStandardFileTypes.get(typeName);
       if (type == null) {
-        myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, pluginDescriptor, fileNameMatchers));
+        myStandardFileTypes.put(typeName, new StandardFileType(fileType, pluginDescriptor, fileNameMatchers));
       }
       else {
         type.matchers.addAll(fileNameMatchers);

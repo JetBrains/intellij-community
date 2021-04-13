@@ -401,13 +401,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           CharSequence name2 = o2.getName();
           int cmp = compareNames(name1, name2, caseSensitive);
           if (cmp == 0 && name1 != name2 && errorsCount[0] < 10) {
-            LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
+            LOG.error(ourPersistence + " returned duplicate file names('" + name1 + "', '" + name2 + "')" +
                       " caseSensitive: " + caseSensitive +
                       " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
                       " isCaseSensitive(): " + isCaseSensitive() +
                       " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
-                      " in the dir: " + this + ";" +
+                      " in the dir: " + this + "; " + children.size() +
                       " children: " + StringUtil.first(children.toString(), 300, true));
             errorsCount[0]++;
             if (!caseSensitive) {
