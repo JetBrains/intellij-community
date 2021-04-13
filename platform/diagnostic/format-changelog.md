@@ -1,3 +1,12 @@
+#34
+
+* Add `module cache loading`
+* `moduleLoading` split to `modules loading without cache` and `modules loading with cache`
+* Add `project files loading`, `serializers creation`, `unloaded modules loading`, `entities loading`, `project model changes saving (in queue)` and `project model changes saving`
+* Add `modules instantiation` and `project libraries loading`
+* Add `events sending after modules are loaded`, `events sending (in queue)` and `events sending`
+* Add `events modules added`
+
 # 33
 
  * Rename `init JBUIScale` to `scale initialization`.

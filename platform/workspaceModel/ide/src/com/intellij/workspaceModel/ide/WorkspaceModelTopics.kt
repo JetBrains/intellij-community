@@ -70,8 +70,8 @@ class WorkspaceModelTopics : Disposable {
   fun notifyModulesAreLoaded() {
     val activity = StartUpMeasurer.startActivity("events sending after modules are loaded", ActivityCategory.DEFAULT)
     sendToQueue = false
-    val activityInQueue = activity.startChild("events sending (in queue)")
     if (allEvents.isNotEmpty() && allEvents.any { it.events.isNotEmpty() }) {
+      val activityInQueue = activity.startChild("events sending (in queue)")
       val application = ApplicationManager.getApplication()
       application.invokeAndWait {
         application.runWriteAction {
