@@ -146,7 +146,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   }
 
   @Override
-  public void setRootElement(CompositePackagingElement<?> root) {
+  public void setRootElement(@NotNull CompositePackagingElement<?> root) {
     myRootElement = root;
   }
 
