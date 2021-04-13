@@ -154,7 +154,7 @@ final class XmlReader {
       Element child = (Element)item;
       if (child.getName().equals("module")) {
         items.add(new PluginContentDescriptor.ModuleItem(Objects.requireNonNull(child.getAttributeValue("name")),
-                                                         child.getAttributeValue("package")));
+                                                         child.getAttributeValue("package"), child.getAttributeValue("configFile")));
       }
       else {
         throw new RuntimeException("Unknown content item type: " + child.getName());

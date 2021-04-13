@@ -162,12 +162,11 @@ private fun extractNeededChildren(remoteElement: Element, xpointer: String): Ele
     throw RuntimeException("Unsupported pointer: $pointer")
   }
 
-  val result = remoteElement
-  if (result.name != matcher.group(1)) {
+  if (remoteElement.name != matcher.group(1)) {
     return null
   }
 
-  val subTagName = matcher.group(2) ?: return result
+  val subTagName = matcher.group(2) ?: return remoteElement
   // cut off the slash
-  return result.getChild(subTagName.substring(1))!!
+  return remoteElement.getChild(subTagName.substring(1))!!
 }

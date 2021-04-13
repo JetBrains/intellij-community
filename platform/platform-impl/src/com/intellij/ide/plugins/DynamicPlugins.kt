@@ -1158,7 +1158,7 @@ private fun loadPluginDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl,
   actionManager.registerActions(list, false)
 }
 
-private class PluginStateChecker(private val loadedIdMap: MutableMap<PluginId, IdeaPluginDescriptorImpl>? = null) {
+private class PluginStateChecker(private val loadedIdMap: Map<PluginId, IdeaPluginDescriptorImpl>? = null) {
   companion object {
     private val NULL_PLUGIN_DESCRIPTOR = IdeaPluginDescriptorImpl(Path.of(""), false)
   }

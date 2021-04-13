@@ -353,7 +353,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           }
           if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
             DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
-                     "Old value: " + myResourceBundleBaseName + ", new value: " + value);
+                                                  "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
           myResourceBundleBaseName = value;
           break;
@@ -785,42 +785,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   public @NotNull Map<String, List<Element>> getUnsortedEpNameToExtensionElements() {
     return epNameToExtensionElements == null ? Collections.emptyMap() : Collections.unmodifiableMap(epNameToExtensionElements);
-  }
-
-  /**
-   * @deprecated Do not use. If you want to get class loader for own plugin, just use your current class's class loader.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public @NotNull List<File> getClassPath() {
-    File path = this.path.toFile();
-    if (!path.isDirectory()) {
-      return Collections.singletonList(path);
-    }
-
-    List<File> result = new ArrayList<>();
-    File classesDir = new File(path, "classes");
-    if (classesDir.exists()) {
-      result.add(classesDir);
-    }
-
-    File[] files = new File(path, "lib").listFiles();
-    if (files == null || files.length <= 0) {
-      return result;
-    }
-
-    for (File f : files) {
-      if (f.isFile()) {
-        String name = f.getName();
-        if (Strings.endsWithIgnoreCase(name, ".jar") || Strings.endsWithIgnoreCase(name, ".zip")) {
-          result.add(f);
-        }
-      }
-      else {
-        result.add(f);
-      }
-    }
-    return result;
   }
 
   public @Nullable List<Element> getActionDescriptionElements() {
