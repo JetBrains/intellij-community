@@ -111,10 +111,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             '.' -> autoPopupMemberLookup(project, editor)
             ':' -> autoPopupCallableReferenceLookup(project, editor)
             '[' -> autoPopupParameterInfo(project, editor)
-            '@' -> {
-                autoPopupLabelLookup(project, editor)
-                autoPopupKDocTag(project, editor)
-            }
+            '@' -> autoPopupAt(project, editor)
         }
 
         return Result.CONTINUE
@@ -245,28 +242,23 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 return false
             })
 
-        private fun autoPopupKDocTag(project: Project, editor: Editor): Unit =
-            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
-                val offset = editor.caretModel.offset
-                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-                lastElement.node.elementType === KDocTokens.TEXT
-            }
+        private fun isLabelCompletion(chars: CharSequence, offset: Int): Boolean {
+            return endsWith(chars, offset, "this@")
+                    || endsWith(chars, offset, "return@")
+                    || endsWith(chars, offset, "break@")
+                    || endsWith(chars, offset, "continue@")
+        }
 
-        private fun autoPopupLabelLookup(project: Project, editor: Editor): Unit =
+        private fun autoPopupAt(project: Project, editor: Editor) {
             AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
                 val offset = editor.caretModel.offset
                 val chars = editor.document.charsSequence
-                if (!endsWith(chars, offset, "this@")
-                    && !endsWith(chars, offset, "return@")
-                    && !endsWith(chars, offset, "break@")
-                    && !endsWith(chars, offset, "continue@")
-                ) {
-                    return@autoPopupMemberLookup false
-                }
+                val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
 
-                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-                lastElement.node.elementType === KtTokens.AT
+                return@autoPopupMemberLookup lastNodeType == KDocTokens.TEXT
+                        || (isLabelCompletion(chars, offset) && lastNodeType === KtTokens.AT)
             }
+        }
 
         private fun autoPopupCallableReferenceLookup(project: Project, editor: Editor): Unit =
             AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->

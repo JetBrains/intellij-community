@@ -923,6 +923,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AutoPopupBreak.kt")
+            public void testAutoPopupBreak() throws Exception {
+                runTest("testData/basic/common/autoPopup/AutoPopupBreak.kt");
+            }
+
+            @TestMetadata("AutoPopupThis.kt")
+            public void testAutoPopupThis() throws Exception {
+                runTest("testData/basic/common/autoPopup/AutoPopupThis.kt");
+            }
+
             @TestMetadata("AutopopupInFunExtensionReceiver.kt")
             public void testAutopopupInFunExtensionReceiver() throws Exception {
                 runTest("testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
