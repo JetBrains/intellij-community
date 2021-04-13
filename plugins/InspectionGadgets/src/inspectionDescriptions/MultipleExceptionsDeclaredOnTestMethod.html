@@ -1,10 +1,34 @@
 <html>
 <body>
-Reports JUnit test methods with more than one exception declared in the
-<b>throws</b> clause. Such a
-<b>throws</b> clause can be more concisely declared as:<br>
-<pre><b>throws</b> Exception</pre>
+Reports JUnit test method <code>throws</code> clauses with more than one exception.
+Such clauses are unnecessarily verbose.
+The test methods will not be called from other project code, so there is not need to handle the exceptions separately.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> EssentialTest {
+
+    @Test
+    <b>public void</b> testUnknownLetters() <b>throws</b> FileNotFoundException, UnsupportedEncodingException {
+      HunspellDictionary hunspell = getTestHunspell();
+      assertNull(hunspell.contains("русский"));
+    }
+
+    // ...
+  }
+</code></pre>
+<p>After the quick fix is applied, the result looks like this:</p>
+<pre><code>
+  <b>public class</b> EssentialTest {
+
+    @Test
+    <b>public void</b> testUnknownLetters() <b>throws</b> Exception {
+      HunspellDictionary hunspell = getTestHunspell();
+      assertNull(hunspell.contains("русский"));
+    }
+
+    // ...
+  }
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

@@ -2,8 +2,17 @@
 <body>
 Reports on JUnit test cases with initialization logic in their constructors. Initialization
 of JUnit test cases should be done in <b>setUp()</b> methods instead.
-<!-- tooltip end -->
-<p>
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> ImportantTest {
+    <b>private</b> File file;
+    <b>public</b> ImportantTest() <b>throws</b> IOException {
+      file = File.createTempFile("xyz", ".tmp");
+    }
 
+    // ... tests go here
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

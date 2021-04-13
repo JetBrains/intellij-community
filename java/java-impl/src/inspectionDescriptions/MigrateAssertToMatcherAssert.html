@@ -1,6 +1,32 @@
 <html>
 <body>
-Reports usages of <b>Assert.assertEquals</b>, <b>Assert.assertTrue</b> etc. methods when its can be migrated to <b>Assert.assertThat</b>
-
+Reports calls to <code>Assert.assertEquals()</code>, <code>Assert.assertTrue()</code> etc. methods
+which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</code> calls.
+<p>For example:</p>
+<pre><code>
+  <b>public class</b> SubstantialTest {
+    @Test
+    <b>public void</b> testContents(Collection&lt;String> c, String s) {
+      Assert.assertTrue(c.contains(s));
+      Assert.assertEquals(c, s);
+      Assert.assertNotNull(c);
+      Assert.assertNull(c);
+      Assert.assertFalse(c.contains(s));
+    }
+  }
+</code></pre>
+<p>After the quick fix is applied, the result looks like this:</p>
+<pre><code>
+  <b>public class</b> SubstantialTest {
+    @Test
+    <b>public void</b> testContents(Collection&lt;String> c, String s) {
+      Assert.assertThat(c, hasItem(o));
+      Assert.assertThat(o, is(c));
+      Assert.assertThat(c, notNullValue());
+      Assert.assertThat(c, nullValue());
+      Assert.assertThat(c, not(hasItem(o)));
+    }
+  }
+</code></pre>
 </body>
 </html>
