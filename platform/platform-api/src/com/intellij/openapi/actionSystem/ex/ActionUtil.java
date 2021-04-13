@@ -52,29 +52,18 @@ public final class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(AnActionEvent @NotNull ... events) {
-    Project project = null;
+  public static void showDumbModeWarning(@Nullable Project project, AnActionEvent @NotNull ... events) {
     List<String> actionNames = new ArrayList<>();
-    for (final AnActionEvent event : events) {
-      final String s = event.getPresentation().getText();
+    for (AnActionEvent event : events) {
+      String s = event.getPresentation().getText();
       if (StringUtil.isNotEmpty(s)) {
         actionNames.add(s);
       }
-
-      final Project _project = event.getProject();
-      if (_project != null && project == null) {
-        project = _project;
-      }
     }
-
-    if (project == null) {
-      return;
-    }
-
     if (LOG.isDebugEnabled()) {
       LOG.debug("Showing dumb mode warning for " + Arrays.asList(events), new Throwable());
     }
-
+    if (project == null) return;
     DumbService.getInstance(project).showDumbModeNotification(getActionUnavailableMessage(actionNames));
   }
 
@@ -210,7 +199,7 @@ public final class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
     performDumbAwareUpdate(false, action, e, true);
 
-    final Project project = e.getProject();
+    Project project = e.getProject();
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;
@@ -219,7 +208,7 @@ public final class ActionUtil {
         return false;
       }
 
-      showDumbModeWarning(e);
+      showDumbModeWarning(project, e);
       return false;
     }
 
@@ -244,6 +233,7 @@ public final class ActionUtil {
   }
 
   public static void performActionDumbAware(AnAction action, DataContext context, AnActionEvent e) {
+    Project project = e.getProject();
     long startNanoTime = System.nanoTime();
     try {
       try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
@@ -252,7 +242,7 @@ public final class ActionUtil {
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
-      showDumbModeWarning(e);
+      showDumbModeWarning(project, e);
     }
     finally {
       long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
