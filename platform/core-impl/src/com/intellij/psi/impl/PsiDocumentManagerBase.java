@@ -1156,4 +1156,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public boolean isDefaultProject() {
     return myProject.isDefault();
   }
+
+  public String someDocumentDebugInfo(@NotNull Document document) {
+    FileViewProvider viewProvider = getCachedViewProvider(document);
+    return "cachedProvider: " + viewProvider + "; isEventSystemEnabled: " + isEventSystemEnabled(document);
+  }
 }
