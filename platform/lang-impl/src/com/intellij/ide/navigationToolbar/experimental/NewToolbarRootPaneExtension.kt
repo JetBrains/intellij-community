@@ -96,7 +96,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       logger.info("Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
 
       myPanelWrapper.add(myPanel, BorderLayout.CENTER)
-      myPanel.add(myRightPanel, "growx, align trailing, width pref, shrink 0")
+      myPanel.add(myRightPanel, "growx, align trailing")
       myPanel.add(myCenterPanel, "growx, align leading")
       myPanel.add(myLeftPanel, "growx, align leading")
 
@@ -104,7 +104,7 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
       val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
       addGroupComponent(myLeftPanel, "align leading", listChildren[0])
-      addGroupComponent(myCenterPanel, "align leading, width 0:pref:max", listChildren[1])
+      addGroupComponent(myCenterPanel, "align trailing, width 0:pref:max", listChildren[1])
       addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
 
       myPanelWrapper.isVisible = toolbarSettingsService.showNewToolbar && !instance.presentationMode
