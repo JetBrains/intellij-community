@@ -16,7 +16,6 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.util.Enumeration;
 
 /**
  * @author Konstantin Bulenkov
@@ -44,23 +43,13 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     g.setPaint(bottomSeparatorColor);
     LinePainter2D.paint(g, 0, h - 1, w, h - 1);
 
-    final Enumeration<TableColumn> columns = model.getColumns();
-
     final Color lineColor = JBColor.namedColor("TableHeader.separatorColor", ColorUtil.shift(bg, 0.7));
-    int offset = 0;
-    while (columns.hasMoreElements()) {
-      final TableColumn column = columns.nextElement();
-      if (columns.hasMoreElements() && column.getWidth() > 0) {
-        offset += column.getWidth();
-        g.setColor(lineColor);
-        LinePainter2D.paint(g, offset - 1, 1, offset - 1, h - 3);
-      }
-    }
 
     config.restore();
 
-    int count = model.getColumnCount();
-    if (count > 0) {
+    int first = 0;
+    int last = model.getColumnCount() - 1;
+    if (last >= first) {
       Rectangle clip = g.getClipBounds();
       int columnAtLeft = header.columnAtPoint(new Point(clip.x, clip.y));
       int columnAtRight = header.columnAtPoint(new Point(clip.x + clip.width - 1, clip.y));
@@ -70,19 +59,23 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
       TableColumn draggedColumn = header.getDraggedColumn();
       if (ltr) {
-        if (columnAtLeft == -1) columnAtLeft = 0;
-        if (columnAtRight == -1) columnAtRight = count - 1;
+        if (columnAtLeft == -1) columnAtLeft = first;
+        if (columnAtRight == -1) columnAtRight = last;
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
         for (int index = columnAtLeft; columnAtRight >= index; index++) {
+          if (index != first) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
+          bounds.x += bounds.width;
         }
       }
       else {
-        if (columnAtRight == -1) columnAtRight = 0;
-        if (columnAtLeft == -1) columnAtLeft = count - 1;
+        if (columnAtRight == -1) columnAtRight = first;
+        if (columnAtLeft == -1) columnAtLeft = last;
         Rectangle bounds = header.getHeaderRect(columnAtLeft);
         for (int index = columnAtLeft; columnAtRight <= index; index--) {
+          if (index != last) paintLine(g, bounds, lineColor);
           paintCell(g, bounds, model, index, focused, draggedColumn);
+          bounds.x += bounds.width;
         }
       }
       if (draggedColumn != null) {
@@ -111,14 +104,17 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
   }
 
 
+  private static void paintLine(Graphics g, Rectangle bounds, Color color) {
+    g.setColor(color);
+    g.fillRect(bounds.x, bounds.y + 1, 1, bounds.height - 3);
+  }
+
   private void paintCell(Graphics g, Rectangle bounds, TableColumnModel model, int index, boolean focused, TableColumn draggedColumn) {
     TableColumn column = model.getColumn(index);
-    int width = column.getWidth();
-    bounds.width = width;
+    bounds.width = column.getWidth();
     if (column != draggedColumn) {
       paintCell(g, bounds, column, index, focused);
     }
-    bounds.x += width;
   }
 
   private void paintCell(Graphics g, Rectangle bounds, TableColumn column, int index, boolean focused) {
