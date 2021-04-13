@@ -16,8 +16,13 @@ class KotlinRunConfigurationType : SimpleConfigurationType(
     NotNullLazyValue.createValue { KotlinIcons.SMALL_LOGO }
 ) {
 
-    override fun createTemplateConfiguration(project: Project) =
-        KotlinRunConfiguration("", JavaRunConfigurationModule(project, true), this)
+    override fun createTemplateConfiguration(project: Project): KotlinRunConfiguration {
+        return KotlinRunConfiguration("", JavaRunConfigurationModule(project, true), this)
+    }
+
+    override fun isDumbAware(): Boolean = true
+
+    override fun isEditableInDumbMode(): Boolean = true
 
     override fun getOptionsClass() = JvmMainMethodRunConfigurationOptions::class.java
 

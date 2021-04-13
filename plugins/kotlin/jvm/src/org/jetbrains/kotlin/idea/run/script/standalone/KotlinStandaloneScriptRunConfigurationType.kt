@@ -26,6 +26,10 @@ class KotlinStandaloneScriptRunConfigurationType : SimpleConfigurationType(
 
     override fun getOptionsClass() = JvmMainMethodRunConfigurationOptions::class.java
 
+    override fun isEditableInDumbMode(): Boolean = true
+
+    override fun isDumbAware(): Boolean = true
+
     companion object {
         val instance: KotlinStandaloneScriptRunConfigurationType
             get() = ConfigurationTypeUtil.findConfigurationType(KotlinStandaloneScriptRunConfigurationType::class.java)

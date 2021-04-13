@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.run
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.JavaPsiFacade
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
@@ -122,6 +124,17 @@ class RunConfigurationTest : AbstractRunConfigurationTest() {
 
         assertEquals(runConfiguration1.inputRedirectOptions.isRedirectInput, runConfiguration2.inputRedirectOptions.isRedirectInput)
         assertEquals(runConfiguration1.inputRedirectOptions.redirectInputPath, runConfiguration2.inputRedirectOptions.redirectInputPath)
+    }
+
+    fun testIsEditableInADumbMode() {
+        configureProject()
+
+        val runConfiguration = createConfigurationFromObject("foo.Bar")
+
+        with(runConfiguration.factory!!) {
+            assertTrue(isEditableInDumbMode)
+            assertTrue(safeAs<PossiblyDumbAware>()!!.isDumbAware)
+        }
     }
 
     fun testUpdateOnClassRename() {
