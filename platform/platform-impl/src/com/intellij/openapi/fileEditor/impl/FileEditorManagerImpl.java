@@ -1062,8 +1062,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         if (component != null) {
           component.requestFocus();
         }
-        IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
       }
+      IdeFocusManager.getInstance(myProject).toFront(window.getOwner());
     }
 
     if (newEditor) {
