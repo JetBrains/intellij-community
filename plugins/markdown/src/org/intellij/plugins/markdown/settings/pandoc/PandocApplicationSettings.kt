@@ -19,7 +19,6 @@ class PandocApplicationSettings: PersistentStateComponent<PandocApplicationSetti
 
   class State {
     internal var myPathToPandoc: String? = null
-    internal var myPathToImages: String? = null
   }
 
   override fun getState(): State = myState

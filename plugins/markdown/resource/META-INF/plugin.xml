@@ -40,8 +40,6 @@ Includes the following features:</p>
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Markdown" extensions="md;markdown" language="Markdown"
               implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileType" fieldName="INSTANCE"/>
-    <fileType name="Doc(x)" extensions="doc;docx"
-              implementationClass="org.intellij.plugins.markdown.fileActions.DocxFileType" fieldName="INSTANCE"/>
     <lang.fileViewProviderFactory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
     <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory"/>
@@ -75,8 +73,6 @@ Includes the following features:</p>
 
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
-
-    <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.DocxFileDropHandler"/>
 
     <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
 
@@ -233,13 +229,6 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               icon="AllIcons.Actions.SynchronizeScrolling">
       </action>
-    </group>
-
-    <group id="FileImportGroup" popup="true">
-      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.ImportFromDocxAction"
-              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.ImportFromDocxAction">
-      </action>
-      <add-to-group group-id="PrintExportGroup" relative-to-action="FileExportGroup" anchor="before"/>
     </group>
   </actions>
 </idea-plugin>
