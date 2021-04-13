@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBValue;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
-import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -33,9 +35,9 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     final Color bg = c.getBackground();
     g.setPaint(bg);
 
-    TableColumnModel model = ((JTableHeader)c).getColumnModel();
+    TableColumnModel model = header.getColumnModel();
 
-    final int h = c.getHeight();
+    final int h = header.getHeight();
     final int w = model.getTotalColumnWidth();
     g.fillRect(0, 0, w, h);
     JBColor bottomSeparatorColor = JBColor.namedColor("TableHeader.bottomSeparatorColor", ColorUtil.shift(bg, 0.75));
@@ -57,7 +59,47 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
 
     config.restore();
 
-    super.paint(g, c);
+    int count = model.getColumnCount();
+    if (count > 0) {
+      Rectangle clip = g.getClipBounds();
+      int columnAtLeft = header.columnAtPoint(new Point(clip.x, clip.y));
+      int columnAtRight = header.columnAtPoint(new Point(clip.x + clip.width - 1, clip.y));
+
+      boolean focused = TableUtil.isFocused(header);
+      boolean ltr = header.getComponentOrientation().isLeftToRight();
+
+      TableColumn draggedColumn = header.getDraggedColumn();
+      if (ltr) {
+        if (columnAtLeft == -1) columnAtLeft = 0;
+        if (columnAtRight == -1) columnAtRight = count - 1;
+        Rectangle bounds = header.getHeaderRect(columnAtLeft);
+        for (int index = columnAtLeft; columnAtRight >= index; index++) {
+          paintCell(g, bounds, model, index, focused, draggedColumn);
+        }
+      }
+      else {
+        if (columnAtRight == -1) columnAtRight = 0;
+        if (columnAtLeft == -1) columnAtLeft = count - 1;
+        Rectangle bounds = header.getHeaderRect(columnAtLeft);
+        for (int index = columnAtLeft; columnAtRight <= index; index--) {
+          paintCell(g, bounds, model, index, focused, draggedColumn);
+        }
+      }
+      if (draggedColumn != null) {
+        int index = TableUtil.getColumnIndex(header, draggedColumn);
+
+        Rectangle bounds = header.getHeaderRect(index);
+        g.setColor(header.getParent().getBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+
+        bounds.x += header.getDraggedDistance();
+        g.setColor(header.getBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        paintCell(g, bounds, draggedColumn, index, focused);
+      }
+      // remove all renderers
+      rendererPane.removeAll();
+    }
   }
 
   @Override
@@ -66,5 +108,41 @@ public class DarculaTableHeaderUI extends BasicTableHeaderUI {
     if (size.height == 0) return size;
     JBValue.UIInteger height = new JBValue.UIInteger("TableHeader.height", 25);
     return new Dimension(size.width, Math.max(height.get(), size.height));
+  }
+
+
+  private void paintCell(Graphics g, Rectangle bounds, TableColumnModel model, int index, boolean focused, TableColumn draggedColumn) {
+    TableColumn column = model.getColumn(index);
+    int width = column.getWidth();
+    bounds.width = width;
+    if (column != draggedColumn) {
+      paintCell(g, bounds, column, index, focused);
+    }
+    bounds.x += width;
+  }
+
+  private void paintCell(Graphics g, Rectangle bounds, TableColumn column, int index, boolean focused) {
+    Component component = TableUtil.getRendererComponent(header, column, index, focused);
+    if (component != null && isExpandableHintShown(column)) {
+      Graphics cg = g.create(bounds.x, bounds.y, bounds.width, bounds.height);
+      try {
+        int width = Math.max(component.getPreferredSize().width, bounds.width);
+        rendererPane.paintComponent(cg, component, header, 0, 0, width, bounds.height, true);
+      }
+      finally {
+        cg.dispose();
+      }
+    }
+    else {
+      rendererPane.paintComponent(g, component, header, bounds.x, bounds.y, bounds.width, bounds.height, true);
+    }
+  }
+
+  private boolean isExpandableHintShown(TableColumn column) {
+    if (column != null && header instanceof ComponentWithExpandableItems) {
+      ComponentWithExpandableItems<?> c = (ComponentWithExpandableItems<?>)header;
+      return column == ContainerUtil.getFirstItem(c.getExpandableItemsHandler().getExpandedItems());
+    }
+    return false;
   }
 }

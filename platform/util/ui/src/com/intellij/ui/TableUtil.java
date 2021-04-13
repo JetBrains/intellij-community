@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.SmartList;
@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -239,5 +241,40 @@ public final class TableUtil {
       scrollPane.revalidate();
       scrollPane.repaint();
     }
+  }
+
+
+  public static Rectangle getColumnBounds(@NotNull JTableHeader header, int index) {
+    return header.getHeaderRect(index);
+  }
+
+  public static Rectangle getColumnBounds(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    return getColumnBounds(header, getColumnIndex(header, column));
+  }
+
+  public static int getColumnIndex(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    if (column == null) return -1;
+    TableColumnModel model = header.getColumnModel();
+    if (model == null) return -1;
+    int index = model.getColumnCount();
+    while (0 < index--) {
+      if (column == model.getColumn(index)) break;
+    }
+    return index;
+  }
+
+  public static boolean isFocused(@NotNull JTableHeader header) {
+    return !header.isPaintingForPrint() && header.hasFocus();
+  }
+
+  public static TableCellRenderer getRenderer(@NotNull JTableHeader header, @Nullable TableColumn column) {
+    TableCellRenderer renderer = column == null ? null : column.getHeaderRenderer();
+    return renderer != null ? renderer : header.getDefaultRenderer();
+  }
+
+  public static Component getRendererComponent(@NotNull JTableHeader header, @Nullable TableColumn column, int index, boolean focused) {
+    TableCellRenderer renderer = column == null ? null : getRenderer(header, column);
+    return renderer == null ? null : renderer.getTableCellRendererComponent(
+      header.getTable(), column.getHeaderValue(), false, focused, -1, index);
   }
 }
