@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.util.TypeConversionUtil.canConvertSealedTo;
 
 public final class TypeConstraints {
@@ -30,6 +31,7 @@ public final class TypeConstraints {
     @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return BOTTOM; }
     @Override public String toString() { return ""; }
+    @Override public DfType getUnboxedType() { return DfTypes.TOP; }
   };
   /**
    * Bottom constraint (no actual type satisfies this)
@@ -53,11 +55,11 @@ public final class TypeConstraints {
     @Override public boolean isConvertibleFrom(@NotNull Exact other) { return true;}
     @NotNull @Override public TypeConstraint instanceOf() { return TOP;}
     @NotNull @Override public TypeConstraint notInstanceOf() { return BOTTOM;}
-    @Override public String toString() { return CommonClassNames.JAVA_LANG_OBJECT;}
+    @Override public String toString() { return JAVA_LANG_OBJECT;}
 
     @Override
     public PsiType getPsiType(Project project) {
-      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT);
+      return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(JAVA_LANG_OBJECT);
     }
   };
 
@@ -183,11 +185,11 @@ public final class TypeConstraints {
     String name = psiClass.getQualifiedName();
     if (name != null) {
       switch (name) {
-        case CommonClassNames.JAVA_LANG_OBJECT:
+        case JAVA_LANG_OBJECT:
           return EXACTLY_OBJECT;
-        case CommonClassNames.JAVA_LANG_CLONEABLE:
+        case JAVA_LANG_CLONEABLE:
           return ArraySuperInterface.CLONEABLE;
-        case CommonClassNames.JAVA_IO_SERIALIZABLE:
+        case JAVA_IO_SERIALIZABLE:
           return ArraySuperInterface.SERIALIZABLE;
       }
     }
@@ -252,8 +254,8 @@ public final class TypeConstraints {
   }
 
   private enum ArraySuperInterface implements TypeConstraint.Exact {
-    CLONEABLE(CommonClassNames.JAVA_LANG_CLONEABLE),
-    SERIALIZABLE(CommonClassNames.JAVA_IO_SERIALIZABLE);
+    CLONEABLE(JAVA_LANG_CLONEABLE),
+    SERIALIZABLE(JAVA_IO_SERIALIZABLE);
     private final @NotNull String myReference;
 
     ArraySuperInterface(@NotNull String reference) {
@@ -327,21 +329,21 @@ public final class TypeConstraints {
       String name = myClass.getQualifiedName();
       if (name == null) return DfTypes.BOTTOM;
       switch (name) {
-        case CommonClassNames.JAVA_LANG_BOOLEAN:
+        case JAVA_LANG_BOOLEAN:
           return DfTypes.BOOLEAN;
-        case CommonClassNames.JAVA_LANG_INTEGER:
+        case JAVA_LANG_INTEGER:
           return DfTypes.INT;
-        case CommonClassNames.JAVA_LANG_LONG:
+        case JAVA_LANG_LONG:
           return DfTypes.LONG;
-        case CommonClassNames.JAVA_LANG_DOUBLE:
+        case JAVA_LANG_DOUBLE:
           return DfTypes.DOUBLE;
-        case CommonClassNames.JAVA_LANG_FLOAT:
+        case JAVA_LANG_FLOAT:
           return DfTypes.FLOAT;
-        case CommonClassNames.JAVA_LANG_BYTE:
+        case JAVA_LANG_BYTE:
           return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.BYTE)));
-        case CommonClassNames.JAVA_LANG_SHORT:
+        case JAVA_LANG_SHORT:
           return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.SHORT)));
-        case CommonClassNames.JAVA_LANG_CHARACTER:
+        case JAVA_LANG_CHARACTER:
           return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.CHAR)));
         default:
           return DfTypes.BOTTOM;
@@ -359,13 +361,13 @@ public final class TypeConstraints {
       // Abstract final type is incorrect. We, however, assume that final wins: it can be instantiated
       // otherwise TypeConstraints.instanceOf(type) would return impossible type
       return (myClass.hasModifierProperty(PsiModifier.FINAL) || !myClass.hasModifierProperty(PsiModifier.ABSTRACT)) &&
-             !CommonClassNames.JAVA_LANG_VOID.equals(myClass.getQualifiedName());
+             !JAVA_LANG_VOID.equals(myClass.getQualifiedName());
     }
 
     @Override
     public boolean isComparedByEquals() {
       String name = myClass.getQualifiedName();
-      return name != null && (CommonClassNames.JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
+      return name != null && (JAVA_LANG_STRING.equals(name) || TypeConversionUtil.isPrimitiveWrapper(name));
     }
 
     @NotNull
@@ -493,7 +495,7 @@ public final class TypeConstraints {
       }
       if (other instanceof ArraySuperInterface) return true;
       if (other instanceof ExactClass) {
-        return CommonClassNames.JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
+        return JAVA_LANG_OBJECT.equals(((ExactClass)other).myClass.getQualifiedName());
       }
       return false;
     }

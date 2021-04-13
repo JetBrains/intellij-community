@@ -8,6 +8,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
@@ -172,7 +173,9 @@ public interface TypeConstraint {
   }
 
   /**
-   * @return type that represents unboxed type of this type; {@link DfTypes#BOTTOM} if this constraint is not primitive wrapper
+   * @return type that represents unboxed type of this type;
+   * {@link DfTypes#TOP} if this constraint can be one of several primitive wrappers
+   * {@link DfTypes#BOTTOM} if this constraint is not primitive wrapper
    */
   default DfType getUnboxedType() {
     return DfTypes.BOTTOM;
@@ -321,6 +324,12 @@ public interface TypeConstraint {
    * A non-exact, constrained type
    */
   final class Constrained implements TypeConstraint {
+    private static final Set<String> WRAPPER_SUPER_TYPES = Set.of(CommonClassNames.JAVA_LANG_OBJECT,
+                                                                  CommonClassNames.JAVA_LANG_NUMBER,
+                                                                  CommonClassNames.JAVA_IO_SERIALIZABLE,
+                                                                  CommonClassNames.JAVA_LANG_COMPARABLE,
+                                                                  "java.lang.constant.Constable",
+                                                                  "java.lang.constant.ConstantDesc");
     private final @NotNull Set<Exact> myInstanceOf;
     private final @NotNull Set<Exact> myNotInstanceOf;
 
@@ -553,6 +562,11 @@ public interface TypeConstraint {
     public @NotNull DfType getArrayComponentType() {
       return instanceOfTypes().map(Exact::getArrayComponentType)
         .reduce(DfType::meet).orElse(DfTypes.BOTTOM);
+    }
+
+    @Override
+    public DfType getUnboxedType() {
+      return instanceOfTypes().allMatch(t -> WRAPPER_SUPER_TYPES.contains(t.toString())) ? DfTypes.TOP : DfTypes.BOTTOM;
     }
 
     @Override
