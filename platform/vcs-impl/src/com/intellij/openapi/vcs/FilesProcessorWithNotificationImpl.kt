@@ -39,17 +39,10 @@ abstract class FilesProcessorWithNotificationImpl(
   @NlsContexts.Button
   protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
-  override fun doProcess(): Boolean {
-    val processed = super.doProcess()
-    if (!processed) {
-      proposeToProcessFiles()
-    }
-    return processed
-  }
-
-  private fun proposeToProcessFiles() {
+  override fun handleProcessingForCurrentProject() {
     synchronized(NOTIFICATION_LOCK) {
       if (notAskedBefore() && notificationNotPresent()) {
+        // propose to process files
         val notificationActions = mutableListOf(showAction(), addForCurrentProjectAction()).apply {
           if (forAllProjectsActionText != null) {
             add(forAllProjectsAction())

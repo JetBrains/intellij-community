@@ -25,19 +25,16 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
 
     addNewFiles(filteredFiles)
 
-    doProcess()
-  }
-
-  protected open fun doProcess(): Boolean {
-    val doForCurrentProject = needDoForCurrentProject()
-
-    if (doForCurrentProject) {
+    if (needDoForCurrentProject()) {
       doActionOnChosenFiles(acquireValidFiles())
       clearFiles()
     }
-
-    return doForCurrentProject
+    else {
+      handleProcessingForCurrentProject()
+    }
   }
+
+  protected open fun handleProcessingForCurrentProject() = Unit
 
   protected fun removeFiles(filesToRemove: Collection<VirtualFile>): Boolean {
     synchronized(files) {
