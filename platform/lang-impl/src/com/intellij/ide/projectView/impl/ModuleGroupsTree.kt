@@ -4,8 +4,11 @@ package com.intellij.ide.projectView.impl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -34,13 +37,43 @@ internal class ModuleGroupsTree private constructor(private val grouper: ModuleG
           group
         }
         childModules.putValue(parentGroupForModule, module)
-        var parentGroupPath = groupPath
-        while (parentGroupPath.size > 1 && parentGroupPath !in moduleAsGroupPaths) {
-          val nextParentGroupPath = parentGroupPath.subList(0, parentGroupPath.size - 1)
-          childGroups.putValue(ModuleGroup(nextParentGroupPath), ModuleGroup(parentGroupPath))
-          parentGroupPath = nextParentGroupPath
+        addChildGroup(groupPath, moduleAsGroupPaths)
+      }
+    }
+
+    for (key in childModules.keySet()) {
+      for (module in childModules[key]) {
+        addChildGroupsForNonContainedModuleGroups(module)
+      }
+    }
+  }
+
+  private fun addChildGroupsForNonContainedModuleGroups(module: Module) {
+    val groupPath = grouper.getModuleAsGroupPath(module)
+    if (groupPath != null) {
+      val moduleGroup = ModuleGroup(groupPath)
+      if (childModules.containsKey(moduleGroup)) {
+        val roots = ModuleRootManager.getInstance(module).contentRoots
+        for (childModule in childModules[moduleGroup]) {
+          val childRoots = ModuleRootManager.getInstance(childModule).contentRoots
+          if (childRoots.any { !isContainedInRoots(it, roots)}) {
+            addChildGroup(groupPath, null)
+            return
+          }
         }
       }
+    }
+  }
+
+  private fun isContainedInRoots(file: VirtualFile, roots: Array<VirtualFile>) = roots.all { VfsUtilCore.isAncestor(it, file, false) }
+
+  private fun addChildGroup(groupPath: List<String>,
+                            moduleAsGroupPaths: HashSet<List<String>>?) {
+    var parentGroupPath = groupPath
+    while (parentGroupPath.size > 1 && (moduleAsGroupPaths == null || parentGroupPath !in moduleAsGroupPaths)) {
+      val nextParentGroupPath = parentGroupPath.subList(0, parentGroupPath.size - 1)
+      childGroups.putValue(ModuleGroup(nextParentGroupPath), ModuleGroup(parentGroupPath))
+      parentGroupPath = nextParentGroupPath
     }
   }
 
