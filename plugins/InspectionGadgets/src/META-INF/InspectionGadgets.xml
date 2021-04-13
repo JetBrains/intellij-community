@@ -1741,9 +1741,9 @@
                      key="cached.number.constructor.call.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.CachedNumberConstructorCallInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="NumericCastThatLosesPrecision" shortName="CastThatLosesPrecision"
+    <localInspection groupPathKey="group.path.names.numeric" language="JAVA" suppressId="NumericCastThatLosesPrecision" shortName="CastThatLosesPrecision"
                      bundle="messages.InspectionGadgetsBundle" key="cast.that.loses.precision.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.cast" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.CastThatLosesPrecisionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CharUsedInArithmeticContext" bundle="messages.InspectionGadgetsBundle"
                      key="char.used.in.arithmetic.context.display.name" groupBundle="messages.InspectionsBundle"
@@ -1766,9 +1766,9 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="divzero" shortName="DivideByZero" bundle="messages.InspectionGadgetsBundle"
                      key="divide.by.zero.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.numeric.DivideByZeroInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="DoubleLiteralMayBeFloatLiteral" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.names.numeric" language="JAVA" shortName="DoubleLiteralMayBeFloatLiteral" bundle="messages.InspectionGadgetsBundle"
                      key="double.literal.may.be.float.literal.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.cast" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.DoubleLiteralMayBeFloatLiteralInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FloatingPointEquality" bundle="messages.InspectionGadgetsBundle" key="floating.point.equality.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
@@ -1781,13 +1781,13 @@
                      key="integer.division.in.floating.point.context.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntegerDivisionInFloatingPointContextInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IntegerMultiplicationImplicitCastToLong" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.names.numeric" language="JAVA" shortName="IntegerMultiplicationImplicitCastToLong" bundle="messages.InspectionGadgetsBundle"
                      key="integer.multiplication.implicit.cast.to.long.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.numeric.cast" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="IntLiteralMayBeLongLiteral" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.names.numeric" language="JAVA" shortName="IntLiteralMayBeLongLiteral" bundle="messages.InspectionGadgetsBundle"
                      key="int.literal.may.be.long.literal.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.cast" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.IntLiteralMayBeLongLiteralInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LongLiteralEndingWithLowercaseL" shortName="LongLiteralsEndingWithLowercaseL"
                      bundle="messages.InspectionGadgetsBundle" key="long.literals.ending.with.lowercase.l.display.name"
@@ -1819,9 +1819,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnaryPlus" bundle="messages.InspectionGadgetsBundle" key="unary.plus.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnaryPlusInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryExplicitNumericCast" bundle="messages.InspectionGadgetsBundle"
+    <localInspection groupPathKey="group.path.names.numeric" language="JAVA" shortName="UnnecessaryExplicitNumericCast" bundle="messages.InspectionGadgetsBundle"
                      key="unnecessary.explicit.numeric.cast.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.cast" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryUnaryMinus" bundle="messages.InspectionGadgetsBundle" key="unnecessary.unary.minus.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
