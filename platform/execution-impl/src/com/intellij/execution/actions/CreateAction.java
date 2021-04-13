@@ -6,13 +6,35 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class CreateAction extends BaseRunConfigurationAction {
   public CreateAction() {
-    super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, null);
+    this(null);
+  }
+
+  public CreateAction(Icon icon) {
+    super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, icon);
+    getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+  }
+
+  @Override
+  protected void fullUpdate(@NotNull AnActionEvent event) {
+    ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
+    if (findExisting(context) != null) {
+      event.getPresentation().setEnabledAndVisible(true);
+      event.getPresentation().setIcon(getTemplatePresentation().getIcon());
+      Holder.EDIT.update(event.getPresentation(), context, "");
+    }
+    else {
+      super.fullUpdate(event);
+    }
   }
 
   @Override
