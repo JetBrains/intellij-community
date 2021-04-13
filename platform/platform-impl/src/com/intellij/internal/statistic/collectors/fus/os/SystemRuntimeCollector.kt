@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.containers.ContainerUtil
@@ -38,6 +39,21 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     var totalSwapSize = (osMxBean.totalSwapSpaceSize.toDouble() / (1 shl 30)).roundToInt()
     totalSwapSize = min(totalSwapSize, totalPhysicalMemory)
     result.add(SWAP_SIZE.metric(if (totalSwapSize > 0) StatisticsUtil.getNextPowerOfTwo(totalSwapSize) else 0))
+
+    try {
+      val totalSpace = PathManager.getIndexRoot().toFile().totalSpace
+      if (totalSpace > 0L) {
+        val indexDirPartitionSize = min(1 shl 14, // currently max available consumer hard drive size is around 16 Tb
+                                        StatisticsUtil.getNextPowerOfTwo((totalSpace shr 30).toInt()))
+        val indexDirPartitionFreeSpace =
+          ((PathManager.getIndexRoot().toFile().usableSpace.toDouble() / totalSpace) * 100).toInt()
+        result.add(DISK_SIZE.metric(indexDirPartitionSize, indexDirPartitionFreeSpace))
+      }
+    } catch (uoe : UnsupportedOperationException) {
+      // In case of some custom FS
+    } catch (se : SecurityException) {
+      // In case of Security Manager denies read of FS attributes
+    }
 
     for (gc in ManagementFactory.getGarbageCollectorMXBeans()) {
       result.add(GC.metric(gc.name))
@@ -82,11 +98,14 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "-Xms", "-Xmx", "-XX:SoftRefLRUPolicyMSPerMB", "-XX:ReservedCodeCacheSize"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 9)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 10)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
     private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", EventFields.Int("gigabytes"))
+    private val DISK_SIZE: EventId2<Int, Int> = GROUP.registerEvent("disk.size",
+                                                                    EventFields.Int("index_partition_size"),
+                                                                    EventFields.Int("index_partition_free"))
     private val GC: EventId1<String?> = GROUP.registerEvent("garbage.collector",
       EventFields.String(
         "name",
