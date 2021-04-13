@@ -552,8 +552,12 @@ idea.fatal.error.notification=disabled
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
       extraJars += file.name
     }
-    Files.copy(Paths.get("$buildContext.paths.distAll/lib/classpath.txt"), destLibDir.resolve("classpath.txt"), StandardCopyOption.REPLACE_EXISTING)
-    Files.writeString(destLibDir.resolve("classpath.txt"), "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
+    def classPathTxt = destLibDir.resolve("classpath.txt")
+    //no file in fleet
+    if (Files.exists(classPathTxt)) {
+      Files.copy(Paths.get("$buildContext.paths.distAll/lib/classpath.txt"), classPathTxt, StandardCopyOption.REPLACE_EXISTING)
+      Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
+    }
   }
 
   private void logFreeDiskSpace(String phase) {
