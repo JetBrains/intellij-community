@@ -73,7 +73,7 @@
     <!--group.names.assignment.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToCatchBlockParameter" bundle="messages.InspectionGadgetsBundle"
                      key="assignment.to.catch.block.parameter.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.assignment.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.assignment.AssignmentToCatchBlockParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToForLoopParameter" bundle="messages.InspectionGadgetsBundle"
                      key="assignment.to.for.loop.parameter.display.name" groupBundle="messages.InspectionsBundle"
