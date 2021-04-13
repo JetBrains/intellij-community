@@ -23,6 +23,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +193,8 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Qu
     return Document.EMPTY_ARRAY;
   }
 
-  static void putTextEditor(@NotNull Editor editor, @NotNull TextEditor textEditor) {
+  @ApiStatus.Internal
+  public static void putTextEditor(@NotNull Editor editor, @NotNull TextEditor textEditor) {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
