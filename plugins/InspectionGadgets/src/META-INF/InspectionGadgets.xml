@@ -100,7 +100,7 @@
                      implementationClass="com.siyeh.ig.assignment.AssignmentToSuperclassFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentUsedAsCondition" bundle="messages.InspectionGadgetsBundle"
                      key="assignment.used.as.condition.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.assignment.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.assignment.AssignmentUsedAsConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ValueOfIncrementOrDecrementUsed" shortName="IncrementDecrementUsedAsExpression"
                      bundle="messages.InspectionGadgetsBundle" key="increment.decrement.display.name"

@@ -1,8 +1,25 @@
 <html>
 <body>
 Reports assignments to a lambda parameter, this includes compound assignments and incrementing or decrementing the parameter.
-While occasionally intended, this construct can be extremely confusing, and is often the result of a typo.
+While occasionally intended, this construct can be confusing, and is often the result of a typo, or wrong variable being used.
+<p>Example:</p>
+<pre>
+  list.forEach(s -> {
+    s = s.trim();
+    System.out.println("String: " + s);
+  });
+</pre>
+<p>A quick-fix is suggested to declare a new variable:</p>
+<pre>
+  list.forEach(s -> {
+    String trimmed = s.trim();
+    System.out.println("String: " + trimmed);
+  });
+</pre>
 <!-- tooltip end -->
 <p>
+  Use the checkbox below to ignore assignments that modify
+  the parameter value based on its previous value.
+</p>
 </body>
 </html>

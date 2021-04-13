@@ -1,8 +1,36 @@
 <html>
 <body>
-Reports any assignments to fields from a superclass from within a constructor. It is usually better to call a constructor of the
-superclass to initialize the fields.
+Reports any assignments to fields declared in a superclass from within a constructor.
+It is usually better to initialize superclass fields in its own constructor and
+delegate to that constructor in a subclass. This will also allow to declare the field as final,
+if it's not changed after the construction.
+<p>Example:</p>
+<pre>
+class Super {
+  int x;
+}
+class Sub extends Super {
+  Sub(int _x) {
+    // Warning: x is declared in a superclass
+    x = _x;
+  }
+}
+</pre>
+<p>To avoid this problem, declare a super-class constructor:</p>
+<pre>
+class Super {
+  final int x;
+
+  Super(int _x) {
+    x = _x;
+  }
+}
+class Sub extends Super {
+  Sub(int _x) {
+    super(_x);
+  }
+}
+</pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>

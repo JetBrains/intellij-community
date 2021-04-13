@@ -2,6 +2,13 @@
 <body>
 Reports assignment expressions nested inside other expressions. While admirably terse,
 such expressions may be confusing, and violate the general design principle that a given construct should do precisely one thing.
+<p>Example:</p>
+<pre>
+  String userName;
+  // Warning: result of assignment to 'userName' is used
+  System.out.println("Hello " + (userName = "Alice") + "!");
+  System.out.println("Goodbye " + userName);
+</pre>
 <!-- tooltip end -->
 <p>
 

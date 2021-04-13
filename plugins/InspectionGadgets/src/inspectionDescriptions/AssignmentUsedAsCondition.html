@@ -1,12 +1,25 @@
 <html>
 <body>
-Reports an assignment being
-used as the condition of an <b>if</b>, <b>while</b>, <b>for</b> or
-<b>do</b> statement. While occasionally intended,
-this usage is confusing, and often indicates a typo
-(<b>=</b> instead of <b>==</b>).
+Reports an assignment being used as the condition of an <code>if</code>, <code>while</code>, <code>for</code> or
+<code>do</code> statement, or in any other context. While occasionally intended, this usage is confusing,
+and may indicate a typo (<code>=</code> instead of <code>==</code>).
+<p>Example:</p>
+<pre>
+  void update(String str, boolean empty) {
+    // Warning: 'empty' is reassigned, not compared to str.isEmpty()
+    if (empty = str.isEmpty()) {
+      ...
+    }
+  }
+</pre>
+<p>A quick-fix is suggested to replace <code>=</code> with <code>==</code>:</p>
+<pre>
+  void update(String str, boolean empty) {
+    if (empty == str.isEmpty()) {
+      ...
+    }
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

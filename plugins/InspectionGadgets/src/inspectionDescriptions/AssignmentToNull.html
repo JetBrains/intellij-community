@@ -1,15 +1,30 @@
 <html>
 <body>
-Reports the assignment of a variable to
-<b>null</b>, outside of declarations.
-While occasionally useful for triggering garbage collection, this
-construct may make the code more prone
-to NullPointerExceptions, and often indicates that the developer doesn't
-really understand the class's intended semantics.
+Reports the assignment of a variable to <code>null</code>, outside of declarations.
+The main purpose of <code>null</code> in Java is to denote uninitialized
+reference variable. In rare cases, it's also useful to explicitly assign the variable to null
+to aid the garbage collection. However using <code>null</code> as a sentinel to denote
+'absent value', 'not specified value', 'invalid value' or 'not found element' could be
+considered as a bad practice and may make the code more prone to NullPointerExceptions.
+Instead, consider properly defining the sentinel object with the intended semantics,
+or use library types like <code>Optional</code> to denote the absence of the value.
+<p>Example:</p>
+<pre>
+  Integer convert(String s) {
+    Integer value;
+    try {
+      value = Integer.parseInt(s);
+    } catch (NumberFormatException e) {
+      // Warning: null is used to denote an 'invalid value'
+      value = null;
+    }
+    return value;
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to ignore assignments to fields.
-<p>
+</p>
 
 </body>
 </html>
