@@ -1,10 +1,17 @@
 <html>
 <body>
-Reports any limited-scope inner classes. Some code standards discourage
-the use of limited-scope inner classes, and they are unusual enough as to possibly be
-confusing.
+Reports any limited-scope inner classes.
+They are unusual enough and possibly be confusing.
+Some code standards discourage them as well.
+<p>Example:</p>
+<pre>
+  void test() {
+    class Local { // limited-scope inner class
+    }
+    new Local();
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
 </body>
 </html>

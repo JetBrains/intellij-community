@@ -1,6 +1,19 @@
 <html>
 <body>
-Reports non-<b>final</b> fields in enumeration types. A non-<b>final</b> field in an enum is rarely needed.
+Reports non-<code>final</code> fields in enumeration types as they are rarely needed.
+<p>Example:</p>
+<pre>
+  enum Enum {
+    FIRST("first"),
+    SECOND("second");
+
+    public String str;
+
+    Enum(String str) {
+        this.str = str;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 </body>
