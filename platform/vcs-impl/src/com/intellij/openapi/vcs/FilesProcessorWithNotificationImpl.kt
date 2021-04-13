@@ -80,20 +80,18 @@ abstract class FilesProcessorWithNotificationImpl(
   }
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
-    doActionOnChosenFiles(acquireValidFiles())
+    doActionOnChosenFiles(queryFiles())
     setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     expireNotification()
-    clearFiles()
   }
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
-    doActionOnChosenFiles(acquireValidFiles())
+    doActionOnChosenFiles(queryFiles())
     setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     rememberForAllProjects()
     expireNotification()
-    clearFiles()
   }
 
   private fun muteAction() = NotificationAction.create(muteActionText) { _, notification ->

@@ -26,8 +26,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     addNewFiles(filteredFiles)
 
     if (needDoForCurrentProject()) {
-      doActionOnChosenFiles(acquireValidFiles())
-      clearFiles()
+      doActionOnChosenFiles(queryFiles())
     }
     else {
       handleProcessingForCurrentProject()
@@ -58,6 +57,14 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     synchronized(files) {
       files.removeAll { !it.isValid }
       return files.toList()
+    }
+  }
+
+  protected fun queryFiles(): List<VirtualFile> {
+    synchronized(files) {
+      val result = files.filter { it.isValid }
+      files.clear()
+      return result
     }
   }
 
