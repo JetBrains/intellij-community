@@ -1,15 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.actions
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.ide.util.TipUIUtil
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ResourceUtil
 import java.awt.datatransfer.StringSelection
-import java.lang.StringBuilder
 
 class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
@@ -21,16 +22,16 @@ class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
         featuresRegistry.getFeatureDescriptor(featureId)?.let { feature ->
           featureTipRow.name = feature.displayName
           featureTipRow.group = feature.groupId
-          feature.tipFileName?.let { tipFile ->
-            featureTipRow.tipFile = feature.tipFileName
-            featureTipRow.tipFileExists = TipUIUtil.getTip(feature) != null
-            tips.remove(tipFile)
+          TipUIUtil.getTip(feature)?.let { tip ->
+            featureTipRow.tipFile = tip.fileName
+            featureTipRow.tipFileExists = tipFileExists(tip)
+            tips.remove(tip.fileName)
           }
         }
         rows.add(featureTipRow)
       }
       for (tip in tips.values) {
-        rows.add(FeatureTipRow(tipFile = tip.fileName, tipFileExists = TipAndTrickBean.findByFileName(tip.fileName) != null))
+        rows.add(FeatureTipRow(tipFile = tip.fileName, tipFileExists = tipFileExists(tip)))
       }
       val output = StringBuilder()
       output.appendLine(FeatureTipRow.HEADER)
@@ -39,6 +40,12 @@ class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
       }
       CopyPasteManager.getInstance().setContents(StringSelection(output.toString()))
     }
+  }
+
+  private fun tipFileExists(tip: TipAndTrickBean): Boolean {
+    if (FileUtil.exists(tip.fileName)) return true
+    val tipLoader = tip.pluginDescriptor?.pluginClassLoader ?: DumpFeaturesAndTipsAction::class.java.classLoader
+    return ResourceUtil.getResourceAsStream(tipLoader, "/tips/", tip.fileName) != null
   }
 
   private data class FeatureTipRow(var id: String? = null,
