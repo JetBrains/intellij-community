@@ -78,6 +78,11 @@ final class CrossPlatformDistributionBuilder {
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")
+
+          if (linuxFiles.containsKey("lib/classpath.txt")) { //linux has extra dbus-java
+            exclude(name: "lib/classpath.txt")
+          }
+
           extraExecutables.each {
             exclude(name: it)
           }
