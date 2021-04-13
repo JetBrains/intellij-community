@@ -125,12 +125,12 @@ internal fun readContent(list: Element, descriptor: IdeaPluginDescriptorImpl) {
 
 internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptorImpl) {
   val content = list.content
-  val items = ArrayList<ModuleDependenciesDescriptor.ModuleItem>()
+  val items = ArrayList<ModuleDependenciesDescriptor.ModuleItem>(list.contentSize)
   for (item in content) {
     if (item !is Element) {
       continue
-
     }
+
     when (item.name) {
       "module" -> items.add(ModuleDependenciesDescriptor.ModuleItem(item.getAttributeValue("name")!!, item.getAttributeValue("package")))
       "plugin" -> {

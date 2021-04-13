@@ -1,39 +1,56 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+package com.intellij.ide.plugins
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
-
-final class ModuleDependenciesDescriptor {
-  static final ModuleDependenciesDescriptor EMPTY = new ModuleDependenciesDescriptor(Collections.emptyList());
-
-  final List<ModuleItem> modules;
-
-  ModuleDependenciesDescriptor(@NotNull List<ModuleItem> modules) {
-    this.modules = modules;
+internal class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleItem>) {
+  companion object {
+    @JvmField
+    val EMPTY = ModuleDependenciesDescriptor(emptyList())
   }
 
-  @Nullable ModuleDependenciesDescriptor.ModuleItem findModuleByName(@NotNull String name) {
-    for (ModuleDependenciesDescriptor.ModuleItem module : modules) {
-      if (module.name.equals(name)) {
-        return module;
+  fun findModuleByName(name: String): ModuleItem? {
+    for (module in modules) {
+      if (module.name == name) {
+        return module
       }
     }
-    return null;
+    return null
   }
 
-  static final class ModuleItem {
-    final String name;
-    final String packageName;
-
-    ModuleItem(@NotNull String name, @Nullable String packageName) {
-      this.name = name;
-      this.packageName = packageName;
+  internal class ModuleItem(@JvmField val name: String, @JvmField val packageName: String?) {
+    init {
       if (packageName != null && packageName.endsWith(".")) {
-        throw new RuntimeException("packageName must not ends with dot: " + packageName);
+        throw RuntimeException("packageName must not ends with dot: $packageName")
+      }
+    }
+  }
+
+  internal class PluginItem(@JvmField val id: String) {
+  }
+}
+
+internal class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
+  companion object {
+    @JvmField
+    val EMPTY = PluginContentDescriptor(emptyList())
+  }
+
+  fun findModuleByName(name: String): ModuleItem? {
+    for (module in modules) {
+      if (module.name == name) {
+        return module
+      }
+    }
+    return null
+  }
+
+  internal class ModuleItem(@JvmField val name: String, @JvmField val packageName: String?, @JvmField val configFile: String?) {
+    // <module name="intellij.clouds.docker.file" package="com.intellij.docker.dockerFile"/> - xi-include without classloader at all
+    @JvmField
+    var isInjected = false
+
+    init {
+      if (packageName != null && packageName.endsWith(".")) {
+        throw RuntimeException("packageName must not ends with dot: $packageName")
       }
     }
   }
