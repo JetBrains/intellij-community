@@ -1307,12 +1307,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="AssertStatement" bundle="messages.InspectionGadgetsBundle" key="assert.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.AssertStatementInspection"/>
-    <localInspection groupPath="Java" language="JAVA" alternativeId="boxing" shortName="AutoBoxing" bundle="messages.InspectionGadgetsBundle" key="auto.boxing.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.jdk.AutoBoxingInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="AutoUnboxing" bundle="messages.InspectionGadgetsBundle" key="auto.unboxing.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.jdk.AutoUnboxingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumClass" bundle="messages.InspectionGadgetsBundle" key="enumerated.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.java.language.level.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.jdk.EnumClassInspection"/>
@@ -2008,6 +2002,12 @@
                      key="inspection.if.statement.missing.break.in.loop.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.IfStatementMissingBreakInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="AutoUnboxing" bundle="messages.InspectionGadgetsBundle" key="auto.unboxing.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.jdk.AutoUnboxingInspection"/>
+    <localInspection groupPath="Java" language="JAVA" alternativeId="boxing" shortName="AutoBoxing" bundle="messages.InspectionGadgetsBundle" key="auto.boxing.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
+                     level="WARNING" implementationClass="com.siyeh.ig.jdk.AutoBoxingInspection"/>
 
     <!--group.names.portability.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="HardcodedFileSeparator" shortName="HardcodedFileSeparators" bundle="messages.InspectionGadgetsBundle"
