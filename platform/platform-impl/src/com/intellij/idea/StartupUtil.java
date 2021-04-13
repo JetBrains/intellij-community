@@ -119,21 +119,21 @@ public final class StartupUtil {
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless(args));
 
     activity = activity.endAndStart("main class loading scheduling");
-    ForkJoinTask<AppStarter> appStarterFuture = ForkJoinPool.commonPool().submit(() -> {
-      Activity subActivity = StartUpMeasurer.startActivity("main class loading");
-      Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
-      subActivity.end();
-
+    CompletableFuture<AppStarter> appStarterFuture = CompletableFuture.supplyAsync(() -> {
       try {
+        Activity subActivity = StartUpMeasurer.startActivity("main class loading");
+        Class<?> aClass = StartupUtil.class.getClassLoader().loadClass(mainClass);
+        subActivity.end();
+
         return (AppStarter)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
       }
-      catch (Exception e) {
+      catch (RuntimeException e) {
         throw e;
       }
       catch (Throwable e) {
-        throw new RuntimeException(e);
+        throw new CompletionException(e);
       }
-    });
+    }, ForkJoinPool.commonPool());
 
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
@@ -251,14 +251,30 @@ public final class StartupUtil {
         return null;
       });
 
-    if (!Main.isHeadless() && configImportNeeded) {
-      prepareUiFuture.join();
-      importConfig(Arrays.asList(args), log, appStarterFuture, agreementDialogWasShown);
-    }
-    getAppStarter(appStarterFuture).start(Arrays.asList(args), prepareUiFuture);
+    Activity mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting");
+    appStarterFuture
+      .thenCompose(appStarter -> {
+        mainClassLoadingWaitingActivity.end();
+
+        if (!Main.isHeadless() && configImportNeeded) {
+          prepareUiFuture.join();
+          try {
+            importConfig(Arrays.asList(args), log, appStarter, agreementDialogWasShown);
+          }
+          catch (Exception e) {
+            throw new CompletionException(e);
+          }
+        }
+        return appStarter.start(Arrays.asList(args), prepareUiFuture);
+      })
+      .exceptionally(e -> {
+        Throwable unwrappedError = e instanceof CompletionException && e.getCause() != null ? e.getCause() : e;
+        StartupAbortedException.logAndExit(new StartupAbortedException("Cannot start app", unwrappedError), log);
+        return null;
+      });
 
     // prevent JVM from exiting - because in FJP pool "all worker threads are initialized with {@link Thread#isDaemon} set {@code true}"
-    // cannot change `AppStarter.start` method signature for now to return CompletableFuture
+    // awaitQuiescence allows us to reuse main thread instead of creating another one
     ForkJoinPool.commonPool().awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 
@@ -274,7 +290,9 @@ public final class StartupUtil {
 
   // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<? super List<String>, ? extends Future<CliResult>> processor) {
-    if (socketLock == null) throw new AssertionError("Not initialized yet");
+    if (socketLock == null) {
+      throw new AssertionError("Not initialized yet");
+    }
     socketLock.setCommandProcessor(processor);
   }
 
@@ -317,7 +335,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    void start(@NotNull List<String> args, @NotNull CompletionStage<?> prepareUiFuture);
+    @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<?> prepareUiFuture);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
@@ -354,16 +372,9 @@ public final class StartupUtil {
     }
   }
 
-  private static @NotNull AppStarter getAppStarter(@NotNull ForkJoinTask<AppStarter> mainStartFuture) {
-    Activity activity = StartUpMeasurer.startActivity("main class loading waiting");
-    AppStarter result = mainStartFuture.join();
-    activity.end();
-    return result;
-  }
-
   private static void importConfig(@NotNull List<String> args,
                                    @NotNull Logger log,
-                                   @NotNull ForkJoinTask<AppStarter> appStarterFuture,
+                                   @NotNull AppStarter appStarter,
                                    @NotNull CompletableFuture<Boolean> agreementDialogWasShown) throws Exception {
     Activity activity = StartUpMeasurer.startActivity("screen reader checking");
     try {
@@ -372,10 +383,7 @@ public final class StartupUtil {
     catch (Throwable e) {
       log.error(e);
     }
-    activity.end();
-
-    activity = StartUpMeasurer.startActivity("config importing");
-    AppStarter appStarter = getAppStarter(appStarterFuture);
+    activity = activity.endAndStart("config importing");
     appStarter.beforeImportConfigs();
     Path newConfigDir = PathManager.getConfigDir();
     EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown.join(), newConfigDir, args, log));
@@ -442,7 +450,7 @@ public final class StartupUtil {
             throw e;
           }
           catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw new CompletionException(e);
           }
         }
 
@@ -455,7 +463,7 @@ public final class StartupUtil {
           throw e;
         }
         catch (Throwable e) {
-          throw new RuntimeException(e);
+          throw new CompletionException(e);
         }
 
         activity = activity.endAndStart("base LaF initialization");
@@ -481,7 +489,7 @@ public final class StartupUtil {
           UIManager.setLookAndFeel(new IntelliJLaf(baseLaF));
         }
         catch (UnsupportedLookAndFeelException e) {
-          throw new RuntimeException(e);
+          throw new CompletionException(e);
         }
 
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);

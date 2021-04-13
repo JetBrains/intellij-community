@@ -6,7 +6,7 @@ import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("UnusedDeclaration")
 public final class MainImpl implements StartupUtil.AppStarter {
@@ -15,8 +15,9 @@ public final class MainImpl implements StartupUtil.AppStarter {
   }
 
   @Override
-  public void start(@NotNull List<String> args, @NotNull CompletionStage<?> prepareUiFuture) {
+  public @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<?> prepareUiFuture) {
     ApplicationLoader.initApplication(args, prepareUiFuture);
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override
