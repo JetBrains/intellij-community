@@ -56,9 +56,6 @@ private val excludeAction = object : MarkExcludeRootAction() {
 @Service
 class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(project, project) {
 
-  override val askedBeforeProperty = ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
-  override val doForCurrentProjectProperty: String? = null
-
   init {
     project.messageBus.connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) = updateNotificationState()
@@ -95,8 +92,10 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
 
   fun getValidFiles() = with(ChangeListManager.getInstance(project)) { acquireValidFiles().filter(this::isIgnoredFile) }
 
+  private fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, false)
+
   fun muteForCurrentProject() {
-    PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
+    PropertiesComponent.getInstance(project).setValue(ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, true)
     clearFiles()
   }
 
@@ -109,12 +108,6 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
   }
 
   override fun doFilterFiles(files: Collection<VirtualFile>) = files.filter(VirtualFile::isValid)
-
-  override fun rememberForAllProjects() {}
-
-  override fun rememberForCurrentProject() {
-    VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED = true
-  }
 
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 

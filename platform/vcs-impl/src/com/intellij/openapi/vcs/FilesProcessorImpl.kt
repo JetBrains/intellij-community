@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -11,19 +10,9 @@ import com.intellij.vcsUtil.VcsUtil
 abstract class FilesProcessorImpl(protected val project: Project, parentDisposable: Disposable) : FilesProcessor {
   private val files = mutableSetOf<VirtualFile>()
 
-  abstract val askedBeforeProperty: String
-
-  abstract val doForCurrentProjectProperty: String?
-
   abstract fun doActionOnChosenFiles(files: Collection<VirtualFile>)
 
   abstract fun doFilterFiles(files: Collection<VirtualFile>): Collection<VirtualFile>
-
-  abstract fun rememberForAllProjects()
-
-  protected open fun rememberForCurrentProject() {
-    setForCurrentProject(true)
-  }
 
   init {
     Disposer.register(parentDisposable, this)
@@ -78,15 +67,5 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     clearFiles()
   }
 
-  protected fun setForCurrentProject(value: Boolean) {
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, value) }
-  }
-
-  private fun getForCurrentProject(): Boolean =
-    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
-
-  protected fun notAskedBefore() = !wasAskedBefore()
-  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
-
-  protected open fun needDoForCurrentProject() = getForCurrentProject()
+  protected abstract fun needDoForCurrentProject(): Boolean
 }

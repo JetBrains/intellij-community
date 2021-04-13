@@ -20,6 +20,9 @@ abstract class FilesProcessorWithNotificationImpl(
   private var notification: Notification? = null
   abstract val notificationDisplayId: String
 
+  abstract val askedBeforeProperty: String
+  abstract val doForCurrentProjectProperty: String?
+
   abstract val showActionText: String
   abstract val forCurrentProjectActionText: String
   abstract val forAllProjectsActionText: String?
@@ -34,7 +37,7 @@ abstract class FilesProcessorWithNotificationImpl(
   @NlsContexts.Button
   protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
   @NlsContexts.Button
-  protected open val  viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
+  protected open val viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
   override fun doProcess(): Boolean {
     val processed = super.doProcess()
@@ -115,4 +118,23 @@ abstract class FilesProcessorWithNotificationImpl(
     synchronized(NOTIFICATION_LOCK) {
       notification?.expire()
     }
+
+
+  abstract fun rememberForAllProjects()
+
+  protected open fun rememberForCurrentProject() {
+    setForCurrentProject(true)
   }
+
+  protected fun setForCurrentProject(value: Boolean) {
+    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).setValue(it, value) }
+  }
+
+  private fun getForCurrentProject(): Boolean =
+    doForCurrentProjectProperty?.let { PropertiesComponent.getInstance(project).getBoolean(it, false) } ?: false
+
+  protected fun notAskedBefore() = !wasAskedBefore()
+  protected fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(askedBeforeProperty, false)
+
+  override fun needDoForCurrentProject() = getForCurrentProject()
+}
