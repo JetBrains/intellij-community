@@ -66,6 +66,16 @@ class StubBuilderType {
     }
   }
 
+  @NotNull Class<?> getClassToBlameInCaseOfException() {
+    if (myElementType != null) {
+      return myElementType.getClass();
+    }
+    if (myBinarySubBuilder == null) {
+      return myBinaryFileStubBuilder.getClass();
+    }
+    return myBinarySubBuilder.getClass();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
