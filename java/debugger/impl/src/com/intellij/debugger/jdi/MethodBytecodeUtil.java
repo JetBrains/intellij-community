@@ -225,19 +225,12 @@ public final class MethodBytecodeUtil {
           return;
         }
         ReferenceType declaringType = method.declaringType();
-        ReferenceType cls;
         owner = Type.getObjectType(owner).getClassName();
-        if (declaringType.name().equals(owner)) {
-          cls = declaringType;
-        }
-        else {
-          cls = ContainerUtil.getFirstItem(classesByName.get(owner));
-        }
+        ReferenceType cls = declaringType.name().equals(owner) ?
+                            declaringType :
+                            ContainerUtil.getFirstItem(classesByName.get(owner));
         if (cls != null) {
-          Method method = DebuggerUtils.findMethod(cls, name, desc);
-          if (method != null) {
-            methodRef.setIfNull(method);
-          }
+          methodRef.setIfNull(DebuggerUtils.findMethod(cls, name, desc));
         }
       }
     }, false);
