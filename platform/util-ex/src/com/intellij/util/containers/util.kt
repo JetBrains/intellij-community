@@ -278,6 +278,18 @@ fun <T> Iterable<T>?.asJBIterable(): JBIterable<T> = JBIterable.from(this)
 fun <T> Array<T>?.asJBIterable(): JBIterable<T> = if (this == null) JBIterable.empty() else JBIterable.of(*this)
 
 /**
+ * Modify the elements of the array without creating a new array
+ *
+ * @return the array itself
+ */
+fun <T> Array<T>.mapInPlace(transform: (T) -> T): Array<T> {
+  for (i in this.indices) {
+    this[i] = transform(this[i])
+  }
+  return this
+}
+
+/**
  * returns sequence of distinct nodes in breadth-first order.
  */
 fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> {
