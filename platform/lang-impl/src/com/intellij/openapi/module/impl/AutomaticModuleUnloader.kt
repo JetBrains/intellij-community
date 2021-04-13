@@ -12,6 +12,9 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
 
 /**
@@ -45,8 +48,43 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
       .filter { it.moduleName in newLoadedNames }
       .mapTo(state.modules) { it.moduleName }
     val change = UnloadedModulesListChange(toLoad, toUnload, toUnload.map { moduleDescriptions[it.moduleName]!! })
-    fireNotifications(change)
+    fireNotifications(change.toLoad.map { it.moduleName }, change.toUnload.map { it.moduleName })
     return change
+  }
+
+  fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
+    if (currentModules.isEmpty()) return
+
+    val oldLoaded = state.modules.toSet()
+    //if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine, so let's not unload all modules
+    if (oldLoaded.isEmpty()) return
+
+    val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
+    val unloadedModules = unloadedStorage.unloadedModuleNames.toSet()
+    //no new modules were added, nothing to process
+    if (currentModules.all { it in oldLoaded || it in unloadedModules }) return
+
+    val oldLoadedWithDependencies = HashSet<String>()
+    for (name in oldLoaded) {
+      processTransitiveDependencies(ModuleId(name), storage, unloadedModules, oldLoadedWithDependencies)
+    }
+
+    val toLoad = currentModules.filter { it in oldLoadedWithDependencies && it !in oldLoaded }
+    val toUnload = currentModules.filter { it !in oldLoadedWithDependencies && it !in unloadedModules}
+    fireNotifications(toLoad, toUnload)
+    unloadedStorage.unloadedModuleNames = unloadedStorage.unloadedModuleNames + toUnload
+  }
+
+  private fun processTransitiveDependencies(moduleId: ModuleId, storage: WorkspaceEntityStorage, explicitlyUnloaded: Set<String>,
+                                            result: MutableSet<String>) {
+    if (moduleId.name in explicitlyUnloaded) return
+    val moduleEntity = storage.resolve(moduleId) ?: return
+    if (!result.add(moduleEntity.name)) return
+    moduleEntity.dependencies.forEach {
+      if (it is ModuleDependencyItem.Exportable.ModuleDependency) {
+        processTransitiveDependencies(it.module, storage, explicitlyUnloaded, result)
+      }
+    }
   }
 
   private fun processTransitiveDependencies(name: String, moduleDescriptions: Map<String, UnloadedModuleDescriptionImpl>,
@@ -61,26 +99,24 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     }
   }
 
-  private fun fireNotifications(change: UnloadedModulesListChange) {
-    if (change.toLoad.isEmpty() && change.toUnload.isEmpty()) return
+  private fun fireNotifications(modulesToLoad: List<String>, modulesToUnload: List<String>) {
+    if (modulesToLoad.isEmpty() && modulesToUnload.isEmpty()) return
 
     val messages = mutableListOf<String>()
     val actions = mutableListOf<NotificationAction>()
 
-    if (change.toUnload.isNotEmpty()) {
-      val modules = change.toUnload
-      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+    if (modulesToUnload.isNotEmpty()) {
+      val args = arrayOf(modulesToUnload.size, modulesToUnload[0], modulesToUnload.getOrElse(2) { modulesToUnload.size - 1 })
       messages += ProjectBundle.message("auto.unloaded.notification", *args)
-      val text = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.unloaded.revert.short" else "auto.unloaded.revert.full", *args)
-      actions += createAction(text) { list -> list.removeAll(modules.map { it.moduleName }) }
+      val text = ProjectBundle.message(if (modulesToUnload.isEmpty()) "auto.unloaded.revert.short" else "auto.unloaded.revert.full", *args)
+      actions += createAction(text) { list -> list.removeAll(modulesToUnload) }
     }
 
-    if (change.toLoad.isNotEmpty()) {
-      val modules = change.toLoad
-      val args = arrayOf(modules.size, modules[0].moduleName, modules.getOrElse(2) { modules.size - 1 })
+    if (modulesToLoad.isNotEmpty()) {
+      val args = arrayOf(modulesToLoad.size, modulesToLoad[0], modulesToLoad.getOrElse(2) { modulesToLoad.size - 1 })
       messages += ProjectBundle.message("auto.loaded.notification", *args)
-      val action = ProjectBundle.message(if (change.toUnload.isEmpty()) "auto.loaded.revert.short" else "auto.loaded.revert.full", *args)
-      actions += createAction(action) { list -> list.addAll(modules.map { it.moduleName }) }
+      val action = ProjectBundle.message(if (modulesToUnload.isEmpty()) "auto.loaded.revert.short" else "auto.loaded.revert.full", *args)
+      actions += createAction(action) { list -> list.addAll(modulesToLoad) }
     }
 
     actions += object : NotificationAction(ProjectBundle.message("configure.unloaded.modules")) {

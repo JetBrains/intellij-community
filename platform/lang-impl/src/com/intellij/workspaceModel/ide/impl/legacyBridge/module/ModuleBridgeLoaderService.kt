@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
 import com.intellij.openapi.roots.ProjectRootManager
@@ -50,10 +49,7 @@ class ModuleBridgeLoaderService(private val project: Project) {
   private fun loadModules() {
     val childActivity = activity?.startChild("modules instantiation")
     val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
-    val unloadedNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames.toSet()
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
-      .filter { !unloadedNames.contains(it.name) }
-      .toList()
     moduleManager.loadModules(entities)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
