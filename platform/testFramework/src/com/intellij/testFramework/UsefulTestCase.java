@@ -698,8 +698,8 @@ public abstract class UsefulTestCase extends TestCase {
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
   public static <T> void assertSameElements(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
-    if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
-      Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
+    if (actual.size() != expected.size() || !new LinkedHashSet<>(expected).equals(new LinkedHashSet<T>(actual))) {
+      Assert.assertEquals(message, new LinkedHashSet<>(expected), new LinkedHashSet<T>(actual));
     }
   }
 
