@@ -31,7 +31,8 @@ public final class IfHelper {
           res |= mergeAllIfsRec(st, setReorderedIfs);
 
           // collapse composed if's
-          if (changed = mergeIfs(st, setReorderedIfs)) {
+          if (mergeIfs(st, setReorderedIfs)) {
+            changed = true;
             break;
           }
         }
@@ -75,21 +76,25 @@ public final class IfHelper {
             continue;
           }
 
-          if (updated = collapseIfIf(rtnode)) {
+          if (collapseIfIf(rtnode)) {
+            updated = true;
             break;
           }
 
           if (!setReorderedIfs.contains(stat.id)) {
-            if (updated = collapseIfElse(rtnode)) {
+            if (collapseIfElse(rtnode)) {
+              updated = true;
               break;
             }
 
-            if (updated = collapseElse(rtnode)) {
+            if (collapseElse(rtnode)) {
+              updated = true;
               break;
             }
           }
 
-          if (updated = reorderIf((IfStatement)stat)) {
+          if (reorderIf((IfStatement)stat)) {
+            updated = true;
             setReorderedIfs.add(stat.id);
             break;
           }
@@ -440,10 +445,9 @@ public final class IfHelper {
         if (sttemp == ifstat) {
           break;
         }
-        else {
-          if (elsedirectpath = existsPath(sttemp, next)) {
-            break;
-          }
+        else if (existsPath(sttemp, next)) {
+          elsedirectpath = true;
+          break;
         }
       }
     }
