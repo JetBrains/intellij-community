@@ -384,7 +384,7 @@ object PluginDescriptorLoader {
     val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
     // should be the only plugin in lib (only for Ultimate and WebStorm for now)
     val pathResolver = ClassPathXmlPathResolver(classLoader)
-    if ((platformPrefix == null || platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
+    if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
         (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || !isRunningFromSources)) {
       val factory = context.xmlFactory
       val element = JDOMUtil.load(classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!, factory)
