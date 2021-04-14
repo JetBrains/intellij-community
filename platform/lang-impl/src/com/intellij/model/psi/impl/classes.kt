@@ -5,7 +5,6 @@ import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
-import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -34,20 +33,17 @@ internal sealed class TargetData {
 
     override val targets: List<SymbolWithProvider>
       get() = references.flatMap { reference ->
-        reference.resolveReference().map { SymbolWithProvider(it.target, reference) }
+        reference.resolveReference().map { SymbolWithProvider(it.target, provider(reference)) }
       }
-  }
 
-  class Evaluator(val origin: PsiOrigin, val targetElements: List<PsiElement>) : TargetData() {
-
-    init {
-      require(targetElements.isNotEmpty())
+    private fun provider(reference: PsiSymbolReference): Any? {
+      if (reference is EvaluatorReference) {
+        return (reference.origin as? PsiOrigin.Reference)?.reference
+      }
+      else {
+        return reference
+      }
     }
-
-    override val targets: List<SymbolWithProvider>
-      get() = targetElements.map {
-        SymbolWithProvider(PsiSymbolService.getInstance().asSymbol(it), (origin as? PsiOrigin.Reference)?.reference)
-      }
   }
 }
 

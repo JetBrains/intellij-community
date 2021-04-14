@@ -48,7 +48,6 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
 
   var declaration: PsiSymbolDeclaration? = null
   val references: MutableList<PsiSymbolReference> = ArrayList()
-  var evaluatorData: TargetData.Evaluator? = null
 
   for (dr in withMinimalRanges) {
     when (dr) {
@@ -69,16 +68,12 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
       is DeclarationOrReference.Reference -> {
         references.add(dr.reference)
       }
-      is DeclarationOrReference.Evaluator -> {
-        LOG.assertTrue(evaluatorData == null)
-        evaluatorData = dr.evaluatorData
-      }
     }
   }
 
   return DeclaredReferencedData(
     declaredData = declaration?.let(TargetData::Declared),
-    referencedData = evaluatorData ?: references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
+    referencedData = references.takeUnless { it.isEmpty() }?.let(TargetData::Referenced)
   )
 }
 
@@ -90,16 +85,22 @@ private sealed class DeclarationOrReference {
     override val rangeWithOffset: TextRange get() = declaration.absoluteRange
   }
 
-  class Reference(val reference: PsiSymbolReference) : DeclarationOrReference() {
-    override val rangeWithOffset: TextRange get() = reference.absoluteRange
-  }
-
-  class Evaluator(private val offset: Int, val evaluatorData: TargetData.Evaluator) : DeclarationOrReference() {
+  class Reference(val reference: PsiSymbolReference, private val offset: Int) : DeclarationOrReference() {
     override val rangeWithOffset: TextRange by lazy(LazyThreadSafetyMode.NONE) {
-      evaluatorData.origin.absoluteRanges.find {
+      referenceRanges(reference).find {
         it.containsOffset(offset)
       } ?: error("One of the ranges must contain offset at this point")
     }
+  }
+}
+
+internal fun referenceRanges(it: PsiSymbolReference): List<TextRange> {
+  return if (it is EvaluatorReference) {
+    it.origin.absoluteRanges
+  }
+  else {
+    // Symbol references don't support multi-ranges yet.
+    listOf(it.absoluteRange)
   }
 }
 
@@ -125,15 +126,15 @@ private fun declarationsOrReferences(file: PsiFile, offset: Int): List<Declarati
 
   val allReferences = file.allReferencesAround(offset)
   if (allReferences.isEmpty()) {
-    fromTargetEvaluator(file, offset)?.let { evaluatorData ->
-      if (foundNamedElement != null && evaluatorData.targetElements.singleOrNull() === foundNamedElement) {
+    fromTargetEvaluator(file, offset)?.let { evaluatorReference ->
+      if (foundNamedElement != null && evaluatorReference.targetElements.singleOrNull() === foundNamedElement) {
         return@let // treat self-reference as a declaration
       }
-      result += DeclarationOrReference.Evaluator(offset, evaluatorData)
+      result += DeclarationOrReference.Reference(evaluatorReference, offset)
     }
   }
   else {
-    allReferences.mapTo(result, DeclarationOrReference::Reference)
+    allReferences.mapTo(result) { DeclarationOrReference.Reference(it, offset) }
   }
 
   return result
@@ -151,7 +152,7 @@ private fun namedElement(file: PsiFile, offset: Int): NamedElementAndLeaf? {
   return null
 }
 
-private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluator? {
+private fun fromTargetEvaluator(file: PsiFile, offset: Int): EvaluatorReference? {
   val editor = mockEditor(file) ?: return null
   val flags = TargetElementUtil.getInstance().allAccepted and
     TargetElementUtil.ELEMENT_NAME_ACCEPTED.inv() and
@@ -173,5 +174,5 @@ private fun fromTargetEvaluator(file: PsiFile, offset: Int): TargetData.Evaluato
   if (targetElements.isEmpty()) {
     return null
   }
-  return TargetData.Evaluator(origin, targetElements)
+  return EvaluatorReference(origin, targetElements)
 }
