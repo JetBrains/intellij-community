@@ -200,12 +200,12 @@ public final class PluginDownloader {
       if (Registry.is("marketplace.certificate.signature.check")) {
 
         if (isFromMarketplace) {
-          if (!PluginSignatureChecker.isSignedByJetBrains(myDescriptor, myFile)) {
+          if (!PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)) {
             myShownErrors = true;
             return null;
           }
         } else {
-          if (!PluginSignatureChecker.isSignedByCustomCertificates(myDescriptor, myFile)) {
+          if (!PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile)) {
             myShownErrors = true;
             return null;
           }
