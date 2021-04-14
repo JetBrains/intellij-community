@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports <b>@GuardedBy</b> annotations annotations where the guarding field
-is not <b>final</b>. Guarding on a non-final field may result in unexpected race conditions, as locks will
+Reports <code>@GuardedBy</code> annotations annotations where the guarding field
+is not <code>final</code>. Guarding on a non-final field may result in unexpected race conditions, as locks will
 be held on the value of the field (which may change), rather than the field itself.
-Supported <b>@GuardedBy</b> annotations are:
+<!-- tooltip end -->
+Supported <code>@GuardedBy</code> annotations are:
 <ul>
   <li>net.jcip.annotations.GuardedBy</li>
   <li>javax.annotation.concurrent.GuardedBy</li>
