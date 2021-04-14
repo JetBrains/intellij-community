@@ -58,6 +58,8 @@ class YAMLFormattingContext {
     YAMLCodeStyleSettings custom = mySettings.getCustomSettings(YAMLCodeStyleSettings.class);
     CommonCodeStyleSettings common = mySettings.getCommonSettings(YAMLLanguage.INSTANCE);
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
+      .between(YAMLTokenTypes.COLON, YAMLElementTypes.KEY_VALUE_PAIR).lineBreakInCode()
+      .between(YAMLTokenTypes.COLON, YAMLElementTypes.SEQUENCE_ITEM).lineBreakInCode()
       .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
       .after(YAMLTokenTypes.COLON).spaces(1)
       .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
