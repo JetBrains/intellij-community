@@ -25,9 +25,11 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
+import org.jetbrains.kotlin.idea.project.KotlinLibraryToSourceAnalysisComponent
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.test.KotlinTestUtils.allowProjectRootAccess
@@ -111,9 +113,18 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         jar: File,
         name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
         kind: PersistentLibraryKind<*>? = null
+    ) = addMultiJarLibrary(listOf(jar), name, kind)
+
+    fun Module.addMultiJarLibrary(
+        jars: Collection<File>,
+        name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
+        kind: PersistentLibraryKind<*>? = null,
     ) {
+        assert(jars.isNotEmpty()) { "No JARs passed for a library" }
         ConfigLibraryUtil.addLibrary(this, name, kind) {
-            addRoot(jar, OrderRootType.CLASSES)
+            for (jar in jars) {
+                addRoot(jar, OrderRootType.CLASSES)
+            }
         }
     }
 
@@ -147,6 +158,26 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
             check()
         }
         Assert.assertTrue(atLeastOneFile)
+    }
+
+    protected fun withResolutionAnchors(
+        anchors: Map<String, String>,
+        block: () -> Unit
+    ) {
+        val resolutionAnchorService = ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()
+            ?: error("Anchor service missing")
+        val oldResolutionAnchorMappingState = resolutionAnchorService.state
+        val oldLibraryToSourceAnalysisState = KotlinLibraryToSourceAnalysisComponent.isEnabled(project)
+
+        resolutionAnchorService.setAnchors(anchors)
+        KotlinLibraryToSourceAnalysisComponent.setState(project, isEnabled = true)
+
+        try {
+            block()
+        } finally {
+            KotlinLibraryToSourceAnalysisComponent.setState(project, isEnabled = oldLibraryToSourceAnalysisState)
+            resolutionAnchorService.loadState(oldResolutionAnchorMappingState)
+        }
     }
 }
 
