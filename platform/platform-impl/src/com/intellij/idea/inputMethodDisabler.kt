@@ -12,6 +12,7 @@ import java.awt.EventQueue
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
+import java.util.concurrent.ForkJoinPool
 import javax.swing.SwingUtilities
 
 internal fun disableInputMethodsIfPossible() {
@@ -25,10 +26,19 @@ internal fun disableInputMethodsIfPossible() {
       val method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport") ?: return@invokeLater
       method.invoke(componentClass)
 
-      for (frameHelper in WindowManagerEx.getInstanceEx().projectFrameHelpers) {
-        freeIMRecursively(SwingUtilities.getRoot(frameHelper.frame))
+      getLogger().info("Input methods was disabled for any java.awt.Component.")
+
+      val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
+        .map { fh -> SwingUtilities.getRoot(fh.frame) }
+        .filter { с -> с != null }
+
+      ForkJoinPool.commonPool().execute {
+        val startMs = System.currentTimeMillis()
+        for (frameRoot in frames) {
+          freeIMRecursively(frameRoot)
+        }
+        getLogger().info("Resources of input methods were released, spent " + (System.currentTimeMillis() - startMs) + " ms.")
       }
-      Logger.getInstance(Main::class.java).info("InputMethods was disabled")
     }
     catch (e: Throwable) {
       getLogger().warn(e)
@@ -38,10 +48,11 @@ internal fun disableInputMethodsIfPossible() {
 
 private fun getLogger() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
+// releases resources of input-methods support
 private fun freeIMRecursively(c: Component) {
-  val ic = c.getInputContext()
+  val ic = c.getInputContext() // thread-safe
   if (ic != null)
-    ic.removeNotify(c);
+    ic.removeNotify(c); // thread-safe
 
   if (c !is Container) {
     return
