@@ -246,7 +246,7 @@ public final class UITheme {
       Map.entry("Objects.Pink", "#F98B9E"),
       Map.entry("Objects.Red", "#F26522"),
       Map.entry("Objects.RedStatus", "#E05555"),
-      Map.entry("Objects.GreenAndroid", "#A4C639"),
+      Map.entry("Objects.GreenAndroid", "#3DDC84"),
       Map.entry("Objects.BlackText", "#231F20"),
       Map.entry("Checkbox.Background.Default", "#FFFFFF"),
       Map.entry("Checkbox.Background.Default.Dark", "#43494A"),
