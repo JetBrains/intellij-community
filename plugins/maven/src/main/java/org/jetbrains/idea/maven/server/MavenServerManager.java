@@ -62,9 +62,11 @@ public final class MavenServerManager implements Disposable {
   }
 
   public Collection<MavenServerConnector> getAllConnectors() {
+    Set<MavenServerConnector> set = Collections.newSetFromMap(new IdentityHashMap<>());
     synchronized (myMultimoduleDirToConnectorMap) {
-      return new ArrayList<>(myMultimoduleDirToConnectorMap.values());
+      set.addAll(myMultimoduleDirToConnectorMap.values());
     }
+    return set;
   }
 
   public void cleanUp(MavenServerConnector connector) {
@@ -126,28 +128,60 @@ public final class MavenServerManager implements Disposable {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     Sdk jdk = getJdk(project, settings);
 
-    MavenServerConnector connector = null;
-    synchronized (myMultimoduleDirToConnectorMap) {
-      connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
-    }
+    MavenServerConnector connector = doGetOrCreateConnector(project, multimoduleDirectory, jdk);
     if(connector.isNew()) {
       connector.connect();
     } else {
-      if(!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
+      if (!compatibleParameters(project, connector, jdk, multimoduleDirectory)) {
         MavenLog.LOG.info("Maven connector in " + multimoduleDirectory + " is incompatible, restarting");
         connector.shutdown(false);
-        synchronized (myMultimoduleDirToConnectorMap) {
-          connector = myMultimoduleDirToConnectorMap.computeIfAbsent(multimoduleDirectory, dir -> registerNewConnector(project, jdk, multimoduleDirectory));
-        }
+        connector = this.doGetOrCreateConnector(project, multimoduleDirectory, jdk);
         connector.connect();
       }
     }
     return connector;
   }
 
-  private MavenServerConnector registerNewConnector(Project project,
-                                                    Sdk jdk,
-                                                    String multimoduleDirectory) {
+  private MavenServerConnector doGetOrCreateConnector(@NotNull Project project,
+                                                      @NotNull String multimoduleDirectory,
+                                                      @NotNull Sdk jdk) {
+    MavenServerConnector connector;
+    synchronized (myMultimoduleDirToConnectorMap) {
+      connector = myMultimoduleDirToConnectorMap.get(multimoduleDirectory);
+      if (connector != null) return connector;
+      connector = findCompatibleConnector(project, jdk, multimoduleDirectory);
+      if (connector != null) {
+        MavenLog.LOG.info("use existing connector for " + multimoduleDirectory + ":::" + connector.getMultimoduleDirectories());
+        connector.addMultimoduleDir(multimoduleDirectory);
+      }
+      else {
+        connector = registerNewConnector(project, jdk, multimoduleDirectory);
+      }
+      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector);
+    }
+
+    return connector;
+  }
+
+  private @Nullable MavenServerConnector findCompatibleConnector(@NotNull Project project,
+                                                                 @NotNull Sdk jdk,
+                                                                 @NotNull String multimoduleDirectory) {
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
+    String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
+    for (Map.Entry<String, MavenServerConnector> entry : myMultimoduleDirToConnectorMap.entrySet()) {
+      if (!entry.getValue().getProject().equals(project)) continue;
+      if (Registry.is("maven.server.per.idea.project")) return entry.getValue();
+      if (entry.getValue().isCompatibleWith(jdk, vmOptions, distribution)) {
+        return entry.getValue();
+      }
+    }
+
+    return null;
+  }
+
+  private @NotNull MavenServerConnector registerNewConnector(Project project,
+                                                             Sdk jdk,
+                                                             String multimoduleDirectory) {
     MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory);
     String vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory);
     Integer debugPort = getDebugPort(project);
@@ -210,7 +244,7 @@ public final class MavenServerManager implements Disposable {
                                               MavenServerConnector connector,
                                               Sdk jdk,
                                               String multimoduleDirectory) {
-
+    if (Registry.is("maven.server.per.idea.project")) return true;
     MavenDistributionsCache cache = MavenDistributionsCache.getInstance(project);
     MavenDistribution distribution = cache.getMavenDistribution(multimoduleDirectory);
     String vmOptions = cache.getVmOptions(multimoduleDirectory);
@@ -434,10 +468,13 @@ public final class MavenServerManager implements Disposable {
       @NotNull
       @Override
       protected MavenServerIndexer create() throws RemoteException {
-        MavenServerConnector connector = null;
+        MavenServerConnector connector;
         synchronized (myMultimoduleDirToConnectorMap) {
-          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> FileUtil
-            .isAncestor(finalPath, c.getMultimoduleDirectory(), false));
+          connector = ContainerUtil.find(myMultimoduleDirToConnectorMap.values(), c -> ContainerUtil.find(
+            c.myMultimoduleDirectories,
+            mDir -> FileUtil
+              .isAncestor(finalPath, mDir, false)) != null
+          );
         }
         if (connector != null) {
           return connector.createIndexer();

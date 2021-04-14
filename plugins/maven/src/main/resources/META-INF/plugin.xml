@@ -260,8 +260,11 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.server.per.idea.project" defaultValue="false"
+                 description="Single Maven server per idea project, .mvn could be ignored"/>
+
     <registryKey key="maven.always.reset" defaultValue="false"
-                 description="always reset maven dependencies and folders"/>
+                 description="Always reset maven dependencies and folders"/>
 
     <registryKey key="maven.print.import.stacktraces" defaultValue="false"
                  description="Print maven server stacktraces in log"/>
