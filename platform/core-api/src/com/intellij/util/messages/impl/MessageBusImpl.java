@@ -2,6 +2,7 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -116,7 +117,10 @@ public class MessageBusImpl implements MessageBus {
 
   @Override
   public final @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
-    checkNotDisposed();
+    if (isDisposed()) {
+      PluginException.logPluginError(LOG, "Already disposed: " + this, null, topic.getClass());
+    }
+
     //noinspection unchecked
     return (L)publisherCache.computeIfAbsent(topic, topic1 -> {
       Class<?> listenerClass = topic1.getListenerClass();
