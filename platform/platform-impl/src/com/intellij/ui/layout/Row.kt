@@ -166,3 +166,8 @@ fun Row.enableIf(predicate: ComponentPredicate) {
   enabled = predicate()
   predicate.addListener { enabled = it }
 }
+
+fun Row.enableSubRowsIf(predicate: ComponentPredicate) {
+  subRowsEnabled = predicate()
+  predicate.addListener { subRowsEnabled = it }
+}
