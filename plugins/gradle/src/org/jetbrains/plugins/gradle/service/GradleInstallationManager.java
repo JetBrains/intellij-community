@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,12 +103,13 @@ public class GradleInstallationManager implements Disposable {
         myBuildLayoutParametersCache.remove(workingDir);
       }
     };
-
+    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, this);
+    AtomicBoolean listenerAdded = new AtomicBoolean(true);
     MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect();
     appConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        if (ProjectManager.getInstance().getOpenProjects().length == 1) {
+        if (listenerAdded.compareAndSet(false, true)) {
           ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(listener, GradleInstallationManager.this);
         }
       }
@@ -115,7 +117,7 @@ public class GradleInstallationManager implements Disposable {
       @Override
       public void projectClosed(@NotNull Project project) {
         myBuildLayoutParametersCache.clear();
-        if (ProjectManager.getInstance().getOpenProjects().length == 0) {
+        if (listenerAdded.compareAndSet(true, false)) {
           ExternalSystemProgressNotificationManager.getInstance().removeNotificationListener(listener);
         }
       }
