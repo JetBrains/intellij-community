@@ -70,7 +70,7 @@ public class SimpleDuplicatesFinder {
     return result;
   }
 
-  private void deannotatePattern() {
+  protected void deannotatePattern() {
     for (final PsiElement patternComponent : myPattern) {
       patternComponent.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override public void visitElement(@NotNull PsiElement element) {
@@ -83,7 +83,7 @@ public class SimpleDuplicatesFinder {
     }
   }
 
-  private void annotatePattern() {
+  protected void annotatePattern() {
     for (final PsiElement patternComponent : myPattern) {
       patternComponent.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
