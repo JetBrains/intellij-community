@@ -181,7 +181,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     super.setCursor(cursor);
     myEditor.myCursorSetExternally = true;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Mouse cursor set to " + cursor, new Throwable());
+      LOG.debug("Mouse cursor set to " + cursor + " in " + myEditor, new Throwable());
     }
   }
 
