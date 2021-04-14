@@ -310,7 +310,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
           actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
           focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
-          ActionUtil.performActionDumbAware(menuItemAction, myContext, event);
+          ActionUtil.performActionDumbAware(menuItemAction, event);
           actionManager.queueActionPerformedEvent(menuItemAction, myContext, event);
         }
         else {

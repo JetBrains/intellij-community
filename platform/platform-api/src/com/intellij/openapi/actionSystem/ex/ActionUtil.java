@@ -196,7 +196,7 @@ public final class ActionUtil {
 
   }
 
-  public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
+  public static boolean lastUpdateAndCheckDumb(@NotNull AnAction action, @NotNull AnActionEvent e, boolean visibilityMatters) {
     performDumbAwareUpdate(false, action, e, true);
 
     Project project = e.getProject();
@@ -232,7 +232,7 @@ public final class ActionUtil {
     manager.fireAfterActionPerformed(action, e.getDataContext(), e);
   }
 
-  public static void performActionDumbAware(AnAction action, DataContext context, AnActionEvent e) {
+  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent e) {
     Project project = e.getProject();
     long startNanoTime = System.nanoTime();
     try {
@@ -246,27 +246,19 @@ public final class ActionUtil {
     }
     finally {
       long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, context, e, durationMillis);
+      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, e.getDataContext(), e, durationMillis);
     }
   }
 
-  public static void performActionDumbAware(AnAction action, AnActionEvent e) {
-    performActionDumbAware(action, e.getDataContext(), e);
-  }
-
-  public static void performAction(AnAction action, @NotNull DataContext context, AnActionEvent e) {
+  public static void performAction(@NotNull AnAction action, @NotNull AnActionEvent e) {
     long startNanoTime = System.nanoTime();
     try {
       action.actionPerformed(e);
     }
     finally {
       long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, context, e, durationMillis);
+      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, e.getDataContext(), e, durationMillis);
     }
-  }
-
-  public static void performAction(AnAction action, AnActionEvent e) {
-    performAction(action, e.getDataContext(), e);
   }
 
   @NotNull
@@ -425,7 +417,7 @@ public final class ActionUtil {
     final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
       manager.fireBeforeActionPerformed(action, dataContext, event);
-      performActionDumbAware(action, dataContext, event);
+      performActionDumbAware(action, event);
       if (onDone != null) {
         onDone.run();
       }

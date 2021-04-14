@@ -547,9 +547,10 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
           long startNanoTime = System.nanoTime();
           try {
             onProjectScopeToggled();
-          } finally {
+          }
+          finally {
             long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-            actionManager.fireFinallyActionPerformed(ScopeChooserAction.this, dataContext, event, durationMillis);
+            actionManager.fireFinallyActionPerformed(ScopeChooserAction.this, event.getDataContext(), event, durationMillis);
           }
           actionManager.fireAfterActionPerformed(ScopeChooserAction.this, dataContext, event);
         }

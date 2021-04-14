@@ -57,7 +57,7 @@ public final class MacGestureSupportForEditor {
 
           if (context != null && !context.isShowing()) continue;
 
-          ActionUtil.performAction(action, dataContext, actionEvent);
+          ActionUtil.performAction(action, actionEvent);
         }
       }
     }

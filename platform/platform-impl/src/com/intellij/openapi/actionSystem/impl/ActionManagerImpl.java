@@ -1751,7 +1751,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           }
         }, AWTEvent.WINDOW_EVENT_MASK, result);
 
-        ActionUtil.performActionDumbAware(action, context, event);
+        ActionUtil.performActionDumbAware(action, event);
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       });
