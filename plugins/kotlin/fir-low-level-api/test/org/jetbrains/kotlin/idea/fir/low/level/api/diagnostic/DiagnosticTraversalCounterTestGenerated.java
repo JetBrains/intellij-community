@@ -56,6 +56,11 @@ public class DiagnosticTraversalCounterTestGenerated extends AbstractDiagnosticT
         runTest("testdata/diagnosticTraversalCounter/initBlock.kt");
     }
 
+    @TestMetadata("lambda.kt")
+    public void testLambda() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/lambda.kt");
+    }
+
     @TestMetadata("localDeclarationsInAccessor.kt")
     public void testLocalDeclarationsInAccessor() throws Exception {
         runTest("testdata/diagnosticTraversalCounter/localDeclarationsInAccessor.kt");
