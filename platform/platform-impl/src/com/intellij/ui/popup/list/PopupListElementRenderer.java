@@ -103,11 +103,13 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myValueLabel.setEnabled(false);
     myValueLabel.setBorder(JBUI.Borders.empty(0, JBUIScale.scale(8), 1, 0));
     myValueLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
+    myValueLabel.setOpaque(false);
     panel.add(myValueLabel, BorderLayout.CENTER);
 
     myShortcutLabel = new JLabel();
     myShortcutLabel.setBorder(JBUI.Borders.empty(0,0,1,3));
     myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
+    myShortcutLabel.setOpaque(false);
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
@@ -118,6 +120,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myMnemonicLabel.setPreferredSize(preferredSize);
     myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
+    myMnemonicLabel.setVisible(false);
 
     myIconBar = createIconBar();
 
@@ -213,8 +216,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
 
-    setSelected(myComponent, isSelected && isSelectable);
-    setSelected(myTextLabel, isSelected && isSelectable);
     myMainPane.setOpaque(false);
     myButtonPane.setOpaque(false);
     myNextStepButtonSeparator.setVisible(false);
@@ -226,17 +227,19 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       if (Registry.is("ide.list.popup.separate.next.step.button") && step.isFinal(value)) {
         myMainPane.setOpaque(true);
         myButtonPane.setOpaque(true);
-        setSelected(myComponent, false, isSelected);
+        myComponent.setBackground(calcBackground(false, isSelected));
 
         nextStepButtonSelected = isNextStepButtonSelected(list);
-        setSelected(myMainPane, isSelected && !nextStepButtonSelected, isSelected);
-        setSelected(myTextLabel, isSelected && !nextStepButtonSelected, isSelected);
-        setSelected(myButtonPane, isSelected && nextStepButtonSelected, isSelected);
+        myMainPane.setBackground(calcBackground(isSelected && !nextStepButtonSelected, isSelected));
+        myButtonPane.setBackground(calcBackground(isSelected && nextStepButtonSelected, isSelected));
+        setForegroundSelected(myTextLabel, isSelected && !nextStepButtonSelected);
         myNextStepLabel.setIcon(isSelectable && isSelected && nextStepButtonSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
         myNextStepButtonSeparator.setVisible(!isSelected);
       }
       else {
         myNextStepLabel.setIcon(isSelectable && isSelected ? AllIcons.Icons.Ide.MenuArrowSelected : AllIcons.Icons.Ide.MenuArrow);
+        myComponent.setBackground(calcBackground(isSelected && isSelectable, false));
+        setForegroundSelected(myTextLabel, isSelected && isSelectable);
       }
     }
     else {
@@ -257,11 +260,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     }
 
-    if (value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
+    if (myMnemonicLabel != null && value instanceof NumericMnemonicItem && ((NumericMnemonicItem)value).digitMnemonicsEnabled()) {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
-      myIconBar.add(myMnemonicLabel);
+      myMnemonicLabel.setVisible(true);
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
@@ -298,7 +301,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
         }
         if (shortcutText != null) myShortcutLabel.setText("     " + shortcutText);
       }
-      setSelected(myShortcutLabel, isSelected && isSelectable && !nextStepButtonSelected, isSelected);
       myShortcutLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected
                                     ? UIManager.getColor("MenuItem.acceleratorSelectionForeground")
                                     : UIManager.getColor("MenuItem.acceleratorForeground"));
@@ -306,7 +308,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     if (myValueLabel != null) {
       myValueLabel.setText(step instanceof ListPopupStepEx<?> ? ((ListPopupStepEx<E>)step).getValueFor(value) : null);
-      setSelected(myValueLabel, isSelected && isSelectable  && !nextStepButtonSelected, isSelected);
+      boolean selected = isSelected && isSelectable && !nextStepButtonSelected;
+      setForegroundSelected(myValueLabel, selected);
     }
   }
 
@@ -314,19 +317,16 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     Box res = Box.createHorizontalBox();
     res.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
     res.add(myIconLabel);
+    res.add(myMnemonicLabel);
 
     return res;
   }
 
-  private void setSelected(JComponent component, boolean selected, boolean hovered) {
-    if (!hovered) {
-      super.setSelected(component, selected);
-      return;
-    }
+  private Color calcBackground(boolean selected, boolean hovered) {
+    if (selected) return getSelectionBackground();
+    if (hovered) return JBUI.CurrentTheme.Table.Hover.background(true);
 
-    Color background = JBUI.CurrentTheme.Table.Hover.background(true);
-    UIUtil.setBackgroundRecursively(component, selected ? getSelectionBackground() : background);
-    component.setForeground(selected ? getSelectionForeground() : getForeground());
+    return getBackground();
   }
 
   protected boolean isNextStepButtonSelected(JList<?> list) {

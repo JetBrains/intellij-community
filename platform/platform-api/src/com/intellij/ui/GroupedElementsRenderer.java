@@ -76,6 +76,10 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
   protected final void setSelected(JComponent aComponent, boolean selected) {
     UIUtil.setBackgroundRecursively(aComponent, selected ? getSelectionBackground() : getBackground());
+    setForegroundSelected(aComponent, selected);
+  }
+
+  protected final void setForegroundSelected(JComponent aComponent, boolean selected) {
     aComponent.setForeground(selected ? getSelectionForeground() : getForeground());
   }
 
