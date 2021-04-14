@@ -112,14 +112,14 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       affectedMarkers.asSequence().mapNotNull { it.host }.firstOrNull()?.let { host ->
         val indent = host.getUserData(InjectionMeta.INJECTION_INDENT)
         val indented = indentHeuristically(indent, myFragmentDocument.text, false)
-        ElementManipulators.handleContentChange(host, indented)
+        workingRange = workingRange union ElementManipulators.handleContentChange(host, indented)?.textRange
       }
     }
 
     LOG.logMarkers("after reformat")
-    rebuildMarkers(workingRange)
+    rebuildMarkers(workingRange!!)
     LOG.logMarkers("after rebuild")
-    updateFileContextElementIfNeeded(hostPsiFile, workingRange)
+    updateFileContextElementIfNeeded(hostPsiFile, workingRange!!)
   }
 
   private fun indentHeuristically(indent: String?, newText0: String, maybeIndented: Boolean): String {
