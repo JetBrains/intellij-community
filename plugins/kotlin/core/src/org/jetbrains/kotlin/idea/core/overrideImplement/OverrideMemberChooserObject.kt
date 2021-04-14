@@ -318,9 +318,6 @@ private fun generateFunction(
     }
 }
 
-private fun BodyType.effectiveBodyType(canBeEmpty: Boolean): BodyType =
-    if (!canBeEmpty && this == EMPTY_OR_TEMPLATE) FROM_TEMPLATE else this
-
 fun generateUnsupportedOrSuperCall(
     project: Project,
     descriptor: CallableMemberDescriptor,
