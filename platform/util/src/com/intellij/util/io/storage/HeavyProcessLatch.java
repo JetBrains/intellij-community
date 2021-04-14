@@ -115,6 +115,12 @@ public final class HeavyProcessLatch {
   public boolean isRunning(@NotNull Type type) {
     return ContainerUtil.exists(myHeavyProcesses, op->op.getType() == type);
   }
+  /**
+   * @return true if there is a heavy operation currently running in some thread which has its {@link Operation#getType()} != {@code type}
+   */
+  public boolean isRunningAnythingBut(@NotNull Type type) {
+    return ContainerUtil.exists(myHeavyProcesses, op->op.getType() != type);
+  }
 
   /**
    * @return heavy operation currently running, if any, in undefined order

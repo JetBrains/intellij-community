@@ -7,6 +7,7 @@ import junit.framework.TestCase;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HeavyProcessLatchTest extends TestCase {
   public void testQueryHeavyOpStatusWorks() throws Exception {
@@ -45,5 +46,62 @@ public class HeavyProcessLatchTest extends TestCase {
     assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Indexing));
     assertNull(HeavyProcessLatch.INSTANCE.getAnyRunningOperation());
     future.get();
+  }
+
+  public void testQueryHeavyStatusWorkForInterleavedOps() throws Exception {
+    AtomicInteger started = new AtomicInteger();
+    AtomicInteger finished = new AtomicInteger();
+    Semaphore allowToFinish = new Semaphore(1);
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning());
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Processing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Syncing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Indexing));
+    assertNull(HeavyProcessLatch.INSTANCE.getAnyRunningOperation());
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Indexing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Processing));
+    String displayName = "my";
+    Future<?> future0 = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      HeavyProcessLatch.INSTANCE
+        .performOperation(HeavyProcessLatch.Type.Processing, displayName, () -> {
+          started.incrementAndGet();
+          allowToFinish.waitFor();
+        });
+      finished.incrementAndGet();
+    });
+    Future<?> future1 = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      HeavyProcessLatch.INSTANCE
+        .performOperation(HeavyProcessLatch.Type.Syncing, displayName, () -> {
+          started.incrementAndGet();
+          allowToFinish.waitFor();
+        });
+      finished.incrementAndGet();
+    });
+
+    while (started.get() != 2);
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunning());
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Processing));
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Syncing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Indexing));
+    HeavyProcessLatch.Operation op = HeavyProcessLatch.INSTANCE.getAnyRunningOperation();
+    assertNotNull(op);
+    assertTrue(op.getType() == HeavyProcessLatch.Type.Processing || op.getType() == HeavyProcessLatch.Type.Syncing);
+    assertEquals(displayName, op.getDisplayName());
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Indexing));
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing));
+    assertTrue(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Processing));
+
+    allowToFinish.up();
+    while (finished.get() != 2);
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning());
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Processing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Syncing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunning(HeavyProcessLatch.Type.Indexing));
+    assertNull(HeavyProcessLatch.INSTANCE.getAnyRunningOperation());
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Indexing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing));
+    assertFalse(HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Processing));
+    future0.get();
+    future1.get();
   }
 }
