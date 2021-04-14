@@ -67,7 +67,7 @@ class ExternalSystemUsagesCollector : ProjectUsagesCollector() {
                                   systemId: ProjectSystemId?,
                                   taskId: ExternalSystemTaskId,
                                   environmentConfigurationProvider: TargetEnvironmentConfigurationProvider?): StructuredIdeActivity {
-      return StructuredIdeActivity(project, EXTERNAL_TASK_ACTIVITY).started {
+      return EXTERNAL_TASK_ACTIVITY.started(project) {
         val data: MutableList<EventPair<*>> = mutableListOf(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(systemId)))
         data.add(TASK_ID_FIELD.with(taskId))
         environmentConfigurationProvider?.environmentConfiguration?.typeId?.also {

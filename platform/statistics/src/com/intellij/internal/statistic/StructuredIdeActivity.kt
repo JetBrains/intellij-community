@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
 
 @ApiStatus.Internal
-class StructuredIdeActivity constructor(private val projectOrNullForApplication: Project?,
-                                        private val ideActivityDefinition: IdeActivityDefinition) {
+class StructuredIdeActivity internal constructor(private val projectOrNullForApplication: Project?,
+                                                 private val ideActivityDefinition: IdeActivityDefinition) {
   private val id = counter.incrementAndGet()
 
   private var state = IdeActivityState.NOT_STARTED
@@ -86,13 +86,22 @@ class StructuredIdeActivity constructor(private val projectOrNullForApplication:
   }
 }
 
-class IdeActivityDefinition constructor(val group: EventLogGroup,
-                                        val activityName: String?,
-                                        startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                                        finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
+class IdeActivityDefinition internal constructor(val group: EventLogGroup,
+                                                 val activityName: String?,
+                                                 startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                                                 finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
   val started = group.registerVarargEvent(appendActivityName(activityName, "started"), activityId, *startEventAdditionalFields)
   val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs,
                                            *finishEventAdditionalFields)
+
+  @JvmOverloads
+  fun started(project: Project?, dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
+    return StructuredIdeActivity(project, this).started(dataSupplier)
+  }
+
+  fun startedAsync(project: Project?, dataSupplier: () -> Promise<List<EventPair<*>>>): StructuredIdeActivity {
+    return StructuredIdeActivity(project, this).startedAsync(dataSupplier)
+  }
 
   private fun appendActivityName(activityName: String?, state: String): String {
     if (activityName == null) return state

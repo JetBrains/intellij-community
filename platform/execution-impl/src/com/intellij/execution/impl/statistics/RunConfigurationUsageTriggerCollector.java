@@ -42,7 +42,7 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
   private static final EnumEventField<RunConfigurationFinishType> FINISH_TYPE =
     EventFields.Enum("finish_type", RunConfigurationFinishType.class);
 
-  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity( null,
+  private static final IdeActivityDefinition ACTIVITY_GROUP = GROUP.registerIdeActivity(null,
                                                                                         new EventField<?>[]{ADDITIONAL_FIELD, EXECUTOR,
                                                                                           TARGET,
                                                                                           RunConfigurationTypeUsagesCollector.FACTORY_FIELD,
@@ -62,8 +62,8 @@ public final class RunConfigurationUsageTriggerCollector extends CounterUsagesCo
                                               @NotNull ConfigurationFactory factory,
                                               @NotNull Executor executor,
                                               @Nullable RunConfiguration runConfiguration) {
-    return new StructuredIdeActivity(project, ACTIVITY_GROUP)
-      .startedAsync(() -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
+    return ACTIVITY_GROUP
+      .startedAsync(project, () -> ReadAction.nonBlocking(() -> buildContext(project, factory, executor, runConfiguration))
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance()));
   }

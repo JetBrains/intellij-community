@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -26,7 +25,8 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     private val WAS_UPDATING_BEFORE = EventFields.Boolean("wasUpdatingBefore")
     private val CHANGES_DELTA = EventFields.Int("changesDelta")
     private val UNVERSIONED_DELTA = EventFields.Int("unversionedDelta")
-    private val CHANGES_VIEW_REFRESH = GROUP.registerVarargEvent("changes.view.refresh", WAS_UPDATING_BEFORE, CHANGES_DELTA, UNVERSIONED_DELTA)
+    private val CHANGES_VIEW_REFRESH = GROUP.registerVarargEvent("changes.view.refresh", WAS_UPDATING_BEFORE, CHANGES_DELTA,
+                                                                 UNVERSIONED_DELTA)
 
     val NON_MODAL_COMMIT_STATE_CHANGED = GROUP.registerEvent("non.modal.commit.state.changed", EventFields.Enabled)
     val NON_MODAL_COMMIT_PROMOTION_SHOWN = GROUP.registerEvent("non.modal.commit.promotion.shown")

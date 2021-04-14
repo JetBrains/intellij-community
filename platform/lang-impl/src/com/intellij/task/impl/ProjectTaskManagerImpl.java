@@ -181,7 +181,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    StructuredIdeActivity activity = new StructuredIdeActivity(myProject, BUILD_ACTIVITY).started(() ->
+    StructuredIdeActivity activity = BUILD_ACTIVITY.started(myProject, () ->
       Collections.singletonList(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())))
     );
 

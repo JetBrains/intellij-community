@@ -26,7 +26,7 @@ fun anonymizeSystemId(systemId: ProjectSystemId?) =
 
 fun importActivityStarted(project: Project, externalSystemId: ProjectSystemId,
                           dataSupplier: (() -> List<EventPair<*>>)?): StructuredIdeActivity {
-  return StructuredIdeActivity(project, IMPORT_ACTIVITY).started{
+  return IMPORT_ACTIVITY.started(project){
     val data: MutableList<EventPair<*>> = mutableListOf(EXTERNAL_SYSTEM_ID.with(anonymizeSystemId(externalSystemId)))
     if(dataSupplier != null) {
       data.addAll(dataSupplier())

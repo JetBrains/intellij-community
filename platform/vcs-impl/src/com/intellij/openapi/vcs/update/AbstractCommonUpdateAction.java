@@ -334,7 +334,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       if (progressIndicator != null) {
         progressIndicator.setIndeterminate(false);
       }
-      StructuredIdeActivity activity = new StructuredIdeActivity(myProject, UPDATE_ACTIVITY).started();
+      StructuredIdeActivity activity = UPDATE_ACTIVITY.started(myProject);
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;

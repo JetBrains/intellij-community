@@ -606,7 +606,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
-      StructuredIdeActivity activity = new StructuredIdeActivity(myProject, IndexingStatisticsCollector.INDEXING_ACTIVITY).started();
+      StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
 
       final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
       final Thread self = Thread.currentThread();

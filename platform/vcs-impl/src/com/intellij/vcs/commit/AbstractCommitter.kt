@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.ide.util.DelegatingProgressIndicator
-import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -50,7 +49,7 @@ abstract class AbstractCommitter(
     val task = object : Task.Backgroundable(project, taskName, true, configuration.commitOption) {
       override fun run(indicator: ProgressIndicator) {
         val vcsManager = ProjectLevelVcsManager.getInstance(project)
-        val activity = StructuredIdeActivity(myProject, COMMIT_ACTIVITY).started() // NON-NLS
+        val activity = COMMIT_ACTIVITY.started(myProject) // NON-NLS
         vcsManager.startBackgroundVcsOperation()
         try {
           delegateCommitToVcsThread()
