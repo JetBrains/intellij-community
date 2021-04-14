@@ -143,7 +143,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
     String bodyAsText = myBodyAsText;
     if (null == myBodyCodeBlock && bodyAsText != null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
-      myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + myBodyAsText + "}", this);
+      myBodyCodeBlock = elementFactory.createCodeBlockFromText("{" + bodyAsText + "}", this);
       myBodyAsText = null;
     }
     return myBodyCodeBlock;
