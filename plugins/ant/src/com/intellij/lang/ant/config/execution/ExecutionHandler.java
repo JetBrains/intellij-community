@@ -3,11 +3,16 @@ package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.JavaCommandLineState;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
+import com.intellij.execution.target.*;
+import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
@@ -106,7 +111,9 @@ public final class ExecutionHandler {
                                                           List<BuildFileProperty> additionalProperties,
                                                           @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
-    final GeneralCommandLine commandLine;
+    final TargetEnvironmentFactory factory;
+    final TargetEnvironmentConfiguration configuration;
+    final SimpleJavaParameters javaParameters;
     final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
     final Project project = buildFile.getProject();
     try {
@@ -120,8 +127,17 @@ public final class ExecutionHandler {
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
-      commandLine = builder.getCommandLine().toCommandLine();
-      messageView.setBuildCommandLine(commandLine.getCommandLineString());
+      javaParameters = builder.getCommandLine();
+
+      WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
+      if (wslConfiguration != null) {
+        factory = new WslTargetEnvironmentFactory(wslConfiguration);
+        configuration = wslConfiguration;
+      }
+      else {
+        factory = new LocalTargetEnvironmentFactory();
+        configuration = null;
+      }
 
       project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
     }
@@ -155,7 +171,14 @@ public final class ExecutionHandler {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine);
+          TargetEnvironmentRequest request = factory.createRequest();
+          TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request, configuration);
+          TargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
+          TargetedCommandLine commandLine = builder.build();
+
+          messageView.setBuildCommandLine(commandLine.getCommandPresentation(environment));
+
+          ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine, environment);
           future.set(handler);
           if (waitFor && handler != null) {
             handler.waitFor();
@@ -171,18 +194,19 @@ public final class ExecutionHandler {
   }
 
   @Nullable
-  private static ProcessHandler runBuild(final ProgressIndicator progress,
+  private static ProcessHandler runBuild(@NotNull final ProgressIndicator progress,
                                          @NotNull final AntBuildMessageView errorView,
                                          @NotNull final AntBuildFileBase buildFile,
                                          @NotNull final AntBuildListener antBuildListener,
-                                         @NotNull GeneralCommandLine commandLine) {
+                                         @NotNull TargetedCommandLine commandLine,
+                                         @NotNull TargetEnvironment targetEnvironment) {
     final Project project = buildFile.getProject();
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
     final AntProcessHandler handler;
     try {
-      handler = AntProcessHandler.runCommandLine(commandLine);
+      handler = AntProcessHandler.runCommandLine(commandLine, targetEnvironment, progress);
     }
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(
