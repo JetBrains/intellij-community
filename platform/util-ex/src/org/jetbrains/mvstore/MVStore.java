@@ -1373,18 +1373,24 @@ public final class MVStore implements AutoCloseable {
      * @return the chunk
      */
     private Chunk getChunk(int chunkId) {
-        return chunks.computeIfAbsent(chunkId, id -> {
-            checkOpen();
-            byte[] metadata = chunkIdToChunkMetadata.get(chunkId);
-            if (metadata == null) {
-                throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " not found");
-            }
-            Chunk chunk = Chunk.readMetadata(chunkId, Unpooled.wrappedBuffer(metadata));
-            if (!chunk.isSaved()) {
-                throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " is invalid");
-            }
-            return chunk;
-        });
+      // computeIfAbsent cannot be used - recursive update
+      Chunk chunk = chunks.get(chunkId);
+      if (chunk != null) {
+        return chunk;
+      }
+
+      checkOpen();
+      byte[] metadata = chunkIdToChunkMetadata.get(chunkId);
+      if (metadata == null) {
+          throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " not found");
+      }
+
+      chunk = Chunk.readMetadata(chunkId, Unpooled.wrappedBuffer(metadata));
+      if (!chunk.isSaved()) {
+          throw new MVStoreException(MVStoreException.ERROR_CHUNK_NOT_FOUND, "Chunk " + chunkId + " is invalid");
+      }
+      Chunk prev = chunks.putIfAbsent(chunkId, chunk);
+      return prev == null ? chunk : prev;
     }
 
     private void setWriteVersion(long version) {
@@ -2600,7 +2606,7 @@ public final class MVStore implements AutoCloseable {
                 throw new MVStoreException(MVStoreException.ERROR_FILE_CORRUPT, "Page is not saved yet");
             }
 
-            Cache<Long, Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
+            Cache<@NotNull Long, @NotNull Page<?, ?>> cache = getPageCache(DataUtil.isLeafPage(pageInfo));
             Chunk chunk = getChunk(DataUtil.getPageChunkId(pageInfo));
             if (cache == null) {
                 return doReadPage(map, pageInfo, chunk);
