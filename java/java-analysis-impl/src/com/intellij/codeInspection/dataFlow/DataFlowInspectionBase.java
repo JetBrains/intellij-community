@@ -363,7 +363,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
     // Expression switch: if we cannot unwrap existing branch and the other one is default case, we cannot kill it either
     return (allBranches.size() <= 2 &&
-           !allBranches.stream().allMatch(branch -> branch == labelStatement || branch.isDefaultCase())) ||
+           !ContainerUtil.and(allBranches, branch -> branch == labelStatement || branch.isDefaultCase())) ||
            (labelStatement instanceof PsiSwitchLabeledRuleStatement &&
             ((PsiSwitchLabeledRuleStatement)labelStatement).getBody() instanceof PsiExpressionStatement);
   }
@@ -704,7 +704,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private static @NotNull @InspectionMessage String getContractMessage(List<? extends MethodContract> contracts) {
-    if (contracts.stream().allMatch(mc -> mc.getConditions().stream().allMatch(ContractValue::isBoundCheckingCondition))) {
+    if (ContainerUtil.and(contracts, mc -> ContainerUtil.and(mc.getConditions(), ContractValue::isBoundCheckingCondition))) {
       return JavaAnalysisBundle.message("dataflow.message.contract.fail.index");
     }
     return JavaAnalysisBundle.message("dataflow.message.contract.fail");
