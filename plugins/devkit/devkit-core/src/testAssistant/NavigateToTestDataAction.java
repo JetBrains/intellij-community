@@ -9,10 +9,7 @@ import com.intellij.execution.testframework.TestTreeViewAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,7 +30,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
+public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction, UpdateInBackground {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
