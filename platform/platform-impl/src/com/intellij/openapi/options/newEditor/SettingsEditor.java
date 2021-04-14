@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -15,6 +17,7 @@ import com.intellij.openapi.options.ex.MutableConfigurableGroup;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +27,8 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.navigation.History;
+import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
@@ -43,7 +48,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-final class SettingsEditor extends AbstractEditor implements DataProvider {
+final class SettingsEditor extends AbstractEditor implements DataProvider, Place.Navigator {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
@@ -58,6 +63,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final SpotlightPainter mySpotlightPainter;
   private final LoadingDecorator myLoadingDecorator;
   private final @NotNull Banner myBanner;
+  private final History myHistory = new History(this);
 
   private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
   private ConfigurableController myLastController;
@@ -126,6 +132,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
       public Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           myProperties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
+          myHistory.pushQueryPlace();
           myLoadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
@@ -227,7 +234,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     left.add(BorderLayout.NORTH, searchPanel);
     left.add(BorderLayout.CENTER, myTreeView);
     JComponent right = new JPanel(new BorderLayout());
-    right.add(BorderLayout.NORTH, myBanner);
+    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
     right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -331,9 +338,41 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     mySearch.getTextEditor().addFocusListener(spotlightRemover);
   }
 
+  private JComponent withHistoryToolbar(JComponent component) {
+    ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
+    if (group == null) return component;
+    JComponent toolbar = ActionUtil.createToolbarComponent(this, "SettingsHistory", group, true);
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.anchor = GridBagConstraints.NORTH;
+    gbc.gridx = 1;
+    gbc.weightx = 1;
+    panel.add(component, gbc);
+    gbc.gridx = 2;
+    gbc.weightx = 0;
+    panel.add(toolbar, gbc);
+    return panel;
+  }
+
+  @Override
+  public void queryPlace(@NotNull Place place) {
+    place.putPath(SELECTED_CONFIGURABLE, myProperties.getValue(SELECTED_CONFIGURABLE));
+  }
+
+  @Override
+  public @NotNull ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+    Object path = place == null ? null : place.getPath(SELECTED_CONFIGURABLE);
+    String id = path instanceof String ? (String)path : null;
+    return mySettings.select(id == null ? null : mySettings.find(id));
+  }
+
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
-    return Settings.KEY.is(dataId) ? mySettings : SearchTextField.KEY.is(dataId) ? mySearch : null;
+    return History.KEY.is(dataId) ? myHistory :
+           Settings.KEY.is(dataId) ? mySettings :
+           SearchTextField.KEY.is(dataId) ? mySearch :
+           null;
   }
 
   @Override

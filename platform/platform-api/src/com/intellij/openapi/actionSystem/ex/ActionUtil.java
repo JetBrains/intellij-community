@@ -35,6 +35,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -421,9 +422,8 @@ public final class ActionUtil {
   @NotNull
   public static ActionListener createActionListener(@NotNull String actionId, @NotNull Component component, @NotNull String place) {
     return e -> {
-      AnAction action = ActionManager.getInstance().getAction(actionId);
+      AnAction action = getAction(actionId);
       if (action == null) {
-        LOG.warn("Can not find action by id " + actionId);
         return;
       }
       invokeAction(action, component, place, null, null);
@@ -433,5 +433,36 @@ public final class ActionUtil {
   @Nullable
   public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
     return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
+  }
+
+  @ApiStatus.Experimental
+  public static @Nullable AnAction getAction(@NotNull @NonNls String id) {
+    AnAction action = ActionManager.getInstance().getAction(id);
+    if (action == null) LOG.warn("Can not find action by id " + id);
+    return action;
+  }
+
+  @ApiStatus.Experimental
+  public static @Nullable ActionGroup getActionGroup(@NotNull @NonNls String id) {
+    AnAction action = getAction(id);
+    if (action instanceof ActionGroup) return (ActionGroup)action;
+    return action == null ? null : new DefaultActionGroup(Collections.singletonList(action));
+  }
+
+  @ApiStatus.Experimental
+  public static @Nullable ActionGroup getActionGroup(@NonNls String @NotNull ... ids) {
+    if (ids.length == 1) return getActionGroup(ids[0]);
+    List<AnAction> actions = ContainerUtil.mapNotNull(ids, ActionUtil::getAction);
+    return actions.isEmpty() ? null : new DefaultActionGroup(actions);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull JComponent createToolbarComponent(@NotNull JComponent target,
+                                                           @NotNull @NonNls String place,
+                                                           @NotNull ActionGroup group,
+                                                           boolean horizontal) {
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place, group, horizontal);
+    toolbar.setTargetComponent(target);
+    return toolbar.getComponent();
   }
 }
