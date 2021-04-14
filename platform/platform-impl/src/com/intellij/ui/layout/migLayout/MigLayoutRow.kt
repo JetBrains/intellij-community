@@ -155,6 +155,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         it.enabled = value
         it.subRowsEnabled = value
       }
+
+      components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
     }
 
   override var subRowsVisible = true

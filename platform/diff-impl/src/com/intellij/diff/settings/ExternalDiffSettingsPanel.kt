@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.layout.*
-import javax.swing.AbstractButton
 import javax.swing.JComponent
 
 class ExternalDiffSettingsPanel {
@@ -43,7 +42,7 @@ class ExternalDiffSettingsPanel {
     panel = panel {
       blockRow {
         val diffEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.diff.tool"), settings::isDiffEnabled)
-        enableSubRowsIfSelected(diffEnabled.component)
+        enableSubRowsIf(diffEnabled.component.selected)
 
         row {
           row(DiffBundle.message("settings.external.diff.path.to.executable")) {
@@ -68,7 +67,7 @@ class ExternalDiffSettingsPanel {
 
       blockRow {
         val mergeEnabled = checkBox(DiffBundle.message("settings.external.diff.enable.external.merge.tool"), settings::isMergeEnabled)
-        enableSubRowsIfSelected(mergeEnabled.component)
+        enableSubRowsIf(mergeEnabled.component.selected)
 
         row {
           row(DiffBundle.message("settings.external.diff.path.to.executable.merge")) {
@@ -109,15 +108,6 @@ class ExternalDiffSettingsPanel {
 
   fun reset() {
     panel.reset()
-  }
-
-  private fun Row.enableSubRowsIfSelected(button: AbstractButton): Row {
-    subRowsEnabled = button.isSelected
-    button.addChangeListener {
-      subRowsEnabled = button.isSelected
-      button.parent?.repaint() // Repaint all dependent components in sync
-    }
-    return this
   }
 
   private fun Cell.executableTextField(title: @NlsContexts.DialogTitle String,
