@@ -1356,7 +1356,6 @@
       <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
     </action>
 
-    <action id="GenerateJarAccessLog" class="com.intellij.diagnostic.GenerateJarAccessLogAction" internal="true"/>
     <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 
     <action id="NextWindow" class="com.intellij.openapi.wm.impl.NextWindow"/>

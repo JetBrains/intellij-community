@@ -6,6 +6,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.Murmur3_32Hash
+import com.intellij.util.io.inputStream
 import com.intellij.util.lang.ImmutableZipEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
@@ -78,7 +79,7 @@ class ReorderJarsTest {
     val tempDir = tempDir.createDir()
     Files.createDirectories(tempDir)
 
-    doReorderJars(readClassLoadingLog(path.resolve("order.txt"), path), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("order.txt").inputStream(), path), path, tempDir, TaskTest.logger)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     assertThat(files).hasSize(1)
@@ -102,7 +103,7 @@ class ReorderJarsTest {
     Files.createDirectories(tempDir)
 
     val path = testDataPath
-    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt"), path), path, tempDir, TaskTest.logger)
+    doReorderJars(readClassLoadingLog(path.resolve("zkmOrder.txt").inputStream(), path), path, tempDir, TaskTest.logger)
     val files = tempDir.toFile().listFiles()!!
     assertThat(files).isNotNull()
     val file = files[0]

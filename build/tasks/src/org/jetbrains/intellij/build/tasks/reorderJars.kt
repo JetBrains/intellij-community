@@ -4,7 +4,11 @@ package org.jetbrains.intellij.build.tasks
 import com.intellij.util.lang.ImmutableZipEntry
 import com.intellij.util.lang.ImmutableZipFile
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.io.RW_CREATE_NEW
+import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.info
+import org.jetbrains.intellij.build.io.warn
+import java.io.InputStream
 import java.lang.System.Logger
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -13,11 +17,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ForkJoinTask
 
-// see JarMemoryLoader.SIZE_ENTRY
-internal const val SIZE_ENTRY = "META-INF/jb/$\$size$$"
 internal const val PACKAGE_INDEX_NAME = "__packageIndex__"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
@@ -41,29 +42,8 @@ fun reorderJars(homeDir: Path,
                 antLibDir: Path?,
                 logger: Logger) {
   val libDir = homeDir.resolve("lib")
-  val ideaDirsParent = Files.createTempDirectory("idea-reorder-jars-")
 
-  val classLoadingLogFile = stageDir.resolve("class-loading-log.txt")
-  try {
-    @Suppress("SpellCheckingInspection")
-    runJava(
-      mainClass = "com.intellij.idea.Main",
-      args = listOf("jarOrder", classLoadingLogFile.toString()),
-      jvmArgs = listOfNotNull("-Xmx1024m",
-                              "-Didea.record.classpath.info=true",
-                              "-Didea.system.path=${ideaDirsParent.resolve("system")}",
-                              "-Didea.config.path=${ideaDirsParent.resolve("config")}",
-                              "-Didea.home.path=$homeDir",
-                              "-Didea.platform.prefix=$platformPrefix"),
-      classPath = bootClassPathJarNames.map { libDir.resolve(it).toString() },
-      logger = logger
-    )
-  }
-  finally {
-    deleteDir(ideaDirsParent)
-  }
-
-  val sourceToNames = readClassLoadingLog(classLoadingLogFile, homeDir)
+  val sourceToNames = readClassLoadingLog(PackageIndexBuilder::class.java.classLoader.getResourceAsStream("mac/class-report.txt")!!, homeDir)
   val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
 
   logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
@@ -96,14 +76,12 @@ private inline fun addJarsFromDir(dir: Path, consumer: (Sequence<Path>) -> Unit)
   }
 }
 
-internal fun readClassLoadingLog(classLoadingLogFile: Path, rootDir: Path): Map<Path, List<String>> {
+internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, List<String>> {
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
-  Files.lines(classLoadingLogFile).use { lines ->
-    lines.forEach {
-      val data = it.split(':', limit = 2)
-      val source = rootDir.resolve(data[1])
-      sourceToNames.computeIfAbsent(source) { mutableListOf() }.add(data[0])
-    }
+  classLoadingLog.bufferedReader().forEachLine {
+    val data = it.split(':', limit = 2)
+    val source = rootDir.resolve(data[1])
+    sourceToNames.computeIfAbsent(source) { mutableListOf() }.add(data[0])
   }
   return sourceToNames
 }
@@ -112,37 +90,24 @@ internal fun doReorderJars(sourceToNames: Map<Path, List<String>>,
                            sourceDir: Path,
                            targetDir: Path,
                            logger: Logger): List<PackageIndexEntry> {
-  val executor = createIoTaskExecutorPool()
-
-  val results = mutableListOf<Future<PackageIndexEntry?>>()
-  val errorOccurred = AtomicBoolean()
+  val tasks = mutableListOf<ForkJoinTask<PackageIndexEntry?>>()
   for ((jarFile, orderedNames) in sourceToNames.entries) {
     if (!Files.exists(jarFile)) {
-      logger.log(Logger.Level.ERROR, "Cannot find jar: $jarFile")
+      logger.warn("Cannot find jar: $jarFile")
       continue
     }
 
-    results.add(executor.submit(Callable {
-      if (errorOccurred.get()) {
-        return@Callable null
-      }
-
-      try {
-        logger.info("Reorder jar: $jarFile")
-        reorderJar(jarFile, orderedNames, if (targetDir == sourceDir) jarFile else targetDir.resolve(sourceDir.relativize(jarFile)))
-      }
-      catch (e: Throwable) {
-        errorOccurred.set(true)
-        throw e
-      }
+    tasks.add(ForkJoinTask.adapt(Callable {
+      logger.info("Reorder jar: $jarFile")
+      reorderJar(jarFile, orderedNames, if (targetDir == sourceDir) jarFile else targetDir.resolve(sourceDir.relativize(jarFile)))
     }))
   }
 
-  executor.shutdown()
+  ForkJoinTask.invokeAll(tasks)
 
   val index = ArrayList<PackageIndexEntry>(sourceToNames.size)
-  for (future in results) {
-    index.add(future.get() ?: continue)
+  for (task in tasks) {
+    index.add(task.rawResult ?: continue)
   }
   return index
 }

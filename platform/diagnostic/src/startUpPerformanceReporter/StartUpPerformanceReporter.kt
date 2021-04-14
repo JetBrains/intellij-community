@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -19,10 +20,14 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.write
+import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -127,6 +132,11 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
         LOG.info("StartUp Measurement report was written to: $perfFilePath")
         Path.of(perfFilePath).write(currentReport)
+      }
+
+      val classReport = System.getProperty("idea.log.class.list.file")
+      if (!classReport.isNullOrBlank()) {
+        generateJarAccessLog(Path.of(classReport))
       }
       return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
     }
@@ -284,4 +294,31 @@ internal fun compareTime(o1: ActivityImpl, o2: ActivityImpl): Int {
       }
     }
   }
+}
+
+private fun generateJarAccessLog(outFile: Path) {
+  val classLoader = StartUpPerformanceReporter::class.java.classLoader
+  @Suppress("UNCHECKED_CAST")
+  val itemsFromBootstrap = MethodHandles.lookup()
+    .findStatic(classLoader::class.java, "getLoadedClasses", MethodType.methodType(Collection::class.java))
+    .invokeExact() as Collection<Map.Entry<String, Path>>
+  val itemsFromCore = ClassPath.getLoadedClasses()
+  val items = LinkedHashSet<Map.Entry<String, Path>>(itemsFromBootstrap.size + itemsFromCore.size)
+  items.addAll(itemsFromBootstrap)
+  items.addAll(itemsFromCore)
+
+  val homeDir = Path.of(PathManager.getHomePath())
+
+  val builder = StringBuilder()
+  for (item in items) {
+    val source = item.value
+    if (!source.startsWith(homeDir)) {
+      continue
+    }
+
+    builder.append(item.key).append(':').append(homeDir.relativize(source))
+    builder.append('\n')
+  }
+  Files.createDirectories(outFile.parent)
+  Files.writeString(outFile, builder)
 }

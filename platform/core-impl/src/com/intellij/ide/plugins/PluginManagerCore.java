@@ -720,7 +720,7 @@ public final class PluginManagerCore {
     else {
       effectiveBundledPluginPath = Paths.get(PathManager.getPreInstalledPluginsPath());
     }
-    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath, isRunningFromSources());
+    PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir, effectiveBundledPluginPath, isUnitTestMode, isRunningFromSources());
 
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
       if (!descriptor.isBundled()) {

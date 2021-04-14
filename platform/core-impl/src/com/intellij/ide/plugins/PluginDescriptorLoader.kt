@@ -361,6 +361,7 @@ object PluginDescriptorLoader {
       loadBundledDescriptorsAndDescriptorsFromDir(context = context,
                                                   customPluginDir = Paths.get(PathManager.getPluginsPath()),
                                                   bundledPluginDir = bundledPluginPath,
+                                                  isUnitTestMode = isUnitTestMode,
                                                   isRunningFromSources = isRunningFromSources)
       loadDescriptorsFromProperty(result, context)
       if (isUnitTestMode && result.enabledPluginCount() <= 1) {
@@ -377,15 +378,17 @@ object PluginDescriptorLoader {
   fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListLoadingContext,
                                                   customPluginDir: Path,
                                                   bundledPluginDir: Path?,
+                                                  isUnitTestMode: Boolean,
                                                   isRunningFromSources: Boolean) {
     val classLoader = PluginDescriptorLoader::class.java.classLoader
     val pool = ForkJoinPool.commonPool()
     var activity = StartUpMeasurer.startActivity("platform plugin collecting", ActivityCategory.DEFAULT)
-    val platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)
+
+    val platformPrefix = PlatformUtils.getPlatformPrefix()
     // should be the only plugin in lib (only for Ultimate and WebStorm for now)
     val pathResolver = ClassPathXmlPathResolver(classLoader)
     if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
-        (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || !isRunningFromSources)) {
+        (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || (!isUnitTestMode && !isRunningFromSources))) {
       val factory = context.xmlFactory
       val element = JDOMUtil.load(classLoader.getResourceAsStream(PluginManagerCore.PLUGIN_XML_PATH)!!, factory)
 

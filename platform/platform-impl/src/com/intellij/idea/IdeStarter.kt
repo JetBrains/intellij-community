@@ -82,21 +82,20 @@ open class IdeStarter : ApplicationStarter {
     }
 
     val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
-    openProjectIfNeeded(args, app, lifecyclePublisher)
-      .thenRun {
-        reportPluginErrors()
+    openProjectIfNeeded(args, app, lifecyclePublisher).thenRun {
+      reportPluginErrors()
 
-        if (!app.isHeadlessEnvironment) {
-          postOpenUiTasks(app)
-        }
-
-        StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
-        lifecyclePublisher.appStarted()
-
-        if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
-          AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
-        }
+      if (!app.isHeadlessEnvironment) {
+        postOpenUiTasks(app)
       }
+
+      StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+      lifecyclePublisher.appStarted()
+
+      if (!app.isHeadlessEnvironment && PluginManagerCore.isRunningFromSources()) {
+        AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
+      }
+    }
   }
 
   protected open fun openProjectIfNeeded(args: List<String>,
