@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +94,10 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      assertFileTypeIsUnregistered(new MyCustomImageFileType());
+      assertFileTypeIsUnregistered(new MyCustomImageFileType2());
+      assertFileTypeIsUnregistered(new MyTestFileType());
+      assertFileTypeIsUnregistered(new MyHaskellFileType());
       assertEmpty(myFileTypeManager.getRemovedMappingTracker().getRemovedMappings());
       List<FileTypeManagerImpl.FileTypeWithDescriptor> newRegisteredTypes = new ArrayList<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
       myOldRegisteredTypes.sort(Comparator.comparing(FileTypeManagerImpl.FileTypeWithDescriptor::getName));
@@ -102,10 +107,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       WriteAction.run(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
       initStandardFileTypes();
       myFileTypeManager.initializeComponent();
-      assertFileTypeIsUnregistered(MyCustomImageFileType.class);
-      assertFileTypeIsUnregistered(MyCustomImageFileType2.class);
-      assertFileTypeIsUnregistered(MyTestFileType.class);
-      assertFileTypeIsUnregistered(MyHaskellFileType.class);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -480,7 +481,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testPreserveRemovedMappingForUnknownFileType() {
-    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), "Foo Files", true);
+    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher("xxx"), MyTestFileType.NAME, true);
     WriteAction.run(() -> myFileTypeManager
       .setPatternsTable(new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors()),
                         myFileTypeManager.getExtensionMap().copy()));
@@ -551,28 +552,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
     Disposable disposable = Disposer.newDisposable();
     try {
-      FileType myType = new FakeFileType() {
-        @Override
-        public boolean isMyFileType(@NotNull VirtualFile file) {
-          return false;
-        }
-
-        @Override
-        public @NotNull @NonNls String getName() {
-          return "myType";
-        }
-
-        @Override
-        public @NotNull @NlsContexts.Label String getDescription() {
-          return "";
-        }
-      };
-      FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(new FileTypeFactory() {
-        @Override
-        public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-          consumer.consume(myType, myWeirdExtension);
-        }
-      }, disposable);
+      FileType myType = createFakeType("myType", "myDispl", "mydescr", myWeirdExtension, disposable);
       myFileTypeManager.getRegisteredFileTypes();
       assertNotEmpty(initStandardFileTypes());
       myFileTypeManager.unregisterFileType(myType);
@@ -1066,22 +1046,22 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testPluginOverridesAbstractFileType() {
-    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), AbstractFileType.class);
+    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName(MyHaskellFileType.NAME), AbstractFileType.class);
 
     FileTypeBean bean = new FileTypeBean();
-    bean.name = "Haskell";
+    bean.name = MyHaskellFileType.NAME;
     bean.extensions = "hs";
     bean.implementationClass = MyHaskellFileType.class.getName();
     Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
 
-    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName("Haskell"), MyHaskellFileType.class);
+    assertInstanceOf(FileTypeManager.getInstance().findFileTypeByName(MyHaskellFileType.NAME), MyHaskellFileType.class);
     assertInstanceOf(FileTypeManager.getInstance().getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
 
     WriteAction.run(() -> Disposer.dispose(disposable));
 
     // todo restore old AbstractFileType automatically?
     AbstractFileType old = new AbstractFileType(new SyntaxTable());
-    old.setName("Haskell");
+    old.setName(MyHaskellFileType.NAME);
     myFileTypeManager.registerFileType(old);
   }
 
@@ -1154,11 +1134,15 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     WriteAction.run(() -> Disposer.dispose(disposable));
   }
 
-  private static void assertFileTypeIsUnregistered(@NotNull Class<?> aClass) {
+  private static void assertFileTypeIsUnregistered(@NotNull FileType fileType) {
     for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
-      if (type.getClass() == aClass) {
+      if (type.getClass() == fileType.getClass()) {
         throw new AssertionError(type + " is still registered");
       }
+    }
+    FileType registered = FileTypeManager.getInstance().findFileTypeByName(fileType.getName());
+    if (registered != null && !(registered instanceof AbstractFileType)) {
+      fail(registered.toString());
     }
   }
 
@@ -1352,5 +1336,64 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     setBinaryContent(virtualFile, "qwe\newq".getBytes(StandardCharsets.UTF_8));
     myFileTypeManager.drainReDetectQueue();
     assertEquals(PlainTextFileType.INSTANCE, virtualFile.getFileType());
+  }
+
+  public void testRegisterFileTypesWithIdenticalDisplayNameOrDescriptionMustThrow() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      createFakeType("myCreativeName0", "display1", "descr1", "ext1", disposable);
+      createFakeType("myCreativeName1", "display1", "descr2", "ext2", disposable);
+      assertThrows(Throwable.class, () -> initStandardFileTypes());
+      myFileTypeManager.unregisterFileType(myFileTypeManager.findFileTypeByName("myCreativeName0"));
+      myFileTypeManager.unregisterFileType(myFileTypeManager.findFileTypeByName("myCreativeName1"));
+      createFakeType("myCreativeName2", "display0", "descr", "ext1", disposable);
+      createFakeType("myCreativeName3", "display1", "descr", "ext2", disposable);
+      assertThrows(Throwable.class, () -> initStandardFileTypes());
+      myFileTypeManager.unregisterFileType(myFileTypeManager.findFileTypeByName("myCreativeName2"));
+      myFileTypeManager.unregisterFileType(myFileTypeManager.findFileTypeByName("myCreativeName3"));
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+    initStandardFileTypes(); // give FileTypeManagerImpl chance to finish init standard file types without exceptions
+  }
+
+  @NotNull
+  private static FileType createFakeType(@NotNull String name,
+                                         @NotNull String displayName,
+                                         @NotNull String description,
+                                         @NotNull String extension,
+                                         @NotNull Disposable disposable) {
+    FileType myType = new FakeFileType() {
+      @Override
+      public boolean isMyFileType(@NotNull VirtualFile file) {
+        return false;
+      }
+
+      @Override
+      public @NotNull @NonNls String getName() {
+        return name;
+      }
+
+      @Nls
+      @Override
+      public @NotNull String getDisplayName() {
+        return displayName;
+      }
+
+      @Override
+      public @NotNull @NlsContexts.Label String getDescription() {
+        return description;
+      }
+    };
+    FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(new FileTypeFactory() {
+      @Override
+      public void createFileTypes(@NotNull FileTypeConsumer consumer) {
+        consumer.consume(myType, extension);
+      }
+    }, disposable);
+    return myType;
   }
 }
