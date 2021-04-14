@@ -224,7 +224,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       return false;
     }
 
-    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation", true);
+    boolean needGenerateRegistryFlag = Registry.is("vcs.ignorefile.generation");
     if (!needGenerateRegistryFlag) {
       return false;
     }

@@ -227,5 +227,5 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     else -> null
   }
 
-  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation", true)
+  private fun needProcessIgnoredFiles() = Registry.`is`("vcs.ignorefile.generation")
 }
