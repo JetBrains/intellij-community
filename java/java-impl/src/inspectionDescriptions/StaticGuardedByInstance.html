@@ -3,6 +3,7 @@
 Reports <code>@GuardedBy</code> annotations on <code>static</code> fields or methods,
 where the guard is either a non-static field or <code>this</code>. Guarding a <code>static</code> by a non-static may result in
 excessive concurrency, multiple threads may be able to access the guarded field simultaneously, by locking in different object contexts.
+<!-- tooltip end -->
 Supported <code>@GuardedBy</code> annotations are:
 <ul>
   <li>net.jcip.annotations.GuardedBy</li>
