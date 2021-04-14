@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -14,16 +15,20 @@ import com.intellij.util.SmartList
 import java.awt.Dimension
 import java.awt.Rectangle
 
-class ProviderWithSettings<T: Any>(
+class ProviderWithSettings<T : Any>(
   val info: ProviderInfo<T>,
   var settings: T
 ) {
-  val configurable by lazy { provider.createConfigurable(settings) }
+  val configurable: ImmediateConfigurable by lazy {
+    invokeAndWaitIfNeeded {
+      provider.createConfigurable(settings)
+    }
+  }
 
   val provider: InlayHintsProvider<T>
-  get() = info.provider
+    get() = info.provider
   val language: Language
-  get() = info.language
+    get() = info.language
 }
 
 fun <T : Any> ProviderWithSettings<T>.withSettingsCopy(): ProviderWithSettings<T> {
@@ -46,7 +51,7 @@ internal fun <T : Any> InlayHintsProvider<T>.withSettings(language: Language, co
 internal fun <T : Any> InlayHintsProvider<T>.getActualSettings(config: InlayHintsSettings, language: Language): T =
   config.findSettings(key, language) { createSettings() }
 
-internal fun <T: Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
+internal fun <T : Any> copySettings(from: T, provider: InlayHintsProvider<T>): T {
   val settings = provider.createSettings()
   // Workaround to make a deep copy of settings. The other way is to parametrize T with something like
   // interface DeepCopyable<T> { fun deepCopy(from: T): T }, but there will be a lot of problems with recursive type bounds
@@ -105,7 +110,7 @@ object InlayHintsUtils {
    *
    * @return list of updated constrained presentations
    */
-  fun <Constraint: Any> produceUpdatedRootList(
+  fun <Constraint : Any> produceUpdatedRootList(
     new: List<ConstrPresent<Constraint>>,
     old: List<ConstrPresent<Constraint>>,
     editor: Editor,
@@ -170,11 +175,11 @@ object InlayHintsUtils {
   /**
    * @return true iff updated
    */
-  private fun <Content : Any>RootInlayPresentation<Content>.updateIfSame(
+  private fun <Content : Any> RootInlayPresentation<Content>.updateIfSame(
     newPresentation: RootInlayPresentation<*>,
     editor: Editor,
     factory: InlayPresentationFactory
-  ) : Boolean {
+  ): Boolean {
     if (key != newPresentation.key) return false
     @Suppress("UNCHECKED_CAST")
     return update(newPresentation.content as Content, editor, factory)
