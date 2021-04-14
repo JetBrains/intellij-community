@@ -9,12 +9,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import org.jetbrains.integratedBinaryPacking.IntBitPacker;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 public final class DataUtil {
     /**
@@ -97,30 +97,39 @@ public final class DataUtil {
         }
     }
 
-    static void readFully(FileChannel file, long position, int length, ByteBuf out) {
+    static void readFully(FileChannel file, long position, int length, ByteBuf out, Path filePath) {
         try {
             do {
                 int n = out.writeBytes(file, position, length);
                 if (n < 0) {
-                    throw new EOFException();
+                  throw new MVStoreException(MVStoreException.ERROR_READING_FAILED,
+                                                   "End of file " + filePath + " (position=" + position +
+                                                   ", length " + getFileSizeOrErrorMessage(file) +
+                                                   ", read=" + out.writerIndex() +
+                                                   ", remaining=" + out.writableBytes() +
+                                                   ")");
                 }
                 position += n;
                 length -= n;
             } while (length > 0);
         } catch (IOException e) {
-            long size;
-            try {
-                size = file.size();
-            } catch (IOException e2) {
-                size = -1;
-            }
-            throw new MVStoreException(MVStoreException.ERROR_READING_FAILED,
-                                       "Reading from file " + file + " failed at " + position + " (length " + size + "), " +
-                                       "read " + out.writerIndex() + ", remaining " + out.writableBytes(), e);
+          throw new MVStoreException(MVStoreException.ERROR_READING_FAILED,
+                                     "Reading from file " + filePath + " failed at " + position + " (length " + getFileSizeOrErrorMessage(file) + "), " +
+                                     "read " + out.writerIndex() + ", remaining " + out.writableBytes(), e);
         }
     }
 
-    /**
+  private static String getFileSizeOrErrorMessage(FileChannel file) {
+    String size;
+    try {
+        size = Long.toString(file.size());
+    } catch (IOException e2) {
+        size = e2.getMessage();
+    }
+    return size;
+  }
+
+  /**
      * Write to a file channel.
      *
      * @param file the file channel
@@ -137,7 +146,7 @@ public final class DataUtil {
             } while (length > 0);
         } catch (IOException e) {
             throw new MVStoreException(MVStoreException.ERROR_WRITING_FAILED,
-                                       "Writing to " + file +" failed; length " + in.readableBytes() + " at " + position, e);
+                                       "Writing to " + file + " failed; length " + in.readableBytes() + " at " + position, e);
         }
     }
 
