@@ -973,19 +973,15 @@ public class GitBranchPopupActions {
 
   @Nls
   private static String getCurrentBranchShortName(@NlsSafe String branchName) {
-    return showBranchNameInsteadCurrent() ? shortBranchName(branchName) : "Current";
+    return showFullBranchNamesInsteadOfCurrentSelected() ? shortBranchName(branchName) : "Current";
   }
 
   @Nls
   private static String getSelectedBranchShortName(@NlsSafe String branchName) {
-    return showBranchNameInsteadSelected() ? shortBranchName(branchName) : "Selected";
+    return showFullBranchNamesInsteadOfCurrentSelected() ? shortBranchName(branchName) : "Selected";
   }
 
-  private static boolean showBranchNameInsteadCurrent() {
-    return Registry.is("git.show.full.branch.name.instead.current");
-  }
-
-  private static boolean showBranchNameInsteadSelected() {
-    return Registry.is("git.show.full.branch.name.instead.selected");
+  private static boolean showFullBranchNamesInsteadOfCurrentSelected() {
+    return Registry.is("git.show.full.branch.name.instead.current.selected");
   }
 }
