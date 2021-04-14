@@ -7,6 +7,8 @@ import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -58,6 +60,7 @@ object UpdateChecker {
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val PRODUCT_DATA_TTL_MS = 300_000L
+  private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -81,6 +84,12 @@ object UpdateChecker {
   init {
     UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
     UpdateRequestParameters.addParameter("uid", PermanentInstallationID.get())
+    if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false)) {
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      if (machineId != null) {
+        UpdateRequestParameters.addParameter("mid", machineId)
+      }
+    }
     UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ExternalUpdateManager.ACTUAL != null) {
       val name = if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) "Toolbox" else ExternalUpdateManager.ACTUAL.toolName
@@ -209,6 +218,9 @@ object UpdateChecker {
       try {
         val product = loadUpdatesData()?.get(ApplicationInfo.getInstance().build.productCode)
         if (product != null) {
+          if (product.disableMachineId) {
+            PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+          }
           productDataCache = SoftReference(product)
           AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
         }
