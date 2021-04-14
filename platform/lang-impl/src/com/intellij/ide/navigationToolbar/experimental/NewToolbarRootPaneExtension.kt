@@ -39,7 +39,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private val myPanelWrapper = JPanel(BorderLayout())
   private val myPanel: JPanel = object : JPanel(
-    MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1]0[shrink 2]0:push[shrink 0]")) {
+    BorderLayout()){
+    //TODO fix shrink behaviour without mig layout
+    //MigLayout("fillx,novisualpadding,ins 0 ${JBUI.scale(5)} 0 ${JBUI.scale(2)},righttoleft", "[shrink 1]0[shrink 2]0:push[shrink 0]")) {
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder()
@@ -71,10 +73,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_TOOLBAR,
                                                                         if (c is ActionGroup) c else DefaultActionGroup(c),
                                                                         true) as ActionToolbarImpl
-      toolbar.targetComponent = null
+      toolbar.targetComponent = panel
       toolbar.layoutPolicy = NOWRAP_LAYOUT_POLICY
       panel.add(toolbar, if (c is CustomComponentAction) "$layoutConstrains, shrink 0" else layoutConstrains)
-      ApplicationManager.getApplication().invokeLater { toolbar.updateActionsImmediately(true) }
     }
   }
 
@@ -96,9 +97,9 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
       logger.info("Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
 
       myPanelWrapper.add(myPanel, BorderLayout.CENTER)
-      myPanel.add(myRightPanel, "growx, align trailing")
-      myPanel.add(myCenterPanel, "growx, align leading")
-      myPanel.add(myLeftPanel, "growx, align leading")
+      myPanel.add(myRightPanel, BorderLayout.EAST)//"growx, align trailing")
+      myPanel.add(myCenterPanel, BorderLayout.CENTER)//"growx, align leading")
+      myPanel.add(myLeftPanel, BorderLayout.WEST)//"growx, align leading")
 
       val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
 
