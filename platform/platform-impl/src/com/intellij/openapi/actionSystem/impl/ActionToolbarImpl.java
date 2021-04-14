@@ -1334,7 +1334,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   protected @NotNull DataContext getDataContext() {
-    if (myTargetComponent == null && getClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING) == null) {
+    if (myTargetComponent == null && getClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING) == null &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       putClientProperty(SUPPRESS_TARGET_COMPONENT_WARNING, true);
       LOG.warn("'" + myPlace + "' toolbar by default uses any focused component to update its actions. " +
                "Toolbar actions that need local UI context would be incorrectly disabled. " +
