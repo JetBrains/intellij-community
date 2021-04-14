@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.service.ui.addJdkReferenceItem
 import com.intellij.openapi.externalSystem.service.ui.resolveJdkReference
 import com.intellij.openapi.externalSystem.service.ui.setSelectedJdkReference
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkListItem
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
@@ -20,7 +19,7 @@ fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvid
   return sdkLookupProvider.resolveGradleJvmReference(selectedItem)
 }
 
-fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider,  externalProjectPath: String?, jdkReference: String?) {
+fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider, externalProjectPath: String?, jdkReference: String?) {
   when (jdkReference) {
     USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(model.project, externalProjectPath))
     else -> setSelectedJdkReference(sdkLookupProvider, jdkReference)

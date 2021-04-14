@@ -288,6 +288,10 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
+  public String suggestBetterGradleHomePath(@NotNull String homePath) {
+    return suggestBetterGradleHomePath(null, homePath);
+  }
+
   /**
    * Tries to suggest better path to gradle home
    *
@@ -411,6 +415,10 @@ public class GradleInstallationManager implements Disposable {
       return false;
     }
     return isGradleSdkHome(project, new File(file.getPath()));
+  }
+
+  public boolean isGradleSdkHome(@Nullable File file) {
+    return isGradleSdkHome(null, file);
   }
 
   /**
