@@ -2,6 +2,7 @@
 package de.plushnikov.intellij.plugin.jps;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
@@ -23,7 +24,7 @@ public final class LombokBuildProcessParametersProvider extends BuildProcessPara
 
   @Override
   public @NotNull List<String> getVMArguments() {
-    if(!LombokLibraryUtil.hasLombokLibrary(myProject)) {
+    if(!ReadAction.nonBlocking(() -> LombokLibraryUtil.hasLombokLibrary(myProject)).executeSynchronously()) {
       return Collections.emptyList();
     }
 
