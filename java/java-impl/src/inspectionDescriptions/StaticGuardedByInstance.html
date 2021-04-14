@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports <b>@GuardedBy</b> annotations on <b>static</b> fields or methods,
-where the guard is either a non-static field or <b>this</b>. Guarding a <b>static</b> by a non-static may result in
+Reports <code>@GuardedBy</code> annotations on <code>static</code> fields or methods,
+where the guard is either a non-static field or <code>this</code>. Guarding a <code>static</code> by a non-static may result in
 excessive concurrency, multiple threads may be able to access the guarded field simultaneously, by locking in different object contexts.
-Supported <b>@GuardedBy</b> annotations are:
+Supported <code>@GuardedBy</code> annotations are:
 <ul>
   <li>net.jcip.annotations.GuardedBy</li>
   <li>javax.annotation.concurrent.GuardedBy</li>
