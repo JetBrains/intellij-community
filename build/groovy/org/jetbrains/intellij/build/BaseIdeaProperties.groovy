@@ -144,7 +144,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         withoutProjectLibrary("layoutlib")
-        withoutProjectLibrary("kotlin-plugin") // Android Studio: we already copy Kotlin from prebuilts.
       }
     } as Consumer<PlatformLayout>
 
