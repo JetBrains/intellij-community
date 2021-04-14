@@ -50,12 +50,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    if (args[0] instanceof GrBinaryExpression) {
-      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedBinaryExpression((GrBinaryExpression)args[0]));
-    }
-    else {
-      return GroovyBundle.message("pointless.boolean.problem.descriptor", calculateSimplifiedPrefixExpression((GrUnaryExpression)args[0]));
-    }
+    return GroovyBundle.message("pointless.boolean.problem.descriptor");
   }
 
   @Nullable

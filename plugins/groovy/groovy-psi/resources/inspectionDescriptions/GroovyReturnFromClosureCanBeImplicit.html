@@ -1,6 +1,21 @@
 <html>
 <body>
-Reports  return statements at the end of closures which can be made implicit.
+Reports return statements at the end of closures which can be made implicit.
 Groovy closures implicitly return the value of the last statement in them.
+
+<p>Example:</p>
+<pre>
+def foo = {
+  return 1
+}
+</pre>
+
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+def foo = {
+  1
+}
+</pre>
+
 </body>
 </html>
