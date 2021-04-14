@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.FileModificationService
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
@@ -37,42 +35,10 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.util.isValidOperator
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-
-abstract class ExclExclCallFix(psiElement: PsiElement) : KotlinQuickFixAction<PsiElement>(psiElement) {
-    override fun getFamilyName(): String = text
-
-    override fun startInWriteAction(): Boolean = true
-}
-
-class RemoveExclExclCallFix(psiElement: PsiElement) : ExclExclCallFix(psiElement), CleanupFix, HighPriorityAction,
-                                                      IntentionActionWithFixAllOption {
-    override fun getText(): String = KotlinBundle.message("fix.remove.non.null.assertion")
-
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
-        getExclExclPostfixExpression() != null
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val postfixExpression = getExclExclPostfixExpression() ?: return
-        val expression = KtPsiFactory(project).createExpression(postfixExpression.baseExpression!!.text)
-        postfixExpression.replace(expression)
-    }
-
-    private fun getExclExclPostfixExpression(): KtPostfixExpression? {
-        val operationParent = element?.parent
-        if (operationParent is KtPostfixExpression && operationParent.baseExpression != null) {
-            return operationParent
-        }
-        return null
-    }
-
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction = RemoveExclExclCallFix(diagnostic.psiElement)
-    }
-}
-
-class AddExclExclCallFix(psiElement: PsiElement, val checkImplicitReceivers: Boolean) : ExclExclCallFix(psiElement), LowPriorityAction {
-    constructor(psiElement: PsiElement) : this(psiElement, true)
-
+class AddExclExclCallFix(
+    psiElement: PsiElement,
+    val checkImplicitReceivers: Boolean = true
+) : ExclExclCallFix(psiElement), LowPriorityAction {
     override fun getText() = KotlinBundle.message("fix.introduce.non.null.assertion")
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean =
