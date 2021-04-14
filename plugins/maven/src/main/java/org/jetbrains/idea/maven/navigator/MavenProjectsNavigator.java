@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.RunManagerListener;
@@ -19,10 +19,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.wm.RegisterToolWindowTask;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -271,7 +268,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.notClosable(TOOL_WINDOW_ID, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(
+      RegisterToolWindowTask.lazyAndNotClosable(TOOL_WINDOW_ID, new ToolWindowFactory() {
+        @Override
+        public void createToolWindowContent(@NotNull Project project,
+                                            @NotNull ToolWindow toolWindow) {
+        }
+      }, MavenIcons.ToolWindowMaven, ToolWindowAnchor.RIGHT));
+
     ContentManager contentManager = toolWindow.getContentManager();
     Disposer.register(this, () -> {
       // fire content removed events, so subscribers could cleanup caches
