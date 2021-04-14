@@ -37,6 +37,7 @@ import com.intellij.util.ui.update.Update;
 import git4idea.GitContentRevision;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
+import git4idea.status.GitRefreshListener;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -47,6 +48,7 @@ public class GitUntrackedFilesHolder implements Disposable {
 
   private final Project myProject;
   private final VirtualFile myRoot;
+  private final GitRepository myRepository;
 
   private final Set<FilePath> myUntrackedFiles = new HashSet<>();
   private final RecursiveFilePathSet myIgnoredFiles;
@@ -58,6 +60,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   private boolean myInUpdate = false;
 
   GitUntrackedFilesHolder(@NotNull GitRepository repository) {
+    myRepository = repository;
     myProject = repository.getProject();
     myRoot = repository.getRoot();
 
@@ -243,29 +246,36 @@ public class GitUntrackedFilesHolder implements Disposable {
       return;
     }
 
-    RefreshResult result = refreshFiles(dirtyFiles);
-    removePathsUnderOtherRoots(result.untracked, "unversioned");
-    removePathsUnderOtherRoots(result.ignored, "ignored");
+    BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStarted();
+    try {
+      RefreshResult result = refreshFiles(dirtyFiles);
+      removePathsUnderOtherRoots(result.untracked, "unversioned");
+      removePathsUnderOtherRoots(result.ignored, "ignored");
 
-    RecursiveFilePathSet dirtyScope = null;
-    if (dirtyFiles != null) {
-      dirtyScope = new RecursiveFilePathSet(myRoot.isCaseSensitive());
-      dirtyScope.addAll(dirtyFiles);
+      RecursiveFilePathSet dirtyScope = null;
+      if (dirtyFiles != null) {
+        dirtyScope = new RecursiveFilePathSet(myRoot.isCaseSensitive());
+        dirtyScope.addAll(dirtyFiles);
+      }
+
+      Set<FilePath> oldIgnored;
+      List<FilePath> newIgnored;
+      synchronized (LOCK) {
+        oldIgnored = new HashSet<>(myIgnoredFiles.filePaths());
+        applyRefreshResult(result, dirtyScope, oldIgnored);
+        newIgnored = new ArrayList<>(myIgnoredFiles.filePaths());
+
+        myInUpdate = isDirty();
+      }
+
+      BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).repositoryUpdated(myRepository);
+      BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
+      notifyExcludedSynchronizer(oldIgnored, newIgnored);
     }
-
-    Set<FilePath> oldIgnored;
-    List<FilePath> newIgnored;
-    synchronized (LOCK) {
-      oldIgnored = new HashSet<>(myIgnoredFiles.filePaths());
-      applyRefreshResult(result, dirtyScope, oldIgnored);
-      newIgnored = new ArrayList<>(myIgnoredFiles.filePaths());
-
-      myInUpdate = isDirty();
+    finally {
+      BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStopped();
     }
-
-    BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
-    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-    notifyExcludedSynchronizer(oldIgnored, newIgnored);
   }
 
   private void applyRefreshResult(@NotNull RefreshResult result,

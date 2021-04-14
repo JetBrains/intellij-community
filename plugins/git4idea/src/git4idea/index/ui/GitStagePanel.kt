@@ -62,13 +62,13 @@ import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.status.GitChangeProvider
+import git4idea.status.GitRefreshListener
+import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.stream.Collectors
 import javax.swing.JPanel
-import org.jetbrains.annotations.NonNls
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
                              isVertical: Boolean,
@@ -155,11 +155,11 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
-    busConnection.subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())
+    busConnection.subscribe(GitRefreshListener.TOPIC, MyGitChangeProviderListener())
     busConnection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
     commitWorkflowHandler.workflow.addListener(MyCommitWorkflowListener(), this)
 
-    if (GitVcs.getInstance(project).changeProvider?.isRefreshInProgress == true) {
+    if (isRefreshInProgress()) {
       tree.setEmptyText(message("stage.loading.status"))
       progressStripe.startLoadingImmediately()
     }
@@ -168,6 +168,14 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     Disposer.register(disposableParent, this)
 
     runInEdtAsync(this) { update() }
+  }
+
+  private fun isRefreshInProgress(): Boolean {
+    if (GitVcs.getInstance(project).changeProvider!!.isRefreshInProgress) return true
+    return GitRepositoryManager.getInstance(project).repositories.any {
+      it.untrackedFilesHolder.isInUpdateMode ||
+      it.ignoredFilesHolder.isInUpdateMode()
+    }
   }
 
   private fun updateChangesStatusPanel() {
@@ -359,7 +367,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
   }
 
-  interface IncludedRootsListener: EventListener {
+  interface IncludedRootsListener : EventListener {
     fun includedRootsChanged()
   }
 
@@ -369,22 +377,29 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
   }
 
-  private inner class MyGitChangeProviderListener : GitChangeProvider.ChangeProviderListener {
+  private inner class MyGitChangeProviderListener : GitRefreshListener {
     override fun progressStarted() {
       runInEdt(this@GitStagePanel) {
-        tree.setEmptyText(message("stage.loading.status"))
-        progressStripe.startLoading()
+        updateProgressState()
       }
     }
 
     override fun progressStopped() {
       runInEdt(this@GitStagePanel) {
+        updateProgressState()
+      }
+    }
+
+    private fun updateProgressState() {
+      if (isRefreshInProgress()) {
+        tree.setEmptyText(message("stage.loading.status"))
+        progressStripe.startLoading()
+      }
+      else {
         progressStripe.stopLoading()
         tree.setEmptyText("")
       }
     }
-
-    override fun repositoryUpdated(repository: GitRepository) = Unit
   }
 
   private inner class MyChangeListListener : ChangeListListener {
