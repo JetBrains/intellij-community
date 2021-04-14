@@ -29,7 +29,7 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
     }
     List<AnAction> result = new SmartList<>();
     for (TestCreator creator : LanguageTestCreators.INSTANCE.allForLanguage(file.getLanguage())) {
-      result.add(new AnAction() {
+      class Action extends AnAction implements UpdateInBackground {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           creator.createTest(project, editor, file);
@@ -47,7 +47,8 @@ public class GenerateFromTestCreatorsGroup extends ActionGroup {
         public boolean isDumbAware() {
           return DumbService.isDumbAware(creator);
         }
-      });
+      }
+      result.add(new Action());
     }
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
