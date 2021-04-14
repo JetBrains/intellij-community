@@ -1542,6 +1542,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                            boolean checkInfos,
                                            boolean checkWeakWarnings,
                                            boolean ignoreExtraHighlighting) {
+    if (myEditor == null) {
+      throw new IllegalStateException("Fixture is not configured. Call something like configureByFile() or configureByText()");
+    }
     ExpectedHighlightingData data = new ExpectedHighlightingData(
       myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, ignoreExtraHighlighting, myMessageBundles);
     data.init();
