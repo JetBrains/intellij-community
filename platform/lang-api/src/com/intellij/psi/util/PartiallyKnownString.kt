@@ -284,12 +284,17 @@ sealed class StringEntry {
     override fun toString(): String = "StringEntry.Known('$value' at $range in $sourcePsi)"
   }
 
-  class Unknown(override val sourcePsi: PsiElement?, override val range: TextRange) : StringEntry() {
+  class Unknown @JvmOverloads constructor(
+    override val sourcePsi: PsiElement?,
+    override val range: TextRange,
+    @ApiStatus.Internal
+    val possibleValues: Iterable<PartiallyKnownString>? = null
+  ) : StringEntry() {
     override fun toString(): String = "StringEntry.Unknown(at $range in $sourcePsi)"
   }
 
   val host: PsiElement?
-    get() = sourcePsi.takeIf { it.isSuitableHostClass() }  ?: sourcePsi?.parent.takeIf { it.isSuitableHostClass() }
+    get() = sourcePsi.takeIf { it.isSuitableHostClass() } ?: sourcePsi?.parent.takeIf { it.isSuitableHostClass() }
 
   val rangeAlignedToHost: Pair<PsiElement, TextRange>?
     get() {
@@ -304,7 +309,7 @@ sealed class StringEntry {
     }
 
   private fun PsiElement?.isSuitableHostClass(): Boolean =
-    when(this) {
+    when (this) {
       // this is primarily to workaround injections into YAMLKeyValue (which doesn't implement {@code PsiLanguageInjectionHost})
       is ContributedReferenceHost, is PsiLanguageInjectionHost -> true
       else -> false

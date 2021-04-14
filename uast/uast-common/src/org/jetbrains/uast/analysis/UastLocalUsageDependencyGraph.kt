@@ -9,6 +9,8 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiType
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -26,29 +28,12 @@ private val LOG = Logger.getInstance(UastLocalUsageDependencyGraph::class.java)
  * Handles variable assignments and branching
  */
 @ApiStatus.Experimental
-class UastLocalUsageDependencyGraph private constructor(element: UElement) {
-  val dependents: Map<UElement, Set<Dependent>>
+class UastLocalUsageDependencyGraph private constructor(
+  val dependents: Map<UElement, Set<Dependent>>,
   val dependencies: Map<UElement, Set<Dependency>>
-
-  init {
-    val visitor = VisitorWithVariablesTracking(currentDepth = 0)
-    try {
-      element.accept(visitor)
-    }
-    finally {
-      LOG.debug {
-        "graph size: dependants = ${visitor.dependents.asSequence().map { (_, arr) -> arr.size }.sum()}," +
-        " dependencies = ${visitor.dependencies.asSequence().map { (_, arr) -> arr.size }.sum()}"
-      }
-    }
-    dependents = visitor.dependents
-    dependencies = visitor.dependencies
-  }
-
+) {
   companion object {
-    private val DEPENDENCY_GRAPH_KEY = Key.create<CachedValue<UastLocalUsageDependencyGraph>>(
-      "reactor.local.dependency.graph"
-    )
+    private val DEPENDENCY_GRAPH_KEY = Key.create<CachedValue<UastLocalUsageDependencyGraph>>("uast.local.dependency.graph")
 
     /**
      * Creates or takes from cache of [element] dependency graph
@@ -58,13 +43,120 @@ class UastLocalUsageDependencyGraph private constructor(element: UElement) {
       val sourcePsi = element.sourcePsi ?: return null
       return CachedValuesManager.getCachedValue(sourcePsi, DEPENDENCY_GRAPH_KEY) {
         val graph = try {
-          UastLocalUsageDependencyGraph(sourcePsi.toUElement()!!)
+          buildFromElement(sourcePsi.toUElement()!!)
         }
         catch (e: VisitorWithVariablesTracking.Companion.BuildOverflowException) {
           null
         }
         CachedValueProvider.Result.create(graph, PsiModificationTracker.MODIFICATION_COUNT)
       }
+    }
+
+    private fun buildFromElement(element: UElement): UastLocalUsageDependencyGraph {
+      val visitor = VisitorWithVariablesTracking(currentDepth = 0)
+      try {
+        element.accept(visitor)
+      }
+      finally {
+        LOG.debug {
+          "graph size: dependants = ${visitor.dependents.asSequence().map { (_, arr) -> arr.size }.sum()}," +
+          " dependencies = ${visitor.dependencies.asSequence().map { (_, arr) -> arr.size }.sum()}"
+        }
+      }
+      return UastLocalUsageDependencyGraph(visitor.dependents, visitor.dependencies)
+    }
+
+    /**
+     * Connects [method] graph with [callerGraph] graph and provides connections from [uCallExpression].
+     * This graph may has cycles. To proper handle them, use [Dependency.ConnectionDependency].
+     * It is useful to analyse methods call hierarchy.
+     */
+    @JvmStatic
+    fun connectMethodWithCaller(method: UMethod, callerGraph: UastLocalUsageDependencyGraph, uCallExpression: UCallExpression): UastLocalUsageDependencyGraph? {
+      val methodGraph = getGraphByUElement(method) ?: return null
+
+      val parametersToValues = method.uastParameters.mapIndexedNotNull { paramIndex, param ->
+        uCallExpression.getArgumentForParameter(paramIndex)?.let { param to it }
+      }.toMap()
+
+      val methodAndCallerMaps = MethodAndCallerMaps(method, parametersToValues, methodGraph, callerGraph)
+      // TODO: handle user data holders
+      return UastLocalUsageDependencyGraph(
+        dependents = methodAndCallerMaps.dependentsMap,
+        dependencies = methodAndCallerMaps.dependenciesMap
+      )
+    }
+  }
+
+  private class MethodAndCallerMaps(
+    method: UMethod,
+    argumentValues: Map<UParameter, UExpression>,
+    private val methodGraph: UastLocalUsageDependencyGraph,
+    private val callerGraph: UastLocalUsageDependencyGraph
+  ) {
+    private val parameterUsagesDependencies: Map<UElement, Set<Dependency>>
+    private val parameterValueDependents: Map<UElement, Set<Dependent>>
+
+    init {
+      val parameterUsagesDependencies = mutableMapOf<UElement, MutableSet<Dependency>>()
+      val parameterValueDependents = mutableMapOf<UElement, MutableSet<Dependent>>()
+
+      val searchScope = LocalSearchScope(method.sourcePsi!!)
+      for ((parameter, value) in argumentValues) {
+        val parameterValueAsDependency =  Dependency.ConnectionDependency(value.extractBranchesResultAsDependency(), callerGraph)
+        for (reference in ReferencesSearch.search(parameter.sourcePsi!!, searchScope).asSequence().mapNotNull { it.element.toUElement() }) {
+          parameterUsagesDependencies[reference] = mutableSetOf(parameterValueAsDependency)
+          val referenceAsDependent = Dependent.CommonDependent(reference)
+          for (valueElement in parameterValueAsDependency.elements) {
+            parameterValueDependents.getOrPut(valueElement) { HashSet() }.add(referenceAsDependent)
+          }
+        }
+      }
+
+      this.parameterUsagesDependencies = parameterUsagesDependencies
+      this.parameterValueDependents = parameterValueDependents
+    }
+
+    val dependenciesMap: Map<UElement, Set<Dependency>>
+      get() = MergedMaps(callerGraph.dependencies, methodGraph.dependencies, parameterUsagesDependencies)
+
+    val dependentsMap: Map<UElement, Set<Dependent>>
+      get() = MergedMaps(callerGraph.dependents, methodGraph.dependents, parameterValueDependents)
+
+    private class MergedMaps<T>(val first: Map<UElement, Set<T>>, val second: Map<UElement, Set<T>>, val connection: Map<UElement, Set<T>>): Map<UElement, Set<T>> {
+      override val entries: Set<Map.Entry<UElement, Set<T>>>
+        get() = HashSet<Map.Entry<UElement, Set<T>>>().apply {
+          addAll(first.entries)
+          addAll(second.entries)
+          addAll(connection.entries)
+        }
+
+      override val keys: Set<UElement>
+        get() = HashSet<UElement>().apply {
+          addAll(first.keys)
+          addAll(second.keys)
+          addAll(connection.keys)
+        }
+
+      // not exact size
+      override val size: Int
+        get() = first.size + second.size + connection.size
+
+      override val values: Collection<Set<T>>
+        get() = ArrayList<Set<T>>().apply {
+          addAll(first.values)
+          addAll(second.values)
+          addAll(connection.values)
+        }
+
+      override fun containsKey(key: UElement): Boolean = key in connection || key in first || key in second
+
+      override fun containsValue(value: Set<T>): Boolean =
+        connection.containsValue(value) || first.containsValue(value) || second.containsValue(value)
+
+      override fun get(key: UElement): Set<T>? = connection[key] ?: first[key] ?: second[key]
+
+      override fun isEmpty(): Boolean = first.isEmpty() || second.isEmpty() || connection.isEmpty()
     }
   }
 }
@@ -178,7 +270,9 @@ private class VisitorWithVariablesTracking(
     if (node.uastParent is UReferenceExpression && (node.uastParent as? UQualifiedReferenceExpression)?.receiver != node)
       return@checkedDepthCall true
 
-    currentScope[node.identifier]?.let { registerDependency(Dependent.CommonDependent(node), Dependency.BranchingDependency(it)) }
+    currentScope[node.identifier]?.let {
+      registerDependency(Dependent.CommonDependent(node), Dependency.BranchingDependency(it).unwrapIfSingle())
+    }
     return@checkedDepthCall super.visitSimpleNameReferenceExpression(node)
   }
 
@@ -237,11 +331,11 @@ private class VisitorWithVariablesTracking(
     }
 
     val firstExpression = (node.expressions.first() as? UDeclarationsExpression)
-      ?.declarations
-      ?.first()
-      ?.castSafelyTo<ULocalVariable>()
-      ?.uastInitializer
-      ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
+                            ?.declarations
+                            ?.first()
+                            ?.castSafelyTo<ULocalVariable>()
+                            ?.uastInitializer
+                            ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
     val ifExpression = node.expressions.getOrNull(1)
                          ?.extractBranchesResultAsDependency() ?: return@checkedDepthCall super.visitExpressionList(node)
 
@@ -394,10 +488,7 @@ private val UExpression.lastExpression: UExpression?
     is UExpressionList -> this.expressions.lastOrNull()
     else -> this
   }?.let { expression ->
-    when(expression) {
-      is UYieldExpression -> expression.expression
-      else -> expression
-    }
+    if (expression is UYieldExpression) expression.expression else expression
   }
 
 sealed class Dependent : UserDataHolderBase() {
@@ -432,7 +523,27 @@ sealed class Dependency : UserDataHolderBase() {
     override val elements = setOf(element)
   }
 
-  data class BranchingDependency(override val elements: Set<UElement>) : Dependency()
+  data class BranchingDependency(override val elements: Set<UElement>) : Dependency() {
+    fun unwrapIfSingle(): Dependency =
+      if (elements.size == 1) {
+        CommonDependency(elements.single())
+      }
+      else {
+        this
+      }
+  }
+
+  /**
+   * To handle cycles properly do not get [UastLocalUsageDependencyGraph.dependencies] from original graph, use [connectedGraph] instead.
+   */
+  data class ConnectionDependency(val dependencyFromConnectedGraph: Dependency, val connectedGraph: UastLocalUsageDependencyGraph) : Dependency() {
+    init {
+      require(dependencyFromConnectedGraph !is ConnectionDependency) { "Connect via ${dependencyFromConnectedGraph.javaClass.simpleName} does not make sense" }
+    }
+
+    override val elements: Set<UElement>
+      get() = dependencyFromConnectedGraph.elements
+  }
 
   fun and(other: Dependency): Dependency {
     return BranchingDependency(elements + other.elements)
@@ -502,7 +613,6 @@ private class LocalScopeContext(private val parent: LocalScopeContext?) {
     for (variable in variables) {
       this[variable] = HashSet<UElement>().apply {
         for (other in others) {
-          other[variable]?.let { addAll(it) }
           other[variable]?.let { addAll(it) }
         }
       }
