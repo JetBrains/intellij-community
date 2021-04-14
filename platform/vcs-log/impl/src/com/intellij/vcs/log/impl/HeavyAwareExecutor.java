@@ -21,8 +21,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
-
 public class HeavyAwareExecutor implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final ListeningExecutorService myExecutorService;
@@ -57,17 +55,19 @@ public class HeavyAwareExecutor implements Disposable {
   public Future<?> executeOutOfHeavyOrPowerSave(@NotNull Consumer<? super ProgressIndicator> task,
                                                 @NotNull ProgressIndicator indicator) {
     ExecutingHeavyOrPowerSaveListener executingListener = new ExecutingHeavyOrPowerSaveListener(myProject, myDelayMs, this, () -> {
-      ListenableFuture<?> future = myExecutorService.submit(() -> {
-        ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator);
-      });
+      ListenableFuture<?> future = myExecutorService.submit(() ->
+          ProgressManager.getInstance().runProcess(() -> task.consume(indicator), indicator));
 
       Disposable disposable = Disposer.newDisposable();
-      future.addListener(() -> Disposer.dispose(disposable), directExecutor());
+      future.addListener(() -> Disposer.dispose(disposable), MoreExecutors.directExecutor());
 
-      new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
+      CancellingOnHeavyOrPowerSaveListener listener =
+        new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
+      HeavyProcessLatch.INSTANCE.addListener(disposable, listener);
+
       return future;
     });
-    return Futures.transformAsync(executingListener.getFuture(), input -> input, directExecutor());
+    return Futures.transformAsync(executingListener.getFuture(), input -> input, MoreExecutors.directExecutor());
   }
 
   @Override
@@ -81,7 +81,7 @@ public class HeavyAwareExecutor implements Disposable {
    * @param delayMs delay in milliseconds to wait after a heavy activity is finished
    */
   public static void executeOutOfHeavyProcessLater(@NotNull Runnable command, int delayMs) {
-    HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
+    HeavyProcessLatch.INSTANCE.queueExecuteOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         executeOutOfHeavyProcessLater(command, delayMs);
       }
@@ -91,11 +91,11 @@ public class HeavyAwareExecutor implements Disposable {
     }, delayMs, TimeUnit.MILLISECONDS));
   }
 
-  private static class CancellingOnHeavyOrPowerSaveListener implements HeavyProcessLatch.HeavyProcessListener, PowerSaveMode.Listener {
+  private static class CancellingOnHeavyOrPowerSaveListener implements HeavyProcessLatch.HeavyProcessListener {
     @NotNull private final ProgressIndicator myIndicator;
     private final int myLongActivityDurationMs;
 
-    @Nullable private ScheduledFuture<?> myFuture = null;
+    @Nullable private ScheduledFuture<?> myFuture;
 
     CancellingOnHeavyOrPowerSaveListener(@NotNull Project project,
                                          @NotNull ProgressIndicator indicator,
@@ -104,8 +104,7 @@ public class HeavyAwareExecutor implements Disposable {
       myIndicator = indicator;
       myLongActivityDurationMs = logActivityDurationMs;
 
-      HeavyProcessLatch.INSTANCE.addListener(this, disposable);
-      project.getMessageBus().connect(disposable).subscribe(PowerSaveMode.TOPIC, this);
+      project.getMessageBus().connect(disposable).subscribe(PowerSaveMode.TOPIC, () -> powerSaveStateChanged());
 
       scheduleCancel(); // in case some sneaky heavy process started before we managed to add a listener
       powerSaveStateChanged(); // or if power save mode was suddenly turned on
@@ -121,9 +120,10 @@ public class HeavyAwareExecutor implements Disposable {
       doNotCancel();
     }
 
-    @Override
-    public void powerSaveStateChanged() {
-      if (PowerSaveMode.isEnabled() && myIndicator.isRunning()) myIndicator.cancel();
+    void powerSaveStateChanged() {
+      if (PowerSaveMode.isEnabled() && myIndicator.isRunning()) {
+        myIndicator.cancel();
+      }
     }
 
     private synchronized void scheduleCancel() {
@@ -172,7 +172,7 @@ public class HeavyAwareExecutor implements Disposable {
 
     private void tryRun() {
       if (!PowerSaveMode.isEnabled()) {
-        HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
+        HeavyProcessLatch.INSTANCE.queueExecuteOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
           if (!HeavyProcessLatch.INSTANCE.isRunning() && !PowerSaveMode.isEnabled()) {
             Disposer.dispose(this);
 
@@ -188,7 +188,7 @@ public class HeavyAwareExecutor implements Disposable {
       }
     }
 
-    private void runTask(@NotNull Computable<ListenableFuture<?>> task) {
+    private void runTask(@NotNull Computable<? extends ListenableFuture<?>> task) {
       try {
         myFuture.set(task.compute());
       }

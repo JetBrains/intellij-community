@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -303,12 +302,17 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     int finalGlobalModCount = globalModCount;
 
-    try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("This test wants no indices flush")) {
+    HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "This test wants no indices flush", ()-> {
       WriteAction.runAndWait(() -> {
         long timestamp = vFile.getTimeStamp();
         int finalInSessionModCount = managingFS.getModificationCount();
-        vFile.setWritable(true);  // 1 change
-        vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
+        try {
+          vFile.setWritable(true);  // 1 change
+          vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
 
         // we check in write action to avoid observing background thread to index stuff
         int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
@@ -317,7 +321,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
         assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
         assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
       });
-    }
+    });
   }
 
   @Test

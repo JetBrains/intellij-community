@@ -244,14 +244,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
-      Map.Entry<@Nls String, HeavyProcessLatch.Type> processEntry = HeavyProcessLatch.INSTANCE.getRunningOperation();
-      if (processEntry != null) {
-        status.reasonWhySuspended = processEntry.getKey();
-        status.heavyProcessType = processEntry.getValue();
-      }
-      else {
+      HeavyProcessLatch.Operation op = HeavyProcessLatch.INSTANCE.getAnyRunningOperation();
+      if (op == null) {
         status.reasonWhySuspended = DaemonBundle.message("process.title.heavy.operation.is.running");
         status.heavyProcessType = HeavyProcessLatch.Type.Processing;
+      }
+      else {
+        status.reasonWhySuspended = op.getDisplayName();
+        status.heavyProcessType = op.getType();
       }
       status.errorAnalyzingFinished = true;
       return status;

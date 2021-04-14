@@ -896,7 +896,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           hasPasses |= dumbAwarePasses.length != 0;
         }
         if (!hasPasses) {
-          HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() ->
+          HeavyProcessLatch.INSTANCE.queueExecuteOutOfHeavyProcess(() ->
             dca.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
           return;
         }

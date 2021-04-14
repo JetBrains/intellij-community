@@ -46,7 +46,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -113,10 +112,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1718,14 +1714,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
         runHeavyProcessing = true;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("my own heavy op");
-          try {
+          HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Processing, "my own heavy op", ()-> {
             while (runHeavyProcessing) {
             }
-          }
-          finally {
-            token.finish();
-          }
+          });
         });
         while (!HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
