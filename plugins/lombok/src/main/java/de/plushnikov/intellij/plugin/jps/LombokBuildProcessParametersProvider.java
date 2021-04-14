@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class LombokBuildProcessParametersProvider extends BuildProcessParametersProvider {
@@ -22,6 +23,10 @@ public final class LombokBuildProcessParametersProvider extends BuildProcessPara
 
   @Override
   public @NotNull List<String> getVMArguments() {
+    if(!LombokLibraryUtil.hasLombokLibrary(myProject)) {
+      return Collections.emptyList();
+    }
+
     List<String> result = new ArrayList<>();
 
     final String lombokVersion = LombokLibraryUtil.getLombokVersionCached(myProject);
