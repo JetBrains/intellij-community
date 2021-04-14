@@ -784,7 +784,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
           return constructor.newInstance(getActualContainerInstance()) as T
         }
         else {
-          return constructor.newInstance() as T
+          @Suppress("UNCHECKED_CAST")
+          return MethodHandles.privateLookupIn(aClass, methodLookup).unreflectConstructor(constructor).invoke() as T
         }
       }
     }
