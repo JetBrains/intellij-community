@@ -141,4 +141,32 @@ class MavenImportingConnectorsTest : MavenImportingTestCase() {
   }
 
 
+  fun testShouldNotCreateNewConnectorsIfProjectRootIsInSiblingDir() {
+    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
+                     "<artifactId>project1</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+                     "<modules>" +
+                     "<module>../m1</module>" +
+                     " </modules>")
+    createModulePom("m1", "<parent>\n" +
+                          "    <groupId>test</groupId>\n" +
+                          "    <artifactId>project1</artifactId>\n" +
+                          "    <version>1</version>\n" +
+                          "    <relativePath>../parent/pom.xml</relativePath>\n" +
+                          "  </parent>")
+    importProject()
+    assertModules("project1", "m1")
+
+    assertEquals(1, MavenServerManager.getInstance().allConnectors.size);
+
+    assertUnorderedElementsAreEqual(
+      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
+        FileUtil.getRelativePath(myDir, File(it))
+      }.map { it?.replace("\\", "/") },
+      listOf("project/parent", "project/m1")
+    )
+  }
+
+
 }
