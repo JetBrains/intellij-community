@@ -4,6 +4,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
@@ -928,23 +929,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
     // fix predefined row height if default system font size is not expected
-    float prevRowHeightScale = prevScaleVal != null || SystemInfo.isMac || SystemInfo.isWindows
+    float prevRowHeightScale = prevScaleVal != null || SystemInfoRt.isMac || SystemInfoRt.isWindows
                                ? prevScale
                                : JBUIScale.getFontScale(12f);
     patchRowHeight(defaults, "List.rowHeight", prevRowHeightScale);
     patchRowHeight(defaults, "Table.rowHeight", prevRowHeightScale);
     patchRowHeight(defaults, "Tree.rowHeight", prevRowHeightScale);
 
-    if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) return;
+    if (prevScale == JBUIScale.scale(1f) && prevScaleVal != null) {
+      return;
+    }
 
-    List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent",
-                                           "SettingsTree.rowHeight");
+    Set<String> myIntKeys = Set.of("Tree.leftChildIndent", "Tree.rightChildIndent", "SettingsTree.rowHeight");
 
-    List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
-                                                 "Slider.verticalSize",
-                                                 "Slider.minimumHorizontalSize",
-                                                 "Slider.minimumVerticalSize");
+    Set<String> myDimensionKeys = Set.of("Slider.horizontalSize",
+                                         "Slider.verticalSize",
+                                         "Slider.minimumHorizontalSize",
+                                         "Slider.minimumVerticalSize");
 
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
@@ -978,7 +979,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     else if (rowHeight <= 0) {
       LOG.warn(key + " = " + value + " in " + UIManager.getLookAndFeel().getName() + "; it may lead to performance degradation");
     }
-    int custom = Registry.intValue("ide.override." + key, -1);
+    int custom = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("ide.override." + key, -1) : -1;
     defaults.put(key, custom >= 0 ? custom : rowHeight <= 0 ? 0 : JBUIScale.scale((int)(rowHeight / prevScale)));
   }
 
