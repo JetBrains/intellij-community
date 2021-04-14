@@ -1,37 +1,29 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2000-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.formatter;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider;
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import kotlin.collections.ArraysKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
 import org.jetbrains.kotlin.idea.util.ReflectionUtil;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("UnnecessaryFinalOnLocalVariableOrParameter")
 public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     @ReflectionUtil.SkipInEquals
     public String CODE_STYLE_DEFAULTS = null;
@@ -52,7 +44,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
         if (isTempForDeserialize) {
             super.readExternal(element);
             return;
@@ -63,7 +55,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
 
         FormatterUtilKt.applyKotlinCodeStyle(tempDeserialize.CODE_STYLE_DEFAULTS, this, true);
 
-        readExternalBase(element);
+        super.readExternal(element);
     }
 
     @Override
@@ -71,28 +63,31 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
         CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
         FormatterUtilKt.applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
 
-        writeExternalBase(element, defaultSettings);
+        writeExternalBase(element, defaultSettings, provider);
     }
 
     //<editor-fold desc="Copied and adapted from CommonCodeStyleSettings ">
-    private void readExternalBase(Element element) throws InvalidDataException {
-        super.readExternal(element);
-    }
-
-    private void writeExternalBase(Element element, CommonCodeStyleSettings defaultSettings) throws WriteExternalException {
-        Set<String> supportedFields = getSupportedFields();
+    private void writeExternalBase(
+            @NotNull Element element,
+            @NotNull CommonCodeStyleSettings defaultSettings,
+            @NotNull LanguageCodeStyleProvider provider
+    ) {
+        Set<String> supportedFields = provider.getSupportedFields();
         if (supportedFields != null) {
             supportedFields.add("FORCE_REARRANGE_MODE");
             supportedFields.add("CODE_STYLE_DEFAULTS");
+        } else {
+            return;
         }
+
         //noinspection deprecation
-        DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
+        DefaultJDOMExternalizer.write(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
         List<Integer> softMargins = getSoftMargins();
         serializeInto(softMargins, element);
 
         IndentOptions myIndentOptions = getIndentOptions();
         if (myIndentOptions != null) {
-            IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
+            IndentOptions defaultIndentOptions = defaultSettings.getIndentOptions();
             Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
             myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
             if (!indentOptionsElement.getChildren().isEmpty()) {
@@ -103,7 +98,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
         ArrangementSettings myArrangementSettings = getArrangementSettings();
         if (myArrangementSettings != null) {
             Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-            ArrangementUtil.writeExternal(container, myArrangementSettings, myLanguage);
+            ArrangementUtil.writeExternal(container, myArrangementSettings, provider.getLanguage());
             if (!container.getChildren().isEmpty()) {
                 element.addContent(container);
             }
@@ -113,8 +108,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     @Override
     public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
         KotlinCommonCodeStyleSettings commonSettings = new KotlinCommonCodeStyleSettings();
-
-        copyPublicFieldsOwn(this, commonSettings);
+        copyPublicFields(this, commonSettings);
 
         try {
             Method setRootSettingsMethod = CommonCodeStyleSettings.class.getDeclaredMethod("setRootSettings", CodeStyleSettings.class);
@@ -189,41 +183,5 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     //<editor-fold desc="Copied from CommonCodeStyleSettings">
     private static final String INDENT_OPTIONS_TAG = "indentOptions";
     private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
-
-    private final Language myLanguage = KotlinLanguage.INSTANCE;
-
-    @Nullable
-    private Set<String> getSupportedFields() {
-        final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
-        return provider == null ? null : provider.getSupportedFields();
-    }
-
-    private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
-        private final Set<String> mySupportedFieldNames;
-
-        private SupportedFieldsDiffFilter(
-                final CommonCodeStyleSettings object,
-                Set<String> supportedFiledNames,
-                final CommonCodeStyleSettings parentObject
-        ) {
-            super(object, parentObject);
-            mySupportedFieldNames = supportedFiledNames;
-        }
-
-        @Override
-        public boolean isAccept(@NotNull Field field) {
-            if (mySupportedFieldNames == null ||
-                mySupportedFieldNames.contains(field.getName())) {
-                return super.isAccept(field);
-            }
-            return false;
-        }
-    }
-
-    // Can't use super.copyPublicFields because the method is internal in 181
-    private static void copyPublicFieldsOwn(Object from, Object to) {
-        assert from != to;
-        com.intellij.util.ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
-    }
     //</editor-fold>
 }
