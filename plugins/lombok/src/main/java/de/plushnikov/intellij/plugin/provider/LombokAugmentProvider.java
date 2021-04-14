@@ -111,11 +111,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   private static <Psi extends PsiElement> List<Psi> getPsis(PsiClass psiClass, Class<Psi> type, String nameHint) {
     final List<Psi> result = new ArrayList<>();
     for (Processor processor : LombokProcessorManager.getProcessors(type)) {
-      if (processor.notNameHintIsEqualToSupportedAnnotation(nameHint)) {
-        final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
-        for (Object psiElement : generatedElements) {
-          result.add((Psi) psiElement);
-        }
+      final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
+      for (Object psiElement : generatedElements) {
+        result.add((Psi) psiElement);
       }
     }
     return result;

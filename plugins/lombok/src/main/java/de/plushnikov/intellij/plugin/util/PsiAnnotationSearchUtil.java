@@ -40,7 +40,8 @@ public class PsiAnnotationSearchUtil {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
   }
 
-  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationNames) {
+  public static List<PsiAnnotation> findAllAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                       @NotNull Collection<String> annotationNames) {
     List<PsiAnnotation> result = Collections.emptyList();
 
     final PsiModifierList psiModifierList = listOwner.getModifierList();
@@ -73,5 +74,26 @@ public class PsiAnnotationSearchUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PsiAnnotation findAnnotationByShortNameOnly(@NotNull PsiModifierListOwner psiModifierListOwner,
+                                                            String @NotNull ... annotationFQNs) {
+    if (annotationFQNs.length > 0) {
+      Collection<String> possibleShortNames = ContainerUtil.map(annotationFQNs, StringUtil::getShortName);
+
+      for (PsiAnnotation psiAnnotation : psiModifierListOwner.getAnnotations()) {
+        String shortNameOfAnnotation = getShortNameOf(psiAnnotation);
+        if(possibleShortNames.contains(shortNameOfAnnotation)) {
+          return psiAnnotation;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean checkAnnotationHasOneOfFQNs(@NotNull PsiAnnotation psiAnnotation,
+                                                    String @NotNull ... annotationFQNs) {
+    return ContainerUtil.or(annotationFQNs, psiAnnotation::hasQualifiedName);
   }
 }

@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,15 +23,13 @@ import java.util.Objects;
  */
 public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
-  private static final String BUILDER_SHORT_NAME = StringUtil.getShortName(LombokClassNames.BUILDER);
-
   public BuilderClassMethodProcessor() {
     super(PsiClass.class, LombokClassNames.BUILDER);
   }
 
   @Override
-  public boolean notNameHintIsEqualToSupportedAnnotation(@Nullable String nameHint) {
-    return !"lombok".equals(nameHint) && !BUILDER_SHORT_NAME.equals(nameHint);
+  protected boolean checkAnnotationFQN(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod) {
+    return getHandler().checkAnnotationFQN(psiClass, psiAnnotation, psiMethod);
   }
 
   @Override
