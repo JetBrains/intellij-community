@@ -110,7 +110,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @NotNull
-  static List<ProgressIndicator> getCurrentIndicators() {
+  @ApiStatus.Internal
+  public static List<ProgressIndicator> getCurrentIndicators() {
     synchronized (threadsUnderIndicator) {
       return new ArrayList<>(threadsUnderIndicator.keySet());
     }
