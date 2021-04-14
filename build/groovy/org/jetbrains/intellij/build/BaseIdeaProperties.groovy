@@ -58,7 +58,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
     "intellij.webp",
-    "intellij.lombok"
     /* Disabled in Android Studio
     "intellij.android.plugin",
     "intellij.android.smali",
@@ -69,6 +68,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.gradle.java.maven",
     "intellij.grazie",
     "intellij.javaFX.community",
+    "intellij.lombok"
     "intellij.markdown"
     "intellij.maven",
     "intellij.java.guiForms.designer",
