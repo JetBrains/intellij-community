@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -149,7 +149,6 @@ internal object UpdateInstaller {
   fun preparePatchCommand(patchFiles: List<File>, indicator: ProgressIndicator): Array<String> {
     indicator.text = IdeBundle.message("update.preparing.patch.progress")
 
-    val log4j = findLib("log4j.jar")
     val jna = findLib("jna.jar")
     val jnaUtils = findLib("jna-platform.jar")
 
@@ -161,7 +160,6 @@ internal object UpdateInstaller {
       throw IOException("Cannot create temp directory: $tempDir")
     }
 
-    val log4jCopy = log4j.copyTo(File(tempDir, log4j.name), true)
     val jnaCopy = jna.copyTo(File(tempDir, jna.name), true)
     val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
 
@@ -199,7 +197,7 @@ internal object UpdateInstaller {
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
     args += "-Xmx${mx}m"
     args += "-cp"
-    args += arrayOf(patchFiles.last().path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
+    args += arrayOf(patchFiles.last().path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 
     args += "-Djna.nosys=true"
     args += "-Djna.boot.library.path="
