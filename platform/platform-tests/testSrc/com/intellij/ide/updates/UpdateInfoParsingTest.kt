@@ -4,8 +4,7 @@ package com.intellij.ide.updates
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.updateSettings.impl.parseUpdateData
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.IOException
@@ -117,5 +116,21 @@ class UpdateInfoParsingTest {
         </products>""".trimIndent(), "IU")!!.channels[0].builds[0]
     assertEquals("162.100.1", buildInfo.number.asStringWithoutProductCode())
     assertEquals("162.99.2", buildInfo.patches[0].fromBuild.asStringWithoutProductCode())
+  }
+
+  @Test
+  fun disableMachineId() {
+    val product = parseUpdateData("""
+      <products>
+        <product name="IntelliJ IDEA" disableMachineId="true">
+          <code>IU</code>
+          <channel id="IDEA_EAP" status="eap">
+            <build number="162.100" fullNumber="162.100.1" version="2016.2">
+               <patch from="162.99" fullFrom="162.99.2" size="1"/>
+            </build>
+          </channel>
+        </product>
+      </products>""".trimIndent(), "IU")!!
+    assertTrue(product.disableMachineId)
   }
 }

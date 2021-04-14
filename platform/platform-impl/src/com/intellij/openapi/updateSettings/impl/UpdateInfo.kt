@@ -27,6 +27,7 @@ fun parseUpdateData(node: Element, productCode: String = ApplicationInfo.getInst
 class Product internal constructor(node: Element, private val productCode: String) {
   val name: @NlsSafe String = node.getMandatoryAttributeValue("name")
   val channels: List<UpdateChannel> = node.getChildren("channel").map { UpdateChannel(it, productCode) }
+  val disableMachineId: Boolean = node.getAttributeValue("disableMachineId", "false") == "true"
 
   override fun toString(): String = productCode
 }
