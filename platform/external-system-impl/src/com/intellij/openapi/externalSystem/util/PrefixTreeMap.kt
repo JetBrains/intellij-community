@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.util.containers.FList
+import java.util.*
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -113,11 +114,11 @@ internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
     fun getEntries(): Sequence<Map.Entry<FList<K>, V>> {
       return sequence {
         if (value.isPresent) {
-          yield(java.util.Map.entry(FList.emptyList(), value.get()))
+          yield(AbstractMap.SimpleImmutableEntry(FList.emptyList(), value.get()))
         }
         for ((key, child) in children) {
           for ((path, value) in child.getEntries()) {
-            yield(java.util.Map.entry(path.prepend(key), value))
+            yield(AbstractMap.SimpleImmutableEntry(path.prepend(key), value))
           }
         }
       }
@@ -142,10 +143,12 @@ internal class PrefixTreeMap<K, V> : Map<List<K>, V> {
     }
   }
 
-  private class Value<out T> private constructor(val isPresent: Boolean, private val value: Any?) {
+  private class Value<out T : Any?> private constructor(val isPresent: Boolean, private val value: Any?) {
     fun get(): T {
       @Suppress("UNCHECKED_CAST")
-      if (isPresent) return value as T
+      if (isPresent) {
+        return value as T
+      }
       throw NoSuchElementException("No value present")
     }
 
