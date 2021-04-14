@@ -79,8 +79,6 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
 
-  public abstract void queueActionPerformedEvent(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event);
-
   public abstract boolean isActionPopupStackEmpty();
 
   public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {

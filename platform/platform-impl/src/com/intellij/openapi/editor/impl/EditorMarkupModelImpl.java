@@ -1555,7 +1555,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
             ActionUtil.performAction(action, event);
 
-            manager.queueActionPerformedEvent(action, context, event);
+            manager.fireAfterActionPerformed(action, context, event);
             ActionsCollector.getInstance().record(event.getProject(), action, event, null);
 
             ActionToolbar toolbar = ActionToolbar.findToolbarBy(StatusButton.this);

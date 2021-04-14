@@ -1469,13 +1469,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @Override
-  public void queueActionPerformedEvent(@NotNull final AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
-    if (myPopups.isEmpty()) {
-      fireAfterActionPerformed(action, context, event);
-    }
-  }
-
   public boolean isToolWindowContextMenuVisible() {
     for (Object popup : myPopups) {
       if (popup instanceof ActionPopupMenuImpl &&
@@ -1753,7 +1746,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
         ActionUtil.performActionDumbAware(action, event);
         result.setDone();
-        queueActionPerformedEvent(action, context, event);
+        fireAfterActionPerformed(action, context, event);
       });
     }, ModalityState.defaultModalityState());
   }
