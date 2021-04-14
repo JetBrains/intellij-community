@@ -230,7 +230,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
         String[] command;
         try {
           if (myTestPatch != null) {
-            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
+            command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
           }
           else {
             List<File> files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);

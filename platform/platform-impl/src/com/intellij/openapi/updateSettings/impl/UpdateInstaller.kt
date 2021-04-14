@@ -22,7 +22,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.JComponent
@@ -141,11 +141,6 @@ internal object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun preparePatchCommand(patchFile: File, indicator: ProgressIndicator): Array<String> =
-    preparePatchCommand(listOf(patchFile), indicator)
-
-  @JvmStatic
-  @Throws(IOException::class)
   fun preparePatchCommand(patchFiles: List<File>, indicator: ProgressIndicator): Array<String> {
     indicator.text = IdeBundle.message("update.preparing.patch.progress")
 
@@ -164,8 +159,8 @@ internal object UpdateInstaller {
     val jnaUtilsCopy = jnaUtils.copyTo(File(tempDir, jnaUtils.name), true)
 
     var java = System.getProperty("java.home")
-    val jrePath = Paths.get(java)
-    val idePath = Paths.get(PathManager.getHomePath()).toRealPath()
+    val jrePath = Path.of(java)
+    val idePath = Path.of(PathManager.getHomePath()).toRealPath()
     if (jrePath.startsWith(idePath)) {
       val javaCopy = File(tempDir, "jre")
       if (javaCopy.exists()) FileUtil.delete(javaCopy)
@@ -183,7 +178,7 @@ internal object UpdateInstaller {
 
     val args = mutableListOf<String>()
 
-    if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
+    if (SystemInfo.isWindows && !Files.isWritable(Path.of(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null && Files.isExecutable(launcher) && Files.isExecutable(elevator)) {
@@ -226,8 +221,8 @@ internal object UpdateInstaller {
 
   private fun getJdkSuffix(): String = when {
     SystemInfo.isMac && CpuArch.isArm64() -> "-jbr11-aarch64"
-    !SystemInfo.isMac && Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
-    Files.isDirectory(Paths.get(PathManager.getHomePath(), "jbr")) -> "-jbr11"
+    !SystemInfo.isMac && Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr-x86")) -> "-jbr11-x86"
+    Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-jbr11"
     else -> "-no-jbr"
   }
 }

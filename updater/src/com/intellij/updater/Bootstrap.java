@@ -98,15 +98,12 @@ public class Bootstrap {
     return new URL("x-in-memory", null, -1, "/", new URLStreamHandler() {
       @Override
       protected URLConnection openConnection(URL u) throws IOException {
-        final byte[] data = classes.get(u.getFile());
-        if (data == null) {
-          throw new FileNotFoundException(u.getFile());
-        }
+        byte[] data = classes.get(u.getFile());
+        if (data == null) throw new FileNotFoundException(u.getFile());
 
         return new URLConnection(u) {
           @Override
-          public void connect() {
-          }
+          public void connect() { }
 
           @Override
           public InputStream getInputStream() {
