@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.File;
@@ -15,16 +15,18 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import static com.intellij.updater.Runner.LOG;
+
 public class PatchFileCreator {
   private static final String PATCH_INFO_FILE_NAME = ".patch-info";
 
   public static Patch create(PatchSpec spec, File patchFile, UpdaterUI ui) throws IOException {
-    Runner.logger().info("Creating the patch file '" + patchFile + "'...");
+    LOG.info("Creating the patch file '" + patchFile + "'...");
     ui.startProcess("Creating the patch file '" + patchFile + "'...");
 
     Patch patchInfo = new Patch(spec, ui);
 
-    Runner.logger().info("Packing entries...");
+    LOG.info("Packing entries...");
     ui.startProcess("Packing entries...");
 
     List<PatchAction> actions = patchInfo.getActions();
@@ -51,13 +53,13 @@ public class PatchFileCreator {
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(patchFile))) {
       out.setLevel(9);
 
-      Runner.logger().info("Packing " + PATCH_INFO_FILE_NAME);
+      LOG.info("Packing " + PATCH_INFO_FILE_NAME);
       out.putNextEntry(new ZipEntry(PATCH_INFO_FILE_NAME));
       patchInfo.write(out);
       out.closeEntry();
 
       for (PatchAction action : actions) {
-        Runner.logger().info("Packing " + action.getPath());
+        LOG.info("Packing " + action.getPath());
         Future<Path> task = tasks.get(action);
         if (task == null) {
           action.buildPatchFile(olderDir, newerDir, out);
@@ -101,7 +103,7 @@ public class PatchFileCreator {
       patch = new Patch(in);
     }
 
-    Runner.logger().info(patch.getOldBuild() + " -> " + patch.getNewBuild());
+    LOG.info(patch.getOldBuild() + " -> " + patch.getNewBuild());
     ui.setDescription(patch.getOldBuild(), patch.getNewBuild());
 
     List<ValidationResult> validationResults = patch.validate(toDir, ui);

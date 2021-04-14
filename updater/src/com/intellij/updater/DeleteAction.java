@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.DataInputStream;
@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class DeleteAction extends PatchAction {
   public DeleteAction(Patch patch, String path, long checksum) {
@@ -56,7 +58,7 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Delete action. File: " + toFile.getAbsolutePath());
+    LOG.info("Delete action. File: " + toFile.getAbsolutePath());
 
     // a directory can be deleted only when it does not contain any user's content
     boolean canDelete = true;
@@ -67,11 +69,11 @@ public class DeleteAction extends PatchAction {
     }
 
     if (canDelete) {
-      Runner.logger().info("Delete: " + toFile.getAbsolutePath());
+      LOG.info("Delete: " + toFile.getAbsolutePath());
       Utils.delete(toFile);
     }
     else {
-      Runner.logger().info("Preserved: " + toFile.getAbsolutePath());
+      LOG.info("Preserved: " + toFile.getAbsolutePath());
     }
   }
 

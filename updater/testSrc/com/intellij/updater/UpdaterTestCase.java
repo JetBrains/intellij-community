@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -30,7 +30,6 @@ public abstract class UpdaterTestCase {
     dataDir = PathManagerEx.findFileUnderCommunityHome("updater/testData");
 
     Runner.checkCaseSensitivity(dataDir.getPath());
-    Runner.initTestLogger();
 
     TEST_UI = new TestUpdaterUI();
 

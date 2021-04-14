@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -8,6 +8,8 @@ import java.nio.file.LinkOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public class CreateAction extends PatchAction {
   public CreateAction(Patch patch, String path) {
@@ -67,7 +69,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
-    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
+    LOG.info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, getPath());

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
@@ -9,6 +9,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.Objects;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 /**
  * <p>
@@ -143,7 +145,7 @@ public abstract class BaseUpdateAction extends PatchAction {
 
   protected void writeDiff(InputStream olderFileIn, InputStream newerFileIn, OutputStream patchOutput) throws IOException {
     if (isCritical()) {
-      Runner.logger().info("critical file, writing raw");
+      LOG.info("critical: " + mySource);
 
       patchOutput.write(RAW);
       Utils.copyStream(newerFileIn, patchOutput);
@@ -151,7 +153,7 @@ public abstract class BaseUpdateAction extends PatchAction {
       return;
     }
 
-    Runner.logger().info("writing diff");
+    LOG.info(mySource);
     ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
     byte[] newerFileBuffer = JBDiff.bsdiff(olderFileIn, newerFileIn, diffOutput);
     diffOutput.close();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -11,9 +11,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
+
+import static com.intellij.updater.Runner.LOG;
 
 public abstract class PatchAction {
   public enum FileType {
@@ -148,21 +151,21 @@ public abstract class PatchAction {
 
   private static boolean isWritable(Path path) {
     if (!Files.isReadable(path)) {
-      Runner.logger().warn("unreadable: " + path);
+      LOG.warning("unreadable: " + path);
       return false;
     }
     if (!Files.isWritable(path)) {
-      Runner.logger().warn("read-only: " + path);
+      LOG.warning("read-only: " + path);
       return false;
     }
     try (FileChannel ch = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.APPEND); FileLock lock = ch.tryLock()) {
       if (lock == null) {
-        Runner.logger().warn("cannot lock: " + path);
+        LOG.warning("cannot lock: " + path);
         return false;
       }
     }
     catch (OverlappingFileLockException | IOException e) {
-      Runner.logger().warn(path, e);
+      LOG.log(Level.WARNING, path.toString(), e);
       return false;
     }
     return true;
