@@ -466,6 +466,9 @@
     <registryKey key="git.show.full.branch.name.instead.selected"
                  description="Show full branch name instead of Selected in 'Rebase Current onto Selected'"
                  defaultValue="false"/>
+    <registryKey key="git.auto.commit.on.revert"
+                 description="If false, show modal commit dialog before producing revert commit"
+                 defaultValue="true"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

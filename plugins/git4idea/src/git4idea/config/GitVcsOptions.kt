@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("PropertyName")
 package git4idea.config
 
 import com.intellij.dvcs.branch.DvcsBranchSettings
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import git4idea.push.GitPushTagMode
@@ -46,7 +47,7 @@ class GitVcsOptions : BaseState() {
   var recentCommonBranch by string()
 
   @get:OptionTag("AUTO_COMMIT_ON_REVERT")
-  var isAutoCommitOnRevert by property(false)
+  var isAutoCommitOnRevert by property(Registry.`is`("git.auto.commit.on.revert"))
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)
