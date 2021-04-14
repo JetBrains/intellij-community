@@ -167,7 +167,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
-      () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(null),
+      () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(),
       () -> ExternalSystemProgressNotificationManagerImpl.cleanupListeners(),
       () -> super.tearDown(),
       () -> resetClassFields(getClass())
