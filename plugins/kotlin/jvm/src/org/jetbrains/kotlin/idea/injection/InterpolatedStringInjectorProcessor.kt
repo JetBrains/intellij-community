@@ -69,6 +69,15 @@ fun transformToInjectionParts(injection: Injection, literalOrConcatenation: KtEl
                 return collectInjections(null, concat(listOfNotNull(child.left, child.right), tail), pendingPrefix, unparseable, collected)
             }
             child is KtStringTemplateExpression -> {
+                if (child.children.isEmpty()) {
+                    // empty range to save injection in the empty string
+                    collected += injectionRange(
+                        child,
+                        ElementManipulators.getValueTextRange(child),
+                        pendingPrefix,
+                        if (tail.isEmpty()) injection.suffix else ""
+                    )
+                }
                 return collectInjections(child, concat(child.children.toList(), tail), pendingPrefix, unparseable, collected)
             }
             literal == null -> {
