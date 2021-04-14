@@ -138,7 +138,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  static void copyPublicFields(Object from, Object to) {
+  protected static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -209,10 +209,10 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  private static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
+  public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
-    SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
+    public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
                                      final CommonCodeStyleSettings parentObject) {
       super(object, parentObject);
