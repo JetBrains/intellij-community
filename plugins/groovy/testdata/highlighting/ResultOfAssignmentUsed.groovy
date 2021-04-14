@@ -3,13 +3,13 @@ public class AssResult {
     String vs = 'prefix'
     if (b) vs += ps  // no warning
     if (b) { vs += ps } // no warning
-    print <warning descr="Result of assignment expression used">vs = 4</warning>
+    print <warning descr="Usage of assignment expression result">vs = 4</warning>
     println ps
   }
 
   def assUsed() {
     def a = 2
-    <warning descr="Result of assignment expression used">a = 3</warning>
+    <warning descr="Usage of assignment expression result">a = 3</warning>
   }
 
   void assIsNotUsed() {
