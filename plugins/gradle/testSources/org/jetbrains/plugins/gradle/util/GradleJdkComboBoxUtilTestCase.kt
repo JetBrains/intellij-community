@@ -16,7 +16,7 @@ abstract class GradleJdkComboBoxUtilTestCase : ExternalSystemJdkComboBoxUtilTest
   }
 
   override fun SdkComboBox.setSelectedJdkReference(jdkReference: String?) {
-    setSelectedGradleJvmReference(sdkLookupProvider, project, externalProjectPath, jdkReference)
+    setSelectedGradleJvmReference(sdkLookupProvider, externalProjectPath, jdkReference)
   }
 
   override fun SdkComboBox.getSelectedJdkReference(): String? {

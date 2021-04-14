@@ -20,9 +20,9 @@ fun SdkComboBox.getSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvid
   return sdkLookupProvider.resolveGradleJvmReference(selectedItem)
 }
 
-fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider, project: Project, externalProjectPath: String?, jdkReference: String?) {
+fun SdkComboBox.setSelectedGradleJvmReference(sdkLookupProvider: SdkLookupProvider,  externalProjectPath: String?, jdkReference: String?) {
   when (jdkReference) {
-    USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(project, externalProjectPath))
+    USE_GRADLE_JAVA_HOME -> selectedItem = addJdkReferenceItem(GRADLE_JAVA_HOME_PROPERTY, getGradleJavaHome(model.project, externalProjectPath))
     else -> setSelectedJdkReference(sdkLookupProvider, jdkReference)
   }
 }
