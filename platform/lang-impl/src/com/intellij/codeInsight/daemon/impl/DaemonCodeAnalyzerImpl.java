@@ -320,13 +320,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     DaemonProgressIndicator.setDebug(!ApplicationManagerEx.isInStressTest());
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
-    // pump first so that queued event do not interfere
-    UIUtil.dispatchAllInvocationEvents();
-
-    // refresh will fire write actions interfering with highlighting
-    while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunning()) {
+    do {
       UIUtil.dispatchAllInvocationEvents();
+      // refresh will fire write actions interfering with highlighting
+      // heavy ops are bad, but VFS refresh is ok
     }
+    while (RefreshQueueImpl.isRefreshInProgress() || HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing));
     long dstart = System.currentTimeMillis();
     while (mustWaitForSmartMode && DumbService.getInstance(myProject).isDumb()) {
       if (System.currentTimeMillis() > dstart + 100000) {
@@ -888,7 +887,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
 
       // wait for heavy processing to stop, re-schedule daemon but not too soon
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+      if (rainCheckBecauseOfHeavyProcess()) {
         boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
           HighlightingPass[] dumbAwarePasses = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
@@ -896,8 +895,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           hasPasses |= dumbAwarePasses.length != 0;
         }
         if (!hasPasses) {
-          HeavyProcessLatch.INSTANCE.queueExecuteOutOfHeavyProcess(() ->
-            dca.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
+          // will be re-scheduled by HeavyLatch listener in DaemonListeners
           return;
         }
       }
@@ -906,6 +904,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       dca.cancelUpdateProgress(true, "Cancel by alarm");
       DaemonProgressIndicator progress = dca.createUpdateProgress(passes.keySet());
       dca.myPassExecutorService.submitPasses(passes, progress);
+    }
+
+    // return true if a heavy op is running
+    private static boolean rainCheckBecauseOfHeavyProcess() {
+      // VFS refresh is OK
+      return HeavyProcessLatch.INSTANCE.isRunningAnythingBut(HeavyProcessLatch.Type.Syncing);
     }
 
     private void clearFieldsOnDispose() {

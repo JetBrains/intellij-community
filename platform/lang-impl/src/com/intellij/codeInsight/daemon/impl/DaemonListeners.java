@@ -75,6 +75,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ThreeState;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -392,6 +393,8 @@ public final class DaemonListeners implements Disposable {
           PsiManager.getInstance(myProject).dropPsiCaches();
         }
       }));
+    HeavyProcessLatch.INSTANCE.addListener(this, () ->
+      myDaemonCodeAnalyzer.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
   }
 
   private <T, U extends KeyedLazyInstance<T>> void restartOnExtensionChange(@NotNull ExtensionPointName<U> name, @NotNull String message) {

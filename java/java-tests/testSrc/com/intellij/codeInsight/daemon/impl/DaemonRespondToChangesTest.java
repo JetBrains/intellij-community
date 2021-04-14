@@ -1740,6 +1740,65 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
   }
 
+  public void testDaemonDoesNotDisableItselfDuringVFSRefresh() {
+    executeWithReparseDelay(0, () -> {
+      runHeavyProcessing = false;
+      try {
+        final Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
+        final Set<Editor> collected = Collections.synchronizedSet(new HashSet<>());
+        registerFakePass(applied, collected);
+
+        configureByText(PlainTextFileType.INSTANCE, "");
+        Editor editor = getEditor();
+        EditorTracker editorTracker = EditorTracker.getInstance(myProject);
+        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        while (HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        type("xxx"); // restart daemon
+        assertTrue(editorTracker.getActiveEditors().contains(editor));
+        assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
+
+
+        // wait for first pass to complete
+        long start = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
+          UIUtil.dispatchAllInvocationEvents();
+          if (System.currentTimeMillis() - start > 1000000) {
+            fail("Too long waiting for daemon");
+          }
+        }
+
+        runHeavyProcessing = true;
+        Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, "my own vfs refresh", () -> {
+            while (runHeavyProcessing);
+          });
+        });
+        while (!HeavyProcessLatch.INSTANCE.isRunning()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
+        applied.clear();
+        collected.clear();
+
+        type("xxx"); // try to restart daemon
+
+        doHighlighting();
+        assertNotEmpty(applied);  // it should restart
+        assertNotEmpty(collected);
+        runHeavyProcessing = false;
+        try {
+          future.get();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      finally {
+        runHeavyProcessing = false;
+      }
+    });
+  }
 
   public void testModificationInsideCodeBlockDoesNotRehighlightWholeFile() {
     configureByText(JavaFileType.INSTANCE, "class X { int f = \"error\"; int f() { int gg<caret> = 11; return 0;} }");
