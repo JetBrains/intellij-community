@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.TargetDebuggerConnection;
+import com.intellij.execution.TargetDebuggerConnectionUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
@@ -15,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -73,7 +75,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  protected static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
+  public static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
     if (jdk == null) {
       return null;
     }
@@ -136,10 +138,6 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   @Override
   public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment,
                                              @NotNull TargetProgressIndicator targetProgressIndicator) {
-    TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
-    Objects.requireNonNull(targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY))
-      .provideEnvironment(environment, targetProgressIndicator);
-
     TargetDebuggerConnection targetDebuggerConnection = myTargetDebuggerConnection;
     if (targetDebuggerConnection != null) {
       targetDebuggerConnection.resolveRemoteConnection(environment);
@@ -208,8 +206,6 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     TargetEnvironmentRequest request = factory.createRequest();
     TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, factory.getTargetConfiguration());
     LocalTargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
-    Objects.requireNonNull(targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_SETUP_KEY))
-      .provideEnvironment(environment, TargetProgressIndicator.EMPTY);
     return environment
       .createGeneralCommandLine(targetedCommandLineBuilder.build())
       .withRedirectErrorStream(redirectErrorStream);

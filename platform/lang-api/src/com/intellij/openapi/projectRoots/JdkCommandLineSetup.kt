@@ -57,6 +57,10 @@ import kotlin.math.abs
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                           private val target: TargetEnvironmentConfiguration?) {
 
+  init {
+    request.onEnvironmentPrepared { environment, progressIndicator -> provideEnvironment(environment, progressIndicator) }
+  }
+
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
 
@@ -162,12 +166,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     mutableMapOf<String, String>().also { commandLine.putUserData(JdkUtil.COMMAND_LINE_CONTENT, it) }
   }
 
-  init {
-    commandLine.putUserData(JdkUtil.COMMAND_LINE_SETUP_KEY, this)
-  }
-
-  fun provideEnvironment(environment: TargetEnvironment,
-                         targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+  private fun provideEnvironment(environment: TargetEnvironment,
+                                 targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
     for (upload in uploads) {
       upload.volume.upload(upload.relativePath, targetProgressIndicator)

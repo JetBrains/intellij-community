@@ -28,6 +28,8 @@ public class LocalTargetEnvironmentFactory implements TargetEnvironmentFactory {
   @Override
   public LocalTargetEnvironment prepareRemoteEnvironment(@NotNull TargetEnvironmentRequest request,
                                                          @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) {
-    return new LocalTargetEnvironment(request);
+    LocalTargetEnvironment environment = new LocalTargetEnvironment(request);
+    ((LocalTargetEnvironmentRequest) request).environmentPrepared(environment, targetProgressIndicator);
+    return environment;
   }
 }

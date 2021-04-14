@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
@@ -92,7 +91,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     projectUploadRoot = setupTargetProjectDirectories(consumerOperationParameters, request, targetedCommandLineBuilder)
     val remoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator)
     targetEnvironment = remoteEnvironment
-    JdkUtil.COMMAND_LINE_SETUP_KEY.get(targetedCommandLineBuilder).provideEnvironment(remoteEnvironment, progressIndicator)
     EP.forEachExtensionSafe {
       it.handleCreatedTargetEnvironment(remoteEnvironment, this, progressIndicator)
     }

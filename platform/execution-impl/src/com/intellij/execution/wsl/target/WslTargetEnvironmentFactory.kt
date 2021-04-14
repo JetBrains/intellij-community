@@ -29,6 +29,6 @@ class WslTargetEnvironmentFactory(private val myConfig: WslTargetEnvironmentConf
     if (distribution == null) {
       error(IdeBundle.message("wsl.no.distribution.found.error"))
     }
-    return WslTargetEnvironment(wslRequest, distribution)
+    return WslTargetEnvironment(wslRequest, distribution).also { wslRequest.environmentPrepared(it, targetProgressIndicator) }
   }
 }

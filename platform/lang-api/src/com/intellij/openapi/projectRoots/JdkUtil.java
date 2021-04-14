@@ -25,13 +25,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Objects;
 import java.util.jar.Attributes;
 
 public final class JdkUtil {
   public static final Key<Map<String, String>> COMMAND_LINE_CONTENT = Key.create("command.line.content");
-
-  public static final Key<JdkCommandLineSetup> COMMAND_LINE_SETUP_KEY = Key.create("com.intellij.openapi.projectRoots.JdkCommandLineSetup");
 
   public static final Key<String> AGENT_RUNTIME_CLASSPATH = Key.create("command.line.agent.classpath");
 
@@ -141,8 +138,6 @@ public final class JdkUtil {
     TargetEnvironmentRequest request = environmentFactory.createRequest();
     TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request, null);
     LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
-    Objects.requireNonNull(builder.getUserData(COMMAND_LINE_SETUP_KEY))
-      .provideEnvironment(environment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
     return environment.createGeneralCommandLine(builder.build());
   }
 

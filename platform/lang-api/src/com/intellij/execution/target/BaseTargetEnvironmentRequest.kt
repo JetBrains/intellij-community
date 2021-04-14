@@ -7,4 +7,17 @@ abstract class BaseTargetEnvironmentRequest @JvmOverloads constructor(
   override val targetPortBindings: MutableSet<TargetEnvironment.TargetPortBinding> = HashSet(),
   override val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding> = HashSet(),
   override var projectPathOnTarget: String = ""
-) : TargetEnvironmentRequest
+) : TargetEnvironmentRequest {
+  private val environmentPreparedCallbacks = mutableListOf<(TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) -> Unit>()
+
+  override fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) -> Unit) {
+    environmentPreparedCallbacks.add(callback)
+  }
+
+  fun environmentPrepared(environment: TargetEnvironment,
+                          progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+    for (callback in environmentPreparedCallbacks) {
+      callback(environment, progressIndicator)
+    }
+  }
+}

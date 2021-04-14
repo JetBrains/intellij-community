@@ -127,8 +127,6 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,
                                                                TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
 
-    setup.provideEnvironment(wslEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
-
     val manager = MavenProjectsManager.getInstance(myProject)
     val commandLine = builder.build()
     val commandPresentation = commandLine.getCommandPresentation(wslEnvironment)
