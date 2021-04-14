@@ -76,7 +76,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final Alarm myValidationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, getEditor());
   private ValidationResult myLastValidationResult = null;
   private volatile boolean myValidationRequested = true;
-  private final List<ValidationListner> myValidationListeners = new SmartList<>();
+  private final List<ValidationListener> myValidationListeners = new SmartList<>();
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(ConfigurationSettingsEditorWrapper.createWrapper(settings), settings);
@@ -186,7 +186,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }, 100, modalityState);
   }
 
-  void addValidationListener(ValidationListner listener) {
+  void addValidationListener(ValidationListener listener) {
     myValidationListeners.add(listener);
   }
 
@@ -237,7 +237,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     if (myComponent != null && !isInplaceValidationSupported()) {
       myComponent.updateValidationResultVisibility(result);
     }
-    for (ValidationListner listener : myValidationListeners) {
+    for (ValidationListener listener : myValidationListeners) {
       listener.validationCompleted(result);
     }
   }
@@ -594,7 +594,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  static interface ValidationListner {
+  interface ValidationListener {
     void validationCompleted(ValidationResult result);
   }
 }
