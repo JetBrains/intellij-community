@@ -1,11 +1,28 @@
 <html>
 <body>
-Reports on field accesses which are not qualified with
-<b>this</b> or some other qualifier. Some coding styles
-mandate that all field accesses are qualified to prevent confusion with local
+Reports on field accesses which are not qualified with <code>this</code> or some other qualifier.
+Some coding styles mandate that all field accesses are qualified to prevent confusion with local
 variable or parameter accesses.
-<!-- tooltip end -->
-<p>
+<p>Example:</p>
+<pre>
+  class Foo {
+    int foo;
 
+    void bar() {
+      foo += 1;
+    }
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  class Foo {
+    int foo;
+
+    void bar() {
+      this.foo += 1;
+    }
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

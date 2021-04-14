@@ -1,9 +1,22 @@
 <html>
 <body>
 Reports parameters or local variables, found in the specified inspection
-scope, that may have a <b><font color="#000080">final</font></b> modifier added.
+scope, that may have a <code>final</code> modifier added.
+<p>Example:</p>
+<pre>
+  ArrayList&lt;Integer&gt; list = new ArrayList();
+  fill(list);
+  return list;
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  final ArrayList&lt;Integer&gt; list = new ArrayList();
+  fill(list);
+  return list;
+</pre>
 <!-- tooltip end -->
-<br> <br>
-Use checkboxes in the inspection options below, to define whether parameters or local variables (or both) are to be reported.
+<p>
+  Use the checkboxes below to define whether parameters or local variables should be reported.
+</p>
 </body>
 </html>

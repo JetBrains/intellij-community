@@ -2,10 +2,35 @@
 <body>
 Reports constructors which do not begin with calls to "super" constructor, or
 other constructors of the same class. Such constructors can be thought of as implicitly beginning with a
-call to <b>super()</b>. Some coding standards prefer that such calls to
-<b>super()</b> be made explicitly.
+call to <code>super()</code>. Some coding standards prefer that such calls to
+<code>super()</code> be made explicitly.
+<p>Example:</p>
+<pre>
+  class Foo {
+    Foo() {}
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  class Foo {
+    Foo() {
+      super();
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
+  Use the checkbox below to ignore classes not extending another class.
+  For instance:
+</p>
+<pre>
+  class Foo {
+    Foo() {} // Not reported
+  }
 
+  class Bar extends Foo {
+    Bar() {} // Implicit call to 'super()'
+  }
+</pre>
 </body>
 </html>

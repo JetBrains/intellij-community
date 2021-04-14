@@ -1,7 +1,26 @@
 <html>
 <body>
-Reports method calls used as parameters of another
-method call.
+Reports method calls used as parameters of another method call.
+The quick-fix introduces a variable to reduce cognitive complexity and make debugging easier.
+<p>Example:</p>
+<pre>
+  public int y() { return 1; }
+  public int f(int x) { return 2 * x; }
+
+  public void foo() {
+      int x = f(y());
+  }
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  public int y() { return 1; }
+  public int f(int x) { return 2 * x; }
+
+  public void foo() {
+      int y = y();
+      int x = f(y);
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to ignore method calls in field initializers.
@@ -9,6 +28,5 @@ Use the first checkbox below to ignore method calls in field initializers.
 Use the second checkbox below to ignore calls to static methods.
 <p>
 Use the third checkbox below to ignore calls to simple getters.
-
 </body>
 </html>

@@ -1,10 +1,19 @@
 <html>
 <body>
-Reports comments which are used as code block markers. For example:<br>
-<pre><code>
-  while (i &lt; 10) {
+Reports comments which are used as code block markers.
+Use the quick-fix to remove such comments.
+<p>Example:</p>
+<pre>
+  while (i < 10) {
     i++;
-  } <b>// end while</b>
-</code></pre>
+  } // end while
+</pre>
+<p>After the quick-fix is applied, the result looks like this:</p>
+<pre>
+  while (i < 10) {
+    i++;
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

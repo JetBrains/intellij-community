@@ -1,7 +1,19 @@
 <html>
 <body>
-Reports <b>java.util.Optional</b> or <b>com.google.common.base.Optional</b> types with an array or collection type parameter.
-In such cases it is more clear to just use an empty array or collection to indicate no result.
+Reports <code>java.util.Optional</code> or <code>com.google.common.base.Optional</code> types with an array or collection type parameter.
+In such cases it is more clear to just use an empty array or collection to indicate the absence of result.
+<p>Example:</p>
+<pre>
+  Optional&lt;List&lt;Integer&gt;&gt; foo() {
+    return Optional.empty();
+  }
+</pre>
+<p>This code could look like:</p>
+<pre>
+  List&lt;Integer&gt; foo() {
+    return new List&lt;&gt;();
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 <small>New in 16</small>

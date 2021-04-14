@@ -1,9 +1,20 @@
 <html>
 <body>
-Reports chained equality comparisons (i.e. <b>a==b==c</b>).
-Such comparisons are confusing.
+Reports chained equality comparisons (i.e. <code>a == b == c</code>).
+Such comparisons are confusing: <code>a == b == c</code> means <code>(a == b) == c</code>,
+but <code>a == b && a == c</code> could be intended.
+<p>Example:</p>
+<pre>
+  boolean chainedEquality(boolean a, boolean b, boolean c) {
+    return a == b == c;
+  }
+</pre>
+<p>Parentheses can be used to make the comparison less confusing:</p>
+<pre>
+  boolean chainedEquality(boolean a, boolean b, boolean c) {
+    return (a == b) == c;
+  }
+</pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>
