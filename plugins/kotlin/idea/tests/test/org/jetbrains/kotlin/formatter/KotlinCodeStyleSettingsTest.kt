@@ -6,11 +6,13 @@
 package org.jetbrains.kotlin.formatter
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.json.CodeStyleSchemeJsonExporter
 import com.intellij.testFramework.LightPlatformTestCase
+import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.formatter.*
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
@@ -31,6 +33,35 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
     fun `test compare different layout`() = compareCodeStyle {
         it.kotlinCustomSettings.PACKAGES_IMPORT_LAYOUT.addEntry(KotlinPackageEntry("my.package.name", true))
         it.kotlinCommonSettings.BRACE_STYLE = 10
+    }
+
+    fun `test official code style scheme`() = doTestWithScheme(KotlinStyleGuideCodeStyle.INSTANCE, "officialCodeStyleScheme.xml")
+    fun `test obsolete code style scheme`() = doTestWithScheme(KotlinObsoleteCodeStyle.INSTANCE, "obsoleteCodeStyleScheme.xml")
+
+    private fun doTestWithScheme(codeStyle: KotlinPredefinedCodeStyle, fileName: String) {
+        doWithTemporarySettings {
+            ProjectCodeStyleImporter.apply(project, codeStyle)
+            val optionElement = Element("code_scheme")
+            optionElement.setAttribute("name", "Project")
+            it.writeExternal(optionElement)
+            KotlinTestUtils.assertEqualsToFile(getTestFile(fileName), JDOMUtil.writeElement(optionElement))
+        }
+    }
+
+    private fun doWithTemporarySettings(action: (CodeStyleSettings) -> Unit) {
+        val settingsManager = CodeStyleSettingsManager.getInstance()
+        val tempSettingsBefore = settingsManager.temporarySettings
+        try {
+            val tempSettings = settingsManager.createTemporarySettings()
+            tempSettings.copyFrom(CodeStyle.getSettings(project))
+            action(tempSettings)
+        } finally {
+            if (tempSettingsBefore != null) {
+                settingsManager.setTemporarySettings(tempSettingsBefore)
+            } else {
+                settingsManager.dropTemporarySettings()
+            }
+        }
     }
 
     private fun compareCodeStyle(transformer: (CodeStyleSettings) -> Unit) {
@@ -55,8 +86,7 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
 }
 
 private fun doTestWithJson(codeStyle: KotlinPredefinedCodeStyle, fileName: String) {
-    val jsonScheme = File(IDEA_TEST_DATA_DIR, "codeStyle/$fileName.json")
-    assert(jsonScheme.exists())
+    val jsonScheme = getTestFile("$fileName.json")
 
     val testScheme = createTestScheme()
     val settings = testScheme.codeStyleSettings
@@ -72,6 +102,8 @@ private fun doTestWithJson(codeStyle: KotlinPredefinedCodeStyle, fileName: Strin
     exporter.exportScheme(testScheme, outputStream, listOf("kotlin"))
     KotlinTestUtils.assertEqualsToFile(jsonScheme, outputStream.toString())
 }
+
+private fun getTestFile(fileName: String): File = File(IDEA_TEST_DATA_DIR, "codeStyle/$fileName").also { assert(it.exists()) }
 
 private fun createTestScheme() = object : CodeStyleScheme {
     private val mySettings = CodeStyle.createTestSettings()

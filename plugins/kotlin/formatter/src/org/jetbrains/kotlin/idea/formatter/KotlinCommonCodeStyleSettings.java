@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
@@ -66,11 +67,9 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-        CommonCodeStyleSettings defaultSettings = getDefaultSettings();
-        if (defaultSettings != null) {
-            FormatterUtilKt.applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
-        }
+    public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+        CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+        FormatterUtilKt.applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
 
         writeExternalBase(element, defaultSettings);
     }
@@ -121,8 +120,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
             Method setRootSettingsMethod = CommonCodeStyleSettings.class.getDeclaredMethod("setRootSettings", CodeStyleSettings.class);
             setRootSettingsMethod.setAccessible(true);
             setRootSettingsMethod.invoke(commonSettings, rootSettings);
-        }
-        catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(e);
         }
 
@@ -149,8 +147,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
                 setRootSettingsMethod.setAccessible(true);
                 setRootSettingsMethod.invoke(commonSettings, getSoftMargins());
             }
-        }
-        catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(e);
         }
 
@@ -196,11 +193,6 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     private final Language myLanguage = KotlinLanguage.INSTANCE;
 
     @Nullable
-    private CommonCodeStyleSettings getDefaultSettings() {
-        return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
-    }
-
-    @Nullable
     private Set<String> getSupportedFields() {
         final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
         return provider == null ? null : provider.getSupportedFields();
@@ -209,7 +201,7 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
         private final Set<String> mySupportedFieldNames;
 
-        public SupportedFieldsDiffFilter(
+        private SupportedFieldsDiffFilter(
                 final CommonCodeStyleSettings object,
                 Set<String> supportedFiledNames,
                 final CommonCodeStyleSettings parentObject
