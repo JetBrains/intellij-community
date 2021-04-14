@@ -5,12 +5,32 @@ import com.intellij.openapi.util.NlsSafe
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * [BuildLayoutParameters] describes layout of the target Gradle build which is supposed to be used according to IDE configuration of the linked Gradle project
+ * and [com.intellij.execution.target.TargetEnvironment] provided by [com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider].
+ *
+ * Implementations are expected to be target build environment specific.
+ *
+ * @see org.gradle.initialization.BuildLayoutParameters
+ * @see org.jetbrains.plugins.gradle.settings.GradleProjectSettings
+ * @see org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+ */
 @ApiStatus.Experimental
 interface BuildLayoutParameters {
+  /**
+   * Gradle installation directory resolved based on the execution parameters of the build.
+   */
   @get:NlsSafe
   val gradleHome: String?
 
+  /**
+   * https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+   */
   @get:NlsSafe
   val gradleUserHome: String
+
+  /**
+   * Gradle version which likely be used for the target build, 'null' means it can not resolved or even guessed.
+   */
   val gradleVersion: GradleVersion?
 }
