@@ -331,7 +331,7 @@ class PluginDescriptorTest {
 
     val foo = list[1]
 
-    assertThat(foo.dependentPluginIds).containsExactly(bar.pluginId)
+    assertThat(foo.pluginDependencies!!.map { it.id }).containsExactly(bar.pluginId)
 
     assertThat(foo.pluginId.idString).isEqualTo("foo")
     val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
@@ -414,7 +414,7 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest("disabled", setOf(PluginId.getId("com.intellij.disabled")))
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
-    UsefulTestCase.assertOrderedEquals(arrayOf(PluginId.getId("com.intellij.modules.lang")), *descriptor.dependentPluginIds)
+    assertThat(descriptor.pluginDependencies!!.map { it.id.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   @Test

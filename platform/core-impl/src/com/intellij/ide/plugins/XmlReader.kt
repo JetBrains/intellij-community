@@ -3,6 +3,7 @@
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
+import com.intellij.core.CoreBundle
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.Logger
@@ -123,22 +124,46 @@ internal fun readContent(list: Element, descriptor: IdeaPluginDescriptorImpl) {
   descriptor.contentDescriptor = PluginContentDescriptor(items)
 }
 
-internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptorImpl) {
-  val content = list.content
-  val items = ArrayList<ModuleDependenciesDescriptor.ModuleItem>(list.contentSize)
-  for (item in content) {
+internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptorImpl, context: DescriptorListLoadingContext): Boolean {
+  var modules: MutableList<ModuleDependenciesDescriptor.ModuleItem>? = null
+  var plugins: MutableList<ModuleDependenciesDescriptor.PluginItem>? = null
+  for (item in list.content) {
     if (item !is Element) {
       continue
     }
 
     when (item.name) {
-      "module" -> items.add(ModuleDependenciesDescriptor.ModuleItem(item.getAttributeValue("name")!!, item.getAttributeValue("package")))
+      "module" -> {
+        if (modules == null) {
+          modules = mutableListOf()
+        }
+        modules.add(ModuleDependenciesDescriptor.ModuleItem(item.getAttributeValue("name")!!, item.getAttributeValue("package")))
+      }
       "plugin" -> {
+        if (plugins == null) {
+          plugins = mutableListOf()
+        }
+
+        val dependencyId = PluginId.getId(item.getAttributeValue("id")!!)
+        if (context.isPluginDisabled(dependencyId)) {
+          descriptor.markAsIncomplete(context, {
+            CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
+          }, dependencyId)
+          return false
+        }
+        else if (context.result.isBroken(dependencyId)) {
+          descriptor.markAsIncomplete(context, {
+            CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependencyId)
+          }, null)
+          return false
+        }
+        plugins.add(ModuleDependenciesDescriptor.PluginItem(dependencyId))
       }
       else -> throw RuntimeException("Unknown content item type: ${item.name}")
     }
   }
-  descriptor.dependencyDescriptor = ModuleDependenciesDescriptor(items)
+  descriptor.dependencyDescriptor = ModuleDependenciesDescriptor(modules ?: emptyList(), plugins ?: emptyList())
+  return true
 }
 
 internal fun readIdAndName(descriptor: IdeaPluginDescriptorImpl, element: Element) {

@@ -6,8 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents an ID of a plugin. A full descriptor of the plugin may be obtained
@@ -16,15 +15,15 @@ import java.util.Map;
 public final class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = new HashMap<>();
+  private static final ConcurrentHashMap<String, PluginId> registeredIds = new ConcurrentHashMap<>();
 
-  public static synchronized @NotNull PluginId getId(@NotNull String idString) {
-    return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
+  public static @NotNull PluginId getId(@NotNull String idString) {
+    return registeredIds.computeIfAbsent(idString, PluginId::new);
   }
 
   public static synchronized @Nullable PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
-      PluginId pluginId = ourRegisteredIds.get(idString);
+      PluginId pluginId = registeredIds.get(idString);
       if (pluginId != null) {
         return pluginId;
       }
@@ -32,23 +31,23 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
-  public static synchronized @NotNull Collection<PluginId> getRegisteredIdList() {
-    return new ArrayList<>(ourRegisteredIds.values());
+  public static @NotNull Collection<PluginId> getRegisteredIdList() {
+    return new ArrayList<>(registeredIds.values());
   }
 
-  private final String myIdString;
+  private final String idString;
 
   private PluginId(@NotNull String idString) {
-    myIdString = idString;
+    this.idString = idString;
   }
 
   public @NotNull String getIdString() {
-    return myIdString;
+    return idString;
   }
 
   @Override
   public int compareTo(@NotNull PluginId o) {
-    return myIdString.compareTo(o.myIdString);
+    return idString.compareTo(o.idString);
   }
 
   @Override

@@ -839,7 +839,6 @@ public final class PluginManagerCore {
    * not used by plugin manager - only for dynamic plugin reloading.
    * Building plugin graph and using `getInList` as it is done for regular loading is not required - all that magic and checks
    * are not required here because only regular plugins maybe dynamically reloaded.
-   * @return
    */
   @ApiStatus.Internal
   public static @NotNull ClassLoaderConfigurator createClassLoaderConfiguratorForDynamicPlugin(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
@@ -1349,6 +1348,7 @@ public final class PluginManagerCore {
 
     try {
       if (context == null) {
+        //noinspection resource
         context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       }
       Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.DEFAULT);

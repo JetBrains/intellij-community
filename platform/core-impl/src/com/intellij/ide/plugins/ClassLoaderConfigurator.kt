@@ -108,6 +108,7 @@ class ClassLoaderConfigurator(
       }
       implicitDependency?.let { addLoaderOrLogError(mainDependent, it, loaders) }
     }
+
     var classPath = mainDependent.jarFiles
     if (classPath == null) {
       classPath = collectClassPath(mainDependent)
@@ -116,17 +117,25 @@ class ClassLoaderConfigurator(
       mainDependent.jarFiles = null
     }
     urlClassLoaderBuilder.files(classPath)
+
     val pluginDependencies = mainDependent.pluginDependencies
     if (pluginDependencies == null) {
       assert(!mainDependent.isUseIdeaClassLoader)
       mainDependent.classLoader = createPluginClassLoader(mainDependent)
       return
     }
+
     for (dependency in pluginDependencies) {
       if (!dependency.isDisabledOrBroken && (!isClassloaderPerDescriptorEnabled(mainDependent) || dependency.subDescriptor == null)) {
         addClassloaderIfDependencyEnabled(dependency.id, mainDependent)
       }
     }
+
+    // new format
+    for (dependency in mainDependent.dependencyDescriptor.plugins) {
+      addClassloaderIfDependencyEnabled(dependency.id, mainDependent)
+    }
+
     val mainDependentClassLoader = if (mainDependent.isUseIdeaClassLoader) {
       configureUsingIdeaClassloader(classPath, mainDependent)
     }
@@ -184,10 +193,12 @@ class ClassLoaderConfigurator(
         throw PluginException("Package prefix $pluginPackagePrefix is already used", parentDescriptor.id)
       }
     }
-    val dependency = idMap[dependencyInfo.id]
+
+    val dependency = idMap.get(dependencyInfo.id)
     if (dependency == null || !dependency.isEnabled) {
       return
     }
+
     if (pluginPackagePrefix == null) {
       packagePrefixes.clear()
       collectPackagePrefixes(dependent, packagePrefixes)

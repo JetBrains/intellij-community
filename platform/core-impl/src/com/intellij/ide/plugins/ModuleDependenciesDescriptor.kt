@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
-internal class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleItem>) {
+import com.intellij.openapi.extensions.PluginId
+
+internal class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleItem>, @JvmField val plugins: List<PluginItem>) {
   companion object {
     @JvmField
-    val EMPTY = ModuleDependenciesDescriptor(emptyList())
+    val EMPTY = ModuleDependenciesDescriptor(emptyList(), emptyList())
   }
 
   fun findModuleByName(name: String): ModuleItem? {
@@ -22,9 +24,20 @@ internal class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleIt
         throw RuntimeException("packageName must not ends with dot: $packageName")
       }
     }
+
+    override fun toString(): String {
+      return "ModuleItem(name=$name, packageName=$packageName)"
+    }
   }
 
-  internal class PluginItem(@JvmField val id: String) {
+  internal class PluginItem(@JvmField val id: PluginId) {
+    override fun toString(): String {
+      return "PluginItem(id=$id)"
+    }
+  }
+
+  override fun toString(): String {
+    return "ModuleDependenciesDescriptor(modules=$modules, plugins=$plugins)"
   }
 }
 

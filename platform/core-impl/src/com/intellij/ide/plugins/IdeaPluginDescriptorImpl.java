@@ -168,7 +168,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     XmlReader.readMetaInfo(this, element);
 
     pluginDependencies = null;
-    if (doRead(element, context, mainDescriptor)) {
+    if (doRead(element, context, mainDescriptor, true)) {
       return false;
     }
 
@@ -205,7 +205,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         if (moduleElement == null) {
           throw new RuntimeException("Plugin " + this + " misses optional descriptor " + descriptorFile);
         }
-        doRead(moduleElement, context, mainDescriptor);
+        doRead(moduleElement, context, mainDescriptor, false);
 
         module.isInjected = true;
       }
@@ -249,7 +249,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @TestOnly
   public void readForTest(@NotNull Element element, @NotNull PluginId pluginId) {
     id = pluginId;
-    doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this);
+    doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this, true);
   }
 
   /**
@@ -258,7 +258,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
    */
   private boolean doRead(@NotNull Element element,
                          @NotNull DescriptorListLoadingContext context,
-                         @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
+                         @NotNull IdeaPluginDescriptorImpl mainDescriptor,
+                         boolean readDependencies) {
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -315,11 +316,13 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "dependencies":
-          XmlReader.readNewDependencies(child, this);
+          if (readDependencies && !XmlReader.readNewDependencies(child, this, context)) {
+            return true;
+          }
           break;
 
         case "depends":
-          if (!readOldPluginDependency(context, child)) {
+          if (readDependencies && !readOldPluginDependency(context, child)) {
             return true;
           }
           break;
@@ -384,7 +387,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return false;
   }
 
-  private void readModule(Element child) {
+  private void readModule(@NotNull Element child) {
     String moduleName = child.getAttributeValue("value");
     if (moduleName == null) {
       return;
@@ -412,7 +415,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private void readPluginIncompatibility(@NotNull Element child) {
     String pluginId = child.getTextTrim();
-    if (pluginId.isEmpty()) return;
+    if (pluginId.isEmpty()) {
+      return;
+    }
 
     if (incompatibilities == null) {
       incompatibilities = new ArrayList<>();
@@ -435,6 +440,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         markAsIncomplete(context, () -> {
           return CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId);
         }, dependencyId);
+        return false;
       }
 
       isDisabledOrBroken = true;
@@ -452,7 +458,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       isDisabledOrBroken = true;
     }
 
-    PluginDependency dependency = new PluginDependency(dependencyId, Strings.nullize(child.getAttributeValue("config-file")), isDisabledOrBroken);
+    PluginDependency dependency = new PluginDependency(dependencyId,
+                                                       Strings.nullize(child.getAttributeValue("config-file")), isDisabledOrBroken);
     dependency.isOptional = isOptional;
     if (pluginDependencies == null) {
       pluginDependencies = new ArrayList<>();
@@ -499,9 +506,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return false;
   }
 
-  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context,
-                                @Nullable Supplier<@Nls String> shortMessage,
-                                @Nullable PluginId disabledDependency) {
+  void markAsIncomplete(@NotNull DescriptorListLoadingContext context,
+                        @Nullable Supplier<@Nls String> shortMessage,
+                        @Nullable PluginId disabledDependency) {
     boolean wasIncomplete = isIncomplete;
     isIncomplete = true;
     setEnabled(false);
@@ -730,20 +737,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return isLicenseOptional;
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public PluginId @NotNull [] getDependentPluginIds() {
-    if (pluginDependencies == null || pluginDependencies.isEmpty()) {
-      return PluginId.EMPTY_ARRAY;
-    }
-    int size = pluginDependencies.size();
-    PluginId[] result = new PluginId[size];
-    for (int i = 0; i < size; i++) {
-      result[i] = pluginDependencies.get(i).id;
-    }
-    return result;
   }
 
   @Override
