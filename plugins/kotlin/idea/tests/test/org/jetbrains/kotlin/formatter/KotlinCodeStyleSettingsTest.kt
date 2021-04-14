@@ -43,24 +43,26 @@ class KotlinCodeStyleSettingsTest : LightPlatformTestCase() {
             ProjectCodeStyleImporter.apply(project, codeStyle)
             val optionElement = Element("code_scheme")
             optionElement.setAttribute("name", "Project")
-            it.writeExternal(optionElement)
+            CodeStyle.getSettings(project).writeExternal(optionElement)
             KotlinTestUtils.assertEqualsToFile(getTestFile(fileName), JDOMUtil.writeElement(optionElement))
         }
     }
 
     private fun doWithTemporarySettings(action: (CodeStyleSettings) -> Unit) {
-        val settingsManager = CodeStyleSettingsManager.getInstance()
+        val settingsManager = CodeStyleSettingsManager.getInstance(project)
         val tempSettingsBefore = settingsManager.temporarySettings
         try {
             val tempSettings = settingsManager.createTemporarySettings()
-            tempSettings.copyFrom(CodeStyle.getSettings(project))
+            settingsManager.dropTemporarySettings()
+            CodeStyle.setMainProjectSettings(project, tempSettings)
             action(tempSettings)
         } finally {
             if (tempSettingsBefore != null) {
                 settingsManager.setTemporarySettings(tempSettingsBefore)
-            } else {
-                settingsManager.dropTemporarySettings()
             }
+
+            settingsManager.USE_PER_PROJECT_SETTINGS = false
+            settingsManager.mainProjectCodeStyle = null
         }
     }
 
