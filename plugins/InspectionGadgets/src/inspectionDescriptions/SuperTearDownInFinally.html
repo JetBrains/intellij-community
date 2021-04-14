@@ -34,9 +34,9 @@ an exception before the <code>super.tearDown()</code> call, this may lead to inc
 
     @Override
     <b>protected void</b> tearDown() <b>throws</b> Exception {
-      try {
+      <b>try</b> {
         file.delete();
-      } finally {
+      } <b>finally</b> {
         <b>super</b>.tearDown();
       }
     }

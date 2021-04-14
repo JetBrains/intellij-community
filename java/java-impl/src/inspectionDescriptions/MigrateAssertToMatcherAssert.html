@@ -20,13 +20,16 @@ which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</c
   <b>public class</b> SubstantialTest {
     @Test
     <b>public void</b> testContents(Collection&lt;String> c, String s) {
-      Assert.assertThat(c, hasItem(o));
-      Assert.assertThat(o, is(c));
-      Assert.assertThat(c, notNullValue());
-      Assert.assertThat(c, nullValue());
-      Assert.assertThat(c, not(hasItem(o)));
+      assertThat(c, hasItem(o));
+      assertThat(o, is(c));
+      assertThat(c, notNullValue());
+      assertThat(c, nullValue());
+      assertThat(c, not(hasItem(o)));
     }
   }
 </code></pre>
+<!-- tooltip end -->
+<p>This inspection requires that the Hamcrest library is available on the classpath.
+<p>Use the check box below to specify if you want the quick fix to statically import the Hamcrest matcher methods.
 </body>
 </html>
