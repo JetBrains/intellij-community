@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
@@ -47,7 +48,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -66,7 +66,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.accessibility.TextFieldWithListAccessibleContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1047,34 +1046,32 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getCompleteCommand().isPresent());
+      e.getPresentation().setEnabled(getCompleteCommand() != null);
     }
 
     private boolean completeCommand() {
-      Optional<SearchEverywhereCommandInfo> suggestedCommand = getCompleteCommand();
-      if (suggestedCommand.isPresent()) {
-        mySearchField.setText(suggestedCommand.get().getCommandWithPrefix() + " ");
+      SearchEverywhereCommandInfo suggestedCommand = getCompleteCommand();
+      if (suggestedCommand != null) {
+        mySearchField.setText(suggestedCommand.getCommandWithPrefix() + " ");
         return true;
       }
 
       return false;
     }
 
-    private Optional<SearchEverywhereCommandInfo> getCompleteCommand() {
+    private SearchEverywhereCommandInfo getCompleteCommand() {
       String pattern = getSearchPattern();
       String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
       if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
         String typedCommand = pattern.substring(commandPrefix.length());
-        SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
+        return getSelectedCommand(typedCommand).orElseGet(() -> {
           List<SearchEverywhereCommandInfo> completions =
             getCommandsForCompletion(myHeader.getSelectedTab().getContributors(), typedCommand);
           return completions.isEmpty() ? null : completions.get(0);
         });
-
-        return Optional.ofNullable(command);
       }
 
-      return Optional.empty();
+      return null;
     }
   }
 

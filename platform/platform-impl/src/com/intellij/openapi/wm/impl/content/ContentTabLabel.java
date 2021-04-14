@@ -21,6 +21,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
@@ -34,7 +35,6 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -245,10 +245,10 @@ class ContentTabLabel extends BaseLabel {
         repaint();
       }
 
-      Optional<AdditionalIcon> first = myAdditionalIcons.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
+      AdditionalIcon first = ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
 
-      if (first.isPresent()) {
-        showTooltip(first.get());
+      if (first != null) {
+        showTooltip(first);
         return;
       }
     }

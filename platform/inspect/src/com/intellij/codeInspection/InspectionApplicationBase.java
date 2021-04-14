@@ -614,13 +614,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   private boolean secondAnalysisFilter(ChangeListManager changeListManager, String text, VirtualFile file, int line) {
     List<Range> ranges = getOrComputeUnchangedRanges(file, changeListManager);
-    Optional<Range> first = StreamEx.of(ranges).findFirst(it -> it.start1 <= line && line < it.end1);
-    if (first.isEmpty()) {
+    Range first = ContainerUtil.find(ranges, it -> it.start1 <= line && line < it.end1);
+    if (first == null) {
       logNotFiltered(text, file, line, -1);
       return true;
     }
-    Range originRange = first.get();
-    int position = originRange.start2 + line - originRange.start1;
+    int position = first.start2 + line - first.start1;
     Collection<String> problems = originalWarnings.get(Pair.create(file.getPath(), position));
     if (problems.stream().anyMatch(it -> Objects.equals(it, text))) {
       return false;

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -475,8 +476,8 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
       if (list != null) {
         if (!list.isEmpty()) {
           int hashCode = element.hashCode();
-          Optional<Node> result = list.stream().filter(node -> node.matches(element, hashCode)).findFirst();
-          if (result.isPresent()) return result.get(); // found child node that matches given element
+          Node result = ContainerUtil.find(list, node -> node.matches(element, hashCode));
+          if (result != null) return result; // found child node that matches given element
         }
         if (LOG.isTraceEnabled()) LOG.debug("node '", getElement(), "' have no child: ", element);
       }

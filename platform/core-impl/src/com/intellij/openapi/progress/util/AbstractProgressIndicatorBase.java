@@ -20,15 +20,14 @@ import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -184,13 +183,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void setFraction(final double fraction) {
     if (isIndeterminate()) {
       StackTraceElement[] trace = new Throwable().getStackTrace();
-      Optional<StackTraceElement> first = Arrays.stream(trace)
-        .filter(element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"))
-        .findFirst();
+      StackTraceElement first = ContainerUtil.find(trace,
+        element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"));
       @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
                                "Please call setIndeterminate(false) before you start progress.";
-      if (first.isPresent()) {
-        message += "\n" + first.get();
+      if (first != null) {
+        message += "\n" + first;
       }
       LOG.warn(message);
       setIndeterminate(false);

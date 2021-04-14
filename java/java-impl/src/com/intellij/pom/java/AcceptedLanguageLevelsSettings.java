@@ -98,10 +98,9 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
               }).notify(project);
           }
         }
-        if (!previewLevels.isEmpty() &&
-            !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
-          Optional<LanguageLevel> languageLevel = previewLevels.stream().min(Comparator.naturalOrder());
-          int previewFeature = languageLevel.get().toJavaVersion().feature;
+        if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+          LanguageLevel languageLevel = previewLevels.first();
+          int previewFeature = languageLevel.toJavaVersion().feature;
           Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
