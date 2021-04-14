@@ -673,7 +673,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     SdkLookupProvider sdkLookupProvider = getSdkLookupProvider(project);
     String externalProjectPath = myInitialSettings.getExternalProjectPath();
     addUsefulGradleJvmReferences(myGradleJdkComboBox, externalProjectPath);
-    setSelectedGradleJvmReference(myGradleJdkComboBox, sdkLookupProvider, project, externalProjectPath, settings.getGradleJvm());
+    setSelectedGradleJvmReference(myGradleJdkComboBox, sdkLookupProvider, externalProjectPath, settings.getGradleJvm());
   }
 
   private void recreateGradleJdkComboBox(@NotNull Project project, @NotNull ProjectSdksModel sdksModel) {
