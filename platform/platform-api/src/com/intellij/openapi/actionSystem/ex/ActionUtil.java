@@ -234,25 +234,18 @@ public final class ActionUtil {
 
   public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent e) {
     Project project = e.getProject();
-    long startNanoTime = System.nanoTime();
     try {
-      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-        action.actionPerformed(e);
-      }
+      performAction(action, e);
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
       showDumbModeWarning(project, e);
     }
-    finally {
-      long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, e.getDataContext(), e, durationMillis);
-    }
   }
 
   public static void performAction(@NotNull AnAction action, @NotNull AnActionEvent e) {
     long startNanoTime = System.nanoTime();
-    try {
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
       action.actionPerformed(e);
     }
     finally {
