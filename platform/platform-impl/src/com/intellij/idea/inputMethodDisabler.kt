@@ -1,48 +1,98 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea
 
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsConfiguration
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.ReflectionUtil
 import java.awt.Component
 import java.awt.Container
-import java.awt.EventQueue
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
-import java.util.concurrent.ForkJoinPool
 import javax.swing.SwingUtilities
 
+private const val PERSISTENT_SETTING_KEY = "input.method.disabler.muted"
+private const val NOTIFICATION_GROUP = "Input method disabler";
+
+private var IS_NOTIFICATION_REGISTERED = false;
+
+// TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
+
 internal fun disableInputMethodsIfPossible() {
-  if (!canDisableInputMethod() || !Registry.`is`("auto.disable.input.methods")) {
+  if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
     return
   }
 
-  EventQueue.invokeLater {
-    try {
-      val componentClass = ReflectionUtil.forName("java.awt.Component")
-      val method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport") ?: return@invokeLater
-      method.invoke(componentClass)
+  val muted = PropertiesComponent.getInstance().isTrueValue(PERSISTENT_SETTING_KEY)
+  if (muted) {
+    return
+  }
 
-      getLogger().info("Input methods was disabled for any java.awt.Component.")
+  PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_KEY, true);
 
-      val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
-        .map { fh -> SwingUtilities.getRoot(fh.frame) }
-        .filter { с -> с != null }
+  // TODO: improve heuristic to return probability and if
+  //  prob == 0: don't notify user, don't disable
+  //  prob == 1: automatically (silently) disable IM
+  //  default: notify user that it would be better to disable IM (otherwise freezes possible)
+  if (!canDisableInputMethod()) {
+    return
+  }
 
-      ForkJoinPool.commonPool().execute {
-        val startMs = System.currentTimeMillis()
-        for (frameRoot in frames) {
-          freeIMRecursively(frameRoot)
-        }
-        getLogger().info("Resources of input methods were released, spent " + (System.currentTimeMillis() - startMs) + " ms.")
+  // Offer to disable IM via notification
+
+  if (!IS_NOTIFICATION_REGISTERED) {
+    IS_NOTIFICATION_REGISTERED = true
+    NotificationsConfiguration.getNotificationsConfiguration().register(
+      NOTIFICATION_GROUP,
+      NotificationDisplayType.STICKY_BALLOON,
+      true)
+  }
+
+  val title = IdeBundle.message("notification.title.input.method.disabler")
+  val message = IdeBundle.message("notification.content.input.method.disabler")
+  val notification = Notification(NOTIFICATION_GROUP, title, message, NotificationType.WARNING, null)
+
+  val disableIMAction: AnAction = DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")
+  ) { e: AnActionEvent? ->
+    disableInputMethdosImpl();
+    notification.expire()
+  }
+  notification.addAction(disableIMAction)
+  notification.notify(null)
+}
+
+private fun disableInputMethdosImpl() {
+  try {
+    val componentClass = ReflectionUtil.forName("java.awt.Component")
+    val method = ReflectionUtil.getMethod(componentClass, "disableInputMethodSupport") ?: return
+    method.invoke(componentClass)
+
+    getLogger().info("Input method disabler: disabled for any java.awt.Component.")
+
+    val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
+      .map { fh -> SwingUtilities.getRoot(fh.frame) }
+      .filter { с -> с != null }
+
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val startMs = System.currentTimeMillis()
+      for (frameRoot in frames) {
+        freeIMRecursively(frameRoot)
       }
+      getLogger().info("Input method disabler: resources of input methods were released, spent " + (System.currentTimeMillis() - startMs) + " ms.")
     }
-    catch (e: Throwable) {
-      getLogger().warn(e)
-    }
+  }
+  catch (e: Throwable) {
+    getLogger().warn(e)
   }
 }
 
@@ -64,10 +114,6 @@ private fun freeIMRecursively(c: Component) {
 
 @Suppress("SpellCheckingInspection")
 private fun canDisableInputMethod(): Boolean {
-  if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
-    return false
-  }
-
   val gdmSession = System.getenv("GDMSESSION") ?: ""
   val xdgDesktop = System.getenv("XDG_CURRENT_DESKTOP")?.toLowerCase(Locale.ENGLISH) ?: ""
   val isGTKDesktop = gdmSession.startsWith("gnome")
@@ -76,6 +122,7 @@ private fun canDisableInputMethod(): Boolean {
                      || xdgDesktop.startsWith("ubuntu")
                      || xdgDesktop.startsWith("gnome")
   if (!isGTKDesktop) {
+    getLogger().info("Input method disabler: not gtk desktop: '$gdmSession' | '$xdgDesktop'")
     return false
   }
 
@@ -99,7 +146,7 @@ private fun canDisableInputMethod(): Boolean {
         val type = parser.extractString(if (first) "('" else "'", "'")
         if (type == null) {
           if (first) { // error (or empty output)
-            Logger.getInstance(Main::class.java).warn("can't parse gsettings line: $line")
+            getLogger().warn("Input method disabler: can't parse gsettings line: $line")
             return false
           }
           break
@@ -107,7 +154,7 @@ private fun canDisableInputMethod(): Boolean {
         first = false
         val layoutId = parser.extractString("'", "'")
         if (layoutId == null) { // error (must be presented)
-          Logger.getInstance(Main::class.java).warn("can't parse gsettings line: $line")
+          getLogger().warn("Input method disabler: can't parse gsettings line: $line")
           return false
         }
         layoutId2type[layoutId] = type
@@ -115,7 +162,7 @@ private fun canDisableInputMethod(): Boolean {
     }
   }
   catch (e: Throwable) {
-    getLogger().warn("error during parsing gsettings line: $line", e)
+    getLogger().warn("Input method disabler: error during parsing gsettings line: $line", e)
   }
 
   val endMs = System.currentTimeMillis()
@@ -130,7 +177,7 @@ private fun canDisableInputMethod(): Boolean {
     }
   }
 
-  val logInfo = StringBuilder("canDisableInputMethod spent ").append(endMs - startMs).append(" ms, found keyboard layouts: [")
+  val logInfo = StringBuilder("Input method disabler: canDisableInputMethod spent ").append(endMs - startMs).append(" ms, found keyboard layouts: [")
   for ((key, value) in layoutId2type) {
     logInfo.append('(')
     logInfo.append(key)
