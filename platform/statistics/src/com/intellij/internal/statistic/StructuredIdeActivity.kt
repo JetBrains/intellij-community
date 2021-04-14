@@ -15,6 +15,18 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
 
+/**
+ * New style API to record information about process.
+ * It allows you to record start/finish events, calculate duration and link them by common id.
+ *
+ * To record a process:
+ * - Register ide activity in event log group (see [com.intellij.internal.statistic.eventLog.EventLogGroup.registerIdeActivity]).
+ * - Use [com.intellij.internal.statistic.IdeActivityDefinition.started] or
+ * [com.intellij.internal.statistic.IdeActivityDefinition.startedAsync] to record start event and
+ * [com.intellij.internal.statistic.StructuredIdeActivity.finished] to record finish event.
+ *
+ * See example in dev-guide/fus-collectors.md.
+ */
 @ApiStatus.Internal
 class StructuredIdeActivity internal constructor(private val projectOrNullForApplication: Project?,
                                                  private val ideActivityDefinition: IdeActivityDefinition) {
