@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.storage
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 object DefaultIndexStorageLayout {
+  private val log = logger<DefaultIndexStorageLayout>()
   private val forcedLayout: String? = System.getProperty("idea.index.storage.forced.layout")
   private val contentLessIndexLock: StorageLockContext = StorageLockContext(true, false, true)
 
@@ -24,6 +26,7 @@ object DefaultIndexStorageLayout {
                              contentHashEnumeratorReopen: Boolean): VfsAwareIndexStorageLayout<Key, Value> {
     val layoutEP = getIndexLayout()
     if (layoutEP != null) {
+      log.info("Layout '${layoutEP.id}' will be used to for '${indexExtension.name}' index")
       return layoutEP.layoutProvider.getLayout(indexExtension)
     }
     if (FileBasedIndex.USE_IN_MEMORY_INDEX) {
