@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBuilder<Settings>, Disposable {
+public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> implements CompositeSettingsBuilder<Settings>, Disposable {
 
   static final int TOP_INSET = 5;
   static final int GROUP_INSET = 20;
@@ -63,13 +64,13 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final GridBagConstraints myConstraints =
     new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(TOP_INSET), 0, 0);
   private final Collection<? extends SettingsEditorFragment<Settings, ?>> myFragments;
-  private final SettingsEditorFragment<Settings, ?> myMain;
+  private final @Nullable NestedGroupFragment<Settings> myMain;
   private int myGroupInset;
   private DropDownLink<String> myLinkLabel;
   private String myConfigId; // for FUS
 
   FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                            SettingsEditorFragment<Settings, ?> main, @NotNull Disposable parentDisposable) {
+                            @Nullable NestedGroupFragment<Settings> main, @NotNull Disposable parentDisposable) {
     myFragments = fragments;
     myMain = main;
     Disposer.register(parentDisposable, this);
@@ -254,16 +255,17 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
         actionGroup.add(customGroup);
         continue;
       }
-      ToggleFragmentAction action = new ToggleFragmentAction(fragment, lastSelected);
-      ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
-      if (shortcutSet != null) {
-        action.registerCustomShortcutSet(shortcutSet, null);
-      }
-      actionGroup.add(action);
       List<SettingsEditorFragment<Settings, ?>> children = fragment.getChildren();
-      if (!children.isEmpty()) {
+      if (children.isEmpty()) {
+        ToggleFragmentAction action = new ToggleFragmentAction(fragment, lastSelected);
+        ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(action);
+        if (shortcutSet != null) {
+          action.registerCustomShortcutSet(shortcutSet, null);
+        }
+        actionGroup.add(action);
+      }
+      else {
         DefaultActionGroup childGroup = buildGroup(children, lastSelected);
-        childGroup.setPopup(true);
         childGroup.getTemplatePresentation().setText(fragment.getChildrenGroupName());
         actionGroup.add(childGroup);
       }
@@ -272,12 +274,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   }
 
   private DefaultActionGroup buildGroup(Ref<? super JComponent> lastSelected) {
-    DefaultActionGroup group = buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
-    if (myMain != null) {
-      group.add(Separator.create(), Constraints.FIRST);
-      group.add(new ToggleFragmentAction(myMain, lastSelected), Constraints.FIRST);
-    }
-    return group;
+    return buildGroup(ContainerUtil.filter(myFragments, fragment -> fragment.getName() != null), lastSelected);
   }
 
   private List<SettingsEditorFragment<Settings, ?>> restoreGroups(List<? extends SettingsEditorFragment<Settings, ?>> fragments) {

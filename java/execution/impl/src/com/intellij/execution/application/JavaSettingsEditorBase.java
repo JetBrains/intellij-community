@@ -2,7 +2,7 @@
 package com.intellij.execution.application;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
-import com.intellij.diagnostic.logging.LogsFragment;
+import com.intellij.diagnostic.logging.LogsGroupFragment;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -65,7 +65,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     fragments.add(moduleClasspath);
     customizeFragments(fragments, moduleClasspath, commonParameterFragments);
 
-    fragments.add(new LogsFragment<>());
+    fragments.add(new LogsGroupFragment<>());
     return fragments;
   }
 
