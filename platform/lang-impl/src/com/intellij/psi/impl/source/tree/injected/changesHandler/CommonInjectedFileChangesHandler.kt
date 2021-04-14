@@ -151,7 +151,7 @@ open class CommonInjectedFileChangesHandler(
                                decodedText: String,
                                e: DocumentEvent?): PsiLanguageInjectionHost {
     LOG.debug { "updating host '${currentHost.text?.esclbr()}' at $localInsideHost with '${decodedText.esclbr()}' " }
-    val updatedHost = updateInjectionHostElement(currentHost, localInsideHost, decodedText)
+    val updatedHost = updateHostElement(currentHost, localInsideHost, decodedText)
     if (updatedHost == null)
       failAndReport("Updating host returned null. Original host" + currentHost +
                     "; original text: " + currentHost.text +
@@ -161,9 +161,17 @@ open class CommonInjectedFileChangesHandler(
     return updatedHost
   }
 
+  @Deprecated("use updateHostElement", ReplaceWith("updateHostElement"))
+  @ApiStatus.ScheduledForRemoval(inVersion =  "2021.3")
   protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
-                                           insideHost: TextRange,
+                                           insideHost: ProperTextRange,
                                            content: String): PsiLanguageInjectionHost? {
+    return updateHostElement(host, insideHost, content)
+  }
+
+  protected open fun updateHostElement(host: PsiLanguageInjectionHost,
+                                  insideHost: TextRange,
+                                  content: String): PsiLanguageInjectionHost? {
     return ElementManipulators.handleContentChange(host, insideHost, content)
   }
 
