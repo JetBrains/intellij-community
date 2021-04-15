@@ -98,7 +98,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
       TextOccurrencesUtil.processUsagesInStringsAndComments(
         myElementToRename, GlobalSearchScope.projectScope(myElementToRename.getProject()),
-        stringToSearch, true, (psiElement, textRange) -> {
+        stringToSearch, false, (psiElement, textRange) -> {
           if (psiElement.getContainingFile() == currentFile) {
             stringUsages.add(Pair.create(psiElement, textRange));
           }
