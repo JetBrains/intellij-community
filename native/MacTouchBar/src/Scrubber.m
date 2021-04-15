@@ -55,7 +55,7 @@ static const int g_interItemSpacings = 5;
     [itemView setText:itemData.text];
     [itemView setEnabled:itemData.enabled];
 
-    if (itemIndex == self.visibleItems.count - 1)
+    if (itemIndex == (int)self.visibleItems.count - 1)
         (*self.updateCache)();
     return itemView;
 }
@@ -123,7 +123,7 @@ static void _fillCache(NSMutableArray * cache, NSMutableArray * visibleItems, vo
         p += 2;
         //NSLog(@"\t w=%d, h=%d", w, h);
 
-        int cacheIndex = fromIndex + c;
+        unsigned int cacheIndex = fromIndex + c;
 
         bool hasAsyncIcon = w == 1 && h == 0;
         NSImage * img = w <= 0 || h <= 0 ? nil : createImgFrom4ByteRGBA((const unsigned char *)p, w, h);
@@ -290,7 +290,7 @@ void showScrubberItems(id scrubObj, void* itemIndices, int count, bool show, boo
         @try {
            // 1. mark items
            if (inverseOthers) {
-               for (int c = 0; c < container.itemsCache.count; ++c) {
+               for (unsigned int c = 0; c < container.itemsCache.count; ++c) {
                    ScrubberItem *itemData = [container.itemsCache objectAtIndex:c];
                    if (itemData == nil)
                        continue;
@@ -331,7 +331,7 @@ void _recalculatePositions(id scrubObj) {
     int position = 0;
     int prevPosition = -1;
     bool insertContinuousChunk = true;
-    for (int c = 0; c < container.itemsCache.count; ++c) {
+    for (unsigned int c = 0; c < container.itemsCache.count; ++c) {
         const ScrubberItem * si = [container.itemsCache objectAtIndex:c];
         if (si == nil)
             continue;
@@ -360,7 +360,7 @@ void _recalculatePositions(id scrubObj) {
 
     if ([hiddenIndexSet count] > 0 || [visibleIndexSet count] > 0) {
         if ([hiddenIndexSet count] == 0) {
-            const int prevVisibleCount = container.visibleItems.count;
+            const unsigned int prevVisibleCount = container.visibleItems.count;
             container.visibleItems = newVisibleItems;
             [scrubber insertItemsAtIndexes:visibleIndexSet];
 

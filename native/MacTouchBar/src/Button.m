@@ -10,9 +10,9 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 @property (nonatomic) CGFloat bwidth;
 @property (nonatomic) execute jaction;
 @property (nonatomic, assign) NSString * uid; // for debug only
-@property (nonatomic) NSLayoutConstraint * constraintEqualToConstant;
-@property (nonatomic) NSLayoutConstraint * constraintLessThanOrEqualToConstant;
-@property (nonatomic) NSLayoutConstraint * constraintGreaterThanOrEqualToConstant;
+@property (nonatomic, retain) NSLayoutConstraint * constraintEqualToConstant;
+@property (nonatomic, retain) NSLayoutConstraint * constraintLessThanOrEqualToConstant;
+@property (nonatomic, retain) NSLayoutConstraint * constraintGreaterThanOrEqualToConstant;
 - (id)init;
 - (void)doAction;
 + (Class)cellClass;
@@ -43,7 +43,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
         [self setMargins:3 border:8];
 
         if ([cell isKindOfClass:[NSButtonCellEx class]]) {
-            NSButtonCellEx * cellEx = cell;
+            NSButtonCellEx * cellEx = (NSButtonCellEx * )cell;
             cellEx.myText = nil;
             cellEx.myHint = nil;
         }
@@ -72,7 +72,7 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
     NSCell * cell = [self cell];
     if ([cell isKindOfClass:[NSButtonCellEx class]]) {
         //NSLog(@"setTextAndHint: text=%@, hint=%@", text, hintText);
-        NSButtonCellEx * cellEx = cell;
+        NSButtonCellEx * cellEx = (NSButtonCellEx *)cell;
         const CGFloat textFontSize = 0; // system-default (12pt)
         const CGFloat hintFontSize = 9.f; // empiric
         cellEx.myText = text == nil || text.length <= 0 ? nil :
