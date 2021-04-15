@@ -17,7 +17,6 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
-    <orderEntry type="library" name="roaringBitmap" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

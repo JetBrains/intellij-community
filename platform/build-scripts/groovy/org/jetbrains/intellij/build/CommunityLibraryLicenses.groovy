@@ -545,8 +545,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(libraryName: "RMI Stubs",
                        url: "https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger",
                        version: LibraryLicense.CUSTOM_REVISION).apache(),
-    new LibraryLicense(libraryName: "roaringBitmap", url: "https://github.com/RoaringBitmap/RoaringBitmap",
-                       licenseUrl: "https://github.com/RoaringBitmap/RoaringBitmap/blob/master/LICENSE").apache(),
     new LibraryLicense(name: "Roboto", attachedTo: "intellij.platform.resources", version: "1.100141",
                        url: "https://github.com/google/roboto/blob/master/LICENSE").apache(),
     new LibraryLicense(libraryName: "sa-jdwp", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/jdk-sa-jdwp",
