@@ -61,10 +61,7 @@ public class HeavyAwareExecutor implements Disposable {
       Disposable disposable = Disposer.newDisposable();
       future.addListener(() -> Disposer.dispose(disposable), MoreExecutors.directExecutor());
 
-      CancellingOnHeavyOrPowerSaveListener listener =
-        new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
-      HeavyProcessLatch.INSTANCE.addListener(disposable, listener);
-
+      new CancellingOnHeavyOrPowerSaveListener(myProject, indicator, myLongActivityDurationMs, disposable);
       return future;
     });
     return Futures.transformAsync(executingListener.getFuture(), input -> input, MoreExecutors.directExecutor());
@@ -91,7 +88,7 @@ public class HeavyAwareExecutor implements Disposable {
     }, delayMs, TimeUnit.MILLISECONDS));
   }
 
-  private static class CancellingOnHeavyOrPowerSaveListener implements HeavyProcessLatch.HeavyProcessListener {
+  private static class CancellingOnHeavyOrPowerSaveListener implements HeavyProcessLatch.HeavyProcessListener, PowerSaveMode.Listener {
     @NotNull private final ProgressIndicator myIndicator;
     private final int myLongActivityDurationMs;
 
@@ -104,7 +101,8 @@ public class HeavyAwareExecutor implements Disposable {
       myIndicator = indicator;
       myLongActivityDurationMs = logActivityDurationMs;
 
-      project.getMessageBus().connect(disposable).subscribe(PowerSaveMode.TOPIC, () -> powerSaveStateChanged());
+      HeavyProcessLatch.INSTANCE.addListener(disposable, this);
+      project.getMessageBus().connect(disposable).subscribe(PowerSaveMode.TOPIC, this);
 
       scheduleCancel(); // in case some sneaky heavy process started before we managed to add a listener
       powerSaveStateChanged(); // or if power save mode was suddenly turned on
@@ -120,10 +118,9 @@ public class HeavyAwareExecutor implements Disposable {
       doNotCancel();
     }
 
-    void powerSaveStateChanged() {
-      if (PowerSaveMode.isEnabled() && myIndicator.isRunning()) {
-        myIndicator.cancel();
-      }
+    @Override
+    public void powerSaveStateChanged() {
+      if (PowerSaveMode.isEnabled() && myIndicator.isRunning()) myIndicator.cancel();
     }
 
     private synchronized void scheduleCancel() {
