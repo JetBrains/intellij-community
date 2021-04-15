@@ -51,7 +51,7 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     installProperty(button, "rolloverEnabled", true)
     installProperty(button, "iconTextGap", 4)
     defaultTextShiftOffset = UIManager.getInt("Button.textShiftOffset")
-    if (!button.isFontSet || button.font is UIResource) button.font = UIManager.getFont("Label.font")
+    if (!button.isFontSet || button.font is UIResource) button.font = UIManager.getFont("Label.font")!!
     if (!button.isBackgroundSet || button.background is UIResource) button.background = UIManager.getColor("Label.background")
     if (!button.isForegroundSet || button.foreground is UIResource) button.foreground = DynamicColor(button)
     button.horizontalAlignment = LEADING
