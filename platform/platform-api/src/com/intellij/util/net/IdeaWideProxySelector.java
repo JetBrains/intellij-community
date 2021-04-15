@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
+  private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
@@ -57,11 +58,22 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
+      // https://youtrack.jetbrains.com/issue/IDEA-262173
+      String oldDocumentBuilderFactory =
+        System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
       try {
         return selectUsingPac(uri);
       }
       catch (Throwable e) {
         LOG.error("Cannot select using PAC", e);
+      }
+      finally {
+        if (oldDocumentBuilderFactory == null) {
+          System.clearProperty(DOCUMENT_BUILDER_FACTORY_KEY);
+        }
+        else {
+          System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, oldDocumentBuilderFactory);
+        }
       }
     }
 
