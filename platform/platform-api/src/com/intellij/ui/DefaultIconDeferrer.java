@@ -14,7 +14,7 @@ public final class DefaultIconDeferrer extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
+  public <T> @NotNull Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
     return f.apply(param);
   }
 
