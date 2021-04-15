@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
@@ -10,10 +10,10 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ReadAction;
@@ -67,11 +67,11 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   @Override
-  public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+  public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     try {
       JavaParameters parameters = getJavaParameters();
       WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
-      return config == null ? null : new WslTargetEnvironmentFactory(config);
+      return config == null ? null : new WslTargetEnvironmentRequest(config);
     }
     catch (ExecutionException e) {
       // ignore
@@ -177,7 +177,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     }
 
     if (Experiments.getInstance().isFeatureEnabled("run.targets") &&
-        !(getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory)) {
+        !(getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest)) {
       LOG.error("Command line hasn't been built yet. " +
                 "Probably you need to run environment#getPreparedTargetEnvironment first, " +
                 "or it return the environment from the previous run session");
@@ -205,11 +205,10 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    LocalTargetEnvironmentFactory factory = new LocalTargetEnvironmentFactory();
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
-    TargetEnvironmentRequest request = factory.createRequest();
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, factory.getTargetConfiguration());
-    LocalTargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, request.getConfiguration());
+    LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
     return environment
       .createGeneralCommandLine(targetedCommandLineBuilder.build())
       .withRedirectErrorStream(redirectErrorStream);

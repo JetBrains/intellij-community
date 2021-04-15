@@ -498,8 +498,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new ExecutionException(e);
     }
 
-    TargetEnvironmentFactory targetEnvironmentFactory = createTargetEnvironmentFactory(sdk);
-    TargetEnvironmentRequest targetEnvironmentRequest = targetEnvironmentFactory.createRequest();
+    TargetEnvironmentRequest targetEnvironmentRequest = createTargetEnvironmentRequest(sdk);
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
     Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
@@ -538,8 +537,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     }
 
     // TODO [Targets API] We should pass the proper progress indicator here
-    TargetEnvironment targetEnvironment =
-      targetEnvironmentFactory.prepareRemoteEnvironment(targetEnvironmentRequest, TargetProgressIndicator.EMPTY);
+    TargetEnvironment targetEnvironment = targetEnvironmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY);
 
     // TODO [Targets API] [regression] We should create PTY process when `PtyCommandLine.isEnabled()`
     //  (see the legacy method `doCreateConsoleCmdLine()`)
@@ -596,12 +594,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
    * @see PythonInterpreterTargetEnvironmentFactory
    */
   @NotNull
-  private static TargetEnvironmentFactory createTargetEnvironmentFactory(@NotNull Sdk sdk) {
-    TargetEnvironmentFactory environmentFactory = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentFactory(sdk);
-    if (environmentFactory == null) {
+  private static TargetEnvironmentRequest createTargetEnvironmentRequest(@NotNull Sdk sdk) {
+    TargetEnvironmentRequest environmentRequest = PythonInterpreterTargetEnvironmentFactory.findTargetEnvironmentRequest(sdk);
+    if (environmentRequest == null) {
       throw new IllegalStateException("Cannot find execution environment for SDK " + sdk);
     }
-    return environmentFactory;
+    return environmentRequest;
   }
 
   @Contract("null -> null")

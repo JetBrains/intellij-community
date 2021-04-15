@@ -13,7 +13,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
@@ -194,7 +194,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
    */
   private static boolean isExecutorSupportedOnTarget(@NotNull ExecutionEnvironment env) {
     Executor executor = env.getExecutor();
-    return env.getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory || executor.isSupportedOnTarget();
+    return env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest || executor.isSupportedOnTarget();
   }
 
   private @Nullable RunContentDescriptor executeJavaState(@NotNull RunProfileState state,

@@ -18,13 +18,12 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -374,7 +373,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+    public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
       try {
         JavaParameters parameters = getJavaParameters();
 
@@ -394,7 +393,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         mavenConfig.setVersionString(mavenVersion);
         config.addLanguageRuntime(mavenConfig);
 
-        return new WslTargetEnvironmentFactory(config);
+        return new WslTargetEnvironmentRequest(config);
       }
       catch (ExecutionException e) {
         // ignore
@@ -404,7 +403,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     @Override
     protected JavaParameters createJavaParameters() throws ExecutionException {
-      if (getEnvironment().getTargetEnvironmentFactory() instanceof LocalTargetEnvironmentFactory) {
+      if (getEnvironment().getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
         JavaParameters parameters = myConfiguration.createJavaParameters(getEnvironment().getProject());
         JavaRunConfigurationExtensionManager.getInstance().updateJavaParameters(
           myConfiguration,

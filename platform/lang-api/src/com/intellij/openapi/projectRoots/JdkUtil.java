@@ -5,9 +5,12 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.SimpleJavaParameters;
-import com.intellij.execution.target.*;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
+import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetProgressIndicator;
+import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -131,10 +134,9 @@ public final class JdkUtil {
   }
 
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
-    LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
-    TargetEnvironmentRequest request = environmentFactory.createRequest();
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
     TargetedCommandLineBuilder builder = setupJVMCommandLine(javaParameters, request, null);
-    LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
+    LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
     return environment.createGeneralCommandLine(builder.build());
   }
 
@@ -177,12 +179,11 @@ public final class JdkUtil {
   }
 
   private static void setupCommandLine(GeneralCommandLine commandLine, SimpleJavaParameters javaParameters) throws CantRunException {
-    LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
-    TargetEnvironmentRequest request = environmentFactory.createRequest();
+    LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
     JdkCommandLineSetup setup = new JdkCommandLineSetup(request, null);
     setup.setupCommandLine(javaParameters);
 
-    LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
+    LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
     GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(setup.getCommandLine().build());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
     commandLine.getParametersList().addAll(generalCommandLine.getParametersList().getList());

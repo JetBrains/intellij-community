@@ -195,7 +195,7 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   /**
-   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration)} instead with request created by {@link com.intellij.execution.target.local.LocalTargetEnvironmentFactory} as an argument
+   * Consider using {@link #toCommandLine(TargetEnvironmentRequest, TargetEnvironmentConfiguration)} instead with {@link com.intellij.execution.target.local.LocalTargetEnvironmentRequest} as an argument
    *
    * @throws CantRunException when incorrect Java SDK is specified
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)

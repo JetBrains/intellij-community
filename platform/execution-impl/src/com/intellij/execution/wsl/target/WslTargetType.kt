@@ -43,8 +43,8 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     return listOf(WslTargetIntrospectionStep(model), WslTargetLanguageStep(model))
   }
 
-  override fun createEnvironmentFactory(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentFactory {
-    return WslTargetEnvironmentFactory(config)
+  override fun createEnvironmentRequest(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
+    return WslTargetEnvironmentRequest(config)
   }
 
   override fun createConfigurable(project: Project,

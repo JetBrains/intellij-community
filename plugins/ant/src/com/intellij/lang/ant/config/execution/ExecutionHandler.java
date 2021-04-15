@@ -7,12 +7,12 @@ import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.*;
 import com.intellij.execution.target.*;
-import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
@@ -111,7 +111,7 @@ public final class ExecutionHandler {
                                                           List<BuildFileProperty> additionalProperties,
                                                           @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
-    final TargetEnvironmentFactory factory;
+    final TargetEnvironmentRequest request;
     final TargetEnvironmentConfiguration configuration;
     final SimpleJavaParameters javaParameters;
     final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
@@ -131,11 +131,11 @@ public final class ExecutionHandler {
 
       WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
       if (wslConfiguration != null) {
-        factory = new WslTargetEnvironmentFactory(wslConfiguration);
+        request = new WslTargetEnvironmentRequest(wslConfiguration);
         configuration = wslConfiguration;
       }
       else {
-        factory = new LocalTargetEnvironmentFactory();
+        request = new LocalTargetEnvironmentRequest();
         configuration = null;
       }
 
@@ -171,9 +171,8 @@ public final class ExecutionHandler {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          TargetEnvironmentRequest request = factory.createRequest();
           TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request, configuration);
-          TargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
+          TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
           TargetedCommandLine commandLine = builder.build();
 
           messageView.setBuildCommandLine(commandLine.getCommandPresentation(environment));

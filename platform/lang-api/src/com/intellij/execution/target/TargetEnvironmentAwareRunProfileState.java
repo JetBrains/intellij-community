@@ -58,7 +58,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
     });
   }
 
-  default TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+  default TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     return null;
   }
 }

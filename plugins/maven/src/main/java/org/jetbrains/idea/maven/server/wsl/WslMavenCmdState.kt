@@ -11,7 +11,7 @@ import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
-import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory
+import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.Sdk
@@ -71,10 +71,9 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
 
   override fun startProcess(): ProcessHandler {
     val wslConfig = WslTargetEnvironmentConfiguration(myWslDistribution)
-    val myEnvFactory = WslTargetEnvironmentFactory(wslConfig)
+    val request = WslTargetEnvironmentRequest(wslConfig)
 
     val wslParams = createJavaParameters()
-    val request = myEnvFactory.createRequest()
     val languageRuntime = JavaLanguageRuntimeConfiguration()
 
     var jdkHomePath = myJdk.homePath
@@ -116,16 +115,15 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     }
 
     languageRuntime.homePath = wslPath ?: "/usr"
-    myEnvFactory.targetConfiguration.addLanguageRuntime(languageRuntime)
-    val setup = JdkCommandLineSetup(request, myEnvFactory.targetConfiguration)
+    request.configuration.addLanguageRuntime(languageRuntime)
+    val setup = JdkCommandLineSetup(request, request.configuration)
     setup.setupCommandLine(wslParams)
     setup.setupJavaExePath(wslParams)
 
-    val builder = wslParams.toCommandLine(myEnvFactory.createRequest(), wslConfig)
+    val builder = wslParams.toCommandLine(request, wslConfig)
     builder.setWorkingDirectory(workingDirectory)
 
-    val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,
-                                                               TargetProgressIndicator.EMPTY)
+    val wslEnvironment = request.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
     val manager = MavenProjectsManager.getInstance(myProject)
     val commandLine = builder.build()
