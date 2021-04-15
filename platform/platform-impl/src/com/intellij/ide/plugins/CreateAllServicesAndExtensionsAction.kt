@@ -27,7 +27,7 @@ import java.util.function.BiConsumer
 import kotlin.properties.Delegates.notNull
 
 @Suppress("HardCodedStringLiteral")
-private class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
+class CreateAllServicesAndExtensionsAction : AnAction("Create All Services And Extensions"), DumbAware {
   companion object {
     @JvmStatic
     fun createAllServicesAndExtensions() {
