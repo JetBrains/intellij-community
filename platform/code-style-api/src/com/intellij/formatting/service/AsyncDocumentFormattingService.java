@@ -60,7 +60,12 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
     if (prepare(formattingContext)) {
       AsyncFormattingRequest formattingRequest = new FormattingRequestImpl(formattingContext, document, canChangeWhiteSpaceOnly);
-      ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest));
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        runAsyncFormat(formattingRequest);
+      }
+      else {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest));
+      }
     }
   }
 
