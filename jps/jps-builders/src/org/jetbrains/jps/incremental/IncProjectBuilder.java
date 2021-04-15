@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -726,7 +725,7 @@ public final class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = new THashSet<>(Arrays.asList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> _outRoot = new THashSet<>(Collections.singletonList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;
@@ -908,7 +907,7 @@ public final class IncProjectBuilder {
 
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(myContext);
       myTasks = new ArrayList<>(chunks.size());
-      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new THashMap<>(chunks.size());
+      Map<BuildTarget<?>, BuildChunkTask> targetToTask = new HashMap<>(chunks.size());
       for (BuildTargetChunk chunk : chunks) {
         BuildChunkTask task = new BuildChunkTask(chunk);
         myTasks.add(task);

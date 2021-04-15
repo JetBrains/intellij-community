@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -127,7 +127,7 @@ public class ClassRepr extends ClassFileRepr {
     if (hasInlinedConstants() != pastClass.hasInlinedConstants()) {
       base |= Difference.CONSTANT_REFERENCES;
     }
-    
+
     final int d = base;
 
     return new Diff(diff) {
@@ -242,9 +242,9 @@ public class ClassRepr extends ClassFileRepr {
     super(context, in);
     try {
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new HashSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new HashSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new HashSet<>(), in);
       myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);

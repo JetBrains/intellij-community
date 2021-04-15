@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -15,11 +15,11 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -93,7 +93,7 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
   }
 
   protected void assertIndexableContent(@Nullable List<VirtualFile> mustContain, @Nullable List<VirtualFile> mustNotContain) {
-    final Set<VirtualFile> collected = new THashSet<>();
+    final Set<VirtualFile> collected = new HashSet<>();
     FileBasedIndex.getInstance().iterateIndexableFiles(fileOrDir -> {
       if (!collected.add(fileOrDir)) {
         fail(fileOrDir + " visited twice");
@@ -107,7 +107,7 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
   protected static void assertIteratedContent(@NotNull FileIndex fileIndex,
                                               @Nullable List<VirtualFile> mustContain,
                                               @Nullable List<VirtualFile> mustNotContain) {
-    final Set<VirtualFile> collected = new THashSet<>();
+    final Set<VirtualFile> collected = new HashSet<>();
     fileIndex.iterateContent(fileOrDir -> {
       if (!collected.add(fileOrDir)) {
         fail(fileOrDir + " visited twice");
@@ -121,7 +121,7 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
                                               @NotNull VirtualFile root,
                                               @Nullable List<VirtualFile> mustContain,
                                               @Nullable List<VirtualFile> mustNotContain) {
-    final Set<VirtualFile> collected = new THashSet<>();
+    final Set<VirtualFile> collected = new HashSet<>();
     fileIndex.iterateContentUnderDirectory(root, fileOrDir -> {
       if (!collected.add(fileOrDir)) {
         fail(fileOrDir + " visited twice");

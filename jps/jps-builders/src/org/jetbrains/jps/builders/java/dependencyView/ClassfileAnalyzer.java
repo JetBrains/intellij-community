@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -19,7 +17,7 @@ import java.util.*;
 /**
  * @author: db
  */
-class ClassfileAnalyzer {
+final class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
@@ -322,18 +320,18 @@ class ClassfileAnalyzer {
     private final Ref<Boolean> myLocalClassFlag = Ref.create(false);
     private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
 
-    private final Set<MethodRepr> myMethods = new THashSet<>();
-    private final Set<FieldRepr> myFields = new THashSet<>();
-    private final Set<UsageRepr.Usage> myUsages = new THashSet<>();
+    private final Set<MethodRepr> myMethods = new HashSet<>();
+    private final Set<FieldRepr> myFields = new HashSet<>();
+    private final Set<UsageRepr.Usage> myUsages = new HashSet<>();
     private final Set<ElemType> myTargets = EnumSet.noneOf(ElemType.class);
     private RetentionPolicy myRetentionPolicy = null;
 
-    private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new THashMap<>();
-    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<>();
-    private final Set<TypeRepr.ClassType> myAnnotations = new THashSet<>();
+    private final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new HashMap<>();
+    private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<>();
+    private final Set<TypeRepr.ClassType> myAnnotations = new HashSet<>();
 
-    private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
-    private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
+    private final Set<ModuleRequiresRepr> myModuleRequires = new HashSet<>();
+    private final Set<ModulePackageRepr> myModuleExports = new HashSet<>();
 
     ClassCrawler(final int fn, boolean isGenerated) {
       super(ASM_API_VERSION);
@@ -433,7 +431,7 @@ class ClassfileAnalyzer {
       processSignature(signature);
 
       return new FieldVisitor(ASM_API_VERSION) {
-        final Set<TypeRepr.ClassType> annotations = new THashSet<>();
+        final Set<TypeRepr.ClassType> annotations = new HashSet<>();
 
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -461,8 +459,8 @@ class ClassfileAnalyzer {
     @Override
     public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
       final Ref<Object> defaultValue = Ref.create();
-      final Set<TypeRepr.ClassType> annotations = new THashSet<>();
-      final Set<ParamAnnotation> paramAnnotations = new THashSet<>();
+      final Set<TypeRepr.ClassType> annotations = new HashSet<>();
+      final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
       processSignature(signature);
 
       return new MethodVisitor(ASM_API_VERSION) {

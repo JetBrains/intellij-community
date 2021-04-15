@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-public class Mappings {
+public final class Mappings {
   private final static Logger LOG = Logger.getInstance(Mappings.class);
   public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
   private boolean myProcessConstantsIncrementally = !Boolean.valueOf(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
@@ -1082,8 +1082,8 @@ public class Mappings {
 
     private class FileClasses {
       final File myFileName;
-      final Set<ClassRepr> myFileClasses = new THashSet<>();
-      final Set<ModuleRepr> myFileModules = new THashSet<>();
+      final Set<ClassRepr> myFileClasses = new HashSet<>();
+      final Set<ModuleRepr> myFileModules = new HashSet<>();
 
       FileClasses(File fileName, Collection<ClassFileRepr> fileContent) {
         myFileName = fileName;
@@ -1482,7 +1482,7 @@ public class Mappings {
           boolean affected = false;
           boolean constrained = false;
 
-          final Set<UsageRepr.Usage> usages = new THashSet<>();
+          final Set<UsageRepr.Usage> usages = new HashSet<>();
 
           if (d.packageLocalOn()) {
             debug("Method became package-private, affecting method usages outside the package");
@@ -1815,7 +1815,7 @@ public class Mappings {
               }
             }
             else {
-              final Set<UsageRepr.Usage> usages = new THashSet<>();
+              final Set<UsageRepr.Usage> usages = new HashSet<>();
 
               if ((d.addedModifiers() & Opcodes.ACC_FINAL) != 0) {
                 debug("Added final modifier --- affecting field assign usages");
@@ -1865,7 +1865,7 @@ public class Mappings {
               toRecompile.addAll(res);
             }
             if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
-              final Set<UsageRepr.Usage> usages = new THashSet<>();
+              final Set<UsageRepr.Usage> usages = new HashSet<>();
               myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), usages, state.myDependants);
               state.myAffectedUsages.addAll(usages);
               // remove any constraints to ensure all field usages are recompiled
@@ -2361,8 +2361,8 @@ public class Mappings {
 
           for (final FileClasses compiledFile : newClasses) {
             final File fileName = compiledFile.myFileName;
-            final Set<ClassRepr> pastClasses = new THashSet<>();
-            final Set<ModuleRepr> pastModules = new THashSet<>();
+            final Set<ClassRepr> pastClasses = new HashSet<>();
+            final Set<ModuleRepr> pastModules = new HashSet<>();
             final Collection<ClassFileRepr> past = sourceFileToClassesGet(fileName);
             if (past != null) {
               for (ClassFileRepr repr : past) {
@@ -2971,7 +2971,7 @@ public class Mappings {
       if (reprs == null || reprs.isEmpty()) {
         return null;
       }
-      final Set<ClassRepr> result = new THashSet<>();
+      final Set<ClassRepr> result = new HashSet<>();
       for (ClassFileRepr repr : reprs) {
         if (repr instanceof ClassRepr) {
           result.add((ClassRepr)repr);
@@ -3185,7 +3185,7 @@ public class Mappings {
     }
     return true;
   }
-  
+
   private static <T> void removeAll(final Collection<? extends T> collection, Iterable<? extends T> it) {
     for (T file : it) {
       collection.remove(file);

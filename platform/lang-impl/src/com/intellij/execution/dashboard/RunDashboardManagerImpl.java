@@ -66,8 +66,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final ContentManager myContentManager;
   private final ContentManagerListener myServiceContentManagerListener;
   private State myState = new State();
-  private final Set<String> myTypes = new THashSet<>();
-  private final Set<RunConfiguration> myHiddenConfigurations = new THashSet<>();
+  private final Set<String> myTypes = new HashSet<>();
+  private final Set<RunConfiguration> myHiddenConfigurations = new HashSet<>();
   private volatile List<List<RunDashboardServiceImpl>> myServices = Collections.emptyList();
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
@@ -614,7 +614,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   Set<String> getEnableByDefaultTypes() {
-    Set<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (RunDashboardDefaultTypesProvider provider : DEFAULT_TYPES_PROVIDER_EP_NAME.getExtensionList()) {
       result.addAll(provider.getDefaultTypeIds(myProject));
     }
