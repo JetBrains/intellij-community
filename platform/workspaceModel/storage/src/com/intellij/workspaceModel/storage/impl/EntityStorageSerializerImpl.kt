@@ -12,10 +12,12 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.*
+import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MostlySingularMultiMap
+import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -38,7 +40,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v13"
+    const val SERIALIZER_VERSION = "v14"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
