@@ -45,7 +45,7 @@ import java.util.Map;
 /**
  * @author pdolgov
  */
-public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
+public class CreateFxmlFileAction extends CreateFromTemplateActionBase implements UpdateInBackground {
   private static final String INTERNAL_TEMPLATE_NAME = "FxmlFile.fxml";
 
   public CreateFxmlFileAction() {
