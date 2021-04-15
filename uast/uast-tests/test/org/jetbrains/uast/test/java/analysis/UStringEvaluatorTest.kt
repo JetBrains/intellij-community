@@ -3,16 +3,17 @@ package org.jetbrains.uast.test.java.analysis
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PsiJavaPatterns.psiMethod
+import com.intellij.patterns.uast.callExpression
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
-import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
-import org.jetbrains.uast.toUElement
 
 class UStringEvaluatorTest : AbstractJavaUastLightTest() {
   fun `test simple string`() {
@@ -444,6 +445,54 @@ class UStringEvaluatorTest : AbstractJavaUastLightTest() {
     TestCase.assertEquals("{'b''a'}NULL", pks.debugConcatenation)
   }
 
+  fun `test join method evaluator`() {
+    val file = myFixture.configureByText("MyFile.java", """
+      class Strings {
+        public static String join(String separator, String... separators) {
+          return null;
+        }
+      }      
+      
+      class MyFile {
+        String a(String param) {
+          String s = "aaa";
+          return Strings.jo<caret>in("\\m/", "abacaba", param, "my-string" + " is cool", s);
+        }
+      }
+    """.trimIndent())
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement().getUCallExpression()
+                         ?: fail("Cannot find UElement at caret")
+    val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+      methodEvaluators = mapOf(
+        callExpression().withResolvedMethod(
+          psiMethod().withName("join").definedInClass("Strings").withModifiers(PsiModifier.STATIC), false
+        ) to UStringEvaluator.MethodCallEvaluator body@{ uStringEvaluator: UStringEvaluator,
+                                                         configuration: UStringEvaluator.Configuration,
+                                                         joinCall: UCallExpression ->
+          val separator = joinCall.getArgumentForParameter(0)?.let { uStringEvaluator.calculateValue(it, configuration) }
+                          ?: return@body null
+
+          val resultSegments = mutableListOf<StringEntry>()
+          val params = joinCall.getArgumentForParameter(1) as? UExpressionList ?: return@body null
+          params.firstOrNull()
+            ?.let { uStringEvaluator.calculateValue(it, configuration) }
+            ?.let { resultSegments += it.segments }
+          ?: return@body null
+
+          for (element in params.expressions.drop(1)) {
+            resultSegments += separator.segments
+            val elementValue = uStringEvaluator.calculateValue(element, configuration) ?: return@body null
+            resultSegments += elementValue.segments
+          }
+          PartiallyKnownString(resultSegments)
+        }
+      )
+    )) ?: fail("Cannot evaluate string")
+
+    TestCase.assertEquals("""'abacaba''\m/'NULL'\m/''my-string'' is cool''\m/''aaa'""", pks.debugConcatenation)
+  }
+
   fun `test many assignments`() {
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
@@ -453,9 +502,7 @@ class UStringEvaluatorTest : AbstractJavaUastLightTest() {
       
         String a() {
           String a0 = "a";
-          ${
-            (1..1000).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }
-          }
+          ${(1..1000).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
           return a1000 + <caret> (true ? "a" : b());
         }
       }

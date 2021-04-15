@@ -10,6 +10,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
@@ -69,11 +70,17 @@ class UStringEvaluator {
       }
     }
 
-    if (element is UCallExpression && element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
-      return PartiallyKnownString(
-        StringEntry.Unknown(element.sourcePsi, element.ownTextRange,
-                            analyzeMethod(graph, element, configuration).takeUnless { it.isEmpty() })
-      )
+    if (element is UCallExpression) {
+      val methodEvaluator = configuration.getEvaluatorForCall(element)
+      if (methodEvaluator != null) {
+        return methodEvaluator.provideValue(this, configuration, element)
+      }
+      if (element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
+        return PartiallyKnownString(
+          StringEntry.Unknown(element.sourcePsi, element.ownTextRange,
+                              analyzeMethod(graph, element, configuration).takeUnless { it.isEmpty() })
+        )
+      }
     }
 
     for (dependency in graph.dependencies[element].orEmpty()) {
@@ -155,11 +162,20 @@ class UStringEvaluator {
     fun provideValue(element: UDeclaration): PartiallyKnownString?
   }
 
+  fun interface MethodCallEvaluator {
+    fun provideValue(evaluator: UStringEvaluator, configuration: Configuration, callExpression: UCallExpression): PartiallyKnownString?
+  }
+
   data class Configuration(
     val methodCallDepth: Int = 1,
     val parameterUsagesDepth: Int = 1,
     val valueProviders: Iterable<DeclarationValueProvider> = emptyList(),
+    val usagesSearchScope: SearchScope = LocalSearchScope.EMPTY,
     val methodsToAnalyzePattern: ElementPattern<PsiMethod> = PlatformPatterns.alwaysFalse(),
-    val usagesSearchScope: SearchScope = LocalSearchScope.EMPTY
-  )
+    val methodEvaluators: Map<ElementPattern<UCallExpression>, MethodCallEvaluator> = emptyMap()
+  ) {
+    internal fun getEvaluatorForCall(callExpression: UCallExpression): MethodCallEvaluator? {
+      return methodEvaluators.entries.firstOrNull { (pattern, _) -> pattern.accepts(callExpression) }?.value
+    }
+  }
 }
