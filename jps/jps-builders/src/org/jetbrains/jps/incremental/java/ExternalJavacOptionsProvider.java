@@ -25,7 +25,7 @@ import java.util.Collections;
  * An extension for setting up additional VM options for external java compiler.
  */
 public interface ExternalJavacOptionsProvider {
-  /*
+  /**
    * @deprecated Use {@link #getOptions(JavaCompilingTool, int)}
    */
   @Deprecated
