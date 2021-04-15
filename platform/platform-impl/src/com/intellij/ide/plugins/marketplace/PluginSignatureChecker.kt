@@ -78,7 +78,7 @@ internal object PluginSignatureChecker {
     val findRevokedCertificate = CertificateUtils.findRevokedCertificate(cert509Lists, lists)
     val isRevoked = findRevokedCertificate != null
     cache.put(this.javaClass.name, Optional.of(isRevoked))
-    return findRevokedCertificate != null
+    return isRevoked
   }
 
   private fun getRevocationLists(certs: List<X509Certificate>): List<X509CRL> {
