@@ -1160,7 +1160,7 @@ public final class PyCallExpressionHelper {
       .filter(
         element -> {
           final PsiElement mapped = mapper.apply(element);
-          return mapped != null && PyiUtil.isOverload(mapped, context);
+          return mapped != null && (PyiUtil.isInsideStub(mapped) || PyiUtil.isOverload(mapped, context));
         }
       );
   }

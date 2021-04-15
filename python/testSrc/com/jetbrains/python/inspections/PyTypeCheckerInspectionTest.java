@@ -1287,4 +1287,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testPyFunctionAgainstBuiltinFunction() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
+
+  // PY-39762
+  public void testOverloadsAndPureStubInSamePyiScope() {
+    doMultiFileTest();
+  }
 }
