@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -40,9 +39,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     override val definitions: Sequence<ScriptDefinition>
         get() {
             definitionsLock.withLock {
-                if (_definitions != null) {
-                    return _definitions!!.asSequence()
-                }
+                _definitions?.let { return it.asSequence() }
             }
 
             forceStartUpdate = false
@@ -92,7 +89,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
     private var forceStartUpdate = false
 
     private fun loadScriptDefinitions() {
-        if (ApplicationManager.getApplication().isUnitTestMode || project.isDefault) {
+        if (project.isDefault) {
             return onEarlyEnd()
         }
 
@@ -101,60 +98,61 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         }
 
         ReadAction
-            .nonBlocking<Collection<VirtualFile>> {
+            .nonBlocking<Collection<VirtualFile>>{
                 FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
             }
             .inSmartMode(project)
             .expireWith(KotlinPluginDisposable.getInstance(project))
             .submit(AppExecutorUtil.getAppExecutorService())
             .onSuccess { files ->
-                val (templates, classpath) = getTemplateClassPath(files)
+                try {
+                    val (templates, classpath) = getTemplateClassPath(files)
 
-                if (templates.isEmpty()) return@onSuccess onEarlyEnd()
+                    if (!inProgress.get() || templates.isEmpty()) return@onSuccess onEarlyEnd()
 
-                val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
-                if (newTemplates == oldTemplates) {
+                    val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
+                    if (newTemplates == oldTemplates) {
+                        return@onSuccess
+                    }
+
+                    if (logger.isDebugEnabled) {
+                        logger.debug("script templates found: $newTemplates")
+                    }
+
+                    oldTemplates = newTemplates
+
+                    val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+                        getEnvironment {
+                            mapOf(
+                                "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File),
+                            )
+                        }
+                    }
+
+                    val newDefinitions = loadDefinitionsFromTemplates(
+                        templateClassNames = newTemplates.templates,
+                        templateClasspath = newTemplates.classpath,
+                        baseHostConfiguration = hostConfiguration,
+                    )
+
+                    if (logger.isDebugEnabled) {
+                        logger.debug("script definitions found: ${newDefinitions.joinToString()}")
+                    }
+
+                    val needReload = definitionsLock.withLock {
+                        if (newDefinitions != _definitions) {
+                            _definitions = newDefinitions
+                            return@withLock true
+                        }
+                        return@withLock false
+                    }
+
+                    if (needReload) {
+                        ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromDependenciesProvider)
+                    }
+                } finally {
                     inProgress.set(false)
-                    return@onSuccess
                 }
-
-                if (logger.isDebugEnabled) {
-                    logger.debug("script templates found: $newTemplates")
-                }
-
-                oldTemplates = newTemplates
-
-                val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-                    getEnvironment {
-                        mapOf(
-                            "projectRoot" to (project.basePath ?: project.baseDir.canonicalPath)?.let(::File),
-                        )
-                    }
-                }
-
-                val newDefinitions = loadDefinitionsFromTemplates(
-                    templateClassNames = newTemplates.templates,
-                    templateClasspath = newTemplates.classpath,
-                    baseHostConfiguration = hostConfiguration,
-                )
-
-                if (logger.isDebugEnabled) {
-                    logger.debug("script definitions found: ${newDefinitions.joinToString()}")
-                }
-
-                val needReload = definitionsLock.withLock {
-                    if (newDefinitions != _definitions) {
-                        _definitions = newDefinitions
-                        return@withLock true
-                    }
-                    return@withLock false
-                }
-
-                if (needReload) {
-                    ScriptDefinitionsManager.getInstance(project).reloadDefinitionsBy(this@ScriptTemplatesFromDependenciesProvider)
-                }
-
-                inProgress.set(false)
             }
     }
 

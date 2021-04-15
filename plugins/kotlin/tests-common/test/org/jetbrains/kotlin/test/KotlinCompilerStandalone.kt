@@ -65,6 +65,37 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
                 //.also { it.deleteOnExit() }
                 .canonicalFile
         }
+
+        fun copyToJar(sources: List<File>, prefix: String): File {
+            with(File.createTempFile(prefix, ".jar").canonicalFile) {
+                copyToJar(sources, this)
+                return this
+            }
+        }
+
+        fun copyToJar(sources: List<File>, target: File) {
+            target.outputStream().buffered().use { os ->
+                ZipOutputStream(os).use { zos ->
+                    for (source in sources) {
+                        for (file in source.walk()) {
+                            if (file.isFile) {
+                                val path = FileUtil.toSystemIndependentName(file.toRelativeString(source))
+                                zos.putNextEntry(ZipEntry(path))
+                                zos.write(file.readBytes())
+                                zos.closeEntry()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        fun copyToDirectory(sources: List<File>, target: File) {
+            target.mkdirs()
+            assert(target.isDirectory) { "Can't create target directory" }
+            assert(target.listFiles().orEmpty().isEmpty()) { "Target directory is not empty" }
+            sources.forEach { it.copyRecursively(target) }
+        }
     }
 
     private val classpath: List<File>
@@ -207,29 +238,6 @@ class KotlinCompilerStandalone @JvmOverloads constructor(
         assert(compileFun(files, args)) { "Java files are not compiled successfully" }
     }
 
-    private fun copyToJar(sources: List<File>, target: File) {
-        target.outputStream().buffered().use { os ->
-            ZipOutputStream(os).use { zos ->
-                for (source in sources) {
-                    for (file in source.walk()) {
-                        if (file.isFile) {
-                            val path = FileUtil.toSystemIndependentName(file.toRelativeString(source))
-                            zos.putNextEntry(ZipEntry(path))
-                            zos.write(file.readBytes())
-                            zos.closeEntry()
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun copyToDirectory(sources: List<File>, target: File) {
-        target.mkdirs()
-        assert(target.isDirectory) { "Can't create target directory" }
-        assert(target.listFiles().orEmpty().isEmpty()) { "Target directory is not empty" }
-        sources.forEach { it.copyRecursively(target) }
-    }
 }
 
 object KotlinCliCompilerFacade {

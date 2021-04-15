@@ -72,8 +72,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     }
 
     private fun findMainScript(testDir: File): File {
-        val scriptFile = testDir.walkTopDown().find { it.name == SCRIPT_NAME }
-        if (scriptFile != null) return scriptFile
+        testDir.walkTopDown().find { it.name == SCRIPT_NAME }?.let { return it }
 
         return testDir.walkTopDown().singleOrNull { it.name.contains("script") }
             ?: error("Couldn't find $SCRIPT_NAME file in $testDir")
@@ -187,7 +186,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         return IdeaTestUtil.getMockJdk18()
     }
 
-    private fun createTestModuleByName(name: String): Module {
+    protected fun createTestModuleByName(name: String): Module {
         val path = File(project.basePath, name).path
         val newModuleDir = runWriteAction { VfsUtil.createDirectoryIfMissing(path) ?: error("unable to create $path") }
         val newModule = createModuleAt(name, project, JavaModuleType.getModuleType(), Paths.get(newModuleDir.path))
@@ -245,7 +244,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             val jdk = PluginTestCaseBase.addJdk(testRootDisposable) {
                 PluginTestCaseBase.jdk(jdkKind)
             }
-            env["javaHome"] = File(jdk.homePath)
+            env["javaHome"] = File(jdk.homePath!!)
         }
 
         env.putAll(defaultEnvironment)
@@ -287,7 +286,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
         )
     }
 
-    private fun getScriptingClasspath(): List<File> {
+    protected fun getScriptingClasspath(): List<File> {
         return listOf(
           KotlinArtifacts.instance.kotlinScriptRuntime,
           KotlinArtifacts.instance.kotlinScriptingCommon,
@@ -308,11 +307,11 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             script = VfsUtil.findFileByIoFile(target, true)
         }
 
-        if (script == null) error("Test file with script couldn't be found in test project")
+        script ?: error("Test file with script couldn't be found in test project")
 
         configureByExistingFile(script)
         loadScriptConfigurationSynchronously(script)
-        return script!!
+        return script
     }
 
     protected open fun loadScriptConfigurationSynchronously(script: VirtualFile) {

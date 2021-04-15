@@ -365,7 +365,9 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
         val firstSDK = getProjectJdkTableSafe().allJdks.first()
 
         with(createFileInProject("script.kts").moduleInfo) {
-            dependencies().filterIsInstance<SdkInfo>().single { it.sdk == firstSDK }
+            val filterIsInstance = dependencies().filterIsInstance<SdkInfo>()
+            filterIsInstance.singleOrNull { it.sdk == firstSDK }
+                ?: error("Unable to look up ${firstSDK.name} in ${filterIsInstance.map { it.name }}")
         }
     }
 

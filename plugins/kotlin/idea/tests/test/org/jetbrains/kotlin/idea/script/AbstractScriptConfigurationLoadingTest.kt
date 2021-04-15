@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
 
 abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurationTest() {
@@ -47,7 +45,7 @@ abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurat
         testScriptConfigurationNotification = true
         ApplicationManager.getApplication().isScriptChangesNotifierDisabled = false
 
-        scriptConfigurationManager = ServiceManager.getService(project, ScriptConfigurationManager::class.java) as CompositeScriptConfigurationManager
+        scriptConfigurationManager = project.getService(ScriptConfigurationManager::class.java) as CompositeScriptConfigurationManager
     }
 
     override fun tearDown() {
