@@ -756,6 +756,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return vf != null && myExcludedIndex.isExcludedFile(vf);
       }
       else {
+        // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.
         FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         for (String name : StringUtil.tokenize(filePath.getPath(), "/")) {
           if (fileTypeManager.isFileIgnored(name)) {

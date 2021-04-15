@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -296,7 +297,15 @@ public final class NewMappings implements Disposable {
         });
       }
 
-      return new Mappings(Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR)), pointerDisposable);
+      List<MappedRoot> result = Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR));
+
+      for (MappedRoot root : result) {
+        if (myVcsManager.isIgnored(VcsUtil.getFilePath(root.root))) {
+          LOG.warn("Root mapping is under ignored root: " + root.root);
+        }
+      }
+
+      return new Mappings(result, pointerDisposable);
     }
     catch (Throwable e) {
       Disposer.dispose(pointerDisposable);
