@@ -164,7 +164,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
         initialTargetDirectory = null;
       }
     }
-    Consumer<String> updater = s -> {
+    Consumer<String> updater = (@NlsContexts.DialogMessage var s) -> {
       setErrorText(s, myDestinationFolderCB);
       if (s == null) {
         validateButtons();
