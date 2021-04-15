@@ -1011,6 +1011,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   }
 
   public DfaInstructionState[] visitClosureInstruction(ClosureInstruction instruction, DataFlowRunner runner, DfaMemoryState before) {
+    for (PsiElement element : instruction.getClosureElements()) {
+      runner.createClosureState(element, before);
+    }
     return nextInstruction(instruction, runner, before);
   }
 

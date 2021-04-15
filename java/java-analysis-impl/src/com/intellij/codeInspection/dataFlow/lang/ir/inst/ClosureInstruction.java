@@ -23,19 +23,20 @@ import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
- * Indicates the closure (lambda or class) inside the analyzed code block
+ * Indicates the closures inside the analyzed code block
  */
 public class ClosureInstruction extends Instruction {
-  @NotNull private final PsiElement myClosure;
+  private final @NotNull List<PsiElement> myClosures;
 
-  public ClosureInstruction(@NotNull PsiElement closure) {
-    myClosure = closure;
+  public ClosureInstruction(@NotNull List<PsiElement> closures) {
+    myClosures = closures;
   }
 
-  @NotNull
-  public PsiElement getClosureElement() {
-    return myClosure;
+  public @NotNull List<PsiElement> getClosureElements() {
+    return myClosures;
   }
 
   @Override
