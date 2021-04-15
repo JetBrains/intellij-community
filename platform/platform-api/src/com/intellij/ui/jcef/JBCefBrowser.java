@@ -252,40 +252,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
   private @NotNull JPanel createComponent() {
     Component uiComp = getCefBrowser().getUIComponent();
-    JPanel resultPanel = new JPanel(new BorderLayout()) {
-      {
-        enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
-      }
-      @Override
-      public void setBackground(Color bg) {
-        uiComp.setBackground(bg);
-        super.setBackground(bg);
-      }
-      @Override
-      public void removeNotify() {
-        if (SystemInfo.isWindows) {
-          if (myCefBrowser.getUIComponent().hasFocus()) {
-            // pass focus before removal
-            myCefBrowser.setFocus(false);
-          }
-        }
-        myFirstShow = true;
-        super.removeNotify();
-      }
-      @Override
-      public Dimension getPreferredSize() {
-        // Preferred size should not be zero, otherwise the content loading is not triggered
-        Dimension size = super.getPreferredSize();
-        return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
-      }
-      @Override
-      protected void processFocusEvent(FocusEvent e) {
-        super.processFocusEvent(e);
-        if (e.getID() == FocusEvent.FOCUS_GAINED) {
-          uiComp.requestFocusInWindow();
-        }
-      }
-    };
+    JPanel resultPanel = new MyPanel(uiComp);
 
     resultPanel.setBackground(JBColor.background());
     resultPanel.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
@@ -401,6 +368,50 @@ public class JBCefBrowser extends JBCefBrowserBase {
     @Override
     public Component getDefaultComponent(Container aContainer) {
       return myCefBrowser.getUIComponent();
+    }
+  }
+
+  private class MyPanel extends JPanel {
+    private final Component myUiComp;
+
+    private MyPanel(Component uiComp) {
+      super(new BorderLayout());
+      myUiComp = uiComp;
+      myUiComp.setBackground(getBackground());
+      enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      if (myUiComp != null) myUiComp.setBackground(bg);
+      super.setBackground(bg);
+    }
+
+    @Override
+    public void removeNotify() {
+      if (SystemInfo.isWindows) {
+        if (myCefBrowser.getUIComponent().hasFocus()) {
+          // pass focus before removal
+          myCefBrowser.setFocus(false);
+        }
+      }
+      myFirstShow = true;
+      super.removeNotify();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      // Preferred size should not be zero, otherwise the content loading is not triggered
+      Dimension size = super.getPreferredSize();
+      return size.width > 0 && size.height > 0 ? size : DEF_PREF_SIZE;
+    }
+
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      if (e.getID() == FocusEvent.FOCUS_GAINED) {
+        myUiComp.requestFocusInWindow();
+      }
     }
   }
 }
