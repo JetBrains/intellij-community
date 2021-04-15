@@ -39,23 +39,22 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   override var panel: DialogPanel = panel {
     nameAndPath()
     row {
-      twoColumnRow(
-        { label(UIBundle.message("label.project.wizard.new.project.language")) },
-        { component(createButtonsPanel(DefaultActionGroup(languageButtons))) }
-      )
-    }
+      cell(isFullWidth = true) {
+        label(UIBundle.message("label.project.wizard.new.project.language"))
+        component(createButtonsPanel(DefaultActionGroup(languageButtons)))
+      }
+    }.largeGapAfter()
 
     settingsMap.values.forEach {
       it.forEach { lc ->
         row {
-          (lc.label?.let {
-            twoColumnRow(
-              { component(it) },
-              { component(lc.component) }
-            )
-          } ?: component(lc.component)
-          )
-        }.apply { visible = false }
+          cell(isFullWidth = true) {
+            if (lc.label != null) {
+              component(lc.label!!)
+            }
+            component(lc.component)
+          }
+        }.apply { visible = false }.largeGapAfter()
       }
     }
     gitCheckbox()
