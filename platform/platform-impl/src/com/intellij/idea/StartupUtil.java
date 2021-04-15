@@ -149,13 +149,13 @@ public final class StartupUtil {
     }
   }
 
-  private static void runPreAppClass(@NotNull Logger log) {
+  private static void runPreAppClass(@NotNull Logger log, @NotNull String[] args) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       try {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
-        Method invokeMethod = clazz.getDeclaredMethod("invoke");
-        invokeMethod.invoke(null);
+        Method invokeMethod = clazz.getDeclaredMethod("invoke", String[].class);
+        invokeMethod.invoke(null, (Object) args);
       }
       catch (Exception e) {
         log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
@@ -244,7 +244,7 @@ public final class StartupUtil {
     }
 
     if (!configImportNeeded) {
-      runPreAppClass(log);
+      runPreAppClass(log, args);
     }
 
     startApp(args, initUiTask, log, configImportNeeded, appStarterFuture, euaDocument);
