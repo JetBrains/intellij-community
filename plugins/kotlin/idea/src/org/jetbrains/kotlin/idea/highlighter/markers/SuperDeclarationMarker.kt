@@ -78,7 +78,7 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
 
 class SuperDeclarationMarkerNavigationHandler : GutterIconNavigationHandler<PsiElement>, TestableLineMarkerNavigator {
     override fun navigate(e: MouseEvent?, element: PsiElement?) {
-        getTargetsPopupDescriptor(element)?.showPopup(e)
+        e?.let { getTargetsPopupDescriptor(element)?.showPopup(e) }
     }
 
     override fun getTargetsPopupDescriptor(element: PsiElement?): NavigationPopupDescriptor? {

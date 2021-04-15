@@ -132,7 +132,7 @@ data class NavigationPopupDescriptor(
     val renderer: ListCellRenderer<in NavigatablePsiElement>,
     val updater: BackgroundUpdaterTask? = null
 ) {
-    fun showPopup(e: MouseEvent?) {
+    fun showPopup(e: MouseEvent) {
         PsiElementListNavigator.openTargets(e, targets.toTypedArray(), title, findUsagesTitle, renderer, updater)
     }
 }
@@ -157,7 +157,7 @@ val OVERRIDDEN_FUNCTION = object : MarkerType(
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
     object : LineMarkerNavigator() {
         override fun browse(e: MouseEvent?, element: PsiElement?) {
-            buildNavigateToOverriddenMethodPopup(e, element)?.showPopup(e)
+            e?.let { buildNavigateToOverriddenMethodPopup(e, element)?.showPopup(e) }
         }
     }) {
 
@@ -178,7 +178,7 @@ val OVERRIDDEN_PROPERTY = object : MarkerType(
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },
     object : LineMarkerNavigator() {
         override fun browse(e: MouseEvent?, element: PsiElement?) {
-            buildNavigateToPropertyOverriddenDeclarationsPopup(e, element)?.showPopup(e)
+            e?.let { buildNavigateToPropertyOverriddenDeclarationsPopup(e, element)?.showPopup(e) }
         }
     }) {
 
@@ -202,7 +202,7 @@ private val PLATFORM_ACTUAL = object : MarkerType(
     { element -> element?.markerDeclaration?.let { getPlatformActualTooltip(it) } },
     object : LineMarkerNavigator() {
         override fun browse(e: MouseEvent?, element: PsiElement?) {
-            buildNavigateToActualDeclarationsPopup(element)?.showPopup(e)
+            e?.let { buildNavigateToActualDeclarationsPopup(element)?.showPopup(e) }
         }
     }) {
     override fun getNavigationHandler(): GutterIconNavigationHandler<PsiElement> {
@@ -224,7 +224,7 @@ private val EXPECTED_DECLARATION = object : MarkerType(
     { element -> element?.markerDeclaration?.let { getExpectedDeclarationTooltip(it) } },
     object : LineMarkerNavigator() {
         override fun browse(e: MouseEvent?, element: PsiElement?) {
-            buildNavigateToExpectedDeclarationsPopup(element)?.showPopup(e)
+            e?.let { buildNavigateToExpectedDeclarationsPopup(element)?.showPopup(e) }
         }
     }) {
     override fun getNavigationHandler(): GutterIconNavigationHandler<PsiElement> {
