@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.JBCheckBox
@@ -29,11 +28,10 @@ import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import training.dsl.*
 import training.learn.course.KLesson
 import training.learn.lesson.general.git.GitLessonsUtil.checkoutBranch
-import training.learn.lesson.general.git.GitLessonsUtil.gotItStep
 import training.learn.lesson.general.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.learn.lesson.general.git.GitLessonsUtil.moveLearnToolWindowRight
 import training.learn.lesson.general.git.GitLessonsUtil.proceedLink
 import training.learn.lesson.general.git.GitLessonsUtil.resetGitLogWindow
-import training.ui.LearnToolWindow
 import training.ui.LearningUiHighlightingManager
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -77,20 +75,7 @@ class GitCommitLesson : KLesson("Git.Commit", "Commit") {
       commitWorkflowHandler.setCommitMessage(lastCommitMessage)
     }
 
-    prepareRuntimeTask {
-      val learnToolWindow = ToolWindowManager.getInstance(project).getToolWindow("Learn") ?: error("Not found Learn toolwindow")
-      learnToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
-      learnToolWindow.show()
-    }
-
-    task {
-      triggerByUiComponentAndHighlight(false, false) { _: LearnToolWindow -> true }
-    }
-
-    task {
-      text("Press ${strong("Got it!")} to proceed.")
-      gotItStep(Balloon.Position.atLeft, 300, "We moved the Learn panel to the right because it is covered by the Commit tool window.")
-    }
+    moveLearnToolWindowRight()
 
     highlightVcsChange(secondFileName)
 

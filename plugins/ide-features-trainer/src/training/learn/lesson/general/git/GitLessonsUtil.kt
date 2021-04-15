@@ -6,6 +6,8 @@ import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -23,6 +25,7 @@ import training.dsl.LearningBalloonConfig
 import training.dsl.LessonContext
 import training.dsl.TaskContext
 import training.dsl.subscribeForMessageBus
+import training.ui.LearnToolWindow
 import training.ui.LearningUiManager
 import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
@@ -79,6 +82,23 @@ object GitLessonsUtil {
         ui.selectionModel.clearSelection()
         true
       }
+    }
+  }
+
+  fun LessonContext.moveLearnToolWindowRight() {
+    prepareRuntimeTask {
+      val learnToolWindow = ToolWindowManager.getInstance(project).getToolWindow("Learn") ?: error("Not found Learn toolwindow")
+      learnToolWindow.setAnchor(ToolWindowAnchor.RIGHT, null)
+      learnToolWindow.show()
+    }
+
+    task {
+      triggerByUiComponentAndHighlight(false, false) { _: LearnToolWindow -> true }
+    }
+
+    task {
+      text("Press ${strong("Got it!")} to proceed.")
+      gotItStep(Balloon.Position.atLeft, 300, "We moved the Learn panel to the right because it is covered by the Commit tool window.")
     }
   }
 
