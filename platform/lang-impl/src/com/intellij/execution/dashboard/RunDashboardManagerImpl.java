@@ -20,6 +20,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -197,10 +198,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public @NotNull String getToolWindowId() {
     if (myToolWindowId == null) {
-      String toolWindowId =
-        ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
-          .getToolWindowId(RunDashboardServiceViewContributor.class);
-      myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
+      if (LightEdit.owns(myProject)) {
+        myToolWindowId = ToolWindowId.SERVICES;
+      }
+      else {
+        String toolWindowId =
+          ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
+            .getToolWindowId(RunDashboardServiceViewContributor.class);
+        myToolWindowId = toolWindowId != null ? toolWindowId : ToolWindowId.SERVICES;
+      }
     }
     return myToolWindowId;
   }
