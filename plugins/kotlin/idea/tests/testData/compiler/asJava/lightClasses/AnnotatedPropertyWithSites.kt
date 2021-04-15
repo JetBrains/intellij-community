@@ -16,7 +16,5 @@ class Test(@get:MyAnnotation @set:MyAnnotation2 @setparam:MyAnnotation3 @propert
         set(value) {}
 }
 
-// IGNORE_BROKEN_LC: it is known broken case for old LightClasses
-// this test data is used for ULC as well that has to pass
-
 // SKIP_SANITY_TEST
+// FIR_COMPARISON
