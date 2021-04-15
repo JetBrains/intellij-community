@@ -37,6 +37,11 @@ private val supportedFeatures = HashSet<String>()
 @ApiStatus.Internal
 class SvgTranscoder private constructor(private var width: Float, private var height: Float) : UserAgent {
   companion object {
+    // An SVG tag custom attribute, optional for @2x SVG icons.
+    // When provided and is set to "true" the document size should be treated as double-scaled of the base size.
+    // See https://youtrack.jetbrains.com/issue/IDEA-267073
+    const val DATA_SCALED_ATTR = "data-scaled"
+
     init {
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
     }
@@ -93,12 +98,21 @@ class SvgTranscoder private constructor(private var width: Float, private var he
         val docWidth = bridgeContext.documentSize.width.toFloat()
         val docHeight = bridgeContext.documentSize.height.toFloat()
 
-        transcoder.setImageSize(docWidth * scale, docHeight * scale, overriddenWidth, overriddenHeight, iconMaxSize)
+        var normalizingScale = 1f
+        if ((document.url?.contains("@2x") == true) and
+            document.rootElement?.attributes?.getNamedItem(DATA_SCALED_ATTR)?.nodeValue?.toLowerCase().equals("true"))
+        {
+          normalizingScale = 2f
+        }
+        val imageScale = scale / normalizingScale
+        transcoder.setImageSize(docWidth * imageScale, docHeight * imageScale, overriddenWidth, overriddenHeight, iconMaxSize)
         val transform = computeTransform(document, gvtRoot, bridgeContext, docWidth, docHeight, transcoder.width, transcoder.height)
         transcoder.currentTransform = transform
 
         val image = render((transcoder.width + 0.5f).toInt(), (transcoder.height + 0.5f).toInt(), transform, gvtRoot)
-        outDimensions?.setSize(docWidth.toDouble(), docHeight.toDouble())
+
+        // outDimensions should contain the base size
+        outDimensions?.setSize(docWidth.toDouble() / normalizingScale, docHeight.toDouble() / normalizingScale)
         return image
       }
       catch (e: TranscoderException) {
