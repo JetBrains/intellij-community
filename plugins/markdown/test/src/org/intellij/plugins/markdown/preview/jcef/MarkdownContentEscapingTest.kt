@@ -52,7 +52,13 @@ class MarkdownContentEscapingTest {
     val content = File(testPath, "$name.html").readText()
     val panel = MarkdownJCEFPreviewTestUtil.setupPreviewPanel(content)
     val expected = parseContentBody(content)
-    val got = parseContentBody(panel.collectPageSource()!!)
+    var got = parseContentBody(panel.collectPageSource()!!)
+    // can't listen for the content load, so use this primitive approach
+    var counter = 5
+    while (got.children().isEmpty() and (counter-- > 0)) {
+      Thread.sleep(500)
+      got = parseContentBody(panel.collectPageSource()!!)
+    }
     assertTrue(got.children().isNotEmpty())
     assertEquals(expected.html(), got.child(0).html())
   }

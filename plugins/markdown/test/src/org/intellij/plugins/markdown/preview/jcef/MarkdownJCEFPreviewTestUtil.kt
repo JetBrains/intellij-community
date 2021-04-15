@@ -16,10 +16,9 @@ object MarkdownJCEFPreviewTestUtil {
     BuiltInServerManager.getInstance().waitForStart()
     val panel = MarkdownJCEFHtmlPanel()
     setupViewComponent(panel)
-    JBCefTestHelper.invokeAndWaitForLoad(panel) {
-      SwingUtilities.invokeLater {
-        panel.setHtml(html, 0)
-      }
+    // setHtml() delegates to JavaScript, we can't listen it with CefLoadHandler, just perform
+    SwingUtilities.invokeAndWait {
+      panel.setHtml(html, 0)
     }
     return panel
   }
@@ -40,7 +39,10 @@ object MarkdownJCEFPreviewTestUtil {
   }
 
   fun setupViewComponent(browser: MarkdownJCEFHtmlPanel) {
-    JBCefTestHelper.invokeAndWaitForShow(browser) {
+    // MarkdownJCEFHtmlPanel loads some html on init,
+    // the native browser is not created immediately but on show,
+    // so loading is started after showing and we can listen/wait for it
+    JBCefTestHelper.invokeAndWaitForLoad(browser) {
       SwingUtilities.invokeLater {
         with(JFrame(MarkdownContentEscapingTest::class.java.name)) {
           setSize(640, 480)
