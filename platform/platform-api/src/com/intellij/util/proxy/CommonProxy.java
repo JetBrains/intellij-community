@@ -36,8 +36,6 @@ public final class CommonProxy extends ProxySelector {
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
   static {
-    // https://youtrack.jetbrains.com/issue/IDEA-262173
-    System.setProperty("javax.xml.parsers.DocumentBuilderFactory", "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
     ProxySelector.setDefault(ourInstance);
   }
 
