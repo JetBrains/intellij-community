@@ -64,6 +64,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -456,12 +457,17 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       setupSecondAnalysisHandler(project, context);
     }
 
-    final List<Path> inspectionsResults = new ArrayList<>();
+    List<Path> inspectionsResults = new ArrayList<>();
     runUnderProgress(project, projectPath, context, scope, resultsDataPath, inspectionsResults);
-    final Path descriptionsFile = resultsDataPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
-    InspectionsResultUtil.describeInspections(descriptionsFile,
-                                              myRunWithEditorSettings ? null : inspectionProfile.getName(),
-                                              inspectionProfile);
+    Path descriptionsFile = resultsDataPath.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
+    try {
+      InspectionsResultUtil.describeInspections(descriptionsFile,
+                                                myRunWithEditorSettings ? null : inspectionProfile.getName(),
+                                                inspectionProfile);
+    }
+    catch (XMLStreamException e) {
+      throw new IOException(e);
+    }
     inspectionsResults.add(descriptionsFile);
     saveProfile(context);
     // convert report

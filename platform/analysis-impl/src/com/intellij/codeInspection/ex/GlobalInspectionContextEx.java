@@ -93,7 +93,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                                @NotNull Path outputDir,
                                @Nullable XMLOutputFactory xmlOutputFactory) {
     if (xmlOutputFactory == null) {
-      xmlOutputFactory = XMLOutputFactory.newInstance();
+      xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
     }
 
     BufferedWriter[] writers = new BufferedWriter[inspections.size()];
@@ -225,7 +225,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
     // export global inspections
     if (!globalToolsWithProblems.isEmpty()) {
-      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
+      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newDefaultFactory();
       Lists.partition(globalToolsWithProblems, MAX_OPEN_GLOBAL_INSPECTION_XML_RESULT_FILES).forEach(inspections ->
                                                                                                       exportResults(inspectionsResults,
                                                                                                                     inspections, outputDir,

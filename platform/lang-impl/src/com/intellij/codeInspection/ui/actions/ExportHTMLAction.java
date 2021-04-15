@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -142,10 +143,14 @@ public final class ExportHTMLAction extends AnAction implements DumbAware {
       InspectionsResultUtil.writeInspectionResult(view.getProject(), shortName, wrappers, outputDirectory, (wrapper -> view.getGlobalInspectionContext().getPresentation(wrapper)));
     }
 
-    final Path descriptionsFile = outputDirectory.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
-    InspectionsResultUtil.describeInspections(descriptionsFile, profile.getName(), profile);
+    Path descriptionsFile = outputDirectory.resolve(InspectionsResultUtil.DESCRIPTIONS + InspectionsResultUtil.XML_EXTENSION);
+    try {
+      InspectionsResultUtil.describeInspections(descriptionsFile, profile.getName(), profile);
+    }
+    catch (XMLStreamException e) {
+      throw new IOException(e);
+    }
   }
-
 
   @NotNull
   private static Collection<InspectionToolWrapper<?, ?>> getWrappersForAllScopes(@NotNull String shortName,

@@ -20,6 +20,8 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.awt.*;
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.ClosedFileSystemException;
@@ -61,29 +63,39 @@ public final class JDOMUtil {
         return factory;
       }
 
-      // requests default JRE factory implementation instead of an incompatible one from the classpath
-      String property = System.setProperty(XML_INPUT_FACTORY_KEY, XML_INPUT_FACTORY_IMPL);
       try {
-        factory = XMLInputFactory.newFactory();
+        factory = (XMLInputFactory)MethodHandles.lookup()
+          .findStatic(XMLInputFactory.class, "newDefaultFactory", MethodType.methodType(XMLInputFactory.class))
+          .invoke();
       }
-      finally {
-        if (property != null) {
-          System.setProperty(XML_INPUT_FACTORY_KEY, property);
-        }
-        else {
-          System.clearProperty(XML_INPUT_FACTORY_KEY);
-        }
+      catch (Throwable ignore) {
       }
 
-      // avoid loading of SystemInfo and Strings classes
-      String jvmVendor = System.getProperty("java.vm.vendor", "");
-      if (!jvmVendor.contains("IBM") && !jvmVendor.contains("ibm")) {
+      if (factory == null) {
+        // requests default JRE factory implementation instead of an incompatible one from the classpath
+        String property = System.setProperty(XML_INPUT_FACTORY_KEY, XML_INPUT_FACTORY_IMPL);
         try {
-          //noinspection HttpUrlsUsage
-          factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+          factory = XMLInputFactory.newFactory();
         }
-        catch (Exception e) {
-          getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+        finally {
+          if (property != null) {
+            System.setProperty(XML_INPUT_FACTORY_KEY, property);
+          }
+          else {
+            System.clearProperty(XML_INPUT_FACTORY_KEY);
+          }
+        }
+
+        // avoid loading of SystemInfo and Strings classes
+        String jvmVendor = System.getProperty("java.vm.vendor", "");
+        if (!jvmVendor.contains("IBM") && !jvmVendor.contains("ibm")) {
+          try {
+            //noinspection HttpUrlsUsage
+            factory.setProperty("http://java.sun.com/xml/stream/properties/report-cdata-event", true);
+          }
+          catch (Exception e) {
+            getLogger().error("cannot set \"report-cdata-event\" property for XMLInputFactory", e);
+          }
         }
       }
 
