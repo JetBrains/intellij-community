@@ -67,6 +67,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
           override fun setText(text: String) = textComponentAccessor.setText(component, text)
           override fun getText() = textComponentAccessor.getText(component)
         }).browsePath(it, component)
+        return@ActionListener
       }
     }
     LOG.error(IllegalStateException("Unexpected configuration $configuration"))
