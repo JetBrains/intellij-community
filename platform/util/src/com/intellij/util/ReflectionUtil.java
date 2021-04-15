@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -123,8 +122,8 @@ public final class ReflectionUtil {
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
-    for (Class<?> c : ReflectionStartupUtil.classTraverser(clazz)) {
-      ContainerUtil.addAll(result, c.getDeclaredFields());
+    for (Class<?> c : JBIterableClassTraverser.classTraverser(clazz)) {
+      Collections.addAll(result, c.getDeclaredFields());
     }
     return result;
   }
@@ -547,7 +546,8 @@ public final class ReflectionUtil {
   }
 
   public static boolean copyFields(Field @NotNull [] fields, @NotNull Object from, @NotNull Object to, @Nullable DifferenceFilter<?> diffFilter) {
-    Set<Field> sourceFields = ContainerUtil.newHashSet(from.getClass().getFields());
+    //noinspection SSBasedInspection
+    Set<Field> sourceFields = new HashSet<>(Arrays.asList(from.getClass().getFields()));
     boolean valuesChanged = false;
     for (Field field : fields) {
       if (sourceFields.contains(field)) {
