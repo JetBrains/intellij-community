@@ -905,7 +905,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
 
     for (ExternalJavacOptionsProvider extension : JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider.class)) {
-      vmOptions.addAll(extension.getOptions(compilingTool));
+      vmOptions.addAll(extension.getOptions(compilingTool, compilerSdkVersion));
     }
 
     addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, true);
