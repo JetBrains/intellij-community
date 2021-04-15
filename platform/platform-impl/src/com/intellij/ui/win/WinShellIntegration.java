@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 
-
 /**
  * <p>WinShellIntegration class provides features allow to integrate you application into Windows Shell.
  * It has asynchronous interface because most of the methods should be invoked strictly inside the internal thread.</p>
@@ -31,9 +30,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  *
  * @author Nikita Provotorov
  */
-@Service
+@Service(Service.Level.APP)
 final class WinShellIntegration implements Disposable {
-
   public static final class ShellContext {
     public void clearRecentTasksList() {
       parent.clearRecentTasksList();
@@ -42,7 +40,6 @@ final class WinShellIntegration implements Disposable {
     public void setRecentTasksList(@NotNull Task @NotNull [] recentTasks) {
       parent.setRecentTasksList(recentTasks);
     }
-
 
     private ShellContext(@NotNull WinShellIntegration parent) {
       this.parent = parent;
@@ -59,7 +56,6 @@ final class WinShellIntegration implements Disposable {
     void run(@NotNull ShellContext ctx);
   }
 
-
   /**
    * Indicates the features provided by this class are available to use.
    * If false then {@link #getInstance} will return null always.
@@ -73,7 +69,6 @@ final class WinShellIntegration implements Disposable {
   public static WinShellIntegration getInstance() {
     return isAvailable ? ApplicationManager.getApplication().getService(WinShellIntegration.class) : null;
   }
-
 
   public <R> @NotNull Future<R> postShellTask(@NotNull final ShellTask<? extends R> shellTask) {
     final ShellContext ctx = new ShellContext(this);
@@ -103,7 +98,6 @@ final class WinShellIntegration implements Disposable {
     });
   }
 
-
   /**
    * Please use {@link #getInstance}
    */
@@ -121,7 +115,6 @@ final class WinShellIntegration implements Disposable {
     bridge.comExecutor.shutdown();
   }
 
-
   private void clearRecentTasksList() {
     bridge.ensureNativeIsInitialized();
     bridge.clearRecentTasksListNative();
@@ -131,7 +124,6 @@ final class WinShellIntegration implements Disposable {
     bridge.ensureNativeIsInitialized();
     bridge.setRecentTasksListNative(recentTasks);
   }
-
 
   private static final class Bridge {
     private void ensureNativeIsInitialized() {
@@ -158,7 +150,6 @@ final class WinShellIntegration implements Disposable {
       NativeLibraryLoader.loadPlatformLibrary("WinShellIntegrationBridge");
     }
   }
-
 
   private final @NotNull Bridge bridge;
 
