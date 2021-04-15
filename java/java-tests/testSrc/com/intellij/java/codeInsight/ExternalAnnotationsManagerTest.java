@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
+import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -46,14 +47,14 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   private static final Set<String> KNOWN_EXCEPTIONS = ContainerUtil.immutableSet(
     "java.util.stream.Stream<T> generate(java.util.function.Supplier<T>)" // replaced with Supplier<? extends T> in JDK11
   );
-  
+
   private final DefaultLightProjectDescriptor myDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
       Sdk jdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       Sdk sdk = PsiTestUtil.addJdkAnnotations(jdk);
 
-      Collection<String> utilClassPath = PathManager.getUtilClassPath();
+      Collection<String> utilClassPath = ClassPathUtil.getUtilClassPath();
       VirtualFile[] files = StreamEx.of(utilClassPath)
         .append(PathManager.getJarPathForClass(XmlElement.class))
         .map(path -> path.endsWith(".jar") ?
@@ -177,7 +178,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       .collect(Collectors.toList());
     if (methods.isEmpty()) {
       // Sometimes the method is overridden in later JDK versions, and inferred contract is not satisfactory,
-      // thus having explicit subclass contract is desired. Thus we don't fail if the annotated method exists 
+      // thus having explicit subclass contract is desired. Thus we don't fail if the annotated method exists
       // in superclass only
       methods = Arrays.stream(aClass.getAllMethods())
         .filter(method -> (method.getContainingClass().getQualifiedName()+" "+methodSignature)

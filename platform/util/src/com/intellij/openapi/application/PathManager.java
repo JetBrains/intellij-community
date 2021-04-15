@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.containers.FList;
 import com.intellij.util.io.URLUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -697,45 +693,6 @@ public final class PathManager {
       artifactsDir = outClassesDir.resolve("artifacts");
     } // otherwise running tests via build scripts
     return artifactsDir.resolve(artifactDirNameInBuildLayout).resolve(artifactFileName);
-  }
-
-  public static @NotNull Collection<String> getUtilClassPath() {
-    Set<String> classPath = new HashSet<>();
-
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
-      PathManager.class,                                  // module 'intellij.platform.util'
-      Strings.class,                                      // module 'intellij.platform.util.strings'
-      FList.class,                                        // module 'intellij.platform.util.collections'
-      MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
-      StartUpMeasurer.class,                              // module 'intellij.platform.util.diagnostic'
-      com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
-      com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
-      org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5
-      org.jdom.Document.class,                            // jDOM
-      org.apache.log4j.Appender.class,                    // Log4J
-      gnu.trove.THashSet.class,                           // Trove
-      it.unimi.dsi.fastutil.objects.Object2IntMap.class,  // fastutil
-      com.sun.jna.TypeMapper.class,                       // JNA
-      com.sun.jna.platform.FileUtils.class,               // JNA (jna-platform)
-      org.apache.oro.text.regex.PatternMatcher.class,     // OROMatcher
-      net.jpountz.lz4.LZ4Factory.class,                   // LZ4-Java
-    };
-    for (Class<?> aClass : classes) {
-      String path = getJarPathForClass(aClass);
-      if (path != null) {
-        classPath.add(path);
-      }
-    }
-
-    String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // intellij.platform.resources.en
-    if (resourceRoot != null) {
-      classPath.add(Paths.get(resourceRoot).toAbsolutePath().toString());
-    }
-    classPath.add(getJarPathForClass(Pair.class)); // kotlin-stdlib
-    classPath.add(getResourceRoot(PathManager.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
-    classPath.add(getResourceRoot(PathManager.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
-
-    return classPath;
   }
 
   // helpers
