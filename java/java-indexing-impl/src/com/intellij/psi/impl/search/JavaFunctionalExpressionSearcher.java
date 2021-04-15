@@ -64,7 +64,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     Session session = ReadAction.compute(() -> new Session(p, consumer));
     session.processResults();
-    if (session.filesLookedInside.size() > 0 && LOG.isDebugEnabled()) {
+    if (!session.filesLookedInside.isEmpty() && LOG.isDebugEnabled()) {
       LOG.debug(session.toString());
     }
   }
@@ -474,10 +474,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     public void processResults() {
       List<SamDescriptor> descriptors = calcDescriptors(this);
 
-      if (scope instanceof GlobalSearchScope && !performSearchUsingCompilerIndices(descriptors,
-                                                                                   (GlobalSearchScope)scope,
-                                                                                   project,
-                                                                                   consumer)) {
+      if (scope instanceof GlobalSearchScope &&
+          !performSearchUsingCompilerIndices(descriptors, (GlobalSearchScope)scope, project, consumer)) {
         return;
       }
 
@@ -490,7 +488,8 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       }
     }
 
-    public String getStatistics() {
+    @Override
+    public String toString() {
       return "filesConsidered=" + filesConsidered +
              ", contextsConsidered=" + contextsConsidered +
              ", sureExprsAfterLightCheck=" + sureExprsAfterLightCheck +

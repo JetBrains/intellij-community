@@ -45,10 +45,8 @@ public final class RelaxedDirectInheritorChecker {
   }
 
   private static @NotNull Pair<PsiClass[], Boolean> getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
-    Map<String, Reference<Pair<PsiClass[],Boolean>>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      Map<String, Reference<Pair<PsiClass[], Boolean>>> map = new ConcurrentHashMap<>();
-      return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-    });
+    Map<String, Reference<Pair<PsiClass[],Boolean>>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
     Pair<PsiClass[], Boolean> result = SoftReference.dereference(cache.get(classShortName));
     if (result == null) {
       PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(classShortName, GlobalSearchScope.allScope(project));
@@ -109,13 +107,8 @@ public final class RelaxedDirectInheritorChecker {
   }
 
   private boolean isEnumOrAnnotationInheritor(@NotNull PsiClass inheritorCandidate) {
-    if (inheritorCandidate.isEnum() && CommonClassNames.JAVA_LANG_ENUM.equals(myBaseClass.getQualifiedName())) {
-      return true;
-    }
-    if (inheritorCandidate.isAnnotationType() && CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(myBaseClass.getQualifiedName())) {
-      return true;
-    }
-    return false;
+    return inheritorCandidate.isEnum() && CommonClassNames.JAVA_LANG_ENUM.equals(myBaseClass.getQualifiedName()) ||
+           inheritorCandidate.isAnnotationType() && CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(myBaseClass.getQualifiedName());
   }
 
   private static boolean isAccessibleLight(@NotNull PsiClass inheritorCandidate, @NotNull PsiClass base) {
