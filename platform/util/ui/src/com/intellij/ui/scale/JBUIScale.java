@@ -58,11 +58,15 @@ public final class JBUIScale {
     }
 
     // with JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
-    Font font = uiDefaults == null ? UIManager.getFont("Label.font") : uiDefaults.get().getFont("Label.font");
+    Font font;
     if (SystemInfoRt.isMac) {
+      // see AquaFonts.getControlTextFont() - lucida13Pt is hardcoded
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      font = new Font(".SF NS Text", font.getStyle(), font.getSize());
+      font = new Font(".SF NS Text", Font.PLAIN, 13);
+    }
+    else {
+      font = uiDefaults == null ? UIManager.getFont("Label.font") : uiDefaults.get().getFont("Label.font");
     }
 
     Logger log = getLogger();
