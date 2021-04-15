@@ -39,26 +39,27 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   override var panel: DialogPanel = panel {
     nameAndPath()
     row {
-      cell(isFullWidth = true) {
-        label(UIBundle.message("label.project.wizard.new.project.language"))
-        component(createButtonsPanel(DefaultActionGroup(languageButtons)))
-      }
-    }.largeGapAfter()
+      twoColumnRow(
+        { label(UIBundle.message("label.project.wizard.new.project.language")) },
+        { component(createButtonsPanel(DefaultActionGroup(languageButtons))) }
+      )
+    }
 
     settingsMap.values.forEach {
       it.forEach { lc ->
         row {
-          cell(isFullWidth = true) {
-            if (lc.label != null) {
-              component(lc.label!!)
-            }
-            component(lc.component)
-          }
-        }.apply { visible = false }.largeGapAfter()
+          (lc.label?.let {
+            twoColumnRow(
+              { component(it) },
+              { component(lc.component) }
+            )
+          } ?: component(lc.component)
+          )
+        }.apply { visible = false }
       }
     }
     gitCheckbox()
-  }.withBorder(JBUI.Borders.empty(10, 10))
+  }.withBorder(JBUI.Borders.empty(10, 0))
     .also {
       languageButtons.first().setSelected(true)
     }

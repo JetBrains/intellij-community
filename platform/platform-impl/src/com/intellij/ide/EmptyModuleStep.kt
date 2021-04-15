@@ -11,7 +11,7 @@ class EmptyModuleStep : NewModuleStep<EmptySettings>() {
   override var panel: DialogPanel = panel {
     nameAndPath()
     gitCheckbox()
-  }.withBorder(JBUI.Borders.empty(10, 10))
+  }.withBorder(JBUI.Borders.empty(10, 0))
 }
 
 class EmptySettings

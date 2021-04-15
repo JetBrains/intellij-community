@@ -25,29 +25,39 @@ abstract class NewModuleStep<T> : ModuleWizardStep() {
 
   fun LayoutBuilder.nameAndPath() {
     row {
-      cell(isFullWidth = true) {
-        label(UIBundle.message("label.project.wizard.new.project.name"))
-        textField(baseSettings::name)
-      }
-    }.largeGapAfter()
+      twoColumnRow(
+        { label(UIBundle.message("label.project.wizard.new.project.name")) },
+        { textField(baseSettings::name) }
+      )
+    }
     row {
-      cell(isFullWidth = true) {
-        label(UIBundle.message("label.project.wizard.new.project.location"))
-        textFieldWithBrowseButton(baseSettings::path, UIBundle.message("dialog.title.project.name"), /*context.project*/null,
-                                  FileChooserDescriptorFactory.createSingleFolderDescriptor())
-      }
-    }.largeGapAfter()
+      twoColumnRow(
+        { label(UIBundle.message("label.project.wizard.new.project.location")) },
+        {
+          textFieldWithBrowseButton(baseSettings::path, UIBundle.message("dialog.title.project.name"), /*context.project*/null,
+                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
+        }
+      )
+    }
   }
 
   fun LayoutBuilder.gitCheckbox() {
     row {
-      cell(isFullWidth = true) {
-        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), baseSettings::git).withLargeLeftGap()
-      }
+      checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), baseSettings::git).withLargeLeftGap()
     }
   }
 
   companion object {
+    fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
+      cell {
+        column1()
+      }
+      cell {
+        column2()
+      }
+      placeholder().constraints(growX, pushX)
+    }
+
     fun findNonExistingFileName(searchDirectory: String, preferredName: String, extension: String): String {
       var idx = 0
       while (true) {
