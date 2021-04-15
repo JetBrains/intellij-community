@@ -21,11 +21,13 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalShellCommandHandler;
+import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -154,15 +156,17 @@ public final class TerminalShellCommandHandlerHelper {
       .withHeader(TerminalBundle.message("smart_command_execution.notification.title"))
       .withLink(TerminalBundle.message("smart_command_execution.notification.configure_link.text"), () -> {
         ShowSettingsUtil.getInstance().showSettingsDialog(myWidget.getProject(), TerminalOptionsConfigurable.class);
-      });
+      })
+      .withPosition(Balloon.Position.below);
     if (!tooltip.canShow()) {
       Disposer.dispose(notificationDisposable);
       return;
     }
-    tooltip.show(myWidget.getTerminalPanel(), component -> {
+    tooltip.show(myWidget.getTerminalPanel(), (component, balloon) -> {
       Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
       if (bounds != null) {
-        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+        int shiftY = BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition() ? 0 : bounds.height;
+        return new Point(bounds.x + bounds.width / 2, bounds.y + shiftY);
       }
       Disposer.dispose(notificationDisposable);
       return new Point(0, 0);

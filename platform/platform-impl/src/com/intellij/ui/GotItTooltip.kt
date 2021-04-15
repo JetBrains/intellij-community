@@ -54,7 +54,7 @@ import javax.swing.text.html.StyleSheet
  * with gotItTooltipAllowlist extension point. Prefix can cover a whole class of different gotit tooltips.
  * If prefix is shorter than the whole ID then all different tooltip usages will be reported in one category described by the prefix.
  */
-class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val parentDisposable: Disposable) : ToolbarActionTracker() {
+class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val parentDisposable: Disposable) : ToolbarActionTracker<Balloon>() {
 
   @Nls
   private var header : String = ""
@@ -92,9 +92,10 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
     Disposer.register(parentDisposable, this)
   }
 
-  override fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point, disposeAction: Runnable?) {
-      presentation.putClientProperty(PRESENTATION_GOT_IT_KEY, ActionContext(this, pointProvider))
-      Disposer.register(this, Disposable { presentation.putClientProperty(PRESENTATION_GOT_IT_KEY, null) })
+  override fun assignTo(presentation: Presentation, pointProvider: (Component, Balloon) -> Point, disposeAction: Runnable?) {
+    this.pointProvider = pointProvider
+    presentation.putClientProperty(PRESENTATION_GOT_IT_KEY as Key<Any>, this)
+    Disposer.register(this, Disposable { presentation.putClientProperty(PRESENTATION_GOT_IT_KEY, null) })
   }
 
   /**
@@ -224,7 +225,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
    *
    * not for actionButton
    */
-  override fun show(component: JComponent, pointProvider: (Component) -> Point) {
+  override fun show(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
     if (canShow()) {
       if (component.isShowing) {
         if (!component.bounds.isEmpty) {
@@ -269,7 +270,7 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
     }
   }
 
-  private fun showImpl(component: JComponent, pointProvider: (Component) -> Point) {
+  private fun showImpl(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
     if (canShow()) {
       val balloonProperty = UIUtil.getClientProperty(component, BALLOON_PROPERTY)
       if (balloonProperty == null) {
@@ -288,15 +289,15 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
     return balloon != null
   }
 
-  override fun init(component: JComponent, pointProvider: (Component) -> Point){
+  override fun init(component: JComponent, pointProvider: (Component, Balloon) -> Point) {
     createAndShow(component, pointProvider)
   }
 
-  override fun createAndShow(component: JComponent, pointProvider: (Component) -> Point): Balloon {
+  fun createAndShow(component: JComponent, pointProvider: (Component, Balloon) -> Point): Balloon {
     val tracker = object : PositionTracker<Balloon> (component) {
       override fun recalculateLocation(balloon: Balloon): RelativePoint? =
         if (getComponent().isShowing)
-          RelativePoint(component, pointProvider(component))
+          RelativePoint(component, pointProvider(component, balloon))
         else {
           balloon.hide(true)
           GotItUsageCollector.instance.logClose(id, GotItUsageCollectorGroup.CloseType.AncestorRemoved)
@@ -570,19 +571,19 @@ class GotItTooltip(@NonNls val id: String, @Nls val text: String, private val pa
 
     // Frequently used point providers
     @JvmField
-    val TOP_MIDDLE : (Component) -> Point = { Point(it.width / 2, 0) }
+    val TOP_MIDDLE: (Component, Any) -> Point = { it, _ -> Point(it.width / 2, 0) }
 
     @JvmField
-    val LEFT_MIDDLE : (Component) -> Point = { Point(0, it.height / 2) }
+    val LEFT_MIDDLE: (Component, Any) -> Point = { it, _ -> Point(0, it.height / 2) }
 
     @JvmField
-    val RIGHT_MIDDLE : (Component) -> Point = { Point(it.width, it.height / 2) }
+    val RIGHT_MIDDLE: (Component, Any) -> Point = { it, _ -> Point(it.width, it.height / 2) }
 
     @JvmField
-    val BOTTOM_MIDDLE : (Component) -> Point = { Point(it.width / 2, it.height) }
+    val BOTTOM_MIDDLE: (Component, Any) -> Point = { it, _ -> Point(it.width / 2, it.height) }
 
     @JvmField
-    val BOTTOM_LEFT : (Component) -> Point = { Point(0, it.height) }
+    val BOTTOM_LEFT: (Component, Any) -> Point = { it, _ -> Point(0, it.height) }
 
     // Global tooltip queue start element
     private var currentlyShown: GotItTooltip? = null

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.PositionTracker
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.ComponentAdapter
@@ -14,17 +15,14 @@ import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.event.AncestorEvent
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.util.function.Consumer
 
 
 @Experimental
-abstract class ToolbarActionTracker: Disposable {
-  private var pointProvider: ((Component) -> Point)? = null
-
+abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
   /**
    * pointProvider - point in toolbar coordinates
    */
-  class ActionContext(val tracker: ToolbarActionTracker, val pointProvider: (Component) -> Point)
+  protected var pointProvider: ((Component, T) -> Point)? = null
 
   inner class MyComponentAdapter : ComponentAdapter() {
     override fun componentMoved(event: ComponentEvent) {
@@ -54,7 +52,7 @@ abstract class ToolbarActionTracker: Disposable {
   private val componentAdapter = MyComponentAdapter()
   private var ancestorListener : MyAncestorAdapter? = null
 
-  protected fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component) -> Point) {
+  protected fun followToolbarComponent(component: JComponent, toolbar: JComponent, pointProvider: (Component, T) -> Point) {
     if (canShow()) {
       this.pointProvider = pointProvider
       component.addComponentListener(componentAdapter.also { Disposer.register(this, Disposable { component.removeComponentListener(it) }) })
@@ -74,26 +72,24 @@ abstract class ToolbarActionTracker: Disposable {
    * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates its content and ActionButton's
    * showing status / location may change in time.
    */
-  abstract fun assignTo(presentation: Presentation, pointProvider: (Component) -> Point, disposeAction: Runnable? = null)
+  abstract fun assignTo(presentation: Presentation, pointProvider: (Component, T) -> Point, disposeAction: Runnable? = null)
 
   abstract fun wasCreated(): Boolean
 
   abstract fun hidePopup()
 
-  abstract fun init(component: JComponent, pointProvider: (Component) -> Point)
-
-  abstract fun createAndShow(component: JComponent, pointProvider: (Component) -> Point): Any
+  abstract fun init(component: JComponent, pointProvider: (Component, T) -> Point)
 
   abstract fun hideOrRepaint(component: JComponent)
 
   abstract fun canShow(): Boolean
 
-  abstract fun show(component: JComponent, pointProvider: (Component) -> Point)
+  abstract fun show(component: JComponent, pointProvider: (Component, T) -> Point)
 
   companion object {
     const val PROPERTY_PREFIX = "toolbar.tracker"
-    val PRESENTATION_GOT_IT_KEY = Key<ActionContext>("${PROPERTY_PREFIX}.gotit.presentation")
-    val PRESENTATION_POPUP_KEY = Key<ActionContext>("${PROPERTY_PREFIX}.popup.presentation")
+    val PRESENTATION_GOT_IT_KEY = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.gotit.presentation")
+    val PRESENTATION_POPUP_KEY = Key<ToolbarActionTracker<PositionTracker.Client<Any>>>("${PROPERTY_PREFIX}.popup.presentation")
 
     @JvmField
     val ARROW_SHIFT = JBUIScale.scale(20) + Registry.intValue("ide.balloon.shadow.size") + BalloonImpl.ARC.get()
@@ -103,10 +99,10 @@ abstract class ToolbarActionTracker: Disposable {
     @JvmStatic
     fun followToolbarComponent(presentation: Presentation, component: JComponent, toolbar: JComponent) {
       presentation.getClientProperty(PRESENTATION_GOT_IT_KEY)?.let {
-        it.tracker.followToolbarComponent(component, toolbar, it.pointProvider)
+        it.pointProvider?.let { it1 -> it.followToolbarComponent(component, toolbar, it1) }
       }
       presentation.getClientProperty(PRESENTATION_POPUP_KEY)?.let {
-        it.tracker.followToolbarComponent(component, toolbar, it.pointProvider)
+        it.pointProvider?.let { it1 -> it.followToolbarComponent(component, toolbar, it1) }
       }
     }
   }

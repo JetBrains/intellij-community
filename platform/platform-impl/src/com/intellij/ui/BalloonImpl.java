@@ -431,7 +431,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return result;
   }
 
-  private static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
+  public static AbstractPosition getAbstractPositionFor(@NotNull Position position) {
     switch (position) {
       case atLeft:
         return AT_LEFT;
@@ -650,6 +650,10 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         });
       }
     }
+  }
+
+  public AbstractPosition getPosition() {
+    return myPosition;
   }
 
   /**

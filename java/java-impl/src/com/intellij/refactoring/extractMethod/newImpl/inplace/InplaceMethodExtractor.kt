@@ -223,7 +223,7 @@ class InplaceMethodExtractor(private val editor: Editor,
         balloonCreated(balloon)
       }
 
-      show(editor.contentComponent) { getPosition() }
+      show(editor.contentComponent) {_, _-> getPosition() }
     }
   }
 
