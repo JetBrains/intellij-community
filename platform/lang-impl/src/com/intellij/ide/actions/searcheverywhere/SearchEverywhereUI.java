@@ -1196,30 +1196,27 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
 
-      if (showFindInFilesAction) {
-        Optional.ofNullable(myProject)
-          .map(project -> FindInProjectManager.getInstance(project))
-          .filter(manager -> manager.isEnabled())
-          .ifPresent(manager -> {
-            DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
-            ActionListener findInFilesAction = e -> manager.findInProject(context, null);
-            emptyStatus.appendText((firstPartAdded.get() ?
-                                   " " + IdeBundle.message("searcheverywhere.use.optional")
-                                   : IdeBundle.message("searcheverywhere.use.main")) + " ");
-            emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.find.in.files"),
-                                   SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
-            String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
-            if (!StringUtil.isEmpty(findInFilesShortcut)) {
-              emptyStatus.appendText(" (" + findInFilesShortcut + ")");
-            }
+      if (showFindInFilesAction && myProject != null) {
+        FindInProjectManager manager = FindInProjectManager.getInstance(myProject);
+        if (manager != null && manager.isEnabled()) {
+          DataContext context = DataManager.getInstance().getDataContext(SearchEverywhereUI.this);
+          ActionListener findInFilesAction = e -> manager.findInProject(context, null);
+          emptyStatus.appendText((firstPartAdded.get() ? " " + IdeBundle.message("searcheverywhere.use.optional")
+                                                       : IdeBundle.message("searcheverywhere.use.main")) + " ");
+          emptyStatus.appendText(IdeBundle.message("searcheverywhere.try.to.find.in.files"),
+                                 SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, findInFilesAction);
+          String findInFilesShortcut = KeymapUtil.getFirstKeyboardShortcutText("FindInPath");
+          if (!StringUtil.isEmpty(findInFilesShortcut)) {
+            emptyStatus.appendText(" (" + findInFilesShortcut + ")");
+          }
 
-            if (actionsPrinted.incrementAndGet() >= 2) {
-              emptyStatus.appendLine("");
-              actionsPrinted.set(0);
-            }
+          if (actionsPrinted.incrementAndGet() >= 2) {
+            emptyStatus.appendLine("");
+            actionsPrinted.set(0);
+          }
 
-            emptyStatus.appendText(" " + IdeBundle.message("searcheverywhere.to.perform.fulltext.search"));
-          });
+          emptyStatus.appendText(" " + IdeBundle.message("searcheverywhere.to.perform.fulltext.search"));
+        }
       }
 
       if (anyActionAllowed) {
