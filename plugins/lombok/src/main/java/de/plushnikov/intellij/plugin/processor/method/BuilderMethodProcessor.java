@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -62,6 +61,6 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
   }
 
   private BuilderHandler getHandler() {
-    return ApplicationManager.getApplication().getService(BuilderHandler.class);
+    return new BuilderHandler();
   }
 }

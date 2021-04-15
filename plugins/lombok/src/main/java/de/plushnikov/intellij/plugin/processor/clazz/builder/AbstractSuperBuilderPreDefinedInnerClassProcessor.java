@@ -20,7 +20,9 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
     super(supportedClass, supportedAnnotationClass);
   }
 
-  protected abstract SuperBuilderHandler getBuilderHandler();
+  protected SuperBuilderHandler getBuilderHandler() {
+    return new SuperBuilderHandler();
+  }
 
   @NotNull
   @Override

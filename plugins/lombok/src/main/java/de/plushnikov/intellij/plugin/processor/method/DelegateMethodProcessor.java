@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -20,7 +19,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   }
 
   private DelegateHandler getDelegateHandler() {
-    return ApplicationManager.getApplication().getService(DelegateHandler.class);
+    return new DelegateHandler();
   }
 
   @Override

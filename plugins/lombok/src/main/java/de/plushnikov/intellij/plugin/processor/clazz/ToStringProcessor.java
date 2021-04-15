@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,7 +42,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   }
 
   private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
-    return ApplicationManager.getApplication().getService(EqualsAndHashCodeToStringHandler.class);
+    return new EqualsAndHashCodeToStringHandler();
   }
 
   @Override

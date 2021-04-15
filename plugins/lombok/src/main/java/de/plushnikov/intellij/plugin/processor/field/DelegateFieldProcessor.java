@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -23,7 +22,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   }
 
   private DelegateHandler getDelegateHandler() {
-    return ApplicationManager.getApplication().getService(DelegateHandler.class);
+    return new DelegateHandler();
   }
 
   @Override

@@ -46,12 +46,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="de.plushnikov.intellij.plugin.activity.LombokProjectValidatorActivity"/>
-
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.BuilderHandler"/>
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler"/>
-    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.DelegateHandler"/>
-    <applicationService
-      serviceImplementation="de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler"/>
+    <projectService serviceImplementation="de.plushnikov.intellij.plugin.activity.LombokPluginDisposable"/>
 
     <!-- Start of lombok Processors-->
     <applicationService
@@ -122,8 +117,6 @@
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.CleanupProcessor"/>
     <!--    <applicationService serviceImplementation="de.plushnikov.intellij.plugin.processor.SynchronizedProcessor"/>-->
-
-    <projectService serviceImplementation="de.plushnikov.intellij.plugin.activity.LombokPluginDisposable"/>
     <!-- END of lombok Processors-->
 
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
