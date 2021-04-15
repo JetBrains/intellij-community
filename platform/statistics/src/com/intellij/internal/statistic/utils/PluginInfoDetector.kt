@@ -87,16 +87,63 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 }
 
 enum class PluginType {
-  PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
+  /**
+   * IntelliJ platform or JVM core libraries
+   */
+  PLATFORM,
 
+  /**
+   * Plugin implemented by JetBrains, bundled with a product
+   */
+  JB_BUNDLED,
+
+  /**
+   * Plugin implemented by JetBrains but not bundled with a product
+   */
+  JB_NOT_BUNDLED,
+
+  /**
+   * Third-party plugin, available on Marketplace
+   */
+  LISTED,
+
+  /**
+   * Third-party plugin, installed from disk or custom repository
+   */
+  NOT_LISTED,
+
+  /**
+   * Cannot detect plugin type
+   */
+  UNKNOWN,
+
+  /**
+   * Cannot detect plugin type because IDE was built from sources
+   */
+  FROM_SOURCES,
+
+  /**
+   * Plugin implemented by JetBrains, bundled with a product but the version is different from the one which was bundled
+   */
+  JB_UPDATED_BUNDLED;
+
+  /**
+   * @return true if code is from IntelliJ platform or JB bundled plugin.
+   */
   fun isPlatformOrJetBrainsBundled(): Boolean {
     return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
+  /**
+   * @return true if code is from IntelliJ platform or JB plugin.
+   */
   fun isDevelopedByJetBrains(): Boolean {
     return isPlatformOrJetBrainsBundled() || this == JB_NOT_BUNDLED
   }
 
+  /**
+   * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
+   */
   fun isSafeToReport(): Boolean {
     return isDevelopedByJetBrains() || this == LISTED
   }
