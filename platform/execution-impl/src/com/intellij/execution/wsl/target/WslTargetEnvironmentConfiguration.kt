@@ -34,6 +34,11 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
     projectRootOnTarget = state.projectRootOnTarget ?: ""
   }
 
+  override fun toString(): String {
+    val distributionIdText = distributionMsId?.let { "'$it'" }
+    return "WslTargetEnvironmentConfiguration(distributionId=$distributionIdText, projectRootOnTarget='$projectRootOnTarget')"
+  }
+
   class MyState : BaseState() {
     var distributionMsId by string()
     var projectRootOnTarget by string()
