@@ -540,6 +540,7 @@ public final class PathManager {
     paths.add(getCustomPropertiesFile());
     // Don't use here SystemProperties.getUserHome(). Called too early to load extra class.
     paths.add(System.getProperty("user.home") + '/' + PROPERTIES_FILE_NAME);
+    String homePath = getHomePath(true);
     for (Path binDir : getBinDirectories()) {
       paths.add(binDir.resolve(PROPERTIES_FILE_NAME).toString());
     }
@@ -551,7 +552,7 @@ public final class PathManager {
         continue;
       }
 
-      try (Reader reader = Files.newBufferedReader(file)) {
+      try (InputStream inputStream = Files.newInputStream(file)) {
         //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
         new Properties() {
           @Override
@@ -560,11 +561,11 @@ public final class PathManager {
               log(path + ": '" + key + "' cannot be redefined");
             }
             else if (!sysProperties.containsKey(key)) {
-              sysProperties.setProperty(String.valueOf(key), substituteVars(String.valueOf(value)));
+              sysProperties.put(key, substituteVars((String)value, homePath));
             }
             return null;
           }
-        }.load(reader);
+        }.load(inputStream);
       }
       catch (NoSuchFileException | AccessDeniedException ignore) {
       }
