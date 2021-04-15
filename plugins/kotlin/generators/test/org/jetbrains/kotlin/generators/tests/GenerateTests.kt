@@ -1193,7 +1193,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
-            model("compiler/asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression"), pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("compiler/asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 
