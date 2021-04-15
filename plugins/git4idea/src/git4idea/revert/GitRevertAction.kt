@@ -26,7 +26,7 @@ class GitRevertAction : DumbAwareAction() {
 
     val commits = ContainerUtil.getFirstItems(log.selectedShortDetails, MAX_SELECTED_COMMITS)
 
-    e.presentation.text = GitBundle.message("action.Git.Revert.In.Log.text", commits.size)
+    e.presentation.text = GitBundle.message("action.Git.Revert.In.Log.template.text", commits.size)
 
     if (commits.isEmpty()) {
       e.presentation.isEnabledAndVisible = false
