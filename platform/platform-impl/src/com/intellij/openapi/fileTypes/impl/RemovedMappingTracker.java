@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -16,6 +17,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 final class RemovedMappingTracker {
+  private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
   static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
@@ -99,11 +101,13 @@ final class RemovedMappingTracker {
   void load(@NotNull Element e) {
     myRemovedMappings.clear();
     List<RemovedMapping> removedMappings = readRemovedMappings(e);
-    Set<RemovedMapping> uniques = new HashSet<>(removedMappings.size());
+    Set<RemovedMapping> uniques = new LinkedHashSet<>(removedMappings.size());
     for (RemovedMapping mapping : removedMappings) {
       if (!uniques.add(mapping)) {
-        throw new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping);
+        LOG.error(new InvalidDataException("Duplicate <removed_mapping> tag for " + mapping));
       }
+    }
+    for (RemovedMapping mapping : uniques) {
       myRemovedMappings.putValue(mapping.myFileNameMatcher, mapping);
     }
   }
