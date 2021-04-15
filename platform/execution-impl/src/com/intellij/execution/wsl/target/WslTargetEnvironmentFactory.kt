@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetEnvironmentFactory
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform

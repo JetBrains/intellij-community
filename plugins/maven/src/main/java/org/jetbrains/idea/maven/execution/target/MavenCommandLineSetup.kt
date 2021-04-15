@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
@@ -50,7 +50,7 @@ class MavenCommandLineSetup(private val project: Project,
   private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = target.runtimes.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
 
   init {
@@ -72,7 +72,7 @@ class MavenCommandLineSetup(private val project: Project,
     return this
   }
 
-  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+  fun provideEnvironment(environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to progressIndicator)
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.testDiscovery.TestBySource;
 import com.intellij.execution.junit.testDiscovery.TestsByChanges;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -21,7 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
@@ -607,7 +607,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         processHandler.startNotify()
-        val targetProgressIndicator = object : TargetEnvironmentAwareRunProfileState.TargetProgressIndicator {
+        val targetProgressIndicator = object : TargetProgressIndicator {
           @Volatile
           var stopped = false
 

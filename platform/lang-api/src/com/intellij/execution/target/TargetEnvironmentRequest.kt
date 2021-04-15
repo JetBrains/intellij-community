@@ -134,5 +134,5 @@ interface TargetEnvironmentRequest {
   /**
    * Requests a callback to be called when a target environment has been created from this request.
    */
-  fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) -> Unit)
+  fun onEnvironmentPrepared(callback: (environment: TargetEnvironment, progressIndicator: TargetProgressIndicator) -> Unit)
 }

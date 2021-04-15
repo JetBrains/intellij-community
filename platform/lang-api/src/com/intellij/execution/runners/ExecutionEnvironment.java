@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -123,7 +123,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @ApiStatus.Experimental
   public @NotNull TargetEnvironment getPreparedTargetEnvironment(@NotNull RunProfileState runProfileState,
-                                                                 TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
+                                                                 @NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
     if (myPrepareRemoteEnvironment != null) {
       // In a correct implementation that uses the new API this condition is always true.
@@ -135,7 +135,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @ApiStatus.Experimental
   public @NotNull TargetEnvironment prepareTargetEnvironment(@NotNull RunProfileState runProfileState,
-                                                             TargetEnvironmentAwareRunProfileState.@NotNull TargetProgressIndicator targetProgressIndicator)
+                                                             @NotNull TargetProgressIndicator targetProgressIndicator)
     throws ExecutionException {
     TargetEnvironmentFactory factory = null;
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState &&

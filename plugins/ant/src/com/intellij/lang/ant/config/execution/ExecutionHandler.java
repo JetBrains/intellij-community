@@ -173,7 +173,7 @@ public final class ExecutionHandler {
         try {
           TargetEnvironmentRequest request = factory.createRequest();
           TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request, configuration);
-          TargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
+          TargetEnvironment environment = factory.prepareRemoteEnvironment(request, TargetProgressIndicator.EMPTY);
           TargetedCommandLine commandLine = builder.build();
 
           messageView.setBuildCommandLine(commandLine.getCommandPresentation(environment));

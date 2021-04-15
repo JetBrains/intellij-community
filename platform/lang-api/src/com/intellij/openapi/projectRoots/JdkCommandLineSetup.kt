@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
@@ -67,7 +67,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
-  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
+  private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
   private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
   private val uploads = mutableListOf<Upload>()
 
@@ -167,7 +167,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   private fun provideEnvironment(environment: TargetEnvironment,
-                                 targetProgressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+                                 targetProgressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
     for (upload in uploads) {
       upload.volume.upload(upload.relativePath, targetProgressIndicator)

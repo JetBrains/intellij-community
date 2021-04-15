@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.*
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger

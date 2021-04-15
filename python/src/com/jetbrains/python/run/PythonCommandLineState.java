@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -310,7 +310,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // TODO [Targets API] [major] Meaningful progress indicator should be taken
     EmptyProgressIndicator progressIndicator = new EmptyProgressIndicator();
     TargetEnvironment targetEnvironment = targetEnvironmentFactory
-      .prepareRemoteEnvironment(targetEnvironmentRequest, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY);
+      .prepareRemoteEnvironment(targetEnvironmentRequest, TargetProgressIndicator.EMPTY);
 
     List<String> interpreterParameters = getConfiguredInterpreterParameters();
     TargetedCommandLine targetedCommandLine =

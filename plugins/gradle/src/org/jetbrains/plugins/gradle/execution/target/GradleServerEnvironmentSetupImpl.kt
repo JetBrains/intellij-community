@@ -196,7 +196,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                               consumerOperationParameters: ConsumerOperationParameters,
                                               targetPathMapper: PathMapper?,
                                               environmentConfiguration: TargetEnvironmentConfiguration,
-                                              progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): Pair<TargetEnvironmentRequest, List<Pair<String, TargetValue<String>?>>> {
+                                              progressIndicator: TargetProgressIndicator): Pair<TargetEnvironmentRequest, List<Pair<String, TargetValue<String>?>>> {
     val request = factory.createRequest()
     if (request is LocalTargetEnvironmentRequest) {
       javaParameters.vmParametersList.addProperty(Main.LOCAL_BUILD_PROPERTY, "true")
@@ -318,7 +318,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   }
 
   private class Uploader {
-    private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetEnvironmentAwareRunProfileState.TargetProgressIndicator>>()
+    private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
     private val dependingOnEnvironmentPromise = mutableListOf<Promise<Unit>>()
     private val uploads = mutableListOf<Upload>()
     val pathMappingSettings = PathMappingSettings()

@@ -7,7 +7,7 @@ import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.rmi.RemoteServer
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
@@ -125,7 +125,7 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     builder.setWorkingDirectory(workingDirectory)
 
     val wslEnvironment = myEnvFactory.prepareRemoteEnvironment(request,
-                                                               TargetEnvironmentAwareRunProfileState.TargetProgressIndicator.EMPTY)
+                                                               TargetProgressIndicator.EMPTY)
 
     val manager = MavenProjectsManager.getInstance(myProject)
     val commandLine = builder.build()
