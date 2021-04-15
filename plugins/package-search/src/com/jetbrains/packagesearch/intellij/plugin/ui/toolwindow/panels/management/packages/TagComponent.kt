@@ -10,11 +10,12 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import org.jetbrains.annotations.Nls
 import java.awt.Graphics
 import javax.swing.JLabel
 
-@Suppress("MagicNumber") // Thanks Swing
-class TagComponent(name: String) : JLabel() {
+@Suppress("MagicNumber") // Swing dimension constants
+class TagComponent(@Nls name: String) : JLabel() {
 
     init {
         foreground = JBColor.namedColor("Plugins.tagForeground", JBColor(0x808080, 0x808080))

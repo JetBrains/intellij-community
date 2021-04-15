@@ -10,6 +10,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageActionsTableCellRendererAndEditor
+import org.jetbrains.annotations.Nls
 import javax.swing.JTable
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
@@ -111,7 +112,7 @@ internal class ActionsColumn(
         val packageModel: PackageModel,
         val operations: List<PackageSearchOperation<*>>,
         val operationType: PackageOperationType?,
-        val infoMessage: String?,
+        @Nls val infoMessage: String?,
         val isSearchResult: Boolean,
         val isHover: Boolean
     )

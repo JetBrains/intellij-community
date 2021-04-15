@@ -1,11 +1,12 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import org.jetbrains.annotations.Nls
 
 internal class OperationFailureRenderer {
 
-    @Nls
+    @NlsSafe
     fun renderFailuresAsHtmlBulletList(failures: List<PackageSearchOperationFailure>) = buildString {
         append("<html><head></head><body><ul>")
         for (failure in failures) {

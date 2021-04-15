@@ -6,13 +6,14 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 class InfoBannerPanel(
-    text: String = "",
+    @Nls text: String = "",
     backgroundColor: JBColor = PackageSearchUI.InfoBannerBackground,
     icon: Icon? = AllIcons.General.BalloonInformation
 ) : JPanel() {

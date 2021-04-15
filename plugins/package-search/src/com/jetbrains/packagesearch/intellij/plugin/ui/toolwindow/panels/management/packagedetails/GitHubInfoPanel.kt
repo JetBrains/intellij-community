@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.intellij.icons.AllIcons
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
@@ -15,7 +16,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 internal class GitHubInfoPanel : JPanel() {
 
     private val linkLabel = PackageSearchUI.createLabelWithLink()
@@ -50,8 +51,8 @@ internal class GitHubInfoPanel : JPanel() {
         when (stars) {
             null -> "0"
             in 0..999 -> stars.toString()
-            in 1_000..9_999 -> String.format("%.1fk", stars / 1000f)
-            in 10_000..999_999 -> "${stars / 1000}k"
+            in 1_000..9_999 -> PackageSearchBundle.message("packagesearch.ui.util.numberWithThousandsSymbol", String.format("%.1f", stars / 1000f))
+            in 10_000..999_999 -> PackageSearchBundle.message("packagesearch.ui.util.numberWithThousandsSymbol", stars / 1000)
             else -> String.format("%dm", stars / 1_000_000f)
         }
 

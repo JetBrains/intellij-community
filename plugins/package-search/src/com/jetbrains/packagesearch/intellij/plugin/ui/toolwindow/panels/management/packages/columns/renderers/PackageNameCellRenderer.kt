@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
@@ -22,7 +23,7 @@ import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 internal object PackageNameCellRenderer : TableCellRenderer {
 
     private val layoutConstraints = LC().align("left", "center")
@@ -86,8 +87,8 @@ internal object PackageNameCellRenderer : TableCellRenderer {
 
     private fun createNamePanel(
         columnWidth: Int,
-        name: String?,
-        identifier: String,
+        @NlsSafe name: String?,
+        @NlsSafe identifier: String,
         isKotlinMultiplatform: Boolean,
         isSelected: Boolean
     ) = TagPaintingJPanel(columnWidth).apply {

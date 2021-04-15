@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
+import org.jetbrains.annotations.Nls
 import java.awt.CardLayout
 import java.awt.Color
 import java.awt.Component
@@ -90,11 +91,11 @@ internal object PackageSearchUI {
         override fun getBackground() = backgroundColor
     }.apply(init)
 
-    internal fun checkBox(title: String) = object : JCheckBox(title) {
+    internal fun checkBox(@Nls title: String) = object : JCheckBox(title) {
         override fun getBackground() = UsualBackgroundColor
     }
 
-    internal fun menuItem(title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
+    internal fun menuItem(@Nls title: String, icon: Icon?, handler: () -> Unit): JMenuItem {
         if (icon != null) {
             return JMenuItem(title, icon).apply { addActionListener { handler() } }
         }

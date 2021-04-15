@@ -20,7 +20,7 @@ import javax.swing.JTable
 import javax.swing.SwingConstants
 import javax.swing.table.TableCellRenderer
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 internal class PackageActionsTableCellRendererAndEditor(
     private val table: JTable,
     private val actionPerformedCallback: (ActionsViewModel) -> Unit
@@ -96,7 +96,7 @@ internal class PackageActionsTableCellRendererAndEditor(
             foreground = if (isSelected) {
                 table.colors.selectionForeground
             } else {
-                JBUI.CurrentTheme.Link.linkColor()
+                JBUI.CurrentTheme.Link.Foreground.ENABLED
             }
 
             if (viewModel.infoMessage != null) {

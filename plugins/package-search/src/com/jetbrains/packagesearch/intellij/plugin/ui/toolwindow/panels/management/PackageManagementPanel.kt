@@ -29,7 +29,7 @@ import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JScrollPane
 
-@Suppress("MagicNumber") // Thanks Swing
+@Suppress("MagicNumber") // Swing dimension constants
 internal class PackageManagementPanel(
     private val rootDataModelProvider: RootDataModelProvider,
     selectedPackageSetter: SelectedPackageSetter,

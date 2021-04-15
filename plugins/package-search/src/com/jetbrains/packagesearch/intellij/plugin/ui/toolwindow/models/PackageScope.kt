@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -20,7 +21,7 @@ internal sealed class PackageScope(open val scopeName: String) : Comparable<Pack
         override fun toString() = "[Missing scope]"
     }
 
-    data class Named(override val scopeName: String) : PackageScope(scopeName) {
+    data class Named(@NlsSafe override val scopeName: String) : PackageScope(scopeName) {
 
         init {
             require(scopeName.isNotBlank()) { "A Named scope name cannot be blank." }

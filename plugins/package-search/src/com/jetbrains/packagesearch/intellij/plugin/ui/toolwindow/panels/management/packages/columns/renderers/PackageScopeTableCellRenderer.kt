@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBComboBoxLabel
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -44,6 +45,7 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         add(jbComboBoxLabel)
     }
 
+    @NlsSafe
     private fun scopesMessage(installedScopes: List<PackageScope>, defaultScope: PackageScope): String {
         if (installedScopes.isEmpty()) return defaultScope.displayName
 

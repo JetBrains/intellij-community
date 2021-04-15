@@ -10,7 +10,7 @@ import com.jetbrains.rd.util.reactive.IVoidSignal
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 class PackagesSmartSearchField(
     searchFieldFocus: IVoidSignal,
     lifetime: Lifetime

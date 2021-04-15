@@ -59,7 +59,7 @@ import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 import kotlin.math.roundToInt
 
-@Suppress("MagicNumber") // Thanks Swing
+@Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
     private val project: Project,
     private val operationExecutor: OperationExecutor,

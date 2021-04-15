@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber") // Thanks Swing...
+@file:Suppress("MagicNumber") // Swing dimension constants
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
 import com.intellij.openapi.util.BuildNumber

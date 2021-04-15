@@ -26,7 +26,7 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@Suppress("MagicNumber") // Thanks Swing...
+@Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesDetailsInfoPanel : JPanel() {
 
     @ScaledPixels private val maxRowHeight = 180.scaled()

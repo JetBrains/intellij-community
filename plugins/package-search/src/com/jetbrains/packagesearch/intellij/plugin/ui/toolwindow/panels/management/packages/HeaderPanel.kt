@@ -14,11 +14,12 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scrollbarWidth
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.JLabel
 
-@Suppress("MagicNumber") // Thanks Swing
+@Suppress("MagicNumber") // Swing dimension constants
 internal class HeaderPanel(
     onUpdateAllLinkClicked: (List<PackageSearchOperation<*>>) -> Unit
 ) : BorderLayoutPanel() {
@@ -85,7 +86,7 @@ internal class HeaderPanel(
         }
     }
 
-    fun display(title: String, rowsCount: Int?, availableUpdatesCount: Int, updateOperations: List<PackageSearchOperation<*>>) {
+    fun display(@Nls title: String, rowsCount: Int?, availableUpdatesCount: Int, updateOperations: List<PackageSearchOperation<*>>) {
         titleLabel.text = title
 
         if (rowsCount != null) {
