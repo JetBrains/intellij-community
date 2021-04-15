@@ -458,6 +458,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       loadedModules.removeAll(unloadedModuleNames)
       AutomaticModuleUnloader.getInstance(project).setLoadedModules(loadedModules)
     }
+    else {
+      AutomaticModuleUnloader.getInstance(project).setLoadedModules(emptyList())
+    }
 
     val unloadedModuleNamesSet = unloadedModuleNames.toSet()
     val moduleMap = entityStore.current.moduleMap
