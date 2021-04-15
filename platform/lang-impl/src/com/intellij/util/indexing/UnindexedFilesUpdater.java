@@ -229,7 +229,7 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       var fileSetName = sortedProviders.size() == 1
                         ? sortedProviders.get(0).first.getDebugName()
                         : sortedProviders.stream()
-                          .map(p -> p.getFirst().getDebugName() + ": " + StringUtil.pluralize("file", p.getSecond()))
+                          .map(p -> p.getFirst().getDebugName() + ": " + p.getSecond() + " " + StringUtil.pluralize("file", p.getSecond()))
                           .collect(Collectors.joining("\n"));
 
       concurrentTasksProgressManager.setText(indexingProgressText);
