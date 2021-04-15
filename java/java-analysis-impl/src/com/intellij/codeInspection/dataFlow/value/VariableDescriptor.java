@@ -80,11 +80,12 @@ public interface VariableDescriptor {
   DfType getDfType(@Nullable DfaVariableValue qualifier);
 
   /**
-   * Returns the DfType the value with this descriptor has at the beginning of the interpretation
+   * Returns the DfType the value with this descriptor has at the beginning of the interpretation in a given context.
+   *
    * @param thisValue DfaVariableValue representing the current variable
-   * @param context
+   * @param context analysis context. Usually method body, lambda body, some block, or class (for class initializers analysis)
    * @return Initial DfType of the value. May differ from {@link #getDfType(DfaVariableValue)} result,
-   * as additional information like initial nullability or range may be known from annotations, which
+   * as additional information like initial nullability, range, or locality may be known from annotations or context, which
    * may change later if the value is reassigned.
    */
   @NotNull

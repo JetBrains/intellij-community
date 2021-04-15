@@ -2,14 +2,15 @@
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +68,24 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   @Override
   public boolean equals(Object obj) {
     return this == obj || obj instanceof ThisDescriptor && ((ThisDescriptor)obj).myQualifier == myQualifier;
+  }
+
+  @Override
+  public @NotNull DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
+                                          @Nullable PsiElement context) {
+    DfType dfType = getDfType(thisValue.getQualifier());
+    // In class initializer this variable is local until escaped
+    if (myQualifier.equals(context)) {
+      return dfType.meet(DfTypes.LOCAL_OBJECT);
+    }
+    if (context != null) {
+      PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
+      if (method != null && !method.isConstructor() &&
+          myQualifier.equals(method.getContainingClass()) && MutationSignature.fromMethod(method).preservesThis()) {
+        return dfType.meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
+      }
+    }
+    return dfType;
   }
 
   /**

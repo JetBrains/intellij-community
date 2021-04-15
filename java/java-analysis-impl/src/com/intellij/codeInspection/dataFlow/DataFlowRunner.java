@@ -3,11 +3,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
-import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -23,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -35,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
@@ -313,7 +308,12 @@ public class DataFlowRunner {
   protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
                                                                               @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                               @NotNull ControlFlow flow) {
-    initializeVariables(psiBlock, memStates, flow);
+    DfaVariableValue assertionStatus = myValueFactory.getAssertionDisabled();
+    if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
+      for (DfaMemoryState state : memStates) {
+        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean())));
+      }
+    }
     return ContainerUtil.map(memStates, s -> new DfaInstructionState(flow.getInstruction(0), s));
   }
 
@@ -417,52 +417,6 @@ public class DataFlowRunner {
       }
     });
     return ref.get();
-  }
-
-  private void initializeVariables(@NotNull PsiElement psiBlock,
-                                   @NotNull Collection<? extends DfaMemoryState> initialStates,
-                                   @NotNull ControlFlow flow) {
-    List<DfaVariableValue> vars = flow.accessedVariables().collect(Collectors.toList());
-    DfaVariableValue assertionStatus = myValueFactory.getAssertionDisabled();
-    if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
-      for (DfaMemoryState state : initialStates) {
-        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean())));
-      }
-    }
-    if (psiBlock instanceof PsiClass) {
-      DfaVariableValue thisValue = ThisDescriptor.createThisValue(getFactory(), (PsiClass)psiBlock);
-      // In class initializer this variable is local until escaped
-      for (DfaMemoryState state : initialStates) {
-        state.meetDfType(thisValue, DfTypes.LOCAL_OBJECT);
-      }
-      return;
-    }
-    PsiElement parent = psiBlock.getParent();
-    if (parent instanceof PsiMethod && !(((PsiMethod)parent).isConstructor())) {
-      Map<DfaVariableValue, DfaValue> initialValues = StreamEx.of(vars).mapToEntry(
-        var -> makeInitialValue(var, (PsiMethod)parent)).nonNullValues().toMap();
-      for (DfaMemoryState state : initialStates) {
-        initialValues.forEach(state::setVarValue);
-      }
-    }
-  }
-
-  private static @Nullable DfaValue makeInitialValue(DfaVariableValue var, @NotNull PsiMethod method) {
-    DfaValueFactory factory = var.getFactory();
-    if (var.getDescriptor() instanceof ThisDescriptor) {
-      PsiClass aClass = ((ThisDescriptor)var.getDescriptor()).getPsiElement();
-      if (method.getContainingClass() == aClass && MutationSignature.fromMethod(method).preservesThis()) {
-        // Unmodifiable view, because we cannot call mutating methods, but it's not guaranteed that all fields are stable
-        // as fields may not contribute to the visible state
-        DfType dfType = var.getDfType().meet(Mutability.UNMODIFIABLE_VIEW.asDfType());
-        return factory.fromDfType(dfType);
-      }
-      return null;
-    }
-    if (!DfaUtil.isEffectivelyUnqualified(var)) return null;
-    PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
-    if (field == null || DfaUtil.ignoreInitializer(field) || DfaUtil.hasInitializationHacks(field)) return null;
-    return DfaUtil.getPossiblyNonInitializedValue(factory, field, method);
   }
 
   private static boolean containsState(Collection<DfaMemoryState> processed,
