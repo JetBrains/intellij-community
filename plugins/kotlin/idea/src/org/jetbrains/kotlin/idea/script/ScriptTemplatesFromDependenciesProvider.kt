@@ -98,22 +98,25 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
         }
 
         ReadAction
-            .nonBlocking<Collection<VirtualFile>>{
-                FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
+            .nonBlocking<TemplatesWithCp?>{
+                val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
+
+                val (templates, classpath) = getTemplateClassPath(files)
+
+                if (!inProgress.get() || templates.isEmpty()) return@nonBlocking null
+
+                val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
+                if (newTemplates == oldTemplates) {
+                    return@nonBlocking null
+                }
+                newTemplates
             }
             .inSmartMode(project)
             .expireWith(KotlinPluginDisposable.getInstance(project))
             .submit(AppExecutorUtil.getAppExecutorService())
-            .onSuccess { files ->
+            .onSuccess { newTemplates ->
                 try {
-                    val (templates, classpath) = getTemplateClassPath(files)
-
-                    if (!inProgress.get() || templates.isEmpty()) return@onSuccess onEarlyEnd()
-
-                    val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
-                    if (newTemplates == oldTemplates) {
-                        return@onSuccess
-                    }
+                    if (!inProgress.get() || newTemplates == null) return@onSuccess onEarlyEnd()
 
                     if (logger.isDebugEnabled) {
                         logger.debug("script templates found: $newTemplates")

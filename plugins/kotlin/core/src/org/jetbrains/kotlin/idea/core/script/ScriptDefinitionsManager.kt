@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.getScriptRelatedModuleInfo
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.idea.core.util.withLock
-import org.jetbrains.kotlin.idea.core.util.write
+import org.jetbrains.kotlin.idea.core.util.withCheckCanceledLock
+import org.jetbrains.kotlin.idea.core.util.writeWithCheckCanceled
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
@@ -101,7 +101,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         if (!isReady()) return null
 
-        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
+        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.get(locationId) }?.let { cached -> return cached }
 
         val definition =
             if (isScratchFile(script)) {
@@ -111,7 +111,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 super.findDefinition(script) ?: return null
             }
 
-        scriptDefinitionsCacheLock.withLock {
+        scriptDefinitionsCacheLock.withCheckCanceledLock {
             scriptDefinitionsCache.put(locationId, definition)
         }
 
@@ -128,8 +128,13 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? = findDefinition(File(fileName).toScriptSource())?.legacyDefinition
 
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
+        lock.writeWithCheckCanceled {
+            if (definitions == null) return // not loaded yet
+            if (source !in definitionsBySource) error("Unknown script definition source: $source")
+        }
+
         val safeGetDefinitions = source.safeGetDefinitions()
-        lock.write {
+        lock.writeWithCheckCanceled {
             definitionsBySource[source] = safeGetDefinitions
 
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
@@ -167,7 +172,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        lock.write {
+        lock.writeWithCheckCanceled {
             definitionsBySource.putAll(newDefinitionsBySource)
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
 
@@ -177,16 +182,15 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        definitions?.forEach {
-            val order = scriptingSettings.getScriptDefinitionOrder(it)
-            lock.write {
-                it.order = order
-            }
-        }
-        lock.write {
-            definitions = definitions?.sortedBy { it.order }
+        lock.writeWithCheckCanceled {
+            definitions?.let { list ->
+                list.forEach {
+                    it.order = scriptingSettings.getScriptDefinitionOrder(it)
+                }
+                definitions = list.sortedBy(ScriptDefinition::order)
 
-            updateDefinitions()
+                updateDefinitions()
+            } ?: {}
         }()
     }
 
@@ -201,7 +205,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun isReady(): Boolean {
         if (definitions == null) return false
-        val keys = lock.write { definitionsBySource.keys }
+        val keys = lock.writeWithCheckCanceled { definitionsBySource.keys }
         return keys.all { source ->
             // TODO: implement another API for readiness checking
             (source as? ScriptDefinitionContributor)?.isReady() != false
@@ -224,21 +228,21 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
             fileTypeManager.getFileTypeByExtension(it) != KotlinFileType.INSTANCE
         }.toSet()
 
-        if (newExtensions.any()) {
-            // Register new file extensions
-            ApplicationManager.getApplication().invokeLater {
-                runWriteAction {
-                    newExtensions.forEach {
-                        fileTypeManager.associateExtension(KotlinFileType.INSTANCE, it)
+        clearCache()
+        scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.clear() }
+
+        return {
+            if (newExtensions.any()) {
+                // Register new file extensions
+                ApplicationManager.getApplication().invokeLater {
+                    runWriteAction {
+                        newExtensions.forEach {
+                            fileTypeManager.associateExtension(KotlinFileType.INSTANCE, it)
+                        }
                     }
                 }
             }
-        }
 
-        clearCache()
-        scriptDefinitionsCacheLock.withLock { scriptDefinitionsCache.clear() }
-
-        return {
             // TODO: clear by script type/definition
             ScriptConfigurationManager.getInstance(project).updateScriptDefinitionReferences()
         }

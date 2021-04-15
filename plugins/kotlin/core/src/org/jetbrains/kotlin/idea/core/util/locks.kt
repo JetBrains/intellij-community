@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
-internal inline fun <T> ReentrantReadWriteLock.write(action: () -> T): T {
+internal inline fun <T> ReentrantReadWriteLock.writeWithCheckCanceled(action: () -> T): T {
     val rl = readLock()
 
     val readCount = if (writeHoldCount == 0) readHoldCount else 0
@@ -27,7 +27,7 @@ internal inline fun <T> ReentrantReadWriteLock.write(action: () -> T): T {
     }
 }
 
-internal inline fun <T> Lock.withLock(action: () -> T): T {
+internal inline fun <T> Lock.withCheckCanceledLock(action: () -> T): T {
     while (!tryLock(100, TimeUnit.MILLISECONDS)) {
         ProgressManager.checkCanceled()
     }
