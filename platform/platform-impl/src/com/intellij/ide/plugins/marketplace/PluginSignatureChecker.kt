@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.marketplace
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.certificates.PluginCertificateStore
@@ -22,10 +23,17 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 import java.security.cert.X509CRL
 import java.security.cert.X509Certificate
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 internal object PluginSignatureChecker {
   private val LOG = logger<PluginSignatureChecker>()
+
+  private val cache = Caffeine
+    .newBuilder()
+    .expireAfterWrite(1, TimeUnit.HOURS)
+    .build<String, Optional<Boolean>>()
 
   private val jetbrainsCertificate: Certificate? by lazy {
     val cert = PluginSignatureChecker.javaClass.classLoader.getResourceAsStream("ca.crt")
@@ -63,9 +71,13 @@ internal object PluginSignatureChecker {
   }
 
   private fun isCertificatesRevoked(vararg certificates: Certificate): Boolean {
+    val isRevokedCached = cache.getIfPresent(this.javaClass.name)?.get()
+    if (isRevokedCached != null) return isRevokedCached
     val cert509Lists = certificates.mapNotNull { it as? X509Certificate }
     val lists = getRevocationLists(cert509Lists)
     val findRevokedCertificate = CertificateUtils.findRevokedCertificate(cert509Lists, lists)
+    val isRevoked = findRevokedCertificate != null
+    cache.put(this.javaClass.name, Optional.of(isRevoked))
     return findRevokedCertificate != null
   }
 
