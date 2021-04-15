@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.function.IntPredicate;
 
 /**
  * Class buffers changes in 2 modes:
@@ -29,7 +16,7 @@ import java.util.Arrays;
  * It is assumed that add / remove operations as well as read only operations are externally synchronized, the only synchronization is
  * performed upon transforming changes array into randomAccessContainer because it can be done during read only operations in several threads
  */
-public class ChangeBufferingList implements Cloneable {
+public final class ChangeBufferingList implements Cloneable {
   static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
   //static final int MAX_FILES = 100;
   private volatile int[] changes;
@@ -59,7 +46,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public synchronized void add(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(value);
@@ -79,7 +66,7 @@ public class ChangeBufferingList implements Cloneable {
 
   public synchronized void remove(int value) {
     ensureCapacity(1);
-    
+
     RandomAccessIntContainer intContainer = randomAccessContainer;
     if (intContainer == null) {
       addChange(-value);
@@ -98,7 +85,7 @@ public class ChangeBufferingList implements Cloneable {
       if (randomAccessContainer != null) {
         clone.randomAccessContainer = (RandomAccessIntContainer)randomAccessContainer.clone();
       }
-      
+
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -157,7 +144,7 @@ public class ChangeBufferingList implements Cloneable {
           }
         }
       }
-      
+
       length = 0;
       hasRemovals = false;
       mayHaveDupes = false;
@@ -247,7 +234,7 @@ public class ChangeBufferingList implements Cloneable {
     return intContainer.size() == 0;
   }
 
-  public synchronized ValueContainer.IntPredicate intPredicate() {
+  public synchronized IntPredicate intPredicate() {
     RandomAccessIntContainer container = getRandomAccessContainer();
     return container::contains;
   }

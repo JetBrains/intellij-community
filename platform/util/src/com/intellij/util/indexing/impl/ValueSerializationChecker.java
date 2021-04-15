@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 
-class ValueSerializationChecker<Value, Input> {
+final class ValueSerializationChecker<Value, Input> {
   private static final Logger LOG = Logger.getInstance(ValueSerializationChecker.class);
 
   private final @NotNull DataExternalizer<Value> myValueExternalizer;

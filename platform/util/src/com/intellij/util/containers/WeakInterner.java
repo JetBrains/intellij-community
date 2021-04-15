@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.ConcurrencyUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -28,15 +26,15 @@ public class WeakInterner<T> extends Interner<T> {
     myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
   }
 
-  public WeakInterner(@NotNull TObjectHashingStrategy<? super T> strategy) {
-    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(),
-                                                    ContainerUtil.createHashingStrategy(strategy));
+  public WeakInterner(@NotNull HashingStrategy<? super T> strategy) {
+    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), strategy);
   }
 
   @Override
   @NotNull
   public T intern(@NotNull T name) {
-    return ConcurrencyUtil.cacheOrGet(myMap, name, name);
+    T old = myMap.putIfAbsent(name, name);
+    return old == null ? name : old;
   }
 
   @Override
@@ -47,6 +45,6 @@ public class WeakInterner<T> extends Interner<T> {
   @Override
   @NotNull
   public Set<T> getValues() {
-    return new THashSet<>(myMap.values());
+    return new HashSet<>(myMap.values());
   }
 }

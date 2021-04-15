@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -274,7 +274,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return processValueIterator(indexId, dataKey, restrictToFile, scope, valueIt -> {
       while (valueIt.hasNext()) {
         V value = valueIt.next();
-        if (valueIt.getValueAssociationPredicate().contains(restrictedFileId) && !processor.process(restrictToFile, value)) {
+        if (valueIt.getValueAssociationPredicate().test(restrictedFileId) && !processor.process(restrictToFile, value)) {
           return false;
         }
         ProgressManager.checkCanceled();
@@ -485,7 +485,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                         @Nullable final IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    ValueContainer.IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter::test : id ->
+    IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter : id ->
       projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id) && (restrictedIds == null || restrictedIds.contains(id));
     Condition<? super K> keyChecker = __ -> {
       ProgressManager.checkCanceled();

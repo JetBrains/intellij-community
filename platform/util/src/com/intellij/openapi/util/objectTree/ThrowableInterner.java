@@ -1,13 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +27,10 @@ import java.util.Objects;
  */
 @ApiStatus.Internal
 public final class ThrowableInterner {
-  private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new TObjectHashingStrategy<Throwable>() {
+  private static final Interner<Throwable> myTraceInterner = new WeakInterner<>(new HashingStrategy<Throwable>() {
     @Override
-    public int computeHashCode(Throwable throwable) {
-      return ThrowableInterner.computeHashCode(throwable);
+    public int hashCode(Throwable throwable) {
+      return computeHashCode(throwable);
     }
 
     @Override
@@ -61,11 +60,16 @@ public final class ThrowableInterner {
 
   public static int computeTraceHashCode(@NotNull Throwable throwable) {
     Object[] backtrace = getBacktrace(throwable);
-    if (backtrace != null) {
-      Object[] stack = ContainerUtil.findInstance(backtrace, Object[].class);
-      return Arrays.hashCode(stack);
+    if (backtrace == null) {
+      return Arrays.hashCode(throwable.getStackTrace());
     }
-    return Arrays.hashCode(throwable.getStackTrace());
+
+    for (Object element : backtrace) {
+      if (element instanceof Object[]) {
+        return Arrays.hashCode((Object[])element);
+      }
+    }
+    return 0;
   }
 
   private static final Field BACKTRACE_FIELD;

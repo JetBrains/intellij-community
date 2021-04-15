@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
 public class ValueContainersTest extends TestCase {
   public void testNullValueSingleId() {
@@ -176,9 +177,9 @@ public class ValueContainersTest extends TestCase {
         assertTrue(object instanceof ChangeBufferingList);
       }
 
-      ValueContainer.IntPredicate predicate = valueIterator.getValueAssociationPredicate();
+      IntPredicate predicate = valueIterator.getValueAssociationPredicate();
 
-      for (int inputId : list.toIntArray()) assertTrue(predicate.contains(inputId));
+      for (int inputId : list.toIntArray()) assertTrue(predicate.test(inputId));
 
       ValueContainer.IntIterator iterator = valueIterator.getInputIdsIterator();
       assertEquals(list.size(), iterator.size());

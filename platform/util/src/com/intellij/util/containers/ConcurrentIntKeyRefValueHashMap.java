@@ -2,10 +2,10 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
+import java.util.HashSet;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -249,7 +249,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @NotNull
   @Override
   public Collection<V> values() {
-    Set<V> result = new THashSet<>();
+    Set<V> result = new HashSet<>();
     ContainerUtil.addAll(result, elements());
     return result;
   }

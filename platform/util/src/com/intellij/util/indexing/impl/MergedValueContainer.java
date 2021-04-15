@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.ValueContainer;
@@ -6,8 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.IntPredicate;
 
-public class MergedValueContainer<Value> extends ValueContainer<Value> {
+public final class MergedValueContainer<Value> extends ValueContainer<Value> {
   private final @NotNull List<? extends ValueContainer<Value>> myContainers;
   private int mySize;
 

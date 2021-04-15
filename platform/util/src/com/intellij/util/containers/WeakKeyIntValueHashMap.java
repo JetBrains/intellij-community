@@ -1,20 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
+final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   private final TObjectIntHashMap<MyReference<K>> myMap = new TObjectIntHashMap<>();
   private final ReferenceQueue<K> myQueue = new ReferenceQueue<>();
 
@@ -101,11 +101,14 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
     throw new IncorrectOperationException("values() makes no sense for weak/soft key map because GC can clear the key any moment now");
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
-    //noinspection unchecked
-    return new THashSet<>(ContainerUtil.map(myMap.keys(), ref -> SoftReference.dereference((MyReference<K>)ref)));
+  public @NotNull Set<K> keySet() {
+    Set<K> result = new HashSet<>(myMap.size());
+    for (Object t : myMap.keys()) {
+      //noinspection unchecked
+      result.add(SoftReference.dereference((MyReference<K>)t));
+    }
+    return result;
   }
 
   @Override
@@ -139,7 +142,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
             public K getKey() {
               K v = SoftReference.dereference(tIterator.key());
               //noinspection unchecked
-              return ObjectUtils.notNull(v, (K)GCED);
+              return v == null ? (K)GCED : v;
             }
 
             @Override
