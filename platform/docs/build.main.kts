@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Repository("https://repo1.maven.org/maven2/")
 @file:DependsOn("net.sourceforge.plantuml:plantuml:1.2020.17")
 
@@ -61,7 +61,7 @@ val transformer = TransformerFactory.newInstance().newTransformer()
 transformer.setOutputProperty(OutputKeys.INDENT, "yes")
 transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
 
-val dbFactory = DocumentBuilderFactory.newInstance()
+val dbFactory = DocumentBuilderFactory.newDefaultInstance()
 val xPathFactory = XPathFactory.newInstance()
 val textFillXPath = xPathFactory.newXPath().compile("/svg/g/text")
 val rectFillXPath = xPathFactory.newXPath().compile("/svg/g/rect")

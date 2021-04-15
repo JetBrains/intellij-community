@@ -292,7 +292,7 @@ public final class EmojiService implements PersistentStateComponent<EmojiService
 
     private CldrData(EmojiData emojiData) throws ParserConfigurationException {
       myEmojiData = emojiData;
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
       factory.setValidating(false);
       factory.setNamespaceAware(true);
       factory.setFeature("http://xml.org/sax/features/namespaces", false);

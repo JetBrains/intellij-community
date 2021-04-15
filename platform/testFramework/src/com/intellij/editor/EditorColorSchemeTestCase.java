@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -45,7 +31,7 @@ import java.util.List;
 
 public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   protected static EditorColorsScheme loadScheme(@NotNull String docText) throws ParserConfigurationException, IOException, SAXException {
-    DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    DocumentBuilder docBuilder = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder();
     InputSource inputSource = new InputSource(new StringReader(docText));
     Document doc = docBuilder.parse(inputSource);
     Element root = new DOMBuilder().build(doc.getDocumentElement());
