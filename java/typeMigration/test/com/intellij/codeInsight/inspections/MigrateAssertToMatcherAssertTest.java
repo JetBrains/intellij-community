@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -28,18 +28,19 @@ public class MigrateAssertToMatcherAssertTest extends JavaCodeInsightFixtureTest
                              ArrayUtilRt.toStringArray(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("hamcrest")));
   }
 
-  public void testAll() {
-    myFixture.configureByFile(getTestName(true) + ".java");
+  public void testMigrateAssertToMatcherAssert() {
+    myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.enableInspections(new MigrateAssertToMatcherAssertInspection());
+    myFixture.checkHighlighting();
     for (IntentionAction wrapper : myFixture.getAllQuickFixes()) {
       if (wrapper instanceof QuickFixWrapper) {
         final LocalQuickFix fix = ((QuickFixWrapper)wrapper).getFix();
-        if (fix instanceof MigrateAssertToMatcherAssertInspection.MyQuickFix) {
+        if (fix instanceof MigrateAssertToMatcherAssertInspection.MigrateAssertToMatcherAssertFix) {
           myFixture.launchAction(wrapper);
         }
       }
     }
-    myFixture.checkResultByFile(getTestName(true) + "_after.java");
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
 }
