@@ -41,9 +41,13 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   @Override
   public JavaParameters getJavaParameters() throws ExecutionException {
     if (myParams == null) {
-      myParams = ReadAction.compute(this::createJavaParameters);
+      myParams = isReadActionRequired() ? ReadAction.compute(this::createJavaParameters) : createJavaParameters();
     }
     return myParams;
+  }
+
+  protected boolean isReadActionRequired() {
+    return true;
   }
 
   public void clear() {

@@ -13,6 +13,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -40,20 +41,22 @@ public abstract class ApplicationCommandLineState<T extends
     params.setMainClass(myConfiguration.getRunClass());
     setupJavaParameters(params);
 
-    final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-    final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
-    if (module.getModule() != null) {
-      DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-        int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,
-                                                                isProvidedScopeIncluded());
-        JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
-      });
-    }
-    else {
-      JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-    }
+    ReadAction.run(() -> {
+      final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
+      final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+      if (module.getModule() != null) {
+        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
+          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,
+                                                                  isProvidedScopeIncluded());
+          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+        });
+      }
+      else {
+        JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+      }
 
-    setupModulePath(params, module);
+      setupModulePath(params, module);
+    });
 
     params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 

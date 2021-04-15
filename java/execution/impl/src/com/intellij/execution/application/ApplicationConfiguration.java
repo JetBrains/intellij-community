@@ -401,5 +401,10 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     protected boolean isProvidedScopeIncluded() {
       return myConfiguration.isProvidedScopeIncluded();
     }
+
+    @Override
+    protected boolean isReadActionRequired() {
+      return false;
+    }
   }
 }
