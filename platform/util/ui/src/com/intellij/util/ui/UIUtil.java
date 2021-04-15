@@ -537,6 +537,33 @@ public final class UIUtil {
     return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
   }
 
+  @NotNull
+  public static Map<Object, Object> getAllClientProperties(Object component) {
+    Map<Object, Object> map = new LinkedHashMap<>();
+    if (component instanceof RootPaneContainer) component = ((RootPaneContainer)component).getRootPane();
+    if (component instanceof JComponent) {
+      try {
+        Method method = ReflectionUtil.getDeclaredMethod(JComponent.class, "getClientProperties");
+        if (method == null) return Collections.emptyMap();
+        method.setAccessible(true);
+        Object table = method.invoke(component);
+        method = ReflectionUtil.getDeclaredMethod(table.getClass(), "getKeys", Object[].class);
+        if (method == null) return Collections.emptyMap();
+        method.setAccessible(true);
+        Object arr = method.invoke(table, new Object[1]);
+        if (arr instanceof Object[]) {
+          for (Object key : (Object[])arr) {
+            map.put(key, ((JComponent)component).getClientProperty(key));
+          }
+        }
+        return Collections.unmodifiableMap(map);
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return Collections.emptyMap();
+  }
+
   /**
    * @param component a Swing component that may hold a client property value
    * @return the property value from the specified component or {@code null}
