@@ -65,8 +65,8 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
     val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread()
                                                                                           ?: throw IllegalStateException("Init UI first"))
     (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
-
-    if (isInternal) {
+     ApplicationImpl.preventAwtAutoShutdown(app)
+     if (isInternal) {
       BundleBase.assertOnMissedKeys(true)
     }
 

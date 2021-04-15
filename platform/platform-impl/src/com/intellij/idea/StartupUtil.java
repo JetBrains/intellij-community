@@ -41,7 +41,6 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.mac.MacOSApplicationProvider;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EnvironmentUtil;
-import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -144,7 +143,6 @@ public final class StartupUtil {
     CompletableFuture<Boolean> agreementDialogWasShown;
     if (Main.isHeadless()) {
       agreementDialogWasShown = initUiTask.thenApply(__ -> true);
-      enableHeadlessAwtGuard();
     }
     else {
       CompletableFuture<@Nullable("if accepted") Object> euaDocumentFuture = scheduleEuaDocumentLoading();
@@ -167,6 +165,17 @@ public final class StartupUtil {
       });
     }
     activity.end();
+
+    /*
+      Make EDT to always persist while main thread is alive. Otherwise, it's possible to have EDT being
+      terminated by {@link AWTAutoShutdown}, which will have negative impact on a ReadMostlyRWLock instance.
+      {@link AWTAutoShutdown#notifyThreadBusy(Thread)} will put a main thread into the thread map,
+      and thus will effectively disable auto shutdown behavior for this application.
+
+      This should never be called from a EDT, since a EDT could remove itself from the busy map while there are no events in
+      the event queue.
+     */
+    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
 
     if (!checkJdkVersion()) {
       System.exit(Main.JDK_CHECK_FAILED);
@@ -276,6 +285,7 @@ public final class StartupUtil {
     // prevent JVM from exiting - because in FJP pool "all worker threads are initialized with {@link Thread#isDaemon} set {@code true}"
     // awaitQuiescence allows us to reuse main thread instead of creating another one
     ForkJoinPool.commonPool().awaitQuiescence(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+    AWTAutoShutdown.getInstance().notifyThreadFree(Thread.currentThread());
   }
 
   /** Called via reflection from {@link com.intellij.ide.WindowsCommandLineProcessor#processWindowsLauncherCommandLine}. */
@@ -397,23 +407,6 @@ public final class StartupUtil {
     PluginManagerCore.scheduleDescriptorLoading();
   }
 
-  /**
-   * This method should make EDT to always persist in a headless environment. Otherwise, it's possible to have EDT being
-   * terminated by {@link AWTAutoShutdown}, which will have negative impact on a ReadMostlyRWLock instance.
-   * <p/>
-   * This method works by calling {@link AWTAutoShutdown#notifyThreadBusy(Thread)} from a non-EDT thread. This will put a
-   * thread into the thread map forever, and thus will effectively disable auto shutdown behavior for this application.
-   * <p/>
-   * This should never be called from a EDT, since a EDT could remove itself from the busy map while there are no events in
-   * the event queue.
-   */
-  private static void enableHeadlessAwtGuard() {
-    if (EventQueue.isDispatchThread()) {
-      throw new AssertionError("Should not be called from EDT");
-    }
-    AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
-  }
-
   private static @NotNull CompletableFuture<?> scheduleInitUi() {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
@@ -495,15 +488,6 @@ public final class StartupUtil {
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
 
         activity = activity.endAndStart("awt thread busy notification");
-        // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
-        // that thread was chosen because we know for sure it's running
-        Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
-        // needed for EDT not to exit suddenly
-        AWTAutoShutdown.getInstance().notifyThreadBusy(thread);
-        ShutDownTracker.getInstance().registerShutdownTask(() -> {
-          // allow for EDT to exit
-          AWTAutoShutdown.getInstance().notifyThreadFree(thread);
-        });
         activity.end();
       }, it -> EventQueue.invokeLater(it)/* don't use here method reference (EventQueue class must be loaded on demand) */);
 

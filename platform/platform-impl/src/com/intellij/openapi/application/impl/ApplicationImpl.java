@@ -145,13 +145,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
-      // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
-      // that thread was chosen because we know for sure it's running
-      Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
-      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
-      Disposer.register(this, () -> {
-        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
-      });
+      preventAwtAutoShutdown(this);
       edtThread.set(Thread.currentThread());
     });
     myLock = new ReadMostlyRWLock(edtThread.get());
@@ -162,6 +156,16 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
+    // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
+    // that thread was chosen because we know for sure it's running
+    Thread thread = AppScheduledExecutorService.getPeriodicTasksThread();
+    AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
+    Disposer.register(parentDisposable, () -> {
+      AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
+    });
   }
 
   // this constructor must be called only by ApplicationLoader
