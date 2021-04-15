@@ -214,20 +214,23 @@ idea.fatal.error.notification=disabled
 
   @NotNull Path patchApplicationInfo() {
     Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    Path targetFile = Paths.get(buildContext.paths.temp).resolve(sourceFile.fileName)
-    def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+    Path targetFile = buildContext.paths.tempDir.resolve(sourceFile.fileName)
+    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
-    def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
-    def builtinPluginsRepoUrl = ""
+    ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
+    String builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
       builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
       if (builtinPluginsRepoUrl.startsWith("http:")) {
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    BuildUtils.copyAndPatchFile(sourceFile, targetFile,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
-                                "BUILTIN_PLUGINS_URL": builtinPluginsRepoUrl ?: ""])
+    BuildUtils.copyAndPatchFile(sourceFile, targetFile, Map.<String, String>of(
+      "BUILD_NUMBER", buildContext.fullBuildNumber,
+      "BUILD_DATE", date,
+      "BUILD", buildContext.buildNumber,
+      "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
+    ))
     return targetFile
   }
 
