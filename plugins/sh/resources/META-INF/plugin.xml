@@ -66,7 +66,7 @@ Adds support for working with shell script files
     <langCodeStyleSettingsProvider implementation="com.intellij.sh.codeStyle.ShLanguageCodeStyleSettingsProvider"/>
 
     <fileDocumentManagerListener implementation="com.intellij.sh.formatter.ShLineEndingsAdapter"/>
-    <externalFormatProcessor implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
+    <formattingService implementation="com.intellij.sh.formatter.ShExternalFormatter"/>
 
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
