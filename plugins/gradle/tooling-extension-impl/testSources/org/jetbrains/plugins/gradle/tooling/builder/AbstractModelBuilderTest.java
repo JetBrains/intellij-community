@@ -66,17 +66,6 @@ import static org.junit.Assume.assumeThat;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
-  /**
-   * !When adding new versions here change also list in Idea_Tests_BuildToolsTests in Intellij Teamcity configuration
-   */
-  public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
-    {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"}, {"4.4"}, {"4.5.1"}, {"4.6"}, {"4.7"}, {"4.8"}, {"4.9"},*/ {"4.10.3"},
-    {"5.0"}, /*{"5.1"}, {"5.2"}, {"5.3.1"}, {"5.4.1"}, {"5.5.1"},*/ {"5.6.2"},
-    {"6.0"}, /* {"6.0.1"},  {"6.1"}, {"6.2"}, {"6.3"}, {"6.4"}, */ {"6.8.1"}
-  };
-  public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
-
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
   private static File ourTempDir;
@@ -95,7 +84,7 @@ public abstract class AbstractModelBuilderTest {
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+    return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
 

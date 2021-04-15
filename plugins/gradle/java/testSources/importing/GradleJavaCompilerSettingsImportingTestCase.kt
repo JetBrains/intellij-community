@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.importing.GradleBuildScriptBuilder.Companion.buildscript
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.runners.Parameterized
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
@@ -65,6 +65,6 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   companion object {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
-    fun tests() = arrayListOf(*AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS, arrayOf("6.3"))
+    fun tests() = arrayListOf(*VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS, arrayOf("6.3"))
   }
 }

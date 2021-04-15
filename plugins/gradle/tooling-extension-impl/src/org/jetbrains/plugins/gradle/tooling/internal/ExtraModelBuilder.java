@@ -22,9 +22,7 @@ import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl;
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +68,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     if (DummyModel.class.getName().equals(modelName)) return true;
     if (TurnOffDefaultTasks.class.getName().equals(modelName)) return true;
     for (ModelBuilderService service : modelBuilderServices) {
-      if (service.canBuild(modelName) && isVersionMatch(service)) return true;
+      if (service.canBuild(modelName)) return true;
     }
     return false;
   }
@@ -106,7 +104,7 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     CURRENT_CONTEXT.set(myModelBuilderContext);
     try {
       for (ModelBuilderService service : modelBuilderServices) {
-        if (service.canBuild(modelName) && isVersionMatch(service)) {
+        if (service.canBuild(modelName)) {
           final long startTime = System.currentTimeMillis();
           try {
             if (service instanceof ModelBuilderService.Ex)
@@ -154,11 +152,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
     catch (Throwable e) {
       LOG.warn("Failed to report model builder error", e);
     }
-  }
-
-  private boolean isVersionMatch(@NotNull ModelBuilderService builderService) {
-    TargetVersions targetVersions = builderService.getClass().getAnnotation(TargetVersions.class);
-    return new VersionMatcher(myCurrentGradleVersion).isVersionMatch(targetVersions);
   }
 
   @NotNull
