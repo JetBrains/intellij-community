@@ -201,10 +201,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
-    if (myTableModel.getRowCount() != 0) {
-      myTable.getSelectionModel().addSelectionInterval(0, 0);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SwingUtilities.invokeLater(() -> {
+        if (myTableModel.getRowCount() != 0) {
+          myTable.getSelectionModel().addSelectionInterval(0, 0);
+        }
+      });
     }
-
     myOptionsPanel.setVisible(false);
 
     return myPanel;
