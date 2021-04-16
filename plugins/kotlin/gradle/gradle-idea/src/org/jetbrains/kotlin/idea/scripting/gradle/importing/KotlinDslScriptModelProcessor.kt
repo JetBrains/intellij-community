@@ -152,15 +152,24 @@ class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSyste
 
 fun saveScriptModels(project: Project, build: KotlinDslGradleBuildSync) {
     synchronized(build) {
-        val errorReporter = KotlinGradleDslErrorReporter(project, build.taskId)
-
-        build.models.forEach { model ->
-            errorReporter.reportError(File(model.file), model)
-        }
+        reportErrors(project, build)
 
         // todo: use real info about projects
         build.projectRoots.addAll(build.models.map { toSystemIndependentName(File(it.file).parent) })
 
         GradleBuildRootsManager.getInstance(project)?.update(build)
+    }
+}
+
+internal fun reportErrors(
+    project: Project,
+    build: KotlinDslGradleBuildSync
+) {
+    synchronized(build) {
+        val errorReporter = KotlinGradleDslErrorReporter(project, build.taskId)
+
+        build.models.forEach { model ->
+            errorReporter.reportError(File(model.file), model)
+        }
     }
 }

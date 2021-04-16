@@ -5,8 +5,13 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.replaceService
 import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
@@ -15,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.script.configuration.loader.DefaultScriptC
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.areSimilar
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
+import org.jetbrains.kotlin.idea.scripting.gradle.importing.KotlinGradleDslErrorReporter.Companion.build_script_errors_group
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -68,6 +74,14 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
             testRootDisposable
         )
 
+        val events = mutableListOf<BuildEvent>()
+        val syncViewManager = object : SyncViewManager(myProject) {
+            override fun onEvent(buildId: Any, event: BuildEvent) {
+                events.add(event)
+            }
+        }
+        myProject.replaceService(SyncViewManager::class.java, syncViewManager, testRootDisposable)
+
         configureByFiles()
 
         val result = try {
@@ -79,6 +93,12 @@ class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         assert(result is AssertionFailedError) { "Exception should be thrown" }
         assertNotNull(context)
         assert(context?.cancellationTokenSource?.token()?.isCancellationRequested == true)
+        val errors = events.filterIsInstance<MessageEventImpl>().filter { it.kind == MessageEvent.Kind.ERROR }
+        val buildScriptErrors = errors.filter { it.group == build_script_errors_group }
+        assertTrue(
+            "$build_script_errors_group error has not been reported among other errors: $errors",
+            buildScriptErrors.isNotEmpty()
+        )
     }
 
     @Test
