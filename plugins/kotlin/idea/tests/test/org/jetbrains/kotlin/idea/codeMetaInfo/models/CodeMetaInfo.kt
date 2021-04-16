@@ -78,7 +78,7 @@ class ParsedCodeMetaInfo(
 ) : CodeMetaInfo {
     override val renderConfiguration = object : AbstractCodeMetaInfoRenderConfiguration(false) {}
 
-    override fun asString() = renderConfiguration.asString(this) + params?: ""
+    override fun asString() = (renderConfiguration.asString(this) + params) ?: ""
 
     override fun equals(other: Any?): Boolean {
         if (other == null || other !is CodeMetaInfo) return false

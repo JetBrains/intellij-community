@@ -81,7 +81,7 @@ class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) 
             if (value !in Long.MIN_VALUE.toDouble()..Long.MAX_VALUE.toDouble()) return false
         }
 
-        return constValue.toLong() in valueRanges[typeName] ?: return false
+        return constValue.toLong() in (valueRanges[typeName] ?: return false)
     }
 
     override fun getFamilyName() = KotlinBundle.message("change.to.correct.primitive.type")

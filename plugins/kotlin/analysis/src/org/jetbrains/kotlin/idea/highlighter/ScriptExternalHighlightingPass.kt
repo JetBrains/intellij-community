@@ -53,7 +53,7 @@ class ScriptExternalHighlightingPass(
         val reports = IdeScriptReportSink.getReports(file)
 
         val annotations = reports.mapNotNull { scriptDiagnostic ->
-            val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: 0 to 0
+            val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
             val exception = scriptDiagnostic.exception
             val exceptionMessage = if (exception != null) " ($exception)" else ""
             val message = scriptDiagnostic.message + exceptionMessage

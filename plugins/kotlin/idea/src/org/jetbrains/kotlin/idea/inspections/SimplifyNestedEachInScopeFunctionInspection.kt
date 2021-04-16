@@ -49,7 +49,7 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
         private fun KtExpression.unpackLabelAndLambdaExpression(): Pair<KtLabeledExpression?, KtLambdaExpression?> = when (this) {
             is KtLambdaExpression -> null to this
             is KtLabeledExpression -> this to baseExpression?.unpackLabelAndLambdaExpression()?.second
-            is KtAnnotatedExpression -> baseExpression?.unpackLabelAndLambdaExpression() ?: null to null
+            is KtAnnotatedExpression -> baseExpression?.unpackLabelAndLambdaExpression() ?: (null to null)
             else -> null to null
         }
 
@@ -163,7 +163,7 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
                     val parameterName = lambdaExpression.valueParameters.singleOrNull()?.name ?: "it"
                     if (!receiverExpression.textMatches(parameterName)) return
 
-                    if (forEachLambda != null && forEachLambda.valueParameters.singleOrNull()?.name ?: "it" == parameterName)
+                    if (forEachLambda != null && (forEachLambda.valueParameters.singleOrNull()?.name ?: "it") == parameterName)
                         null // Parameter from outer lambda is shadowed
                     else ParameterReferenceTreeVisitor(parameterName)
                 }
@@ -174,7 +174,7 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
                         val receiverExpression = innerExpression.receiverExpression
                         if (receiverExpression !is KtThisExpression) return
                         val labelName = receiverExpression.getLabelName()
-                        if (labelName != null && labelName != labelExpression?.getLabelName() ?: scopeFunctionShortName) return
+                        if (labelName != null && labelName != (labelExpression?.getLabelName() ?: scopeFunctionShortName)) return
                     }
 
                     ImplicitThisReferenceVisitor(lambdaType, context)

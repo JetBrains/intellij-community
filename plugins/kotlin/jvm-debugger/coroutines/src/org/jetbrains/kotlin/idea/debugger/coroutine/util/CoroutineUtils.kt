@@ -48,7 +48,7 @@ fun Location.isPreFlight(): SuspendExitMode {
 }
 
 fun Location.safeCoroutineExitPointLineNumber() =
-    wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -2 == -1
+  (wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -2) == -1
 
 fun ReferenceType.isContinuation() =
     isBaseContinuationImpl() || isSubtype("kotlin.coroutines.Continuation")

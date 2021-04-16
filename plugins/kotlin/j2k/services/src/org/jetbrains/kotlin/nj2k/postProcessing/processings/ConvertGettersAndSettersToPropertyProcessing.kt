@@ -137,7 +137,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             ?.returnedExpression
             ?.unpackedReferenceToProperty()
             ?.takeIf {
-                it.type() == type() ?: return@takeIf false
+              it.type() == (type() ?: return@takeIf false)
             }
         return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }

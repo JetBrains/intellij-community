@@ -30,7 +30,7 @@ fun ASTBlock.requireNode() = node ?: error("ASTBlock.getNode() returned null")
 fun PsiElement.getLineCount(): Int {
     val spaceRange = textRange ?: TextRange.EMPTY_RANGE
     return getLineCountByDocument(spaceRange.startOffset, spaceRange.endOffset)
-        ?: StringUtil.getLineBreakCount(text ?: error("Cannot count number of lines")) + 1
+        ?: (StringUtil.getLineBreakCount(text ?: error("Cannot count number of lines")) + 1)
 }
 
 fun PsiElement.getLineCountByDocument(startOffset: Int, endOffset: Int): Int? {

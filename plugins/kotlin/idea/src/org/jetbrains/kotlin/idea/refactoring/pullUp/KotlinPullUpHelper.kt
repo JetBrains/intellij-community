@@ -167,7 +167,7 @@ class KotlinPullUpHelper(
             }
         }
         commonInitializer?.accept(visitor)
-        if (targetConstructor == (data.targetClass as? KtClass)?.primaryConstructor ?: data.targetClass) {
+        if (targetConstructor == ((data.targetClass as? KtClass)?.primaryConstructor ?: data.targetClass)) {
             property.initializer?.accept(visitor)
         }
 

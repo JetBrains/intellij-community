@@ -115,7 +115,7 @@ private class MoveKotlinDeclarationsHandlerTestActions : MoveKotlinDeclarationsH
     ) {
         val sourceFiles = getSourceFiles(elementsToMove)
         val targetFilePath =
-            targetFile?.virtualFile?.path ?: sourceFiles[0].virtualFile.parent.path + "/" + guessNewFileName(elementsToMove)
+            targetFile?.virtualFile?.path ?: (sourceFiles[0].virtualFile.parent.path + "/" + guessNewFileName(elementsToMove))
 
         val model = MoveKotlinTopLevelDeclarationsModel(
             project = project,

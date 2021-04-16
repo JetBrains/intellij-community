@@ -113,7 +113,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
                     container = parent
                     name = "$parentName.$name"
                     val parentVisibility = ModifiersChecker.resolveVisibilityFromModifiers(parent, visibility)
-                    if (DescriptorVisibilities.compare(parentVisibility, visibility) ?: 0 < 0) {
+                    if ((DescriptorVisibilities.compare(parentVisibility, visibility) ?: 0) < 0) {
                         visibility = parentVisibility
                     }
                 }

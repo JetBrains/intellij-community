@@ -81,7 +81,7 @@ class MultipleScriptDefinitionsChecker(private val project: Project) : EditorNot
                                     it.name + " (${it.scriptFilePattern})"
                                 } ?: value.asLegacyOrNull<StandardIdeScriptDefinition>()?.let {
                                     it.name + " (${KotlinParserDefinition.STD_SCRIPT_EXT})"
-                                } ?: value.name + " (${value.fileExtension})"
+                                } ?: (value.name + " (${value.fileExtension})")
                         }
                     )
                     list.showUnderneathOf(label)

@@ -212,8 +212,8 @@ open class KotlinStackFrame(stackFrameDescriptorImpl: StackFrameDescriptorImpl) 
                 val label = name.drop(AsmUtil.LABELED_THIS_PARAMETER.length)
                 clone(customName ?: getThisName(label), label)
             }
-            name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: THIS + " (outer)", null)
-            name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: THIS + " (receiver)", null)
+            name == AsmUtil.THIS_IN_DEFAULT_IMPLS -> clone(customName ?: (THIS + " (outer)"), null)
+            name == AsmUtil.RECEIVER_PARAMETER_NAME -> clone(customName ?: (THIS + " (receiver)"), null)
             INLINED_THIS_REGEX.matches(name) -> {
                 val label = generateThisLabel(frame.getValue(this)?.type())
                 if (label != null) {

@@ -163,8 +163,8 @@ sealed class LazyLightClassDataHolder(
             return null
         }
 
-        val parameterCountMatches = (this as? PsiMethod)?.parameterList?.parametersCount ?: 0 ==
-                (dummyMember as? PsiMethod)?.parameterList?.parametersCount ?: 0
+        val parameterCountMatches = ((this as? PsiMethod)?.parameterList?.parametersCount ?: 0) ==
+                ((dummyMember as? PsiMethod)?.parameterList?.parametersCount ?: 0)
         if (this.memberIndex != dummyMember.memberIndex || !parameterCountMatches) {
             logMismatch("Wrongly matched ${dummyMember.debugName} to ${this.debugName}", containingClass)
             return null

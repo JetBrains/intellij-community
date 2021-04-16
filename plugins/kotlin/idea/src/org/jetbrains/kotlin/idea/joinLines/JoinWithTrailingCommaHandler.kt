@@ -43,7 +43,7 @@ class JoinWithTrailingCommaHandler : JoinLinesHandlerDelegate {
         deleteOrReplaceWithWhiteSpace(comma, comma.nextLeaf()?.elementType)
         startElement.nextWhiteSpaceOrNull()?.let { deleteOrReplaceWithWhiteSpace(it, startElement.elementType) }
 
-        return TrailingCommaHelper.elementAfterLastElement(commaOwner)?.startOffset ?: end - 1
+        return TrailingCommaHelper.elementAfterLastElement(commaOwner)?.startOffset ?: (end - 1)
     }
 
     companion object {

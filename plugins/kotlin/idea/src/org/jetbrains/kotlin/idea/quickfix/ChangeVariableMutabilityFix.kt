@@ -39,8 +39,8 @@ class ChangeVariableMutabilityFix(
 ) : KotlinQuickFixAction<KtValVarKeywordOwner>(element) {
 
     override fun getText() = actionText
-        ?: (if (makeVar) KotlinBundle.message("change.to.var") else KotlinBundle.message("change.to.val")) +
-        if (deleteInitializer) KotlinBundle.message("and.delete.initializer") else ""
+        ?: ((if (makeVar) KotlinBundle.message("change.to.var") else KotlinBundle.message("change.to.val")) +
+                if (deleteInitializer) KotlinBundle.message("and.delete.initializer") else "")
 
     override fun getFamilyName(): String = text
 

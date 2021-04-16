@@ -36,7 +36,7 @@ interface ReadWriteAccessChecker {
                     return (
                             if (useResolveForReadWrite) readWriteAccessWithFullExpressionByResolve(assignment)
                             else null
-                            ) ?: ReferenceAccess.READ_WRITE to assignment
+                            ) ?: (ReferenceAccess.READ_WRITE to assignment)
                 }
             }
         }

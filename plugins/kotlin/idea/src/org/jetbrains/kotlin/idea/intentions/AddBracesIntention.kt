@@ -49,7 +49,7 @@ class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.ja
             is KtIfExpression -> {
                 val thenExpr = then ?: return null
                 val elseExpr = `else`
-                if (elseExpr != null && caretLocation >= elseKeyword?.startOffset ?: return null) {
+                if (elseExpr != null && caretLocation >= (elseKeyword?.startOffset ?: return null)) {
                     elseExpr
                 } else {
                     thenExpr

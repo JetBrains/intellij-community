@@ -82,7 +82,8 @@ import java.text.StringCharacterIterator
 
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun String?.orAnonymous(kind: String = ""): String = this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
+internal inline fun String?.orAnonymous(kind: String = ""): String =
+    this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
 
 internal fun <T> lz(initializer: () -> T) = lazy(LazyThreadSafetyMode.SYNCHRONIZED, initializer)
 
