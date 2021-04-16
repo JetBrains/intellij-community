@@ -227,7 +227,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
     myLoadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
     myBanner = new Banner(myEditor.getResetAction());
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
-    myBanner.setBorder(JBUI.Borders.empty(5, 6, 0, 10));
+    myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
@@ -351,6 +351,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
     panel.add(component, gbc);
     gbc.gridx = 2;
     gbc.weightx = 0;
+    gbc.insets = JBUI.insets(8, 2, 0, 0);
     panel.add(toolbar, gbc);
     return panel;
   }
