@@ -6,15 +6,34 @@ import com.intellij.jsonpath.ui.IncorrectDocument
 import com.intellij.jsonpath.ui.IncorrectExpression
 import com.intellij.jsonpath.ui.JsonPathEvaluator
 import com.intellij.jsonpath.ui.ResultString
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.util.*
 
 @RunWith(JUnit4::class)
 class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
+  companion object {
+    init {
+      Configuration.setDefaults(object : Configuration.Defaults {
+        private val jsonProvider = JacksonJsonProvider()
+        private val mappingProvider = JacksonMappingProvider()
+
+        override fun jsonProvider() = jsonProvider
+
+        override fun mappingProvider() = mappingProvider
+
+        override fun options() = EnumSet.noneOf(Option::class.java)
+      })
+    }
+  }
   @Test
   fun evaluateWithBindingFromClasspath() {
     val documentContext = JsonPath.parse("{ \"some\": 12 }")
@@ -91,8 +110,7 @@ class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
     val document = myFixture.configureByText("my.json", "{ invalid }")
     val evaluator = JsonPathEvaluator(document as JsonFile, "$", setOf())
     val result = evaluator.evaluate() as IncorrectDocument
-
-    assertEquals("Unexpected End Of File position 10: null", result.message)
+    assertThat(result.message).contains("Unexpected character ('i' (code 105)): was expecting double-quote to start field name")
   }
 
   private val sampleDocument: String

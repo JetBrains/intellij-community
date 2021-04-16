@@ -44,15 +44,35 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.KeyEvent
+import java.util.*
 import java.util.function.Supplier
 import javax.swing.*
+import kotlin.collections.ArrayDeque
 
 internal abstract class JsonPathEvaluateView(protected val project: Project) : SimpleToolWindowPanel(true, true), Disposable {
+  companion object {
+    init {
+      Configuration.setDefaults(object : Configuration.Defaults {
+        private val jsonProvider = JacksonJsonProvider()
+        private val mappingProvider = JacksonMappingProvider()
+
+        override fun jsonProvider() = jsonProvider
+
+        override fun mappingProvider() = mappingProvider
+
+        override fun options() = EnumSet.noneOf(Option::class.java)
+      })
+    }
+  }
+
   protected val searchTextField: EditorTextField = object : EditorTextField(project, JsonPathFileType.INSTANCE) {
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
