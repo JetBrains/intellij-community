@@ -97,11 +97,23 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       editor.getScrollingModel().runActionOnScrollingFinished(() -> {
           CachedIntentions cachedIntentions = CachedIntentions.createAndUpdateActions(project, file, editor, intentions);
           cachedIntentions.wrapAndUpdateGutters();
-          IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
+          if (cachedIntentions.getAllActions().isEmpty()) {
+            showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+          }
+          else {
+            IntentionHintComponent.showIntentionHint(project, file, editor, true, cachedIntentions);
+          }
       });
     }
-    else if (showFeedbackOnEmptyMenu) {
-      HintManager.getInstance().showInformationHint(editor, LangBundle.message("hint.text.no.context.actions.available.at.this.location"));
+    else {
+      showEmptyMenuFeedback(editor, showFeedbackOnEmptyMenu);
+    }
+  }
+
+  private static void showEmptyMenuFeedback(@NotNull Editor editor, boolean showFeedbackOnEmptyMenu) {
+    if (showFeedbackOnEmptyMenu) {
+      HintManager.getInstance()
+        .showInformationHint(editor, LangBundle.message("hint.text.no.context.actions.available.at.this.location"));
     }
   }
 
