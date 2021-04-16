@@ -32,8 +32,8 @@ import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
+import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import git4idea.GitContentRevision;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
@@ -224,7 +224,7 @@ public class GitUntrackedFilesHolder implements Disposable {
       myInUpdate = true;
     }
     BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
-    myQueue.queue(Update.create(new ComparableObject.Impl(this, "update"), this::update));
+    myQueue.queue(DisposableUpdate.createDisposable(this, new ComparableObject.Impl(this, "update"), this::update));
   }
 
   /**
