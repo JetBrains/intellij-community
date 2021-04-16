@@ -228,7 +228,7 @@ public final class StartupUtil {
     });
 
     if (!configImportNeeded) {
-      runPreAppClass(log);
+      runPreAppClass(log, args);
     }
 
     // maybe called in EDT, but other events in queue should be processed before patchSystem
@@ -365,15 +365,15 @@ public final class StartupUtil {
     }
   }
 
-  private static void runPreAppClass(@NotNull Logger log) {
+  private static void runPreAppClass(@NotNull Logger log, @NotNull String[] args) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       Activity activity = StartUpMeasurer.startActivity("pre app class running");
       try {
         Class<?> clazz = Class.forName(classBeforeAppProperty);
-        Method invokeMethod = clazz.getDeclaredMethod("invoke");
+        Method invokeMethod = clazz.getDeclaredMethod("invoke", String[].class);
         invokeMethod.setAccessible(true);
-        invokeMethod.invoke(null);
+        invokeMethod.invoke(null, (Object) args);
       }
       catch (Exception e) {
         log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
