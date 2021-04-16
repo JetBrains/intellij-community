@@ -43,8 +43,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyCondaPackageService.getCondaName
-import com.jetbrains.python.packaging.PyCondaPackageService.getPythonName
+import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
@@ -116,14 +115,9 @@ fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataH
   filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, true)
 
 fun guessCondaBaseEnvironment(condaPath: String): Sdk? {
-  if (!condaPath.endsWith(File.separatorChar + getCondaName())) {
-    return null
-  }
-
-  val interpreterPath = condaPath.replaceAfterLast(File.separatorChar, getPythonName())
-  val condaVirtualFile = VfsUtil.findFileByIoFile(File(interpreterPath), false)
-  if (condaVirtualFile != null && condaVirtualFile.exists()) {
-    return PyDetectedSdk(condaVirtualFile.path)
+  val condaBasePython = PyCondaPackageService.getCondaBasePython(condaPath)
+  if (condaBasePython != null) {
+    return PyDetectedSdk(condaBasePython)
   }
   return null
 }
