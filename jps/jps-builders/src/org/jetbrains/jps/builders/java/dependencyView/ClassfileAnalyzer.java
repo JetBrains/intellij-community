@@ -20,6 +20,7 @@ import java.util.*;
 final class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance(ClassfileAnalyzer.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
+  private static final String KOTLIN_LAMBDA_USAGE_CLASS_MARKER = "$sam$";
   private static final int ASM_API_VERSION = Opcodes.API_VERSION;
 
   private final DependencyContext myContext;
@@ -576,12 +577,19 @@ final class ClassfileAnalyzer {
 
         @Override
         public void visitTypeInsn(int opcode, String type) {
-          final TypeRepr.AbstractType typ = type.startsWith("[") ? TypeRepr.getType(myContext, type) : TypeRepr.createClassType(
-            myContext, myContext.get(type));
+          final TypeRepr.AbstractType typ = type.startsWith("[")? TypeRepr.getType(myContext, type) : TypeRepr.createClassType(myContext, myContext.get(type));
 
           if (opcode == Opcodes.NEW) {
             myUsages.add(UsageRepr.createClassUsage(myContext, ((TypeRepr.ClassType)typ).className));
             myUsages.add(UsageRepr.createClassNewUsage(myContext, ((TypeRepr.ClassType)typ).className));
+            final int ktLambdaMarker = type.indexOf(KOTLIN_LAMBDA_USAGE_CLASS_MARKER);
+            if (ktLambdaMarker > 0) {
+              final int ifNameStart = ktLambdaMarker + KOTLIN_LAMBDA_USAGE_CLASS_MARKER.length();
+              final int ifNameEnd = type.indexOf("$", ifNameStart);
+              if (ifNameEnd > ifNameStart) {
+                myUsages.add(UsageRepr.createClassNewUsage(myContext, myContext.get(type.substring(ifNameStart, ifNameEnd).replace('_', '/'))));
+              }
+            }
           }
           else if (opcode == Opcodes.ANEWARRAY) {
             if (typ instanceof TypeRepr.ClassType) {
