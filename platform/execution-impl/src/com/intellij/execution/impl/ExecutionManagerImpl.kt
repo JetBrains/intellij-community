@@ -392,7 +392,15 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         val taskEnvironment = builder.build()
         taskEnvironment.executionId = id
         EXECUTION_SESSION_ID_KEY.set(taskEnvironment, id)
-        if (!provider.executeTask(projectContext, profile, taskEnvironment, task)) {
+        try {
+          if (!provider.executeTask(projectContext, profile, taskEnvironment, task)) {
+            if (onCancelRunnable != null) {
+              SwingUtilities.invokeLater(onCancelRunnable)
+            }
+            return@executeOnPooledThread
+          }
+        }
+        catch (e: ProcessCanceledException) {
           if (onCancelRunnable != null) {
             SwingUtilities.invokeLater(onCancelRunnable)
           }
