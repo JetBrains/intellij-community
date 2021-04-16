@@ -1355,7 +1355,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myWriteStackBase = myWriteActionsStack.size();
     try (AccessToken ignored = myLock.writeSuspend()) {
       runModalProgress(project, title, runnable);
-    } finally {
+    }
+    finally {
       myWriteStackBase = prevBase;
     }
   }

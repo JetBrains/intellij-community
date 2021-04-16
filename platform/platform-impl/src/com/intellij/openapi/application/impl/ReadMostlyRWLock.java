@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite;
+
 /**
  * Read-Write lock optimised for mostly reads.
  * Scales better than {@link java.util.concurrent.locks.ReentrantReadWriteLock} with a number of readers due to reduced contention thanks to thread local structures.
@@ -243,6 +245,7 @@ final class ReadMostlyRWLock {
     return new AccessToken() {
       @Override
       public void finish() {
+        cancelActionsToBeCancelledBeforeWrite();
         writeLock();
         writeSuspended = prev;
       }

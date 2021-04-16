@@ -130,11 +130,16 @@ public final class ProgressIndicatorUtils {
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
-        for (Runnable cancellation : ourWACancellations) {
-          cancellation.run();
-        }
+        cancelActionsToBeCancelledBeforeWrite();
       }
     }, app);
+  }
+
+  @ApiStatus.Internal
+  public static void cancelActionsToBeCancelledBeforeWrite() {
+    for (Runnable cancellation : ourWACancellations) {
+      cancellation.run();
+    }
   }
 
   @ApiStatus.Internal
