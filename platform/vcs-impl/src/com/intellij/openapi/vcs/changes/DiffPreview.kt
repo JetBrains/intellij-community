@@ -2,6 +2,6 @@
 package com.intellij.openapi.vcs.changes
 
 interface DiffPreview {
-  fun updatePreview(fromModelRefresh: Boolean)
-  fun setPreviewVisible(isPreviewVisible: Boolean)
+  fun updatePreview(fromModelRefresh: Boolean) = Unit
+  fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean = false) = Unit
 }

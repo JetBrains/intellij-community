@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
@@ -119,8 +119,8 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
     }
   }
 
-  override fun setPreviewVisible(isPreviewVisible: Boolean) {
-    if (isPreviewVisible) openPreview(false) else closePreview()
+  override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
+    if (isPreviewVisible) openPreview(focus) else closePreview()
   }
 
   private fun isPreviewOpen(): Boolean = FileEditorManager.getInstance(project).isFileOpen(previewFile)
