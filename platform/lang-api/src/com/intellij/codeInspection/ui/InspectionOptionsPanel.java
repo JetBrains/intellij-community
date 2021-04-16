@@ -17,6 +17,13 @@ public class InspectionOptionsPanel extends JPanel {
     add(component, "pushx, wrap");
   }
 
+  /**
+   * Adds a row with a single component, using as much vertical and horizontal space as possible.
+   */
+  public void addGrowing(Component component) {
+    add(component, "push, grow, wrap");
+  }
+
   @Override
   public Component add(Component comp) {
     super.add(comp, "span, wrap");

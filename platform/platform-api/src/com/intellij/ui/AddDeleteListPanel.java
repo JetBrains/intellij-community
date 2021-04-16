@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,9 +55,10 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     setLayout(new BorderLayout());
     add(decorator.createPanel(), BorderLayout.CENTER);
     if (myTitle != null) {
-      final JLabel label = new JLabel(myTitle);
-      label.setBorder(JBUI.Borders.emptyBottom(3));
-      add(label, BorderLayout.NORTH);
+      @SuppressWarnings("DialogTitleCapitalization") var outerBorder = IdeBorderFactory.createTitledBorder(
+        myTitle, false, JBUI.emptyInsets()
+      ).setShowLine(false);
+      setBorder(new CompoundBorder(outerBorder, getBorder()));
     }
   }
 

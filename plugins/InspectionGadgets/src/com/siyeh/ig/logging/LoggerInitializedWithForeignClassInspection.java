@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.project.Project;
@@ -76,7 +77,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
     final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
+    final var panel = new InspectionOptionsPanel();
+    panel.addGrowing(UiUtils.createAddRemoveTreeClassChooserPanel(table, title));
+    return panel;
   }
 
   @Override

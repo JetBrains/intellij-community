@@ -1,18 +1,4 @@
-/*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -28,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -88,22 +75,32 @@ public class MismatchedCollectionQueryUpdateInspection
   @Override
   public JComponent createOptionsPanel() {
     final ListTable queryNamesTable = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
-    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(queryNamesTable);
+    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(
+      queryNamesTable,
+      InspectionGadgetsBundle.message("query.label"),
+      true);
 
     final ListTable updateNamesTable = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
-    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(updateNamesTable);
+    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(
+      updateNamesTable,
+      InspectionGadgetsBundle.message("update.label"),
+      true);
 
     String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
     final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
     final JPanel ignoredClassesPanel =
-      UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage, CommonClassNames.JAVA_UTIL_COLLECTION,
-                                                   CommonClassNames.JAVA_UTIL_MAP);
+      UiUtils.createAddRemoveTreeClassChooserPanel(
+        ignoreClassesMessage,
+        InspectionGadgetsBundle.message("ignored.class.label"),
+        ignoredClassesTable,
+        true,
+        CommonClassNames.JAVA_UTIL_COLLECTION, CommonClassNames.JAVA_UTIL_MAP);
 
     final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     namesPanel.add(queryNamesPanel);
     namesPanel.add(updateNamesPanel);
 
-    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, JBUI.scale(8)));
     panel.add(namesPanel);
     panel.add(ignoredClassesPanel);
     return panel;

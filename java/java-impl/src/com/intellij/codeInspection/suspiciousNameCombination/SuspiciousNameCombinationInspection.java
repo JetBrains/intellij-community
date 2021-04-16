@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.java.JavaBundle;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import java.awt.*;
 import java.util.List;
 import java.util.*;
 
@@ -74,19 +74,20 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   @Override @Nullable
   public JComponent createOptionsPanel() {
     NameGroupsPanel nameGroupsPanel = new NameGroupsPanel();
+
     ListTable table = new ListTable(new ListWrappingTableModel(
       Arrays.asList(myIgnoredMethods.getClassNames(), myIgnoredMethods.getMethodNamePatterns()),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    JPanel tablePanel = new JPanel(new BorderLayout());
-    JLabel label = new JLabel(JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods"));
-    label.setBorder(JBUI.Borders.emptyBottom(3));
-    tablePanel.add(label, BorderLayout.NORTH);
-    tablePanel.add(UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class")), BorderLayout.CENTER);
+    final var tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(
+      InspectionGadgetsBundle.message("choose.class"),
+      JavaBundle.message("section.title.inspection.suspicious.names.ignore.methods"),
+      table,
+      false);
 
-    JPanel panel = new JPanel(new GridLayout(2, 1));
-    panel.add(nameGroupsPanel);
-    panel.add(tablePanel);
+    final InspectionOptionsPanel panel = new InspectionOptionsPanel();
+    panel.add(nameGroupsPanel, "growx, wrap");
+    panel.addGrowing(tablePanel);
     return panel;
   }
 
@@ -161,6 +162,8 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
     NameGroupsPanel() {
       super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
+      setMinimumSize(JBUI.size(150, 100));
+      setPreferredSize(JBUI.size(150, 130));
       myListModel.addListDataListener(new ListDataListener() {
         @Override
         public void intervalAdded(ListDataEvent e) {

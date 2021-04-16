@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2021 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.ui;
 
 import com.intellij.codeInspection.ui.ListTable;
@@ -21,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
@@ -32,6 +19,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -52,6 +40,7 @@ public final class UiUtils {
 
   public static JPanel createAddRemovePanel(final ListTable table) {
     final JPanel panel = ToolbarDecorator.createDecorator(table)
+      .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -65,8 +54,14 @@ public final class UiUtils {
       })
       .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
-    panel.setPreferredSize(JBUI.size(150, 100));
+    panel.setMinimumSize(JBUI.size(150, 100));
     return panel;
+  }
+
+  public static JPanel createAddRemovePanel(final ListTable table, @NlsContexts.Label final String panelLabel, boolean removeHeader) {
+    if (removeHeader) table.setTableHeader(null);
+    var panel = createAddRemovePanel(table);
+    return UI.PanelFactory.panel(panel).withLabel(panelLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
   public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, @NlsContexts.DialogTitle final String chooserTitle,
@@ -79,6 +74,8 @@ public final class UiUtils {
       filter = new SubclassFilter(ancestorClasses);
     }
     final JPanel panel = ToolbarDecorator.createDecorator(table)
+      .disableUpDownActions()
+      .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -111,10 +108,21 @@ public final class UiUtils {
           }
           editTableCell(table, rowIndex, table.getColumnCount() > 1 && project != null ? 1 : 0);
         }
-      }).setRemoveAction(button -> TableUtil.removeSelectedItems(table))
-      .disableUpDownActions().createPanel();
-    panel.setPreferredSize(JBUI.size(150, 100));
+      })
+      .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
+      .createPanel();
+    panel.setMinimumSize(JBUI.size(150, 100));
     return panel;
+  }
+
+  public static JPanel createAddRemoveTreeClassChooserPanel(@NlsContexts.DialogTitle final String chooserTitle,
+                                                            @NlsContexts.Label final String treeLabel,
+                                                            final ListTable table,
+                                                            boolean removeHeader,
+                                                            @NonNls String... ancestorClasses) {
+    if (removeHeader) table.setTableHeader(null);
+    final var panel = createAddRemoveTreeClassChooserPanel(table, chooserTitle, ancestorClasses);
+    return UI.PanelFactory.panel(panel).withLabel(treeLabel).moveLabelOnTop().resizeY(true).createPanel();
   }
 
   private static void editTableCell(final ListTable table, final int row, final int column) {
@@ -143,7 +151,6 @@ public final class UiUtils {
     else {
       filter = new SubclassFilter(ancestorClasses);
     }
-    final JPanel optionsPanel = new JPanel(new BorderLayout());
     final JBList<String> list = new JBList<>(collection);
 
     final JPanel panel = ToolbarDecorator.createDecorator(list)
@@ -182,12 +189,8 @@ public final class UiUtils {
           ListUtil.removeSelectedItems(list);
         }
       }).createPanel();
-    panel.setPreferredSize(JBUI.size(150, 100));
-    final JLabel label = new JLabel(borderTitle);
-    label.setBorder(JBUI.Borders.emptyBottom(3));
-    optionsPanel.add(label, BorderLayout.NORTH);
-    optionsPanel.add(panel, BorderLayout.CENTER);
-    return optionsPanel;
+    panel.setMinimumSize(JBUI.size(150, 100));
+    return UI.PanelFactory.panel(panel).withLabel(borderTitle).moveLabelOnTop().resizeY(true).createPanel();
   }
 
   private static final class SubclassFilter implements ClassFilter {
