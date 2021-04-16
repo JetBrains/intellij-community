@@ -70,7 +70,7 @@ object EditorConfigPsiTreeUtil {
   fun findRemovableRange(element: PsiElement): IntRange =
     EditorConfigPsiTreeUtilCore.findRemovableRangeBackward(element)
     ?: EditorConfigPsiTreeUtilCore.findRemovableRangeForward(element)
-    ?: element.textRange.startOffset until element.textRange.endOffset
+    ?: (element.textRange.startOffset until element.textRange.endOffset)
 
   /**
    * current file **is** included

@@ -93,7 +93,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
 
     }
 
-    val wholeRange = markersWholeRange(affectedMarkers) union workingRange ?: failAndReport("no wholeRange", e)
+    val wholeRange = (markersWholeRange(affectedMarkers) union workingRange) ?: failAndReport("no wholeRange", e)
 
     CodeStyleManager.getInstance(myProject).reformatRange(
       hostPsiFile, wholeRange.startOffset, wholeRange.endOffset, true)

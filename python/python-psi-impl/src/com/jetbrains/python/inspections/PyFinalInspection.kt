@@ -75,7 +75,7 @@ class PyFinalInspection : PyInspection() {
           .filterIsInstance<PyFunction>()
           .firstOrNull { isFinal(it) }
           ?.let {
-            @NlsSafe val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
+            @NlsSafe val qualifiedName = it.qualifiedName ?: (it.containingClass?.name + "." + it.name)
             registerProblem(node.nameIdentifier,
                             PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
           }

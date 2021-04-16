@@ -79,7 +79,7 @@ object NGram {
       .reversed()
     if (precedingTokens.isEmpty()) return emptyArray()
     return with(precedingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
@@ -94,7 +94,7 @@ object NGram {
       .reversed()
     if (followingTokens.isEmpty()) return emptyArray()
     return with(followingTokens) {
-      if (last() == parameters.originalPosition?.text ?: "") dropLast(1) else drop(1)
+      if (last() == (parameters.originalPosition?.text ?: "")) dropLast(1) else drop(1)
     }.toTypedArray()
   }
 
