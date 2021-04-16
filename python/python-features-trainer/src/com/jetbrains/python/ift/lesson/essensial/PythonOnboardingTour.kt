@@ -332,9 +332,8 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(
-        PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 300))
+      text(PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
       }
@@ -382,7 +381,7 @@ class PythonOnboardingTour :
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
-           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 400))
+           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         isDemoFilePath(path)
       }
