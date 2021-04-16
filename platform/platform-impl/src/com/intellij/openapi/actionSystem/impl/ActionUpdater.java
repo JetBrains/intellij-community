@@ -79,6 +79,7 @@ final class ActionUpdater {
 
   private boolean myAllowPartialExpand = true;
   private boolean myPreCacheSlowDataKeys;
+  private boolean myForceAsync;
   private final Function<AnActionEvent, AnActionEvent> myEventTransform;
   private final Consumer<Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
@@ -110,6 +111,7 @@ final class ActionUpdater {
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
+    myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
     myRealUpdateStrategy = new UpdateStrategy(
       action -> updateActionReal(action, myEventTransform == null ? Op.update : Op.beforeActionPerformedUpdate),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
@@ -172,8 +174,7 @@ final class ActionUpdater {
     };
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    boolean forceAsync = canAsync && Registry.is("actionSystem.update.actions.async.unsafe");
-    if (forceAsync ||
+    if (canAsync && myForceAsync ||
         EDT.isCurrentThreadEdt() ||
         canAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
       return adjustedCall.get();
@@ -356,7 +357,8 @@ final class ActionUpdater {
     if (myAllowPartialExpand) {
       ProgressManager.checkCanceled();
     }
-
+    boolean prevForceAsync = myForceAsync;
+    myForceAsync |= group instanceof UpdateInBackground.Recursive;
     Presentation presentation = update(group, strategy);
     if (presentation == null || !presentation.isVisible()) { // don't process invisible groups
       return Collections.emptyList();
@@ -366,6 +368,7 @@ final class ActionUpdater {
     List<AnAction> result = ContainerUtil.concat(children, child -> TimeoutUtil.compute(
       () -> expandGroupChild(child, hideDisabled, strategy),
       1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
+    myForceAsync = prevForceAsync;
     return group.afterExpandGroup(result, asUpdateSession(strategy));
   }
 

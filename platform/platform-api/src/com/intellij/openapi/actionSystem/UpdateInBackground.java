@@ -21,4 +21,9 @@ public interface UpdateInBackground {
   default boolean isUpdateInBackground() {
     return true;
   }
+
+  @ApiStatus.Experimental
+  interface Recursive extends UpdateInBackground {
+
+  }
 }
