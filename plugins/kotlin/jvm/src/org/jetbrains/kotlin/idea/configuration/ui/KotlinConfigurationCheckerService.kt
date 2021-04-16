@@ -15,7 +15,6 @@ import com.intellij.openapi.startup.StartupActivity
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.configuration.notifyOutdatedBundledCompilerIfNecessary
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyNewJVMBackendIfNeeded
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.project.getAndCacheLanguageLevelByDependencies
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
