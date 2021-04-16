@@ -226,22 +226,6 @@ public final class DfaUtil {
     return Nullability.UNKNOWN;
   }
 
-  public static boolean hasInitializationHacks(@NotNull PsiVariable var) {
-    if (!(var instanceof PsiField)) return false;
-    PsiClass containingClass = ((PsiField)var).getContainingClass();
-    return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
-  }
-
-  public static boolean ignoreInitializer(PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiType.BOOLEAN)) {
-      // Skip boolean constant fields as they usually used as control knobs to modify program logic
-      // it's better to analyze both true and false values even if it's predefined
-      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
-      return initializer != null && initializer.getValue() instanceof Boolean;
-    }
-    return false;
-  }
-
   public static boolean hasImplicitImpureSuperCall(PsiClass aClass, PsiMethod constructor) {
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return false;

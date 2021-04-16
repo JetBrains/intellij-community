@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class DfaExpressionFactory {
 
    private DfaExpressionFactory() {
@@ -237,7 +239,7 @@ public class DfaExpressionFactory {
    */
   @Nullable
   private static DfaValue getConstantFromVariable(DfaValueFactory factory, PsiVariable variable) {
-    if (!variable.hasModifierProperty(PsiModifier.FINAL) || DfaUtil.ignoreInitializer(variable)) return null;
+    if (!variable.hasModifierProperty(PsiModifier.FINAL) || ignoreInitializer(variable)) return null;
     Object value = variable.computeConstantValue();
     PsiType type = variable.getType();
     if (value == null) {
@@ -269,5 +271,19 @@ public class DfaExpressionFactory {
     if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
     @NonNls String name = variable.getName();
     return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
+  }
+
+  /**
+   * @param variable variable to check
+   * @return true if variable initializer should be ignored by analysis
+   */
+  public static boolean ignoreInitializer(PsiVariable variable) {
+    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.FINAL) && variable.getType().equals(PsiType.BOOLEAN)) {
+      // Skip boolean constant fields as they usually used as control knobs to modify program logic
+      // it's better to analyze both true and false values even if it's predefined
+      PsiLiteralExpression initializer = tryCast(PsiUtil.skipParenthesizedExprDown(variable.getInitializer()), PsiLiteralExpression.class);
+      return initializer != null && initializer.getValue() instanceof Boolean;
+    }
+    return false;
   }
 }

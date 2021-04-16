@@ -297,7 +297,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
-    if (DfaUtil.ignoreInitializer(variable)) return;
+    if (DfaExpressionFactory.ignoreInitializer(variable)) return;
     DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, variable);
     addInstruction(new PushInstruction(dfaVariable, null, true));
     initializer.accept(this);

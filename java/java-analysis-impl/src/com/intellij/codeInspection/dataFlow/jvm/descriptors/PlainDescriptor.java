@@ -4,7 +4,10 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -53,7 +56,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   @Override
   public boolean isStable() {
     return PsiUtil.isJvmLocalVariable(myVariable) ||
-           (myVariable.hasModifierProperty(PsiModifier.FINAL) && !DfaUtil.hasInitializationHacks(myVariable));
+           (myVariable.hasModifierProperty(PsiModifier.FINAL) && !hasInitializationHacks(myVariable));
   }
 
   @NotNull
@@ -94,7 +97,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
                                         @NotNull DfaVariableValue value,
                                         @Nullable PsiElement context) {
     PsiField field = ObjectUtils.tryCast(var, PsiField.class);
-    if (field != null && DfaUtil.hasInitializationHacks(field)) {
+    if (field != null && hasInitializationHacks(field)) {
       return DfaNullability.FLUSHED;
     }
 
@@ -201,5 +204,16 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   private static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
     return variableValue.getQualifier() == null ||
            variableValue.getQualifier().getDescriptor() instanceof ThisDescriptor;
+  }
+
+  /**
+   * @param var variable to check
+   * @return true if variable is known to be initialized in a weird way and actual initializer should be taken into account.
+   * Currentyl, reports fields declared inside java.lang.System class (System.out, System.in, System.err)
+   */
+  private static boolean hasInitializationHacks(@NotNull PsiVariable var) {
+    if (!(var instanceof PsiField)) return false;
+    PsiClass containingClass = ((PsiField)var).getContainingClass();
+    return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
   }
 }
