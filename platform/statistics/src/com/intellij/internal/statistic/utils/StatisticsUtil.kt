@@ -1,34 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectCacheFileName
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.util.*
-
-fun addPluginInfoTo(info: PluginInfo, data: MutableMap<String, Any>) {
-  data["plugin_type"] = info.type.name
-  if (!info.type.isSafeToReport()) return
-  val id = info.id
-  if (!id.isNullOrEmpty()) {
-    data["plugin"] = id
-  }
-  val version = info.version
-  if (!version.isNullOrEmpty()) {
-    data["plugin_version"] = version
-  }
-}
-
 
 object StatisticsUtil {
   private const val kilo = 1000
   private const val mega = kilo * kilo
 
   @JvmStatic
-  fun getProjectId(project: Project, recorderId: String): String {
-    return EventLogConfiguration.getOrCreate(recorderId).anonymize(project.getProjectCacheFileName())
+  fun addPluginInfoTo(info: PluginInfo, data: MutableMap<String, Any>) {
+    data["plugin_type"] = info.type.name
+    if (!info.type.isSafeToReport()) return
+    val id = info.id
+    if (!id.isNullOrEmpty()) {
+      data["plugin"] = id
+    }
+    val version = info.version
+    if (!version.isNullOrEmpty()) {
+      data["plugin_version"] = version
+    }
   }
 
   /**

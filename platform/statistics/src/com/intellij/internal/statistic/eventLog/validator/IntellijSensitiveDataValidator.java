@@ -10,17 +10,15 @@ import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValida
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginInfoTo;
 
 /**
  * <p>
@@ -150,7 +148,7 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
                                  validatedData.containsKey("plugin_version");
     PluginInfo pluginInfo = context.getPayload(CustomValidationRule.PLUGIN_INFO);
     if (pluginInfo != null && !containsPluginInfo) {
-      addPluginInfoTo(pluginInfo, validatedData);
+      StatisticsUtil.addPluginInfoTo(pluginInfo, validatedData);
     }
     return validatedData;
   }
