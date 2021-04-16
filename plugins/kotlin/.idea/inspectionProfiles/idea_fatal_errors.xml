@@ -795,7 +795,9 @@
     <inspection_tool class="ControlFlowStatementWithoutBraces" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ControlFlowWithEmptyBody" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Convert2Diamond" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="Convert2Lambda" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="Convert2Lambda" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="reportNotAnnotatedInterfaces" value="false" />
+    </inspection_tool>
     <inspection_tool class="Convert2MethodRef" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Convert2streamapi" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="ConvertAnnotations" enabled="false" level="WARNING" enabled_by_default="false" />
