@@ -125,7 +125,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
 
   private fun doTest(vararg expected: String) {
     val request = LocalTargetEnvironmentRequest()
-    val cmd = parameters.toCommandLine(request, request.configuration)
+    val cmd = parameters.toCommandLine(request)
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
     filesToDelete = cmd.filesToDeleteOnTermination
 

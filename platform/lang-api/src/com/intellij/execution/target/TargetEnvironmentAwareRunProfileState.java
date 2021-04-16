@@ -18,7 +18,6 @@ import org.jetbrains.concurrency.Promises;
 @ApiStatus.Experimental
 public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
-                                       @Nullable TargetEnvironmentConfiguration configuration,
                                        @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException;
 
   /**

@@ -8,9 +8,12 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -54,8 +57,7 @@ import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
 import kotlin.math.abs
 
-class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
-                          private val target: TargetEnvironmentConfiguration?) {
+class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
   init {
     request.onEnvironmentPrepared { environment, progressIndicator -> provideEnvironment(environment, progressIndicator) }
@@ -64,7 +66,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
 
-  private val languageRuntime: JavaLanguageRuntimeConfiguration? = target?.runtimes?.findByType(
+  private val languageRuntime: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
@@ -186,7 +188,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
   @Throws(CantRunException::class)
   fun setupJavaExePath(javaParameters: SimpleJavaParameters) {
-    if (request is LocalTargetEnvironmentRequest || target == null) {
+    if (request is LocalTargetEnvironmentRequest || request.configuration == null) {
       val jdk = javaParameters.jdk ?: throw CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
       val type = jdk.sdkType
       if (type !is JavaSdkType) throw CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"))
@@ -196,7 +198,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", target.displayName))
+        throw CantRunException(LangBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
       }
 
       val java = if (platform == Platform.WINDOWS) "java.exe" else "java"

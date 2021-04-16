@@ -116,11 +116,11 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
 
     languageRuntime.homePath = wslPath ?: "/usr"
     request.configuration.addLanguageRuntime(languageRuntime)
-    val setup = JdkCommandLineSetup(request, request.configuration)
+    val setup = JdkCommandLineSetup(request)
     setup.setupCommandLine(wslParams)
     setup.setupJavaExePath(wslParams)
 
-    val builder = wslParams.toCommandLine(request, wslConfig)
+    val builder = wslParams.toCommandLine(request)
     builder.setWorkingDirectory(workingDirectory)
 
     val wslEnvironment = request.prepareEnvironment(TargetProgressIndicator.EMPTY)

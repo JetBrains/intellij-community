@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
-import com.intellij.execution.target.*
+import com.intellij.execution.target.LanguageRuntimeConfiguration
+import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -30,11 +33,10 @@ class MavenRuntimeTargetConfiguration : LanguageRuntimeConfiguration(MavenRuntim
   companion object {
     fun createUploadRoot(mavenRuntimeConfiguration: MavenRuntimeTargetConfiguration?,
                          targetEnvironmentRequest: TargetEnvironmentRequest,
-                         targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
                          volumeDescriptor: LanguageRuntimeType.VolumeDescriptor,
                          localRootPath: Path): TargetEnvironment.UploadRoot {
       return EP_NAME.computeSafeIfAny {
-        it.createUploadRoot(mavenRuntimeConfiguration, targetEnvironmentRequest, targetEnvironmentConfiguration, volumeDescriptor, localRootPath)
+        it.createUploadRoot(mavenRuntimeConfiguration, targetEnvironmentRequest, volumeDescriptor, localRootPath)
       } ?: mavenRuntimeConfiguration?.createUploadRoot(volumeDescriptor, localRootPath)
              ?: TargetEnvironment.UploadRoot(localRootPath, TargetEnvironment.TargetPath.Temporary())
     }

@@ -147,7 +147,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     }
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {
       ((TargetEnvironmentAwareRunProfileState)runProfileState)
-        .prepareTargetEnvironmentRequest(request, request.getConfiguration(), targetProgressIndicator);
+        .prepareTargetEnvironmentRequest(request, targetProgressIndicator);
     }
     myPrepareRemoteEnvironment = request.prepareEnvironment(targetProgressIndicator);
     if (runProfileState instanceof TargetEnvironmentAwareRunProfileState) {

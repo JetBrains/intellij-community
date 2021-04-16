@@ -112,7 +112,6 @@ public final class ExecutionHandler {
                                                           @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
     final TargetEnvironmentRequest request;
-    final TargetEnvironmentConfiguration configuration;
     final SimpleJavaParameters javaParameters;
     final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
     final Project project = buildFile.getProject();
@@ -132,11 +131,9 @@ public final class ExecutionHandler {
       WslTargetEnvironmentConfiguration wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.getJdk());
       if (wslConfiguration != null) {
         request = new WslTargetEnvironmentRequest(wslConfiguration);
-        configuration = wslConfiguration;
       }
       else {
         request = new LocalTargetEnvironmentRequest();
-        configuration = null;
       }
 
       project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
@@ -171,7 +168,7 @@ public final class ExecutionHandler {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request, configuration);
+          TargetedCommandLineBuilder builder = javaParameters.toCommandLine(request);
           TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
           TargetedCommandLine commandLine = builder.build();
 

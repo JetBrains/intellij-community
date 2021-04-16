@@ -109,21 +109,20 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   @Override
   public void prepareTargetEnvironmentRequest(
     @NotNull TargetEnvironmentRequest request,
-    @Nullable TargetEnvironmentConfiguration configuration,
     @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
     targetProgressIndicator.addSystemLine(ExecutionBundle.message("progress.text.prepare.target.requirements"));
 
     myTargetEnvironmentRequest = request;
 
     TargetDebuggerConnection targetDebuggerConnection =
-      shouldPrepareDebuggerConnection() ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request, configuration) : null;
+      shouldPrepareDebuggerConnection() ? TargetDebuggerConnectionUtil.prepareDebuggerConnection(this, request) : null;
     myTargetDebuggerConnection = targetDebuggerConnection;
 
     Ref<TargetedCommandLineBuilder> commandLineRef = new Ref<>();
     Ref<ExecutionException> exceptionRef = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        commandLineRef.set(createTargetedCommandLine(myTargetEnvironmentRequest, configuration));
+        commandLineRef.set(createTargetedCommandLine(myTargetEnvironmentRequest));
       }
       catch (ExecutionException e) {
         exceptionRef.set(e);
@@ -194,20 +193,19 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   }
 
   @NotNull
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                 @Nullable TargetEnvironmentConfiguration configuration)
+  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
     SimpleJavaParameters javaParameters = getJavaParameters();
     if (!javaParameters.isDynamicClasspath()) {
       javaParameters.setUseDynamicClasspath(getEnvironment().getProject());
     }
-    return javaParameters.toCommandLine(request, configuration);
+    return javaParameters.toCommandLine(request);
   }
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
     boolean redirectErrorStream = Registry.is("run.processes.with.redirectedErrorStream", false);
     LocalTargetEnvironmentRequest request = new LocalTargetEnvironmentRequest();
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, request.getConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request);
     LocalTargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
     return environment
       .createGeneralCommandLine(targetedCommandLineBuilder.build())

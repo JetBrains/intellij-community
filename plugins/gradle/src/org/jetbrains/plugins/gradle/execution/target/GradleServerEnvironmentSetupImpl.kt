@@ -79,7 +79,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       prepareTargetEnvironmentRequest(request, consumerOperationParameters, targetPathMapper, environmentConfiguration, progressIndicator)
 
     progressIndicator.checkCanceled()
-    val targetedCommandLineBuilder = javaParameters.toCommandLine(request, environmentConfiguration)
+    val targetedCommandLineBuilder = javaParameters.toCommandLine(request)
     projectUploadRoot = setupTargetProjectDirectories(consumerOperationParameters, request, targetedCommandLineBuilder)
     val remoteEnvironment = request.prepareEnvironment(progressIndicator)
     targetEnvironment = remoteEnvironment

@@ -544,16 +544,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     }
 
     @Override
-    protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                            @Nullable TargetEnvironmentConfiguration configuration)
+    protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
       throws ExecutionException {
       if (request instanceof LocalTargetEnvironmentRequest) {
-        return super.createTargetedCommandLine(request, configuration);
+        return super.createTargetedCommandLine(request);
       }
-      if (configuration == null) {
+      if (request.getConfiguration() == null) {
         throw new CantRunException(RunnerBundle.message("cannot.find.target.environment.configuration"));
       }
-      return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request, configuration)
+      return new MavenCommandLineSetup(myConfiguration.getProject(), myConfiguration.getName(), request)
         .setupCommandLine(myConfiguration.mySettings)
         .getCommandLine();
     }

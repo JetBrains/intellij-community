@@ -210,9 +210,9 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
    * @see JdkUtil#setupJVMCommandLine(SimpleJavaParameters)
    */
   @NotNull
-  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request, @Nullable TargetEnvironmentConfiguration configuration)
+  public TargetedCommandLineBuilder toCommandLine(@NotNull TargetEnvironmentRequest request)
     throws CantRunException {
-    return JdkUtil.setupJVMCommandLine(this, request, configuration);
+    return JdkUtil.setupJVMCommandLine(this, request);
   }
 
   @NotNull

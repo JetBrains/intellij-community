@@ -39,15 +39,14 @@ import java.util.*
 
 class MavenCommandLineSetup(private val project: Project,
                             private val name: @NlsSafe String,
-                            private val request: TargetEnvironmentRequest,
-                            private val target: TargetEnvironmentConfiguration) {
+                            private val request: TargetEnvironmentRequest) {
 
   val commandLine = TargetedCommandLineBuilder(request)
   val platform = request.targetPlatform.platform
 
-  private val defaultMavenRuntimeConfiguration: MavenRuntimeTargetConfiguration? = target.runtimes.findByType(
+  private val defaultMavenRuntimeConfiguration: MavenRuntimeTargetConfiguration? = request.configuration?.runtimes?.findByType(
     MavenRuntimeTargetConfiguration::class.java)
-  private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = target.runtimes.findByType(
+  private val defaultJavaRuntimeConfiguration: JavaLanguageRuntimeConfiguration? = request.configuration?.runtimes?.findByType(
     JavaLanguageRuntimeConfiguration::class.java)
 
   private val environmentPromise = AsyncPromise<Pair<TargetEnvironment, TargetProgressIndicator>>()
@@ -209,7 +208,7 @@ class MavenCommandLineSetup(private val project: Project,
   }
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
-    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, target, volumeDescriptor, localRootPath)
+    return MavenRuntimeTargetConfiguration.createUploadRoot(defaultMavenRuntimeConfiguration, request, volumeDescriptor, localRootPath)
   }
 
   private fun setupTargetProjectDirectories(settings: MavenRunConfiguration.MavenSettings) {
