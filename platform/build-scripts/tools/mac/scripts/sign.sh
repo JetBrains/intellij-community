@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 APP_DIRECTORY=$1
 JB_CERT=$2
 
@@ -65,7 +65,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
       -v -s "$JB_CERT" --options=runtime \
       --entitlements entitlements.xml {} \;
 
-    (cd jarfolder; zip -q -r -o ../jar.jar .)
+    (cd jarfolder; zip -q -r -o -0 ../jar.jar .)
     mv jar.jar "$file"
   done
 

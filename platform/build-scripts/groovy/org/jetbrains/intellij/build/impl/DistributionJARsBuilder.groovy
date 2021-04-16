@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.lang.invoke.MethodHandle
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -193,14 +194,14 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.extensions", "util.jar")
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
-      addModule("intellij.json")
-      addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics", "stats.jar")
       addModule("intellij.platform.statistics.uploader", "stats.jar")
       addModule("intellij.platform.statistics.config", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
       for (String module in List.of("intellij.relaxng",
+                                    "intellij.json",
+                                    "intellij.spellchecker",
                                     "intellij.xml.analysis.impl",
                                     "intellij.xml.psi.impl",
                                     "intellij.xml.structureView.impl",
@@ -208,21 +209,23 @@ final class DistributionJARsBuilder {
         addModule(module, PLATFORM_JAR)
       }
 
-      addModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
-      addModule("intellij.platform.vcs.codeReview", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.impl", PLATFORM_JAR)
+      addModule("intellij.platform.vcs.dvcs.impl", PLATFORM_JAR)
+      addModule("intellij.platform.vcs.log.graph.impl", PLATFORM_JAR)
+      addModule("intellij.platform.vcs.log.impl", PLATFORM_JAR)
+      addModule("intellij.platform.vcs.codeReview", PLATFORM_JAR)
 
       addModule("intellij.platform.objectSerializer.annotations")
 
       addModule("intellij.platform.bootstrap")
       addModule("intellij.java.guiForms.rt")
-      addModule("intellij.platform.icons")
       addModule("intellij.platform.boot", "bootstrap.jar")
+
+      addModule("intellij.platform.icons", "resources.jar")
       addModule("intellij.platform.resources", "resources.jar")
       addModule("intellij.platform.colorSchemes", "resources.jar")
       addModule("intellij.platform.resources.en", "resources.jar")
+
       addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       addModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
@@ -1066,7 +1069,7 @@ final class DistributionJARsBuilder {
           }
         }
 
-        copyProjectLibraries(outputDir, layout, layoutSpec, buildContext)
+        copyProjectLibraries(outputDir, layout, layoutSpec, buildContext.paths.distAllDir == targetDirectory, buildContext)
 
         for (Map.Entry<String, String> entry in layout.includedArtifacts.entrySet()) {
           String artifactName = entry.key
@@ -1140,11 +1143,22 @@ final class DistributionJARsBuilder {
     }
   }
 
+  @SuppressWarnings('SpellCheckingInspection')
+  private static Set<String> excludedFromMergeLibs = Set.of(
+    "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
+    "dexlib2", // android-only lib
+    "winp", "junixsocket-core", "pty4j" // contains native library
+  )
+
   private static void copyProjectLibraries(Path outputDir,
                                            BaseLayout layout,
                                            LayoutBuilder.LayoutSpec layoutSpec,
+                                           boolean mergeLibs,
                                            BuildContext buildContext) {
     Map<Path, ProjectLibraryData> copiedFiles = new HashMap<>()
+    Map<String, List<Path>> toMerge = mergeLibs ? new HashMap<String, List<Path>>() : Collections.<String, List<Path>>emptyMap()
+    boolean copyFiles = layoutSpec.copyFiles
+
     libProcessing:
     for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
       Path libOutputDir = outputDir
@@ -1162,20 +1176,46 @@ final class DistributionJARsBuilder {
                                          layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)
       List<File> files = library.getFiles(JpsOrderRootType.COMPILED)
       List<Path> nioFiles = new ArrayList<Path>(files.size())
+
+      String libName = library.name
       for (File file : files) {
         Path nioFile = file.toPath()
         nioFiles.add(nioFile)
         ProjectLibraryData alreadyCopiedFor = copiedFiles.putIfAbsent(nioFile, libraryData)
         if (alreadyCopiedFor != null) {
-          throw new IllegalStateException("File $nioFile from ${library.name} is already provided by ${alreadyCopiedFor.libraryName} library")
+          throw new IllegalStateException("File $nioFile from ${libName} is already provided by ${alreadyCopiedFor.libraryName} library")
         }
       }
 
-      boolean copyFiles = layoutSpec.copyFiles
       if (copyFiles) {
+        String lowerCasedLibName = libName.toLowerCase()
+        if (mergeLibs) {
+          String key
+          if (libName.startsWith("netty-")) {
+            key = "netty"
+          }
+          else if (!excludedFromMergeLibs.contains(libName) && !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+                   !lowerCasedLibName.contains("annotations") &&
+                   !lowerCasedLibName.startsWith("junit") &&
+                   !lowerCasedLibName.startsWith("cucumber-") &&
+                   !lowerCasedLibName.contains("groovy")) {
+            key = "3rd-party"
+          }
+          else {
+            key = null
+          }
+
+          if (key != null) {
+            toMerge.computeIfAbsent(key, { new ArrayList<>() }).addAll(nioFiles)
+            String jarName = key + ".jar"
+            layoutSpec.addLibraryMapping(library, jarName, outputDir.resolve(jarName).toString())
+            continue libProcessing
+          }
+        }
+
         Files.createDirectories(libOutputDir)
-        if (!removeVersionFromJarName && files.size() > 1) {
-          String mergedFilename = FileUtil.sanitizeFileName(library.name.toLowerCase(), false)
+        if (!removeVersionFromJarName && nioFiles.size() > 1) {
+          String mergedFilename = FileUtil.sanitizeFileName(lowerCasedLibName, false)
           if (mergedFilename == "gradle") {
             mergedFilename = "gradle-lib"
           }
@@ -1203,6 +1243,16 @@ final class DistributionJARsBuilder {
           layoutSpec.addLibraryMapping(library, file.fileName.toString(), file.toString())
           buildContext.messages.debug(" include $file from library '${LayoutBuilder.LayoutSpec.getLibraryName(library)}'")
         }
+      }
+    }
+
+    if (mergeLibs && copyFiles) {
+      Files.createDirectories(outputDir)
+      MethodHandle mergeJarsMethod = BuildHelper.getInstance(buildContext).mergeJars
+      for (Map.Entry<String, List<Path>> entry : toMerge.entrySet()) {
+        List<Path> list = entry.value
+        list.sort(null)
+        mergeJarsMethod.invokeWithArguments(outputDir.resolve(entry.key + ".jar"), list)
       }
     }
   }
