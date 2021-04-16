@@ -27,7 +27,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.After;
 import org.junit.Before;
@@ -96,11 +98,7 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
 
   @Test
   public void ignoredTestMethod() throws ExecutionException {
-    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
-    assertNotNull(psiClass);
-    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
-    JUnitConfiguration configuration = createConfiguration(testMethod);
-    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    ProcessOutput processOutput = doStartProcess();
     String testOutput = processOutput.out.toString();
     assertEmpty(processOutput.err);
     switch (myJUnitVersion) {
@@ -115,5 +113,21 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
     }
   }
 
+  @Test
+  public void extendsTestCase() throws ExecutionException {
+    if (myJUnitVersion.equals("4.4")) {
+      return; //runner doesn't exist
+    }
+    ProcessOutput output = doStartProcess();
+    assertEmpty(output.err);
+    assertFalse(ContainerUtil.exists(output.messages, m -> m instanceof TestFailed));
+  }
 
+  private ProcessOutput doStartProcess() throws ExecutionException {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    assertNotNull(psiClass);
+    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
+    JUnitConfiguration configuration = createConfiguration(testMethod);
+    return doStartTestsProcess(configuration);
+  }
 }
