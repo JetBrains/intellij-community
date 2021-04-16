@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -145,6 +146,7 @@ public final class PackageAnnotator {
     Map<String, PackageCoverageInfo> packageCoverageMap = new HashMap<>();
     Map<String, PackageCoverageInfo> flattenPackageCoverageMap = new HashMap<>();
     for (final Module module : modules) {
+      ProgressIndicatorProvider.checkCanceled();
       if (!scope.isSearchInModuleContent(module)) continue;
       final String rootPackageVMName = qualifiedName.replaceAll("\\.", "/");
       final VirtualFile[] productionRoots = myCoverageManager.doInReadActionIfProjectOpen(
@@ -309,6 +311,7 @@ public final class PackageAnnotator {
 
       Map<String, ClassCoverageInfo> toplevelClassCoverage = new HashMap<>();
       for (File child : children) {
+        ProgressIndicatorProvider.checkCanceled();
         if (child.isDirectory()) {
           final String childName = child.getName();
           final String childPackageVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;

@@ -4,6 +4,7 @@ package com.intellij.coverage;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -134,9 +135,11 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
         }
       };
       for (PsiPackage aPackage : packages) {
+        ProgressIndicatorProvider.checkCanceled();
         new PackageAnnotator(aPackage).annotate(suite, annotator);
       }
       for (final PsiClass aClass : classes) {
+        ProgressIndicatorProvider.checkCanceled();
         Runnable runnable = () -> {
           final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
           final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
