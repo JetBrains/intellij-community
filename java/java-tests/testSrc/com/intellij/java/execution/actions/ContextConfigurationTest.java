@@ -5,14 +5,20 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -24,6 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.TestActionEvent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -173,6 +180,20 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     assertEquals(CLASS_NAME, configuration.getMainClassName());
     assertEquals(configuration.suggestedName(), configuration.getName());
     assertEquals(SHORT_CLASS_NAME, configuration.getName());
+  }
+
+  public void testApplicationFromConsoleContext() {
+    PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
+    PsiMethod psiMethod = psiClass.findMethodsByName("main", false)[0];
+    ApplicationConfiguration configuration = createConfiguration(psiMethod);
+    RunnerAndConfigurationSettingsImpl settings =
+      new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration);
+    ExecutionEnvironment e = ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(LangDataKeys.EXECUTION_ENVIRONMENT, e);
+    TestActionEvent event = new TestActionEvent(dataContext);
+    new CreateAction().update(event);
+    assertTrue(event.getPresentation().isEnabledAndVisible());
   }
 
   public void testReusingConfiguration() {
