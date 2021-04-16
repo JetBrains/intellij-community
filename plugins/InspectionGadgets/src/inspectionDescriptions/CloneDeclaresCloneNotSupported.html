@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports <code>clone()</code> methods that don't declare <code>CloneNotSupportedException</code>.
-If <code>CloneNotSupportedException</code> is not declared, then subclasses will not be able to prohibit cloning
+<p>Reports the <code>clone()</code> methods that don't declare <code>CloneNotSupportedException</code>.</p>
+<p>If <code>CloneNotSupportedException</code> is not declared, the method's subclasses will not be able to prohibit cloning
 in the standard way. This inspection does not report <code>clone()</code> methods declared <code>final</code>
-and <code>clone()</code> methods on <code>final</code> classes.
+and <code>clone()</code> methods on <code>final</code> classes.</p>
 <!-- tooltip end -->
-<p>
-Use the checkbox below to indicate that this inspection should also warn on <code>public clone()</code> methods.
-<i>Effective Java</i> (second and third edition) recommends to omit the <code>CloneNotSupportedException</code>
+<p>Configure the inspection:</p>
+<p>Disable the <b>Only warn on 'protected' clone methods</b> option to indicate that this inspection should also warn on <code>public clone()</code> methods.
+The <i>Effective Java</i> book (second and third edition) recommends omitting the <code>CloneNotSupportedException</code>
 declaration on <code>public</code> methods, because methods that don't throw checked exceptions are easier to use.
-<p>Example</p>
+<p>Example:</p>
 <pre><code>
   <b>public class</b> Example <b>implements</b> Cloneable {
     // method doesn't declare 'throws CloneNotSupportedException'

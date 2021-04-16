@@ -1,8 +1,9 @@
 <html>
 <body>
-Reports arrays of enum constants which may be replaced with <code>EnumType.values()</code>. If such enum would be updated later,
-it would be necessary to update the array as well, though with <code>EnumType.values()</code> no modifications would be required.
-<p><b>Example:</b></p>
+<p>Reports the arrays of enum constants that can be replaced with <code>EnumType.values()</code>.</p>
+<p>Usually, when updating such an enum, you have to update the array as well. However, if you use <code>EnumType.values()</code>
+ instead, no modifications are required.</p>
+<p>Example:</p>
 <pre><code>
   enum States {
      NOT_RUN, IN_PROGRESS, FINISHED;
@@ -10,7 +11,10 @@ it would be necessary to update the array as well, though with <code>EnumType.va
   
   handleStates(new States[] {NOT_RUN, IN_PROGRESS, FINISHED});
 </code></pre>
-<p>After the quickfix the code would look like this: <code>handleStates(States.values());</code></p>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  handleStates(States.values());
+</code></pre>
 <p><small>New in 2019.1</small></p>
 </body>
 </html>

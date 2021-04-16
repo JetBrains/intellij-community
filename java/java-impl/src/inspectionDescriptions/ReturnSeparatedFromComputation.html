@@ -1,12 +1,13 @@
 <html>
 <body>
-Reports <code>return</code> statements that return a local variable, where the value of the variable is computed
-somewhere else within the same code block with the <code>return</code> statement.
-<p>The quick fix inlines the returned variable by moving the return statement to the location where the value of the variable is computed.
+<p>Reports the <code>return</code> statements that return a local variable in which the value of the variable is computed
+somewhere else within the same code block with the <code>return</code> statement.</p>
+<p>The quick-fix inlines the returned variable by moving the return statement to the location in which the value
+  of the variable is computed.
   When the returned value can't be inlined into the <code>return</code> statement, 
-  the quick fix attempts to move the return statement as close to the computation of the returned value as possible.
-<p>For example, the code below could be simplified:
-<pre>
+  the quick-fix attempts to move the return statement as close to the computation of the returned value as possible.</p>
+<p>Example:</p>
+<pre><code>
   int n = -1;
   for (int i = 0; i &lt; a.length; i++) {
     if (a[i] == b) {
@@ -15,9 +16,9 @@ somewhere else within the same code block with the <code>return</code> statement
     }
   }
   return n;
-</pre>
-<p>After the quick fix it becomes the following:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   int n = -1;
   for (int i = 0; i &lt; a.length; i++) {
     if (a[i] == b) {
@@ -25,6 +26,6 @@ somewhere else within the same code block with the <code>return</code> statement
     }
   }
   return n;
-</pre>
+</code></pre>
 </body>
 </html>
