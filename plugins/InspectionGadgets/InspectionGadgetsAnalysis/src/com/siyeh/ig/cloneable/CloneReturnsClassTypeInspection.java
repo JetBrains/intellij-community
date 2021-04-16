@@ -12,9 +12,13 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * @author Bas Leijdekkers
@@ -128,6 +132,9 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       if (containingClass == null || containingClass.equals(aClass)) {
         return;
       }
+      if (methodAlwaysReturnsNullOrThrowsException(method)) {
+        return;
+      }
       if (!CloneUtils.isCloneable(containingClass)) {
         if (JavaPsiFacade.getElementFactory(method.getProject()).createType(containingClass).isConvertibleFrom(returnType)) {
           return;
@@ -137,6 +144,59 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
       else {
         registerError(typeElement, containingClass.getName(), Boolean.TRUE);
       }
+    }
+
+    private static boolean methodAlwaysReturnsNullOrThrowsException(@NotNull PsiMethod method) {
+      final PsiCodeBlock body = method.getBody();
+      if (body == null) {
+        return false;
+      }
+      final ReturnChecker checker = new ReturnChecker(r -> ExpressionUtils.isNullLiteral(r.getReturnValue()));
+      body.accept(checker);
+      return checker.isReturnFound() ? checker.isOnlyValidReturns() : !ControlFlowUtils.codeBlockMayCompleteNormally(body);
+    }
+  }
+
+  private static class ReturnChecker extends JavaRecursiveElementWalkingVisitor {
+
+    private final Predicate<PsiReturnStatement> myPredicate;
+
+    private boolean myReturnFound = false;
+    private boolean myAllReturnsValid = true;
+
+    ReturnChecker(Predicate<PsiReturnStatement> predicate) {
+      myPredicate = predicate;
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      super.visitThrowStatement(statement);
+      myAllReturnsValid = false;
+      stopWalking();
+    }
+
+    @Override
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      super.visitReturnStatement(statement);
+      myReturnFound = true;
+      myAllReturnsValid &= myPredicate.test(statement);
+      if (!myAllReturnsValid) {
+        stopWalking();
+      }
+    }
+
+    public boolean isOnlyValidReturns() {
+      return myAllReturnsValid;
+    }
+
+    public boolean isReturnFound() {
+      return myReturnFound;
     }
   }
 }
