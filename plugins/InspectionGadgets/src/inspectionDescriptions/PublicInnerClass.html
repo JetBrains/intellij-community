@@ -1,11 +1,20 @@
 <html>
 <body>
-Reports <b>public</b> nested classes.
+Reports <code>public</code> nested classes.
+<p><b>Example:</b></p>
+<pre>
+  public class Outer {
+    public static class Nested {} // warning
+    public class Inner {}         // warning
+    public enum Mode {}           // warning depends on the setting
+    public interface I {}         // warning depends on the setting
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to ignore <b>public</b> inner enums.
+Use the first checkbox below to ignore <code>public</code> inner enums.
 <p>
-Use the seconds checkbox below to ignore <b>public</b> inner interface.
+Use the seconds checkbox below to ignore <code>public</code> inner interface.
 <p>
 
 </body>

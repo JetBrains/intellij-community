@@ -1,10 +1,14 @@
 <html>
 <body>
-Reports any fields on subclasses of
-<b>java.lang.Exception</b> which are not declared as
-<b>final</b>. Data on exception objects should not
-be modified, as it may result in loss of error context for later debugging and
-logging.
+Reports any fields on subclasses of <code>java.lang.Exception</code> which are not declared as
+<code>final</code>. Data on exception objects should not be modified,
+as it may result in loss of error context for later debugging and logging.
+<p><b>Example:</b></p>
+<pre>
+  public class EditorException extends Exception {
+    private String message; // warning: Non-final field 'message' of exception class
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

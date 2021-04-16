@@ -1,7 +1,14 @@
 <html>
 <body>
-Reports <b>protected</b> instance variables.
-Constants (i.e. variables marked <b>static</b> and <b>final</b>) are not reported.
+Reports <code>protected</code> instance variables.
+Constants (i.e. variables marked <code>static</code> and <code>final</code>) are not reported.
+<p><b>Example:</b></p>
+<pre>
+  public class A {
+    protected Object object;              // warning
+    protected final static int MODE = 0;  // constant, no warning
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

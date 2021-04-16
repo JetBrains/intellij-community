@@ -1,7 +1,17 @@
 <html>
 <body>
-Reports <b>catch</b> blocks which have parameters which are more generic than the
-exceptions thrown by the corresponding <b>try</b> block.
+Reports <code>catch</code> blocks which have parameters which are more generic than the
+exceptions thrown by the corresponding <code>try</code> block.
+<p><b>Example:</b></p>
+<pre>
+  try  {
+    File file = new File(pathToFile);
+    return file.getAbsolutePath();
+  }
+  catch (Exception ex) { // warning: 'catch' of 'Exception' is too broad, masking exceptions 'RuntimeException'
+    return defaultFilePath;
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to have this inspection only warn on the most generic exceptions.

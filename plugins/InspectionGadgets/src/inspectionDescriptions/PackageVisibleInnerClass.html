@@ -1,6 +1,15 @@
 <html>
 <body>
-Reports package-private nested classes.
+Reports nested classes declared without access modifier (also known as package-private).
+<p><b>Example:</b></p>
+<pre>
+ public class Outer {
+    static class Nested {}  // warning
+    class Inner {}          // warning
+    enum Mode {}            // warning depends on the setting
+    interface I {}          // warning depends on the setting
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first checkbox below to ignore package-private inner enums.
