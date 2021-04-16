@@ -11,8 +11,8 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.ReferenceRange
 
 internal data class DeclaredReferencedData(
-  val declaredData: TargetData?,
-  val referencedData: TargetData?
+  val declaredData: TargetData.Declared?,
+  val referencedData: TargetData.Referenced?,
 )
 
 internal data class SymbolWithProvider(val symbol: Symbol, val navigationProvider: Any?)
