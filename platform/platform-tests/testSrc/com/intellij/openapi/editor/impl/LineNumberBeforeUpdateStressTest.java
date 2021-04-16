@@ -69,8 +69,7 @@ public class LineNumberBeforeUpdateStressTest extends LightPlatformTestCase {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
       for (int i = 0; i < expectedResults.length; i++) {
-        int line = PersistentRangeMarker.computeLineBeforeUpdateForTest((DocumentEventImpl)event, i);
-        assertEquals("Wrong result for offset " + i, expectedResults[i], line);
+        assertEquals("Wrong result for offset " + i, expectedResults[i], ((DocumentEventImpl)event).getLineNumberBeforeUpdate(i));
       }
     }
   }
