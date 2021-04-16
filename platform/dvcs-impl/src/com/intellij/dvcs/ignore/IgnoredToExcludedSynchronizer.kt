@@ -77,7 +77,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
       val fileIndex = ProjectFileIndex.getInstance(project)
       val sourceRoots = getProjectSourceRoots(project)
 
-      val acquiredFiles = acquireValidFiles()
+      val acquiredFiles = selectValidFiles()
       LOG.debug("updateNotificationState, acquiredFiles", acquiredFiles)
       val filesToRemove = acquiredFiles
         .asSequence()
@@ -95,7 +95,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
 
   fun clearFiles(files: Collection<VirtualFile>) = removeFiles(files)
 
-  fun getValidFiles() = with(ChangeListManager.getInstance(project)) { acquireValidFiles().filter(this::isIgnoredFile) }
+  fun getValidFiles() = with(ChangeListManager.getInstance(project)) { selectValidFiles().filter(this::isIgnoredFile) }
 
   private fun wasAskedBefore() = PropertiesComponent.getInstance(project).getBoolean(ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY, false)
 

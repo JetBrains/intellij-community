@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
@@ -26,7 +26,7 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     addNewFiles(filteredFiles)
 
     if (needDoForCurrentProject()) {
-      doActionOnChosenFiles(queryFiles())
+      doActionOnChosenFiles(acquireValidFiles())
     }
     else {
       handleProcessingForCurrentProject()
@@ -53,14 +53,14 @@ abstract class FilesProcessorImpl(protected val project: Project, parentDisposab
     }
   }
 
-  protected fun acquireValidFiles(): List<VirtualFile> {
+  protected fun selectValidFiles(): List<VirtualFile> {
     synchronized(files) {
       files.removeAll { !it.isValid }
       return files.toList()
     }
   }
 
-  protected fun queryFiles(): List<VirtualFile> {
+  protected fun acquireValidFiles(): List<VirtualFile> {
     synchronized(files) {
       val result = files.filter { it.isValid }
       files.clear()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.CommonBundle
@@ -61,7 +61,7 @@ abstract class FilesProcessorWithNotificationImpl(
   }
 
   private fun showAction() = NotificationAction.createSimple(showActionText) {
-    val allFiles = acquireValidFiles()
+    val allFiles = selectValidFiles()
     if (allFiles.isNotEmpty()) {
       with(SelectFilesDialog.init(project, allFiles, null, null, true, true,
                                   viewFilesDialogOkActionName, viewFilesDialogCancelActionName)) {
@@ -80,14 +80,14 @@ abstract class FilesProcessorWithNotificationImpl(
   }
 
   private fun addForCurrentProjectAction() = NotificationAction.create(forCurrentProjectActionText) { _, _ ->
-    doActionOnChosenFiles(queryFiles())
+    doActionOnChosenFiles(acquireValidFiles())
     setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     expireNotification()
   }
 
   private fun forAllProjectsAction() = NotificationAction.create(forAllProjectsActionText!!) { _, _ ->
-    doActionOnChosenFiles(queryFiles())
+    doActionOnChosenFiles(acquireValidFiles())
     setForCurrentProject(true)
     PropertiesComponent.getInstance(project).setValue(askedBeforeProperty, true)
     rememberForAllProjects()
