@@ -152,8 +152,8 @@ public final class MVStore implements AutoCloseable {
      */
     static final int BLOCK_SIZE = 4 * 1024;
 
-    private static final byte FORMAT_WRITE = 2;
-    private static final byte FORMAT_READ = 2;
+    private static final byte FORMAT_WRITE = 3;
+    private static final byte FORMAT_READ = 3;
 
     // first 4 numbers reserved for internal maps
     private static final int MIN_USER_MAP_ID = 5;

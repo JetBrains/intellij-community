@@ -77,7 +77,7 @@ public final class SVGLoader {
 
       SvgCacheManager cache;
       try {
-        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v2.db")) : null;
+        cache = USE_CACHE ? new SvgCacheManager(Path.of(PathManager.getSystemPath(), "icons-v3.db")) : null;
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error(e);
