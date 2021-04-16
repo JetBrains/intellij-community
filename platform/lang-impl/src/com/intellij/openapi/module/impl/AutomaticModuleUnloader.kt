@@ -5,6 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -61,6 +62,9 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
     val unloadedModules = unloadedStorage.unloadedModuleNames.toSet()
+    //if no modules were unloaded by user, automatic unloading shouldn't start
+    if (unloadedModules.isEmpty()) return
+
     //no new modules were added, nothing to process
     if (currentModules.all { it in oldLoaded || it in unloadedModules }) return
 
@@ -71,6 +75,11 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
 
     val toLoad = currentModules.filter { it in oldLoadedWithDependencies && it !in oldLoaded }
     val toUnload = currentModules.filter { it !in oldLoadedWithDependencies && it !in unloadedModules}
+    if (toUnload.isNotEmpty()) {
+      LOG.info("Old loaded modules: $oldLoaded")
+      LOG.info("Old unloaded modules: $unloadedModules")
+      LOG.info("New modules to unload: $toUnload")
+    }
     fireNotifications(toLoad, toUnload)
     unloadedStorage.unloadedModuleNames = unloadedStorage.unloadedModuleNames + toUnload
   }
@@ -153,6 +162,8 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
   }
 
   companion object {
+    private val LOG = logger<AutomaticModuleUnloader>()
+
     @JvmStatic
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
 
