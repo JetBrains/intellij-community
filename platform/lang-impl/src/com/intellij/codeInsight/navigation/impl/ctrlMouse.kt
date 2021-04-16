@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.referenceRanges
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 
 internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
   return when (this) {
@@ -20,15 +21,30 @@ internal fun TargetData.ctrlMouseInfo(): CtrlMouseInfo? {
       val ranges = highlightRanges()
       val singleTarget = targets.singleOrNull()
       if (singleTarget != null) {
-        // If there is an evaluator reference in the list, then it will be the last one,
-        // otherwise we don't care about the element at offset because it's not used to generate doc for symbol references.
-        val elementAtOffset = references.last().element
-        SingleSymbolCtrlMouseInfo(singleTarget.symbol, elementAtOffset, ranges)
+        SingleSymbolCtrlMouseInfo(singleTarget.symbol, elementAtOffset(), ranges)
       }
       else {
         MultipleTargetElementsInfo(ranges)
       }
     }
+  }
+}
+
+internal fun TargetData.elementAtOffset(): PsiElement {
+  return when (this) {
+    is TargetData.Declared -> declaration.declaringElement
+    is TargetData.Referenced -> {
+      // If there is an evaluator reference in the list, then it will be the last one,
+      // otherwise we don't care about the element at offset because it's not used to generate doc for symbol references.
+      references.last().element
+    }
+  }
+}
+
+internal fun TargetData.highlightRanges(): List<TextRange> {
+  return when (this) {
+    is TargetData.Declared -> listOf(declaration.absoluteRange)
+    is TargetData.Referenced -> highlightRanges()
   }
 }
 
