@@ -2,6 +2,8 @@
 <body>
 Reports JUnit 4 test classes annotated with <code>@RunWith(Parameterized.class)</code> without
 a data provider method annotated with <code>@Parameterized.Parameters</code> or with a data provider method that has an incorrect signature.
+A data provider method should be <code>public</code>, <code>static</code> and have a return type of <code>Iterable</code> or
+<code>Object[]</code>.
 Such <a href="https://github.com/junit-team/junit4/wiki/parameterized-tests">parameterized test</a> classes cannot be run.
 <p>For example:</p>
 <pre><code>
