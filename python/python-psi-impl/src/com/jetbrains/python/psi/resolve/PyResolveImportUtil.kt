@@ -180,6 +180,9 @@ private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
   if (context.withoutRoots) {
     results.add("without-roots")
   }
+  if (context.withMembers) {
+    results.add("with-members")
+  }
   return QualifiedName.fromComponents(results)
 }
 
