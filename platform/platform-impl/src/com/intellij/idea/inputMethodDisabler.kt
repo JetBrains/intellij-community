@@ -16,12 +16,14 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.ReflectionUtil
 import java.awt.Component
 import java.awt.Container
+import java.awt.EventQueue
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.*
 import javax.swing.SwingUtilities
 
-private const val PERSISTENT_SETTING_KEY = "input.method.disabler.muted"
+private const val PERSISTENT_SETTING_MUTED_KEY = "input.method.disabler.muted"
+private const val PERSISTENT_SETTING_AUTO_DISABLE_KEY = "input.method.disabler.auto"
 private const val NOTIFICATION_GROUP = "Input method disabler";
 
 private var IS_NOTIFICATION_REGISTERED = false;
@@ -33,12 +35,19 @@ internal fun disableInputMethodsIfPossible() {
     return
   }
 
-  val muted = PropertiesComponent.getInstance().isTrueValue(PERSISTENT_SETTING_KEY)
+  val properties = PropertiesComponent.getInstance();
+  val muted = properties.isTrueValue(PERSISTENT_SETTING_MUTED_KEY)
   if (muted) {
+    val auto = properties.isTrueValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY)
+    if (auto) {
+      EventQueue.invokeLater {
+        disableInputMethdosImpl()
+      }
+    }
     return
   }
 
-  PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_KEY, true);
+  properties.setValue(PERSISTENT_SETTING_MUTED_KEY, true);
 
   // TODO: improve heuristic to return probability and if
   //  prob == 0: don't notify user, don't disable
@@ -64,6 +73,7 @@ internal fun disableInputMethodsIfPossible() {
 
   val disableIMAction: AnAction = DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")
   ) { e: AnActionEvent? ->
+    PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true);
     disableInputMethdosImpl();
     notification.expire()
   }
