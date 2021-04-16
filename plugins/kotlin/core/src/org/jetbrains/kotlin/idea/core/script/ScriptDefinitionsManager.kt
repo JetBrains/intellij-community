@@ -82,6 +82,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
+    private val sourcesToReload = mutableSetOf<ScriptDefinitionsSource>()
 
     private val failedContributorsHashes = HashSet<Int>()
 
@@ -129,18 +130,22 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reloadDefinitionsBy(source: ScriptDefinitionsSource) {
         lock.writeWithCheckCanceled {
-            if (definitions == null) return // not loaded yet
+            if (definitions == null) {
+                sourcesToReload.add(source)
+                return // not loaded yet
+            }
             if (source !in definitionsBySource) error("Unknown script definition source: $source")
         }
 
         val safeGetDefinitions = source.safeGetDefinitions()
-        lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = lock.writeWithCheckCanceled {
             definitionsBySource[source] = safeGetDefinitions
 
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
 
             updateDefinitions()
-        }()
+        }
+        updateDefinitionsResult?.apply()
     }
 
     override val currentDefinitions:Sequence<ScriptDefinition>
@@ -172,17 +177,26 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = lock.writeWithCheckCanceled {
             definitionsBySource.putAll(newDefinitionsBySource)
             definitions = definitionsBySource.values.flattenTo(mutableListOf())
 
             updateDefinitions()
-        }()
+        }
+        updateDefinitionsResult?.apply()
+
+        lock.writeWithCheckCanceled {
+            sourcesToReload.takeIf { it.isNotEmpty() }?.let {
+                val copy = ArrayList<ScriptDefinitionsSource>(it)
+                it.clear()
+                copy
+            }
+        }?.forEach(::reloadDefinitionsBy)
     }
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        lock.writeWithCheckCanceled {
+        val updateDefinitionsResult = lock.writeWithCheckCanceled {
             definitions?.let { list ->
                 list.forEach {
                     it.order = scriptingSettings.getScriptDefinitionOrder(it)
@@ -190,8 +204,9 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
                 definitions = list.sortedBy(ScriptDefinition::order)
 
                 updateDefinitions()
-            } ?: {}
-        }()
+            }
+        }
+        updateDefinitionsResult?.apply()
     }
 
     private fun kotlinScriptingSettingsSafe() = runReadAction {
@@ -218,9 +233,9 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), standardScriptDefinitionContributor.getDefinitions().last())
     }
 
-    private fun updateDefinitions(): () -> Unit {
+    private fun updateDefinitions(): UpdateDefinitionsResult? {
         assert(lock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
-        if (project.isDisposed) return {}
+        if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()
 
@@ -231,10 +246,15 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         clearCache()
         scriptDefinitionsCacheLock.withCheckCanceledLock { scriptDefinitionsCache.clear() }
 
-        return {
-            if (newExtensions.any()) {
+        return UpdateDefinitionsResult(project, newExtensions)
+    }
+
+    private data class UpdateDefinitionsResult(val project: Project, val newExtensions: Set<String>) {
+        fun apply() {
+            if (newExtensions.isNotEmpty()) {
                 // Register new file extensions
                 ApplicationManager.getApplication().invokeLater {
+                    val fileTypeManager = FileTypeManager.getInstance()
                     runWriteAction {
                         newExtensions.forEach {
                             fileTypeManager.associateExtension(KotlinFileType.INSTANCE, it)
