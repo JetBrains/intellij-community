@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
-#include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -42,9 +41,9 @@ static bool update_roots(array* new_roots);
 static void unregister_roots();
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
 static array* unwatchable_mounts();
-static void inotify_callback(const char* path, int event);
+static void inotify_callback(const char* path, uint32_t event);
 static void report_event(const char* event, const char* path);
-static void output(const char* format, ...);
+static void output(const char* line, bool flush);
 static void check_missing_roots();
 static void check_root_removal(const char*);
 
@@ -78,19 +77,17 @@ int main(int argc, char** argv) {
   if (roots != NULL && init_inotify()) {
     set_inotify_callback(&inotify_callback);
 
-    if (!self_test) {
-      if (!main_loop()) {
-        rv = 3;
-      }
-    }
-    else {
+    if (self_test) {
       run_self_test();
+    }
+    else if (!main_loop()) {
+      rv = 3;
     }
 
     unregister_roots();
   }
   else {
-    output("GIVEUP\n");
+    output("GIVEUP", true);
     rv = 2;
   }
   close_inotify();
@@ -102,7 +99,8 @@ int main(int argc, char** argv) {
 
 
 void message(const char *text) {
-  output("MESSAGE\n%s\n", text);
+  output("MESSAGE", false);
+  output(text, true);
 }
 
 
@@ -172,14 +170,12 @@ static bool main_loop() {
 
 static int read_input() {
   char* line = read_line(stdin);
-
   if (line == NULL || strcmp(line, "EXIT") == 0) {
     return 0;
   }
-
-  if (strcmp(line, "ROOTS") == 0) {
+  else if (strcmp(line, "ROOTS") == 0) {
     array* new_roots = array_create(20);
-    CHECK_NULL(new_roots, ERR_ABORT);
+    CHECK_NULL(new_roots, ERR_ABORT)
 
     while (true) {
       line = read_line(stdin);
@@ -190,17 +186,18 @@ static int read_input() {
         break;
       }
       else {
-        int l = strlen(line);
+        size_t l = strlen(line);
         if (l > 1 && line[l-1] == '/')  line[l-1] = '\0';
-        CHECK_NULL(array_push(new_roots, strdup(line)), ERR_ABORT);
+        CHECK_NULL(array_push(new_roots, strdup(line)), ERR_ABORT)
       }
     }
 
     return update_roots(new_roots) ? ERR_CONTINUE : ERR_ABORT;
   }
-
-  userlog(LOG_WARNING, "unrecognised command: %s", line);
-  return ERR_CONTINUE;
+  else {
+    userlog(LOG_WARNING, "unrecognised command: '%s'", line);
+    return ERR_CONTINUE;
+  }
 }
 
 
@@ -209,14 +206,8 @@ static bool update_roots(array* new_roots) {
 
   unregister_roots();
 
-  if (array_size(new_roots) == 0) {
-    output("UNWATCHEABLE\n#\n");
-    array_delete(new_roots);
-    return true;
-  }
-  else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch the entire tree
-    output("UNWATCHEABLE\n/\n#\n");
-    userlog(LOG_INFO, "unwatchable: /");
+  if (array_size(new_roots) == 0 || (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0)) {
+    output("UNWATCHEABLE\n#", true);
     array_delete_vs_data(new_roots);
     return true;
   }
@@ -231,13 +222,11 @@ static bool update_roots(array* new_roots) {
     return false;
   }
 
-  output("UNWATCHEABLE\n");
-  for (int i=0; i<array_size(unwatchable); i++) {
-    char* s = array_get(unwatchable, i);
-    output("%s\n", s);
-    userlog(LOG_INFO, "unwatchable: %s", s);
+  output("UNWATCHEABLE", false);
+  for (int i = 0; i < array_size(unwatchable); i++) {
+    output(array_get(unwatchable, i), false);
   }
-  output("#\n");
+  output("#", true);
 
   array_delete_vs_data(unwatchable);
   array_delete_vs_data(mounts);
@@ -254,12 +243,12 @@ static void unregister_roots() {
     unwatch(root->id);
     free(root->path);
     free(root);
-  };
+  }
 }
 
 
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
-  for (int i=0; i<array_size(new_roots); i++) {
+  for (int i = 0; i < array_size(new_roots); i++) {
     char* new_root = array_get(new_roots, i);
     char* unflattened = UNFLATTEN(new_root);
     userlog(LOG_INFO, "registering root: %s", new_root);
@@ -270,22 +259,22 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
     }
 
     array* inner_mounts = array_create(5);
-    CHECK_NULL(inner_mounts, false);
+    CHECK_NULL(inner_mounts, false)
 
     bool skip = false;
-    for (int j=0; j<array_size(mounts); j++) {
+    for (int j = 0; j < array_size(mounts); j++) {
       char* mount = array_get(mounts, j);
       if (is_parent_path(mount, unflattened)) {
         userlog(LOG_INFO, "watch root '%s' is under mount point '%s' - skipping", unflattened, mount);
-        CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
+        CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false)
         skip = true;
         break;
       }
       else if (is_parent_path(unflattened, mount)) {
         userlog(LOG_INFO, "watch root '%s' contains mount point '%s' - partial watch", unflattened, mount);
         char* copy = strdup(mount);
-        CHECK_NULL(array_push(unwatchable, copy), false);
-        CHECK_NULL(array_push(inner_mounts, copy), false);
+        CHECK_NULL(array_push(unwatchable, copy), false)
+        CHECK_NULL(array_push(inner_mounts, copy), false)
       }
     }
     if (skip) {
@@ -297,18 +286,18 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 
     if (id >= 0 || id == ERR_MISSING) {
       watch_root* root = malloc(sizeof(watch_root));
-      CHECK_NULL(root, false);
+      CHECK_NULL(root, false)
       root->id = id;
       root->path = strdup(new_root);
-      CHECK_NULL(root->path, false);
-      CHECK_NULL(array_push(roots, root), false);
+      CHECK_NULL(root->path, false)
+      CHECK_NULL(array_push(roots, root), false)
     }
     else if (id == ERR_ABORT) {
       return false;
     }
     else if (id != ERR_IGNORE) {
       userlog(LOG_WARNING, "watch root '%s' cannot be watched: %d", unflattened, id);
-      CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
+      CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false)
     }
   }
 
@@ -320,7 +309,7 @@ static bool is_watchable(const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(fs, "dev", 3) == 0 || strcmp(fs, "proc") == 0 || strcmp(fs, "sysfs") == 0 || strcmp(fs, MNTTYPE_SWAP) == 0 ||
            (strncmp(fs, "fuse", 4) == 0 && strcmp(fs + 4, "blk") != 0 && strcmp(fs + 4, ".osxfs") != 0) ||
-           strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0);
+           strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0|| strcmp(fs, "9p") == 0);
 }
 
 static array* unwatchable_mounts() {
@@ -334,13 +323,13 @@ static array* unwatchable_mounts() {
   }
 
   array* mounts = array_create(20);
-  CHECK_NULL(mounts, NULL);
+  CHECK_NULL(mounts, NULL)
 
   struct mntent* ent;
   while ((ent = getmntent(mtab)) != NULL) {
     userlog(LOG_INFO, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
     if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_type)) {
-      CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL);
+      CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL)
     }
   }
 
@@ -349,7 +338,7 @@ static array* unwatchable_mounts() {
 }
 
 
-static void inotify_callback(const char* path, int event) {
+static void inotify_callback(const char* path, uint32_t event) {
   if (event & (IN_CREATE | IN_MOVED_TO)) {
     report_event("CREATE", path);
     report_event("CHANGE", path);
@@ -367,7 +356,7 @@ static void inotify_callback(const char* path, int event) {
     check_root_removal(path);
   }
   else if (event & IN_UNMOUNT) {
-    output("RESET\n");
+    output("RESET", true);
   }
 }
 
@@ -386,36 +375,27 @@ static void report_event(const char* event, const char* path) {
   }
 #pragma clang diagnostic pop
 
-  fputs(event, stdout);
-  fputc('\n', stdout);
-  fwrite(copy, (p - copy), 1, stdout);
-  fputc('\n', stdout);
+  output(event, false);
+  output(copy, true);
 
   if (copy != path) {
     free(copy);
   }
-
-  fflush(stdout);
 }
 
 
-static void output(const char* format, ...) {
-  if (self_test) {
-    return;
+static void output(const char* line, bool flush) {
+  fputs(line, stdout);
+  fputc('\n', stdout);
+  if (flush) {
+    fflush(stdout);
   }
-
-  va_list ap;
-  va_start(ap, format);
-  vprintf(format, ap);
-  va_end(ap);
-
-  fflush(stdout);
 }
 
 
 static void check_missing_roots() {
   struct stat st;
-  for (int i=0; i<array_size(roots); i++) {
+  for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
     if (root->id < 0) {
       char* unflattened = UNFLATTEN(root->path);
@@ -430,7 +410,7 @@ static void check_missing_roots() {
 }
 
 static void check_root_removal(const char* path) {
-  for (int i=0; i<array_size(roots); i++) {
+  for (int i = 0; i < array_size(roots); i++) {
     watch_root* root = array_get(roots, i);
     if (root->id >= 0 && strcmp(path, UNFLATTEN(root->path)) == 0) {
       unwatch(root->id);
