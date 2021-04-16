@@ -16,6 +16,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,7 +25,6 @@ import java.util.List;
 public class ParameterizedParametersStaticCollectionInspection extends BaseInspection {
 
   protected static final String PARAMETERS_FQN = "org.junit.runners.Parameterized.Parameters";
-  private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
 
   @Override
   protected InspectionGadgetsFix buildFix(final Object... infos) {
@@ -79,20 +79,7 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
     return new BaseInspectionVisitor() {
       @Override
       public void visitClass(PsiClass aClass) {
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, "org.junit.runner.RunWith");
-        if (annotation == null) {
-          return;
-        }
-        final PsiNameValuePair pair = AnnotationUtil.findDeclaredAttribute(annotation, null);
-        if (pair == null) {
-          return;
-        }
-        final PsiAnnotationMemberValue value = pair.getValue();
-        if (!(value instanceof PsiClassObjectAccessExpression)) {
-          return;
-        }
-        final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
-        if (!typeElement.getType().getCanonicalText().equals(PARAMETERIZED_FQN)) {
+        if (!TestUtils.isParameterizedTest(aClass)) {
           return;
         }
         final List<MethodCandidate> candidates = new ArrayList<>();

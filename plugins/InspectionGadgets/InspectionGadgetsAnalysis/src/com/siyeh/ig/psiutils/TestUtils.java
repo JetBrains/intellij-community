@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public final class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
-
+  private static final String PARAMETERIZED_FQN = "org.junit.runners.Parameterized";
   private static final CallMatcher ASSERT_THROWS =
     CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertThrows");
 
@@ -229,5 +229,22 @@ public final class TestUtils {
    */
   public static boolean isExplicitlyJUnit4TestAnnotated(@NotNull PsiMethod method) {
     return AnnotationUtil.isAnnotated(method, JUnitCommonClassNames.ORG_JUNIT_TEST, 0);
+  }
+
+  public static boolean isParameterizedTest(PsiClass aClass) {
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(aClass, RUN_WITH);
+    if (annotation == null) {
+      return false;
+    }
+    final PsiNameValuePair pair = AnnotationUtil.findDeclaredAttribute(annotation, null);
+    if (pair == null) {
+      return false;
+    }
+    final PsiAnnotationMemberValue value = pair.getValue();
+    if (!(value instanceof PsiClassObjectAccessExpression)) {
+      return false;
+    }
+    final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
+    return typeElement.getType().getCanonicalText().equals(PARAMETERIZED_FQN);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,10 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     if (Boolean.TRUE.equals(infos[0])) {
-      return InspectionGadgetsBundle.message(
-        "test.case.with.constructor.problem.descriptor.initializer");
+      return InspectionGadgetsBundle.message("test.case.with.constructor.problem.descriptor.initializer");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "test.case.with.constructor.problem.descriptor");
+      return InspectionGadgetsBundle.message("test.case.with.constructor.problem.descriptor");
     }
   }
 
@@ -52,8 +50,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
     return new TestCaseWithConstructorVisitor();
   }
 
-  private static class TestCaseWithConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class TestCaseWithConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -62,6 +59,9 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
       }
       final PsiClass aClass = method.getContainingClass();
       if (!TestUtils.isJUnitTestClass(aClass) && !TestUtils.isJUnit4TestClass(aClass, false)) {
+        return;
+      }
+      if (TestUtils.isParameterizedTest(aClass)) {
         return;
       }
       if (MethodUtils.isTrivial(method, false)) {
