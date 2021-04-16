@@ -48,7 +48,7 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
     return runBlocking(block = action)
   }
   // we are under indicator => the Job must be canceled when indicator is canceled
-  return runBlocking(CoroutineName("indicator run blocking")) {
+  return runBlocking(progressSinkElement(ProgressIndicatorSink(indicator)) + CoroutineName("indicator run blocking")) {
     val indicatorWatchJob = launch(Dispatchers.Default + CoroutineName("indicator watcher")) {
       while (true) {
         if (indicator.isCanceled) {
@@ -81,13 +81,13 @@ fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
  * @see ProgressManager.runProcess
  */
 fun <T> CoroutineScope.runUnderIndicator(action: () -> T): T {
-  return runUnderIndicator(coroutineContext.job, action)
+  return runUnderIndicator(coroutineContext.job, coroutineContext.progressSink, action)
 }
 
 @Suppress("EXPERIMENTAL_API_USAGE_ERROR")
-internal fun <T> runUnderIndicator(job: Job, action: () -> T): T {
+internal fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
-  val indicator = EmptyProgressIndicator()
+  val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.

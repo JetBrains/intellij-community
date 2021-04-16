@@ -9,7 +9,9 @@ import com.intellij.openapi.util.Computable
  */
 fun <T> runUnderIndicator(progress: Progress, action: () -> T): T {
   if (progress is JobProgress) {
-    return runUnderIndicator(progress.job, action)
+    // no sink because this `runUnderIndicator` overload is used with `Progress` instance,
+    // which is supposed to only handle the cancellation.
+    return runUnderIndicator(progress.job, null, action)
   }
   val indicator = object : EmptyProgressIndicatorBase() {
 

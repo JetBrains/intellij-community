@@ -73,4 +73,64 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
       }
     }
   }
+
+  fun `test indicator text via progress sink`() {
+    suspend fun xx() = progressSink()?.fraction(0.42)
+    val indicator = object : EmptyProgressIndicator() {
+      var myText: String? = null
+      var myText2: String? = null
+      var myFraction: Double? = null
+
+      override fun setText(text: String) {
+        myText = text
+      }
+
+      override fun setText2(text: String) {
+        myText2 = text
+      }
+
+      override fun setFraction(fraction: Double) {
+        myFraction = fraction
+      }
+    }
+    backgroundActivity(indicator) {
+      runSuspendingAction {
+        progressSink?.text("Hello")
+        progressSink?.details("World")
+        xx()
+      }
+    }.get(2000, TimeUnit.MILLISECONDS)
+    assertEquals(indicator.myText, "Hello")
+    assertEquals(indicator.myText2, "World")
+    assertEquals(indicator.myFraction, 0.42)
+  }
+
+  fun `test sink via progress indicator`() = runBlocking {
+    val sink = object : ProgressSink {
+      var text: String? = null
+      var details: String? = null
+      var fraction: Double? = null
+
+      override fun text(text: String) {
+        this.text = text
+      }
+
+      override fun details(details: String) {
+        this.details = details
+      }
+
+      override fun fraction(fraction: Double) {
+        this.fraction = fraction
+      }
+    }
+    withContext(progressSinkElement(sink)) {
+      runUnderIndicator {
+        ProgressManager.progress("Hello", "World")
+        ProgressManager.getInstance().progressIndicator.fraction = 0.42
+      }
+    }
+    assertEquals(sink.text, "Hello")
+    assertEquals(sink.details, "World")
+    assertEquals(sink.fraction, 0.42)
+  }
 }
