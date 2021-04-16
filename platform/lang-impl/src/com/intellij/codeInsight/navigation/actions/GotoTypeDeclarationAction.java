@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -32,8 +33,8 @@ import java.util.Set;
 public final class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
   @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler(){
-    return this;
+  protected CodeInsightActionHandler getHandler() {
+    return Registry.is("ide.symbol.gttd") ? GotoTypeDeclarationHandler2.INSTANCE : this;
   }
 
   @Override
@@ -156,6 +157,9 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
 
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    if (Registry.is("ide.symbol.gttd")) {
+      return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);
+    }
     PsiElement targetElement = findSymbolType(editor, offset);
     if (targetElement == null || !targetElement.isPhysical()) {
       return null;
