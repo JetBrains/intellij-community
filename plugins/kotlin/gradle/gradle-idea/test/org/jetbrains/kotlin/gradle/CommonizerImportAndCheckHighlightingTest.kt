@@ -1,6 +1,7 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.openapi.roots.DependencyScope.COMPILE
+import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -14,7 +15,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.5.20-M1+")
+    @PluginTargetVersions(pluginVersion = "1.5.20-dev+")
     fun testWithPosix() {
         configureByFiles()
         importProject(false)
@@ -92,6 +93,21 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                     libraryDependencyByUrl(Regex(""".*withPosix.*"""), COMPILE)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), COMPILE)
                 }
+            }
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.20-M1+")
+    fun testSingleNativeTarget() {
+        configureByFiles()
+        importProject()
+        val highlightingCheck = createHighlightingCheck()
+
+        checkProjectStructure(false, false, false){
+            module("project.p1.nativeMain") {
+                highlightingCheck(module)
+                libraryDependency(Regex("""Kotlin/Native.*posix.*"""), PROVIDED)
             }
         }
     }
