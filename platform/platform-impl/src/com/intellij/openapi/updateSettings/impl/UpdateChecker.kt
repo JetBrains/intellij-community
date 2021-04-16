@@ -61,6 +61,7 @@ object UpdateChecker {
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MS = 300_000L
   private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  private const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -85,7 +86,7 @@ object UpdateChecker {
     if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false)) {
       val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
       if (machineId != null) {
-        UpdateRequestParameters.addParameter("mid", machineId)
+        UpdateRequestParameters.addParameter(MACHINE_ID_PARAMETER, machineId)
       }
     }
     UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
@@ -222,6 +223,7 @@ object UpdateChecker {
       loadProductData(indicator)?.let { product ->
         if (product.disableMachineId) {
           PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+          UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
         }
         UpdateStrategy(ApplicationInfo.getInstance().build, product, settings).checkForUpdates()
       } ?: CheckForUpdateResult.Empty
