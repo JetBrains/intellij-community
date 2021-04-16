@@ -24,10 +24,10 @@ import java.util.function.Consumer;
 public final class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
-  private final @Nullable Project myProject;
-  private final @NotNull SortedSet<PluginDownloader> myPluginToInstall;
-  private final @NotNull List<PluginNode> myCustomPlugins;
+  private final SortedSet<PluginDownloader> myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
   private final Set<PluginId> mySkippedPlugins = new HashSet<>();
+  private final @Nullable Project myProject;
+  private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
 
   PluginsAdvertiserDialog(@Nullable Project project,
@@ -36,7 +36,6 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
-    myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
     myPluginToInstall.addAll(pluginsToInstall);
     myCustomPlugins = customPlugins;
     myFinishFunction = finishFunction;
@@ -52,16 +51,18 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
-    final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel() {
+    return new DetectedPluginsPanel() {
+
+      {
+        addAll(myPluginToInstall);
+        TableUtil.ensureSelectionExists(getEntryTable());
+      }
+
       @Override
-      protected Set<PluginId> getSkippedPlugins() {
+      protected @NotNull Set<PluginId> getSkippedPlugins() {
         return mySkippedPlugins;
       }
     };
-    foundPluginsPanel.addAll(myPluginToInstall);
-
-    TableUtil.ensureSelectionExists(foundPluginsPanel.getEntryTable());
-    return foundPluginsPanel;
   }
 
   @Override

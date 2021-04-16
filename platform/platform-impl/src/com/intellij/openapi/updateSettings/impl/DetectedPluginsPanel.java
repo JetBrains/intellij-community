@@ -76,7 +76,6 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
         }
       }
     });
-    setCheckboxColumnName("");
     myDescriptionPanel.setPreferredSize(new JBDimension(600, 400));
     myDescriptionPanel.setEditable(false);
     myDescriptionPanel.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -97,31 +96,23 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   }
 
   @Override
-  public String getCheckboxColumnName() {
-    return "";
-  }
-
-  @Override
-  public boolean isCheckable(PluginDownloader downloader) {
-    return true;
-  }
-
-  @Override
-  public boolean isChecked(PluginDownloader downloader) {
+  public boolean isChecked(@NotNull PluginDownloader downloader) {
     return !getSkippedPlugins().contains(downloader.getId());
   }
 
   @Override
-  public void setChecked(PluginDownloader downloader, boolean checked) {
+  public void setChecked(@NotNull PluginDownloader downloader, boolean checked) {
+    Set<PluginId> skippedPlugins = getSkippedPlugins();
+    PluginId pluginId = downloader.getId();
     if (checked) {
-      getSkippedPlugins().remove(downloader.getId());
+      skippedPlugins.remove(pluginId);
     }
     else {
-      getSkippedPlugins().add(downloader.getId());
+      skippedPlugins.add(pluginId);
     }
   }
 
-  protected Set<PluginId> getSkippedPlugins() {
+  protected @NotNull Set<PluginId> getSkippedPlugins() {
     return UpdateChecker.getDisabledToUpdate();
   }
 }
