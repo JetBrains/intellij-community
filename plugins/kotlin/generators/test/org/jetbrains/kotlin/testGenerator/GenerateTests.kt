@@ -104,10 +104,7 @@ import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
 import org.jetbrains.kotlin.idea.perf.synthetic.*
 import org.jetbrains.kotlin.idea.perf.*
-import org.jetbrains.kotlin.idea.quickfix.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
+import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
@@ -839,40 +836,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("multiplatform", isRecursive = false, pattern = DIRECTORY)
         }
 
-<<<<<<< HEAD
         testClass<AbstractQuickFixMultiModuleTest> {
             model("multiModuleQuickFix", pattern = DIRECTORY, depth = 1)
         }
-||||||| parent of d33f254054d (FIR IDE: add quickfix AddWhenElseBranchFix)
-            testClass<AbstractHighLevelQuickFixTest> {
-                val pattern = "^([\\w\\-_]+)\\.kt$"
-                model("quickfix/abstract", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/expressions", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/lateinit", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/modifiers", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
-                model("quickfix/override/typeMismatchOnOverride", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
-                model("quickfix/replaceWithDotCall", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/replaceWithSafeCall", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/variables/changeMutability", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
-            }
-=======
-            testClass<AbstractHighLevelQuickFixTest> {
-                val pattern = "^([\\w\\-_]+)\\.kt$"
-                model("quickfix/abstract", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/expressions", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/lateinit", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/modifiers", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
-                model("quickfix/override/typeMismatchOnOverride", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
-                model("quickfix/replaceWithDotCall", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/replaceWithSafeCall", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/variables/changeMutability", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
-                model("quickfix/when", pattern = pattern, filenameStartsLowerCase = true)
-            }
->>>>>>> d33f254054d (FIR IDE: add quickfix AddWhenElseBranchFix)
 
         testClass<AbstractKotlinGotoImplementationMultiModuleTest> {
             model("navigation/implementations/multiModule", isRecursive = false, pattern = DIRECTORY)
@@ -1193,6 +1159,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/addInitializer", pattern = pattern)
             model("quickfix/addPropertyAccessors", pattern = pattern)
             model("quickfix/when", pattern = pattern, filenameStartsLowerCase = true)
+        }
+
+        testClass<AbstractHighLevelQuickFixMultiFileTest> {
+            model("quickfix/autoImports", pattern = """^(\w+)\.((before\.Main\.\w+))$""", testMethod = "doTestWithExtraFile")
         }
 
         testClass<AbstractHLInspectionTest> {
