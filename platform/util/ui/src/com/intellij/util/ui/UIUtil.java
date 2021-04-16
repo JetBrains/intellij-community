@@ -106,7 +106,16 @@ public final class UIUtil {
     }
 
     JBInsets topWindowInset =  JBUI.insetsTop("small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24);
-    rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
+
+    // Use standard properties starting jdk 17
+    if (Runtime.version().feature() < 17) {
+      rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
+    } else {
+      rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+      rootPane.putClientProperty("apple.awt.fullWindowContent", true);
+      rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
+    }
+
     AbstractBorder customDecorationBorder = new AbstractBorder() {
       @Override
       public Insets getBorderInsets(Component c) {
