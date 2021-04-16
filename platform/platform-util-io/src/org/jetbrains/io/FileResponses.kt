@@ -71,8 +71,7 @@ object FileResponses {
   private fun doPrepareResponse(response: DefaultHttpResponse, filename: String, lastModified: Long, extraHeaders: HttpHeaders?): DefaultHttpResponse {
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename))
     response.addCommonHeaders()
-    @Suppress("SpellCheckingInspection")
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")//NON-NLS
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, HttpHeaderValues.NO_CACHE)
     if (response.status() != HttpResponseStatus.PARTIAL_CONTENT) {
       response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
     }
