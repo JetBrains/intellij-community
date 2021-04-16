@@ -366,7 +366,27 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     else if (c == ',' && handleAnnotationParameter(project, editor, file)) {
       return Result.STOP;
     }
+    else if (c == '.') {
+      if (handleDotTyped(project, editor, file)) {
+        return Result.STOP;
+      }
+    }
     return Result.CONTINUE;
+  }
+
+  private static boolean handleDotTyped(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = editor.getCaretModel().getOffset() - 1;
+    if (offset >= 0) {
+      Document document = editor.getDocument();
+      int line = document.getLineNumber(offset);
+      int lineStart = document.getLineStartOffset(line);
+      if (StringUtil.isEmptyOrSpaces(document.getCharsSequence().subSequence(lineStart, offset))) {
+        PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
