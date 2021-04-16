@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -38,7 +39,7 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
 
     DfType dfType = state.getDfType(value);
     if (value instanceof DfaVariableValue && dfType instanceof DfIntegralType) {
-      LongRangeSet set = LongRangeSet.fromType(type);
+      LongRangeSet set = JvmPsiRangeSetUtil.typeRange(type);
       if (set != null && !LongRangeSet.all().equals(set) && ((DfIntegralType)dfType).meetRange(set).equals(dfType)) {
         return value;
       }

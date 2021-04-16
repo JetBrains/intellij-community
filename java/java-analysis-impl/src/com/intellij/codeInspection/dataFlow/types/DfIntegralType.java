@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -49,8 +50,8 @@ public interface DfIntegralType extends DfPrimitiveType {
     if (!TypeConversionUtil.isIntegralNumberType(type)) {
       return DfPrimitiveType.super.castTo(type);
     }
-    LongRangeSet range = getRange().castTo(type);
-    LongRangeSet wideRange = getWideRange().castTo(type);
+    LongRangeSet range = JvmPsiRangeSetUtil.castTo(getRange(), type);
+    LongRangeSet wideRange = JvmPsiRangeSetUtil.castTo(getWideRange(), type);
     return type.equals(PsiType.LONG) ? DfTypes.longRange(range, wideRange) : DfTypes.intRange(range, wideRange);
   }
 }

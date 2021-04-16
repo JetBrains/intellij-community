@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
@@ -340,11 +340,11 @@ public final class TypeConstraints {
         case JAVA_LANG_FLOAT:
           return DfTypes.FLOAT;
         case JAVA_LANG_BYTE:
-          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.BYTE)));
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.BYTE)));
         case JAVA_LANG_SHORT:
-          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.SHORT)));
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.SHORT)));
         case JAVA_LANG_CHARACTER:
-          return DfTypes.intRange(Objects.requireNonNull(LongRangeSet.fromType(PsiType.CHAR)));
+          return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
         default:
           return DfTypes.BOTTOM;
       }

@@ -3,6 +3,7 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
         PsiBinaryExpression condition =
           tryCast(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)loop).getCondition()), PsiBinaryExpression.class);
         if (condition == null) return false;
-        RelationType relationType = RelationType.fromElementType(condition.getOperationTokenType());
+        RelationType relationType = DfaPsiUtil.getRelationByToken(condition.getOperationTokenType());
         if (relationType == null) return false;
         PsiExpression sizeExpression;
         switch (relationType) {
@@ -179,7 +180,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
         PsiBinaryExpression condition =
           tryCast(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)loopStatement).getCondition()), PsiBinaryExpression.class);
         if (condition == null) return null;
-        RelationType relationType = RelationType.fromElementType(condition.getOperationTokenType());
+        RelationType relationType = DfaPsiUtil.getRelationByToken(condition.getOperationTokenType());
         if (relationType == null) return null;
         PsiExpression left = condition.getLOperand();
         PsiExpression right = condition.getROperand();

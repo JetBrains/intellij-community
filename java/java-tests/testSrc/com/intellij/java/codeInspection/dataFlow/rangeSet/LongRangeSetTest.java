@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInspection.dataFlow.rangeSet;
 
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
@@ -37,7 +38,7 @@ import static org.junit.Assert.*;
 public class LongRangeSetTest {
   @NotNull
   private static LongRangeSet fromTypeStrict(PsiType type) {
-    LongRangeSet range = fromType(type);
+    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
     assertNotNull(range);
     return range;
   }
@@ -60,13 +61,13 @@ public class LongRangeSetTest {
 
   @Test
   public void testFromType() {
-    assertNull(fromType(PsiType.FLOAT));
-    assertNull(fromType(PsiType.NULL));
+    assertNull(JvmPsiRangeSetUtil.typeRange(PsiType.FLOAT));
+    assertNull(JvmPsiRangeSetUtil.typeRange(PsiType.NULL));
     assertEquals("{-128..127}", fromTypeStrict(PsiType.BYTE).toString());
     assertEquals("{0..65535}", fromTypeStrict(PsiType.CHAR).toString());
     assertEquals("{-32768..32767}", fromTypeStrict(PsiType.SHORT).toString());
     assertEquals("{Integer.MIN_VALUE..Integer.MAX_VALUE}", fromTypeStrict(PsiType.INT).toString());
-    assertEquals("{0..Integer.MAX_VALUE}", indexRange().toString());
+    assertEquals("{0..Integer.MAX_VALUE}", JvmPsiRangeSetUtil.indexRange().toString());
     assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE}", fromTypeStrict(PsiType.LONG).toString());
   }
 
@@ -102,7 +103,7 @@ public class LongRangeSetTest {
     assertEquals("{Long.MIN_VALUE}", all().subtract(range(Long.MIN_VALUE + 1, Long.MAX_VALUE)).toString());
     assertEquals("{Long.MAX_VALUE}", all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE - 1)).toString());
     assertTrue(all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE)).isEmpty());
-    assertEquals(indexRange(), fromTypeStrict(PsiType.INT).subtract(range(Long.MIN_VALUE, -1)));
+    assertEquals(JvmPsiRangeSetUtil.indexRange(), fromTypeStrict(PsiType.INT).subtract(range(Long.MIN_VALUE, -1)));
     assertTrue(all().subtract(all()).isEmpty());
   }
 
@@ -199,7 +200,7 @@ public class LongRangeSetTest {
     assertEquals("{-1000..-501, -99..99, 501..1000}", rangeSet.toString());
     assertEquals(point(99), rangeSet.intersect(point(99)));
     assertTrue(rangeSet.intersect(point(100)).isEmpty());
-    assertEquals("{0..99, 501..1000}", rangeSet.intersect(indexRange()).toString());
+    assertEquals("{0..99, 501..1000}", rangeSet.intersect(JvmPsiRangeSetUtil.indexRange()).toString());
   }
 
   @Test
@@ -278,7 +279,7 @@ public class LongRangeSetTest {
       assertEquals(start, union, intervals.get(0));
     }
   }
-  
+
   @Test
   public void testSubtract() {
     assertEquals("{Long.MIN_VALUE..-1, 1..9, 11..Long.MAX_VALUE}", all().subtract(modRange(0, 10, 2, 1)).toString());
@@ -410,14 +411,14 @@ public class LongRangeSetTest {
   public void testCastTo() {
     PsiPrimitiveType[] types = {PsiType.BYTE, PsiType.SHORT, PsiType.CHAR, PsiType.INT, PsiType.LONG};
     for (PsiPrimitiveType type : types) {
-      assertTrue(empty().castTo(type).isEmpty());
-      assertEquals(point(0), point(0).castTo(type));
+      assertTrue(JvmPsiRangeSetUtil.castTo(empty(), type).isEmpty());
+      assertEquals(point(0), JvmPsiRangeSetUtil.castTo(point(0), type));
     }
-    assertEquals(point(0x1234_5678_9ABC_DEF0L), point(0x1234_5678_9ABC_DEF0L).castTo(PsiType.LONG));
-    assertEquals(point(0x9ABC_DEF0), point(0x1234_5678_9ABC_DEF0L).castTo(PsiType.INT));
-    assertEquals(point(0xDEF0), point(0x1234_5678_9ABC_DEF0L).castTo(PsiType.CHAR));
-    assertEquals(point(-8464), point(0x1234_5678_9ABC_DEF0L).castTo(PsiType.SHORT));
-    assertEquals(point(-16), point(0x1234_5678_9ABC_DEF0L).castTo(PsiType.BYTE));
+    assertEquals(point(0x1234_5678_9ABC_DEF0L), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.LONG));
+    assertEquals(point(0x9ABC_DEF0), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.INT));
+    assertEquals(point(0xDEF0), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.CHAR));
+    assertEquals(point(-8464), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.SHORT));
+    assertEquals(point(-16), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.BYTE));
     LongRangeSet longSet = fromTypeStrict(PsiType.LONG);
     assertNotNull(longSet);
     LongRangeSet byteSet = fromTypeStrict(PsiType.BYTE);
@@ -425,16 +426,17 @@ public class LongRangeSetTest {
     for (PsiPrimitiveType type : types) {
       LongRangeSet set = fromTypeStrict(type);
       assertNotNull(set);
-      assertEquals(set, set.castTo(type));
-      assertEquals(set, longSet.castTo(type));
-      assertEquals(type.equals(PsiType.CHAR) ? range(0, 127).unite(range(0xFF80, 0xFFFF)) : byteSet, byteSet.castTo(type));
+      assertEquals(set, JvmPsiRangeSetUtil.castTo(set, type));
+      assertEquals(set, JvmPsiRangeSetUtil.castTo(longSet, type));
+      assertEquals(type.equals(PsiType.CHAR) ? range(0, 127).unite(range(0xFF80, 0xFFFF)) : byteSet, JvmPsiRangeSetUtil
+        .castTo(byteSet, type));
     }
     checkCast(range(-10, 1000), "{-128..127}", PsiType.BYTE);
     checkCast(range(-10, 200), "{-128..-56, -10..127}", PsiType.BYTE);
     checkCast(range(-1, 255), "{0..255, 65535}", PsiType.CHAR);
     checkCast(range(0, 100000), "{-32768..32767}", PsiType.SHORT);
     checkCast(range(0, 50000), "{-32768..-15536, 0..32767}", PsiType.SHORT);
-    assertEquals(fromTypeStrict(PsiType.INT), range(Long.MIN_VALUE, Integer.MAX_VALUE-1).castTo(PsiType.INT));
+    assertEquals(fromTypeStrict(PsiType.INT), JvmPsiRangeSetUtil.castTo(range(Long.MIN_VALUE, Integer.MAX_VALUE - 1), PsiType.INT));
   }
 
   @Test
@@ -463,7 +465,7 @@ public class LongRangeSetTest {
     checkBitwiseAnd(range(0, 100).mul(point(6), true), point(~4), "{0..1018}: <0, 2> mod 8");
     checkBitwiseAnd(range(0, 50).mul(point(6), true), range(0, 50).mul(point(20), true).plus(point(1), true), "{0..508}: divisible by 4");
   }
-  
+
   @Test
   public void testBitwiseOr() {
     assertTrue(empty().bitwiseOr(all(), true).isEmpty());
@@ -486,7 +488,7 @@ public class LongRangeSetTest {
     checkBitwiseOr(range(-50, 50).bitwiseAnd(point(~0xF)), range(-50, 50).bitwiseAnd(point(~0xF1)), true, "{Long.MIN_VALUE..Long.MAX_VALUE}");
     checkBitwiseOr(all().bitwiseAnd(point(4)), all().bitwiseAnd(point(8)), true, "{0..12}: divisible by 4");
   }
-  
+
   @Test
   public void testBitwiseXor() {
     assertTrue(empty().bitwiseXor(all(), true).isEmpty());
@@ -633,7 +635,7 @@ public class LongRangeSetTest {
     checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), false, "{Integer.MIN_VALUE..-2147483639, 2147483637..Integer.MAX_VALUE}");
 
     checkAdd(range(10, 20).unite(range(40, 50)), range(0, 3).unite(range(5, 7)), true, "{10..27, 40..57}");
-    
+
     checkAdd(range(-1, 10).mul(point(2), false), point(3), false, "{1..23}: odd");
     checkAdd(range(-1, 10).mul(point(2), false), point(-10), false, "{-12..10}: even");
     checkAdd(range(-1, 10).mul(point(3), false), point(-1), false, "{-4..29}: <2> mod 3");
@@ -653,7 +655,7 @@ public class LongRangeSetTest {
 
     assertEquals("{-9223372036854775745..Long.MAX_VALUE}: <63> mod 64", all().mul(point(64), true).minus(point(1), true).toString());
   }
-  
+
   @Test
   public void testMul() {
     checkMul(empty(), empty(), true, "{}");
@@ -782,7 +784,7 @@ public class LongRangeSetTest {
     assertEquals("{3..24}: <3, 4, 12, 13, 15, 22, 24, 25> mod 30", set.intersect(modRange(0, 24, 3, 0b11)).toString());
     assertEquals("{3..15}: <0, 3, 4, 12, 13> mod 15", set.intersect(modRange(0, 16, 3, 0b11)).toString());
     assertEquals("{1..99}: odd", range(0, 100).without(10).intersect(modRange(-200, 200, 2, 0b10)).toString());
-    
+
     LongRangeSet even = modRange(0, 15, 2, 0b1);
     even = even.intersect(point(10).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 2, 4, 6, 8, 12, 14> mod 16", even.toString());
@@ -795,7 +797,7 @@ public class LongRangeSetTest {
     even = even.intersect(point(6).fromRelation(RelationType.NE));
     assertEquals("{0..14}: <0, 8, 12, 14> mod 16", even.toString());
   }
-  
+
   @Test
   public void testModRangeUnite() {
     assertEquals("{0..20}: divisible by 5", modRange(0, 10, 5, 0b1).unite(modRange(15, 20, 5, 0b1)).toString());
@@ -810,7 +812,7 @@ public class LongRangeSetTest {
     assertEquals("{-4, 0..100}", modRange(0, 100, 2, 0b1).unite(point(-4)).toString());
     assertEquals("{Long.MIN_VALUE..9223372036854775744}", range(1, 63).unite(modRange(Long.MIN_VALUE, Long.MAX_VALUE, 64, 0b1)).toString());
   }
-  
+
   @Test
   public void testFromRemainder() {
     assertEquals("{-9223372036854775805..9223372036854775805}: divisible by 5", fromRemainder(5, point(0)).toString());
@@ -819,26 +821,29 @@ public class LongRangeSetTest {
     assertEquals("{Long.MIN_VALUE..-3}: <2> mod 5", fromRemainder(5, point(-3)).toString());
     assertEquals("{Long.MIN_VALUE..Long.MAX_VALUE}: <1, 2, 3, 4> mod 5", fromRemainder(5, range(1, 4).unite(range(-4, -1))).toString());
   }
-  
+
   @Test
   public void testGetPresentationText() {
-    assertEquals("0", point(0).getPresentationText(PsiType.INT));
-    assertEquals("unknown", empty().getPresentationText(PsiType.INT));
-    assertEquals("Integer.MAX_VALUE", point(Integer.MAX_VALUE).getPresentationText(PsiType.INT));
-    assertEquals("any value", range(Integer.MIN_VALUE, Integer.MAX_VALUE).getPresentationText(PsiType.INT));
-    assertEquals("in {Integer.MIN_VALUE..Integer.MAX_VALUE}", range(Integer.MIN_VALUE, Integer.MAX_VALUE).getPresentationText(PsiType.LONG));
-    assertEquals("<= 0", range(Integer.MIN_VALUE, 0).getPresentationText(PsiType.INT));
-    assertEquals("<= Integer.MAX_VALUE-1", range(Integer.MIN_VALUE, Integer.MAX_VALUE-1).getPresentationText(PsiType.INT));
-    assertEquals(">= 0", range(0, Integer.MAX_VALUE).getPresentationText(PsiType.INT));
-    assertEquals("in {0..Integer.MAX_VALUE-1}", range(0, Integer.MAX_VALUE-1).getPresentationText(PsiType.INT));
-    assertEquals("even", modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 1).getPresentationText(PsiType.INT));
-    assertEquals("divisible by 4", modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 4, 1).getPresentationText(PsiType.INT));
-    assertEquals("odd", modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 2).getPresentationText(PsiType.INT));
-    assertEquals("<= -1; odd", modRange(Integer.MIN_VALUE, 0, 2, 2).getPresentationText(PsiType.INT));
-    assertEquals(">= 1; odd", modRange(0, Integer.MAX_VALUE, 2, 2).getPresentationText(PsiType.INT));
-    assertEquals("in {Integer.MIN_VALUE+1..Integer.MAX_VALUE}; odd", modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 2).getPresentationText(PsiType.LONG));
-    assertEquals("!= 1", fromTypeStrict(PsiType.INT).without(1).getPresentationText(PsiType.INT));
-    assertEquals("in {Integer.MIN_VALUE..0, 2..Integer.MAX_VALUE}", fromTypeStrict(PsiType.INT).without(1).getPresentationText(PsiType.LONG));
+    assertEquals("0", JvmPsiRangeSetUtil.getPresentationText(point(0), PsiType.INT));
+    assertEquals("unknown", JvmPsiRangeSetUtil.getPresentationText(empty(), PsiType.INT));
+    assertEquals("Integer.MAX_VALUE", JvmPsiRangeSetUtil.getPresentationText(point(Integer.MAX_VALUE), PsiType.INT));
+    assertEquals("any value", JvmPsiRangeSetUtil.getPresentationText(range(Integer.MIN_VALUE, Integer.MAX_VALUE), PsiType.INT));
+    assertEquals("in {Integer.MIN_VALUE..Integer.MAX_VALUE}", JvmPsiRangeSetUtil
+      .getPresentationText(range(Integer.MIN_VALUE, Integer.MAX_VALUE), PsiType.LONG));
+    assertEquals("<= 0", JvmPsiRangeSetUtil.getPresentationText(range(Integer.MIN_VALUE, 0), PsiType.INT));
+    assertEquals("<= Integer.MAX_VALUE-1", JvmPsiRangeSetUtil.getPresentationText(range(Integer.MIN_VALUE, Integer.MAX_VALUE - 1), PsiType.INT));
+    assertEquals(">= 0", JvmPsiRangeSetUtil.getPresentationText(range(0, Integer.MAX_VALUE), PsiType.INT));
+    assertEquals("in {0..Integer.MAX_VALUE-1}", JvmPsiRangeSetUtil.getPresentationText(range(0, Integer.MAX_VALUE - 1), PsiType.INT));
+    assertEquals("even", JvmPsiRangeSetUtil.getPresentationText(modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 1), PsiType.INT));
+    assertEquals("divisible by 4", JvmPsiRangeSetUtil.getPresentationText(modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 4, 1), PsiType.INT));
+    assertEquals("odd", JvmPsiRangeSetUtil.getPresentationText(modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 2), PsiType.INT));
+    assertEquals("<= -1; odd", JvmPsiRangeSetUtil.getPresentationText(modRange(Integer.MIN_VALUE, 0, 2, 2), PsiType.INT));
+    assertEquals(">= 1; odd", JvmPsiRangeSetUtil.getPresentationText(modRange(0, Integer.MAX_VALUE, 2, 2), PsiType.INT));
+    assertEquals("in {Integer.MIN_VALUE+1..Integer.MAX_VALUE}; odd", JvmPsiRangeSetUtil
+      .getPresentationText(modRange(Integer.MIN_VALUE, Integer.MAX_VALUE, 2, 2), PsiType.LONG));
+    assertEquals("!= 1", JvmPsiRangeSetUtil.getPresentationText(fromTypeStrict(PsiType.INT).without(1), PsiType.INT));
+    assertEquals("in {Integer.MIN_VALUE..0, 2..Integer.MAX_VALUE}", JvmPsiRangeSetUtil
+      .getPresentationText(fromTypeStrict(PsiType.INT).without(1), PsiType.LONG));
   }
 
   @Test
@@ -948,7 +953,7 @@ public class LongRangeSetTest {
   }
 
   void checkCast(LongRangeSet operand, String expected, PsiPrimitiveType castType) {
-    LongRangeSet result = operand.castTo(castType);
+    LongRangeSet result = JvmPsiRangeSetUtil.castTo(operand, castType);
     assertEquals(expected, result.toString());
     checkUnOp(operand, result,
               castType.equals(PsiType.CHAR) ? x -> (char)x : x -> ((Number)TypeConversionUtil.computeCastTo(x, castType)).longValue(),

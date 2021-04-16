@@ -2,14 +2,12 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -71,11 +69,6 @@ public final class DfaBinOpValue extends DfaValue {
     return factory.getBinOpFactory().doCreate(myLeft.bindToFactory(factory), myRight.bindToFactory(factory), myLong, myOp);
   }
 
-  @Override
-  public @NotNull PsiType getType() {
-    return myLong ? PsiType.LONG : PsiType.INT;
-  }
-
   @NotNull
   @Override
   public DfIntegralType getDfType() {
@@ -107,11 +100,11 @@ public final class DfaBinOpValue extends DfaValue {
   public DfaValue tryReduceOnCast(DfaMemoryState state, PsiPrimitiveType type) {
     if (!TypeConversionUtil.isIntegralNumberType(type)) return this;
     if ((myOp == LongRangeBinOp.PLUS || myOp == LongRangeBinOp.MINUS) &&
-        DfLongType.extractRange(state.getDfType(myRight)).castTo(type).equals(LongRangeSet.point(0))) {
+        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(myRight)), type).equals(LongRangeSet.point(0))) {
       return myLeft;
     }
     if (myOp == LongRangeBinOp.PLUS &&
-        DfLongType.extractRange(state.getDfType(myLeft)).castTo(type).equals(LongRangeSet.point(0))) {
+        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(myLeft)), type).equals(LongRangeSet.point(0))) {
       return myRight;
     }
     return this;
@@ -129,8 +122,7 @@ public final class DfaBinOpValue extends DfaValue {
       myFactory = factory;
     }
 
-    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, IElementType tokenType) {
-      LongRangeBinOp op = LongRangeBinOp.fromToken(tokenType);
+    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, LongRangeBinOp op) {
       if (op == null) return myFactory.getUnknown();
       DfaValue value = doCreate(left, right, state, isLong, op);
       if (value != null) {
@@ -216,7 +208,7 @@ public final class DfaBinOpValue extends DfaValue {
             }
             long res = value1 + value2;
             right = myFactory.fromDfType(isLong ? DfTypes.longValue(res) : DfTypes.intValue((int)res));
-            return create(sumValue.getLeft(), right, state, isLong, JavaTokenType.PLUS);
+            return create(sumValue.getLeft(), right, state, isLong, LongRangeBinOp.PLUS);
           }
         }
         if (op == LongRangeBinOp.MINUS && sumValue.getOperation() == LongRangeBinOp.PLUS) {

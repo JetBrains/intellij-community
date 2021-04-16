@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -307,7 +308,7 @@ public class StreamChainInliner implements CallInliner {
                    ? LongRangeSet.point(call.getArgumentList().getExpressionCount())
                    : LongRangeSet.range(1, call.getArgumentList().getExpressionCount());
           } else {
-            return LongRangeSet.indexRange();
+            return JvmPsiRangeSetUtil.indexRange();
           }
         }
         else if (!BOXED.matches(call) && !MAP.matches(call) && !PEEK.matches(call) && !SORTED.matches(call) &&

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
@@ -139,11 +140,11 @@ final class DfaBasedFilter {
       return "";
     }
     if (type instanceof DfIntegralType) {
-      LongRangeSet psiRange = LongRangeSet.fromType(psiType);
+      LongRangeSet psiRange = JvmPsiRangeSetUtil.typeRange(psiType);
       LongRangeSet dfRange = ((DfIntegralType)type).getRange();
       if (psiRange != null && dfRange.contains(psiRange)) return "";
       // chop 'int' or 'long' prefix
-      return dfRange.getPresentationText(psiType);
+      return JvmPsiRangeSetUtil.getPresentationText(dfRange, psiType);
     }
     if (type instanceof DfConstantType) {
       return type.toString();

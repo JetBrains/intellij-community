@@ -1,24 +1,18 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -26,25 +20,13 @@ import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeUtil.*;
 
 /**
  * An immutable set of long values optimized for small number of ranges.
+ * Currently, all math are performed according to JVM operations on int or long numbers.
+ * In particular, overflows are processed in JVM-specific way,
+ * so it might be not well-suitable for non-JVM languages.
  *
  * @author Tagir Valeev
  */
 public abstract class LongRangeSet {
-  private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
-  private static final String CHECKER_RANGE = "org.checkerframework.common.value.qual.IntRange";
-  private static final String CHECKER_GTE_NEGATIVE_ONE = "org.checkerframework.checker.index.qual.GTENegativeOne";
-  private static final String CHECKER_NON_NEGATIVE = "org.checkerframework.checker.index.qual.NonNegative";
-  private static final String CHECKER_POSITIVE = "org.checkerframework.checker.index.qual.Positive";
-  private static final String JSR305_NONNEGATIVE = "javax.annotation.Nonnegative";
-  private static final String VALIDATION_MIN = "javax.validation.constraints.Min";
-  private static final String VALIDATION_MAX = "javax.validation.constraints.Max";
-  private static final List<String> ANNOTATIONS = Arrays.asList(CHECKER_RANGE,
-                                                                CHECKER_GTE_NEGATIVE_ONE,
-                                                                CHECKER_NON_NEGATIVE,
-                                                                CHECKER_POSITIVE,
-                                                                JSR305_NONNEGATIVE,
-                                                                VALIDATION_MIN,
-                                                                VALIDATION_MAX);
 
   LongRangeSet() {}
 
@@ -166,9 +148,16 @@ public abstract class LongRangeSet {
     }
   }
 
-  public abstract @Nls String getPresentationText(PsiType type);
+  /**
+   * Formats this range in human-readable string
+   *
+   * @param fullTypeRange range of the declared value type; could be used to produce more human-friendly result
+   * @return human-readable localized text that represents a given range
+   */
+  public abstract @NotNull @Nls String getPresentationText(@NotNull LongRangeSet fullTypeRange);
 
-  @NotNull LongRangeSet mulWiden(LongRangeSet other, boolean isLong) {
+  @NotNull
+  public LongRangeSet mulWiden(LongRangeSet other, boolean isLong) {
     if (Point.ZERO.equals(this)) return this;
     if (Point.ZERO.equals(other)) return other;
     if (Point.ONE.equals(this)) return other;
@@ -179,7 +168,8 @@ public abstract class LongRangeSet {
     return isLong ? Range.LONG_RANGE : Range.INT_RANGE;
   }
 
-  @NotNull LongRangeSet plusWiden(LongRangeSet other, boolean isLong) {
+  @NotNull
+  public LongRangeSet plusWiden(LongRangeSet other, boolean isLong) {
     if (this instanceof Point && other instanceof Point) {
       long val1 = ((Point)this).myValue;
       long val2 = ((Point)other).myValue;
@@ -225,8 +215,6 @@ public abstract class LongRangeSet {
   }
 
   public abstract boolean isCardinalityBigger(long cutoff);
-
-  public abstract LongRangeSet castTo(PsiPrimitiveType type);
 
   /**
    * Returns a range which represents all the possible values after applying {@link Math#abs(int)} or {@link Math#abs(long)}
@@ -312,8 +300,8 @@ public abstract class LongRangeSet {
   @NotNull
   public LongRangeSet bitwiseAnd(LongRangeSet other) {
     if (this.isEmpty() || other.isEmpty()) return empty();
-    long[] left = splitAtZero(asRanges());
-    long[] right = splitAtZero(other.asRanges());
+    long[] left = splitAtZero(asRangeArray());
+    long[] right = splitAtZero(other.asRangeArray());
     // More than three intervals --> convert to single interval to make result more compact (though probably less precise)
     if (left.length > 6) {
       left = splitAtZero(new long[]{left[0], left[left.length - 1]});
@@ -367,8 +355,8 @@ public abstract class LongRangeSet {
     if (!isLong) {
       divisor = divisor.intersect(Range.INT_RANGE);
       dividend = dividend.intersect(Range.INT_RANGE);
-    } 
-    long[] left = splitAtZero(dividend.asRanges());
+    }
+    long[] left = splitAtZero(dividend.asRangeArray());
     long[] right = splitAtZero(new long[]{divisor.min(), divisor.max()});
     LongRangeSet result = empty();
     for (int i = 0; i < left.length; i += 2) {
@@ -698,7 +686,7 @@ public abstract class LongRangeSet {
   }
 
   /**
-   * Creates a new set which contains all the numbers between from (inclusive) and to (inclusive) 
+   * Creates a new set which contains all the numbers between from (inclusive) and to (inclusive)
    * which are equal to any of the set bits in supplied bit-mask modulo supplied mod
    * @param from lower bound
    * @param to upper bound (must be greater or equal to {@code from})
@@ -721,7 +709,7 @@ public abstract class LongRangeSet {
 
     if (from > to) return empty();
     if (from == to) return new Point(from);
-    // Try to reduce mod if the range is too small 
+    // Try to reduce mod if the range is too small
     long length = to - from;
     if (length > 0 && length <= intMod / 2) {
       for (int newMod = (int)length; newMod <= intMod / 2; newMod++) {
@@ -756,7 +744,12 @@ public abstract class LongRangeSet {
     return range.contains(fullRange) ? fullRange : range;
   }
 
-  abstract long[] asRanges();
+  /**
+   * @return list of continuous ranges that contain all the elements from this LongRangeSet.
+   */
+  public abstract @NotNull List<LongRangeSet> asRanges();
+
+  abstract long[] asRangeArray();
 
   static String toString(long from, long to) {
     return formatNumber(from) + (from == to ? "" : (to - from == 1 ? ", " : "..") + formatNumber(to));
@@ -768,85 +761,6 @@ public abstract class LongRangeSet {
 
   static long maxValue(boolean isLong) {
     return isLong ? Long.MAX_VALUE : Integer.MAX_VALUE;
-  }
-
-  /**
-   * @return LongRangeSet describing possible array or string indices (from 0 to Integer.MAX_VALUE)
-   */
-  public static LongRangeSet indexRange() {
-    return Range.INDEX_RANGE;
-  }
-
-  /**
-   * Creates a range for given type (for primitives and boxed: values range)
-   *
-   * @param type type to create a range for
-   * @return a range or null if type is not supported
-   */
-  @Nullable
-  public static LongRangeSet fromType(PsiType type) {
-    if (!(type instanceof PsiPrimitiveType) && !TypeConversionUtil.isPrimitiveWrapper(type)) return null;
-    type = PsiPrimitiveType.getOptionallyUnboxedType(type);
-    if (type != null) {
-      if (type.equals(PsiType.BYTE)) {
-        return Range.BYTE_RANGE;
-      }
-      if (type.equals(PsiType.CHAR)) {
-        return Range.CHAR_RANGE;
-      }
-      if (type.equals(PsiType.SHORT)) {
-        return Range.SHORT_RANGE;
-      }
-      if (type.equals(PsiType.INT)) {
-        return Range.INT_RANGE;
-      }
-      if (type.equals(PsiType.LONG)) {
-        return all();
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
-    if (owner == null) return all();
-    return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
-                   .nonNull()
-                   .append(AnnotationUtil.findAnnotations(owner, ANNOTATIONS))
-                   .map(LongRangeSet::fromAnnotation).foldLeft(all(), LongRangeSet::intersect);
-  }
-
-  private static LongRangeSet fromAnnotation(PsiAnnotation annotation) {
-    switch (Objects.requireNonNull(annotation.getQualifiedName())) {
-      case JETBRAINS_RANGE:
-      case CHECKER_RANGE:
-        Long from = AnnotationUtil.getLongAttributeValue(annotation, "from");
-        Long to = AnnotationUtil.getLongAttributeValue(annotation, "to");
-        if(from != null && to != null && to >= from) {
-          return range(from, to);
-        }
-        break;
-      case VALIDATION_MIN:
-        Long minValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
-        if (minValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
-          return range(minValue, Long.MAX_VALUE);
-        }
-        break;
-      case VALIDATION_MAX:
-        Long maxValue = AnnotationUtil.getLongAttributeValue(annotation, "value");
-        if (maxValue != null && annotation.findDeclaredAttributeValue("groups") == null) {
-          return range(Long.MIN_VALUE, maxValue);
-        }
-        break;
-      case CHECKER_GTE_NEGATIVE_ONE:
-        return range(-1, Long.MAX_VALUE);
-      case JSR305_NONNEGATIVE:
-      case CHECKER_NON_NEGATIVE:
-        return range(0, Long.MAX_VALUE);
-      case CHECKER_POSITIVE:
-        return range(1, Long.MAX_VALUE);
-    }
-    return all();
   }
 
   static LongRangeSet fromRanges(long[] ranges, int bound) {
@@ -864,17 +778,17 @@ public abstract class LongRangeSet {
   /**
    * Creates a LongRangeSet of values {@code x} for which {@code remainders.contains(x % mod)}.
    * May include more values as well.
-   * 
+   *
    * @param mod a divisor
    * @param remainders set of allowed remainders
    * @return set of values which may produce supplied remainders when divided by mod.
    */
   public static LongRangeSet fromRemainder(long mod, LongRangeSet remainders) {
     if (remainders.isEmpty()) return empty();
-    long min = remainders.min() > 0 ? 1 : Long.MIN_VALUE;  
+    long min = remainders.min() > 0 ? 1 : Long.MIN_VALUE;
     long max = remainders.max() < 0 ? -1 : Long.MAX_VALUE;
     if (mod > 1 && mod <= Long.SIZE) {
-      long bits = remainders.contains(0) ? 1 : 0;      
+      long bits = remainders.contains(0) ? 1 : 0;
       for(int rem = 1; rem < mod; rem++) {
         if (remainders.contains(rem) || remainders.contains(rem - mod)) {
           bits = setBit(bits, rem);
@@ -932,21 +846,13 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public String getPresentationText(PsiType type) {
-      return JavaAnalysisBundle.message("long.range.set.presentation.empty");
+    public @NotNull String getPresentationText(@NotNull LongRangeSet fullTypeRange) {
+      return InspectionsBundle.message("long.range.set.presentation.empty");
     }
 
     @Override
     public boolean isCardinalityBigger(long cutoff) {
       return cutoff < 0;
-    }
-
-    @Override
-    public LongRangeSet castTo(PsiPrimitiveType type) {
-      if (TypeConversionUtil.isIntegralNumberType(type)) {
-        return this;
-      }
-      throw new IllegalArgumentException(type.toString());
     }
 
     @NotNull
@@ -984,7 +890,12 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    long[] asRanges() {
+    public @NotNull List<LongRangeSet> asRanges() {
+      return Collections.emptyList();
+    }
+
+    @Override
+    long[] asRangeArray() {
       return new long[0];
     }
 
@@ -1015,7 +926,7 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public String getPresentationText(PsiType type) {
+    public @NotNull String getPresentationText(@NotNull LongRangeSet fullTypeRange) {
       return formatNumber(myValue);
     }
 
@@ -1079,7 +990,7 @@ public abstract class LongRangeSet {
                  : new RangeSet(new long[]{other.min(), other.max(), myValue, myValue});
         }
       }
-      long[] longs = other.asRanges();
+      long[] longs = other.asRangeArray();
       int pos = -Arrays.binarySearch(longs, myValue) - 1;
       assert pos >= 0 && pos % 2 == 0;
       boolean touchLeft = pos > 0 && longs[pos - 1] + 1 == myValue;
@@ -1124,28 +1035,6 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(@NotNull LongRangeSet other) {
       return other.isEmpty() || equals(other);
-    }
-
-    @Override
-    public LongRangeSet castTo(PsiPrimitiveType type) {
-      if (PsiType.LONG.equals(type)) return this;
-      long newValue;
-      if (PsiType.CHAR.equals(type)) {
-        newValue = (char)myValue;
-      }
-      else if (PsiType.INT.equals(type)) {
-        newValue = (int)myValue;
-      }
-      else if (PsiType.SHORT.equals(type)) {
-        newValue = (short)myValue;
-      }
-      else if (PsiType.BYTE.equals(type)) {
-        newValue = (byte)myValue;
-      }
-      else {
-        throw new IllegalArgumentException(type.toString());
-      }
-      return newValue == myValue ? this : point(newValue);
     }
 
     @NotNull
@@ -1260,7 +1149,12 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    long[] asRanges() {
+    public @NotNull List<LongRangeSet> asRanges() {
+      return Collections.singletonList(this);
+    }
+
+    @Override
+    long[] asRangeArray() {
       return new long[] {myValue, myValue};
     }
 
@@ -1282,12 +1176,8 @@ public abstract class LongRangeSet {
   }
 
   static class Range extends LongRangeSet {
-    static final Range BYTE_RANGE = new Range(Byte.MIN_VALUE, Byte.MAX_VALUE);
-    static final Range CHAR_RANGE = new Range(Character.MIN_VALUE, Character.MAX_VALUE);
-    static final Range SHORT_RANGE = new Range(Short.MIN_VALUE, Short.MAX_VALUE);
-    static final Range INT_RANGE = new Range(Integer.MIN_VALUE, Integer.MAX_VALUE);
     static final Range LONG_RANGE = new Range(Long.MIN_VALUE, Long.MAX_VALUE);
-    static final Range INDEX_RANGE = new Range(0, Integer.MAX_VALUE);
+    static final Range INT_RANGE = new Range(Integer.MIN_VALUE, Integer.MAX_VALUE);
 
     final long myFrom; // inclusive
     final long myTo; // inclusive
@@ -1301,23 +1191,20 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public String getPresentationText(PsiType type) {
-      LongRangeSet set = fromType(type);
-      if (set != null) {
-        if (set.min() == myFrom) {
-          if (set.max() == myTo) {
-            return JavaAnalysisBundle.message("long.range.set.presentation.any");
-          }
-          return "<= " + LongRangeSet.formatNumber(myTo);
+    public @NotNull String getPresentationText(@NotNull LongRangeSet fullTypeRange) {
+      if (fullTypeRange.min() == myFrom) {
+        if (fullTypeRange.max() == myTo) {
+          return InspectionsBundle.message("long.range.set.presentation.any");
         }
-        else if (set.max() == myTo) {
-          return ">= " + LongRangeSet.formatNumber(myFrom);
-        }
+        return "<= " + LongRangeSet.formatNumber(myTo);
+      }
+      else if (fullTypeRange.max() == myTo) {
+        return ">= " + LongRangeSet.formatNumber(myFrom);
       }
       if (myTo - myFrom == 1) {
-        return JavaAnalysisBundle.message("long.range.set.presentation.two.values", myFrom, myTo);
+        return InspectionsBundle.message("long.range.set.presentation.two.values", myFrom, myTo);
       }
-      return JavaAnalysisBundle.message("long.range.set.presentation.range", toString());
+      return InspectionsBundle.message("long.range.set.presentation.range", toString());
     }
 
     @Override
@@ -1395,7 +1282,7 @@ public abstract class LongRangeSet {
       long[] result = new long[ranges.length];
       int index = 0;
       for (int i = 0; i < ranges.length; i += 2) {
-        long[] res = intersect(range(ranges[i], ranges[i + 1])).asRanges();
+        long[] res = intersect(range(ranges[i], ranges[i + 1])).asRangeArray();
         System.arraycopy(res, 0, result, index, res.length);
         index += res.length;
       }
@@ -1420,7 +1307,7 @@ public abstract class LongRangeSet {
         }
         return new RangeSet(new long[]{min(), max(), other.min(), other.max()});
       }
-      long[] longs = other.asRanges();
+      long[] longs = other.asRangeArray();
       int minIndex = Arrays.binarySearch(longs, min());
       if (minIndex < 0) {
         minIndex = -minIndex - 1;
@@ -1487,41 +1374,6 @@ public abstract class LongRangeSet {
       return other.isEmpty() || other.min() >= myFrom && other.max() <= myTo;
     }
 
-    @Override
-    public LongRangeSet castTo(PsiPrimitiveType type) {
-      if (PsiType.LONG.equals(type)) return this;
-      if (PsiType.BYTE.equals(type)) {
-        LongRangeSet result = mask(Byte.SIZE, type);
-        assert BYTE_RANGE.contains(result) : this;
-        return result;
-      }
-      if (PsiType.SHORT.equals(type)) {
-        LongRangeSet result = mask(Short.SIZE, type);
-        assert SHORT_RANGE.contains(result) : this;
-        return result;
-      }
-      if (PsiType.INT.equals(type)) {
-        LongRangeSet result = mask(Integer.SIZE, type);
-        assert INT_RANGE.contains(result) : this;
-        return result;
-      }
-      if (PsiType.CHAR.equals(type)) {
-        if (myFrom <= Character.MIN_VALUE && myTo >= Character.MAX_VALUE) return CHAR_RANGE;
-        if (myFrom >= Character.MIN_VALUE && myTo <= Character.MAX_VALUE) return this;
-        return bitwiseAnd(point(0xFFFF));
-      }
-      throw new IllegalArgumentException(type.toString());
-    }
-
-    @NotNull
-    private LongRangeSet mask(int size, PsiPrimitiveType type) {
-      long addend = 1L << (size - 1);
-      if (myFrom <= -addend && myTo >= addend - 1) return Objects.requireNonNull(fromType(type));
-      if (myFrom >= -addend && myTo <= addend - 1) return this;
-      long mask = (1L << size) - 1;
-      return plus(myFrom, myTo, addend, addend, true).bitwiseAnd(point(mask)).plus(point(-addend), true);
-    }
-
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -1571,7 +1423,7 @@ public abstract class LongRangeSet {
       if (other instanceof Point || other instanceof Range || (other instanceof RangeSet && ((RangeSet)other).myRanges.length > 6)) {
         return plus(myFrom, myTo, other.min(), other.max(), isLong);
       }
-      long[] ranges = other.asRanges();
+      long[] ranges = other.asRangeArray();
       LongRangeSet result = empty();
       for (int i = 0; i < ranges.length; i += 2) {
         result = result.unite(plus(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
@@ -1636,7 +1488,12 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    long[] asRanges() {
+    public @NotNull List<LongRangeSet> asRanges() {
+      return Collections.singletonList(this);
+    }
+
+    @Override
+    long[] asRangeArray() {
       return new long[] {myFrom, myTo};
     }
 
@@ -1671,26 +1528,23 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public String getPresentationText(PsiType type) {
-      LongRangeSet set = fromType(type);
-      if (set != null) {
-        set = modRange(set.min(), set.max(), myMod, myBits);
-        String prefix = null;
-        if (set.min() == myFrom) {
-          prefix = set.max() == myTo ? "" : "<= " + LongRangeSet.formatNumber(myTo);
-        }
-        else if (set.max() == myTo) {
-          prefix = ">= " + LongRangeSet.formatNumber(myFrom);
-        }
-        if (prefix != null) {
-          if (prefix.isEmpty()) {
-            return getSuffix();
-          }
-          return JavaAnalysisBundle.message("long.range.set.presentation.range.with.mod", prefix, getSuffix());
-        }
+    public @NotNull String getPresentationText(@NotNull LongRangeSet fullTypeRange) {
+      fullTypeRange = modRange(fullTypeRange.min(), fullTypeRange.max(), myMod, myBits);
+      String prefix = null;
+      if (fullTypeRange.min() == myFrom) {
+        prefix = fullTypeRange.max() == myTo ? "" : "<= " + LongRangeSet.formatNumber(myTo);
       }
-      String rangeMessage = JavaAnalysisBundle.message("long.range.set.presentation.range", super.toString());
-      return JavaAnalysisBundle.message("long.range.set.presentation.range.with.mod", rangeMessage, getSuffix());
+      else if (fullTypeRange.max() == myTo) {
+        prefix = ">= " + LongRangeSet.formatNumber(myFrom);
+      }
+      if (prefix != null) {
+        if (prefix.isEmpty()) {
+          return getSuffix();
+        }
+        return InspectionsBundle.message("long.range.set.presentation.range.with.mod", prefix, getSuffix());
+      }
+      String rangeMessage = InspectionsBundle.message("long.range.set.presentation.range", super.toString());
+      return InspectionsBundle.message("long.range.set.presentation.range.with.mod", rangeMessage, getSuffix());
     }
 
     @Override
@@ -1804,7 +1658,7 @@ public abstract class LongRangeSet {
         int lcm = lcm(modRange.myMod);
         if (lcm <= Long.SIZE && (modRange.widenBits(lcm) & widenBits(lcm)) == 0) return false;
       }
-      long[] otherRanges = other.asRanges();
+      long[] otherRanges = other.asRangeArray();
       for (int i = 0; i < otherRanges.length && otherRanges[i] <= myTo; i += 2) {
         if (myTo >= otherRanges[i] && myFrom <= otherRanges[i + 1] &&
             !modRange(otherRanges[i], otherRanges[i + 1], myMod, myBits).isEmpty()) {
@@ -1853,7 +1707,7 @@ public abstract class LongRangeSet {
           return (~widenBits(lcm) & modRange.widenBits(lcm)) == 0;
         }
       }
-      long[] ranges = other.asRanges();
+      long[] ranges = other.asRangeArray();
       for (int i = 0; i < ranges.length; i += 2) {
         if (!contains(ranges[i], ranges[i + 1])) return false;
       }
@@ -1878,7 +1732,7 @@ public abstract class LongRangeSet {
       LongRangeSet set = super.plus(other, isLong);
       if (other instanceof Point ||
           other instanceof ModRange && ((ModRange)other).myMod == myMod && Long.bitCount(((ModRange)other).myBits) == 1) {
-        long[] ranges = set.asRanges();
+        long[] ranges = set.asRangeArray();
         LongRangeSet result = empty();
         int bit = other instanceof Point ? remainder(((Point)other).myValue, myMod) : Long.numberOfTrailingZeros(((ModRange)other).myBits);
         long bits = rotateRemainders(myBits, myMod, myMod - bit);
@@ -1909,7 +1763,7 @@ public abstract class LongRangeSet {
             long to = MathUtil.clamp(myTo, 0, divisorValue - 1);
             long possibleMods = widenBits(lcm);
             while (Long.SIZE - Long.numberOfLeadingZeros(possibleMods) > divisorValue) {
-              possibleMods = extractBits(possibleMods, divisorValue, Long.SIZE) | 
+              possibleMods = extractBits(possibleMods, divisorValue, Long.SIZE) |
                              extractBits(possibleMods, 0, divisorValue);
             }
             return modRange(from, to, divisorValue, possibleMods);
@@ -1939,12 +1793,12 @@ public abstract class LongRangeSet {
     private @Nls String getSuffix() {
       String suffix;
       if (myMod == 2) {
-        suffix = myBits == 1 ? 
-                 JavaAnalysisBundle.message("long.range.set.presentation.even") : 
-                 JavaAnalysisBundle.message("long.range.set.presentation.odd");
+        suffix = myBits == 1 ?
+                 InspectionsBundle.message("long.range.set.presentation.even") :
+                 InspectionsBundle.message("long.range.set.presentation.odd");
       }
       else if (myBits == 1) {
-        suffix = JavaAnalysisBundle.message("long.range.set.presentation.divisible.by", myMod);
+        suffix = InspectionsBundle.message("long.range.set.presentation.divisible.by", myMod);
       }
       else {
         //noinspection HardCodedStringLiteral
@@ -1979,7 +1833,7 @@ public abstract class LongRangeSet {
       }
       return result;
     }
-    
+
     @Override
     BitString getBitwiseMask() {
       int knownBits = Long.numberOfTrailingZeros(myMod);
@@ -2044,11 +1898,11 @@ public abstract class LongRangeSet {
     public LongRangeSet subtract(@NotNull LongRangeSet other) {
       if (other.isEmpty()) return this;
       if (other == this) return Empty.EMPTY;
-      long[] result = new long[myRanges.length + other.asRanges().length];
+      long[] result = new long[myRanges.length + other.asRangeArray().length];
       int index = 0;
       for (int i = 0; i < myRanges.length; i += 2) {
         LongRangeSet res = range(myRanges[i], myRanges[i + 1]).subtract(other);
-        long[] ranges = res.asRanges();
+        long[] ranges = res.asRangeArray();
         System.arraycopy(ranges, 0, result, index, ranges.length);
         index += ranges.length;
       }
@@ -2098,7 +1952,7 @@ public abstract class LongRangeSet {
       if (other instanceof Point) {
         return contains(((Point)other).myValue);
       }
-      long[] otherRanges = other.asRanges();
+      long[] otherRanges = other.asRangeArray();
       int a = 0, b = 0;
       while (true) {
         long aFrom = myRanges[a];
@@ -2142,27 +1996,24 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    public String getPresentationText(PsiType type) {
-      LongRangeSet set = fromType(type);
-      if (set != null) {
-        LongRangeSet diff = set.subtract(this);
-        if (diff instanceof Point) {
-          return "!= " + diff.min();
-        }
-        if (diff instanceof Range && !diff.intersects(this)) {
-          String min =
-            diff.min() == set.min() ? "" : diff.min() == set.min() + 1 ? formatNumber(set.min()) : "<= " + formatNumber(diff.min() - 1);
-          String max =
-            diff.max() == set.max() ? "" : diff.max() == set.max() - 1 ? formatNumber(set.max()) : ">= " + formatNumber(diff.max() + 1);
-          if (min.isEmpty()) return max;
-          if (max.isEmpty()) return min;
-          return JavaAnalysisBundle.message("long.range.set.presentation.two.values", min, max);
-        }
+    public @NotNull String getPresentationText(@NotNull LongRangeSet fullTypeRange) {
+      LongRangeSet diff = fullTypeRange.subtract(this);
+      if (diff instanceof Point) {
+        return "!= " + diff.min();
+      }
+      if (diff instanceof Range && !diff.intersects(this)) {
+        String min =
+          diff.min() == fullTypeRange.min() ? "" : diff.min() == fullTypeRange.min() + 1 ? formatNumber(fullTypeRange.min()) : "<= " + formatNumber(diff.min() - 1);
+        String max =
+          diff.max() == fullTypeRange.max() ? "" : diff.max() == fullTypeRange.max() - 1 ? formatNumber(fullTypeRange.max()) : ">= " + formatNumber(diff.max() + 1);
+        if (min.isEmpty()) return max;
+        if (max.isEmpty()) return min;
+        return InspectionsBundle.message("long.range.set.presentation.two.values", min, max);
       }
       if (myRanges.length == 4 && myRanges[0] == myRanges[1] && myRanges[2] == myRanges[3]) {
-        return JavaAnalysisBundle.message("long.range.set.presentation.two.values", myRanges[0], myRanges[2]);
+        return InspectionsBundle.message("long.range.set.presentation.two.values", myRanges[0], myRanges[2]);
       }
-      return JavaAnalysisBundle.message("long.range.set.presentation.range", toString());
+      return InspectionsBundle.message("long.range.set.presentation.range", toString());
     }
 
     @Override
@@ -2175,15 +2026,6 @@ public abstract class LongRangeSet {
         if (totalDiff < 0 || totalDiff > cutoff) return true;
       }
       return false;
-    }
-
-    @Override
-    public LongRangeSet castTo(PsiPrimitiveType type) {
-      LongRangeSet result = empty();
-      for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.unite(range(myRanges[i], myRanges[i + 1]).castTo(type));
-      }
-      return result;
     }
 
     @NotNull
@@ -2238,7 +2080,14 @@ public abstract class LongRangeSet {
     }
 
     @Override
-    long[] asRanges() {
+    public @NotNull List<LongRangeSet> asRanges() {
+      return IntStream.range(0, myRanges.length / 2)
+        .mapToObj(idx -> range(myRanges[idx * 2], myRanges[idx * 2 + 1]))
+        .collect(Collectors.toList());
+    }
+
+    @Override
+    long[] asRangeArray() {
       return myRanges;
     }
 

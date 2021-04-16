@@ -10,6 +10,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateCh
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -484,7 +485,7 @@ public final class TrackingRunner extends DataFlowRunner {
 
     @Override
     public String toString() {
-      return String.format(myTemplate, myRangeSet.getPresentationText(myType));
+      return String.format(myTemplate, JvmPsiRangeSetUtil.getPresentationText(myRangeSet, myType));
     }
   }
 
@@ -680,7 +681,7 @@ public final class TrackingRunner extends DataFlowRunner {
     if (expression instanceof PsiBinaryExpression) {
       PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
       RelationType relationType =
-        RelationType.fromElementType(binOp.getOperationTokenType());
+        DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (relationType != null) {
         if (!value) {
           relationType = relationType.getNegated();
@@ -1052,7 +1053,7 @@ public final class TrackingRunner extends DataFlowRunner {
     if (leftPos != null && rightPos != null) {
       DfaValue leftValue = leftPos.myTopOfStack;
       DfaValue rightValue = rightPos.myTopOfStack;
-      RelationType type = RelationType.fromElementType(binOp.getOperationTokenType());
+      RelationType type = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
       if (type != null) {
         return DfaRelation.createRelation(leftValue, type, rightValue);
       }
@@ -1381,7 +1382,7 @@ public final class TrackingRunner extends DataFlowRunner {
   private static CauseItem findRangeCause(MemoryStateChange factUse, DfaValue value, LongRangeSet range, @Nls String template) {
     if (value instanceof DfaVariableValue) {
       VariableDescriptor descriptor = ((DfaVariableValue)value).getDescriptor();
-      if (descriptor instanceof SpecialField && range.equals(LongRangeSet.indexRange())) {
+      if (descriptor instanceof SpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
         switch (((SpecialField)descriptor)) {
           case ARRAY_LENGTH:
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.array.length.is.always.non.negative"), factUse);
@@ -1403,7 +1404,7 @@ public final class TrackingRunner extends DataFlowRunner {
         PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
         PsiMethod method = call.resolveMethod();
         if (method != null) {
-          LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(method);
+          LongRangeSet fromAnnotation = JvmPsiRangeSetUtil.fromPsiElement(method);
           if (fromAnnotation.equals(range)) {
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.range.is.specified.by.annotation", method.getName(), range),
                                  call.getMethodExpression().getReferenceNameElement());
@@ -1417,13 +1418,13 @@ public final class TrackingRunner extends DataFlowRunner {
           DfaValue castedValue = operandPush.myTopOfStack;
           FactDefinition<LongRangeSet> operandInfo = operandPush.findFact(castedValue, FactExtractor.range());
           LongRangeSet operandRange = operandInfo.myFact;
-          LongRangeSet result = operandRange.castTo((PsiPrimitiveType)type);
+          LongRangeSet result = JvmPsiRangeSetUtil.castTo(operandRange, (PsiPrimitiveType)type);
           if (range.equals(result)) {
             CauseItem cause =
               new CauseItem(new RangeDfaProblemType(
                 JavaAnalysisBundle.message("dfa.find.cause.result.of.primitive.cast.template", type.getCanonicalText()), range, null),
                             expression);
-            if (!operandRange.equals(LongRangeSet.fromType(operand.getType()))) {
+            if (!operandRange.equals(JvmPsiRangeSetUtil.typeRange(operand.getType()))) {
               cause.addChildren(findRangeCause(operandPush, castedValue, operandRange,
                                                JavaAnalysisBundle.message("dfa.find.cause.numeric.cast.operand.template")));
             }
@@ -1431,7 +1432,7 @@ public final class TrackingRunner extends DataFlowRunner {
           }
         }
       }
-      if (range.equals(LongRangeSet.fromType(type))) {
+      if (range.equals(JvmPsiRangeSetUtil.typeRange(type))) {
         return null; // Range is any value of given type: no need to explain (except narrowing cast)
       }
       if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
@@ -1447,10 +1448,10 @@ public final class TrackingRunner extends DataFlowRunner {
             FactDefinition<LongRangeSet> leftSet = leftPush.findFact(leftVal, FactExtractor.range());
             DfaValue rightVal = rightPush.myTopOfStack;
             FactDefinition<LongRangeSet> rightSet = rightPush.findFact(rightVal, FactExtractor.range());
-            LongRangeSet fromType = Objects.requireNonNull(LongRangeSet.fromType(type));
+            LongRangeSet fromType = Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type));
             LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
             LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
-            LongRangeBinOp op = LongRangeBinOp.fromToken(binOp.getOperationTokenType());
+            LongRangeBinOp op = JvmPsiRangeSetUtil.binOpFromToken(binOp.getOperationTokenType());
             if (op != null) {
               LongRangeSet result = op.eval(leftRange, rightRange, isLong);
               if (range.equals(result)) {

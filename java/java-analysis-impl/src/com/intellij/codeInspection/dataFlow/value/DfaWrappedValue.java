@@ -5,10 +5,8 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,12 +51,6 @@ public final class DfaWrappedValue extends DfaValue {
   @Override
   public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
     return factory.getWrapperFactory().createWrapper(myType, mySpecialField, myWrappedValue.bindToFactory(factory));
-  }
-
-  @Nullable
-  @Override
-  public PsiType getType() {
-    return DfaTypeValue.toPsiType(myFactory.getProject(), myType);
   }
 
   @NotNull

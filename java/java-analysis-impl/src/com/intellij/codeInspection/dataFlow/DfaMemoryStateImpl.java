@@ -1076,7 +1076,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @Nullable PsiType getPsiType(@NotNull DfaValue value) {
-    return DfaTypeValue.toPsiType(getFactory().getProject(), getDfType(value));
+    return DfaPsiUtil.dfTypeToPsiType(getFactory().getProject(), getDfType(value));
   }
 
   private static boolean isNaN(final DfaValue dfa) {

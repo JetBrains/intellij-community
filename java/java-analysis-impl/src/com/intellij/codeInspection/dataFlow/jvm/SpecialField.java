@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -317,7 +316,7 @@ public enum SpecialField implements VariableDescriptor {
    */
   @NotNull
   public DfType getDefaultValue(boolean forAccessor) {
-    return DfTypes.intRange(LongRangeSet.indexRange());
+    return DfTypes.intRange(JvmPsiRangeSetUtil.indexRange());
   }
 
   @Override

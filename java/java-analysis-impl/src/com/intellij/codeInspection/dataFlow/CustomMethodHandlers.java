@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
@@ -358,7 +359,7 @@ public final class CustomMethodHandlers {
     DfaValue from = arguments[0];
     DfaValue lenVal = STRING_LENGTH.createValue(factory, qualifier);
     DfaValue to = arguments.length == 1 ? lenVal : arguments[1];
-    DfaValue resultLen = factory.getBinOpFactory().create(to, from, state, false, JavaTokenType.MINUS);
+    DfaValue resultLen = factory.getBinOpFactory().create(to, from, state, false, LongRangeBinOp.MINUS);
     if (resultLen instanceof DfaBinOpValue) {
       resultLen = factory.fromDfType(state.getDfType(resultLen));
     }

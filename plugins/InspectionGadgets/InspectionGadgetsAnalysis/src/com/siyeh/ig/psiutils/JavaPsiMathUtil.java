@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
@@ -8,7 +9,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +87,7 @@ public final class JavaPsiMathUtil {
   public static String simplifyComparison(PsiExpression comparison, @NotNull CommentTracker ct) {
     if (!(comparison instanceof PsiBinaryExpression)) return null;
     PsiBinaryExpression binOp = (PsiBinaryExpression)comparison;
-    RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
+    RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
     if (relationType == null) return null;
     String operator = binOp.getOperationSign().getText();
     PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
@@ -242,7 +242,7 @@ public final class JavaPsiMathUtil {
     if (binOp == null) return null;
     final PsiJavaToken sign = binOp.getOperationSign();
     final IElementType tokenType = sign.getTokenType();
-    RelationType relation = RelationType.fromElementType(tokenType);
+    RelationType relation = DfaPsiUtil.getRelationByToken(tokenType);
     if (relation == null) return null;
     final PsiExpression constOperand =
       PsiTreeUtil.isAncestor(binOp.getLOperand(), nonConstantOperand, false) ? binOp.getROperand() : binOp.getLOperand();

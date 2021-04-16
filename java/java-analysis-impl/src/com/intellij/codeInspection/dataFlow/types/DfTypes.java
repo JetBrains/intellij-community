@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiKeyword;
@@ -176,7 +177,7 @@ public final class DfTypes {
   /**
    * A type that corresponds to JVM int type
    */
-  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(LongRangeSet.fromType(PsiType.INT)), null);
+  public static final DfIntType INT = new DfIntRangeType(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.INT)), null);
 
   /**
    * Creates a type that represents a subset of int values, clamping values not representable in the JVM int type.
@@ -515,7 +516,7 @@ public final class DfTypes {
       if (type.equals(PsiType.BOOLEAN)) return BOOLEAN;
       if (type.equals(PsiType.INT)) return INT;
       if (type.equals(PsiType.CHAR) || type.equals(PsiType.SHORT) || type.equals(PsiType.BYTE)){
-        return intRange(Objects.requireNonNull(LongRangeSet.fromType(type)));
+        return intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type)));
       }
       if (type.equals(PsiType.LONG)) return LONG;
       if (type.equals(PsiType.DOUBLE)) return DOUBLE;

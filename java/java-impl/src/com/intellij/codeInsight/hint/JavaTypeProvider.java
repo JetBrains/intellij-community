@@ -17,13 +17,14 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
-import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -117,8 +118,8 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           }
         }
         if (dfType instanceof DfIntegralType) {
-          String rangeText = ((DfIntegralType)dfType).getRange().getPresentationText(type);
-          if (!rangeText.equals(JavaAnalysisBundle.message("long.range.set.presentation.any"))) {
+          String rangeText = JvmPsiRangeSetUtil.getPresentationText(((DfIntegralType)dfType).getRange(), type);
+          if (!rangeText.equals(InspectionsBundle.message("long.range.set.presentation.any"))) {
             infoLines.add(Pair.create(JavaBundle.message("type.information.range"), rangeText));
           }
         }

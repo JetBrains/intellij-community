@@ -1,15 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,12 +26,6 @@ public class DfaTypeValue extends DfaValue {
   @Override
   public DfaTypeValue bindToFactory(@NotNull DfaValueFactory factory) {
     return factory.fromDfType(myType);
-  }
-
-  @Nullable
-  @Override
-  public PsiType getType() {
-    return toPsiType(myFactory.getProject(), myType);
   }
 
   public static boolean isUnknown(DfaValue value) {
@@ -70,16 +59,5 @@ public class DfaTypeValue extends DfaValue {
     @NotNull DfaTypeValue create(@NotNull DfType type) {
       return myValues.computeIfAbsent(type, t -> new DfaTypeValue(myFactory, t));
     }
-  }
-
-  @Nullable
-  public static PsiType toPsiType(Project project, DfType dfType) {
-    if (dfType instanceof DfPrimitiveType) {
-      return ((DfPrimitiveType)dfType).getPsiType();
-    }
-    if (dfType instanceof DfReferenceType) {
-      return ((DfReferenceType)dfType).getConstraint().getPsiType(project);
-    }
-    return null;
   }
 }

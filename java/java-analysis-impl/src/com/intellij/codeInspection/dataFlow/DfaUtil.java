@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -310,9 +311,9 @@ public final class DfaUtil {
     List<MethodContract> rangeContracts = new ArrayList<>();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      LongRangeSet fromType = LongRangeSet.fromType(parameter.getType());
+      LongRangeSet fromType = JvmPsiRangeSetUtil.typeRange(parameter.getType());
       if (fromType == null) continue;
-      LongRangeSet fromAnnotation = LongRangeSet.fromPsiElement(parameter);
+      LongRangeSet fromAnnotation = JvmPsiRangeSetUtil.fromPsiElement(parameter);
       if (fromAnnotation.min() > fromType.min()) {
         MethodContract contract = MethodContract.singleConditionContract(
           ContractValue.argument(i), RelationType.LT, ContractValue.constant(fromAnnotation.min(), parameter.getType()),

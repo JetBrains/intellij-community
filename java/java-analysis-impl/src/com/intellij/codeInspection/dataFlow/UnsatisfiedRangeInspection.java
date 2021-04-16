@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -22,9 +23,9 @@ public class UnsatisfiedRangeInspection extends AbstractBaseJavaLocalInspectionT
         PsiCodeBlock body = method.getBody();
         if (body == null) return;
         PsiType returnType = method.getReturnType();
-        LongRangeSet fromType = LongRangeSet.fromType(returnType);
+        LongRangeSet fromType = JvmPsiRangeSetUtil.typeRange(returnType);
         if (fromType == null) return;
-        LongRangeSet range = LongRangeSet.fromPsiElement(method);
+        LongRangeSet range = JvmPsiRangeSetUtil.fromPsiElement(method);
         if (range.contains(fromType)) return;
         PsiReturnStatement[] statements = PsiUtil.findReturnStatements(body);
         for (PsiReturnStatement statement : statements) {
@@ -38,7 +39,8 @@ public class UnsatisfiedRangeInspection extends AbstractBaseJavaLocalInspectionT
                 Long constantValue = returnRange.getConstantValue();
                 String message = JavaAnalysisBundle
                   .message(constantValue == null ? "inspection.unsatisfied.range.message" : "inspection.unsatisfied.range.message.value",
-                           returnRange.getPresentationText(returnType), range.getPresentationText(returnType));
+                           JvmPsiRangeSetUtil.getPresentationText(returnRange, returnType), JvmPsiRangeSetUtil
+                             .getPresentationText(range, returnType));
                 holder.registerProblem(expression, message);
               }
             }

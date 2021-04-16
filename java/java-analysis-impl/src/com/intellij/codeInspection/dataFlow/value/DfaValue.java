@@ -18,10 +18,12 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+/**
+ * Represents a value that could be operated by data-flow analysis.
+ * Values are unique (interned) within the same {@link DfaValueFactory}.
+ */
 public abstract class DfaValue {
   private final int myID;
   @NotNull
@@ -45,14 +47,6 @@ public abstract class DfaValue {
 
   public int getID() {
     return myID;
-  }
-
-  /**
-   * @return PSI type of the value if known
-   */
-  @Nullable
-  public PsiType getType() {
-    return null;
   }
 
   /**

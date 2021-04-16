@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
@@ -52,7 +53,7 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
     }
     PsiType type = getType(null);
     PsiModifierListOwner element = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
-    LongRangeSet range = LongRangeSet.fromPsiElement(element);
+    LongRangeSet range = JvmPsiRangeSetUtil.fromPsiElement(element);
     DfType dfType = DfTypes.typedObject(type, DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, element));
     if (dfType instanceof DfIntegralType) {
       dfType = ((DfIntegralType)dfType).meetRange(range);
@@ -67,7 +68,7 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
     PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
     if (psi == null) return dfType;
     if (dfType instanceof DfIntegralType) {
-      return ((DfIntegralType)dfType).meetRange(LongRangeSet.fromPsiElement(psi));
+      return ((DfIntegralType)dfType).meetRange(JvmPsiRangeSetUtil.fromPsiElement(psi));
     }
     if (dfType instanceof DfReferenceType) {
       dfType = dfType.meet(Mutability.getMutability(psi).asDfType());

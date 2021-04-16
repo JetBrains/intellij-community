@@ -1,8 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +26,7 @@ public enum RelationType {
 
   /**
    * @param other other relation to meet
-   * @return result of meet operation: the relation that is a sub-relation of both this and other; 
+   * @return result of meet operation: the relation that is a sub-relation of both this and other;
    * null if result is bottom
    */
   public @Nullable RelationType meet(@NotNull RelationType other) {
@@ -106,32 +104,6 @@ public enum RelationType {
   @Override
   public String toString() {
     return myName;
-  }
-
-  @Nullable
-  public static RelationType fromElementType(IElementType type) {
-    if(JavaTokenType.EQEQ.equals(type)) {
-      return EQ;
-    }
-    if(JavaTokenType.NE.equals(type)) {
-      return NE;
-    }
-    if(JavaTokenType.LT.equals(type)) {
-      return LT;
-    }
-    if(JavaTokenType.GT.equals(type)) {
-      return GT;
-    }
-    if(JavaTokenType.LE.equals(type)) {
-      return LE;
-    }
-    if(JavaTokenType.GE.equals(type)) {
-      return GE;
-    }
-    if(JavaTokenType.INSTANCEOF_KEYWORD.equals(type)) {
-      return IS;
-    }
-    return null;
   }
 
   public static RelationType equivalence(boolean equal) {

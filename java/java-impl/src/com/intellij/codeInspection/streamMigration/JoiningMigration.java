@@ -3,6 +3,7 @@ package com.intellij.codeInspection.streamMigration;
 
 
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.project.Project;
@@ -614,7 +615,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
 
       PsiExpression lOperand = condition.getLOperand();
-      RelationType relation = RelationType.fromElementType(condition.getOperationTokenType());
+      RelationType relation = DfaPsiUtil.getRelationByToken(condition.getOperationTokenType());
       if (relation == null) return null;
       int lSize = computeConstantIntExpression(lOperand);
       if (lSize >= 0) {

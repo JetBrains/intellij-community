@@ -14,11 +14,15 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.FinishElementInstructio
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.Instruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -618,5 +622,53 @@ public final class DfaPsiUtil {
     Object value = expr.getValue();
     if (value == null) return DfTypes.typedObject(type, Nullability.NOT_NULL);
     return DfTypes.constant(value, type);
+  }
+
+  /**
+   * Create RelationType from Java token
+   * @param type Java token
+   * @return RelationType
+   */
+  @Nullable
+  public static RelationType getRelationByToken(IElementType type) {
+    if(JavaTokenType.EQEQ.equals(type)) {
+      return RelationType.EQ;
+    }
+    if(JavaTokenType.NE.equals(type)) {
+      return RelationType.NE;
+    }
+    if(JavaTokenType.LT.equals(type)) {
+      return RelationType.LT;
+    }
+    if(JavaTokenType.GT.equals(type)) {
+      return RelationType.GT;
+    }
+    if(JavaTokenType.LE.equals(type)) {
+      return RelationType.LE;
+    }
+    if(JavaTokenType.GE.equals(type)) {
+      return RelationType.GE;
+    }
+    if(JavaTokenType.INSTANCEOF_KEYWORD.equals(type)) {
+      return RelationType.IS;
+    }
+    return null;
+  }
+
+  /**
+   * Tries to convert {@link DfType} to {@link PsiType}.
+   *
+   * @param project project
+   * @param dfType DfType to convert
+   * @return converted DfType; null if no corresponding PsiType found.
+   */
+  public static @Nullable PsiType dfTypeToPsiType(@NotNull Project project, @Nullable DfType dfType) {
+    if (dfType instanceof DfPrimitiveType) {
+      return ((DfPrimitiveType)dfType).getPsiType();
+    }
+    if (dfType instanceof DfReferenceType) {
+      return ((DfReferenceType)dfType).getConstraint().getPsiType(project);
+    }
+    return null;
   }
 }

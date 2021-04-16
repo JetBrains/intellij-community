@@ -1,18 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
- * Supported binary operations over long ranges. 
+ * Supported binary operations over long ranges.
  */
 public enum LongRangeBinOp {
-  PLUS("+"), MINUS("-"), AND("&"), OR("|"), XOR("^"), MUL("*"), 
+  PLUS("+"), MINUS("-"), AND("&"), OR("|"), XOR("^"), MUL("*"),
   MOD("%"), DIV("/"), SHL("<<"), SHR(">>"), USHR(">>>");
-  
+
   final String mySymbol;
 
   LongRangeBinOp(String symbol) {
@@ -57,7 +54,7 @@ public enum LongRangeBinOp {
   }
 
   /**
-   * Performs a binary operation on ranges with possible widening, so that if operation is performed repeatedly 
+   * Performs a binary operation on ranges with possible widening, so that if operation is performed repeatedly
    * it will eventually converge.
    *
    * @param left a left-hand operand
@@ -90,46 +87,4 @@ public enum LongRangeBinOp {
   public boolean isShift() {
     return this == SHL || this == SHR || this == USHR;
   }
-
-  /**
-   * @param token Java token (like {@link JavaTokenType#PLUS})
-   * @return a corresponding {@link LongRangeBinOp} constant; null if no constant corresponds for a given token
-   */
-  public static @Nullable LongRangeBinOp fromToken(IElementType token) {
-    if (token == null) return null;
-    if (token.equals(JavaTokenType.PLUS)) {
-      return PLUS;
-    }
-    if (token.equals(JavaTokenType.MINUS)) {
-      return MINUS;
-    }
-    if (token.equals(JavaTokenType.AND)) {
-      return AND;
-    }
-    if (token.equals(JavaTokenType.OR)) {
-      return OR;
-    }
-    if (token.equals(JavaTokenType.XOR)) {
-      return XOR;
-    }
-    if (token.equals(JavaTokenType.PERC)) {
-      return MOD;
-    }
-    if (token.equals(JavaTokenType.DIV)) {
-      return DIV;
-    }
-    if (token.equals(JavaTokenType.LTLT)) {
-      return SHL;
-    }
-    if (token.equals(JavaTokenType.GTGT)) {
-      return SHR;
-    }
-    if (token.equals(JavaTokenType.GTGTGT)) {
-      return USHR;
-    }
-    if (token.equals(JavaTokenType.ASTERISK)) {
-      return MUL;
-    }
-    return null;
-  } 
 }

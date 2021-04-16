@@ -307,7 +307,7 @@ public final class ReorderingUtils {
       }
       if (condition instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        RelationType relationType = RelationType.fromElementType(binOp.getOperationTokenType());
+        RelationType relationType = DfaPsiUtil.getRelationByToken(binOp.getOperationTokenType());
         if (relationType != null) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -210,7 +211,7 @@ public final class FinishMarker {
                                                    PsiReturnStatement terminalReturn,
                                                    PsiType returnType, PsiElementFactory factory) {
     boolean isLong = PsiType.LONG.equals(returnType);
-    LongRangeSet fullSet = requireNonNull(LongRangeSet.fromType(returnType));
+    LongRangeSet fullSet = requireNonNull(JvmPsiRangeSetUtil.typeRange(returnType));
     LongRangeSet set = nonTerminalReturns.stream()
       .map(CommonDataflow::getExpressionRange)
       .map(range -> range == null ? fullSet : range)

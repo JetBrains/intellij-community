@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
@@ -442,11 +443,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       }
       return factory.fromDfType(dfType.meet(mutable.asDfType()));
     }
-    LongRangeSet range = LongRangeSet.fromType(type);
+    LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
     if (range != null) {
       PsiCall call = instruction.getCallExpression();
       if (call instanceof PsiMethodCallExpression) {
-        range = range.intersect(LongRangeSet.fromPsiElement(call.resolveMethod()));
+        range = range.intersect(JvmPsiRangeSetUtil.fromPsiElement(call.resolveMethod()));
       }
       return factory.fromDfType(rangeClamped(range, PsiType.LONG.equals(type)));
     }
@@ -592,7 +593,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
     final IElementType opSign = instruction.getOperationSign();
     RelationType relationType =
-      RelationType.fromElementType(opSign == BinopInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
+      DfaPsiUtil.getRelationByToken(opSign == BinopInstruction.STRING_EQUALITY_BY_CONTENT ? JavaTokenType.EQEQ : opSign);
     if (relationType != null) {
       return handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
     }
@@ -603,7 +604,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaValue result = runner.getFactory().getUnknown();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
       boolean isLong = PsiType.LONG.equals(type);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, opSign);
+      LongRangeBinOp binOp = JvmPsiRangeSetUtil.binOpFromToken(opSign);
+      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, binOp);
     }
     if (DfaTypeValue.isUnknown(result) && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
       result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());

@@ -3,7 +3,9 @@ package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -202,7 +204,7 @@ class AnalysisStartingPoint {
         }
       }
     }
-    RelationType relationType = RelationType.fromElementType(type);
+    RelationType relationType = DfaPsiUtil.getRelationByToken(type);
     if (relationType != null) {
       LongRangeSet set = DfLongType.extractRange(constantType).fromRelation(relationType);
       if (anchor == null) return null;
@@ -214,7 +216,7 @@ class AnalysisStartingPoint {
           PsiType.SHORT.equals(anchorType) ||
           PsiType.BYTE.equals(anchorType) ||
           PsiType.CHAR.equals(anchorType)) {
-        set = set.intersect(Objects.requireNonNull(LongRangeSet.fromType(anchorType)));
+        set = set.intersect(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
         return new AnalysisStartingPoint(DfTypes.intRangeClamped(set), anchor);
       }
     }
