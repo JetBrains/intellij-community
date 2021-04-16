@@ -5,8 +5,11 @@ package org.jetbrains.kotlin.util
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinVersionRequirement
 
+val KotlinVersion.isSnapshot: Boolean
+    get() = this.classifier != null && this.classifier.toLowerCase() == "snapshot"
 
-val KotlinVersion.isSnapshot: Boolean get() = this.classifier != null && this.classifier.toLowerCase() == "snapshot"
+val KotlinVersion.isDev: Boolean
+    get() = this.classifier != null && this.classifier.matches(Regex("""dev-?\d*"""))
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
@@ -33,6 +36,7 @@ val KotlinVersion.isPreRelease: Boolean get() = !isStable
 enum class KotlinVersionMaturity {
     UNKNOWN,
     SNAPSHOT,
+    DEV,
     MILESTONE,
     ALPHA,
     BETA,
@@ -48,6 +52,7 @@ val KotlinVersion.maturity: KotlinVersionMaturity
         isAlpha -> KotlinVersionMaturity.ALPHA
         isMilestone -> KotlinVersionMaturity.MILESTONE
         isSnapshot -> KotlinVersionMaturity.SNAPSHOT
+        isDev -> KotlinVersionMaturity.DEV
         else -> KotlinVersionMaturity.UNKNOWN
     }
 

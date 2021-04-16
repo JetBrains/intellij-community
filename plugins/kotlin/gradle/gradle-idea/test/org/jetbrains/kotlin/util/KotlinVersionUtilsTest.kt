@@ -75,6 +75,17 @@ class KotlinVersionUtilsTest {
             parseKotlinVersionRequirement("1.5+").matches("1.5.0-rc")
         )
 
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20-M1")
+        )
+
+        assertFalse(
+            parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20-SNAPSHOT")
+        )
     }
 
     @Test
@@ -105,6 +116,14 @@ class KotlinVersionUtilsTest {
 
         assertTrue(
             parseKotlinVersionRequirement("1.4.0 <=> 1.5.0").matches("1.5.0-rc")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20-dev-10")
+        )
+
+        assertTrue(
+            parseKotlinVersionRequirement("1.5.20-dev+").matches("1.5.20-dev10")
         )
     }
 }
