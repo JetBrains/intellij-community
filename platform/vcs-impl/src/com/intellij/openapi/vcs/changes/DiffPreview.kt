@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.changes;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes
 
-public interface DiffPreview {
-  void updatePreview(boolean fromModelRefresh);
-
-  void setPreviewVisible(boolean isPreviewVisible);
+interface DiffPreview {
+  fun updatePreview(fromModelRefresh: Boolean)
+  fun setPreviewVisible(isPreviewVisible: Boolean)
 }
