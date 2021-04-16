@@ -43,6 +43,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -271,6 +272,23 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
+    //loadDefaultsFromJson(defaults);
+    loadDefaultsFromProperties(defaults);
+  }
+
+  protected void loadDefaultsFromJson(UIDefaults defaults) {
+    String filename = getPrefix() + ".theme.json";
+    try (InputStream stream = getClass().getResourceAsStream(filename)) {
+     assert stream != null : "Can't load " + filename;
+     UITheme theme = UITheme.loadFromJson(stream, "Darcula", getClass().getClassLoader(), Function.identity());
+     theme.applyProperties(defaults);
+    }
+    catch (IOException e) {
+      log(e);
+    }
+  }
+
+  protected void loadDefaultsFromProperties(UIDefaults defaults) {
     try {
       Map<String, String> map = new HashMap<>(300);
       //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
