@@ -212,9 +212,8 @@ idea.fatal.error.notification=disabled
     return propertiesFile
   }
 
-  @NotNull Path patchApplicationInfo() {
+  @NotNull String patchApplicationInfo() {
     Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    Path targetFile = buildContext.paths.tempDir.resolve(sourceFile.fileName)
     String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 
     ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
@@ -225,13 +224,13 @@ idea.fatal.error.notification=disabled
         buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
       }
     }
-    BuildUtils.copyAndPatchFile(sourceFile, targetFile, Map.<String, String>of(
+
+    return BuildUtils.replaceAll(Files.readString(sourceFile), Map.<String, String>of(
       "BUILD_NUMBER", buildContext.fullBuildNumber,
       "BUILD_DATE", date,
       "BUILD", buildContext.buildNumber,
       "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
-    ))
-    return targetFile
+    ), "__")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -314,11 +313,11 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo)
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution(@NotNull Path patchedApplicationInfo) {
+  private DistributionJARsBuilder compileModulesForDistribution(@NotNull String patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
     List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
@@ -344,7 +343,7 @@ idea.fatal.error.notification=disabled
     return compilePlatformAndPluginModules(patchedApplicationInfo, pluginsToPublish)
   }
 
-  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull Path patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
+  private DistributionJARsBuilder compilePlatformAndPluginModules(@NotNull String patchedApplicationInfo, @NotNull Set<PluginLayout> pluginsToPublish) {
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
     compileModules(distributionJARsBuilder.getModulesForPluginsToPublish())
 
@@ -360,7 +359,7 @@ idea.fatal.error.notification=disabled
     copyDependenciesFile()
     setupBundledMaven()
 
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     logFreeDiskSpace("before compilation")
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
     logFreeDiskSpace("after compilation")
@@ -866,8 +865,7 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    Path patchedApplicationInfo = patchApplicationInfo()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchedApplicationInfo)
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(patchApplicationInfo())
     distributionJARsBuilder.buildJARs()
     DistributionJARsBuilder.buildInternalUtilities(buildContext)
     scramble(buildContext)
@@ -893,7 +891,7 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
 
     setupBundledMaven()
-    Path patchedApplicationInfo = patchApplicationInfo()
+    String patchedApplicationInfo = patchApplicationInfo()
     compileModulesForDistribution(patchedApplicationInfo).buildJARs(true)
     def osSpecificPlugins = DistributionJARsBuilder.getOsSpecificDistDirectory(currentOs, buildContext).resolve("plugins")
     if (Files.isDirectory(osSpecificPlugins)) {

@@ -65,13 +65,13 @@ final class DistributionJARsBuilder {
   private final BuildContext buildContext
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
   final PlatformLayout platform
-  private final Path patchedApplicationInfo
+  private final String patchedApplicationInfo
   private final LinkedHashSet<PluginLayout> pluginsToPublish
   private final PluginXmlPatcher pluginXmlPatcher
 
   @CompileStatic(TypeCheckingMode.SKIP)
   DistributionJARsBuilder(BuildContext buildContext,
-                          @Nullable Path patchedApplicationInfo,
+                          @Nullable String patchedApplicationInfo,
                           Set<PluginLayout> pluginsToPublish = Collections.emptySet()) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
@@ -513,11 +513,10 @@ final class DistributionJARsBuilder {
 
     addSearchableOptions(layoutBuilder)
 
-    Path applicationInfoDir = buildContext.paths.tempDir.resolve("applicationInfo")
-    Path ideaDir = applicationInfoDir.resolve("idea")
-    Files.createDirectories(ideaDir)
-    Files.copy(patchedApplicationInfo, ideaDir.resolve(patchedApplicationInfo.fileName), StandardCopyOption.REPLACE_EXISTING)
-    layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)
+    Path patchedAppInfoFile = buildContext.paths.tempDir.resolve("appInfo.xml")
+    Files.createDirectories(patchedAppInfoFile.parent)
+    Files.writeString(patchedAppInfoFile, patchedApplicationInfo)
+    buildContext.addDistFile(new Pair<Path, String>(patchedAppInfoFile, "bin"))
 
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", createKeyMapWithAltClickReassignedToMultipleCarets())

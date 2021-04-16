@@ -249,8 +249,7 @@ public final class PluginManagerCore {
       brokenPluginsStorage = updatedBrokenPluginFile;
     }
     else {
-      Path distDir = Paths.get(PathManager.getHomePath());
-      brokenPluginsStorage = distDir.resolve("bin/brokenPlugins.db");
+      brokenPluginsStorage = Paths.get(PathManager.getBinPath() + "/brokenPlugins.db");
     }
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();

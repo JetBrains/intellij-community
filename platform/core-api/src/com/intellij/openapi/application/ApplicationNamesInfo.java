@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 
 public final class ApplicationNamesInfo {
@@ -24,8 +28,45 @@ public final class ApplicationNamesInfo {
 
   private static @NotNull Element loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
-    String resource = "/idea/" + (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
-    InputStream stream = ApplicationNamesInfo.class.getResourceAsStream(resource);
+
+    String filePath;
+    if (Boolean.getBoolean("idea.use.dev.build.server")) {
+      String module = null;
+      if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
+        module = "intellij.idea.ultimate.resources";
+      }
+      else if (prefix.equals(PlatformUtils.WEB_PREFIX)) {
+        module = "intellij.webstorm";
+      }
+
+      if (module == null) {
+        filePath = null;
+      }
+      else {
+        filePath = PathManager.getHomePath() + "/out/classes/production/" + module + "/idea/" +
+                   (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
+      }
+    }
+    else {
+      filePath = PathManager.getBinPath() + "/appInfo.xml";
+    }
+
+    // production
+    if (filePath != null) {
+      Path file = Paths.get(filePath);
+      try {
+        return JDOMUtil.load(Files.newBufferedReader(file));
+      }
+      catch (NoSuchFileException ignore) {
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot load " + file, e);
+      }
+    }
+
+    // from sources
+    String resource = "idea/" + (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
+    InputStream stream = ApplicationNamesInfo.class.getClassLoader().getResourceAsStream(resource);
     if (stream == null) {
       throw new RuntimeException("Resource not found: " + resource);
     }

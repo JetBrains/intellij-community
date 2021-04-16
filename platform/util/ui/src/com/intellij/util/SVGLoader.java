@@ -58,7 +58,7 @@ public final class SVGLoader {
           String dbPath = System.getProperty("idea.ui.icons.prebuilt.db");
           if (!"false".equals(dbPath)) {
             if (dbPath == null || dbPath.isEmpty()) {
-              dbFile = Path.of(PathManager.getHomePath()).resolve("bin/icons.db");
+              dbFile = Path.of(PathManager.getBinPath() + "/icons.db");
             }
             else {
               dbFile = Path.of(dbPath);
