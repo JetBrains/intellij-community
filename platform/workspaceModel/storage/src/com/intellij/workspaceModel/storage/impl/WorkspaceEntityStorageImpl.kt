@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
-import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
+import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -230,7 +230,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
   }
 
-  private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
+  private fun HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
                                                                                                     storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
     val possibleValues = this[entity.identificator(storage)]
     val persistentId = entity.persistentId(storage)
@@ -269,12 +269,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
     LOG.debug { "Performing replace by source" }
 
     // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or PersistentId
-    val localMatchedEntities = ArrayListMultimap.create<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>()
+    val localMatchedEntities = HashMultimap.create<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>()
     // Map of entities in replaceWith store with the entitySource that matches the predicate. Key is either hashCode or PersistentId
-    val replaceWithMatchedEntities = ArrayListMultimap.create<Any, EntityId>()
+    val replaceWithMatchedEntities = HashMultimap.create<Any, EntityId>()
 
     // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or PersistentId
-    val localUnmatchedReferencedNodes = ArrayListMultimap.create<Any, EntityId>()
+    val localUnmatchedReferencedNodes = HashMultimap.create<Any, EntityId>()
 
     // Association of the EntityId in the local store to the EntityId in the remote store
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
