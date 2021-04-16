@@ -109,12 +109,12 @@ public class HeavyAwareExecutor implements Disposable {
     }
 
     @Override
-    public void processStarted() {
+    public void processStarted(@NotNull HeavyProcessLatch.Operation op) {
       scheduleCancel();
     }
 
     @Override
-    public void processFinished() {
+    public void processFinished(@NotNull HeavyProcessLatch.Operation op) {
       doNotCancel();
     }
 

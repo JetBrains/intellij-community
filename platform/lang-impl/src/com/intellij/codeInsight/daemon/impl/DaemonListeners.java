@@ -393,7 +393,7 @@ public final class DaemonListeners implements Disposable {
           PsiManager.getInstance(myProject).dropPsiCaches();
         }
       }));
-    HeavyProcessLatch.INSTANCE.addListener(this, () ->
+    HeavyProcessLatch.INSTANCE.addListener(this, __ ->
       myDaemonCodeAnalyzer.stopProcess(true, "re-scheduled to execute after heavy processing finished"));
   }
 

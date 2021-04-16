@@ -10,10 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EventListener;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -60,11 +57,11 @@ public final class HeavyProcessLatch {
   public @NotNull AccessToken processStarted(@NotNull @Nls String displayName) {
     Op op = new Op(Type.Processing, displayName);
     myHeavyProcesses.add(op);
-    myEventDispatcher.getMulticaster().processStarted();
+    myEventDispatcher.getMulticaster().processStarted(op);
     return new AccessToken() {
       @Override
       public void finish() {
-        myEventDispatcher.getMulticaster().processFinished();
+        myEventDispatcher.getMulticaster().processFinished(op);
         myHeavyProcesses.remove(op);
         executeHandlers();
       }
@@ -77,12 +74,12 @@ public final class HeavyProcessLatch {
   public void performOperation(@NotNull Type type, @NotNull @Nls String displayName, @NotNull Runnable runnable) {
     Op op = new Op(type, displayName);
     myHeavyProcesses.add(op);
-    myEventDispatcher.getMulticaster().processStarted();
+    myEventDispatcher.getMulticaster().processStarted(op);
     try {
       runnable.run();
     }
     finally {
-      myEventDispatcher.getMulticaster().processFinished();
+      myEventDispatcher.getMulticaster().processFinished(op);
       myHeavyProcesses.remove(op);
       executeHandlers();
     }
@@ -130,11 +127,18 @@ public final class HeavyProcessLatch {
     return iterator.hasNext() ? iterator.next() : null;
   }
 
+  /**
+   * @return all heavy operations currently running (or empty collection if none), in undefined order
+   */
+  public @NotNull Collection<Operation> getRunningOperations() {
+    return new ArrayList<>(myHeavyProcesses);
+  }
+
   public interface HeavyProcessListener extends EventListener {
-    default void processStarted() {
+    default void processStarted(@NotNull Operation op) {
     }
 
-    void processFinished();
+    void processFinished(@NotNull Operation op);
   }
 
   public interface Operation {
