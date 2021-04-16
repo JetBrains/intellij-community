@@ -200,7 +200,7 @@ public class RefusedBequestInspection extends BaseInspection {
 
     private boolean isTrivial(PsiMethod method) {
       final PsiElement element = method.getNavigationElement();
-      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, true);
+      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, s -> s instanceof PsiThrowStatement);
     }
 
     private boolean isJUnitSetUpOrTearDown(PsiMethod method) {

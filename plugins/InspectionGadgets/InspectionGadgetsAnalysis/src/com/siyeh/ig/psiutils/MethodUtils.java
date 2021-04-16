@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -284,18 +285,22 @@ public final class MethodUtils {
    * Returns true if the method or constructor is trivial, i.e. does nothing of consequence. This is true when the method is empty, but
    * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
    */
-  public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+  public static boolean isTrivial(PsiMethod method, @Nullable Predicate<PsiStatement> considerTrivialPredicate) {
     if (method.hasModifierProperty(PsiModifier.NATIVE)) {
       return false;
     }
-    return isTrivial(method.getBody(), throwIsTrivial);
+    return isTrivial(method.getBody(), considerTrivialPredicate);
+  }
+
+  public static boolean isTrivial(PsiMethod method) {
+    return isTrivial(method, null);
   }
 
   public static boolean isTrivial(PsiClassInitializer initializer) {
-    return isTrivial(initializer.getBody(), false);
+    return isTrivial(initializer.getBody(), null);
   }
 
-  private static boolean isTrivial(PsiCodeBlock codeBlock, boolean throwIsTrivial) {
+  private static boolean isTrivial(PsiCodeBlock codeBlock, @Nullable Predicate<PsiStatement> trivialPredicate) {
     if (codeBlock == null) {
       return true;
     }
@@ -305,7 +310,7 @@ public final class MethodUtils {
     }
     for (PsiStatement statement : statements) {
       ProgressManager.checkCanceled();
-      if (statement instanceof PsiEmptyStatement) {
+      if (statement instanceof PsiEmptyStatement || trivialPredicate != null && trivialPredicate.test(statement)) {
         continue;
       }
       if (statement instanceof PsiReturnStatement) {
@@ -328,9 +333,6 @@ public final class MethodUtils {
         if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
-      }
-      else if (throwIsTrivial && statement instanceof PsiThrowStatement) {
-        return true;
       }
       else {
         return false;

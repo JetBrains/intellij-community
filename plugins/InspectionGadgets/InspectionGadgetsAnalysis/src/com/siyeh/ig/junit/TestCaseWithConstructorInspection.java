@@ -15,10 +15,9 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,10 +63,32 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
       if (TestUtils.isParameterizedTest(aClass)) {
         return;
       }
-      if (MethodUtils.isTrivial(method, false)) {
+      if (MethodUtils.isTrivial(method, TestCaseWithConstructorVisitor::isAssignmentToFinalField)) {
         return;
       }
       registerMethodError(method, Boolean.FALSE);
+    }
+
+    private static boolean isAssignmentToFinalField(PsiStatement s) {
+      if (!(s instanceof PsiExpressionStatement)) {
+        return false;
+      }
+      final PsiExpressionStatement statement = (PsiExpressionStatement)s;
+      final PsiExpression expression = statement.getExpression();
+      if (!(expression instanceof PsiAssignmentExpression)) {
+        return false;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
+      final IElementType tokenType = assignmentExpression.getOperationTokenType();
+      if (tokenType != JavaTokenType.EQ) {
+        return false;
+      }
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      final PsiElement target = ((PsiReferenceExpression)lhs).resolve();
+      return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL);
     }
 
     @Override
