@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
+import org.junit.runners.model.TestClass;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -999,5 +1000,46 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testFinished name='TestSuite$1.warning']\n" +
 
            "##teamcity[testSuiteFinished name='TestSuite$1']\n");
+  }
+
+  @Test
+  public void test2ClassesWithNoDescription() throws Exception {
+    final Description root = Description.createSuiteDescription(new TestClass(null).getName());
+    final Description testA = Description.createSuiteDescription("TestA");
+    root.addChild(testA);
+    final Description testNameA = Description.createTestDescription("TestA", "testName");
+    testA.addChild(testNameA);
+
+    final Description testB = Description.createSuiteDescription("TestB");
+    root.addChild(testB);
+    final Description testNameB = Description.createTestDescription("TestB", "testName");
+    testB.addChild(testNameB);
+
+    // We're making sure the `rootName` event isn't reported when no name is provided:
+    doTest(root, List.of(testNameA, testNameB),
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
+           "##teamcity[suiteTreeNode name='TestA.testName' locationHint='java:test://TestA/testName']\n" +
+           "##teamcity[suiteTreeEnded name='TestA']\n" +
+           "##teamcity[suiteTreeStarted name='TestB' locationHint='java:suite://TestB']\n" +
+           "##teamcity[suiteTreeNode name='TestB.testName' locationHint='java:test://TestB/testName']\n" +
+           "##teamcity[suiteTreeEnded name='TestB']\n" +
+           "##teamcity[treeEnded]\n",
+
+           "##teamcity[testSuiteStarted name='TestA' locationHint='java:suite://TestA']\n" +
+
+           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA/testName']\n" +
+
+           "##teamcity[testFinished name='TestA.testName']\n" +
+
+           "##teamcity[testSuiteFinished name='TestA']\n" +
+
+           "##teamcity[testSuiteStarted name='TestB' locationHint='java:suite://TestB']\n" +
+
+           "##teamcity[testStarted name='TestB.testName' locationHint='java:test://TestB/testName']\n" +
+
+           "##teamcity[testFinished name='TestB.testName']\n" +
+
+           "##teamcity[testSuiteFinished name='TestB']\n");
   }
 }
