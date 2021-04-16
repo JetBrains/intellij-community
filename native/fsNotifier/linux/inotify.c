@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "fsnotifier.h"
 
 #include <dirent.h>
 #include <errno.h>
-#include <limits.h>
+#include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
-#include <syslog.h>
 #include <unistd.h>
 
 
@@ -66,7 +51,6 @@ bool init_inotify() {
     }
     return false;
   }
-  userlog(LOG_DEBUG, "inotify fd: %d", get_inotify_fd());
 
   read_watch_descriptors_count();
   if (watch_count <= 0) {
@@ -122,7 +106,7 @@ static int add_watch(int path_len, watch_node* parent) {
   int wd = inotify_add_watch(inotify_fd, path_buf, EVENT_MASK);
   if (wd < 0) {
     if (errno == EACCES || errno == ENOENT) {
-      userlog(LOG_DEBUG, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
+      userlog(LOG_INFO, "inotify_add_watch(%s): %s", path_buf, strerror(errno));
       return ERR_IGNORE;
     }
     else if (errno == ENOSPC) {
@@ -136,13 +120,13 @@ static int add_watch(int path_len, watch_node* parent) {
     }
   }
   else {
-    userlog(LOG_DEBUG, "watching %s: %d", path_buf, wd);
+    userlog(LOG_INFO, "watching %s: %d", path_buf, wd);
   }
 
   watch_node* node = table_get(watches, wd);
   if (node != NULL) {
     if (node->wd != wd) {
-      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s)", wd, path_buf, node->wd, node->path);
+      userlog(LOG_ERR, "table error: corruption at %d:%s / %d:%s / %d", wd, path_buf, node->wd, node->path, watch_count);
       return ERR_ABORT;
     }
     else if (strcmp(node->path, path_buf) != 0) {
@@ -199,10 +183,10 @@ static void rm_watch(int wd, bool update_parent) {
     return;
   }
 
-  userlog(LOG_DEBUG, "unwatching %s: %d (%p)", node->path, node->wd, node);
+  userlog(LOG_INFO, "unwatching %s: %d (%p)", node->path, node->wd, node);
 
   if (inotify_rm_watch(inotify_fd, node->wd) < 0) {
-    userlog(LOG_DEBUG, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
+    userlog(LOG_INFO, "inotify_rm_watch(%d:%s): %s", node->wd, node->path, strerror(errno));
   }
 
   for (int i=0; i<array_size(node->kids); i++) {
@@ -231,7 +215,7 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
   for (int j=0; j<array_size(mounts); j++) {
     char* mount = array_get(mounts, j);
     if (strncmp(path_buf, mount, strlen(mount)) == 0) {
-      userlog(LOG_DEBUG, "watch path '%s' crossed mount point '%s' - skipping", path_buf, mount);
+      userlog(LOG_INFO, "watch path '%s' crossed mount point '%s' - skipping", path_buf, mount);
       return ERR_IGNORE;
     }
   }
@@ -240,7 +224,7 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
   if (recursive) {
     if ((dir = opendir(path_buf)) == NULL) {
       if (errno == EACCES || errno == ENOENT || errno == ENOTDIR) {
-        userlog(LOG_DEBUG, "opendir(%s): %d", path_buf, errno);
+        userlog(LOG_INFO, "opendir(%s): %d", path_buf, errno);
         return ERR_IGNORE;
       }
       else {
@@ -277,7 +261,7 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
     if (entry->d_type == DT_UNKNOWN) {
       struct stat st;
       if (stat(path_buf, &st) != 0) {
-        userlog(LOG_DEBUG, "(DT_UNKNOWN) stat(%s): %d", path_buf, errno);
+        userlog(LOG_INFO, "(DT_UNKNOWN) stat(%s): %d", path_buf, errno);
         continue;
       }
       if (!S_ISDIR(st.st_mode)) {
@@ -351,7 +335,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   bool is_dir = (event->mask & IN_ISDIR) == IN_ISDIR;
-  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
+  userlog(LOG_INFO, "inotify: wd=%d mask=%d dir=%d name=%s", event->wd, event->mask & (~IN_ISDIR), is_dir, node->path);
 
   int path_len = node->path_len;
   memcpy(path_buf, node->path, path_len + 1);

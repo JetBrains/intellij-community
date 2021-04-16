@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #pragma once
 
-#define VERSION "20200827.1844"
+#define VERSION "20210416.1152"
+
+#define _DEFAULT_SOURCE
+#include <features.h>
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,6 +13,8 @@
 
 // messaging and logging
 void message(const char *text);
+
+enum { LOG_ERR = 0, LOG_WARNING = 1, LOG_INFO = 2 };
 void userlog(int priority, const char* format, ...);
 
 #define CHECK_NULL(p, r) if (p == NULL) { userlog(LOG_ERR, "out of memory"); return r; }

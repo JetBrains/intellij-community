@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "fsnotifier.h"
 
 #include <errno.h>
-#include <limits.h>
+#include <linux/limits.h>
 #include <mntent.h>
 #include <paths.h>
 #include <stdarg.h>
@@ -12,23 +12,12 @@
 #include <sys/inotify.h>
 #include <sys/select.h>
 #include <sys/stat.h>
-#include <syslog.h>
 #include <unistd.h>
-
-#define LOG_ENV "FSNOTIFIER_LOG_LEVEL"
-#define LOG_ENV_DEBUG "debug"
-#define LOG_ENV_INFO "info"
-#define LOG_ENV_WARNING "warning"
-#define LOG_ENV_ERROR "error"
-#define LOG_ENV_OFF "off"
 
 
 #define USAGE_MSG \
-    "fsnotifier - IntelliJ IDEA companion program for watching and reporting file and directory structure modifications.\n\n" \
-    "fsnotifier utilizes \"user\" facility of syslog(3) - messages usually can be found in /var/log/user.log.\n" \
-    "Verbosity is regulated via " LOG_ENV " environment variable, possible values are: " \
-    LOG_ENV_DEBUG ", " LOG_ENV_INFO ", " LOG_ENV_WARNING ", " LOG_ENV_ERROR ", " LOG_ENV_OFF "; default is " LOG_ENV_WARNING ".\n\n" \
-    "Use 'fsnotifier --selftest' to perform some self-diagnostics (output will be logged and printed to console).\n"
+    "fsnotifier - IntelliJ Platform companion program for watching and reporting file and directory structure modifications.\n\n" \
+    "Use 'fsnotifier --selftest' to perform some self-diagnostics (output will be printed to console).\n"
 
 #define HELP_MSG \
     "Try 'fsnotifier --help' for more information.\n"
@@ -44,10 +33,8 @@ typedef struct {
 
 static array* roots = NULL;
 
-static int log_level = 0;
 static bool self_test = false;
 
-static void init_log();
 static void run_self_test();
 static bool main_loop();
 static int read_input();
@@ -82,13 +69,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  init_log();
-  if (!self_test) {
-    userlog(LOG_INFO, "started (v." VERSION ")");
-  }
-  else {
-    userlog(LOG_INFO, "started (self-test mode) (v." VERSION ")");
-  }
+  userlog(LOG_INFO, "fsnotifier self-test mode (v." VERSION ")");
 
   setvbuf(stdin, NULL, _IONBF, 0);
 
@@ -116,31 +97,7 @@ int main(int argc, char** argv) {
   array_delete(roots);
 
   userlog(LOG_INFO, "finished (%d)", rv);
-  closelog();
-
   return rv;
-}
-
-
-static void init_log() {
-  int level = LOG_WARNING;
-
-  char* env_level = getenv(LOG_ENV);
-  if (env_level != NULL) {
-    if (strcmp(env_level, LOG_ENV_DEBUG) == 0)  level = LOG_DEBUG;
-    else if (strcmp(env_level, LOG_ENV_INFO) == 0)  level = LOG_INFO;
-    else if (strcmp(env_level, LOG_ENV_WARNING) == 0)  level = LOG_WARNING;
-    else if (strcmp(env_level, LOG_ENV_ERROR) == 0)  level = LOG_ERR;
-  }
-
-  if (self_test) {
-    level = LOG_DEBUG;
-  }
-
-  char ident[32];
-  snprintf(ident, sizeof(ident), "fsnotifier[%d]", getpid());
-  openlog(ident, 0, LOG_USER);
-  log_level = level;
 }
 
 
@@ -149,30 +106,20 @@ void message(const char *text) {
 }
 
 
-void userlog(int priority, const char* format, ...) {
-  if (priority > log_level) {
-    return;
-  }
-
+void userlog(int level, const char* format, ...) {
   va_list ap;
-  va_start(ap, format);
-  vsyslog(priority, format, ap);
-  va_end(ap);
-
   if (self_test) {
-    const char* level = "debug";
-    switch (priority) {
-      case LOG_ERR:  level = "error"; break;
-      case LOG_WARNING:  level = " warn"; break;
-      case LOG_INFO:  level = " info"; break;
-    }
-    printf("fsnotifier[%d] %s: ", getpid(), level);
-
+    fputs(level == LOG_ERR ? "[E] " : level == LOG_WARNING ? "[W] " : "[I] ", stdout);
     va_start(ap, format);
-    vprintf(format, ap);
+    vfprintf(stdout, format, ap);
     va_end(ap);
-
-    printf("\n");
+    fputc('\n', stdout);
+  }
+  else if (level <= LOG_WARNING) {
+    va_start(ap, format);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
+    fputc('\n', stderr);
   }
 }
 
@@ -225,10 +172,8 @@ static bool main_loop() {
 
 static int read_input() {
   char* line = read_line(stdin);
-  userlog(LOG_DEBUG, "input: %s", (line ? line : "<null>"));
 
   if (line == NULL || strcmp(line, "EXIT") == 0) {
-    userlog(LOG_INFO, "exiting: %s", line);
     return 0;
   }
 
@@ -236,9 +181,8 @@ static int read_input() {
     array* new_roots = array_create(20);
     CHECK_NULL(new_roots, ERR_ABORT);
 
-    while (1) {
+    while (true) {
       line = read_line(stdin);
-      userlog(LOG_DEBUG, "input: %s", (line ? line : "<null>"));
       if (line == NULL || strlen(line) == 0) {
         return 0;
       }
@@ -270,7 +214,7 @@ static bool update_roots(array* new_roots) {
     array_delete(new_roots);
     return true;
   }
-  else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch entire tree
+  else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch the entire tree
     output("UNWATCHEABLE\n/\n#\n");
     userlog(LOG_INFO, "unwatchable: /");
     array_delete_vs_data(new_roots);
@@ -394,7 +338,7 @@ static array* unwatchable_mounts() {
 
   struct mntent* ent;
   while ((ent = getmntent(mtab)) != NULL) {
-    userlog(LOG_DEBUG, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
+    userlog(LOG_INFO, "mtab: %s : %s", ent->mnt_dir, ent->mnt_type);
     if (strcmp(ent->mnt_type, MNTTYPE_IGNORE) != 0 && !is_watchable(ent->mnt_type)) {
       CHECK_NULL(array_push(mounts, strdup(ent->mnt_dir)), NULL);
     }
@@ -424,13 +368,10 @@ static void inotify_callback(const char* path, int event) {
   }
   else if (event & IN_UNMOUNT) {
     output("RESET\n");
-    userlog(LOG_DEBUG, "RESET");
   }
 }
 
 static void report_event(const char* event, const char* path) {
-  userlog(LOG_DEBUG, "%s: %s", event, path);
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
   char* copy = path, *p;
