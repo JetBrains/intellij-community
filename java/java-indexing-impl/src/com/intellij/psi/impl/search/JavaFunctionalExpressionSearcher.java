@@ -462,7 +462,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     public Session(@NotNull SearchParameters parameters, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
       this.consumer = consumer;
       elementToSearch = parameters.getElementToSearch();
-      project = elementToSearch.getProject();
+      project = parameters.getProject();
       psiManager = PsiManager.getInstance(project);
       scope = parameters.getEffectiveSearchScope();
     }
