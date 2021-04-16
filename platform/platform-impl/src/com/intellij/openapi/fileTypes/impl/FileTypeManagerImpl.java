@@ -451,7 +451,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileType mergeOrInstantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
     StandardFileType type = withReadLock(() -> myStandardFileTypes.get(fileTypeBean.name));
     if (type == null) {
-      return instantiateFileTypeBean(fileTypeBean).fileType;
+      return getFileTypeOrUnknown(instantiateFileTypeBean(fileTypeBean));
     }
     type.matchers.addAll(fileTypeBean.getMatchers());
     for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
@@ -631,8 +631,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     FileTypeBean pendingFileType = withReadLock(() -> myPendingAssociations.findAssociatedFileType(fileName));
     if (pendingFileType != null) {
-      FileTypeWithDescriptor ftd = instantiateFileTypeBean(pendingFileType);
-      return ftd==null? UnknownFileType.INSTANCE:ftd.fileType;
+      return getFileTypeOrUnknown(instantiateFileTypeBean(pendingFileType));
     }
     FileType type = withReadLock(() -> {
       FileTypeWithDescriptor ftd = myPatternsTable.findAssociatedFileType(fileName);
@@ -920,6 +919,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     PluginDescriptor pluginDescriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(type.getClass().getName());
     if (pluginDescriptor == null) pluginDescriptor = coreIdeaPluginDescriptor();
     return new FileTypeWithDescriptor(type, pluginDescriptor);
+  }
+
+  private static @NotNull FileType getFileTypeOrUnknown(@Nullable FileTypeWithDescriptor ftd) {
+    return ftd != null ? ftd.fileType : UnknownFileType.INSTANCE;
   }
 
   @Override
