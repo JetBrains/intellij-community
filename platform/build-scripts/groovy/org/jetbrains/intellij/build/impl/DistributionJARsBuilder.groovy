@@ -61,6 +61,7 @@ final class DistributionJARsBuilder {
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "plugins"
+  private static final String PLATFORM_JAR = "platform-impl.jar"
 
   private final BuildContext buildContext
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
@@ -159,15 +160,19 @@ final class DistributionJARsBuilder {
       CommunityRepositoryModules.PLATFORM_API_MODULES.each {
         addModule(it, "platform-api.jar")
       }
-      CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES.each {
-        addModule(it, "platform-impl.jar")
+
+      for (String module in CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES) {
+        addModule(module, PLATFORM_JAR)
       }
       productLayout.productApiModules.each {
         addModule(it, "openapi.jar")
       }
 
-      productLayout.productImplementationModules.each {
-        addModule(it, productLayout.mainJarName)
+      for (String module in productLayout.productImplementationModules) {
+        boolean isRelocated = module == "intellij.xml.dom.impl" ||
+                              module == "intellij.platform.structuralSearch" ||
+                              module == "intellij.platform.duplicates.analysis"
+        addModule(module, isRelocated ? PLATFORM_JAR : productLayout.mainJarName)
       }
 
       productLayout.moduleExcludes.entrySet().each {
@@ -195,11 +200,13 @@ final class DistributionJARsBuilder {
       addModule("intellij.platform.statistics.config", "stats.jar")
       addModule("intellij.platform.statistics.devkit")
 
-      addModule("intellij.relaxng", "intellij-xml.jar")
-      addModule("intellij.xml.analysis.impl", "intellij-xml.jar")
-      addModule("intellij.xml.psi.impl", "intellij-xml.jar")
-      addModule("intellij.xml.structureView.impl", "intellij-xml.jar")
-      addModule("intellij.xml.impl", "intellij-xml.jar")
+      for (String module in List.of("intellij.relaxng",
+                                    "intellij.xml.analysis.impl",
+                                    "intellij.xml.psi.impl",
+                                    "intellij.xml.structureView.impl",
+                                    "intellij.xml.impl")) {
+        addModule(module, PLATFORM_JAR)
+      }
 
       addModule("intellij.platform.vcs.impl", "intellij-dvcs.jar")
       addModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
