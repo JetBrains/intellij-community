@@ -1,7 +1,13 @@
 <html>
 <body>
-Reports conditional expressions which are negated with a prefix expression. For example:
-<pre><code>!(i == 1 ? a : b)</code></pre>
+Reports conditional expressions which are negated with a prefix expression.
+Such constructions may be confusing.
+There is a fix that propagates outer negation to both branches.
+<p>Example:</p>
+<pre>!(i == 1 ? a : b)</pre>
+<p>After applying the fix:</p>
+<pre>i == 1 ? !a : !b</pre>
+<pre></pre>
 <!-- tooltip end -->
 <p>
 </body>

@@ -1,7 +1,16 @@
 <html>
 <body>
-Reports conditional expressions with identical <em>then</em> and <em>else</em> branches.
-Such expressions are almost certainly a mistake.
+Reports conditional expressions with identical <code>then</code> and <code>else</code> branches.
+Such expressions almost certainly indicate bugs.
+<p>There is a fix that allows to collapse conditional expression</p>
+<p>Example:</p>
+<pre>
+  int y = x == 10 ? 4 : 4;
+</pre>
+<p>After applying the fix:</p>
+<pre>
+  int y = 4;
+</pre>
 <!-- tooltip end -->
 <p>
 
