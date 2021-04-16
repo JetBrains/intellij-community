@@ -61,6 +61,7 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val PRODUCT_DATA_TTL_MS = 300_000L
   private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  private const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -87,7 +88,7 @@ object UpdateChecker {
     if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false)) {
       val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
       if (machineId != null) {
-        UpdateRequestParameters.addParameter("mid", machineId)
+        UpdateRequestParameters.addParameter(MACHINE_ID_PARAMETER, machineId)
       }
     }
     UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
@@ -220,6 +221,7 @@ object UpdateChecker {
         if (product != null) {
           if (product.disableMachineId) {
             PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+            UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
           }
           productDataCache = SoftReference(product)
           AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
