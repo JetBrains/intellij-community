@@ -45,23 +45,6 @@ data class PluginUpdates @JvmOverloads internal constructor(
   val all: List<PluginDownloader> by lazy {
     allEnabled + allDisabled
   }
-
-  internal val enabled: Sequence<PluginDownloader> by lazy {
-    nonIgnored(allEnabled)
-  }
-
-  internal val disabled: Sequence<PluginDownloader> by lazy {
-    nonIgnored(allDisabled)
-  }
-
-  internal val updated: List<PluginDownloader> by lazy {
-    (enabled + disabled).toList()
-  }
-
-  private fun nonIgnored(downloaders: Collection<PluginDownloader>): Sequence<PluginDownloader> {
-    return downloaders.asSequence()
-      .filterNot { UpdateChecker.isIgnored(it.descriptor) }
-  }
 }
 
 @ApiStatus.Internal

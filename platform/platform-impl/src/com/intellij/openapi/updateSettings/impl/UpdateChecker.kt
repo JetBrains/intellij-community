@@ -505,6 +505,11 @@ object UpdateChecker {
   ) {
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
+    fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { isIgnored(it.descriptor) }
+
+    val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
+    val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
+
     if (platformUpdates is CheckForUpdateResult.Loaded) {
       val showNotification = userInitiated || WelcomeFrame.getInstance() != null
 
@@ -517,7 +522,7 @@ object UpdateChecker {
           project,
           platformUpdates,
           showSettingsLink,
-          pluginUpdates.updated,
+          updatedPlugins,
           pluginUpdates.incompatible,
         ).show()
       }
@@ -526,7 +531,7 @@ object UpdateChecker {
         runnable()
       }
       else {
-        UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, pluginUpdates.updated, pluginUpdates.incompatible)
+        UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, pluginUpdates.incompatible)
 
         if (showNotification) {
           IdeUpdateUsageTriggerCollector.trigger("notification.shown")
@@ -544,12 +549,11 @@ object UpdateChecker {
       return
     }
 
-    if (pluginUpdates.enabled.any()) {
+    if (enabledPlugins.isNotEmpty()) {
       if (userInitiated) {
         ourShownNotifications.remove(NotificationKind.PLUGINS)?.forEach { it.expire() }
       }
 
-      val updatedPlugins = pluginUpdates.updated
       val runnable = { PluginUpdateDialog(project, updatedPlugins, customRepoPlugins).show() }
 
       if (forceDialog) {
@@ -598,7 +602,7 @@ object UpdateChecker {
       }
     }
 
-    if (pluginUpdates.enabled.none() && externalUpdates.isEmpty()) {
+    if (enabledPlugins.isEmpty() && externalUpdates.isEmpty()) {
       if (forceDialog) {
         NoUpdatesDialog(showSettingsLink).show()
       }
