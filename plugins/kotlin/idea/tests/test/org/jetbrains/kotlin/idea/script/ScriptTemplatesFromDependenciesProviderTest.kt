@@ -11,6 +11,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
+import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.test.util.addDependency
@@ -39,7 +40,8 @@ class ScriptTemplatesFromDependenciesProviderTest: AbstractScriptConfigurationTe
     @TestMetadata("customDefinitionInJar")
     fun testCustomDefinitionInJar() {
         val allDefinitions = ScriptDefinitionsManager.getInstance(project).getAllDefinitions()
-        assertTrue(allDefinitions.map { it.name }.joinToString(), allDefinitions.any { it.name == "Custom Init Script" })
+        assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Init Script" })
+        assertTrue(allDefinitions.joinToString { it.name }, allDefinitions.any { it.name == "Custom Setting Script" })
     }
 
     override fun setUpTestProject() {
@@ -64,7 +66,8 @@ class ScriptTemplatesFromDependenciesProviderTest: AbstractScriptConfigurationTe
             if (!dir.isDirectory) return@forEach
             val relativePath = FileUtil.getRelativePath(lib, dir)?.replace("/", ".")!!
             dir.listFiles()?.filter { it.isFile }?.forEach {
-                val fqName = it.name.removeSuffix("." + it.extension)
+                val fileName = it.name.removeSuffix("." + it.extension)
+                val fqName = fileName + (if (fileName.endsWith("WithSuffix")) SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT else "")
                 val file = File(scriptDefinitionMarkersPath, "$relativePath.$fqName")
                 assertTrue(file.createNewFile())
             }
