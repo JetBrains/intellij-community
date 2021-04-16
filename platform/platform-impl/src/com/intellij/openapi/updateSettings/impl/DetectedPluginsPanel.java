@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -20,14 +19,12 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.List;
 import java.util.Set;
 
 /**
  * @author anna
  */
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final JEditorPane myDescriptionPanel = new JEditorPane();
   private final PluginHeaderPanel myHeader;
@@ -122,20 +119,9 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     else {
       getSkippedPlugins().add(downloader.getId());
     }
-    for (Listener listener : myListeners) {
-      listener.stateChanged();
-    }
   }
 
   protected Set<PluginId> getSkippedPlugins() {
     return UpdateChecker.getDisabledToUpdate();
-  }
-
-  public void addStateListener(Listener l) {
-    myListeners.add(l);
-  }
-
-  public interface Listener {
-    void stateChanged();
   }
 }
