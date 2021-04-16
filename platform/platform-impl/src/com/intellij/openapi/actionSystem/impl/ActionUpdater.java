@@ -64,7 +64,7 @@ final class ActionUpdater {
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
 
   private final boolean myModalContext;
-  private final PresentationFactory myFactory;
+  private final PresentationFactory myPresentationFactory;
   private final DataContext myDataContext;
   private final String myPlace;
   private final boolean myContextMenuAction;
@@ -84,25 +84,25 @@ final class ActionUpdater {
   private final int myTestDelayMillis;
 
   ActionUpdater(boolean isInModalContext,
-                PresentationFactory presentationFactory,
-                DataContext dataContext,
-                String place,
+                @NotNull PresentationFactory presentationFactory,
+                @NotNull DataContext dataContext,
+                @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction) {
     this(isInModalContext, presentationFactory, dataContext, place, isContextMenuAction, isToolbarAction, null, null);
   }
 
   ActionUpdater(boolean isInModalContext,
-                PresentationFactory presentationFactory,
-                DataContext dataContext,
-                String place,
+                @NotNull PresentationFactory presentationFactory,
+                @NotNull DataContext dataContext,
+                @NotNull String place,
                 boolean isContextMenuAction,
                 boolean isToolbarAction,
                 @Nullable Function<AnActionEvent, AnActionEvent> eventTransform,
                 @Nullable Consumer<Runnable> laterInvocator) {
     myProject = CommonDataKeys.PROJECT.getData(dataContext);
     myModalContext = isInModalContext;
-    myFactory = presentationFactory;
+    myPresentationFactory = presentationFactory;
     myDataContext = dataContext;
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
@@ -114,7 +114,7 @@ final class ActionUpdater {
       action -> updateActionReal(action, myEventTransform == null ? Op.update : Op.beforeActionPerformedUpdate),
       group -> callAction(group, Op.getChildren, () -> group.getChildren(createActionEvent(group, orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
-    myCheapStrategy = new UpdateStrategy(myFactory::getPresentation, group -> group.getChildren(null), group -> true);
+    myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
     LOG.assertTrue(myEventTransform == null || ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
                    ActionPlaces.MOUSE_SHORTCUT.equals(myPlace), "beforeActionPerformed requested in '" + myPlace + "'");
@@ -129,7 +129,7 @@ final class ActionUpdater {
   private Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
     if (myPreCacheSlowDataKeys) ReadAction.run(this::ensureSlowDataKeysPreCached);
     // clone the presentation to avoid partially changing the cached one if update is interrupted
-    Presentation presentation = computeOnEdt(() -> myFactory.getPresentation(action).clone());
+    Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!isBeforePerformed) presentation.setEnabledAndVisible(true); // todo investigate and remove this line
     Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(action, presentation), isBeforePerformed);
@@ -140,7 +140,7 @@ final class ActionUpdater {
   void applyPresentationChanges() {
     for (Map.Entry<AnAction, Presentation> entry : myUpdatedPresentations.entrySet()) {
       AnAction action = entry.getKey();
-      Presentation orig = myFactory.getPresentation(action);
+      Presentation orig = myPresentationFactory.getPresentation(action);
       Presentation copy = entry.getValue();
       if (action instanceof CustomComponentAction) {
         // toolbar may have already created a custom component, do not erase it
@@ -445,7 +445,7 @@ final class ActionUpdater {
   }
 
   private Presentation orDefault(AnAction action, Presentation presentation) {
-    return presentation != null ? presentation : computeOnEdt(() -> myFactory.getPresentation(action));
+    return presentation != null ? presentation : myPresentationFactory.getPresentation(action).clone();
   }
 
   static @NotNull List<AnAction> removeUnnecessarySeparators(@NotNull List<? extends AnAction> visible) {
@@ -486,7 +486,7 @@ final class ActionUpdater {
   UpdateSession asFastUpdateSession(@Nullable Consumer<? super String> missedKeys,
                                     @Nullable Consumer<Runnable> laterInvocator) {
     DataContext frozenContext = Utils.freezeDataContext(myDataContext, missedKeys);
-    ActionUpdater updater = new ActionUpdater(myModalContext, myFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
+    ActionUpdater updater = new ActionUpdater(myModalContext, myPresentationFactory, frozenContext, myPlace, myContextMenuAction, myToolbarAction,
                                               myEventTransform, Objects.requireNonNull(ObjectUtils.coalesce(laterInvocator, myLaterInvocator)));
     updater.myPreCacheSlowDataKeys = false;
     return updater.asUpdateSession();

@@ -4,15 +4,16 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class PresentationFactory {
-  private final Map<AnAction, Presentation> actionToPresentation = new WeakHashMap<>();
+  private final Map<AnAction, Presentation> myPresentations = ContainerUtil.createConcurrentWeakMap();
   private boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
@@ -22,13 +23,12 @@ public class PresentationFactory {
   }
 
   public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Presentation presentation = actionToPresentation.get(action);
+    Presentation presentation = myPresentations.get(action);
     if (presentation == null || !action.isDefaultIcon()) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
         presentation = templatePresentation.clone();
-        actionToPresentation.put(action, presentation);
+        presentation = ObjectUtils.notNull(myPresentations.putIfAbsent(action, presentation), presentation);
       }
       if (!action.isDefaultIcon()) {
         presentation.setIcon(templatePresentation.getIcon());
@@ -44,7 +44,7 @@ public class PresentationFactory {
 
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    actionToPresentation.clear();
+    myPresentations.clear();
     myNeedRebuild = true;
   }
 
