@@ -11,7 +11,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 
 @CompileStatic
 final class KotlinPluginArtifact {
@@ -34,24 +33,42 @@ final class KotlinPluginArtifact {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText) {
+    if (result == oldText && !oldText.contains(newText)) {
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
   }
 
-  private void patchPluginXml(String kotlinPluginVersion, String sinceBuild, String untilBuild, KotlinPluginKind kind) {
+  Path jpsOutPluginXml(KotlinPluginKind kind) {
     def pluginXml = "production/${kind.pluginXmlModuleName}/META-INF/plugin.xml"
     Path jpsOutPluginXml = Paths.get("$context.projectOutputDirectory/$pluginXml")
     if (!Files.exists(jpsOutPluginXml)) {
+      context.messages.info("jpsOutPluginXml=$jpsOutPluginXml doesn't exist")
       jpsOutPluginXml = Paths.get("$context.paths.buildOutputRoot/$CompilationContextImpl.CLASSES_DIR_NAME/$pluginXml")
     }
     if (!Files.exists(jpsOutPluginXml)) {
       throw new IllegalStateException("jpsOutPluginXml=$jpsOutPluginXml doesn't exist!")
     }
+    return jpsOutPluginXml
+  }
+
+  Path srcPluginXml(KotlinPluginKind kind) {
     Path srcPluginXml = Paths.get("$context.paths.projectHome/${kind.pluginXmlContentRoot}/META-INF/plugin.xml")
-    if (!Files.exists(srcPluginXml)) throw new IllegalStateException("srcPluginXml=$srcPluginXml doesn't exist!")
-    Files.copy(srcPluginXml, jpsOutPluginXml, StandardCopyOption.REPLACE_EXISTING)
+    if (!Files.exists(srcPluginXml)) {
+      def pluginXmlContentRoot = kind.pluginXmlContentRoot
+      if (pluginXmlContentRoot.startsWith('community/')) {
+        pluginXmlContentRoot = kind.pluginXmlContentRoot.replaceFirst('community', '')
+      }
+      srcPluginXml = context.paths.communityHomeDir.resolve("$pluginXmlContentRoot/META-INF/plugin.xml")
+    }
+    if (!Files.exists(srcPluginXml)) {
+      throw new IllegalStateException("srcPluginXml=$srcPluginXml doesn't exist!")
+    }
+    return srcPluginXml
+  }
+
+  private void patchPluginXml(String kotlinPluginVersion, String sinceBuild, String untilBuild, KotlinPluginKind kind) {
+    def jpsOutPluginXml = jpsOutPluginXml(kind)
 
     switch (kind) {
       case KotlinPluginKind.AC:
