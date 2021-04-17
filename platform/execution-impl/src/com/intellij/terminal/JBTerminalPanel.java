@@ -266,7 +266,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
   @Override
   protected Font getFontToDisplay(char c, TextStyle style) {
-    FontInfo fontInfo = fontForChar(c, style.hasOption(TextStyle.Option.BOLD) ? Font.BOLD : Font.PLAIN);
+    int fontStyle = Font.PLAIN;
+    if (style.hasOption(TextStyle.Option.BOLD)) {
+      fontStyle |= Font.BOLD;
+    }
+    if (style.hasOption(TextStyle.Option.ITALIC)) {
+      fontStyle |= Font.ITALIC;
+    }
+    FontInfo fontInfo = fontForChar(c, fontStyle);
     return fontInfo.getFont();
   }
 
