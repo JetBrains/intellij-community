@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,6 +45,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeTargetUI;
+import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseButton;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -102,7 +103,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
   private boolean myShowBalloonIfNecessary;
   @Nullable
-  private TextFieldWithBrowseButton myGradleHomePathField;
+  private TargetPathFieldWithBrowseButton myGradleHomePathField;
   @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
   private JPanel myGradlePanel;
   @Nullable
@@ -329,12 +330,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleDistributionComboBox.setRenderer(new MyItemCellRenderer<>());
 
     myGradleDistributionHint = new JBLabel();
-
-    myGradleHomePathField = new TextFieldWithBrowseButton();
-    myGradleHomePathField.addBrowseFolderListener("", GradleBundle.message("gradle.settings.text.home.path"), null,
-                                                  GradleUtil.getGradleHomeFileChooserDescriptor(),
-                                                  TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-
+    myGradleHomePathField = new TargetPathFieldWithBrowseButton();
     myGradleDistributionHint.setLabelFor(myGradleHomePathField);
 
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
@@ -594,6 +590,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
+      GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(), GradleBundle.message("gradle.settings.text.home.path"));
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
       myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     }

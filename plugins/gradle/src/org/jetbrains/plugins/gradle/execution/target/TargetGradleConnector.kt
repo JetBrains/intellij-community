@@ -47,6 +47,11 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
     return this
   }
 
+  fun useInstallation(gradleHome: String): GradleConnector {
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(File(gradleHome)), gradleHome)
+    return this
+  }
+
   override fun useGradleVersion(gradleVersion: String?): GradleConnector {
     distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleVersion))
     return this

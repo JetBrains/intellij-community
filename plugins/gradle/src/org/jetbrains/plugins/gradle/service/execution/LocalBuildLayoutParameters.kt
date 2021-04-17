@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.isDirectory
@@ -8,6 +9,7 @@ import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
 import org.gradle.wrapper.WrapperConfiguration
+import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
@@ -19,12 +21,12 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 internal open class LocalBuildLayoutParameters(private val project: Project,
-                                               private val projectPath: String) : BuildLayoutParameters {
-  override val gradleHome: String? by lazy { findGradleHome() }
+                                               private val projectPath: String?) : BuildLayoutParameters {
+  override val gradleHome: TargetValue<String>? by lazy { findGradleHome()?.let { TargetValue.fixed(it) } }
   override val gradleVersion: GradleVersion? by lazy { guessGradleVersion() }
-  override val gradleUserHome: String by lazy { findGradleUserHomeDir() }
+  override val gradleUserHome: TargetValue<String> by lazy { TargetValue.fixed(findGradleUserHomeDir()) }
 
-  protected open fun getGradleProjectSettings() = getGradleSettings().getLinkedProjectSettings(projectPath)
+  protected open fun getGradleProjectSettings() = projectPath?.let { getGradleSettings().getLinkedProjectSettings(it) }
   private fun getGradleSettings() = GradleSettings.getInstance(project)
 
   private val wrapperConfiguration: WrapperConfiguration? by lazy {
@@ -46,7 +48,8 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     if (distributionType == DistributionType.WRAPPED) return GradleLocalSettings.getInstance(project).getGradleHome(projectPath)
 
     if (wrapperConfiguration == null) return null
-    val localDistribution = PathAssembler(File(gradleUserHome)).getDistribution(wrapperConfiguration)
+    val localGradleUserHome = gradleUserHome.maybeGetLocalValue() ?: return null
+    val localDistribution = PathAssembler(File(localGradleUserHome)).getDistribution(wrapperConfiguration)
     val distributionDir = localDistribution.distributionDir ?: return null
     if (!distributionDir.exists()) return null
     try {
@@ -67,12 +70,12 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     when (distributionType) {
       DistributionType.BUNDLED -> return GradleVersion.current()
       DistributionType.LOCAL -> {
-        return GradleInstallationManager.getGradleVersion(gradleHome)?.run {
+        return GradleInstallationManager.getGradleVersion(gradleHome?.maybeGetLocalValue())?.run {
           GradleInstallationManager.getGradleVersionSafe(this)
         }
       }
       DistributionType.DEFAULT_WRAPPED -> {
-        val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)?.run {
+        val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHome?.maybeGetLocalValue())?.run {
           GradleInstallationManager.getGradleVersionSafe(this)
         }
         if (gradleVersion == null) {
@@ -90,8 +93,12 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     return null
   }
 
-  private fun findGradleUserHomeDir(): String =
-    getGradleSettings().serviceDirectoryPath ?: org.gradle.initialization.BuildLayoutParameters().gradleUserHomeDir.path
+  private fun findGradleUserHomeDir(): String {
+    if (projectPath == null) return defaultGradleUserHome()
+    return getGradleSettings().serviceDirectoryPath ?: defaultGradleUserHome()
+  }
+
+  private fun defaultGradleUserHome() = org.gradle.initialization.BuildLayoutParameters().gradleUserHomeDir.path
 
   companion object {
     private val log = logger<LocalGradleExecutionAware>()
