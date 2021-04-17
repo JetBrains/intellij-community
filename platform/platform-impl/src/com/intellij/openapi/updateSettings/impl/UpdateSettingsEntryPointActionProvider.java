@@ -37,7 +37,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
   private static final String NEXT_RUN_KEY_VERSION = "NextRunPlatformUpdateVersion";
 
   private static @Nullable String myNextRunPlatformUpdateVersion;
-  private static @Nullable CheckForUpdateResult.Loaded myPlatformUpdateInfo;
+  private static @Nullable PlatformUpdates.Loaded myPlatformUpdateInfo;
   private static @Nullable Collection<? extends IdeaPluginDescriptor> myIncompatiblePlugins;
 
   private static @Nullable Collection<PluginDownloader> myUpdatedPlugins;
@@ -126,7 +126,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
     SettingsEntryPointAction.updateState(IconState.Current);
   }
 
-  public static void newPlatformUpdate(@NotNull CheckForUpdateResult.Loaded platformUpdateInfo,
+  public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
                                        @NotNull List<PluginDownloader> updatedPlugins,
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
     setPlatformUpdateInfo(platformUpdateInfo);
@@ -134,7 +134,7 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
     SettingsEntryPointAction.updateState(IconState.ApplicationUpdate);
   }
 
-  private static void setPlatformUpdateInfo(@Nullable CheckForUpdateResult.Loaded platformUpdateInfo) {
+  private static void setPlatformUpdateInfo(@Nullable PlatformUpdates.Loaded platformUpdateInfo) {
     myPlatformUpdateInfo = platformUpdateInfo;
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
@@ -200,34 +200,34 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Project project = e.getProject();
-          Pair<CheckForUpdateResult, InternalPluginResults> result = ProgressManager.getInstance()
+          Pair<PlatformUpdates, InternalPluginResults> result = ProgressManager.getInstance()
             .run(new Task.WithResult<>(project,
                                        IdeBundle.message("find.ide.update.title"),
                                        true) {
 
               @Override
-              protected @NotNull Pair<@NotNull CheckForUpdateResult, @Nullable InternalPluginResults> compute(@NotNull ProgressIndicator indicator) {
-                CheckForUpdateResult platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
+              protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable InternalPluginResults> compute(@NotNull ProgressIndicator indicator) {
+                PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
 
-                InternalPluginResults pluginResults = platformUpdates instanceof CheckForUpdateResult.Loaded ?
-                                                      getInternalPluginUpdates((CheckForUpdateResult.Loaded)platformUpdates, indicator) :
+                InternalPluginResults pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
+                                                      getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
                                                       null;
                 return Pair.create(platformUpdates,
                                    pluginResults);
               }
 
-              private @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull CheckForUpdateResult.Loaded loadedResult,
+              private @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                               @NotNull ProgressIndicator indicator) {
                 return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
                                                               indicator);
               }
             });
 
-          CheckForUpdateResult platformUpdateInfo = result.getFirst();
+          PlatformUpdates platformUpdateInfo = result.getFirst();
           InternalPluginResults pluginResults = result.getSecond();
-          if (platformUpdateInfo instanceof CheckForUpdateResult.Loaded &&
+          if (platformUpdateInfo instanceof PlatformUpdates.Loaded &&
               pluginResults != null) {
-            setPlatformUpdateInfo((CheckForUpdateResult.Loaded)platformUpdateInfo);
+            setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
             newPlatformUpdate(pluginResults.getPluginUpdates().getAll(),
                               pluginResults.getPluginNods(),
                               null);
@@ -235,8 +235,8 @@ final class UpdateSettingsEntryPointActionProvider implements SettingsEntryPoint
             UpdateSettingsEntryPointActionProvider.actionPerformed(project);
           }
           else {
-            if (platformUpdateInfo instanceof CheckForUpdateResult.ConnectionError) {
-              String errorMessage = ((CheckForUpdateResult.ConnectionError)platformUpdateInfo).getError().getMessage();
+            if (platformUpdateInfo instanceof PlatformUpdates.ConnectionError) {
+              String errorMessage = ((PlatformUpdates.ConnectionError)platformUpdateInfo).getError().getMessage();
               Messages.showErrorDialog(project,
                                        IdeBundle.message("updates.error.connection.failed", errorMessage),
                                        IdeBundle.message("find.ide.update.title"));

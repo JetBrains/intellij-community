@@ -12,7 +12,7 @@ class UpdateStrategyTest {
   @Test
   fun `channel contains no builds`() {
     val result = check("IU-145.258", ChannelStatus.RELEASE, """<channel id="IDEA_Release" status="release" licensing="release"/>""")
-    assertNull(result.newBuild)
+    assertTrue(result is PlatformUpdates.Empty)
   }
 
   @Test
@@ -24,7 +24,7 @@ class UpdateStrategyTest {
       <channel id="IDEA_Release" status="release" licensing="release">
         <build number="145.258" version="2016.1"/>
       </channel>""")
-    assertNull(result.newBuild)
+    assertTrue(result is PlatformUpdates.Empty)
   }
 
   @Test fun `patch exclusions`() {
@@ -92,7 +92,7 @@ class UpdateStrategyTest {
         <build number="145.258" version="2016.1"/>
       </channel>"""
     assertBuild("145.258", assertLoaded("IU-145.256", ChannelStatus.RELEASE, channels).newBuild)
-    assertNull(check("IU-145.258", ChannelStatus.RELEASE, channels).newBuild)
+    assertTrue(check("IU-145.258", ChannelStatus.RELEASE, channels) is PlatformUpdates.Empty)
   }
 
   @Test fun `ignored updates are excluded`() {
@@ -184,7 +184,7 @@ class UpdateStrategyTest {
       </channel>"""
     assertBuild("162.11.10", assertLoaded("IU-145.597", ChannelStatus.RELEASE, channels).newBuild)
     assertBuild("162.11.10", assertLoaded("IU-162.7.23", ChannelStatus.RELEASE, channels).newBuild)
-    assertNull(check("IU-162.11.11", ChannelStatus.RELEASE, channels).newBuild)
+    assertTrue(check("IU-162.11.11", ChannelStatus.RELEASE, channels) is PlatformUpdates.Empty)
 
     val result = assertLoaded("IU-162.11.10", ChannelStatus.RELEASE, """
       <channel id="IDEA_Release" status="release" licensing="release">
@@ -287,7 +287,7 @@ class UpdateStrategyTest {
     selectedChannel: ChannelStatus,
     testData: String,
     ignoredBuilds: List<String> = emptyList(),
-  ): CheckForUpdateResult {
+  ): PlatformUpdates {
     val updatesInfoText = """
           <products>
             <product name="IntelliJ IDEA">
@@ -311,10 +311,10 @@ class UpdateStrategyTest {
     selectedChannel: ChannelStatus,
     testData: String,
     ignoredBuilds: List<String> = emptyList(),
-  ): CheckForUpdateResult.Loaded {
+  ): PlatformUpdates.Loaded {
     val result = check(currentBuild, selectedChannel, testData, ignoredBuilds)
-    assertThat(result is CheckForUpdateResult.Loaded)
-    return result as CheckForUpdateResult.Loaded
+    assertThat(result is PlatformUpdates.Loaded)
+    return result as PlatformUpdates.Loaded
   }
 
   private fun assertBuild(expected: String, build: BuildInfo) =

@@ -50,7 +50,7 @@ import static com.intellij.openapi.util.Pair.pair;
 public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private final @Nullable Project myProject;
-  private final @NotNull CheckForUpdateResult.Loaded myLoadedResult;
+  private final @NotNull PlatformUpdates.Loaded myLoadedResult;
   private final @Nullable Collection<PluginDownloader> myUpdatedPlugins;
   private final boolean myWriteProtected;
   private final @Nullable Pair<@NlsContexts.Label String, Boolean> myLicenseInfo;
@@ -58,7 +58,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final @Nullable AbstractAction myWhatsNewAction;
 
   public UpdateInfoDialog(@Nullable Project project,
-                          @NotNull CheckForUpdateResult.Loaded loadedResult,
+                          @NotNull PlatformUpdates.Loaded loadedResult,
                           boolean enableLink,
                           @Nullable Collection<PluginDownloader> updatedPlugins,
                           @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
@@ -83,7 +83,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @SuppressWarnings("HardCodedStringLiteral")
   UpdateInfoDialog(@Nullable Project project,
-                   @NotNull CheckForUpdateResult.Loaded loadedResult,
+                   @NotNull PlatformUpdates.Loaded loadedResult,
                    @Nullable File patchFile) {
     super(true);
     myProject = project;
@@ -104,7 +104,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     setTitle("[TEST] " + getTitle());
   }
 
-  private static @Nullable Pair<@NlsContexts.Label String, Boolean> getLicensingInfo(@NotNull CheckForUpdateResult.Loaded result) {
+  private static @Nullable Pair<@NlsContexts.Label String, Boolean> getLicensingInfo(@NotNull PlatformUpdates.Loaded result) {
     LicensingFacade la = LicensingFacade.getInstance();
     if (la == null) return null;
 
