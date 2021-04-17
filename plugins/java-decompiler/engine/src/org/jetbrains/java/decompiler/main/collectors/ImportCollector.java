@@ -62,10 +62,15 @@ public class ImportCollector {
         }
       }
 
+      StructClass preClass = currentClass;
       // .. and traverse through parent.
       currentClass = !queue.isEmpty() ? classes.get(queue.removeFirst()) : null;
       while (currentClass == null && !queue.isEmpty()) {
         currentClass = classes.get(queue.removeFirst());
+      }
+
+      if (preClass.equals(currentClass) && queue.isEmpty()) {
+        break;
       }
     }
   }
