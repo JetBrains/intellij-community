@@ -950,6 +950,195 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.getLatest());
   }
 
+  public void testPatternMatchingMatchAndCaseKeywordsFollowedByNamesakeIdentifiers() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeBinaryExpression() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithMultipleArguments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithSingleArgument() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeCallWithoutArguments() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchLooksLikeIndexing() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryFStringsInLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalNumericExpressionsInLiteralPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryNoPatternAfterCase() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalStatementsInsideMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleCapturePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleValuePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingValuePatternStartingWithUnderscore() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteValuePattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSingleWildcardPattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingGroupAndParenthesizedSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteGroupAndParenthesizedSequencePatterns() {
+    // XXX Missing statement breaks after "pass" here are odd
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingSequencePatternsInBrackets() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteSequencePatternsInBrackets() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoverySequencePatternsMissingCommas() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoverySequenceAndGroupPatternsFollowedByIllegalContent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIllegalExpressionInSequencePatternItem() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingStarPatternsInSequences() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryStarPatternMissingIdentifier() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryStarPatternFollowedByQualifiedReference() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMatchStatementFollowedByAnotherStatement() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInMappingPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryDoubleStarWildcardPattern() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInClassPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryClassPatternsFollowedByIllegalContent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraBarsInOrPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingAsPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteAsPatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryAsPatternAsOrPatternComponent() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryAsPatternsWithIllegalTarget() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingTopLevelSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryExtraCommasInTopLevelSequencePatterns() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingCaseGuards() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
+  public void testPatternMatchingRecoveryIncompleteCaseGuards() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

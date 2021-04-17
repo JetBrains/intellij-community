@@ -54,10 +54,6 @@ public class PyBlock implements ASTBlock {
                                                                             PyElementTypes.SET_LITERAL_EXPRESSION,
                                                                             PyElementTypes.SET_COMP_EXPRESSION);
 
-  private static final TokenSet ourBrackets = TokenSet.create(PyTokenTypes.LPAR, PyTokenTypes.RPAR,
-                                                              PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
-                                                              PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
-
   private static final TokenSet ourHangingIndentOwners = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                          PyElementTypes.LIST_COMP_EXPRESSION,
                                                                          PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -238,7 +234,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) &&
+          !PyTokenTypes.ALL_BRACES.contains(childType) &&
           childType != PyTokenTypes.COMMA &&
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         childWrap = Wrap.createWrap(WrapType.NORMAL, true);
@@ -331,7 +327,7 @@ public class PyBlock implements ASTBlock {
              !hasLineBreaksBeforeInSameParent(myNode.getFirstChildNode(), 1) &&
              !ourListElementTypes.contains(childType)) {
 
-      if (!ourBrackets.contains(childType)) {
+      if (!PyTokenTypes.ALL_BRACES.contains(childType)) {
         childAlignment = getAlignmentForChildren();
         if (parentType != PyElementTypes.CALL_EXPRESSION) {
           childIndent = Indent.getNormalIndent();
