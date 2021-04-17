@@ -71,15 +71,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     else environmentConfiguration.createEnvironmentFactory(project)
 
     environmentConfiguration.runtimes.findByType(GradleRuntimeTargetConfiguration::class.java)?.homePath?.nullize(true)?.also {
-      val localGradleHomePath = it
-      val targetGradleHomePath: String
-      if (targetPathMapper?.canReplaceLocal(localGradleHomePath) == true) {
-        targetGradleHomePath = targetPathMapper.convertToRemote(localGradleHomePath)
-      }
-      else {
-        targetGradleHomePath = localGradleHomePath
-      }
-      targetBuildParametersBuilder.useInstallation(targetGradleHomePath)
+      targetBuildParametersBuilder.useInstallation(it)
     }
 
     progressIndicator.checkCanceled()
@@ -214,13 +206,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
         val localJavaHomePath = consumerOperationParameters.javaHome.path
-        val targetJavaHomePath: String
-        if (targetPathMapper?.canReplaceLocal(localJavaHomePath) == true) {
-          targetJavaHomePath = targetPathMapper.convertToRemote(localJavaHomePath)
-        }
-        else {
-          targetJavaHomePath = localJavaHomePath
-        }
+        val targetJavaHomePath = targetPathMapper.maybeConvertToRemote(localJavaHomePath)
         val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration().apply { homePath = targetJavaHomePath }
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }

@@ -35,8 +35,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleBundle.PATH_TO_BUNDLE
+import org.jetbrains.plugins.gradle.util.GradleEnvironment
+import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
+import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
 import java.io.File
 import java.lang.System.currentTimeMillis
 
@@ -64,6 +67,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     val targetEnvironmentConfiguration = localEnvironment() ?: return null
     return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
   }
+
+  override fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters = LocalBuildLayoutParameters(project, null)
 
   override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters =
     LocalBuildLayoutParameters(project, projectPath)

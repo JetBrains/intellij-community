@@ -17,6 +17,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo.Resolved
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.pom.Navigatable
@@ -65,6 +66,12 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
   override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
     val projectPath = runConfiguration.settings.externalProjectPath
     return resolveWslDistribution(projectPath) != null
+  }
+
+  override fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters? {
+    val projectLocation = project.guessProjectDir()?.path ?: return null
+    val wslDistribution = resolveWslDistribution(projectLocation) ?: return null
+    return WslBuildLayoutParameters(wslDistribution, project, null)
   }
 
   override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? {

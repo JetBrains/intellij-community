@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -224,8 +225,9 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
     LibraryData data = new LibraryData(GradleConstants.SYSTEM_ID, artifactCoordinates);
     data.addPath(LibraryPathType.BINARY, VfsUtil.getLocalFile(classesFile).getPath());
     BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project, projectPath);
-    File gradleUserHome = new File(buildLayoutParameters.getGradleUserHome());
-    attachSourcesAndJavadocFromGradleCacheIfNeeded(gradleUserHome, data);
+    String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+    if (gradleUserHome == null) return null;
+    attachSourcesAndJavadocFromGradleCacheIfNeeded(new File(gradleUserHome), data);
     Iterator<String> iterator = data.getPaths(LibraryPathType.SOURCE).iterator();
     return iterator.hasNext() ? new File(iterator.next()) : null;
   }

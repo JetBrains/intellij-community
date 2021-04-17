@@ -33,15 +33,7 @@ internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>,
   protected fun runWithHandler(handler: ResultHandler<Any?>) {
     val gradleHomePath = connection.distribution.gradleHomePath
     if (gradleHomePath != null) {
-      val targetPathMapper = connection.environmentConfigurationProvider.pathMapper
-      val targetGradleHomePath: String
-      if (targetPathMapper?.canReplaceLocal(gradleHomePath) == true) {
-        targetGradleHomePath = targetPathMapper.convertToRemote(gradleHomePath)
-      }
-      else {
-        targetGradleHomePath = gradleHomePath
-      }
-      targetBuildParametersBuilder.useInstallation(targetGradleHomePath)
+      targetBuildParametersBuilder.useInstallation(gradleHomePath)
     }
     val classPathAssembler = GradleServerClasspathInferer()
     for (buildAction in buildActions) {

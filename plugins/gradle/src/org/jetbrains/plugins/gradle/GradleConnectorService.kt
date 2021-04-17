@@ -19,6 +19,7 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
+import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
 import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -199,9 +200,18 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       val gradleUserHome = if (connectorParams.serviceDirectory == null) null else File(connectorParams.serviceDirectory)
 
       if (connectorParams.distributionType == DistributionType.LOCAL) {
-        val gradleHome = if (connectorParams.gradleHome == null) null else File(connectorParams.gradleHome)
-        if (gradleHome != null) {
-          connector.useInstallation(gradleHome)
+        // GradleExecutionSettings.gradleHome contains the path in IDE "host" system file format for compatibility reasons
+        val localPathToGradleHome = connectorParams.gradleHome
+        if (localPathToGradleHome != null) {
+          if (connector is TargetGradleConnector) {
+            val targetPathMapper = connectorParams.environmentConfigurationProvider?.pathMapper
+            val targetGradleHomePath = targetPathMapper.maybeConvertToRemote(localPathToGradleHome)
+            // can not use system dependant java.io.File to pass the value to target Gradle runner i.e. GradleConnector#useInstallation(java.io.File)
+            connector.useInstallation(targetGradleHomePath)
+          }
+          else {
+            connector.useInstallation(File(localPathToGradleHome))
+          }
         }
       }
       else if (connectorParams.distributionType == DistributionType.WRAPPED) {

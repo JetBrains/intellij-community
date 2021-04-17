@@ -17,7 +17,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.gradle.util.GradleVersion;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.LocalBuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware;
@@ -133,25 +134,28 @@ public class GradleInstallationManager implements Disposable {
   @ApiStatus.Experimental
   @NotNull
   public static BuildLayoutParameters defaultBuildLayoutParameters(@NotNull Project project) {
-    VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
-    return getInstance().guessBuildLayoutParameters(project, projectDir == null ? "" : projectDir.getPath());
+    return getInstance().guessBuildLayoutParameters(project, null);
   }
 
   /**
-   * Tries to guess build layout parameters for the Gradle build located at {@code projectPath}
+   * Tries to guess build layout parameters for the Gradle build located at {@code projectPath}.
+   * Returns default parameters if {@code projectPath} is not passed in.
    */
+  @ApiStatus.Experimental
   @NotNull
-  public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @NotNull String projectPath) {
-    return myBuildLayoutParametersCache.computeIfAbsent(projectPath, path -> {
+  public BuildLayoutParameters guessBuildLayoutParameters(@NotNull Project project, @Nullable String projectPath) {
+    return myBuildLayoutParametersCache.computeIfAbsent(ObjectUtils.notNull(projectPath, project.getLocationHash()), p -> {
       for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
         if (!(executionAware instanceof GradleExecutionAware)) continue;
         GradleExecutionAware gradleExecutionAware = (GradleExecutionAware)executionAware;
-        BuildLayoutParameters buildLayoutParameters = gradleExecutionAware.getBuildLayoutParameters(project, path);
+        BuildLayoutParameters buildLayoutParameters = projectPath == null
+                                                      ? gradleExecutionAware.getDefaultBuildLayoutParameters(project)
+                                                      : gradleExecutionAware.getBuildLayoutParameters(project, projectPath);
         if (buildLayoutParameters != null) {
           return buildLayoutParameters;
         }
       }
-      return new LocalGradleExecutionAware().getBuildLayoutParameters(project, path);
+      return new LocalGradleExecutionAware().getBuildLayoutParameters(project, projectPath);
     });
   }
 
@@ -196,7 +200,7 @@ public class GradleInstallationManager implements Disposable {
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     if (project == null) return null;
     BuildLayoutParameters buildLayoutParameters = guessBuildLayoutParameters(project, linkedProjectPath);
-    String gradleHome = buildLayoutParameters.getGradleHome();
+    String gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
     return gradleHome != null ? new File(gradleHome) : null;
   }
 

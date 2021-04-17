@@ -8,5 +8,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface GradleExecutionAware : ExternalSystemExecutionAware {
   fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? = null
+  fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters? = null
   fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean = false
 }
