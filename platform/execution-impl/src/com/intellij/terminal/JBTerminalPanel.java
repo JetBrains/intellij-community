@@ -274,10 +274,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
       fontStyle |= Font.ITALIC;
     }
     FontInfo fontInfo = fontForChar(c, fontStyle);
-    return fontInfo.getFont();
+    return fontInfo.getFont().deriveFont((float)mySettingsProvider.getUiSettingsManager().getFontSize());
   }
 
-  public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
+  private @NotNull FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorsScheme().getConsoleFontPreferences(), null);
   }
 
@@ -295,7 +295,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
       if (newFontSize >= MIN_FONT_SIZE) {
-        mySettingsProvider.getUiSettingsManager().setConsoleFontSize(newFontSize);
+        mySettingsProvider.getUiSettingsManager().setFontSize(newFontSize);
       }
       return;
     }

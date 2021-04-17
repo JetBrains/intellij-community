@@ -7,9 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,11 +35,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
 
   private final TerminalUiSettingsManager myUiSettingsManager;
-  private final EditorColorsScheme myColorsScheme;
 
   public JBTerminalSystemSettingsProviderBase() {
     myUiSettingsManager = TerminalUiSettingsManager.getInstance();
-    myColorsScheme = myUiSettingsManager.getEditorColorsScheme();
   }
 
   @NotNull TerminalUiSettingsManager getUiSettingsManager() {
@@ -49,7 +45,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   @NotNull EditorColorsScheme getColorsScheme() {
-    return myColorsScheme;
+    return myUiSettingsManager.getEditorColorsScheme();
   }
 
   @Override
@@ -201,51 +197,42 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public float getLineSpacing() {
-    return myColorsScheme.getConsoleLineSpacing();
+    return getColorsScheme().getConsoleLineSpacing();
   }
 
   @Override
   public TextStyle getSelectionColor() {
-    return new TextStyle(TerminalColor.awt(myColorsScheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
-                         TerminalColor.awt(myColorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
+    return new TextStyle(TerminalColor.awt(getColorsScheme().getColor(EditorColors.SELECTION_FOREGROUND_COLOR)),
+                         TerminalColor.awt(getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR)));
   }
 
   @Override
   public TextStyle getFoundPatternColor() {
-    return new TextStyle(TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
-                         TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
+    return new TextStyle(TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getForegroundColor()),
+                         TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getHyperlinkColor() {
-    return new TextStyle(TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
-                         TerminalColor.awt(myColorsScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
+    return new TextStyle(TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getForegroundColor()),
+                         TerminalColor.awt(getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).getBackgroundColor()));
   }
 
   @Override
   public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> myColorsScheme.getDefaultForeground()),
-                         new TerminalColor(() -> myColorsScheme.getDefaultBackground()));
+    return new TextStyle(new TerminalColor(() -> myUiSettingsManager.getDefaultForeground()),
+                         new TerminalColor(() -> myUiSettingsManager.getDefaultBackground()));
   }
 
   @Override
   public Font getTerminalFont() {
-    return new Font(getFontName(), Font.PLAIN, (int)getTerminalFontSize());
-  }
-
-  public String getFontName() {
-    List<String> fonts = myColorsScheme.getConsoleFontPreferences().getEffectiveFontFamilies();
-
-    if (fonts.size() > 0) {
-      return fonts.get(0);
-    }
-
-    return "Monospaced-14";
+    Font font = getColorsScheme().getFont(EditorFontType.CONSOLE_PLAIN);
+    return font.deriveFont(getTerminalFontSize());
   }
 
   @Override
   public float getTerminalFontSize() {
-    return (float)myColorsScheme.getConsoleFontSize();
+    return (float)myUiSettingsManager.getFontSize();
   }
 
   @Override
