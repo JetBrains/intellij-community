@@ -262,6 +262,7 @@ public final class Utils {
                                     @NotNull String place,
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
+    component.removeAll();
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();
 
