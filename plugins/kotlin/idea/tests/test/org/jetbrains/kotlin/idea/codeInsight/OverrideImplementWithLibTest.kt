@@ -10,13 +10,17 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.idea.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
+import com.intellij.codeInsight.generation.ClassMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
 import org.junit.runner.RunWith
 
 @TestRoot("idea/tests")
 @TestDataPath("\$CONTENT_ROOT")
 @RunWith(JUnit38ClassRunner::class)
 @TestMetadata("testData/codeInsight/overrideImplement/withLib")
-class OverrideImplementWithLibTest : AbstractOverrideImplementTest() {
+class OldOverrideImplementWithLibTest : OverrideImplementWithLibTest<OverrideMemberChooserObject>(), OldOverrideImplementTestMixIn
+
+abstract class OverrideImplementWithLibTest<T : ClassMember> : AbstractOverrideImplementTest<T>() {
     private lateinit var mockLibraryFacility: MockLibraryFacility
 
     override fun setUp() {
