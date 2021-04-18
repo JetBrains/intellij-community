@@ -32,9 +32,10 @@ final class IdeHeartbeatEventReporter implements Disposable {
   private volatile long myPreviousLoggedUIResponse = 0;
 
   IdeHeartbeatEventReporter() {
-    boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
     ApplicationManager.getApplication().getMessageBus().connect(this)
       .subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
+        final boolean isDebugEnabled = DebugAttachDetector.isDebugEnabled();
+
         @Override
         public void uiFreezeFinished(long durationMs, @Nullable File reportDir) {
           if (!isDebugEnabled) {
@@ -55,12 +56,11 @@ final class IdeHeartbeatEventReporter implements Disposable {
         }
       });
 
-    boolean isEap = ApplicationManager.getApplication().isEAP();
-    if (isEap) {
+    if (ApplicationManager.getApplication().isEAP()) {
       myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("IDE Heartbeat", 1);
       myThread = myExecutor.scheduleWithFixedDelay(
         IdeHeartbeatEventReporter::recordHeartbeat,
-        0, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
+        TimeUnit.MINUTES.toMillis(5) /* don't execute during start-up */, UI_RESPONSE_LOGGING_INTERVAL_MS, TimeUnit.MILLISECONDS
       );
     }
     else {
@@ -91,7 +91,7 @@ final class IdeHeartbeatEventReporter implements Disposable {
     }
   }
 
-  public static final class UILatencyLogger extends CounterUsagesCollector {
+  static final class UILatencyLogger extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("performance", 60);
 
     private static final EventId2<Integer, Integer> HEARTBEAT = GROUP.registerEvent(
