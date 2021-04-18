@@ -17,7 +17,6 @@
 package com.intellij.coverage;
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,12 +34,10 @@ public interface CoverageSuiteListener {
   /**
    * Called <b>each time</b> before a coverage suite is opened, added to existing, selected, closed
    */
-  @RequiresEdt
   void beforeSuiteChosen();
 
   /**
    * Called <b>each time</b> after a coverage suite is opened, added to existing, selected, closed
    */
-  @RequiresEdt
   void afterSuiteChosen();
 }
