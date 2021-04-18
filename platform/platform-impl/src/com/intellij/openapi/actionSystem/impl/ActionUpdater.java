@@ -16,10 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -180,17 +177,7 @@ final class ActionUpdater {
       return adjustedCall.get();
     }
 
-    ProgressIndicator progress = Objects.requireNonNull(ProgressManager.getInstance().getProgressIndicator());
-
-    if (myTestDelayMillis > 0) {
-      long start = System.currentTimeMillis();
-      while (true) {
-        progress.checkCanceled();
-        if (System.currentTimeMillis() - start > myTestDelayMillis) break;
-        TimeoutUtil.sleep(1);
-      }
-    }
-
+    ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
       long start = System.currentTimeMillis();
       try {
@@ -281,6 +268,7 @@ final class ActionUpdater {
     Runnable runnable = () -> {
       indicator.checkCanceled();
       ensureSlowDataKeysPreCached();
+      if (myTestDelayMillis > 0) waitTheTestDelay();
       List<AnAction> result = expandActionGroup(group, hideDisabled, myRealUpdateStrategy);
       computeOnEdt(() -> {
         applyPresentationChanges();
@@ -315,6 +303,17 @@ final class ActionUpdater {
     ourPromises.clear();
     for (CancellablePromise<?> promise : copy) {
       promise.cancel();
+    }
+  }
+
+  private void waitTheTestDelay() {
+    if (myTestDelayMillis <= 0) return;
+    ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
+    long start = System.currentTimeMillis();
+    while (true) {
+      progress.checkCanceled();
+      if (System.currentTimeMillis() - start > myTestDelayMillis) break;
+      TimeoutUtil.sleep(1);
     }
   }
 
