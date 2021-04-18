@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpaces;
 

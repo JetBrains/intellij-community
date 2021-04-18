@@ -97,5 +97,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="library" name="zip-signer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
   </component>
 </module>

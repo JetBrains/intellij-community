@@ -330,6 +330,8 @@ class CommunityLibraryLicenses {
                        url: "http://source.android.com/").apache(),
     new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", url: "http://sourceforge.net/projects/iso-relax/").mit(),
     new LibraryLicense(name: "Jackson", libraryName: "jackson", url: "https://github.com/FasterXML/jackson").apache(),
+    new LibraryLicense(name: "jackson-jr-objects", libraryName: "jackson-jr-objects",
+                       url: "https://github.com/FasterXML/jackson-jr").apache(),
     new LibraryLicense(name: "Jackson Databind", libraryName: "jackson-databind",
                        url: "https://github.com/FasterXML/jackson-databind").apache(),
     new LibraryLicense(name: "Jackson Module Kotlin", libraryName: "jackson-module-kotlin",

@@ -1,13 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.gson.Gson;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
@@ -27,7 +28,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
@@ -89,7 +89,7 @@ public final class UITheme {
         }
       }
     }
-    return getProviderClassLoader().getResource(path);
+    return providerClassLoader.getResource(path);
   }
 
   public @Nullable InputStream getResourceAsStream(String path) {
@@ -104,18 +104,30 @@ public final class UITheme {
         }
       }
     }
-    return getProviderClassLoader().getResourceAsStream(path);
+    return providerClassLoader.getResourceAsStream(path);
   }
 
   private boolean isTempTheme() {
     return "Temp theme".equals(id);
   }
 
+  // caches classes - must be not extracted to util class
+  private static final NotNullLazyValue<JSON> JSON_READER = NotNullLazyValue.atomicLazy(() -> {
+    // .disable(JSON.Feature.PRESERVE_FIELD_ORDERING) - cannot be disabled, for unknown reason order is important
+    // for example, button label font color for light theme is not white, but black
+    return JSON.builder()
+      .enable(JSON.Feature.READ_ONLY)
+      .build();
+  });
+
   public static @NotNull UITheme loadFromJson(@NotNull InputStream stream,
                                               @NotNull @NonNls String themeId,
                                               @Nullable ClassLoader provider,
-                                              @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
-    UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+                                              @NotNull Function<? super String, String> iconsMapper)
+    throws IllegalStateException, IOException {
+
+    //UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
+    UITheme theme = JSON_READER.getValue().beanFrom(UITheme.class, stream);
     theme.id = themeId;
 
     if (provider != null) {
