@@ -399,7 +399,11 @@ final class ActionUpdater {
 
       boolean isPopup = actionGroup.isPopup(myPlace);
       boolean hasEnabled = false, hasVisible = false;
-      if (hideDisabled || isPopup) {
+
+      if (child instanceof AlwaysVisibleActionGroup) {
+        hasEnabled = hasVisible = true;
+      }
+      else if (hideDisabled || isPopup) {
         JBIterable<AnAction> childrenIterable = iterateGroupChildren(actionGroup, strategy);
         for (AnAction action : childrenIterable.take(100)) {
           if (action instanceof Separator) continue;
