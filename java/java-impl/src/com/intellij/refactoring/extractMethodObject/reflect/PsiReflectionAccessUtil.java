@@ -77,7 +77,7 @@ final class PsiReflectionAccessUtil {
     }
   }
 
-  @Contract(value = "null -> true")
+  @Contract("null -> true")
   public static boolean isQualifierAccessible(@Nullable PsiExpression qualifierExpression) {
     if (qualifierExpression == null) return true;
     PsiType type = qualifierExpression.getType();
@@ -118,7 +118,7 @@ final class PsiReflectionAccessUtil {
   @NotNull
   private static List<PsiType> getAllAssignableSupertypes(@NotNull PsiType from, @NotNull PsiType to) {
     Set<PsiType> types = new LinkedHashSet<>();
-    Queue<PsiType> queue = new LinkedList<>();
+    Queue<PsiType> queue = new ArrayDeque<>();
     queue.offer(from);
     while (!queue.isEmpty()) {
       PsiType type = queue.poll();
