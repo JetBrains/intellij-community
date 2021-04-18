@@ -15,7 +15,11 @@
       "selectionBackgroundInactive": "#0D293E",
       "selectionInactiveBackground": "#0D293E",
       "selectionForegroundInactive": "#BBBBBB",
-      "selectionInactiveForeground": "#BBBBBB"
+      "selectionInactiveForeground": "#BBBBBB",
+      "selectionBackground": {
+        "os.default": "#2F65CA",
+        "os.windows": "#4B6EAF"
+      }
     },
     "ActionButton": {
       "focusedBorderColor": "#5EACD0",
