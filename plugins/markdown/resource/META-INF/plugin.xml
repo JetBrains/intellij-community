@@ -147,6 +147,9 @@ Includes the following features:</p>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceDownloadLineMarkerProvider"/>
+
     <intentionAction>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
