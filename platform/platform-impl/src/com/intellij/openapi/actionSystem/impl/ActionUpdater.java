@@ -509,7 +509,6 @@ final class ActionUpdater {
     boolean isDumb = myProject != null && DumbService.getInstance(myProject).isDumb();
     return JBTreeTraverser.<AnAction>from(o -> {
       if (o == group) return null;
-      if (o instanceof AlwaysVisibleActionGroup) return null;
       if (isDumb && !o.isDumbAware()) return null;
       if (!(o instanceof ActionGroup)) return null;
       ActionGroup oo = (ActionGroup)o;
