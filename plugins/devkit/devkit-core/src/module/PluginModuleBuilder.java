@@ -87,6 +87,11 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
+  public boolean isAvailable() {
+    return true;
+  }
+
+  @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
     return sdk == IdeaJdk.getInstance();
   }
