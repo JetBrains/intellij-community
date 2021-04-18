@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -59,8 +60,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -103,22 +102,20 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationId);
     myNotificationGroup = registeredGroup != null ? registeredGroup : NotificationGroup.toolWindowGroup(notificationId, toolWindowId);
 
-    Predicate<ExternalSystemViewContributor> contributorPredicate =
+    Condition<ExternalSystemViewContributor> contributorPredicate =
       c -> ProjectSystemId.IDE.equals(c.getSystemId()) || myExternalSystemId.equals(c.getSystemId());
-    myViewContributors = Arrays.stream(ExternalSystemViewContributor.EP_NAME.getExtensions())
-      .filter(contributorPredicate)
-      .collect(Collectors.toList());
+    myViewContributors = ContainerUtil.filter(ExternalSystemViewContributor.EP_NAME.getExtensions(), contributorPredicate);
     ExternalSystemViewContributor.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (contributorPredicate.test(extension)) {
+        if (contributorPredicate.value(extension)) {
           myViewContributors.add(extension);
         }
       }
 
       @Override
       public void extensionRemoved(@NotNull ExternalSystemViewContributor extension, @NotNull PluginDescriptor pluginDescriptor) {
-        if (contributorPredicate.test(extension)) {
+        if (contributorPredicate.value(extension)) {
           myViewContributors.remove(extension);
         }
       }
@@ -191,7 +188,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
     busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-      boolean wasVisible = false;
+      boolean wasVisible;
 
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
@@ -213,16 +210,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    getShortcutsManager().addListener(() -> {
-      scheduleTaskAndRunConfigUpdate();
-    }, this);
+    getShortcutsManager().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
 
-    getTaskActivator().addListener(new ExternalSystemTaskActivator.Listener() {
-      @Override
-      public void tasksActivationChanged() {
-        scheduleTaskAndRunConfigUpdate();
-      }
-    }, this);
+    getTaskActivator().addListener(() -> scheduleTaskAndRunConfigUpdate(), this);
 
     busConnection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
@@ -285,12 +275,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
-        Disposer.register(this, new Disposable() {
-          @Override
-          public void dispose() {
-            ((ExternalSystemViewGearAction)gearAction).setView(null);
-          }
-        });
+        Disposer.register(this, () -> ((ExternalSystemViewGearAction)gearAction).setView(null));
       }
     }
     return group;
@@ -369,15 +354,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     });
   }
 
-  protected boolean isUnitTestMode() {
-    return ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  public static void invokeLater(Project p, Runnable r) {
+  private static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
   }
 
-  public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
+  private static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode()) {
       r.run();
     }
@@ -387,8 +368,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   @Override

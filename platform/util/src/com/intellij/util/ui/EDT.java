@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -16,7 +15,7 @@ import java.awt.*;
  * See {@link #updateEdt()} usage for the details
  */
 public final class EDT {
-  private static Thread myEventDispatchThread = null;
+  private static Thread myEventDispatchThread;
 
   private EDT() {
   }
@@ -35,7 +34,7 @@ public final class EDT {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Thread getEventDispatchThread() {
+  public static @NotNull Thread getEventDispatchThread() {
     return myEventDispatchThread;
   }
 
