@@ -17,6 +17,7 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.EmptyIcon;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class BranchActionGroup extends ActionGroup implements DumbAware, CustomIconProvider {
+public abstract class BranchActionGroup extends ActionGroup implements DumbAware, CustomIconProvider, AlwaysVisibleActionGroup {
 
   private boolean myIsFavorite;
   private LayeredIcon myIcon;
