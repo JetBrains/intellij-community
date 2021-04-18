@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
@@ -62,6 +63,11 @@ public final class UITheme {
   private String editorSchemeName;
   private SVGLoader.SvgElementColorPatcherProvider colorPatcher;
   private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+  private static final String OS_MACOS_KEY = "os.mac";
+  private static final String OS_WINDOWS_KEY = "os.windows";
+  private static final String OS_LINUX_KEY = "os.linux";
+  private static final String OS_DEFAULT_KEY = "os.default";
 
   private UITheme() { }
 
@@ -345,8 +351,12 @@ public final class UITheme {
   private static void apply(@NotNull UITheme theme, String key, Object value, UIDefaults defaults) {
     if (value instanceof Map) {
       @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>)value;
-      for (Map.Entry<String, Object> o : map.entrySet()) {
-        apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
+      if (isOSCustomization(map)) {
+        applyOSCustomizations(theme, map, key, defaults);
+      } else {
+        for (Map.Entry<String, Object> o : map.entrySet()) {
+          apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
+        }
       }
     }
     else {
@@ -374,6 +384,27 @@ public final class UITheme {
         defaults.put(key, value);
       }
     }
+  }
+
+  private static void applyOSCustomizations(@NotNull UITheme theme,
+                                            Map<String, Object> map,
+                                            String key,
+                                            UIDefaults defaults) {
+    String osKey = SystemInfo.isWindows ? OS_WINDOWS_KEY :
+                   SystemInfo.isMac ? OS_MACOS_KEY :
+                   SystemInfo.isLinux ? OS_LINUX_KEY : null;
+    if (osKey != null && map.containsKey(osKey)) {
+      apply(theme, key, map.get(osKey), defaults);
+    } else if (map.containsKey(OS_DEFAULT_KEY)) {
+      apply(theme, key, map.get(OS_DEFAULT_KEY), defaults);
+    }
+  }
+
+  private static boolean isOSCustomization(Map<String, Object> map) {
+    return map.containsKey(OS_MACOS_KEY)
+        || map.containsKey(OS_WINDOWS_KEY)
+        || map.containsKey(OS_LINUX_KEY)
+        || map.containsKey(OS_DEFAULT_KEY);
   }
 
   @SuppressWarnings("unchecked")
