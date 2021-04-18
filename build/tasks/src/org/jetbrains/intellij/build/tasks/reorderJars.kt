@@ -43,7 +43,14 @@ fun reorderJars(homeDir: Path,
                 logger: Logger) {
   val libDir = homeDir.resolve("lib")
 
-  val sourceToNames = readClassLoadingLog(PackageIndexBuilder::class.java.classLoader.getResourceAsStream("mac/class-report.txt")!!, homeDir)
+  val osName = System.getProperty("os.name")
+  val classifier = when {
+    osName.startsWith("windows", ignoreCase = true) -> "windows"
+    osName.startsWith("mac", ignoreCase = true) -> "mac"
+    else -> "linux"
+  }
+
+  val sourceToNames = readClassLoadingLog(PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!, homeDir)
   val coreClassLoaderFiles = computeAppClassPath(sourceToNames, libDir, antLibDir)
 
   logger.log(Logger.Level.INFO, "Reordering *.jar files in $homeDir")
