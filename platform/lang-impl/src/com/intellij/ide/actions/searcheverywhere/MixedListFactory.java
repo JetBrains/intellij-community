@@ -61,6 +61,8 @@ class MixedListFactory extends SEResultsListFactory {
   ListCellRenderer<Object> createListRenderer(SearchListModel model, SearchEverywhereHeader header) {
     return new ListCellRenderer<>() {
 
+      private final Map<String, ListCellRenderer<? super Object>> myRenderersCache = new HashMap<>();
+
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
@@ -72,7 +74,9 @@ class MixedListFactory extends SEResultsListFactory {
         Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
-          ListCellRenderer<? super Object> renderer = model.getRendererForIndex(index);
+          SearchEverywhereContributor<Object> contributor = model.getContributorForIndex(index);
+          assert contributor != null : "Null contributor is not allowed here";
+          ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
           //noinspection ConstantConditions
           component = SlowOperations.allowSlowOperations(
             () -> renderer.getListCellRendererComponent(list, value, index, isSelected, true)

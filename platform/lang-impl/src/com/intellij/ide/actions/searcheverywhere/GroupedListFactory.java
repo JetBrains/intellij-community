@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 
 class GroupedListFactory extends SEResultsListFactory {
   @Override
@@ -32,6 +34,8 @@ class GroupedListFactory extends SEResultsListFactory {
     GroupedSearchListModel groupedModel = (GroupedSearchListModel)model;
     return new ListCellRenderer<>() {
 
+      private final Map<String, ListCellRenderer<? super Object>> myRenderersCache = new HashMap<>();
+
       @Override
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
@@ -44,7 +48,8 @@ class GroupedListFactory extends SEResultsListFactory {
         Component component = SearchEverywhereClassifier.EP_Manager.getListCellRendererComponent(
           list, value, index, isSelected, cellHasFocus);
         if (component == null) {
-          ListCellRenderer<? super Object> renderer = groupedModel.getRendererForIndex(index);
+          assert contributor != null : "Null contributor is not allowed here";
+          ListCellRenderer<? super Object> renderer = myRenderersCache.computeIfAbsent(contributor.getSearchProviderId(), s -> contributor.getElementsRenderer());
           //noinspection ConstantConditions
           component = renderer.getListCellRendererComponent(list, value, index, isSelected, true);
         }

@@ -99,11 +99,6 @@ abstract class SearchListModel extends AbstractListModel<Object> {
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
-  @SuppressWarnings("unchecked")
-  public @Nullable ListCellRenderer<? super Object> getRendererForIndex(int index) {
-    return (ListCellRenderer<? super Object>)listElements.get(index).getRenderer();
-  }
-
   @NotNull
   public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT);
