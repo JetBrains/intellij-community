@@ -129,6 +129,7 @@ data class ProjectIndexingHistory(val project: Project) {
     var totalUpdatingTime: TimeNano,
     var updatingEnd: ZonedDateTime = updatingStart,
     var indexingDuration: Duration = Duration.ZERO,
+    var contentLoadingDuration: Duration = Duration.ZERO,
     var pushPropertiesDuration: Duration = Duration.ZERO,
     var indexExtensionsDuration: Duration = Duration.ZERO,
     var scanFilesDuration: Duration = Duration.ZERO,
