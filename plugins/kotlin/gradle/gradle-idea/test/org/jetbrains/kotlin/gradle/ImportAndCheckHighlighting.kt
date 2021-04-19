@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.PrintStream
 
@@ -41,6 +43,14 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
         importAndCheckHighlighting()
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.30+")
+    fun testKTIJ10023LibraryDependenciesCacheIOException() {
+        configureByFiles()
+        importProject()
+        checkHighligthingOnAllModules()
+    }
+
     private fun importAndCheckHighlighting(testLineMarkers: Boolean = true, checkWarnings: Boolean = true) {
         val files = configureByFiles()
         importProject()
@@ -55,7 +65,7 @@ class ImportAndCheckHighlighting : MultiplePluginVersionGradleImportingTestCase(
                 rootDisposable = testRootDisposable
             ) {
                 init {
-                  allowTreeAccessForAllFiles()
+                    allowTreeAccessForAllFiles()
                 }
             }
         )

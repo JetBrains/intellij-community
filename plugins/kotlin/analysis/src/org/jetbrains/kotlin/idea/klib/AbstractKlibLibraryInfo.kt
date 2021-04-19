@@ -10,10 +10,7 @@ import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
 import org.jetbrains.kotlin.idea.util.IJLoggerAdapter
 import org.jetbrains.kotlin.konan.file.File
-import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.ToolingSingleFileKlibResolveStrategy
-import org.jetbrains.kotlin.library.resolveSingleFileKlib
-import org.jetbrains.kotlin.library.uniqueName
+import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val libraryRoot: String) : LibraryInfo(project, library) {
@@ -30,7 +27,9 @@ abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val l
 
     abstract override val platform: TargetPlatform // must override
 
-    val uniqueName: String by lazy { resolvedKotlinLibrary.uniqueName }
+    val uniqueName: String? by lazy { resolvedKotlinLibrary.safeRead(null) { uniqueName } }
+
+    val isInterop: Boolean by lazy { resolvedKotlinLibrary.safeRead(null) { isInterop } == true }
 
     companion object {
         private val LOG = IJLoggerAdapter.getInstance(AbstractKlibLibraryInfo::class.java)

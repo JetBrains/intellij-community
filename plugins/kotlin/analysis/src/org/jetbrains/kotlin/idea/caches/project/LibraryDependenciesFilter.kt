@@ -35,7 +35,7 @@ internal object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : L
         if (!platform.isSharedNative()) return emptySet()
 
         return candidates.filterIsInstance<KlibLibraryDependencyCandidate>()
-            .filter { it.isInterop }
+            .filter { it.isInterop && it.uniqueName != null }
             .groupBy { it.uniqueName }
             .flatMapTo(mutableSetOf()) { (_, candidates) ->
                 val allCandidatePlatforms = candidates.mapTo(mutableSetOf()) { it.platform }

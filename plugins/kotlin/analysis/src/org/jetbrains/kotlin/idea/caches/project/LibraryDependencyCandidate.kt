@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.caches.project
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
-import org.jetbrains.kotlin.library.isInterop
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 internal sealed class LibraryDependencyCandidate {
@@ -19,7 +18,7 @@ internal sealed class LibraryDependencyCandidate {
                     platform = libraryInfo.platform,
                     libraries = libraryInfos,
                     uniqueName = libraryInfo.uniqueName,
-                    isInterop = libraryInfo.resolvedKotlinLibrary.isInterop
+                    isInterop = libraryInfo.isInterop
                 )
             }
 
@@ -39,7 +38,7 @@ internal data class DefaultLibraryDependencyCandidate(
 internal data class KlibLibraryDependencyCandidate(
     override val platform: TargetPlatform,
     override val libraries: List<LibraryInfo>,
-    val uniqueName: String,
+    val uniqueName: String?,
     val isInterop: Boolean
 ): LibraryDependencyCandidate()
 
