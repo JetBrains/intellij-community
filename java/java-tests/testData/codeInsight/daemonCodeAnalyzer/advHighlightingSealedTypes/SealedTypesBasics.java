@@ -29,3 +29,7 @@ enum ImplicitlySealedEnum {
 }
 
 <error descr="Modifier 'sealed' not allowed here">sealed</error> @interface MyAnnoType {}
+
+//records
+sealed interface IWithRecords permits WithRecords { }
+record WithRecords() implements IWithRecords {}
