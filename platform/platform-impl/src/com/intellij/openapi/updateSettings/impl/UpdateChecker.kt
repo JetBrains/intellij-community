@@ -72,6 +72,7 @@ object UpdateChecker {
   private var productDataCache: SoftReference<Result<Product?>>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
   private val ourShownNotifications = MultiMap<NotificationKind, Notification>()
+  private var machineIdInitialized = false
 
   /**
    * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
@@ -83,12 +84,6 @@ object UpdateChecker {
   init {
     UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
     UpdateRequestParameters.addParameter("uid", PermanentInstallationID.get())
-    if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false)) {
-      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
-      if (machineId != null) {
-        UpdateRequestParameters.addParameter(MACHINE_ID_PARAMETER, machineId)
-      }
-    }
     UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ExternalUpdateManager.ACTUAL != null) {
       val name = if (ExternalUpdateManager.ACTUAL == ExternalUpdateManager.TOOLBOX) "Toolbox" else ExternalUpdateManager.ACTUAL.toolName
@@ -160,6 +155,14 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
     callback: ActionCallback? = null,
   ) {
+    if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false) && !machineIdInitialized) {
+      machineIdInitialized = true
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      if (machineId != null) {
+        UpdateRequestParameters.addParameter(MACHINE_ID_PARAMETER, machineId)
+      }
+    }
+
     val updateSettings = customSettings ?: UpdateSettings.getInstance()
 
     val platformUpdates = getPlatformUpdates(updateSettings, indicator)
