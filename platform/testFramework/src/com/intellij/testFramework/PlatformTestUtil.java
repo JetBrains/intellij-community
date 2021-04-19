@@ -1145,7 +1145,7 @@ public final class PlatformTestUtil {
    * @param condition Check whether finished
    * @param timeoutInSeconds timeout in seconds
    */
-  private static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+  public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
     long start = System.currentTimeMillis();
     while (true) {
       try {
@@ -1156,6 +1156,25 @@ public final class PlatformTestUtil {
           break;
         }
         dispatchAllEventsInIdeEventQueue();
+        //noinspection BusyWait
+        Thread.sleep(10);
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
+  public static void waitForCondition(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
+    long start = System.currentTimeMillis();
+    while (true) {
+      try {
+        if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
+          fail(errorMessage);
+        }
+        if (condition.getAsBoolean()) {
+          break;
+        }
         //noinspection BusyWait
         Thread.sleep(10);
       }
