@@ -5,12 +5,12 @@ Though <code>guava Iterable API</code> provides functionality similar to <code>J
 Especially, primitive-specialized stream variants like <code>IntStream</code> are more performant than generic variants.
 <p><b>Example:</b></p>
 <code>
-List&lt&lt;String&gt&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);//warning: Pseudo functional style code
+List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);//warning: Pseudo functional style code
 </code>
 <p>After the quickfix the code would look like: 
   <code>List&lt;String&gt; transformedIterable = someList.stream().map(someTransformFunction).collect(Collectors.toList());</code></p>
 <br>
-<b>Note:</b> code semantic could be changed e.g., guava's <b>Iterable.transform</b> produces lazy-evaluated iterable, but the replacement is eager-evaluated.
+<b>Note:</b> code semantic could be changed e.g., guava's <code>Iterable.transform</code> produces lazy-evaluated iterable, but the replacement is eager-evaluated.
 <br>
 <!-- tooltip end -->
 <p>
