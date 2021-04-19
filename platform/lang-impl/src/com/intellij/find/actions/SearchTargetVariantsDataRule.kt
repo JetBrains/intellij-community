@@ -3,6 +3,8 @@ package com.intellij.find.actions
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.impl.searchTargets
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -16,10 +18,21 @@ import com.intellij.util.SmartList
  */
 class SearchTargetVariantsDataRule : GetDataRule {
 
+  private fun getSearchTargets(dataProvider: DataProvider): List<SearchTarget>? {
+    val file = CommonDataKeys.PSI_FILE.getData(dataProvider) ?: return null
+    val offset = CommonDataKeys.CARET.getData(dataProvider)?.offset ?: return null
+    try {
+      return searchTargets(file, offset)
+    }
+    catch (e: IndexNotReadyException) {
+      return null
+    }
+  }
+
   override fun getData(dataProvider: DataProvider): Any? {
     val allTargets = SmartList<TargetVariant>()
 
-    FindUsagesAction.SEARCH_TARGETS.getData(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
+    getSearchTargets(dataProvider)?.mapTo(allTargets, ::SearchTargetVariant)
 
     val usageTargets: Array<out UsageTarget>? = UsageView.USAGE_TARGETS_KEY.getData(dataProvider)
     if (usageTargets == null) {
@@ -32,7 +45,8 @@ class SearchTargetVariantsDataRule : GetDataRule {
             TargetElementUtil.getInstance().getTargetCandidates(reference).mapTo(allTargets, ::PsiTargetVariant)
           }
         }
-        catch (ignore: IndexNotReadyException) { }
+        catch (ignore: IndexNotReadyException) {
+        }
       }
     }
     else if (usageTargets.isNotEmpty()) {
