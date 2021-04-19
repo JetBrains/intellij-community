@@ -603,9 +603,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     }
     DfaValue result = runner.getFactory().getUnknown();
     if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
-      boolean isLong = PsiType.LONG.equals(type);
+      DfIntegralType dfType = PsiType.LONG.equals(type) ? LONG : INT;
       LongRangeBinOp binOp = JvmPsiRangeSetUtil.binOpFromToken(opSign);
-      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, isLong, binOp);
+      result = runner.getFactory().getBinOpFactory().create(dfaLeft, dfaRight, memState, dfType, binOp);
     }
     if (DfaTypeValue.isUnknown(result) && JavaTokenType.PLUS == opSign && TypeUtils.isJavaLangString(type)) {
       result = concatStrings(dfaLeft, dfaRight, memState, type, runner.getFactory());

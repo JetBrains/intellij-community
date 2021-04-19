@@ -7,8 +7,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +23,10 @@ import java.util.Objects;
 public final class DfaBinOpValue extends DfaValue {
   private final @NotNull DfaVariableValue myLeft;
   private final @NotNull DfaValue myRight;
-  private final boolean myLong;
+  private final @NotNull DfIntegralType myType;
   private final @NotNull LongRangeBinOp myOp;
 
-  private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, boolean isLong, @NotNull LongRangeBinOp op) {
+  private DfaBinOpValue(@NotNull DfaVariableValue left, @NotNull DfaValue right, @NotNull DfIntegralType type, @NotNull LongRangeBinOp op) {
     super(left.getFactory());
     switch (op) {
       case PLUS:
@@ -50,7 +49,7 @@ public final class DfaBinOpValue extends DfaValue {
     }
     myLeft = left;
     myRight = right;
-    myLong = isLong;
+    myType = type;
     myOp = op;
   }
 
@@ -66,13 +65,13 @@ public final class DfaBinOpValue extends DfaValue {
 
   @Override
   public DfaValue bindToFactory(@NotNull DfaValueFactory factory) {
-    return factory.getBinOpFactory().doCreate(myLeft.bindToFactory(factory), myRight.bindToFactory(factory), myLong, myOp);
+    return factory.getBinOpFactory().doCreate(myLeft.bindToFactory(factory), myRight.bindToFactory(factory), myType, myOp);
   }
 
   @NotNull
   @Override
   public DfIntegralType getDfType() {
-    return myLong ? DfTypes.LONG : DfTypes.INT;
+    return myType;
   }
 
   @Override
@@ -102,22 +101,32 @@ public final class DfaBinOpValue extends DfaValue {
 
   public static class Factory {
     private final DfaValueFactory myFactory;
-    private final Map<Pair<Long, LongRangeBinOp>, DfaBinOpValue> myValues = new HashMap<>();
+    private final Map<Trinity<Long, LongRangeBinOp, DfType>, DfaBinOpValue> myValues = new HashMap<>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
     }
 
-    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, LongRangeBinOp op) {
+    /**
+     * Create a new value as a result of applying binary operation op to left and right values
+     * @param left left value
+     * @param right right value
+     * @param state memory state
+     * @param resultType declared result type
+     * @param op operation to apply
+     * @return a value that represents a computation result. Could be DfaBinOpValue, DfaTypeValue, or DfaVariableValue
+     * depending on how result state is represented better.
+     */
+    public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, DfIntegralType resultType, LongRangeBinOp op) {
       if (op == null) return myFactory.getUnknown();
-      DfaValue value = doCreate(left, right, state, isLong, op);
+      DfaValue value = doCreate(left, right, state, resultType, op);
       if (value != null) {
         return value;
       }
       DfIntegralType leftType = ObjectUtils.tryCast(state.getDfType(left), DfIntegralType.class);
       DfIntegralType rightType = ObjectUtils.tryCast(state.getDfType(right), DfIntegralType.class);
       if (leftType == null || rightType == null) {
-        return myFactory.fromDfType(isLong ? DfTypes.LONG : DfTypes.INT);
+        return myFactory.fromDfType(resultType);
       }
       if (op == LongRangeBinOp.MUL) {
         if (LongRangeSet.point(1).equals(leftType.getRange())) return right;
@@ -134,7 +143,7 @@ public final class DfaBinOpValue extends DfaValue {
     }
 
     @Nullable
-    private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, LongRangeBinOp op) {
+    private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, DfIntegralType resultType, LongRangeBinOp op) {
       if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS && op != LongRangeBinOp.MOD) return null;
       DfType leftDfType = state.getDfType(left);
       Number leftConst = leftDfType.getConstantOfType(Number.class);
@@ -158,28 +167,28 @@ public final class DfaBinOpValue extends DfaValue {
         if (left instanceof DfaVariableValue && rightConst != null) {
           long divisor = rightConst.longValue();
           if (divisor > 1 && divisor <= Long.SIZE) {
-            return doCreate((DfaVariableValue)left, right, isLong, op);
+            return doCreate((DfaVariableValue)left, right, resultType, op);
           }
         }
         return null;
       }
       if (leftConst != null && (right instanceof DfaVariableValue || right instanceof DfaBinOpValue) && op == LongRangeBinOp.PLUS) {
-        return doCreate(right, left, state, isLong, op);
+        return doCreate(right, left, state, resultType, op);
       }
       if (left instanceof DfaVariableValue) {
         if (right instanceof DfaVariableValue) {
           if (op == LongRangeBinOp.PLUS && right.getID() > left.getID()) {
-            return doCreate((DfaVariableValue)right, left, isLong, op);
+            return doCreate((DfaVariableValue)right, left, resultType, op);
           }
-          return doCreate((DfaVariableValue)left, right, isLong, op);
+          return doCreate((DfaVariableValue)left, right, resultType, op);
         }
         if (rightConst != null) {
           long value = rightConst.longValue();
           if (value == 0) return left;
           if (op == LongRangeBinOp.MINUS) {
-            right = myFactory.fromDfType(isLong ? DfTypes.longValue(-value) : DfTypes.intValue(-(int)value));
+            right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(-value)));
           }
-          return doCreate((DfaVariableValue)left, right, isLong, LongRangeBinOp.PLUS);
+          return doCreate((DfaVariableValue)left, right, resultType, LongRangeBinOp.PLUS);
         }
       }
       if (left instanceof DfaBinOpValue) {
@@ -193,8 +202,8 @@ public final class DfaBinOpValue extends DfaValue {
               value2 = -value2;
             }
             long res = value1 + value2;
-            right = myFactory.fromDfType(isLong ? DfTypes.longValue(res) : DfTypes.intValue((int)res));
-            return create(sumValue.getLeft(), right, state, isLong, LongRangeBinOp.PLUS);
+            right = myFactory.fromDfType(resultType.meetRange(LongRangeSet.point(res)));
+            return create(sumValue.getLeft(), right, state, resultType, LongRangeBinOp.PLUS);
           }
         }
         if (op == LongRangeBinOp.MINUS && sumValue.getOperation() == LongRangeBinOp.PLUS) {
@@ -267,10 +276,10 @@ public final class DfaBinOpValue extends DfaValue {
     }
 
     @NotNull
-    private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, boolean isLong, LongRangeBinOp op) {
-      long hash = ((isLong ? 1L : 0L) << 63) | ((long)left.getID() << 32) | right.getID();
-      Pair<Long, LongRangeBinOp> key = Pair.create(hash, op);
-      return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, isLong, op));
+    private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, DfIntegralType resultType, LongRangeBinOp op) {
+      long hash = ((long)left.getID() << 32) | right.getID();
+      Trinity<Long, LongRangeBinOp, DfType> key = Trinity.create(hash, op, resultType);
+      return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, resultType, op));
     }
   }
 }

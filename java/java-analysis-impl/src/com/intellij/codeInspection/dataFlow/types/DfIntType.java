@@ -8,7 +8,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface DfIntType extends DfIntegralType {
+public interface DfIntType extends DfJvmIntegralType {
   @Override
   @NotNull
   LongRangeSet getRange();
