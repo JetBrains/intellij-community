@@ -306,10 +306,10 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 
 
 static bool is_watchable(const char* fs) {
-  // don't watch special and network filesystems
+  // do not watch special and network filesystems
   return !(strncmp(fs, "dev", 3) == 0 || strcmp(fs, "proc") == 0 || strcmp(fs, "sysfs") == 0 || strcmp(fs, MNTTYPE_SWAP) == 0 ||
-           (strncmp(fs, "fuse", 4) == 0 && strcmp(fs + 4, "blk") != 0 && strcmp(fs + 4, ".osxfs") != 0) ||
-           strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0|| strcmp(fs, "9p") == 0);
+           strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0 || strcmp(fs, "9p") == 0 ||
+           (strncmp(fs, "fuse", 4) == 0 && strcmp(fs + 4, "blk") != 0 && strcmp(fs + 4, ".osxfs") != 0));
 }
 
 static array* unwatchable_mounts() {
@@ -375,8 +375,11 @@ static void report_event(const char* event, const char* path) {
   }
 #pragma clang diagnostic pop
 
-  output(event, false);
-  output(copy, true);
+  fputs(event, stdout);
+  fputc('\n', stdout);
+  fwrite(copy, (p - copy), 1, stdout);
+  fputc('\n', stdout);
+  fflush(stdout);
 
   if (copy != path) {
     free(copy);
