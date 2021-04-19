@@ -38,6 +38,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -1684,6 +1686,25 @@ public final class HighlightUtil {
         .descriptionAndTooltip(JavaErrorBundle.message("record.component.cstyle.declaration")).create();
       QuickFixAction.registerQuickFixAction(info, new NormalizeRecordComponentFix(component));
       return info;
+    }
+    return null;
+  }
+
+  static HighlightInfo checkRecordAccessorReturnType(PsiRecordComponent component) {
+    String componentName = component.getName();
+    if (componentName == null) return null;
+    PsiTypeElement typeElement = component.getTypeElement();
+    if (typeElement == null) return null;
+    PsiClass containingClass = component.getContainingClass();
+    if (containingClass == null) return null;
+    PsiMethod[] methods = containingClass.findMethodsByName(componentName, false);
+    for (PsiMethod method : methods) {
+      if (method instanceof LightRecordMethod) {
+        List<HierarchicalMethodSignature> superSignatures =
+          PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method, method.getResolveScope()).getSuperSignatures();
+        MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
+        return HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, superSignatures, true, typeElement.getTextRange());
+      }
     }
     return null;
   }
