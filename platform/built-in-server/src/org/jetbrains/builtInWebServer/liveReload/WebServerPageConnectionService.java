@@ -5,11 +5,14 @@ import com.google.common.net.HttpHeaders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -27,8 +30,6 @@ import org.jetbrains.io.webSocket.WebSocketHandshakeHandler;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 /**
@@ -58,23 +59,12 @@ public final class WebServerPageConnectionService {
   private @Nullable ClientManager myServer;
   private @Nullable JsonRpcServer myRpcServer;
 
-  private final @NotNull AtomicInteger myClientsCount = new AtomicInteger(0);
-  private volatile @Nullable Disposable myListenerDisposable;
-  private final @NotNull AtomicInteger myTotalClientsCount = new AtomicInteger(0);
-  private final @NotNull Set<VirtualFile> myRequestedFilesWithoutReferrer = ConcurrentHashMap.newKeySet();
-  private final @NotNull Map<String, RequestedPage> myRequestedPages = new ConcurrentHashMap<>();
+  private final RequestedPagesState myState = new RequestedPagesState();
 
   private final @NotNull AsyncFileListener.ChangeApplier RELOAD_ALL = new AsyncFileListener.ChangeApplier() {
     @Override
     public void afterVfsChange() {
-      myRequestedFilesWithoutReferrer.clear();
-      Iterator<Map.Entry<String, RequestedPage>> iterator = myRequestedPages.entrySet().iterator();
-      while (iterator.hasNext()) {
-        Map.Entry<String, RequestedPage> next = iterator.next();
-        next.getValue().myClient.cancel(false);
-        iterator.remove();
-      }
-
+      myState.clear();
       ClientManager server = myServer;
       if (server != null) {
         server.send(-1, RELOAD_PAGE_MESSAGE.retainedDuplicate(), null);
@@ -86,6 +76,9 @@ public final class WebServerPageConnectionService {
     return ApplicationManager.getApplication().getService(WebServerPageConnectionService.class);
   }
 
+  /**
+   * @return suffix to add to requested file in response
+   */
   public @Nullable CharSequence fileRequested(@NotNull FullHttpRequest request,
                                               @NotNull Supplier<? extends VirtualFile> fileSupplier) {
     boolean isReloadRequest = false;
@@ -95,29 +88,17 @@ public final class WebServerPageConnectionService {
       isReloadRequest = decoder.parameters().containsKey(RELOAD_URL_PARAM);
     }
 
-    if (!isReloadRequest && myRequestedPages.isEmpty()) return null;
+    if (!isReloadRequest && myState.isEmpty()) return null;
 
     VirtualFile file = fileSupplier.get();
+
     if (!isReloadRequest && file != null) {
-      String referer = request.headers().get(HttpHeaders.REFERER);
-      RequestedPage requestedPage = null;
-      try {
-        URI refererUri = URI.create(referer);
-        String refererWithoutHost = refererUri.getPath() + "?" + refererUri.getQuery();
-        requestedPage = myRequestedPages.get(refererWithoutHost);
-      }
-      catch (Throwable ignore) {}
-      if (requestedPage != null) {
-        requestedPage.myFiles.add(file);
-      }
-      else {
-        myRequestedFilesWithoutReferrer.add(file);
-      }
+      myState.resourceRequested(request, file);
+      return null;
     }
     if (!isReloadRequest) return null;
 
-    int clientId = myTotalClientsCount.incrementAndGet();
-    myRequestedPages.put(uri, new RequestedPage(clientId, file));
+    int clientId = myState.pageRequested(uri, file);
 
     return new StringBuilder()
       .append("\n<script>\n")
@@ -135,23 +116,18 @@ public final class WebServerPageConnectionService {
     ClientManager server = myServer;
     if (server == null) return null;
 
-    Set<RequestedPage> affectedPages = new HashSet<>();
-    for (VirtualFile modifiedFile : modifiedFiles) {
-      if (myRequestedFilesWithoutReferrer.contains(modifiedFile)) {
-        return RELOAD_ALL;
-      }
-      for (RequestedPage requestedPage : myRequestedPages.values()) {
-        if (requestedPage.myFiles.contains(modifiedFile)) {
-          affectedPages.add(requestedPage);
-        }
-      }
+    if (myState.isRequestedFileWithoutReferrerModified(modifiedFiles)) {
+      return RELOAD_ALL;
     }
+
+    Set<CompletableFuture<WebSocketClient>> affectedClients = myState.collectAffectedPages(modifiedFiles);
+    if (affectedClients.isEmpty()) return null;
 
     return new AsyncFileListener.ChangeApplier() {
       @Override
       public void afterVfsChange() {
-        for (RequestedPage affectedPage : affectedPages) {
-          affectedPage.myClient.thenAccept(client -> {
+        for (CompletableFuture<WebSocketClient> clientFuture : affectedClients) {
+          clientFuture.thenAccept(client -> {
             client.send(RELOAD_PAGE_MESSAGE.retainedDuplicate());
           });
         }
@@ -160,36 +136,11 @@ public final class WebServerPageConnectionService {
   }
 
   private void clientConnected(@NotNull WebSocketClient client, int clientId) {
-    if (myClientsCount.incrementAndGet() == 1) {
-      Disposable disposable =
-        Disposer.newDisposable(ApplicationManager.getApplication(), WebServerFileContentListener.class.getSimpleName());
-      VirtualFileManager.getInstance().addAsyncFileListener(new WebServerFileContentListener(), disposable);
-      myListenerDisposable = disposable;
-    }
-
-    for (RequestedPage requestedPage : myRequestedPages.values()) {
-      if (requestedPage.myClientId == clientId) {
-        requestedPage.myClient.complete(client);
-        break;
-      }
-    }
+    myState.clientConnected(client, clientId);
   }
 
   private void clientDisconnected(@NotNull WebSocketClient client) {
-    if (myClientsCount.decrementAndGet() == 0) {
-      Disposer.dispose(Objects.requireNonNull(myListenerDisposable));
-      myListenerDisposable = null;
-    }
-    String requestedPageKey = null;
-    for (Map.Entry<String, RequestedPage> requestedPage : myRequestedPages.entrySet()) {
-      if (requestedPage.getValue().myClient.isDone() && requestedPage.getValue().myClient.getNow(null) == client) {
-        requestedPageKey = requestedPage.getKey();
-        break;
-      }
-    }
-    if (requestedPageKey != null) {
-      myRequestedPages.remove(requestedPageKey);
-    }
+    myState.clientDisconnected(client);
   }
 
   static final class WebServerPageRequestHandler extends WebSocketHandshakeHandler {
@@ -230,9 +181,125 @@ public final class WebServerPageConnectionService {
     }
   }
 
+  private static class RequestedPagesState {
+    private int myLastClientId = 0;
+    private final @NotNull Set<VirtualFile> myRequestedFilesWithoutReferrer = new HashSet<>();
+    private final @NotNull MultiMap<String, RequestedPage> myRequestedPages = new MultiMap<>();
+    private @Nullable Disposable myListenerDisposable = null;
+
+    public synchronized void clear() {
+      for (RequestedPage requestedPage : myRequestedPages.values()) {
+        requestedPage.myClient.cancel(false);
+      }
+      myRequestedPages.clear();
+      cleanupIfEmpty();
+    }
+
+    public synchronized void resourceRequested(@NotNull FullHttpRequest request, @NotNull VirtualFile file) {
+      String referer = request.headers().get(HttpHeaders.REFERER);
+      boolean associatedPageFound = false;
+      try {
+        URI refererUri = URI.create(referer);
+        String refererWithoutHost = refererUri.getPath() + "?" + refererUri.getQuery();
+        Collection<RequestedPage> pages = myRequestedPages.get(refererWithoutHost);
+        for (RequestedPage page : pages) {
+          page.myFiles.add(file);
+        }
+        associatedPageFound = !pages.isEmpty();
+      }
+      catch (Throwable ignore) {
+      }
+      if (!associatedPageFound) {
+        myRequestedFilesWithoutReferrer.add(file);
+      }
+    }
+
+    public synchronized int pageRequested(@NotNull String uri, @NotNull VirtualFile file) {
+      if (myRequestedPages.isEmpty()) {
+        if (myListenerDisposable == null) {
+          Disposable disposable =
+            Disposer.newDisposable(ApplicationManager.getApplication(), WebServerFileContentListener.class.getSimpleName());
+          VirtualFileManager.getInstance().addAsyncFileListener(new WebServerFileContentListener(), disposable);
+          myListenerDisposable = disposable;
+        }
+        else {
+          Logger.getInstance(RequestedPagesState.class).error("Listener already added");
+        }
+      }
+      myRequestedPages.putValue(uri, new RequestedPage(++myLastClientId, file));
+      return myLastClientId;
+    }
+
+    public synchronized void clientConnected(@NotNull WebSocketClient client, int clientId) {
+      RequestedPage requestedPage = ContainerUtil.find(myRequestedPages.values(), it -> it.myClientId == clientId);
+      if (requestedPage != null) {
+        requestedPage.myClient.complete(client);
+      }
+      else {
+        // possible if 'clear' happens between page is registered and connected
+        Logger.getInstance(WebServerPageConnectionService.class).info("Cannot find client for id = " + clientId);
+      }
+    }
+
+    public synchronized void clientDisconnected(@NotNull WebSocketClient client) {
+      String requestedPageKey = null;
+      RequestedPage requestedPage = null;
+      for (Map.Entry<String, Collection<RequestedPage>> entry : myRequestedPages.entrySet()) {
+        for (RequestedPage page : entry.getValue()) {
+          if (page.myClient.isDone() && page.myClient.getNow(null) == client) {
+            requestedPageKey = entry.getKey();
+            requestedPage = page;
+            break;
+          }
+        }
+      }
+
+      if (requestedPageKey != null) {
+        myRequestedPages.remove(requestedPageKey, requestedPage);
+      }
+      cleanupIfEmpty();
+    }
+
+    private void cleanupIfEmpty() {
+      if (myRequestedPages.isEmpty()) {
+        myRequestedFilesWithoutReferrer.clear();
+        if (myListenerDisposable != null) {
+          Disposer.dispose(Objects.requireNonNull(myListenerDisposable));
+          myListenerDisposable = null;
+        }
+        else {
+          Logger.getInstance(RequestedPagesState.class).error("Listener already disposed");
+        }
+      }
+    }
+
+    public synchronized boolean isRequestedFileWithoutReferrerModified(@NotNull List<VirtualFile> files) {
+      for (VirtualFile file : files) {
+        if (myRequestedFilesWithoutReferrer.contains(file)) return true;
+      }
+      return false;
+    }
+
+    public synchronized @NotNull Set<CompletableFuture<WebSocketClient>> collectAffectedPages(@NotNull List<VirtualFile> files) {
+      HashSet<CompletableFuture<WebSocketClient>> result = new HashSet<>();
+      for (VirtualFile modifiedFile : files) {
+        for (RequestedPage requestedPage : myRequestedPages.values()) {
+          if (requestedPage.myFiles.contains(modifiedFile)) {
+            result.add(requestedPage.myClient);
+          }
+        }
+      }
+      return result;
+    }
+
+    public synchronized boolean isEmpty() {
+      return myRequestedPages.isEmpty();
+    }
+  }
+
   private static class RequestedPage {
     private final int myClientId;
-    private final @NotNull Set<VirtualFile> myFiles = ConcurrentHashMap.newKeySet();
+    private final @NotNull Set<VirtualFile> myFiles = new HashSet<>();
     private final @NotNull CompletableFuture<WebSocketClient> myClient = new CompletableFuture<>();
 
     private RequestedPage(int clientId, @NotNull VirtualFile requestedPageFile) {
