@@ -21,15 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * @author Vladislav.Soroka
- */
-public class ExtraModelBuilderTest {
+public class VersionMatcherTest {
 
   @Test
   public void testVersionMatching() {
@@ -143,6 +141,10 @@ public class ExtraModelBuilderTest {
 
 
   private static boolean isMatching(String version, Class<?> aClass) {
-    return new ExtraModelBuilder(GradleVersion.version(version)).canBuild(aClass.getName());
+    final TargetVersions annotation = aClass.getAnnotation(TargetVersions.class);
+    if (annotation == null) {
+      return false;
+    }
+    return new VersionMatcher(GradleVersion.version(version)).isVersionMatch(annotation);
   }
 }
