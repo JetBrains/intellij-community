@@ -294,11 +294,13 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   @Throws(IOException::class)
-  fun <T> readOrUpdateFile(file: Path?,
-                           url: String,
-                           indicator: ProgressIndicator?,
-                           @Nls indicatorMessage: String,
-                           parser: (Reader) -> T): T {
+  fun <T> readOrUpdateFile(
+    file: Path?,
+    url: String,
+    indicator: ProgressIndicator?,
+    @Nls indicatorMessage: String,
+    parser: (Reader) -> T
+  ): T {
     val eTag = if (file == null) null else loadETagForFile(file)
     return HttpRequests
       .request(url)
