@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -156,7 +157,7 @@ public class RegistryUi implements Disposable {
       KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
   }
 
-  private final class RevertAction extends AnAction {
+  private final class RevertAction extends AnAction implements DumbAware {
 
     private RevertAction() {
       new ShadowAction(this, ActionManager.getInstance().getAction("EditorDelete"), myTable, RegistryUi.this);
@@ -185,7 +186,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private final class EditAction extends AnAction {
+  private final class EditAction extends AnAction implements DumbAware {
     private EditAction() {
       new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable, RegistryUi.this);
     }
