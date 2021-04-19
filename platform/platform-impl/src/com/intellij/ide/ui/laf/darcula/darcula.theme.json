@@ -19,6 +19,10 @@
       "selectionBackground": {
         "os.default": "#2F65CA",
         "os.windows": "#4B6EAF"
+      },
+      "selectionForeground": {
+        "os.default": "#bbbbbb",
+        "os.mac": "#ffffff"
       }
     },
     "ActionButton": {
@@ -32,7 +36,10 @@
       "cellBorderInsets": "1,12,1,12",
       "icon.gap": 6,
       "mnemonic.icon.gap": 4,
-      "mnemonicsBorderInsets": "0,8,1,6"
+      "mnemonicsBorderInsets": {
+        "os.default": "0,8,1,6",
+        "os.linux": "0,8,1,8"
+      }
     },
     "AssignedMnemonic": {
       "background": "#665632",
@@ -119,8 +126,8 @@
     },
     "EditorPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaEditorPaneUI",
     "EditorTabs": {
-    "tabInsets": "0,8,0,8",
-    "underlinedTabBackground": "#4E5254"
+      "tabInsets": "0,8,0,8",
+      "underlinedTabBackground": "#4E5254"
     },
     "FileView.fileIcon": "AllIcons.FileTypes.Unknown",
     "Focus.color": "ff0000",
@@ -131,13 +138,46 @@
     "FormattedTextFieldUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI",
     "Group.separatorColor": "#515151",
     "HelpTooltip": {
-    "defaultTextBorderInsets": "8,10,10,13",
-    "smallTextBorderInsets": "6,10,7,12",
-    "xOffset": 1,
-    "yOffset": 1
+      "defaultTextBorderInsets": "8,10,10,13",
+      "descriptionSizeDelta": {
+        "os.linux": -2,
+        "os.mac": -1
+      },
+      "fontSizeDelta": {
+        "os.linux": -2
+      },
+      "mouseCursorOffset": {
+        "os.mac": 17
+      },
+      "smallTextBorderInsets": "6,10,7,12",
+      "xOffset": 1,
+      "yOffset": 1
     },
     "Hyperlink.linkColor": "#589df6",
+    "InternalFrame": {
+      "border": {
+        "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalBorder"
+      },
+      "closeIcon": {
+        "os.windows": "AllIcons.Windows.CloseInactive"
+      },
+      "iconifyIcon": {
+        "os.windows": "AllIcons.Windows.MinimizeInactive"
+      },
+      "maximizeIcon": {
+        "os.windows": "AllIcons.Windows.MaximizeInactive"
+      },
+      "minimizeIcon": {
+        "os.windows": "AllIcons.Windows.RestoreInactive"
+      }
+    },
+    "InternalFrameUI": {
+      "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaInternalFrameUI"
+    },
     "Label": {
+      "disabledForeground": {
+        "os.windows": "#777777"
+      },
       "foreground": "#BBBBBB",
       "selectedForeground": "#BBBBBB"
     },
@@ -154,7 +194,10 @@
     },
     "ListUI": "com.intellij.ui.components.WideSelectionListUI",
     "Menu": {
-      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "border": {
+        "os.default": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+        "os.mac": "0,5,2,5"
+      },
       "borderColor": "#515151",
       "maxGutterIconWidth": 18,
       "opaque": true,
@@ -170,7 +213,10 @@
       "acceleratorDelimiter": "-",
       "acceleratorForeground": "#BBBBBB",
       "acceleratorSelectionForeground": "#BBBBBB",
-      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+      "border": {
+        "os.default": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
+        "os.mac": "0,5,2,5"
+      },
       "disabledForeground": "#777777",
       "maxGutterIconWidth": 18
     },
@@ -186,10 +232,32 @@
       "separatorWidth": 10
     },
     "OptionButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaOptionButtonUI",
-    "OptionPane.messageForeground": "#bbbbbb",
-    "PasswordField.background": "#45494A",
-    "PasswordField.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
+    "OptionPane": {
+      "messageForeground": "#bbbbbb",
+      "errorIcon":{
+        "os.windows": "AllIcons.General.ErrorDialog",
+        "os.linux": "AllIcons.General.ErrorDialog"
+      },
+      "warningIcon":{
+        "os.windows": "AllIcons.General.WarningDialog",
+        "os.linux": "AllIcons.General.WarningDialog"
+      },
+      "informationIcon":{
+        "os.windows": "AllIcons.General.InformationDialog",
+        "os.linux": "AllIcons.General.InformationDialog"
+      },
+      "questionIcon":{
+        "os.windows": "AllIcons.General.QuestionDialog",
+        "os.linux": "AllIcons.General.QuestionDialog"
+      }
+    },
+
+    "PasswordField": {
+      "background": "#45494A",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder"
+    },
     "PasswordFieldUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI",
+
     "Popup": {
       "Header.activeBackground": "#4a4e52",
       "Header.inactiveBackground": "#434649",
@@ -198,9 +266,34 @@
       "borderColor": "#616161",
       "inactiveBorderColor": "#565656"
     },
-    "PopupMenu.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-    "PopupMenu.translucentBackground": "#3c3f41",
+
+    "PopupMenu": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
+      "borderInsets": {
+        "os.mac": "4,0,4,0"
+      },
+      "borderWidth": {
+        "os.mac": 0
+      },
+      "translucentBackground": "#3c3f41"
+    },
+    "PopupMenuUI": {
+      "os.mac": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
+    },
+
+    "PopupMenuSeparator": {
+      "height": {
+        "os.mac": 12
+      },
+      "stripeWidth": {
+        "os.mac": 2
+      },
+      "stripeIndent": {
+        "os.mac": 5
+      }
+    },
     "PopupMenuSeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI",
+
     "ProgressBar": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
       "failedColor": "#e74848",
@@ -214,6 +307,7 @@
       "trackColor": "#555555"
     },
     "ProgressBarUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI",
+
     "RadioButton": {
       "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
       "borderInsets": "2,2,2,0",
@@ -222,11 +316,14 @@
       "darcula.selectionEnabledColor": "#aaaaaa",
       "darcula.selectionEnabledShadowColor": "#1e1e1e"
     },
+    "RadioButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI",
+
     "RadioButtonMenuItem.borderPainted": false,
     "RadioButtonMenuItemUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonMenuItemUI",
-    "RadioButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI",
+
     "ScrollBar.background": "#3F4244",
     "ScrollBarUI": "com.intellij.ui.components.JBScrollBar",
+
     "SearchEverywhere": {
       "Advertiser.background": "#45494a",
       "Advertiser.foreground": "#808080",
@@ -238,19 +335,32 @@
       "Tab.selectedBackground": "#555a5e",
       "Tab.selectedForeground": "#bbbbbb"
     },
+
     "Separator.separatorColor": "#515151",
     "SeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI",
+
     "Slider.tickColor": "#666666",
     "SliderUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI",
-    "Spinner.arrowButtonInsets": "1,1,1,1",
-    "Spinner.background": "#3c3f41",
-    "Spinner.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder",
-    "Spinner.editorBorderPainted": false,
+
+    "Spinner": {
+      "arrowButtonInsets": "1,1,1,1",
+      "background": "#3c3f41",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder",
+      "editorBorderPainted": false
+    },
     "SpinnerUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI",
+
     "SplitPane.highlight": "#3c3f41",
-    "StatusBar.LightEditBackground": "#2f475e",
-    "StatusBar.borderColor": "#464646",
-    "StatusBar.hoverBackground": "#4c5052",
+    "SplitPaneUI": {
+      "os.mac": "com.intellij.ide.ui.laf.darcula.ui.DarculaSplitPaneUI"
+    },
+
+    "StatusBar": {
+      "LightEditBackground": "#2f475e",
+      "borderColor": "#464646",
+      "hoverBackground": "#4c5052"
+    },
+
     "TabbedPane": {
       "contentAreaColor": "#323232",
       "disabledForeground": "#777777",
@@ -269,6 +379,7 @@
       "underlineColor": "#4A88C7"
     },
     "TabbedPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI",
+
     "Table": {
       "ascendingSortIcon": "AllIcons.General.ArrowUp",
       "cellNoFocusBorder": "2,3,2,3",
@@ -278,27 +389,44 @@
       "gridColor": "#4F5152",
       "rowHeight": 20
     },
-    "TableHeader.background": "#45484a",
-    "TableHeader.bottomSeparatorColor": "#333638",
-    "TableHeader.cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
-    "TableHeader.height": 25,
-    "TableHeader.separatorColor": "#333638",
+
+    "TableHeader": {
+      "background": "#45484a",
+      "bottomSeparatorColor": "#333638",
+      "cellBorder": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder",
+      "height": 25,
+      "separatorColor": "#333638"
+    },
     "TableHeaderUI": "com.intellij.ide.ui.laf.darcula.DarculaTableHeaderUI",
-    "TextArea.background": "#45494A",
-    "TextArea.selectionForeground": "#bbbbbb",
+
+    "TextArea": {
+      "background": "#45494A",
+      "selectionForeground": "#bbbbbb"
+    },
     "TextAreaUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextAreaUI",
-    "TextField.background": "#45494A",
-    "TextField.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
-    "TextField.disabledBackground": "#3c3f41",
+
+    "TextField": {
+      "background": "#45494A",
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder",
+      "disabledBackground": "#3c3f41"
+    },
     "TextFieldUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI",
+
     "TitledBorder.titleColor": "#bbbbbb",
+
     "ToggleButton.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter",
     "ToggleButtonUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI",
+
     "ToolTip": {
       "background": "#4b4d4d",
       "foreground": "#bfbfbf",
-      "infoForeground": "#919191"
+      "infoForeground": "#919191",
+      "paintBorder": {
+        "os.linux": true,
+        "os.windows": true
+      }
     },
+
     "ToolWindow": {
       "Header.background": "#3B4754",
       "Header.inactiveBackground": "#3C3F41",
@@ -306,6 +434,7 @@
       "HeaderTab.selectedBackground": "#313B45",
       "HeaderTab.selectedInactiveBackground": "#343638"
     },
+
     "Tree": {
       "border": "0,4,0,0",
       "collapsedIcon": "/com/intellij/ide/ui/laf/icons/darcula/treeCollapsed.svg",
@@ -319,6 +448,7 @@
       "rowHeight": 20
     },
     "TreeUI": "com.intellij.ui.tree.ui.DefaultTreeUI",
+
     "ValidationTooltip": {
       "errorBackground": "#593D41",
       "errorBorderColor": "#73454B",
@@ -326,6 +456,7 @@
       "warningBackground": "#594E32",
       "warningBorderColor": "#78550B"
     },
+
     "activeCaption": "#434E60",
     "control": "#3c3f41",
     "controlText": "#bbbbbb",
