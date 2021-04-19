@@ -110,7 +110,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  public ApplicationImpl(boolean isInternal, boolean isUnitTestMode, boolean isHeadless, boolean isCommandLine) {
+  public ApplicationImpl(boolean isInternal,
+                         boolean isUnitTestMode,
+                         boolean isHeadless,
+                         boolean isCommandLine) {
     super(null);
 
     registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
@@ -131,7 +134,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    mySaveAllowed = !(isUnitTestMode || isHeadless);
+    mySaveAllowed = !isUnitTestMode && !isHeadless;
 
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
@@ -166,47 +169,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Disposer.register(parentDisposable, () -> {
       AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
     });
-  }
-
-  // this constructor must be called only by ApplicationLoader
-  public ApplicationImpl(boolean isInternal,
-                         boolean isUnitTestMode,
-                         boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull Thread edtThread) {
-    super(null);
-
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.getFakeCorePluginDescriptor());
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
-
-    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
-
-    myIsInternal = isInternal;
-    myTestModeFlag = isUnitTestMode;
-    myHeadlessMode = isHeadless;
-    myCommandLineMode = isCommandLine;
-
-    mySaveAllowed = !(isUnitTestMode || isHeadless);
-
-    if (!isUnitTestMode && !isHeadless) {
-      Disposable uiRootDisposable = Disposer.newDisposable();
-      //noinspection deprecation
-      Disposer.register(this, uiRootDisposable, "ui");
-    }
-
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
-    myLock = new ReadMostlyRWLock(edtThread);
-    // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass()));
-    }
-    activity.end();
-
-    NoSwingUnderWriteAction.watchForEvents(this);
-
-    // reset back to null only when all components already disposed
-    ApplicationManager.setApplication(this, myLastDisposable);
   }
 
   /**
@@ -1118,7 +1080,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
       " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
       "\nCurrent thread: " + describe(Thread.currentThread()) +
-      "\nWrite thread (volatile): " + describe(myLock.writeThread) +
+      "\nWrite thread (volatile): " + describe(myLock.writeThread),
       new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
