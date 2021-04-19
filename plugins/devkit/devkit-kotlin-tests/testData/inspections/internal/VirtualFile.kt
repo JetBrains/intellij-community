@@ -22,9 +22,15 @@ abstract class VirtualFile {
 
     if (<warning descr="'VirtualFile' instances should be compared by 'equals()', not '=='">third === first</warning>) {}
     if (<warning descr="'VirtualFile' instances should be compared by 'equals()', not '=='">third !== first</warning>) {}
+
+    val fourth: NullableVirtualFile = second
+    if (<warning descr="'VirtualFile' instances should be compared by 'equals()', not '=='">fourth === second</warning>) {}
+    if (<warning descr="'VirtualFile' instances should be compared by 'equals()', not '=='">fourth !== second</warning>) {}
   }
 }
 
 class VirtualFileImpl : VirtualFile()
 
 typealias MyVirtualFile = VirtualFileImpl
+
+typealias NullableVirtualFile = VirtualFile?

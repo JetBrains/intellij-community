@@ -2,9 +2,6 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,12 +12,5 @@ public final class UseVirtualFileEqualsInspection extends UseEqualsInspectionBas
   @Override
   protected @NotNull Class<?> getTargetClass() {
     return VirtualFile.class;
-  }
-
-  @Override
-  protected boolean hasTargetType(@NotNull PsiElement sourcePsi,
-                                  @NotNull PsiType expressionType) {
-    return InheritanceUtil.isInheritor(expressionType,
-                                       getTargetClass().getName());
   }
 }

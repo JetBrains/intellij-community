@@ -5,7 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -37,7 +37,7 @@ public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
                                                if (sourcePsi != null) {
                                                  holder.registerProblem(sourcePsi,
                                                                         DevKitBundle.message("inspections.use.equals.description",
-                                                                                             getTargetClassDescription()));
+                                                                                             getTargetClass().getSimpleName()));
                                                }
 
                                                return true;
@@ -48,32 +48,15 @@ public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
 
   protected abstract @NotNull Class<?> getTargetClass();
 
-  protected @NotNull String getTargetClassDescription() {
-    return getTargetClass().getSimpleName();
-  }
-
-  protected boolean isThisOrLiteral(@NotNull UExpression operand) {
+  protected boolean isExcluded(@NotNull UExpression operand) {
     return operand instanceof ULiteralExpression ||
            operand instanceof UThisExpression;
   }
 
   private boolean hasTargetType(@NotNull UExpression operand) {
-    PsiElement sourcePsi = operand.getSourcePsi();
-    if (sourcePsi == null) {
-      return false;
-    }
-
-    PsiType expressionType = operand.getExpressionType();
-    return expressionType != null &&
-           hasTargetType(sourcePsi, expressionType);
-  }
-
-  protected boolean hasTargetType(@NotNull PsiElement sourcePsi,
-                                  @NotNull PsiType expressionType) {
-    return PsiType.getTypeByName(getTargetClass().getName(),
-                                 sourcePsi.getProject(),
-                                 sourcePsi.getResolveScope())
-      .isAssignableFrom(expressionType);
+    return operand.getSourcePsi() != null &&
+           InheritanceUtil.isInheritor(operand.getExpressionType(),
+                                       getTargetClass().getName());
   }
 
   private boolean isEqualityExpression(@NotNull UBinaryExpression binaryExpression) {
@@ -84,12 +67,12 @@ public abstract class UseEqualsInspectionBase extends DevKitUastInspectionBase {
     }
 
     UExpression leftOperand = binaryExpression.getLeftOperand();
-    if (isThisOrLiteral(leftOperand)) {
+    if (isExcluded(leftOperand)) {
       return false;
     }
 
     UExpression rightOperand = binaryExpression.getRightOperand();
-    if (isThisOrLiteral(rightOperand)) {
+    if (isExcluded(rightOperand)) {
       return false;
     }
 
