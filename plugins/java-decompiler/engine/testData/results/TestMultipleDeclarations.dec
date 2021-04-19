@@ -1,0 +1,43 @@
+package pkg;
+
+public class TestMultipleDeclarations {
+   public int seeXenoAmess() {
+      int result = 1;// 6
+      Object e = this.getXenoAmess();// 7
+      result = result * 5 + (e == null ? 7 : e.hashCode());// 8
+      return result;// 9
+   }
+
+   private Object getXenoAmess() {
+      return "XenoAmess";// 13
+   }
+}
+
+class 'pkg/TestMultipleDeclarations' {
+   method 'seeXenoAmess ()I' {
+      0      4
+      1      4
+      3      5
+      6      5
+      8      6
+      9      6
+      b      6
+      e      6
+      14      6
+      17      6
+      18      6
+      1a      7
+   }
+
+   method 'getXenoAmess ()Ljava/lang/Object;' {
+      0      11
+      2      11
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+8 <-> 7
+9 <-> 8
+13 <-> 12
