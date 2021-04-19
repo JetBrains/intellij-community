@@ -162,7 +162,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
 
     NameGroupsPanel() {
       super(AnalysisBundle.message("suspicious.name.combination.options.title"), myNameGroups);
-      setMinimumSize(JBUI.size(150, 100));
+      setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
       setPreferredSize(JBUI.size(150, 130));
       myListModel.addListDataListener(new ListDataListener() {
         @Override

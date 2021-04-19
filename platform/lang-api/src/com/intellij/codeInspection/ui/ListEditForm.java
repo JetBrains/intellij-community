@@ -22,7 +22,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,7 +48,7 @@ public class ListEditForm {
       .setToolbarPosition(ActionToolbarPosition.RIGHT)
       .createPanel();
     contentPanel = UI.PanelFactory.panel(contentPanel).withLabel(label).moveLabelOnTop().resizeY(true).createPanel();
-    contentPanel.setMinimumSize(JBUI.size(150, 100));
+    contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
   }
 
   private @NotNull ToolbarDecorator setupActions(@NotNull ToolbarDecorator decorator) {

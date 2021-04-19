@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ui.JBUI;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -46,7 +45,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm(JavaBundle.message("column.name.ignore.suppressions"), JavaBundle.message("ignored.suppressions"), myAllowedSuppressions);
     final JComponent contentPanel = form.getContentPanel();
-    contentPanel.setMinimumSize(JBUI.size(150, 100));
+    contentPanel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
     return contentPanel;
   }
 

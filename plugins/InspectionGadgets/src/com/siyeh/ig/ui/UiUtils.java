@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.ui;
 
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.ide.DataManager;
@@ -18,7 +19,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.NonNls;
 
@@ -54,7 +54,7 @@ public final class UiUtils {
       })
       .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .disableUpDownActions().createPanel();
-    panel.setMinimumSize(JBUI.size(150, 100));
+    panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
     return panel;
   }
 
@@ -111,7 +111,7 @@ public final class UiUtils {
       })
       .setRemoveAction(button -> TableUtil.removeSelectedItems(table))
       .createPanel();
-    panel.setMinimumSize(JBUI.size(150, 100));
+    panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
     return panel;
   }
 
@@ -189,7 +189,7 @@ public final class UiUtils {
           ListUtil.removeSelectedItems(list);
         }
       }).createPanel();
-    panel.setMinimumSize(JBUI.size(150, 100));
+    panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
     return UI.PanelFactory.panel(panel).withLabel(borderTitle).moveLabelOnTop().resizeY(true).createPanel();
   }
 
