@@ -187,6 +187,9 @@ public abstract class ArchiveHandler {
           }
 
           myEntries = new SoftReference<>(map);
+          // createEntriesMap recreates EntryInfo instances, so we need to ensure that we also recreate the children entries
+          // cache which uses EntryInfo instances as keys (otherwise the cache lookup in list() would return empty children arrays)
+          myChildrenEntries = new SoftReference<>(null);
         }
       }
     }
