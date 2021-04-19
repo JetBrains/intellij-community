@@ -62,7 +62,8 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
 
   prepareUiFuture.thenComposeAsync({
     val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
+    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread()
+                                                                                          ?: throw IllegalStateException("Init UI first"))
     (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
      ApplicationImpl.preventAwtAutoShutdown(app)
      if (isInternal) {
