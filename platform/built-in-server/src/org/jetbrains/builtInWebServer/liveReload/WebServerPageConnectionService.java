@@ -2,6 +2,7 @@
 package org.jetbrains.builtInWebServer.liveReload;
 
 import com.google.common.net.HttpHeaders;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
@@ -30,6 +31,7 @@ import org.jetbrains.io.webSocket.WebSocketHandshakeHandler;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
@@ -226,8 +228,18 @@ public final class WebServerPageConnectionService {
           Logger.getInstance(RequestedPagesState.class).error("Listener already added");
         }
       }
-      myRequestedPages.putValue(uri, new RequestedPage(++myLastClientId, file));
+      RequestedPage newPage = new RequestedPage(++myLastClientId, file);
+      myRequestedPages.putValue(uri, newPage);
+      JobScheduler.getScheduler().schedule(() -> stopWaitingForClient(uri, newPage), 30, TimeUnit.SECONDS);
       return myLastClientId;
+    }
+
+    private synchronized void stopWaitingForClient(@NotNull String uri, @NotNull RequestedPage page) {
+      if (page.myClient.isDone()) return;
+      page.myClient.cancel(false);
+      myRequestedPages.remove(uri, page);
+      cleanupIfEmpty();
+      Logger.getInstance(RequestedPagesState.class).error("Timeout on waiting for client for " + uri);
     }
 
     public synchronized void clientConnected(@NotNull WebSocketClient client, int clientId) {
