@@ -1164,25 +1164,6 @@ public final class PlatformTestUtil {
       }
     }
   }
-  
-  public static void waitForCondition(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {
-    long start = System.currentTimeMillis();
-    while (true) {
-      try {
-        if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          fail(errorMessage);
-        }
-        if (condition.getAsBoolean()) {
-          break;
-        }
-        //noinspection BusyWait
-        Thread.sleep(10);
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
     String filePath = project.getBasePath() + File.separator + fileRelativePath;
