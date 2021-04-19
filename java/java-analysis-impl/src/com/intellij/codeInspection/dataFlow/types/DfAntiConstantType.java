@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import java.util.Set;
  */
 public abstract class DfAntiConstantType<T> implements DfType {
   final @NotNull Set<T> myNotValues;
-  
+
   DfAntiConstantType(@NotNull Set<T> notValues) {
     myNotValues = notValues;
   }
@@ -38,6 +39,6 @@ public abstract class DfAntiConstantType<T> implements DfType {
 
   @Override
   public String toString() {
-    return "!= " + StreamEx.of(myNotValues).map(DfConstantType::renderValue).joining(", ");
+    return "!= " + StreamEx.of(myNotValues).map(DfaPsiUtil::renderValue).joining(", ");
   }
 }

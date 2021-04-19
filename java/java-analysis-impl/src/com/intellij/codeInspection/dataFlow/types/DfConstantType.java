@@ -1,11 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +48,7 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public String toString() {
-    return renderValue(myValue);
+    return String.valueOf(myValue);
   }
 
   @Override
@@ -64,25 +59,5 @@ public abstract class DfConstantType<T> implements DfType {
   @Override
   public <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
     return ObjectUtils.tryCast(myValue, clazz);
-  }
-
-  /**
-   * @param value constant value
-   * @return human readable representation of the value
-   */
-  public static @NlsSafe String renderValue(Object value) {
-    if (value == null) return "null";
-    if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
-    if (value instanceof Float) return value + "f";
-    if (value instanceof Long) return value + "L";
-    if (value instanceof PsiField) {
-      PsiField field = (PsiField)value;
-      PsiClass containingClass = field.getContainingClass();
-      return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
-    }
-    if (value instanceof PsiType) {
-      return ((PsiType)value).getPresentableText();
-    }
-    return value.toString();
   }
 }

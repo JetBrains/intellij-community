@@ -30,4 +30,9 @@ class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
   public DfType tryNegate() {
     return new DfFloatNotValueType(Collections.singleton(getValue()));
   }
+
+  @Override
+  public String toString() {
+    return getValue()+"f";
+  }
 }

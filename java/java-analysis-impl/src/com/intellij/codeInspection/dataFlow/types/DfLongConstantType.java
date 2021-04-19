@@ -10,7 +10,7 @@ import java.util.Objects;
 
 class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   private final @Nullable LongRangeSet myWideRange;
-  
+
   DfLongConstantType(long value, @Nullable LongRangeSet wideRange) {
     super(value);
     myWideRange = wideRange;
@@ -47,5 +47,10 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   @Override
   public boolean equals(Object obj) {
     return this == obj || super.equals(obj) && Objects.equals(((DfLongConstantType)obj).myWideRange, myWideRange);
+  }
+
+  @Override
+  public String toString() {
+    return getValue() + "L";
   }
 }

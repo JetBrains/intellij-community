@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
-import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.JavaPsiFacade;
@@ -332,7 +329,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       components.add(mySpecialField + "=" + mySpecialFieldType);
     }
     if (!myNotValues.isEmpty()) {
-      components.add("!= " + StreamEx.of(myNotValues).map(DfConstantType::renderValue).joining(", "));
+      components.add("!= " + StreamEx.of(myNotValues).map(DfaPsiUtil::renderValue).joining(", "));
     }
     return String.join(" ", components);
   }

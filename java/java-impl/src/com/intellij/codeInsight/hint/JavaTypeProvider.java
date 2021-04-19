@@ -19,10 +19,14 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ExpressionTypeProvider;
@@ -106,7 +110,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
       if (!values.isEmpty()) {
         infoLines.add(Pair.create(
           JavaBundle.message("type.information.value"),
-          StreamEx.of(values).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningOr())));
+          StreamEx.of(values).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningOr())));
       } else {
         if (dfType instanceof DfAntiConstantType) {
           List<Object> nonValues = new ArrayList<>(((DfAntiConstantType<?>)dfType).getNotValues());
@@ -114,7 +118,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           if (!nonValues.isEmpty()) {
             infoLines.add(Pair.create(
               JavaBundle.message("type.information.not.equal.to"),
-              StreamEx.of(nonValues).map(DfConstantType::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
+              StreamEx.of(nonValues).map(DfaPsiUtil::renderValue).sorted().collect(NlsMessages.joiningNarrowAnd())));
           }
         }
         if (dfType instanceof DfIntegralType) {

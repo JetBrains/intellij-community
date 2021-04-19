@@ -23,7 +23,9 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
@@ -670,5 +672,25 @@ public final class DfaPsiUtil {
       return ((DfReferenceType)dfType).getConstraint().getPsiType(project);
     }
     return null;
+  }
+
+  /**
+   * @param value constant value
+   * @return human readable representation of the value
+   */
+  public static @NlsSafe String renderValue(Object value) {
+    if (value == null) return "null";
+    if (value instanceof String) return '"' + StringUtil.escapeStringCharacters((String)value) + '"';
+    if (value instanceof Float) return value + "f";
+    if (value instanceof Long) return value + "L";
+    if (value instanceof PsiField) {
+      PsiField field = (PsiField)value;
+      PsiClass containingClass = field.getContainingClass();
+      return containingClass == null ? field.getName() : containingClass.getName() + "." + field.getName();
+    }
+    if (value instanceof PsiType) {
+      return ((PsiType)value).getPresentableText();
+    }
+    return value.toString();
   }
 }
