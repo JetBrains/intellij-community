@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -326,6 +327,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   private static Supplier<DataContext> getComponentContextSupplier(Component component) {
+    DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
+    if (Utils.isAsyncDataContext(dataContext)) return () -> dataContext;
     return () -> DataManager.getInstance().getDataContext(component);
   }
 
