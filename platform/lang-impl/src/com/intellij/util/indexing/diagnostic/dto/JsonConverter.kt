@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
+import java.time.Duration
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 
@@ -52,6 +53,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(indexingVisibleTime),
+    contentLoadingTime = JsonDuration(contentLoadingVisibleTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     indexedFiles = jsonIndexedFiles
   )
@@ -66,6 +68,7 @@ fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
+    contentLoadingTime = JsonDuration(contentLoadingDuration.toNanos()),
     scanFilesTime = JsonDuration(scanFilesDuration.toNanos()),
     pushPropertiesTime = JsonDuration(pushPropertiesDuration.toNanos()),
     indexExtensionsTime = JsonDuration(indexExtensionsDuration.toNanos()),
@@ -77,8 +80,9 @@ fun ProjectIndexingHistory.IndexingTimes.toJson() =
 
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
 
-fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
-  JsonProjectIndexingHistory(
+fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory {
+  times.contentLoadingDuration = Duration.ofNanos(providerStatistics.sumOf { it.contentLoadingTime.nano })
+  return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
     totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
@@ -86,6 +90,7 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory =
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
   )
+}
 
 private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProjectIndexingHistory.JsonStatsPerFileType> {
   val totalIndexingTime = totalStatsPerFileType.values.sumOf { it.totalIndexingTimeInAllThreads }

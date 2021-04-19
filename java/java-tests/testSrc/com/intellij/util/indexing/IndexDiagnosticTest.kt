@@ -135,6 +135,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             444,
             33,
             JsonDuration(123),
+            JsonDuration(456),
             1,
             listOf(
               JsonFileProviderIndexStatistics.JsonIndexedFile(

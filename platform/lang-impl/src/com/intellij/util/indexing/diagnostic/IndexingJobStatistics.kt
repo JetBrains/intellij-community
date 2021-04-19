@@ -15,6 +15,14 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   var indexingVisibleTime: TimeNano = 0
 
+  var processingTimeInAllThreads: TimeNano = 0
+
+  var contentLoadingTimeInAllThreads: TimeNano = 0
+
+  val contentLoadingVisibleTime: TimeNano
+    get() = if (processingTimeInAllThreads == 0L) 0
+    else (indexingVisibleTime * contentLoadingTimeInAllThreads.toDouble() / processingTimeInAllThreads).toLong()
+
   var numberOfIndexedFiles: Int = 0
 
   var numberOfFilesFullyIndexedByExtensions: Int = 0
@@ -46,6 +54,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
   fun addFileStatistics(
     file: VirtualFile,
     fileStatistics: FileIndexingStatistics,
+    processingTime: Long,
     contentLoadingTime: Long,
     fileSize: Long
   ) {
@@ -53,6 +62,8 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     if (fileStatistics.wasFullyIndexedByExtensions) {
       numberOfFilesFullyIndexedByExtensions++
     }
+    processingTimeInAllThreads += processingTime
+    contentLoadingTimeInAllThreads += contentLoadingTime
     val perIndexerTimes = fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes
     perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {

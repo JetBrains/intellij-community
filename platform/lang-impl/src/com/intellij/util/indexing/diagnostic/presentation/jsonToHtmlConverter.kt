@@ -156,6 +156,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
           tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
           tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
+          tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
           tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
           tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
         }
@@ -289,7 +290,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         thead {
           tr {
             th("Provider name")
-            th("Total indexing time")
+            th("Indexing time")
+            th("Content loading time")
             th("Number of indexed files")
             th("Number of files indexed by infrastructure extensions")
             th("Number of too large for indexing files")
@@ -303,6 +305,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             tr {
               td(providerStats.providerName)
               td(providerStats.totalIndexingTime.presentableDuration())
+              td(providerStats.contentLoadingTime.presentableDuration())
               td(providerStats.totalNumberOfIndexedFiles.toString())
               td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
               td(providerStats.numberOfTooLargeForIndexingFiles.toString())
