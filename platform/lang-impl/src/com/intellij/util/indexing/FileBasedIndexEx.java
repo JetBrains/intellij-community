@@ -429,6 +429,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
     for (IndexableFilesIterator provider : providers) {
+      if (indicator != null) {
+        indicator.checkCanceled();
+      }
       if (!provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)) {
         break;
       }
