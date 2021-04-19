@@ -30,15 +30,15 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
   data class StatsPerIndexer(
-    val indexingTime: TimeStats,
+    var indexingTime: TimeNano,
     var numberOfFiles: Int,
     var numberOfFilesIndexedByExtensions: Int,
     var totalBytes: BytesNumber
   )
 
   data class StatsPerFileType(
-    val indexingTime: TimeStats,
-    val contentLoadingTime: TimeStats,
+    var indexingTime: TimeNano,
+    var contentLoadingTime: TimeNano,
     var numberOfFiles: Int,
     var totalBytes: BytesNumber
   )
@@ -55,9 +55,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
     (fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes).forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
-        StatsPerIndexer(TimeStats(), 0, 0, 0)
+        StatsPerIndexer(0, 0, 0, 0)
       }
-      stats.indexingTime.addTime(time)
+      stats.indexingTime += time
       stats.numberOfFiles++
       if (indexId in fileStatistics.indexesProvidedByExtensions) {
         stats.numberOfFilesIndexedByExtensions++
@@ -66,10 +66,10 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
     val fileTypeName = fileStatistics.fileType.name
     val stats = statsPerFileType.getOrPut(fileTypeName) {
-      StatsPerFileType(TimeStats(), TimeStats(), 0, 0)
+      StatsPerFileType(0, 0, 0, 0)
     }
-    stats.contentLoadingTime.addTime(contentLoadingTime)
-    stats.indexingTime.addTime(fileStatistics.indexingTime)
+    stats.contentLoadingTime += contentLoadingTime
+    stats.indexingTime += fileStatistics.indexingTime
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
