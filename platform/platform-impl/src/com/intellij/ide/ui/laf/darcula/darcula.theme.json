@@ -11,7 +11,6 @@
       "textForeground": "#BBBBBB",
       "caretForeground": "#BBBBBB",
       "inactiveBackground": "#3C3F41",
-      "selectionForeground": "#FFFFFF",
       "selectionBackgroundInactive": "#0D293E",
       "selectionInactiveBackground": "#0D293E",
       "selectionForegroundInactive": "#BBBBBB",
@@ -320,6 +319,10 @@
 
     "RadioButtonMenuItem.borderPainted": false,
     "RadioButtonMenuItemUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonMenuItemUI",
+
+    "RootPaneUI":{
+      "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI"
+    },
 
     "ScrollBar.background": "#3F4244",
     "ScrollBarUI": "com.intellij.ui.components.JBScrollBar",
