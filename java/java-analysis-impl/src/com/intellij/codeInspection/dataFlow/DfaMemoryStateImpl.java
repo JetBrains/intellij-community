@@ -221,7 +221,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     value = handleStackValueOnVariableFlush(value, var, null);
-    flushVariable(var, var.getInherentNullability() != Nullability.UNKNOWN);
+    flushVariable(var, DfaNullability.fromDfType(var.getInherentType()) != DfaNullability.UNKNOWN);
     flushQualifiedMethods(var);
 
     if (DfaTypeValue.isUnknown(value)) {
@@ -1323,7 +1323,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {
-    if (value.getInherentNullability() != Nullability.NULLABLE) return false;
+    if (DfaNullability.fromDfType(value.getInherentType()) != DfaNullability.NULLABLE) return false;
     return DfaNullability.fromDfType(getDfType(value)) == DfaNullability.FLUSHED || isNull(value) || isNotNull(value);
   }
 

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
@@ -102,7 +103,7 @@ public final class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryState memState, DfaValue value) {
-      DfaVariableValue assertionDisabled = value.getFactory().getAssertionDisabled();
+      DfaVariableValue assertionDisabled = AssertionDisabledDescriptor.getAssertionsDisabledVar(value.getFactory());
       if (assertionDisabled == null) {
         assert myData == myDataAssertionsDisabled;
         updateDataPoint(myData, expression, memState, value);

@@ -542,7 +542,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       if (!(psi instanceof PsiField) || !((PsiField)psi).hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
-      if (var.getInherentNullability() == Nullability.NULLABLE &&
+      if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
           DfaNullability.fromDfType(memState.getDfType(var)) == DfaNullability.UNKNOWN && instruction.isVariableInitializer()) {
         memState.meetDfType(var, DfaNullability.NULLABLE.asDfType());
       }

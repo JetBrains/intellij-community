@@ -237,7 +237,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
     startElement(statement);
-    addInstruction(new PushInstruction(AssertionDisabledDescriptor.getAssertionsDisabledVariable(myFactory), null));
+    addInstruction(new PushInstruction(AssertionDisabledDescriptor.createAssertionsDisabledVar(myFactory), null));
     ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
     addInstruction(jump);
     final PsiExpression condition = statement.getAssertCondition();

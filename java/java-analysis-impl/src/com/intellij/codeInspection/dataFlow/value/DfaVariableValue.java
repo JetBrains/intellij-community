@@ -16,9 +16,6 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -50,6 +47,17 @@ public final class DfaVariableValue extends DfaValue {
     @NotNull
     public DfaVariableValue createVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
       return createVariableValue(descriptor, qualifier, VariableDescriptor::getDfType);
+    }
+
+    /**
+     * @param descriptor variable descriptor
+     * @param qualifier qualifier (if present)
+     * @return existing variable value with given descriptor and qualifier; null if it doesn't exist yet
+     */
+    @Nullable
+    public DfaVariableValue getVariableValue(@NotNull VariableDescriptor descriptor, @Nullable DfaVariableValue qualifier) {
+      Pair<VariableDescriptor, DfaVariableValue> key = Pair.create(descriptor, qualifier);
+      return myExistingVars.get(key);
     }
 
     @NotNull
@@ -85,9 +93,6 @@ public final class DfaVariableValue extends DfaValue {
     myDescriptor = descriptor;
     myQualifier = qualifier;
     myDfType = type;
-    if (myDescriptor instanceof AssertionDisabledDescriptor) {
-      myFactory.setAssertionDisabled(this);
-    }
   }
 
   @Nullable
@@ -155,11 +160,6 @@ public final class DfaVariableValue extends DfaValue {
       myInherentType = myDescriptor.getInitialDfType(this, getFactory().getContext());
     }
     return myInherentType;
-  }
-
-  @NotNull
-  public Nullability getInherentNullability() {
-    return DfaNullability.toNullability(DfaNullability.fromDfType(getInherentType()));
   }
 
   public boolean isFlushableByCalls() {

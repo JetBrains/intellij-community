@@ -38,7 +38,19 @@ public final class AssertionDisabledDescriptor implements VariableDescriptor {
     return "$assertionsDisabled";
   }
 
-  public static DfaVariableValue getAssertionsDisabledVariable(DfaValueFactory factory) {
+  /**
+   * @param factory factory to use
+   * @return variable that represents assertions status
+   */
+  public static @NotNull DfaVariableValue createAssertionsDisabledVar(DfaValueFactory factory) {
     return factory.getVarFactory().createVariableValue(INSTANCE);
+  }
+
+  /**
+   * @param factory factory to use
+   * @return variable that represents assertions status; null if it isn't created yet
+   */
+  public static @Nullable DfaVariableValue getAssertionsDisabledVar(DfaValueFactory factory) {
+    return factory.getVarFactory().getVariableValue(INSTANCE, null);
   }
 }

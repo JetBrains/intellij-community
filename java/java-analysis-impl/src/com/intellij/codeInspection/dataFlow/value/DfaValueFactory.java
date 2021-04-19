@@ -25,7 +25,6 @@ public class DfaValueFactory {
   private final @NotNull List<DfaValue> myValues = new ArrayList<>();
   private final @NotNull Project myProject;
   private final @Nullable PsiElement myContext;
-  private @Nullable DfaVariableValue myAssertionDisabled;
 
   /**
    * @param project a project in which context the analysis is performed
@@ -48,15 +47,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaTypeValue getObjectType(@Nullable PsiType type, @NotNull Nullability nullability) {
     return fromDfType(DfTypes.typedObject(type, nullability));
-  }
-
-  public @Nullable DfaVariableValue getAssertionDisabled() {
-    return myAssertionDisabled;
-  }
-
-  void setAssertionDisabled(@NotNull DfaVariableValue value) {
-    assert myAssertionDisabled == null;
-    myAssertionDisabled = value;
   }
 
   int registerValue(DfaValue value) {

@@ -3,8 +3,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -308,10 +310,11 @@ public class DataFlowRunner {
   protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
                                                                               @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                               @NotNull ControlFlow flow) {
-    DfaVariableValue assertionStatus = myValueFactory.getAssertionDisabled();
+    DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(myValueFactory);
     if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
+      DfaCondition condition = assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean()));
       for (DfaMemoryState state : memStates) {
-        state.applyCondition(assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean())));
+        state.applyCondition(condition);
       }
     }
     return ContainerUtil.map(memStates, s -> new DfaInstructionState(flow.getInstruction(0), s));
