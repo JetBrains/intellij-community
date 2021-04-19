@@ -63,8 +63,7 @@ public interface VariableDescriptor {
   }
 
   /**
-   * @return true if the variable having this descriptor could be read implicitly, so it should not be auto-flushed via
-   * {@link com.intellij.codeInspection.dataFlow.lang.ir.LiveVariablesAnalyzer}.
+   * @return true if the variable having this descriptor could be read implicitly, so it should not be auto-flushed.
    */
   default boolean isImplicitReadPossible() {
     return false;
