@@ -13,6 +13,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.util.io.readText
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
@@ -27,10 +28,12 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.apache.commons.lang.RandomStringUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.name
+import kotlin.streams.toList
 
 class DelayedProjectSynchronizerTest {
   @Rule
@@ -120,7 +123,14 @@ class DelayedProjectSynchronizerTest {
     }
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
     JpsProjectModelSynchronizer.getInstance(project)!!.getSerializers().saveAllEntities(storage, projectData.projectDir)
-    assertThat(projectData.projectDir.toPath().resolve(".idea/libraries/foo.xml")).exists()
+    val librariesFolder = projectData.projectDir.toPath().resolve(".idea/libraries/")
+    val librariesPaths = Files.list(librariesFolder).sorted().toList()
+    assertEquals(4, librariesPaths.size)
+    assertThat(librariesPaths.map { it.name }).containsAll(listOf("foo.xml", "jarDir.xml", "junit.xml", "log4j.xml"))
+    assertTrue(librariesPaths[0].readText().contains("library name=\"foo\""))
+    assertTrue(librariesPaths[1].readText().contains("library name=\"jarDir\""))
+    assertTrue(librariesPaths[2].readText().contains("library name=\"junit\""))
+    assertTrue(librariesPaths[3].readText().contains("library name=\"log4j\""))
   }
 
   private fun saveToCache(storage: WorkspaceEntityStorage) {
