@@ -16,10 +16,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.changesHandler.BaseInjectedFileChangesHandler;
 import com.intellij.util.IncorrectOperationException;
@@ -37,12 +34,21 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
                                                              Editor hostEditor,
                                                              Document newDocument,
                                                              PsiFile injectedFile) {
-    if (Registry.is("injections.java.fragment.editor.new")) {
+    if (Registry.is("injections.java.fragment.editor.new") && !hasBlockLiterals(shreds)) {
       return new JavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
     }
     else {
       return new OldJavaInjectedFileChangesHandler(shreds, hostEditor, newDocument, injectedFile);
     }
+  }
+
+  private static boolean hasBlockLiterals(List<PsiLanguageInjectionHost.Shred> shreds) {
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      PsiLanguageInjectionHost host = shred.getHost();
+      if (!(host instanceof PsiLiteralExpression)) continue;
+      if (((PsiLiteralExpression)host).isTextBlock()) return true;
+    }
+    return false;
   }
 }
 
