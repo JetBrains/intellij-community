@@ -8,6 +8,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionViewModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
@@ -52,6 +53,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         )
     }
 
+    @Nls
     private fun versionMessage(packageModel: PackageModel.Installed, onlyStable: Boolean): String {
         val installedVersions = packageModel.usageInfo.asSequence()
             .map { it.version }
@@ -61,12 +63,15 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
         require(installedVersions.isNotBlank()) { "An installed package cannot produce an empty installed versions list" }
 
+        @Suppress("HardCodedStringLiteral") // Composed of @Nls components
         return buildString {
             append(installedVersions)
 
             if (packageModel.canBeUpgraded(onlyStable)) {
+                val latestAvailableVersion = packageModel.getLatestAvailableVersion(onlyStable)
+                    ?: return@buildString
                 append(" → ")
-                append(packageModel.getLatestAvailableVersion(onlyStable))
+                append(latestAvailableVersion?.displayName)
             }
         }
     }
