@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class JsonProjectIndexingHistoryTimes(
   val totalUpdatingTime: JsonDuration,
   val indexingTime: JsonDuration,
+  val contentLoadingTime: JsonDuration,
   val scanFilesTime: JsonDuration,
   val pushPropertiesTime: JsonDuration,
   val indexExtensionsTime: JsonDuration,

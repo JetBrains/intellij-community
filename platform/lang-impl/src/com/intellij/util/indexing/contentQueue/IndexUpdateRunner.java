@@ -216,7 +216,8 @@ public final class IndexUpdateRunner {
   }
 
   private void indexOneFileOfJob(@NotNull IndexingJob indexingJob) throws ProcessCanceledException {
-    long contentLoadingTime = System.nanoTime();
+    long startTime = System.nanoTime();
+    long contentLoadingTime;
     ContentLoadingResult loadingResult;
     try {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fail the whole indexing (see IndexingJob.myError).
@@ -236,7 +237,7 @@ public final class IndexUpdateRunner {
       return;
     }
     finally {
-      contentLoadingTime = System.nanoTime() - contentLoadingTime;
+      contentLoadingTime = System.nanoTime() - startTime;
     }
 
     if (loadingResult == null) {
@@ -253,9 +254,11 @@ public final class IndexUpdateRunner {
           .expireWith(indexingJob.myProject)
           .wrapProgress(indexingJob.myIndicator)
           .executeSynchronously();
+        long processingTime = System.nanoTime() - startTime;
         synchronized (indexingJob.myStatistics) {
           indexingJob.myStatistics.addFileStatistics(file,
                                                      fileIndexingStatistics,
+                                                     processingTime,
                                                      contentLoadingTime,
                                                      loadingResult.fileLength
           );
