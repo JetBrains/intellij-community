@@ -5,14 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public final class ShutDownTracker implements Runnable {
-  private final List<Thread> myThreads = new ArrayList<>();
-  private final LinkedList<Runnable> myShutdownTasks = new LinkedList<>();
+  private final List<Thread> myThreads = Collections.synchronizedList(new ArrayList<>());
+  private final java.util.Stack<Runnable> myShutdownTasks = new Stack<>(); // guarded by myShutdownTasks
   private final Thread myThread;
 
   private ShutDownTracker() {
@@ -38,7 +36,11 @@ public final class ShutDownTracker implements Runnable {
     ensureStopperThreadsFinished();
 
     Runnable task;
-    while ((task = removeLast(myShutdownTasks)) != null) {
+    while (!myShutdownTasks.isEmpty()) {
+      synchronized (myShutdownTasks) {
+        if (myShutdownTasks.isEmpty()) break;
+        task = myShutdownTasks.pop();
+      }
       // task can change myShutdownTasks
       try {
         task.run();
@@ -94,20 +96,26 @@ public final class ShutDownTracker implements Runnable {
     }
   }
 
-  private synchronized boolean isRegistered(@NotNull Thread thread) {
+  private boolean isRegistered(@NotNull Thread thread) {
     return myThreads.contains(thread);
   }
 
-  private synchronized Thread @NotNull [] getStopperThreads() {
+  private Thread @NotNull [] getStopperThreads() {
     return myThreads.toArray(new Thread[0]);
   }
 
-  public synchronized void registerStopperThread(@NotNull Thread thread) {
-    myThreads.add(thread);
+  private void unregisterStopperThread(@NotNull Thread thread) {
+    myThreads.remove(thread);
   }
 
-  public synchronized void unregisterStopperThread(@NotNull Thread thread) {
-    myThreads.remove(thread);
+  public void executeWithStopperThread(@NotNull Thread thread, @NotNull Runnable runnable) {
+    myThreads.add(thread);
+    try {
+      runnable.run();
+    }
+    finally {
+      myThreads.remove(thread);
+    }
   }
 
   public void registerShutdownTask(@NotNull Runnable task, @NotNull Disposable parentDisposable) {
@@ -115,15 +123,11 @@ public final class ShutDownTracker implements Runnable {
     Disposer.register(parentDisposable, () -> unregisterShutdownTask(task));
   }
 
-  public synchronized void registerShutdownTask(@NotNull Runnable task) {
-    myShutdownTasks.addLast(task);
+  public void registerShutdownTask(@NotNull Runnable task) {
+    myShutdownTasks.add(task);
   }
 
-  public synchronized void unregisterShutdownTask(@NotNull Runnable task) {
+  public void unregisterShutdownTask(@NotNull Runnable task) {
     myShutdownTasks.remove(task);
-  }
-
-  private synchronized <T> T removeLast(@NotNull LinkedList<T> list) {
-    return list.isEmpty() ? null : list.removeLast();
   }
 }

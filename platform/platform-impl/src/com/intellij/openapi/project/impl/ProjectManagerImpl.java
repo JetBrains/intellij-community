@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -343,9 +344,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return false;
     }
 
-    final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
-    shutDownTracker.registerStopperThread(Thread.currentThread());
-    try {
+    AtomicBoolean result = new AtomicBoolean();
+    ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()->{
       if (project instanceof ComponentManagerImpl) {
         ((ComponentManagerImpl)project).stopServicePreloading();
       }
@@ -358,7 +358,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
-        return false;
+        return;
       }
 
       // somebody can start progress here, do not wrap in write action
@@ -384,12 +384,10 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
           Disposer.dispose(project);
         }
       });
-    }
-    finally {
-      shutDownTracker.unregisterStopperThread(Thread.currentThread());
-    }
+      result.set(true);
+    });
 
-    return true;
+    return result.get();
   }
 
   @TestOnly

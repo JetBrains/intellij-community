@@ -110,19 +110,14 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    autoSyncFuture = GlobalScope.launch {
-      try {
-        // to ensure that repository will not be in uncompleted state and changes will be pushed
-        ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
+    // to ensure that repository will not be in uncompleted state and changes will be pushed
+    ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread()) {
+      autoSyncFuture = GlobalScope.launch {
         catchAndLog {
           icsManager.runInAutoCommitDisabledMode {
             doSync()
           }
         }
-      }
-      finally {
-        autoSyncFuture = null
-        ShutDownTracker.getInstance().unregisterStopperThread(Thread.currentThread())
       }
     }
   }

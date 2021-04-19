@@ -608,39 +608,37 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
       StructuredIdeActivity activity = IndexingStatisticsCollector.INDEXING_ACTIVITY.started(myProject);
 
-      final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
-      final Thread self = Thread.currentThread();
-      try {
-        shutdownTracker.registerStopperThread(self);
+      ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
+        try {
+          DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
+          ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
 
-        DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
-        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
-
-        myGuiDumbTaskRunner.processTasksWithProgress(activity, taskIndicator -> {
-          suspender.attachToProgress(taskIndicator);
-          taskIndicator.addStateDelegate(relayToVisibleIndicator);
-        },
-        taskIndicator -> {
-          ((AbstractProgressIndicatorExBase)taskIndicator).removeStateDelegate(relayToVisibleIndicator);
+          myGuiDumbTaskRunner.processTasksWithProgress(activity, taskIndicator -> {
+                                                         suspender.attachToProgress(taskIndicator);
+                                                         taskIndicator.addStateDelegate(relayToVisibleIndicator);
+                                                       },
+                                                       taskIndicator -> {
+                                                         ((AbstractProgressIndicatorExBase)taskIndicator)
+                                                           .removeStateDelegate(relayToVisibleIndicator);
+                                                       }
+          );
         }
-        );
-      }
-      catch (Throwable unexpected) {
-        LOG.error(unexpected);
-      }
-      finally {
-        shutdownTracker.unregisterStopperThread(self);
-        // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
-        // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
-        // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
-        // previously installed.
-        myHeavyActivities.resetCurrentSuspender();
+        catch (Throwable unexpected) {
+          LOG.error(unexpected);
+        }
+        finally {
+          // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
+          // got suspended after the last dumb task finished (or even after the last check cancelled call). This case is handled by
+          // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
+          // previously installed.
+          myHeavyActivities.resetCurrentSuspender();
 
-        //this used to be called in EDT from getNextTask(), but moved it here to simplify
-        queueUpdateFinished();
+          //this used to be called in EDT from getNextTask(), but moved it here to simplify
+          queueUpdateFinished();
 
-        activity.finished();
-      }
+          activity.finished();
+        }
+      });
     }
   }
 
