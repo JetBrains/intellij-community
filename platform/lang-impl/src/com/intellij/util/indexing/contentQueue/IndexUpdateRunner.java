@@ -101,7 +101,7 @@ public final class IndexUpdateRunner {
     catch (RuntimeException e) {
       throw new IndexingInterruptedException(e, statistics);
     } finally {
-      statistics.setTotalIndexingTime(System.nanoTime() - startTime);
+      statistics.setIndexingVisibleTime(System.nanoTime() - startTime);
     }
     return statistics;
   }
