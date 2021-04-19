@@ -30,6 +30,7 @@ import sun.font.FontUtilities;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.swing.FocusManager;
 import javax.swing.Timer;
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -73,6 +74,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -3481,5 +3483,20 @@ public final class UIUtil {
       return 0;
     }
     return Math.min(result, 255);
+  }
+
+  public static void stopFocusedEditing(@NotNull Window window) {
+    Component focusOwner = FocusManager.getCurrentManager().getFocusOwner();
+    if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, window)) {
+      return;
+    }
+    ObjectUtils.consumeIfCast(focusOwner, JFormattedTextField.class, field -> {
+      try {
+        ((JFormattedTextField)focusOwner).commitEdit();
+      }
+      catch (ParseException ignored) {
+      }
+    });
+    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
   }
 }
