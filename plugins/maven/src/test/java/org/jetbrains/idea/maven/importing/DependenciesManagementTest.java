@@ -127,13 +127,7 @@ public class DependenciesManagementTest extends MavenImportingTestCase {
                                                            myProjectsManager.findProject(project)));
     myProjectsManager.waitForResolvingCompletion();
 
-    // maven doesn't expect imported pom to be in the reactor,
-    // when it is fixed, let us know
-    assertTrue(myProjectsManager.findProject(project).hasReadingProblems());
-    assertModuleLibDeps("project");
-
-    // actually should be
-    // assertModuleLibDeps("project", "Maven: junit:junit:4.0");
+    assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
   public void testCheckThatOrderDoesntMatterForMaven() throws Exception {
