@@ -98,7 +98,15 @@ public final class UIUtil {
 
   public static void decorateWindowHeader(JRootPane pane) {
     if (pane != null && SystemInfo.isMacOSMojave) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", StartupUiUtil.isUnderDarcula());
+      if (Runtime.version().feature() < 17) {
+        pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+      } else {
+        if (isUnderDarcula()) {
+          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantDark");
+        } else {
+          pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantLight");
+        }
+      }
     }
   }
 
