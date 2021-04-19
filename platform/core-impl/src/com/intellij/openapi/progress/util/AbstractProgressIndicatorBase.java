@@ -205,7 +205,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
         if (first != null) {
           message += "\n" + first;
         }
-        LOG.warn(message);
+        LOG.warnInProduction(new IllegalStateException(message));
         setIndeterminate(false);
       }
       myFraction = fraction;
