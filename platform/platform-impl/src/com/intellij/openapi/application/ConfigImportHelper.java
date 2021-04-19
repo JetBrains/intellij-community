@@ -691,11 +691,6 @@ public final class ConfigImportHelper {
       }
       if (oldPluginsDir == null) {
         oldPluginsDir = oldConfigDir.getFileSystem().getPath(defaultPluginsPath(getNameWithVersion(oldConfigDir)));
-        // temporary code; safe to remove after 2020.1 branch is created
-        if (!Files.isDirectory(oldPluginsDir) && oldPluginsDir.toString().contains("2020.1")) {
-          oldPluginsDir = oldConfigDir.getFileSystem().getPath(
-            defaultPluginsPath(getNameWithVersion(oldConfigDir).replace("2020.1", "2019.3")).replace("2019.3", "2020.1"));
-        }
       }
     }
 
