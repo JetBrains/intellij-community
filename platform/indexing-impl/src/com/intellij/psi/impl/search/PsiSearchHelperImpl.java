@@ -291,7 +291,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     progress.pushState();
     try {
       progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
-
+      progress.setIndeterminate(false);
 
       Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
 

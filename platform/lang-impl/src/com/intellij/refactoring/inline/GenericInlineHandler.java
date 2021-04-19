@@ -93,6 +93,7 @@ public final class GenericInlineHandler {
         }
 
         Consumer<ProgressIndicator> perform = indicator -> {
+          indicator.setIndeterminate(false);
           for (int i = 0; i < usages.length; i++) {
             indicator.setFraction((double) i / usages.length);
             inlineReference(usages[i], element, inliners);
@@ -106,7 +107,8 @@ public final class GenericInlineHandler {
         if (Registry.is("run.refactorings.under.progress")) {
           ((ApplicationImpl)ApplicationManager.getApplication())
             .runWriteActionWithNonCancellableProgressInDispatchThread(commandName, project, null, perform);
-        } else {
+        }
+        else {
           perform.accept(new EmptyProgressIndicator());
         }
       });
