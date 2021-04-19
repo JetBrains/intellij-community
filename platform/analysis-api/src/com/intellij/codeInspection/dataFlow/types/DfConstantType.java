@@ -13,7 +13,7 @@ import java.util.Objects;
 public abstract class DfConstantType<T> implements DfType {
   private final T myValue;
 
-  DfConstantType(T value) {
+  protected DfConstantType(T value) {
     myValue = value;
   }
 
