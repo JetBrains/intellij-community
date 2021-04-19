@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
@@ -104,6 +105,15 @@ abstract class EditorDiffPreview(private val project: Project,
       if (VcsLogUiUtil.isDiffPreviewInEditor(project) && Registry.`is`("show.diff.preview.as.editor.tab.with.single.click")) {
         openPreviewInEditor(false)
       }
+      else {
+        updatePreview(true)
+      }
+    }
+  }
+
+  override fun updatePreview(fromModelRefresh: Boolean) {
+    if (previewFileDelegate.isInitialized()) {
+      FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(previewFile)
     }
   }
 
@@ -165,5 +175,6 @@ class VcsLogEditorDiffPreview(project: Project, private val mainFrame: MainFrame
         listener()
       }
     }, owner)
+    mainFrame.changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
   }
 }
