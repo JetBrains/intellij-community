@@ -10,7 +10,7 @@ import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
 internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>, R : Any?>(private val connection: TargetProjectConnection) :
-  AbstractLongRunningOperation<T>(connection.parameters) {
+  AbstractLongRunningOperation<T>(connection.parameters.connectionParameters) {
   abstract val targetBuildParametersBuilder: TargetBuildParameters.Builder
   protected open val buildActions: List<BuildAction<*>> = emptyList()
 
@@ -31,9 +31,13 @@ internal abstract class TargetBuildExecuter<T : AbstractLongRunningOperation<T>,
   }
 
   protected fun runWithHandler(handler: ResultHandler<Any?>) {
-    val gradleHomePath = connection.distribution.gradleHomePath
-    if (gradleHomePath != null) {
-      targetBuildParametersBuilder.useInstallation(gradleHomePath)
+    val gradleHome = connection.distribution.gradleHome.maybeGetTargetValue()
+    if (gradleHome != null) {
+      targetBuildParametersBuilder.useInstallation(gradleHome)
+    }
+    val gradleUserHome = connection.parameters.gradleUserHome.maybeGetTargetValue()
+    if (gradleUserHome != null) {
+      targetBuildParametersBuilder.useGradleUserHome(gradleUserHome)
     }
     val classPathAssembler = GradleServerClasspathInferer()
     for (buildAction in buildActions) {
