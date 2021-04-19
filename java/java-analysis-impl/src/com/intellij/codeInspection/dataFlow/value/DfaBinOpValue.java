@@ -2,13 +2,13 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,20 +94,6 @@ public final class DfaBinOpValue extends DfaValue {
       }
     }
     return myLeft + delimiter + myRight;
-  }
-
-  @NotNull
-  public DfaValue tryReduceOnCast(DfaMemoryState state, PsiPrimitiveType type) {
-    if (!TypeConversionUtil.isIntegralNumberType(type)) return this;
-    if ((myOp == LongRangeBinOp.PLUS || myOp == LongRangeBinOp.MINUS) &&
-        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(myRight)), type).equals(LongRangeSet.point(0))) {
-      return myLeft;
-    }
-    if (myOp == LongRangeBinOp.PLUS &&
-        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(myLeft)), type).equals(LongRangeSet.point(0))) {
-      return myRight;
-    }
-    return this;
   }
 
   private static long extractLong(DfaTypeValue right) {

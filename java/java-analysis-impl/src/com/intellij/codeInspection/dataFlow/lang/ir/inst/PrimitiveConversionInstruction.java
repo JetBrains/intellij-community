@@ -3,8 +3,10 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
@@ -13,6 +15,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,13 +37,13 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
     DfaValue value = arguments[0];
     PsiPrimitiveType type = myTargetType;
     if (value instanceof DfaBinOpValue) {
-      value = ((DfaBinOpValue)value).tryReduceOnCast(state, type);
+      value = tryReduceOnCast(((DfaBinOpValue)value), state, type);
     }
 
     DfType dfType = state.getDfType(value);
-    if (value instanceof DfaVariableValue && dfType instanceof DfIntegralType) {
+    if (value instanceof DfaVariableValue && dfType instanceof DfIntType) {
       LongRangeSet set = JvmPsiRangeSetUtil.typeRange(type);
-      if (set != null && !LongRangeSet.all().equals(set) && ((DfIntegralType)dfType).meetRange(set).equals(dfType)) {
+      if (set != null && !LongRangeSet.all().equals(set) && ((DfIntType)dfType).meetRange(set).equals(dfType)) {
         return value;
       }
     }
@@ -53,5 +56,21 @@ public class PrimitiveConversionInstruction extends EvalInstruction {
   @Override
   public String toString() {
     return "CONVERT_PRIMITIVE " + myTargetType.getPresentableText();
+  }
+
+  private static @NotNull DfaValue tryReduceOnCast(@NotNull DfaBinOpValue value,
+                                                   @NotNull DfaMemoryState state,
+                                                   @NotNull PsiPrimitiveType type) {
+    if (!TypeConversionUtil.isIntegralNumberType(type)) return value;
+    LongRangeBinOp operation = value.getOperation();
+    if ((operation == LongRangeBinOp.PLUS || operation == LongRangeBinOp.MINUS) &&
+        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(value.getRight())), type).equals(LongRangeSet.point(0))) {
+      return value.getLeft();
+    }
+    if (operation == LongRangeBinOp.PLUS &&
+        JvmPsiRangeSetUtil.castTo(DfLongType.extractRange(state.getDfType(value.getLeft())), type).equals(LongRangeSet.point(0))) {
+      return value.getRight();
+    }
+    return value;
   }
 }
