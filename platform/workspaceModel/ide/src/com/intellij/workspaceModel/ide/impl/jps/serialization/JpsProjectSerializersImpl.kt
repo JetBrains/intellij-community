@@ -261,7 +261,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
       val res = ConcurrencyUtil.invokeAll(tasks, service)
       val builders = res.map { it.get() }
-      val sourcesToUpdate = removeDiplicatingEntities(builders, serializers, project)
+      val sourcesToUpdate = removeDuplicatingEntities(builders, serializers, project)
       val squashedBuilder = squash(builders, consistencyCheckingMode)
       builder.addDiff(squashedBuilder)
       return sourcesToUpdate
@@ -293,7 +293,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   // Check if the same module is loaded from different source. This may happen in case of two `modules.xml` with the same module.
   // See IDEA-257175
   // This code may be removed if we'll get rid of storing modules.xml and friends in external storage (cache/external_build_system)
-  private fun removeDiplicatingEntities(builders: List<WorkspaceEntityStorageBuilder>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
+  private fun removeDuplicatingEntities(builders: List<WorkspaceEntityStorageBuilder>, serializers: List<JpsFileEntitiesSerializer<*>>, project: Project?): List<EntitySource> {
     if (project == null) return emptyList()
 
     val modules = mutableMapOf<ModuleId, MutableList<Pair<WorkspaceEntityStorageBuilder, JpsFileEntitiesSerializer<*>>>>()
@@ -352,7 +352,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         val entitySource = library.entitySource
         if (entitySource !is JpsFileEntitySource.FileInDirectory) return@mapNotNull null
         val fileName = serializer.fileUrl.fileName
-        if (fileName != defaultFileName) Triple(builder, library, fileName) else null
+        if (fileName != defaultFileName || enableExternalStorage) Triple(builder, library, fileName) else null
       }
       if (entitiesToRemove.isNotEmpty() && entitiesToRemove.size < buildersWithSerializers.size) {
         for ((builder, entity) in entitiesToRemove) {
