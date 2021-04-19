@@ -104,7 +104,7 @@ internal class PackageSearchDataService(
             val traceInfo = TraceInfo(TraceInfo.TraceSource.SEARCH_QUERY)
             logDebug(traceInfo, "PKGSDataService#searchQuery.advise()") { "searchQuery changed ('$query'), performing search..." }
 
-            onSearchDataChanged(query, traceInfo)
+            onSearchQueryChanged(query, traceInfo)
         }
 
         searchResultsProperty.advise(lifetime) {
@@ -144,18 +144,6 @@ internal class PackageSearchDataService(
             }
     }
 
-    private fun onSearchDataChanged(query: String, traceInfo: TraceInfo) {
-        queryChangeJob?.cancel()
-        queryChangeJob = mainScope.launch {
-            try {
-                performSearch(query, traceInfo)
-            } catch (e: CancellationException) {
-                logTrace(traceInfo, "onSearchQueryChangedActor") { "Execution cancelled: ${e.message}" }
-                setStatus(isSearching = false)
-            }
-        }
-    }
-
     @RequiresEdt
     private suspend fun refreshKnownRepositories(traceInfo: TraceInfo) {
         setStatus(isRefreshingData = true)
@@ -173,18 +161,30 @@ internal class PackageSearchDataService(
             }
         }
             .also { yield() }
-            .onFailure   {
+            .onFailure {
                 logError(traceInfo, "refreshKnownRepositories()") { "Failed to refresh known repositories list. $it" }
-                         }
-            .onSuccess{
-                    knownRepositoriesRemoteInfo = it
-                    logInfo(traceInfo, "refreshKnownRepositories()") {
-                        "Known repositories refreshed. We know of ${it.size} repo(s). Refreshing data..."
-                    }
-                    refreshData(traceInfo)
+            }
+            .onSuccess {
+                knownRepositoriesRemoteInfo = it
+                logInfo(traceInfo, "refreshKnownRepositories()") {
+                    "Known repositories refreshed. We know of ${it.size} repo(s). Refreshing data..."
                 }
+                refreshData(traceInfo)
+            }
 
         setStatus(isRefreshingData = true)
+    }
+
+    private fun onSearchQueryChanged(query: String, traceInfo: TraceInfo) {
+        queryChangeJob?.cancel()
+        queryChangeJob = mainScope.launch {
+            try {
+                performSearch(query, traceInfo)
+            } catch (e: CancellationException) {
+                logTrace(traceInfo, "onSearchQueryChangedActor") { "Execution cancelled: ${e.message}" }
+                setStatus(isSearching = false)
+            }
+        }
     }
 
     @RequiresEdt
@@ -243,7 +243,7 @@ internal class PackageSearchDataService(
                 setStatus(isRefreshingData = false)
             }
         }
-        onSearchDataChanged(searchQueryProperty.value, traceInfo)
+        onSearchQueryChanged(searchQueryProperty.value, traceInfo)
     }
 
     @RequiresEdt
@@ -271,30 +271,33 @@ internal class PackageSearchDataService(
                 .filter { it.matches(query, filterOptions.onlyKotlinMultiplatform) }
 
             val installablePackages = installablePackages(currentSearchResults, installedPackages, traceInfo)
-            val knownRepositoryModels = knownRepositoryModels(targetModules, knownRepositoriesRemoteInfo)
+            val allKnownRepositories = allKnownRepositoryModels(moduleModels, knownRepositoriesRemoteInfo)
+            val knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules)
 
             yield()
 
             logDebug(traceInfo, "PKGSDataService#onDataChanged()") {
                 "New data: ${installedPackages.size} installed, ${installablePackages.size} installable, " +
-                    "${knownRepositoryModels.size} known repos, ${moduleModels.size} modules"
+                    "${knownRepositoriesInTargetModules.size} known repos in target modules, ${moduleModels.size} modules"
             }
 
-            val packageModels = installedPackages.union(installablePackages).sorted()
+            val packageModels = installedPackages + installablePackages
             val headerData = computeHeaderData(
                 installed = installedPackages,
                 installable = installablePackages,
                 isSearching = query.isNotEmpty(),
                 onlyStable = filterOptions.onlyStable,
                 targetModules = targetModules,
-                knownRepositoryModels = knownRepositoryModels
+                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                allKnownRepositories = allKnownRepositories
             )
 
             yield()
             RootDataModel(
                 projectModules = moduleModels,
                 packageModels = packageModels,
-                knownRepositoryModels = knownRepositoryModels,
+                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+                allKnownRepositories = allKnownRepositories,
                 headerData = headerData,
                 targetModules = targetModules,
                 selectedPackage = selectedPackage,
@@ -378,7 +381,7 @@ internal class PackageSearchDataService(
                     usageInfo = usageInfo,
                     remoteInfo = remoteInfo
                 )
-            }
+            }.sortedBy { it.sortKey }
         } catch (e: CancellationException) {
             logDebug(traceInfo, "PKGSDataService#installedPackages()", e) { "Fetching installed packages info cancelled" }
             setStatus(isSearching = false)
@@ -427,10 +430,10 @@ internal class PackageSearchDataService(
             .toList()
     }
 
-    private fun knownRepositoryModels(
-        projectModules: TargetModules,
+    private fun allKnownRepositoryModels(
+        allModules: List<ModuleModel>,
         knownRepositoriesRemoteInfo: List<V2Repository>
-    ): List<RepositoryModel> =
+    ) = KnownRepositories.All(
         knownRepositoriesRemoteInfo.map { remoteInfo ->
             val url = remoteInfo.url
             val id = remoteInfo.id
@@ -439,11 +442,12 @@ internal class PackageSearchDataService(
                 id = id,
                 name = remoteInfo.friendlyName,
                 url = url,
-                usageInfo = projectModules.filter { it.declaredRepositories.anyMatches(remoteInfo) }
-                    .map { RepositoryUsageInfo(it.projectModule) },
+                usageInfo = allModules.filter { module -> module.declaredRepositories.anyMatches(remoteInfo) }
+                    .map { module -> RepositoryUsageInfo(module.projectModule) },
                 remoteInfo = remoteInfo
             )
         }
+    )
 
     private fun List<RepositoryDeclaration>.anyMatches(remoteInfo: V2Repository): Boolean {
         val urls = ((remoteInfo.alternateUrls ?: emptyList()) + remoteInfo.url).filterNotNull()
@@ -454,7 +458,7 @@ internal class PackageSearchDataService(
         }
     }
 
-    private fun areEquivalentUrls(first: String?, second: String?): Boolean  {
+    private fun areEquivalentUrls(first: String?, second: String?): Boolean {
         if (first == null || second == null) return false
         val firstUri = URI(first.trim().trimEnd('/', '?', '#'))
         val secondUri = URI(second.trim().trimEnd('/', '?', '#'))
@@ -474,7 +478,8 @@ internal class PackageSearchDataService(
         isSearching: Boolean,
         onlyStable: Boolean,
         targetModules: TargetModules,
-        knownRepositoryModels: List<RepositoryModel>
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All
     ): PackagesHeaderData {
         val count = installed.count() + installable.count()
         val selectedModules = _targetModulesProperty.value
@@ -496,10 +501,10 @@ internal class PackageSearchDataService(
             val newVersion = packageModel.getLatestAvailableVersion(onlyStable)
                 ?: return@flatMap emptyList<PackageSearchOperation<*>>()
 
-            val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(
-                knownRepositoryModels = knownRepositoryModels,
-                targetModules = targetModules,
-                selectedVersion = newVersion
+            val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+                packageModel = packageModel,
+                selectedVersion = newVersion,
+                allKnownRepositories = allKnownRepositories
             )
             operationFactory.createChangePackageVersionOperations(
                 packageModel = packageModel,

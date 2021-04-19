@@ -1,11 +1,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 import javax.swing.SizeRequirements
 import javax.swing.event.HyperlinkEvent
@@ -33,15 +33,16 @@ internal abstract class HtmlEditorPane : JEditorPane() {
             //language=CSS
             styleSheet.addRule(
                 """
-                    |a{color: ${JBUI.CurrentTheme.Link.linkColor().toCssHexColorString()};}
-                    |a:link{color: ${JBUI.CurrentTheme.Link.linkColor().toCssHexColorString()};}
-                    |a:visited{color: ${JBUI.CurrentTheme.Link.linkVisitedColor().toCssHexColorString()};}
-                    |a:active{color: ${JBUI.CurrentTheme.Link.linkPressedColor().toCssHexColorString()};}
-                    |a:hover{color: ${JBUI.CurrentTheme.Link.linkHoverColor().toCssHexColorString()};}
+                    |a{color: ${JBUI.CurrentTheme.Link.Foreground.ENABLED.toCssHexColorString()};}
+                    |a:link{color: ${JBUI.CurrentTheme.Link.Foreground.ENABLED.toCssHexColorString()};}
+                    |a:visited{color: ${JBUI.CurrentTheme.Link.Foreground.VISITED.toCssHexColorString()};}
+                    |a:active{color: ${JBUI.CurrentTheme.Link.Foreground.PRESSED.toCssHexColorString()};}
+                    |a:hover{color: ${JBUI.CurrentTheme.Link.Foreground.HOVERED.toCssHexColorString()};}
                 """.trimMargin()
             )
         }
 
+        highlighter = null
         isEditable = false
         isOpaque = false
         addHyperlinkListener(ProxyingHyperlinkListener(::onLinkClicked))
@@ -52,11 +53,16 @@ internal abstract class HtmlEditorPane : JEditorPane() {
         caret.updatePolicy = DefaultCaret.NEVER_UPDATE
     }
 
-    protected fun setBody(@Nls body: String) {
-        text = if (body.isEmpty()) {
+    protected fun clearBody() {
+        setBody(emptyList())
+    }
+
+    protected fun setBody(chunks: Collection<HtmlChunk>) {
+        text = if (chunks.isEmpty()) {
             ""
         } else {
-            "<html><body>$body</body></html>"
+            HtmlChunk.body().style("color: ${JBUI.CurrentTheme.Label.foreground().toCssHexColorString()};")
+                .children(*chunks.toTypedArray()).toString()
         }
     }
 

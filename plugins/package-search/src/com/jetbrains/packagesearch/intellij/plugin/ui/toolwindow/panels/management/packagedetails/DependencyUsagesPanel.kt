@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
@@ -27,30 +28,27 @@ internal class DependencyUsagesPanel : HtmlEditorPane() {
     fun display(packageModel: PackageModel.Installed) {
         clear()
 
-        val bodyString = buildString {
-            append("<p>")
-            append(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.usages.caption"))
-            append("</p><ul>")
-
-            for ((index, usageInfo) in packageModel.usageInfo.withIndex()) {
+        val chunks = mutableListOf<HtmlChunk>()
+        chunks += HtmlChunk.p().addText(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.usages.caption"))
+        chunks += HtmlChunk.ul().children(
+            packageModel.usageInfo.mapIndexed { index, usageInfo ->
                 val anchor = "#$index"
-                append("<li><a href=\"$anchor\">")
-                append(usageInfo.projectModule.name)
-
                 linkActionsMap[anchor] = usageInfo.projectModule.getNavigatableDependency(
                     packageModel.groupId,
                     packageModel.artifactId,
                     usageInfo.version
                 )
-                append("</li></a>")
+
+                HtmlChunk.li().child(
+                    HtmlChunk.link(anchor, usageInfo.projectModule.name)
+                )
             }
-            append("</ul>")
-        }
-        setBody(bodyString)
+        )
+        setBody(chunks)
     }
 
     fun clear() {
-        setBody("")
+        clearBody()
         linkActionsMap.clear()
     }
 }

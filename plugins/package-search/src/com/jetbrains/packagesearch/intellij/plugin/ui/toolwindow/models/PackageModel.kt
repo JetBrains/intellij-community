@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
+import org.apache.commons.lang3.StringUtils
 import java.util.Locale
 
 internal sealed class PackageModel(
@@ -11,6 +12,8 @@ internal sealed class PackageModel(
 ) : Comparable<PackageModel> {
 
     val identifier = "$groupId:$artifactId".toLowerCase(Locale.ROOT)
+
+    val sortKey = (StringUtils.normalizeSpace(remoteInfo?.name) ?: identifier).toLowerCase(Locale.ROOT)
 
     val isKotlinMultiplatform = remoteInfo?.mpp != null
 
@@ -29,8 +32,8 @@ internal sealed class PackageModel(
         val allVersions = additionalAvailableVersions()
             .union(remoteVersions ?: emptyList())
 
-        return allVersions.filter { !onlyStable || it.isStable }
-            .distinct()
+        return allVersions.filter { if (onlyStable) it.isStable else true }
+            .distinctBy { it.versionName }
             .sortedDescending()
     }
 
@@ -41,29 +44,6 @@ internal sealed class PackageModel(
     override fun compareTo(other: PackageModel): Int = sortingKey.compareTo(other.sortingKey)
 
     abstract val searchableInfo: String
-
-    fun repositoryToAddWhenInstallingOrUpgrading(
-        knownRepositoryModels: List<RepositoryModel>,
-        targetModules: TargetModules,
-        selectedVersion: PackageVersion
-    ): RepositoryModel? {
-        val repositoriesInTargetModules = targetModules.declaredKnownRepositories(knownRepositoryModels)
-
-        val repoIdToInstall = remoteInfo?.versions
-            ?.find { it.version == selectedVersion.versionName }
-            ?.repositoryIds
-            ?.firstOrNull { repoId -> !repositoriesInTargetModules.containsId(repoId) }
-
-        return if (repoIdToInstall != null) {
-            knownRepositoryModels.find { it.id == repoIdToInstall }
-        } else {
-            null
-        }
-    }
-
-    private fun List<RepositoryModel>.containsId(id: String) =
-        map { repositoryModel -> repositoryModel.id }
-            .any { knownRepoId -> knownRepoId == id }
 
     class Installed(
         groupId: String,

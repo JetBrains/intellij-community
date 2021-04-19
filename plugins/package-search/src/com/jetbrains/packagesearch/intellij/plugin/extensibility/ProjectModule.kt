@@ -5,10 +5,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import org.jetbrains.annotations.ApiStatus
 
 data class ProjectModule(
-    val name: String,
+    @NlsSafe val name: String,
     val nativeModule: Module,
     val parent: ProjectModule?,
     val buildFile: VirtualFile,

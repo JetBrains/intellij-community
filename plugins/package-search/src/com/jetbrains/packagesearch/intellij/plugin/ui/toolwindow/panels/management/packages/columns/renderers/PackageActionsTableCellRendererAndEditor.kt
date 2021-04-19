@@ -8,7 +8,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn.ActionsViewModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.colors
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.setUnderlined
@@ -27,28 +26,6 @@ internal class PackageActionsTableCellRendererAndEditor(
 ) : AbstractTableCellEditor(), TableCellRenderer {
 
     private var lastEditorValue: ActionsViewModel? = null
-    private var isEditing = false
-
-    init {
-        table.onMouseAction(
-            onPressed = {
-                if (table.isEditing && table.cellEditor === this) {
-                    isEditing = true
-                }
-            },
-            onReleased = {
-                if (isEditing && table.isEditing) {
-                    val value = lastEditorValue
-                        ?: throw IllegalStateException("Handling a mouse action but no editor value is available — how did we get here?")
-
-                    actionPerformedCallback(value)
-                    table.cellEditor.stopCellEditing()
-                }
-
-                isEditing = false
-            }
-        )
-    }
 
     override fun getTableCellRendererComponent(
         table: JTable,
@@ -59,9 +36,12 @@ internal class PackageActionsTableCellRendererAndEditor(
         column: Int
     ) = createComponent(table, isSelected, value as? ActionsViewModel)
 
-    override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): JComponent {
-        lastEditorValue = value as? ActionsViewModel
-        return createComponent(table, isSelected, lastEditorValue)
+    override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): JComponent? {
+        check(value is ActionsViewModel) { "The Actions column value must be an ActionsViewModel, but was ${value::class.simpleName}" }
+        actionPerformedCallback(value)
+        lastEditorValue = value
+        table.cellEditor?.stopCellEditing()
+        return null // This should cause editing to stop immediately (see JBTable#prepareEditor)
     }
 
     override fun getCellEditorValue(): Any? = lastEditorValue

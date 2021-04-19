@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -154,7 +155,8 @@ internal class PackageDetailsHeaderPanel(
 
     fun display(
         selectedPackageModel: SelectedPackageModel<*>,
-        knownRepositories: List<RepositoryModel>,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All,
         targetModules: TargetModules,
         onlyStable: Boolean
     ) {
@@ -184,10 +186,10 @@ internal class PackageDetailsHeaderPanel(
 
         val selectedVersion = selectedPackageModel.selectedVersion
         val selectedScope = selectedPackageModel.selectedScope
-        val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(
-            knownRepositories,
-            targetModules,
-            selectedVersion
+        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+            packageModel,
+            selectedVersion,
+            allKnownRepositories
         )
 
         updateRepoWarningBanner(repoToInstall)

@@ -5,9 +5,9 @@ import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Author
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Version
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
@@ -97,17 +97,17 @@ internal class PackagesDetailsInfoPanel : JPanel() {
     fun display(
         packageModel: PackageModel,
         selectedVersion: PackageVersion,
-        installedKnownRepositories: List<RepositoryModel>
+        allKnownRepositories: KnownRepositories.All
     ) {
+        clearPanelContents()
         if (packageModel.remoteInfo == null) {
-            clearPanelContents()
             return
         }
 
         noDataLabel.isVisible = false
 
         val selectedVersionInfo = packageModel.remoteInfo.versions.find { it.version == selectedVersion.versionName }
-        displayRepositoriesIfAny(selectedVersionInfo, installedKnownRepositories)
+        displayRepositoriesIfAny(selectedVersionInfo, allKnownRepositories)
 
         displayAuthorsIfAny(packageModel.remoteInfo.authors)
 
@@ -134,6 +134,8 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         projectWebsiteLinkLabel.isVisible = false
         documentationLinkLabel.isVisible = false
         readmeLinkLabel.isVisible = false
+        kotlinPlatformsPanel.isVisible = false
+        usagesPanel.isVisible = false
 
         kotlinPlatformsPanel.clear()
         usagesPanel.clear()
@@ -143,7 +145,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
 
     private fun displayRepositoriesIfAny(
         selectedVersionInfo: StandardV2Version?,
-        knownRepositories: List<RepositoryModel>
+        allKnownRepositories: KnownRepositories.All
     ) {
         if (selectedVersionInfo == null) {
             repositoriesLabel.isVisible = false
@@ -151,13 +153,14 @@ internal class PackagesDetailsInfoPanel : JPanel() {
         }
 
         val repositoryNames = selectedVersionInfo.repositoryIds
-            .mapNotNull { repoId -> knownRepositories.find { it.id == repoId }?.displayName }
-            .joinToString()
+            .mapNotNull { repoId -> allKnownRepositories.findById(repoId)?.displayName }
+            .filterNot { it.isBlank() }
+        val repositoryNamesToDisplay = repositoryNames.joinToString()
 
-        repositoriesLabel.text = if (selectedVersionInfo.repositoryIds.size == 1) {
-            PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.repository", repositoryNames)
+        repositoriesLabel.text = if (repositoryNames.size == 1) {
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.repository", repositoryNamesToDisplay)
         } else {
-            PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.repositories", repositoryNames)
+            PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.repositories", repositoryNamesToDisplay)
         }.withHtmlStyling(wordWrap = true)
 
         repositoriesLabel.isVisible = true
@@ -254,6 +257,7 @@ internal class PackagesDetailsInfoPanel : JPanel() {
             kotlinPlatformsPanel.display(packageDetails.platforms)
             kotlinPlatformsPanel.isVisible = true
         } else {
+            kotlinPlatformsPanel.clear()
             kotlinPlatformsPanel.isVisible = false
         }
     }

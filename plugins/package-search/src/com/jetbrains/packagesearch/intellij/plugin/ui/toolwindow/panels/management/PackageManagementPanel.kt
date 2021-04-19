@@ -3,6 +3,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
@@ -91,7 +92,8 @@ internal class PackageManagementPanel(
 
             packageDetailsPanel.display(
                 selectedPackageModel = selectedPackage,
-                knownRepositories = rootDataModelProvider.dataModelProperty.value.knownRepositoryModels,
+                knownRepositoriesInTargetModules = rootDataModelProvider.dataModelProperty.value.knownRepositoriesInTargetModules,
+                allKnownRepositories = rootDataModelProvider.dataModelProperty.value.allKnownRepositories,
                 targetModules = rootDataModelProvider.dataModelProperty.value.targetModules,
                 onlyStable = rootDataModelProvider.dataModelProperty.value.filterOptions.onlyStable
             )
@@ -116,13 +118,15 @@ internal class PackageManagementPanel(
                 headerData = data.headerData,
                 packageModels = data.packageModels,
                 targetModules = data.targetModules,
-                installedKnownRepositories = data.knownRepositoryModels,
+                knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
+                allKnownRepositories = data.allKnownRepositories,
                 filterOptions = data.filterOptions,
                 traceInfo = data.traceInfo
             )
             packageDetailsPanel.display(
                 selectedPackageModel = data.selectedPackage,
-                knownRepositories = data.knownRepositoryModels,
+                knownRepositoriesInTargetModules = data.knownRepositoriesInTargetModules,
+                allKnownRepositories = data.allKnownRepositories,
                 targetModules = data.targetModules,
                 onlyStable = data.filterOptions.onlyStable
             )
@@ -134,11 +138,13 @@ internal class PackageManagementPanel(
         packagesSplitter.secondComponent.isVisible = becomeVisible
 
         if (!wasVisible && becomeVisible) {
-            packagesSplitter.proportion = PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion
+            packagesSplitter.proportion =
+                PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion
         }
 
         if (!becomeVisible) {
-            PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion = packagesSplitter.proportion
+            PackageSearchGeneralConfiguration.getInstance(rootDataModelProvider.project).packageDetailsSplitterProportion =
+                packagesSplitter.proportion
             packagesSplitter.proportion = 1.0f
         }
     }
@@ -156,7 +162,7 @@ internal class PackageManagementPanel(
 
     override fun dispose() {
         logDebug("PackageManagementPanel#dispose()") { "Disposing PackageManagementPanel..." }
-        modulesTree.dispose()
-        packagesListPanel.dispose()
+        Disposer.dispose(modulesTree)
+        Disposer.dispose(packagesListPanel)
     }
 }

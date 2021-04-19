@@ -10,6 +10,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -25,7 +26,7 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class RepositoryTree(
     private val project: Project,
-    installedKnownRepositories: IPropertyView<List<RepositoryModel>>,
+    allKnownRepositories: IPropertyView<KnownRepositories.All>,
     lifetime: Lifetime
 ) : Tree(), DataProvider, CopyProvider {
 
@@ -78,18 +79,17 @@ internal class RepositoryTree(
 
         TreeUtil.installActions(this)
 
-        installedKnownRepositories.advise(lifetime) { repositories -> onRepositoriesChanged(repositories) }
+        allKnownRepositories.advise(lifetime) { repositories -> onRepositoriesChanged(repositories) }
     }
 
     private fun openFile(repositoryModuleItem: RepositoryTreeItem.Module, focusEditor: Boolean = false) {
         if (!PackageSearchGeneralConfiguration.getInstance(project).autoScrollToSource) return
 
-        // TODO At some point it would be nice to jump to the location in the file
         val file = repositoryModuleItem.usageInfo.projectModule.buildFile
         FileEditorManager.getInstance(project).openFile(file, focusEditor, true)
     }
 
-    private fun onRepositoriesChanged(repositories: List<RepositoryModel>) {
+    private fun onRepositoriesChanged(repositories: KnownRepositories.All) {
         val previouslySelectedItem = getSelectedRepositoryItem()
 
         clearSelection()

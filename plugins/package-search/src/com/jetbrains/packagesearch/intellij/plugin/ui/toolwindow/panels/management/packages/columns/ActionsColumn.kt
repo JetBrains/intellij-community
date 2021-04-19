@@ -2,8 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -24,7 +24,8 @@ internal class ActionsColumn(
     var hoverItem: PackagesTableItem<*>? = null
 
     private var targetModules: TargetModules = TargetModules.None
-    private var installedKnownRepositories: List<RepositoryModel> = emptyList()
+    private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
+    private var allKnownRepositories = KnownRepositories.All.EMPTY
     private var onlyStable = false
 
     private val cellRendererAndEditor = PackageActionsTableCellRendererAndEditor(table) {
@@ -37,10 +38,16 @@ internal class ActionsColumn(
 
     override fun isCellEditable(item: PackagesTableItem<*>) = getOperationTypeFor(item) != null
 
-    fun updateData(onlyStable: Boolean, targetModules: TargetModules, installedKnownRepositories: List<RepositoryModel>) {
+    fun updateData(
+        onlyStable: Boolean,
+        targetModules: TargetModules,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All
+    ) {
         this.onlyStable = onlyStable
         this.targetModules = targetModules
-        this.installedKnownRepositories = installedKnownRepositories
+        this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+        this.allKnownRepositories = allKnownRepositories
     }
 
     override fun valueOf(item: PackagesTableItem<*>): ActionsViewModel {
@@ -71,36 +78,50 @@ internal class ActionsColumn(
         }
 
     private fun createOperationsFor(item: PackagesTableItem<*>, operationType: PackageOperationType?): List<PackageSearchOperation<*>> {
-        val targetVersion = item.packageModel.getLatestAvailableVersion(onlyStable)
+        if (operationType == null) return emptyList()
+
+        val packageModel = item.packageModel
+        val targetVersion = packageModel.getLatestAvailableVersion(onlyStable)
             ?: return emptyList()
 
-        val repoToInstall = item.packageModel.repositoryToAddWhenInstallingOrUpgrading(
-          knownRepositoryModels = installedKnownRepositories,
-          targetModules = targetModules,
-          selectedVersion = targetVersion
+        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+            packageModel,
+            targetVersion,
+            allKnownRepositories
         )
 
         return when (operationType) {
             PackageOperationType.UPGRADE -> {
-                val packageModel = item.packageModel as PackageModel.Installed
-                operationFactory.createChangePackageVersionOperations(packageModel, targetVersion, targetModules, repoToInstall)
+                operationFactory.createChangePackageVersionOperations(
+                    packageModel = packageModel as PackageModel.Installed,
+                    newVersion = targetVersion,
+                    targetModules = targetModules,
+                    repoToInstall = repoToInstall
+                )
             }
             PackageOperationType.INSTALL -> {
-                val packageModel = item.packageModel as PackageModel.SearchResult
-                val selectedScope = item.selectedPackageModel.selectedScope
-                operationFactory.createAddPackageOperations(packageModel, targetVersion, selectedScope, targetModules, repoToInstall)
+                operationFactory.createAddPackageOperations(
+                    packageModel = packageModel as PackageModel.SearchResult,
+                    version = targetVersion,
+                    scope = item.selectedPackageModel.selectedScope,
+                    targetModules = targetModules,
+                    repoToInstall = repoToInstall
+                )
             }
-            null -> emptyList()
             else -> throw IllegalArgumentException("The actions column can only handle INSTALL and UPGRADE operations.")
         }
     }
 
+    @Nls
     private fun generateMessageFor(item: PackagesTableItem<*>): String? {
         val packageModel = item.packageModel
         val selectedVersion = item.selectedPackageModel.selectedVersion
 
-        val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(installedKnownRepositories, targetModules, selectedVersion)
-            ?: return null
+        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+            packageModel,
+            selectedVersion,
+            allKnownRepositories
+        ) ?: return null
 
         return PackageSearchBundle.message(
             "packagesearch.repository.willBeAddedOnInstall",

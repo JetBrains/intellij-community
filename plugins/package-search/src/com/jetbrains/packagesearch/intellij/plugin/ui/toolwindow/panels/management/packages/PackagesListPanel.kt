@@ -17,10 +17,10 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.LifetimeProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -188,7 +188,8 @@ internal class PackagesListPanel(
         headerData: PackagesHeaderData,
         packageModels: List<PackageModel>,
         targetModules: TargetModules,
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All,
         filterOptions: FilterOptions,
         traceInfo: TraceInfo
     ) {
@@ -202,7 +203,8 @@ internal class PackagesListPanel(
             packageModels = packageModels,
             onlyStable = filterOptions.onlyStable,
             targetModules = targetModules,
-            installedKnownRepositories = installedKnownRepositories,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            allKnownRepositories = allKnownRepositories,
             traceInfo = traceInfo
         )
     }
@@ -234,7 +236,8 @@ internal class PackagesListPanel(
         packageModels: List<PackageModel>,
         onlyStable: Boolean,
         targetModules: TargetModules,
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All,
         traceInfo: TraceInfo
     ) {
         logDebug(traceInfo, "PackagesListPanel#display()") { "PackagesListPanel#display() — Got new data" }
@@ -246,7 +249,7 @@ internal class PackagesListPanel(
             headerData.updateOperations
         )
 
-        packagesTable.display(packageModels, onlyStable, targetModules, installedKnownRepositories, traceInfo)
+        packagesTable.display(packageModels, onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories, traceInfo)
         tableScrollPane.isVisible = packageModels.isNotEmpty()
         listPanel.updateAndRepaint()
 

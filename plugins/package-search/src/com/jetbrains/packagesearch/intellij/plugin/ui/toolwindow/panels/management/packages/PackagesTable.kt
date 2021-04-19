@@ -13,12 +13,12 @@ import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -40,7 +40,6 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -67,7 +66,7 @@ internal class PackagesTable(
 ) : JBTable(), DataProvider, CopyProvider, Disposable {
 
     private val mainScope = CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()) +
-         CoroutineName("PackagesTable")
+        CoroutineName("PackagesTable")
 
     private var dataChangeJob: Job? = null
 
@@ -107,14 +106,15 @@ internal class PackagesTable(
     private val autosizingColumnsIndices: List<Int>
 
     private var latestTargetModules: TargetModules = TargetModules.None
-    private var installedKnownRepositories: List<RepositoryModel> = emptyList()
+    private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
+    private var allKnownRepositories = KnownRepositories.All.EMPTY
 
     init {
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
 
         model = PackagesTableModel(
             onlyStable = false,
-            columns = *arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
+            columns = arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
         )
 
         val columnInfos = tableModel.columnInfos
@@ -243,14 +243,18 @@ internal class PackagesTable(
         packages: List<PackageModel>,
         onlyStable: Boolean,
         targetModules: TargetModules,
-        installedKnownRepositories: List<RepositoryModel>,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All,
         traceInfo: TraceInfo
     ) {
         logDebug(traceInfo, "PackagesTable#display()") { "Got data, ${packages.size} package(s)" }
 
+        this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+        this.allKnownRepositories = allKnownRepositories
+
         dataChangeJob?.cancel()
         dataChangeJob = mainScope.launch(Dispatchers.Default) {
-            displayData(packages, onlyStable, targetModules, installedKnownRepositories, traceInfo)
+            displayData(packages, onlyStable, targetModules, traceInfo)
         }
     }
 
@@ -258,7 +262,6 @@ internal class PackagesTable(
         packageModels: List<PackageModel>,
         onlyStable: Boolean,
         targetModules: TargetModules,
-        installedKnownRepositories: List<RepositoryModel>,
         traceInfo: TraceInfo
     ) {
         val displayItems = computeDisplayItems(packageModels, onlyStable, targetModules, traceInfo)
@@ -270,7 +273,7 @@ internal class PackagesTable(
             // where the target modules or only stable flags get updated after the items data change, thus
             // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
             versionColumn.updateData(onlyStable, targetModules)
-            actionsColumn.updateData(onlyStable, targetModules, installedKnownRepositories)
+            actionsColumn.updateData(onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
             latestTargetModules = targetModules
 
             val currentSelectedPackage = _selectedPackage.value
@@ -464,10 +467,10 @@ internal class PackagesTable(
         when (packageModel) {
             is PackageModel.Installed -> {
                 val operations = packageModel.usageInfo.flatMap {
-                    val repoToInstall = packageModel.repositoryToAddWhenInstallingOrUpgrading(
-                        installedKnownRepositories,
-                        latestTargetModules,
-                        newVersion
+                    val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+                        packageModel,
+                        newVersion,
+                        allKnownRepositories
                     )
 
                     operationFactory.createChangePackageVersionOperations(

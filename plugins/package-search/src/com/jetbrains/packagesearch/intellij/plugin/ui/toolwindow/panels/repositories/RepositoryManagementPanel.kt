@@ -21,7 +21,7 @@ internal class RepositoryManagementPanel(
 
     private val repositoriesTree = RepositoryTree(
       project = rootDataModelProvider.project,
-      installedKnownRepositories = rootDataModelProvider.dataModelProperty.map { it.knownRepositoryModels },
+      allKnownRepositories = rootDataModelProvider.dataModelProperty.map { it.allKnownRepositories },
       lifetime = lifetimeProvider.lifetime
     )
 

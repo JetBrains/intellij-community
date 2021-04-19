@@ -33,15 +33,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
     private var modified: Boolean = false
     private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
 
-    private val checkboxFieldChangeListener = ChangeListener { modified = true }
-
     private val builder = FormBuilder.createFormBuilder()
-
-    private val allowCheckForPackageUpgradesEditor =
-        JCheckBox(PackageSearchBundle.message("packagesearch.configuration.allow.check.upgrades"))
-            .apply {
-                addChangeListener(checkboxFieldChangeListener)
-            }
 
     override fun createComponent(): JComponent? {
         // Extensions
@@ -53,14 +45,6 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         builder.addComponent(
             TitledSeparator(PackageSearchBundle.message("packagesearch.configuration.general")),
             0
-        )
-
-        // Allow checking for package upgrades?
-        builder.addComponent(allowCheckForPackageUpgradesEditor)
-        builder.addComponent(
-            RelativeFont.TINY.install(
-                JLabel(PackageSearchBundle.message("packagesearch.configuration.allow.check.upgrades.extrainfo"))
-            )
         )
 
         // Reset defaults
@@ -80,30 +64,24 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
     override fun isModified() = modified || extensions.any { it.isModified() }
 
     override fun reset() {
-        extensions.forEach {
-            it.reset()
+        for (contributor in extensions) {
+            contributor.reset()
         }
-
-        allowCheckForPackageUpgradesEditor.isSelected = configuration.allowCheckForPackageUpgrades
 
         modified = false
     }
 
     private fun restoreDefaults() {
-        extensions.forEach {
-            it.restoreDefaults()
+        for (contributor in extensions) {
+            contributor.restoreDefaults()
         }
-
-        allowCheckForPackageUpgradesEditor.isSelected = true
 
         modified = true
     }
 
     override fun apply() {
-        extensions.forEach {
-            it.apply()
+        for (contributor in extensions) {
+            contributor.apply()
         }
-
-        configuration.allowCheckForPackageUpgrades = allowCheckForPackageUpgradesEditor.isSelected
     }
 }

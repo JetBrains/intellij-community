@@ -1,5 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformTarget
 import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformType
@@ -20,29 +22,31 @@ internal class DependencyKotlinPlatformsPanel : HtmlEditorPane() {
     fun display(platforms: List<StandardV2Platform>) {
         clear()
 
-        val bodyString = buildString {
-            append("<p>")
-            append(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.kotlinPlatforms"))
-            append("</p><ul>")
-            for (platform in platforms) {
-                append("<li>")
-                append(platform.type.displayName())
-
-                val canHaveTargets = platform.type == PlatformType.JS || platform.type == PlatformType.NATIVE
-                if (canHaveTargets && platform.targets != null && platform.targets.isNotEmpty()) {
-                    append("<br /><em>")
-                    append(platform.targets.mapNotNull { it.displayName() }.joinToString(", "))
-                    append("</em>")
+        val chunks = mutableListOf<HtmlChunk>()
+        chunks += HtmlChunk.p().addText(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.details.info.kotlinPlatforms"))
+        chunks += HtmlChunk.ul().children(
+            platforms.mapNotNull { platform ->
+                @NlsSafe val displayName = platform.type.displayName() ?: return@mapNotNull null
+                HtmlChunk.li().addText(displayName).let { element ->
+                    val canHaveTargets = platform.type == PlatformType.JS || platform.type == PlatformType.NATIVE
+                    if (canHaveTargets && platform.targets != null && platform.targets.isNotEmpty()) {
+                        element.children(
+                            HtmlChunk.br(),
+                            HtmlChunk.span("font-style: italic;").addText(
+                                platform.targets.mapNotNull { it.displayName() }.joinToString(", ")
+                            )
+                        )
+                    } else {
+                        element
+                    }
                 }
-                append("</li>")
             }
-            append("</ul>")
-        }
-        setBody(bodyString)
+        )
+        setBody(chunks)
     }
 
     fun clear() {
-        setBody("")
+        clearBody()
     }
 
     private fun PlatformType.displayName() = when (this) {

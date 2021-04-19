@@ -1,14 +1,13 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.intellij.openapi.util.text.HtmlChunk
 
 @NlsSafe
 internal fun @receiver:NlsSafe String.withHtmlStyling(
     wordWrap: Boolean = false,
     lineHeight: String? = null
 ): String {
-    // TODO use HtmlChunk instead
     val styleString = buildString {
         if (wordWrap) append("word-wrap:normal; width: 100%;")
         if (lineHeight != null) {
@@ -18,5 +17,9 @@ internal fun @receiver:NlsSafe String.withHtmlStyling(
         }
     }
 
-    return PackageSearchBundle.message("packagesearch.ui.util.htmlStylingWrapper", styleString, this)
+    return HtmlChunk.html()
+        .child(
+            HtmlChunk.body().style(styleString)
+                .addText(this)
+        ).toString()
 }

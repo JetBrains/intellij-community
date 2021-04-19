@@ -19,7 +19,7 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
         const val DefaultPackageDetailsSplitterProportion = 0.8f
 
         fun getInstance(project: Project): PackageSearchGeneralConfiguration =
-          project.getService(PackageSearchGeneralConfiguration::class.java)
+            project.getService(PackageSearchGeneralConfiguration::class.java)
     }
 
     override fun getState(): PackageSearchGeneralConfiguration = this
@@ -27,9 +27,6 @@ class PackageSearchGeneralConfiguration : BaseState(), PersistentStateComponent<
     override fun loadState(state: PackageSearchGeneralConfiguration) {
         this.copyFrom(state)
     }
-
-    @get:OptionTag("ALLOW_CHECK_FOR_PACKAGE_UPGRADES")
-    var allowCheckForPackageUpgrades by property(true)
 
     @get:OptionTag("AUTO_SCROLL_TO_SOURCE")
     var autoScrollToSource by property(true)

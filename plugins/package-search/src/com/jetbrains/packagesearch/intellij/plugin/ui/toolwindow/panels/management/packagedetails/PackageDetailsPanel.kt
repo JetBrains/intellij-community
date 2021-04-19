@@ -4,8 +4,8 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SelectedPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -61,13 +61,14 @@ internal class PackageDetailsPanel(
 
     fun display(
         selectedPackageModel: SelectedPackageModel<*>?,
-        knownRepositories: List<RepositoryModel>,
+        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
+        allKnownRepositories: KnownRepositories.All,
         targetModules: TargetModules,
         onlyStable: Boolean
     ) {
         if (selectedPackageModel != null) {
-            headerPanel.display(selectedPackageModel, knownRepositories, targetModules, onlyStable)
-            infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, knownRepositories)
+            headerPanel.display(selectedPackageModel, knownRepositoriesInTargetModules, allKnownRepositories, targetModules, onlyStable)
+            infoPanel.display(selectedPackageModel.packageModel, selectedPackageModel.selectedVersion, allKnownRepositories)
 
             showPanel(CONTENT_PANEL)
         } else {
@@ -85,6 +86,7 @@ internal class PackageDetailsPanel(
     override fun build(): JPanel = cardPanel
 
     companion object {
+
         private const val EMPTY_STATE = "empty_state"
         private const val CONTENT_PANEL = "content_panel"
     }

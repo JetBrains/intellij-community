@@ -34,20 +34,20 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         CopyPasteManager.getInstance().setContents(StringSelection(getTextForCopy(packageModel)))
 
     private fun getTextForCopy(packageModel: PackageModel) = buildString {
-        appendln("${packageModel.groupId}/${packageModel.artifactId}")
+        appendLine("${packageModel.groupId}/${packageModel.artifactId}")
 
         append(additionalCopyText())
 
         packageModel.remoteInfo?.versions?.let { versions ->
             if (versions.any()) {
-                appendln()
+                appendLine()
                 append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.availableVersions")} ")
                 append(versions.joinToString("; ") { it.version })
             }
         }
 
         packageModel.remoteInfo?.gitHub?.let { gitHub ->
-            appendln()
+            appendLine()
             append("  ")
             append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats"))
             if (gitHub.stars != null) {
@@ -62,7 +62,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
 
         packageModel.remoteInfo?.stackOverflowTags?.tags?.let { tags ->
             if (tags.any()) {
-                appendln()
+                appendLine()
                 append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.stackOverflowTags")} ")
                 append(tags.joinToString("; ") { "${it.tag} (${it.count})" })
             }
@@ -104,7 +104,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         override fun additionalCopyText() = buildString {
             if (packageModel.usageInfo.isEmpty()) return@buildString
 
-            appendln()
+            appendLine()
             append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.installedVersions")} : ")
             append(
                 packageModel.usageInfo.map { it.version }
