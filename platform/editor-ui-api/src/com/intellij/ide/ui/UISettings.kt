@@ -496,8 +496,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     @JvmStatic
     val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
       get() {
-        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
-                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+        return if (!Registry.`is`("ide.disable.fractionalMetrics", false))
           RenderingHints.VALUE_FRACTIONALMETRICS_ON
         else
           RenderingHints.VALUE_FRACTIONALMETRICS_OFF
