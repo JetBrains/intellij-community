@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,9 +87,9 @@ public interface DfaMemoryState {
   boolean applyContractCondition(DfaCondition dfaCond);
 
   /**
-   * Updates value dfType if it's compatible with current value state. 
+   * Updates value dfType if it's compatible with current value state.
    * Depending on value passed and memory state implementation the new fact may or may not be memoized.
-   * 
+   *
    * @param value value to update
    * @param dfType wanted type
    * @return true if update was successful. If false was returned the memory state may be in inconsistent state.
@@ -98,15 +97,15 @@ public interface DfaMemoryState {
   boolean meetDfType(@NotNull DfaValue value, @NotNull DfType dfType);
 
   /**
-   * Forcibly sets the supplied dfType to given value if given value state can be memoized. 
-   * This is necessary to override some knowledge about the variable state. In most of the cases 
+   * Forcibly sets the supplied dfType to given value if given value state can be memoized.
+   * This is necessary to override some knowledge about the variable state. In most of the cases
    * {@link #meetDfType(DfaValue, DfType)} should be used as it narrows existing type.
-   * 
+   *
    * @param value value to update.
    * @param dfType type to assign to value. Note that type might be adjusted, e.g. to be compatible with value declared PsiType.
    */
   void setDfType(@NotNull DfaValue value, @NotNull DfType dfType);
-  
+
   /**
    * @param value value to get the type of
    * @return the DfType of the value within this memory state
@@ -120,13 +119,6 @@ public interface DfaMemoryState {
    */
   @NotNull
   DfType getUnboxedDfType(@NotNull DfaValue value);
-
-  /**
-   * @param value value to get the type of
-   * @return the PsiType of given value, could be more precise than the declared type. May return null if not known.
-   */
-  @Nullable
-  PsiType getPsiType(@NotNull DfaValue value);
 
   /**
    * @param value to check
@@ -153,8 +145,8 @@ public interface DfaMemoryState {
   /**
    * Flush given variable (forget any knowledge about it)
    * @param variable to flush
-   * @param canonicalize whether to canonicalize the variable before flushing. Flushing canonical variable allows to forget 
-   *                     about all known aliases as well. Flushing without canonicalization could be necessary only 
+   * @param canonicalize whether to canonicalize the variable before flushing. Flushing canonical variable allows to forget
+   *                     about all known aliases as well. Flushing without canonicalization could be necessary only
    *                     to simplify memory state, if it's known that given variable is never used anymore.
    */
   void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize);
@@ -172,7 +164,7 @@ public interface DfaMemoryState {
    * <li>State that appears when {@linkplain com.intellij.codeInspection.dataFlow.types.DfEphemeralReferenceType an ephemeral value} is stored on the stack</li>
    * </ul>
    * The "unsound" warnings (e.g. possible NPE) are not reported if they happen only in ephemeral states, and there's a non-ephemeral state
-   * where the same problem doesn't happen. 
+   * where the same problem doesn't happen.
    */
   boolean isEphemeral();
 

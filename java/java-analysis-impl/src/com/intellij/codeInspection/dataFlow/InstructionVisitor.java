@@ -104,7 +104,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-    PsiType qualifierType = memState.getPsiType(callArguments.myQualifier);
+    PsiType qualifierType = getPsiType(memState, callArguments.myQualifier);
     PsiMethod realMethod = findSpecificMethod(instruction.getContext(), instruction.getTargetMethod(), qualifierType);
     DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory, realMethod);
     PsiExpression expression = instruction.getExpression();
@@ -431,7 +431,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         } else {
           mutable = Mutability.getMutability(targetMethod);
         }
-        PsiType qualifierType = state.getPsiType(qualifierValue);
+        PsiType qualifierType = getPsiType(state, qualifierValue);
         type = narrowReturnType(type, qualifierType, realMethod);
       }
       DfType dfType = instruction.getContext() instanceof PsiNewExpression ?
@@ -1154,5 +1154,14 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       }
     }
     return new DfaCallArguments(qualifier, arguments, MutationSignature.fromMethod(method));
+  }
+
+  /**
+   * @param state memory state
+   * @param value value
+   * @return PsiType of the value within given memory state
+   */
+  private static @Nullable PsiType getPsiType(DfaMemoryState state, @NotNull DfaValue value) {
+    return DfaPsiUtil.dfTypeToPsiType(value.getFactory().getProject(), state.getDfType(value));
   }
 }
