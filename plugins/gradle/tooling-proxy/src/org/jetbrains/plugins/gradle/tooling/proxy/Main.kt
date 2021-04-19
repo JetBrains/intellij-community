@@ -5,8 +5,6 @@ import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
-import org.gradle.internal.concurrent.DefaultExecutorFactory
-import org.gradle.internal.remote.internal.inet.InetAddressFactory
 import org.gradle.internal.remote.internal.inet.InetEndpoint
 import org.gradle.launcher.cli.action.BuildActionSerializer
 import org.gradle.launcher.daemon.protocol.BuildEvent
@@ -21,7 +19,6 @@ import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Inter
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.net.InetAddress
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -60,6 +57,10 @@ object Main {
     val gradleHome = targetBuildParameters.gradleHome
     if (gradleHome != null) {
       connector.useInstallation(File(gradleHome))
+    }
+    val gradleUserHome = targetBuildParameters.gradleUserHome
+    if (gradleUserHome != null) {
+      connector.useGradleUserHomeDir(File(gradleUserHome))
     }
     val resultHandler = BlockingResultHandler(Any::class.java)
 

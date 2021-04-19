@@ -17,7 +17,7 @@ internal class TargetProjectConnection(val environmentConfigurationProvider: Tar
                                        val taskId: ExternalSystemTaskId?,
                                        val taskListener: ExternalSystemTaskNotificationListener?,
                                        val distribution: TargetGradleDistribution,
-                                       val parameters: ConnectionParameters,
+                                       val parameters: TargetConnectionParameters,
                                        private val connectionCloseListener: ProjectConnectionCloseListener?) : ProjectConnection, UserDataHolderBase() {
   override fun close() {
     connectionCloseListener?.connectionClosed(this)
