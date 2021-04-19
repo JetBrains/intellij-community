@@ -4,10 +4,13 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.build.events.impl.*
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
+import com.intellij.execution.wsl.WSLUtil
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -18,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -33,6 +37,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.plugins.gradle.issue.IncorrectGradleJdkIssue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -108,6 +113,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
     if (sdkInfo !is SdkInfo.Resolved) throw jdkConfigurationException("gradle.jvm.is.invalid")
     val homePath = sdkInfo.homePath ?: throw jdkConfigurationException("gradle.jvm.is.invalid")
+    checkForWslJdkOnWindows(homePath, externalProjectPath, task)
     if (!JdkUtil.checkForJdk(homePath)) {
       if (JdkUtil.checkForJre(homePath)) {
         throw jdkConfigurationException("gradle.jvm.is.jre")
@@ -115,6 +121,16 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
     return sdkInfo
+  }
+
+  private fun checkForWslJdkOnWindows(homePath: String, externalProjectPath: String, task: ExternalSystemTask) {
+    if (WSLUtil.isSystemCompatible() &&
+        WslDistributionManager.isWslPath(homePath) &&
+        !WslDistributionManager.isWslPath(externalProjectPath)) {
+      val isResolveProjectTask = task is ExternalSystemResolveProjectTask
+      val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
+      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
+    }
   }
 
   private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {

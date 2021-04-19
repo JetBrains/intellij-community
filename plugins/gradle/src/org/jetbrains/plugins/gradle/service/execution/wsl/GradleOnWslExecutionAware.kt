@@ -1,12 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution.wsl
 
-import com.intellij.build.issue.BuildIssue
-import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WSLUtil
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration
@@ -19,11 +18,9 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolv
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo.Resolved
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.pom.Navigatable
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
+import org.jetbrains.plugins.gradle.issue.IncorrectGradleJdkIssue
 import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
 
@@ -45,7 +42,10 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     val jdkWslDistribution = WslPath.getDistributionByWindowsUncPath(homePath)
     if (wslDistribution.id != jdkWslDistribution?.id) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
-      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, wslDistribution, homePath, isResolveProjectTask))
+      val distributionPath = wslDistribution.uncRootPath.toString()
+      val distributionName = wslDistribution.presentableName
+      val message = message("gradle.incorrect.jvm.wsl.issue.description", distributionName, distributionPath)
+      throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
     }
   }
 
@@ -112,30 +112,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
   }
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {
-    if (!SystemInfo.isWindows || !WslDistributionManager.isWslPath(path)) return null
+    if (!WSLUtil.isSystemCompatible() || !WslDistributionManager.isWslPath(path)) return null
     return WslPath.getDistributionByWindowsUncPath(path)
-  }
-
-  @ApiStatus.Internal
-  class IncorrectGradleJdkIssue(projectPath: String,
-                                distribution: WSLDistribution,
-                                jdkHomePath: String,
-                                isResolveProjectTask: Boolean) : BuildIssue {
-    override val title: String = message("gradle.incorrect.jvm.issue.title")
-    override val description: String
-    override val quickFixes: List<BuildIssueQuickFix>
-    override fun getNavigatable(project: Project): Navigatable? = null
-
-    init {
-      val gradleSettingsFix = GradleSettingsQuickFix(projectPath, isResolveProjectTask,
-                                                     { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
-                                                     message("gradle.settings.text.jvm.path"))
-      quickFixes = listOf(gradleSettingsFix)
-      val distributionPath = distribution.uncRootPath.toString()
-      val distributionName = distribution.presentableName
-      val message = message("gradle.incorrect.jvm.wsl.issue.description", jdkHomePath, distributionName, distributionPath)
-      val fixLink = "<a href=\"${gradleSettingsFix.id}\">${message("gradle.open.gradle.settings")}</a>"
-      description = "$message\n$fixLink\n"
-    }
   }
 }
