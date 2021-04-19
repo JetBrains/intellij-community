@@ -1048,9 +1048,9 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo checkExtendsProhibitedClass(@NotNull PsiClass superClass, @NotNull PsiElement elementToHighlight) {
+  static HighlightInfo checkExtendsProhibitedClass(@NotNull PsiClass superClass, @NotNull PsiClass psiClass, @NotNull PsiElement elementToHighlight) {
     String qualifiedName = superClass.getQualifiedName();
-    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) || CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName)) {
+    if (CommonClassNames.JAVA_LANG_ENUM.equals(qualifiedName) && !psiClass.isEnum() || CommonClassNames.JAVA_LANG_RECORD.equals(qualifiedName) && !psiClass.isRecord()) {
       String message = JavaErrorBundle.message("classes.extends.prohibited.super", qualifiedName);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
     }
@@ -1063,7 +1063,7 @@ public final class HighlightClassUtil {
       PsiClass superClass = aClass.getSuperClass();
       PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
       if (superClass != null && reference != null) {
-        return checkExtendsProhibitedClass(superClass, reference);
+        return checkExtendsProhibitedClass(superClass, aClass, reference);
       }
     }
     return null;

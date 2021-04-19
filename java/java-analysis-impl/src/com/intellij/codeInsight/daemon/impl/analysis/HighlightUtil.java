@@ -3402,7 +3402,7 @@ public final class HighlightUtil {
             highlightInfo = HighlightClassUtil.checkCannotInheritFromFinal(aClass, ref);
           }
           if (highlightInfo == null) {
-            highlightInfo = HighlightClassUtil.checkExtendsProhibitedClass(aClass, ref);
+            highlightInfo = HighlightClassUtil.checkExtendsProhibitedClass(aClass, (PsiClass)refGrandParent, ref);
           }
           if (highlightInfo == null) {
             highlightInfo = GenericsHighlightUtil.checkCannotInheritFromTypeParameter(aClass, ref);

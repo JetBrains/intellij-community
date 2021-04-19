@@ -75,3 +75,4 @@ record CStyle(int a<error descr="C-style record component declaration is not all
 record CStyle2(int[] a<error descr="C-style record component declaration is not allowed">[] []</error> ) {}
 record JavaStyle(int[] [] a) {}
 record SafeVarargComponent(<error descr="@SafeVarargs annotation cannot be applied for a record component">@SafeVarargs</error> int... component) {}
+record ExtendsRecordExplicitly() <error descr="No extends clause allowed for record">extends java.lang.Record</error> {}
