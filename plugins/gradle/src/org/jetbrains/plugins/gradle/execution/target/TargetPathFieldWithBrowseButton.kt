@@ -14,8 +14,8 @@ class TargetPathFieldWithBrowseButton : TextFieldWithBrowseButton() {
   private var pathMapper: PathMapper? = null
   private var currentActionListener: ActionListener? = null
 
-  fun getLocalePath(): String? = getTargetPathValue().maybeGetLocalValue()
-  fun setLocalePath(path: String?) {
+  fun getLocalPath(): String? = getTargetPathValue().maybeGetLocalValue()
+  fun setLocalPath(path: String?) {
     val targetPath = path?.let { pathMapper.maybeConvertToRemote(it) }
     setText(targetPath)
   }

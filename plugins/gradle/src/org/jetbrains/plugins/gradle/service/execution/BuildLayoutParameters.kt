@@ -22,13 +22,11 @@ interface BuildLayoutParameters {
   /**
    * Gradle installation directory resolved based on the execution parameters of the build.
    */
-  @get:NlsSafe
   val gradleHome: TargetValue<String>?
 
   /**
    * https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
    */
-  @get:NlsSafe
   val gradleUserHome: TargetValue<String>
 
   /**
