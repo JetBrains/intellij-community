@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -81,7 +81,7 @@ public interface DfType {
   };
   /**
    * A special value that represents a contract failure after method return (the control flow should immediately proceed
-   * with exception handling). This value is like a constant but it's type doesn't correspond to any JVM type.
+   * with exception handling). This value is like a constant but its type doesn't correspond to any JVM type.
    */
   DfType FAIL = new DfConstantType<>(ObjectUtils.sentinel("FAIL")) {
     @Override
