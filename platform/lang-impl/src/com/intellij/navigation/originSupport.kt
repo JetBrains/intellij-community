@@ -10,7 +10,7 @@ import java.net.URISyntaxException
 private val LOG = logger<JBProtocolNavigateCommand>()
 
 @VisibleForTesting
-fun isOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
+fun areOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
   if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
 
   val canonicalOrigin = extractCanonicalPath(originUrl)
@@ -32,25 +32,25 @@ private fun extractCanonicalPath(originUrl: String?) : String? {
 private fun extractHostAndPath(url: String) : String {
   val urlWithScheme = if (URLUtil.containsScheme(url)) url else "ssh://$url"
   val uri = URI(urlWithScheme)
-  var host = uri.host
-  if (host != null) {
-    host = uri.host + (if (uri.port != -1) uri.port else "")
-  }
-  var path = uri.path ?: ""
+  val host = uri.host
+  val path = uri.path ?: ""
 
-  if (host == null) {
-    if (uri.scheme == "ssh") {
-      if (uri.authority != null) {
-        // git@github.com:JetBrains
-        val at = uri.authority.split("@")
-        val hostAndOrg = if (at.size > 1) at[1] else at[0]
-        val comma = hostAndOrg.split(":")
-        host = comma[0]
-        if (comma.size > 1) {
-          path = "/" + comma[1] + path
-        }
-      }
+  //val host, path
+  if (host != null) {
+    val hostPort = uri.host + (if (uri.port != -1) ":${uri.port}" else "")
+    return hostPort + path
+  }
+
+  if (uri.scheme == "ssh") {
+    if (uri.authority != null) {
+      // git@github.com:JetBrains
+      val at = uri.authority.split("@")
+      val hostAndOrg = if (at.size > 1) at[1] else at[0]
+      val comma = hostAndOrg.split(":")
+      val sshPath = if (comma.size > 1) "/" + comma[1] + path else path
+      return comma[0] + sshPath
     }
   }
-  return host + path
+
+  return ""
 }

@@ -74,7 +74,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
     }
 
     val check = { name: String, path: Path? ->
-      !projectName.isNullOrEmpty() && name == projectName || isOriginsEqual(originUrl, getProjectOriginUrl(path))
+      !projectName.isNullOrEmpty() && name == projectName || areOriginsEqual(originUrl, getProjectOriginUrl(path))
     }
 
     val project = ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }

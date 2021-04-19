@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
-import com.intellij.navigation.isOriginsEqual
+import com.intellij.navigation.areOriginsEqual
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -114,7 +114,7 @@ class JBNavigateCommandTest {
 
     equalOrigins.forEach { first ->
       equalOrigins.forEach { second ->
-        assertTrue(isOriginsEqual(first, second), "Non equal: '$first' and '$second'")
+        assertTrue(areOriginsEqual(first, second), "Non equal: '$first' and '$second'")
       }
     }
 
@@ -130,7 +130,7 @@ class JBNavigateCommandTest {
     )
     equalOrigins.forEach { first ->
       nonEqualOrigins.forEach { second ->
-        assertFalse(isOriginsEqual(first, second), "Equal: '$first' and '$second'")
+        assertFalse(areOriginsEqual(first, second), "Equal: '$first' and '$second'")
       }
     }
   }
