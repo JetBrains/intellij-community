@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -231,8 +232,8 @@ public class GitBranchPopupActions {
       myGitBranchManager = project.getService(GitBranchManager.class);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
-      getTemplatePresentation().putClientProperty(JComponent.TOOL_TIP_TEXT_KEY,
-                                                  constructIncomingOutgoingTooltip(hasIncomingCommits(), hasOutgoingCommits()));
+
+      addTooltipText(getTemplatePresentation(), constructIncomingOutgoingTooltip(hasIncomingCommits(), hasOutgoingCommits()));
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
 
@@ -623,25 +624,40 @@ public class GitBranchPopupActions {
       }
     }
 
-      private static class PullWithMergeAction extends PullBranchBaseAction {
+    private static class PullWithMergeAction extends PullBranchBaseAction {
 
-        PullWithMergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-          super(project, repositories, branchName, UpdateMethod.MERGE);
-          Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.merge",
-                                                                    getCurrentBranchTruncatedPresentation(repositories));
-          getTemplatePresentation().setText(text);
-        }
+      PullWithMergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+        super(project, repositories, branchName, UpdateMethod.MERGE);
+        Presentation presentation = getTemplatePresentation();
+
+        Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.merge",
+                                                              getCurrentBranchTruncatedPresentation(repositories));
+        presentation.setText(text);
+
+        Supplier<@Nls String> description = GitBundle.messagePointer("branches.action.pull.into.branch.using.merge.description",
+                                                                     getCurrentBranchFullPresentation(repositories));
+
+        presentation.setDescription(description);
+        addTooltipText(presentation, description.get());
       }
+    }
 
-      private static class PullWithRebaseAction extends PullBranchBaseAction {
+    private static class PullWithRebaseAction extends PullBranchBaseAction {
 
-        PullWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-          super(project, repositories, branchName, UpdateMethod.REBASE);
-          Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase",
-                                                                getCurrentBranchTruncatedPresentation(repositories));
-          getTemplatePresentation().setText(text);
-        }
+      PullWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+        super(project, repositories, branchName, UpdateMethod.REBASE);
+        Presentation presentation = getTemplatePresentation();
+
+        Supplier<@Nls String> text = GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase",
+                                                              getCurrentBranchTruncatedPresentation(repositories));
+        presentation.setText(text);
+        Supplier<@Nls String> description = GitBundle.messagePointer("branches.action.pull.into.branch.using.rebase.description",
+                                                                     getCurrentBranchFullPresentation(repositories));
+
+        presentation.setDescription(description);
+        addTooltipText(presentation, description.get());
       }
+    }
 
     private static class RemoteDeleteAction extends DumbAwareAction {
       private final Project myProject;
@@ -675,6 +691,11 @@ public class GitBranchPopupActions {
 
     CheckoutAsNewBranch(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
       super(GitBundle.messagePointer("branches.new.branch.from.branch", getSelectedBranchTruncatedPresentation(branchName)));
+
+      Supplier<@Nls String> description = GitBundle.messagePointer("branches.new.branch.from.branch.description",
+                                                              getSelectedBranchFullPresentation(branchName));
+      getTemplatePresentation().setDescription(description);
+      addTooltipText(getTemplatePresentation(), description.get());
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -720,6 +741,7 @@ public class GitBranchPopupActions {
                                              getCurrentBranchFullPresentation(myRepositories));
       Presentation presentation = e.getPresentation();
       presentation.setDescription(description);
+      addTooltipText(presentation, description);
 
       String text = GitBundle.message("branches.compare.with.branch",
                                       getCurrentBranchTruncatedPresentation(myRepositories));
@@ -774,15 +796,17 @@ public class GitBranchPopupActions {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
       String description = GitBundle.message("branches.merge.into",
                                              getSelectedBranchFullPresentation(myBranchName),
                                              getCurrentBranchFullPresentation(myRepositories));
-      e.getPresentation().setDescription(description);
+      presentation.setDescription(description);
+      addTooltipText(presentation, description);
 
       String name = GitBundle.message("branches.merge.into",
                                       getSelectedBranchTruncatedPresentation(myBranchName),
                                       getCurrentBranchTruncatedPresentation(myRepositories));
-      e.getPresentation().setText(name);
+      presentation.setText(name);
     }
 
     @Override
@@ -822,6 +846,7 @@ public class GitBranchPopupActions {
                            : GitBundle.message("branches.rebase.is.not.possible.in.the.detached.head.state");
       Presentation presentation = e.getPresentation();
       presentation.setDescription(description);
+      addTooltipText(presentation, description);
       presentation.setEnabled(isOnBranch);
 
       String actionText = GitBundle.message(
@@ -856,11 +881,13 @@ public class GitBranchPopupActions {
                                              getSelectedBranchFullPresentation(myBranchName),
                                              getCurrentBranchFullPresentation(myRepositories),
                                              myBranchName);
-      e.getPresentation().setDescription(description);
+      Presentation presentation = e.getPresentation();
+      presentation.setDescription(description);
+      addTooltipText(presentation, description);
 
       String text = GitBundle.message("branches.checkout.and.rebase.onto.branch",
                                       getCurrentBranchTruncatedPresentation(myRepositories));
-      e.getPresentation().setText(text);
+      presentation.setText(text);
     }
 
     @Override
@@ -1033,5 +1060,13 @@ public class GitBranchPopupActions {
   @NotNull
   private static String wrapWithQuotes(@NlsSafe @NotNull String branchName) {
     return "'" + branchName + "'";
+  }
+
+  /**
+   * Adds a tooltip to action in the branches popup
+   * @see com.intellij.ui.popup.ActionStepBuilder#appendAction
+   */
+  private static void addTooltipText(Presentation presentation, @NlsContexts.Tooltip String tooltipText) {
+    presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, tooltipText);
   }
 }
