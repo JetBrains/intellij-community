@@ -1225,9 +1225,9 @@ public final class HighlightClassUtil {
   private static boolean hasPermittedSubclassModifier(@NotNull PsiClass psiClass) {
     PsiModifierList modifiers = psiClass.getModifierList();
     if (modifiers == null) return false;
-    return modifiers.hasExplicitModifier(PsiModifier.SEALED) ||
-           modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) ||
-           modifiers.hasExplicitModifier(PsiModifier.FINAL);
+    return modifiers.hasModifierProperty(PsiModifier.SEALED) ||
+           modifiers.hasModifierProperty(PsiModifier.NON_SEALED) ||
+           modifiers.hasModifierProperty(PsiModifier.FINAL);
   }
 
   public static HighlightInfo checkSealedSuper(PsiClass aClass) {
