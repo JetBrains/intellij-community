@@ -3,6 +3,7 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.impl.CachedIntentions
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionListStep
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,11 +12,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.SELECTED_ITEM
 import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.awt.RelativePoint
@@ -81,7 +85,17 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
     val editor = intentions.editor ?: return
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
-      IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions)
+      object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions) {
+        override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching?, file: PsiFile?, project: Project) {
+          // hack until doWhenFocusSettlesDown will work as expected
+          getApplication().invokeLater(
+            {
+              IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
+                super.chooseActionAndInvoke(cachedAction, file, project)
+              } 
+            }, ModalityState.NON_MODAL, project.disposed)
+        }
+      }
     ))
   }
 
