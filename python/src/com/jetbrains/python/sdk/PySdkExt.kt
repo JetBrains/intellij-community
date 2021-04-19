@@ -43,7 +43,6 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThreeState
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
@@ -113,14 +112,6 @@ fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module, true)
-
-fun guessCondaBaseEnvironment(condaPath: String): Sdk? {
-  val condaBasePython = PyCondaPackageService.getCondaBasePython(condaPath)
-  if (condaBasePython != null) {
-    return PyDetectedSdk(condaBasePython)
-  }
-  return null
-}
 
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
