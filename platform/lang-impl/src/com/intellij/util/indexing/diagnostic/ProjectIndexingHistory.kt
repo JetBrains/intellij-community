@@ -50,14 +50,14 @@ data class ProjectIndexingHistory(val project: Project) {
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += fileTypeStats.indexingTime
-      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTime
+      totalStats.totalIndexingTimeInAllThreads += fileTypeStats.indexingTimeInAllThreads
+      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTimeInAllThreads
       totalStats.biggestFileTypeContributors.addElement(
         BiggestFileTypeContributor(
           statistics.fileSetName,
           fileTypeStats.numberOfFiles,
           fileTypeStats.totalBytes,
-          fileTypeStats.indexingTime
+          fileTypeStats.indexingTimeInAllThreads
         )
       )
     }
