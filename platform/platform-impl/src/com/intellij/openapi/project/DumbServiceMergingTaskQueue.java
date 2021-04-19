@@ -159,8 +159,7 @@ public class DumbServiceMergingTaskQueue {
     private final DumbModeTask myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    QueuedDumbModeTask(@NotNull DumbModeTask task,
-                       @NotNull ProgressIndicatorEx progress) {
+    QueuedDumbModeTask(@NotNull DumbModeTask task, @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
     }
@@ -186,15 +185,9 @@ public class DumbServiceMergingTaskQueue {
 
       if (customIndicator == null) {
         customIndicator = myIndicator;
-      } else {
+      }
+      else {
         customIndicator.checkCanceled();
-        //ProgressIndicator customIndicatorFinal = customIndicator;
-        //new ProgressIndicatorListenerAdapter() {
-        //  @Override
-        //  public void cancelled() {
-        //    customIndicatorFinal.cancel();
-        //  }
-        //}.installToProgress(myIndicator);
       }
 
       myTask.performInDumbMode(customIndicator);

@@ -60,21 +60,25 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
 
   @NotNull private static volatile CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
-  private enum CheckCanceledBehavior { NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS }
 
-  /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
-   *  which are not inherited from {@link StandardProgressIndicator}.
-   *  for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
-   *  to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
-   *  Poor-man Multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
-   *  ProgressIndicator -> count of this indicator occurrences in this multiset.
+  private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
+
+  /**
+   * active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
+   * which are not inherited from {@link StandardProgressIndicator}.
+   * for them an extra processing thread (see {@link #myCheckCancelledFuture}) has to be run
+   * to call their non-standard {@link ProgressIndicator#checkCanceled()} method periodically.
+   * Poor-man Multiset here (instead of a set) is for simplifying add/remove indicators on process-with-progress start/end with possibly identical indicators.
+   * ProgressIndicator -> count of this indicator occurrences in this multiset.
    */
   private static final Map<ProgressIndicator, AtomicInteger> nonStandardIndicators = new ConcurrentHashMap<>();
 
-  /** true if running in non-cancelable section started with
+  /**
+   * true if running in non-cancelable section started with
    * {@link #executeNonCancelableSection(Runnable)} in this thread
    */
-  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>(); // do not supply initial value to conserve memory
+  private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>();
+    // do not supply initial value to conserve memory
 
   // must be under threadsUnderIndicator lock
   private void startBackgroundNonStandardIndicatorsPing() {
@@ -314,7 +318,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                    @NotNull Runnable process,
                                                    @Nullable Runnable successRunnable,
                                                    @Nullable Runnable canceledRunnable) {
-    runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable, PerformInBackgroundOption.DEAF);
+    runProcessWithProgressAsynchronously(project, progressTitle, process, successRunnable, canceledRunnable,
+                                         PerformInBackgroundOption.DEAF);
   }
 
   // bg; runnables on UI/EDT?
@@ -350,23 +355,23 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   /**
    * Different places in IntelliJ codebase behaves differently in case of headless mode.
-   *
+   * <p>
    * Often, they're trying to make async parts synchronous to make it more predictable or controllable.
    * E.g. in tests or IntelliJ-based command line tools this is the usual code:
-   *
+   * <p>
    * ```
    * if (ApplicationManager.getApplication().isHeadless()) {
-   *   performSyncChange()
+   * performSyncChange()
    * }
    * else {
-   *   scheduleAsyncChange()
+   * scheduleAsyncChange()
    * }
    * ```
-   *
+   * <p>
    * However, sometimes headless application should behave just as regular GUI Application,
    * with all its asynchronous stuff. For that, the application must declare `intellij.progress.task.ignoreHeadless`
    * system property. And clients should modify its pure `isHeadless` condition to something like
-   *
+   * <p>
    * ```
    * ApplicationManager.getApplication().isHeadless() && !shouldRunHeadlessTasksAsynchronously()
    * ```
@@ -436,12 +441,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     return runProcessWithProgressAsynchronously(task, progressIndicator, continuation, progressIndicator.getModalityState());
   }
 
-  @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
   protected void startTask(@NotNull Task task,
                            @NotNull ProgressIndicator indicator,
                            @Nullable Runnable continuation) {
-
 
     try {
       task.run(indicator);
@@ -671,7 +674,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       boolean oneOfTheIndicatorsIsCanceled = false;
 
-      for (ProgressIndicator thisIndicator = indicator; thisIndicator != null; thisIndicator = thisIndicator instanceof WrappedProgressIndicator ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator() : null) {
+      for (ProgressIndicator thisIndicator = indicator;
+           thisIndicator != null;
+           thisIndicator = thisIndicator instanceof WrappedProgressIndicator
+                           ? ((WrappedProgressIndicator)thisIndicator).getOriginalProgressIndicator()
+                           : null) {
         Set<Thread> underIndicator = threadsUnderIndicator.computeIfAbsent(thisIndicator, __ -> new HashSet<>());
         boolean alreadyUnder = !underIndicator.add(currentThread);
         threadsUnderThisIndicator.add(alreadyUnder ? null : underIndicator);
@@ -734,7 +741,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   final void updateShouldCheckCanceled() {
     synchronized (threadsUnderIndicator) {
       CheckCanceledHook hook = createCheckCanceledHook();
@@ -791,10 +797,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private static final long MAX_PRIORITIZATION_NANOS = TimeUnit.SECONDS.toNanos(12);
-  private static final Thread[] NO_THREADS = new Thread[0];
+  private static final Thread[] EMPTY_THREAD_ARRAY = new Thread[0];
   private final Set<Thread> myPrioritizedThreads = ContainerUtil.newConcurrentSet();
-  private volatile Thread[] myEffectivePrioritizedThreads = NO_THREADS;
-  private int myDeprioritizations;
+  private volatile Thread[] myEffectivePrioritizedThreads = EMPTY_THREAD_ARRAY;
+  private int myDeprioritizations; //guarded by myPrioritizationLock
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
   private volatile long myPrioritizingStarted;
 
@@ -827,16 +833,19 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private void updateEffectivePrioritized() {
     Thread[] prev = myEffectivePrioritizedThreads;
-    Thread[] current = myDeprioritizations > 0 || myPrioritizedThreads.isEmpty() ? NO_THREADS : myPrioritizedThreads.toArray(NO_THREADS);
+    Thread[] current = myDeprioritizations > 0 || myPrioritizedThreads.isEmpty() ? EMPTY_THREAD_ARRAY
+                                                                                 : myPrioritizedThreads.toArray(EMPTY_THREAD_ARRAY);
     myEffectivePrioritizedThreads = current;
     if (prev.length == 0 && current.length > 0) {
       prioritizingStarted();
-    } else if (prev.length > 0 && current.length == 0) {
+    }
+    else if (prev.length > 0 && current.length == 0) {
       prioritizingFinished();
     }
   }
 
   protected void prioritizingStarted() {}
+
   protected void prioritizingFinished() {}
 
   @ApiStatus.Internal
@@ -901,8 +910,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     if (time > MAX_PRIORITIZATION_NANOS) {
-       // Don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
-       // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
+      // Don't wait forever in case someone forgot to stop prioritizing before waiting for other threads to complete
+      // wait just for 12 seconds; this will be noticeable (and we'll get 2 thread dumps) but not fatal
       stopAllPrioritization();
       return false;
     }
@@ -968,6 +977,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       threadTopLevelIndicators.putIfAbsent(threadId, indicator);
     }
   }
+
   private static ProgressIndicator getCurrentIndicator(@NotNull Thread thread) {
     return currentIndicators.get(thread.getId());
   }
@@ -986,7 +996,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       Set<Thread> threads = threadsUnderIndicator.get(indicator);
       if (threads == null || !threads.contains(Thread.currentThread())) {
-        LOG.error("Must be executed under progress indicator: "+indicator+". Please see e.g. ProgressManager.runProcess()");
+        LOG.error("Must be executed under progress indicator: " + indicator + ". Please see e.g. ProgressManager.runProcess()");
       }
     }
   }
