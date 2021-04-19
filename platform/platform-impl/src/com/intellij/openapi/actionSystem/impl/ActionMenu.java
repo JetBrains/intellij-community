@@ -414,7 +414,7 @@ public final class ActionMenu extends JBMenu {
       else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
         setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
-      else if (Presentation.PROP_TEXT.equals(name)) {
+      else if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(name)) {
         setText(myPresentation.getText(true));
       }
       else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {

@@ -363,7 +363,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         else if (Presentation.PROP_MNEMONIC_INDEX.equals(name)) {
           setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
         }
-        else if (Presentation.PROP_TEXT.equals(name)) {
+        else if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(name)) {
           setText(myPresentation.getText(true));
           Window window = ComponentUtil.getWindow(ActionMenuItem.this);
           if (window != null) window.pack();

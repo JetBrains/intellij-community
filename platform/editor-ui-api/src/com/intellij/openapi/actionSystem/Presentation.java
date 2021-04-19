@@ -46,6 +46,12 @@ public final class Presentation implements Cloneable {
    */
   @NonNls public static final String PROP_TEXT = "text";
   /**
+   * Defines tool tip for button at tool bar or text for element at menu
+   * that includes mnemonic suffix, like "Git(G)"
+   * value: String
+   */
+  @NonNls public static final String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
+  /**
    * value: Integer
    */
   @NonNls public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
@@ -188,11 +194,13 @@ public final class Presentation implements Cloneable {
    */
   public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
     String oldText = getText();
+    String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
     int oldIndex = getDisplayedMnemonicIndex();
     myTextWithMnemonicSupplier = textWithMnemonicSupplier;
 
     fireObjectPropertyChange(PROP_TEXT, oldText, getText());
+    fireObjectPropertyChange(PROP_TEXT_WITH_SUFFIX, oldTextWithSuffix, getText(true));
     fireObjectPropertyChange(PROP_MNEMONIC_KEY, oldMnemonic, getMnemonic());
     fireObjectPropertyChange(PROP_MNEMONIC_INDEX, oldIndex, getDisplayedMnemonicIndex());
   }
