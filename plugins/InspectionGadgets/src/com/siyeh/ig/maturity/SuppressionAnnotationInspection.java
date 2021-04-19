@@ -16,6 +16,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -43,10 +44,10 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(JavaBundle.message("column.name.ignore.suppressions"), myAllowedSuppressions);
-    final JComponent panel = form.getContentPanel();
-    panel.setPreferredSize(JBUI.size(150, 100));
-    return panel;
+    final ListEditForm form = new ListEditForm(JavaBundle.message("column.name.ignore.suppressions"), JavaBundle.message("ignored.suppressions"), myAllowedSuppressions);
+    final JComponent contentPanel = form.getContentPanel();
+    contentPanel.setMinimumSize(JBUI.size(150, 100));
+    return contentPanel;
   }
 
   @Override

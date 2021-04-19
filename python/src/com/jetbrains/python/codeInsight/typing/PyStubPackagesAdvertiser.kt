@@ -59,6 +59,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   var ignoredPackages: MutableList<String> = mutableListOf()
 
   override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
+                                                               PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label"),
                                                                ignoredPackages).contentPanel
 
   override fun buildVisitor(holder: ProblemsHolder,

@@ -58,7 +58,7 @@ public class QuestionableNameInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final ListTable table =
       new ListTable(new ListWrappingTableModel(nameList, InspectionGadgetsBundle.message("questionable.name.column.title")));
-    return UiUtils.createAddRemovePanel(table);
+    return UiUtils.createAddRemovePanel(table, InspectionGadgetsBundle.message("questionable.name.list.label"), true);
   }
 
   @Override

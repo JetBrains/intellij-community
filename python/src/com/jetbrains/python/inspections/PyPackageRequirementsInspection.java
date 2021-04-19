@@ -63,7 +63,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), ignoredPackages);
+    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), PyPsiBundle.message("INSP.requirements.ignore.packages.label"), ignoredPackages);
     return form.getContentPanel();
   }
 

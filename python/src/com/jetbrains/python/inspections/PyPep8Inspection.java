@@ -36,7 +36,7 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), ignoredErrors);
+    ListEditForm form = new ListEditForm(PyBundle.message("INSP.settings.pep8.ignore.errors"), PyBundle.message("INSP.settings.pep8.ignore.errors.label"), ignoredErrors);
     return form.getContentPanel();
   }
 

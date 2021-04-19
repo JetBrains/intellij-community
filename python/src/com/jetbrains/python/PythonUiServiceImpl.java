@@ -251,6 +251,12 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
+  public JComponent createListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
+    final ListEditForm form = new ListEditForm(title, label, stringList);
+    return form.getContentPanel();
+  }
+
+  @Override
   @NotNull
   public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
                                             String @ListItem [] items,

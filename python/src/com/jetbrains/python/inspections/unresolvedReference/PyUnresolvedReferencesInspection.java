@@ -69,6 +69,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
   @Override
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.unresolved.refs.column.name.ignore.references"),
+                                               PyPsiBundle.message("INSP.unresolved.refs.ignore.references.label"),
                                                ignoredIdentifiers);
     return form.getContentPanel();
   }

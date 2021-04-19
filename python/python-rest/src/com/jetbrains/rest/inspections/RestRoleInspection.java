@@ -145,7 +145,7 @@ public class RestRoleInspection extends RestInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm(PythonRestBundle.message("python.rest.inspections.role.ignore.roles"), ignoredRoles);
+    ListEditForm form = new ListEditForm(PythonRestBundle.message("python.rest.inspections.role.ignore.roles"), PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label"), ignoredRoles);
     return form.getContentPanel();
   }
 }

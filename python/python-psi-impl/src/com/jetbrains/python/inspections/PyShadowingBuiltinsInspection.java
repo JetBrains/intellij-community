@@ -62,7 +62,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("INSP.shadowing.builtins.column.name.ignore.built.ins"), ignoredNames);
+    return PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("INSP.shadowing.builtins.column.name.ignore.built.ins"), PyPsiBundle.message("INSP.shadowing.builtins.ignore.built.ins.label"), ignoredNames);
   }
 
   @NotNull
