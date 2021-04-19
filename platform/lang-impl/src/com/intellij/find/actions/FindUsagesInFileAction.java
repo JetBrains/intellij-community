@@ -4,7 +4,6 @@ package com.intellij.find.actions;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.find.FindBundle;
-import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -23,8 +22,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
+import static com.intellij.find.actions.ResolverKt.allTargets;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_HIGHLIGHT_USAGES_IN_FILE;
 
 public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAware {
@@ -86,29 +84,22 @@ public class FindUsagesInFileAction extends AnAction implements PossiblyDumbAwar
         Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
-
-    List<SearchTarget> searchTargets = dataContext.getData(FindUsagesAction.SEARCH_TARGETS);
-    if (searchTargets != null && !searchTargets.isEmpty()) {
+    if (!allTargets(dataContext).isEmpty()) {
       return true;
     }
-
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      UsageTarget[] target = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
-      return target != null && target.length > 0;
+      return false;
     }
-    else {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null) {
-        return false;
-      }
-
-      Language language = PsiUtilBase.getLanguageInEditor(editor, project);
-      if (language == null) {
-        language = file.getLanguage();
-      }
-      return !(LanguageFindUsages.INSTANCE.forLanguage(language) instanceof EmptyFindUsagesProvider);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    if (file == null) {
+      return false;
     }
+    Language language = PsiUtilBase.getLanguageInEditor(editor, project);
+    if (language == null) {
+      language = file.getLanguage();
+    }
+    return !(LanguageFindUsages.INSTANCE.forLanguage(language) instanceof EmptyFindUsagesProvider);
   }
 
   public static void updateFindUsagesAction(@NotNull AnActionEvent event) {
