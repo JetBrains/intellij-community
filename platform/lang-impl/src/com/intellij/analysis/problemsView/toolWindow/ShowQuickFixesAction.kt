@@ -86,13 +86,14 @@ internal class ShowQuickFixesAction : AnAction(), UpdateInBackground {
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
       object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions) {
-        override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching?, file: PsiFile?, project: Project) {
+        override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, file: PsiFile, project: Project, editor: Editor?) {
+          editor?.contentComponent?.requestFocus()
           // hack until doWhenFocusSettlesDown will work as expected
           getApplication().invokeLater(
             {
               IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {
-                super.chooseActionAndInvoke(cachedAction, file, project)
-              } 
+                super.chooseActionAndInvoke(cachedAction, file, project, editor)
+              }
             }, ModalityState.NON_MODAL, project.disposed)
         }
       }

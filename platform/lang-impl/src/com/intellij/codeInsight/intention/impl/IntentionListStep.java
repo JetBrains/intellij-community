@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -124,16 +123,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         return;
       }
 
-      Component focusable = myEditor == null ? null : myEditor.getContentComponent();
-      if (focusable != null) {
-        focusable.requestFocus();
-      }
-      chooseActionAndInvoke(cachedAction, file, myProject);
+      chooseActionAndInvoke(cachedAction, file, myProject, myEditor);
     };
   }
 
-  protected void chooseActionAndInvoke(IntentionActionWithTextCaching cachedAction, PsiFile file, Project project) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
+  protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                       @NotNull PsiFile file,
+                                       @NotNull Project project,
+                                       @Nullable Editor editor) {
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(), project);
   }
 
   @NotNull
@@ -157,8 +155,11 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       }
 
       @Override
-      protected void chooseActionAndInvoke(IntentionActionWithTextCaching cachedAction, PsiFile file, Project project) {
-        IntentionListStep.this.chooseActionAndInvoke(cachedAction, file, myProject);
+      protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
+                                           @NotNull PsiFile file,
+                                           @NotNull Project project,
+                                           @Nullable Editor editor) {
+        IntentionListStep.this.chooseActionAndInvoke(cachedAction, file, project, editor);
       }
     };
   }
