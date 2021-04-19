@@ -85,6 +85,33 @@ private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
 
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
+    head {
+      title("Indexing diagnostics of '${projectIndexingHistory.projectName}'")
+      //language=CSS
+      style("""
+        table, th, td {
+          border: 1px solid black;
+          border-collapse: collapse;
+        }
+        
+        table {
+          width: 80%;
+        }
+        
+        th, td {
+          padding: 3px;
+        }
+        
+        th {
+          background: lightgrey;
+        }
+        
+        td {
+          white-space: pre-wrap;
+          word-break: break-word;
+        }        
+      """.trimIndent())
+    }
     body {
       h1("Project name")
       text(projectIndexingHistory.projectName)
@@ -304,6 +331,9 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
 
 private fun HtmlBuilder.text(@Nls text: String) = append(text)
 private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
+private fun HtmlBuilder.title(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("title")))
+
+private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
 
 private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
@@ -336,6 +366,7 @@ private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
 private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
+private fun HtmlBuilder.head(head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
 private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
 private fun html(body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)
