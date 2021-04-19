@@ -51,6 +51,11 @@ public abstract class CompletionPhase implements Disposable {
     public int newCompletionStarted(int time, boolean repeated) {
       return time;
     }
+
+    @Override
+    public String toString() {
+      return "NoCompletion";
+    }
   };
 
   public final CompletionProgressIndicator indicator;
