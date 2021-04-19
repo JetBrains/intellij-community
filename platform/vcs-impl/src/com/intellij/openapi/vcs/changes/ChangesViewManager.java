@@ -311,7 +311,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
-    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -385,19 +384,14 @@ public class ChangesViewManager implements ChangesViewEx,
       myMainPanel = simplePanel(myContentPanel);
 
       setDiffPreview();
-      isEditorDiffPreview.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          setDiffPreview();
-        }
-      }, this);
+
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
           if (!isSplitterPreview()) setDiffPreview(true);
         }
       }, this);
-      busConnection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> setDiffPreview());
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 

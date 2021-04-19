@@ -636,7 +636,6 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private static final class ShelfToolWindowPanel implements ChangesViewContentManagerListener, DataProvider, Disposable {
-    @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
@@ -704,12 +703,7 @@ public class ShelvedChangesViewManager implements Disposable {
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindowShown(myProject));
       setDiffPreview();
-      isEditorDiffPreview.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          setDiffPreview();
-        }
-      }, this);
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
       isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
@@ -730,7 +724,6 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void toolWindowMappingChanged() {
       addToolbar(isCommitToolWindowShown(myProject));
-      setDiffPreview();
     }
 
     private void addToolbar(boolean isHorizontal) {
