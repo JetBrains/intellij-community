@@ -1300,7 +1300,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    DfType arrayType = SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length), type)
+    DfType arrayType = SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length))
+      .meet(type == null ? DfTypes.OBJECT_OR_NULL : TypeConstraints.exact(type).asDfType())
       .meet(DfTypes.LOCAL_OBJECT);
     if (arrayWriteTarget != null) {
       addInstruction(new PushInstruction(arrayWriteTarget, null, true));
@@ -1843,7 +1844,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0), type).meet(DfTypes.LOCAL_OBJECT);
+      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
+        .meet(TypeConstraints.exact(type).asDfType())
+        .meet(DfTypes.LOCAL_OBJECT);
       return myFactory.fromDfType(dfType);
     }
     return null;

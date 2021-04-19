@@ -161,7 +161,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
           PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
-          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(argCount - paramCount + 1), arrayType);
+          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(argCount - paramCount + 1))
+            .meet(TypeConstraints.exact(arrayType).asDfType());
           argValues[paramCount - 1] = factory.fromDfType(dfType);
         }
       }
@@ -638,11 +639,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private static @NotNull DfaValue concatStrings(DfaValue left,
-                                                 DfaValue right,
-                                                 DfaMemoryState memState,
-                                                 PsiType stringType,
-                                                 DfaValueFactory factory) {
+  private static @NotNull DfaValue concatStrings(@NotNull DfaValue left,
+                                                 @NotNull DfaValue right,
+                                                 @NotNull DfaMemoryState memState,
+                                                 @NotNull PsiType stringType,
+                                                 @NotNull DfaValueFactory factory) {
     String leftString = memState.getDfType(left).getConstantOfType(String.class);
     String rightString = memState.getDfType(right).getConstantOfType(String.class);
     if (leftString != null && rightString != null &&
@@ -654,7 +655,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfType leftRange = memState.getDfType(leftLength);
     DfType rightRange = memState.getDfType(rightLength);
     DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
-    return factory.fromDfType(SpecialField.STRING_LENGTH.asDfType(resultRange, stringType));
+    DfType result = resultRange.isConst(0)
+                    ? referenceConstant("", stringType)
+                    : SpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(stringType).asDfType());
+    return factory.fromDfType(result);
   }
 
   private DfaInstructionState @NotNull [] handleRelationBinop(BinopInstruction instruction,

@@ -365,23 +365,6 @@ public enum SpecialField implements VariableDescriptor {
   }
 
   /**
-   * @param fieldValue dfType of the special field value
-   * @param exactResultType exact PSI type of the result
-   * @return a dfType that represents a value having this special field restricted to the supplied dfType
-   */
-  @NotNull
-  public DfType asDfType(@NotNull DfType fieldValue, @Nullable PsiType exactResultType) {
-    DfType dfType = asDfType(fieldValue);
-    if (exactResultType == null) {
-      return dfType;
-    }
-    if (this == STRING_LENGTH && fieldValue.isConst(0)) {
-      return DfTypes.referenceConstant("", exactResultType);
-    }
-    return dfType.meet(TypeConstraints.exact(exactResultType).asDfType());
-  }
-
-  /**
    * Returns a DfType from given DfType qualifier if it's bound to this special field
    * @param dfType of the qualifier
    * @return en extracted DfType
