@@ -97,7 +97,9 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
       }
       cleanUp();
       myManager.cleanUp(this);
-      throw new CannotStartServerException(e);
+      throw e instanceof CannotStartServerException
+            ? (CannotStartServerException) e
+            : new CannotStartServerException(e);
     }
   }
 

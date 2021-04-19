@@ -192,7 +192,12 @@ public final class MavenIndicesManager implements Disposable {
       return indicesObjectCache.add(remoteIndexIdAndUrl.first, remoteIndexIdAndUrl.second, MavenSearchIndex.Kind.REMOTE);
     }
     catch (MavenIndexException e) {
-      MavenLog.LOG.warn(e);
+      if (myProject.isDisposed()) {
+        MavenLog.LOG.warn(e.getMessage());
+      }
+      else {
+        MavenLog.LOG.warn(e);
+      }
       return null;
     }
   }
