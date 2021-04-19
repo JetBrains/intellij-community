@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.intellij.util.indexing.diagnostic.*
-import java.time.Duration
 
 fun TimeNano.toMillis(): TimeMillis = this / 1_000_000
 
@@ -52,7 +51,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     providerName = fileSetName,
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
-    totalIndexingTime = JsonDuration(totalIndexingTime),
+    totalIndexingTime = JsonDuration(indexingVisibleTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
     indexedFiles = jsonIndexedFiles
   )
