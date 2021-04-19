@@ -206,8 +206,13 @@ static bool update_roots(array* new_roots) {
 
   unregister_roots();
 
-  if (array_size(new_roots) == 0 || (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0)) {
+  if (array_size(new_roots) == 0) {
     output("UNWATCHEABLE\n#", true);
+    array_delete(new_roots);
+    return true;
+  }
+  if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refusing to watch the entire tree
+    output("UNWATCHEABLE\n/\n#", true);
     array_delete_vs_data(new_roots);
     return true;
   }
