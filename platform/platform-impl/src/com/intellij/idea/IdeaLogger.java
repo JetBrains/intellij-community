@@ -79,7 +79,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    super.warn(message, checkException(t));
+    super.warn(message, ensureNotControlFlow(t));
   }
 
   @Override
@@ -89,7 +89,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
-      myLogger.error(message, checkException(t));
+      myLogger.error(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
     }
 

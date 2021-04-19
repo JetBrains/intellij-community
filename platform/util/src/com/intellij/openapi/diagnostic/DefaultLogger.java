@@ -42,14 +42,14 @@ public class DefaultLogger extends Logger {
   @Override
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void warn(String message, @Nullable Throwable t) {
-    t = checkException(t);
+    t = ensureNotControlFlow(t);
     System.err.println("WARN: " + message);
     if (t != null) t.printStackTrace(System.err);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    t = checkException(t);
+    t = ensureNotControlFlow(t);
     message += attachmentsToString(t);
     dumpExceptionsToStderr(message, t, details);
 

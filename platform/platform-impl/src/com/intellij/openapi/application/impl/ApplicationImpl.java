@@ -133,6 +133,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     myTestModeFlag = isUnitTestMode;
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
+    if (isUnitTestMode) {
+      //noinspection TestOnlyProblems
+      Logger.setUnitTestMode();
+    }
 
     mySaveAllowed = !isUnitTestMode && !isHeadless;
 

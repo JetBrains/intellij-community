@@ -18,14 +18,12 @@ public final class TestLogger extends Log4jBasedLogger {
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    t = checkException(t);
-    LoggedErrorProcessor.getInstance().processWarn(message, t, myLogger);
+    LoggedErrorProcessor.getInstance().processWarn(message, ensureNotControlFlow(t), myLogger);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    t = checkException(t);
-    LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
+    LoggedErrorProcessor.getInstance().processError(message, ensureNotControlFlow(t), details, myLogger);
   }
 
   @Override
