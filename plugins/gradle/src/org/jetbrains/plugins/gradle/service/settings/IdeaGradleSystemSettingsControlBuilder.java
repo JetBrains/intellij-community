@@ -107,7 +107,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
       String gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHome()); //NON-NLS
       ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
-      myServiceDirectoryPathField.setLocalePath(myInitialSettings.getServiceDirectoryPath());
+      myServiceDirectoryPathField.setLocalPath(myInitialSettings.getServiceDirectoryPath());
     }
 
     if (myGradleVmOptionsField != null) {
@@ -127,7 +127,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public boolean isModified() {
     if (myServiceDirectoryPathField != null &&
-        !Objects.equals(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getLocalePath()),
+        !Objects.equals(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getLocalPath()),
                         ExternalSystemApiUtil.normalizePath(myInitialSettings.getServiceDirectoryPath()))) {
       return true;
     }
@@ -147,7 +147,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   @Override
   public void apply(@NotNull GradleSettings settings) {
     if (myServiceDirectoryPathField != null) {
-      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getLocalePath());
+      String serviceDirectoryPath = trimIfPossible(myServiceDirectoryPathField.getLocalPath());
       settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(serviceDirectoryPath));
     }
     if (myGradleVmOptionsField != null) {
