@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
+import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
 import com.intellij.util.indexing.diagnostic.dto.*
 import org.jetbrains.annotations.Nls
 
@@ -159,6 +160,36 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
           tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
           tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+        }
+      }
+
+      val hasSlowIndexedFiles = projectIndexingHistory.fileProviderStatistics.any { it.slowIndexedFiles.isNotEmpty() }
+      if (hasSlowIndexedFiles) {
+        h1("Slowly indexed files (> ${IndexingJobStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
+        table {
+          thead {
+            tr {
+              th("Provider name")
+              th("File")
+              th("Content loading time")
+              th("Indexing time")
+              th("Total processing time")
+            }
+          }
+          tbody {
+            for (providerStatistic in projectIndexingHistory.fileProviderStatistics.filter { it.slowIndexedFiles.isNotEmpty() }) {
+              val slowIndexedFiles = providerStatistic.slowIndexedFiles
+              for ((index, slowFile) in slowIndexedFiles.sortedByDescending { it.processingTime.nano }.withIndex()) {
+                tr {
+                  td(if (index == 0) providerStatistic.providerName else "^")
+                  td(slowFile.fileName)
+                  td(slowFile.contentLoadingTime.presentableDuration())
+                  td(slowFile.indexingTime.presentableDuration())
+                  td(slowFile.processingTime.presentableDuration())
+                }
+              }
+            }
+          }
         }
       }
 

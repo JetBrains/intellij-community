@@ -55,9 +55,17 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     totalIndexingTime = JsonDuration(indexingVisibleTime),
     contentLoadingTime = JsonDuration(contentLoadingVisibleTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
+    slowIndexedFiles = slowIndexedFiles.biggestElements.map { it.toJson() },
     indexedFiles = jsonIndexedFiles
   )
 }
+
+fun SlowIndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
+  fileName = fileName,
+  processingTime = JsonDuration(processingTime),
+  indexingTime = JsonDuration(indexingTime),
+  contentLoadingTime = JsonDuration(contentLoadingTime)
+)
 
 fun IndexingJobStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatistics.JsonIndexedFile(
   path = portableFilePath,

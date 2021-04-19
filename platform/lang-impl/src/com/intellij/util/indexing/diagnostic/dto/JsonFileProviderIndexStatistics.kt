@@ -13,9 +13,17 @@ data class JsonFileProviderIndexStatistics(
   val totalIndexingTime: JsonDuration,
   val contentLoadingTime: JsonDuration,
   val numberOfTooLargeForIndexingFiles: Int,
+  val slowIndexedFiles: List<JsonSlowIndexedFile>,
   // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
   val indexedFiles: List<JsonIndexedFile>?
 ) {
+  data class JsonSlowIndexedFile(
+    val fileName: String,
+    val processingTime: JsonDuration,
+    val indexingTime: JsonDuration,
+    val contentLoadingTime: JsonDuration
+  )
+
   data class JsonIndexedFile(
     val path: PortableFilePath,
     @JsonProperty("wfibe")
