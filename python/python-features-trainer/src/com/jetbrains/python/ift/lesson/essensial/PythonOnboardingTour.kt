@@ -434,16 +434,23 @@ class PythonOnboardingTour :
       restoreByUi()
     }
 
+    lateinit var completionTask: TaskContext.TaskId
     task("CodeCompletion") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
                                        code("values"),
                                        code("()"),
                                        action(it)))
       trigger(it)
+      restoreIfModifiedOrMoved()
+      completionTask = taskId
+    }
+
+    task {
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains("values")
       }
       restoreIfModifiedOrMoved()
+      restoreByTimer() // completion may be invoked in the another place, for example...
     }
 
     task {
@@ -452,7 +459,7 @@ class PythonOnboardingTour :
       stateCheck {
         checkEditorModification(completionPosition, "/len(values)")
       }
-      restoreByUi()
+      restoreByUi(restoreId = completionTask)
     }
   }
 
