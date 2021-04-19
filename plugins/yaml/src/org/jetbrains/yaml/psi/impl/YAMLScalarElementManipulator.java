@@ -48,8 +48,12 @@ public class YAMLScalarElementManipulator extends AbstractElementManipulator<YAM
       if (!(result instanceof YAMLScalarImpl)) {
         throw new AssertionError("Inserted YAML scalar, but it isn't a scalar after insertion :(");
       }
+      
+      // it is a hack to preserve the `QUICK_EDIT_HANDLERS` key, 
+      // actually `element.replace` should have done it, but for some reason didn't
       ((UserDataHolderBase)element.getNode()).copyCopyableDataTo((UserDataHolderBase)result.getNode());
       CodeEditUtil.setNodeGenerated(result.getNode(), true);
+      
       return ((YAMLScalarImpl)result);
     }
     catch (IllegalArgumentException e) {
