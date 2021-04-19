@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
@@ -20,6 +21,7 @@ import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.KotlinIdeaAnalysisBundle
 import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -30,6 +32,10 @@ class AnnotationPresentationInfo(
     val highlightType: ProblemHighlightType? = null,
     val textAttributes: TextAttributesKey? = null
 ) {
+
+    companion object {
+        private const val KOTLIN_SUPPRESS_OPTIONS_ID = "KotlinSuppressOptions"
+    }
 
     fun processDiagnostics(
         holder: HighlightInfoHolder,
@@ -62,14 +68,17 @@ class AnnotationPresentationInfo(
         info: HighlightInfo
     ) {
         val fixes = fixesMap[diagnostic]
+        val keyForSuppressOptions = HighlightDisplayKey.findOrRegister(
+            KOTLIN_SUPPRESS_OPTIONS_ID, KotlinIdeaAnalysisBundle.message("kotlin.suppress.options")
+        )
         fixes.filter { it is IntentionAction || it is KotlinUniversalQuickFix }.forEach {
-            QuickFixAction.registerQuickFixAction(info, it)
+            QuickFixAction.registerQuickFixAction(info, it, keyForSuppressOptions)
         }
 
         if (diagnostic.severity == Severity.WARNING) {
             if (fixes.isEmpty()) {
                 // if there are no quick fixes we need to register an EmptyIntentionAction to enable 'suppress' actions
-                QuickFixAction.registerQuickFixAction(info, EmptyIntentionAction(diagnostic.factory.name))
+                QuickFixAction.registerQuickFixAction(info, EmptyIntentionAction(diagnostic.factory.name), keyForSuppressOptions)
             }
         }
     }
