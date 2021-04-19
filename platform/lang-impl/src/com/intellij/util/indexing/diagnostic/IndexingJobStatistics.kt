@@ -13,7 +13,7 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
  */
 class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
 
-  var totalIndexingTime: TimeNano = 0
+  var indexingVisibleTime: TimeNano = 0
 
   var numberOfIndexedFiles: Int = 0
 
