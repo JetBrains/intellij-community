@@ -520,7 +520,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage(project)), LessonUtil.rawEnter()))
       stateCheck {
         val text = editor.document.text
-        previous.sample.text != text && text.contains("object")
+        previous.sample.text != text && text.contains("object") && !text.contains("values: object")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
