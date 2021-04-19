@@ -2,6 +2,23 @@
 <body>
 Reports thread-blocking method calls found in a code fragment where a thread should not be blocked
 <!-- tooltip end -->
-(e.g. Reactive frameworks, Kotlin coroutines)
+
+<p><b>Example (Reactor):</b></p><br/>
+<pre><code>
+Flux.just("1").flatMap(f -&gt; {
+    Flux&lt;String&gt; just = Flux.just(f);
+    just.toIterable(); // Error: blocking operator call in non-blocking scope
+    return just;
+  }
+);
+</code></pre>
+
+
+<p><b>Example (Kotlin Coroutines):</b></p><br/>
+<pre><code>
+suspend fun exampleFun() {
+    Thread.sleep(100); // Error: inappropriate blocking method call inside suspend function
+}
+</code></pre>
 </body>
 </html>
