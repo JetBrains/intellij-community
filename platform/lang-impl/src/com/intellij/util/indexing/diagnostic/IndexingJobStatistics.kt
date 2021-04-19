@@ -53,7 +53,8 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     if (fileStatistics.wasFullyIndexedByExtensions) {
       numberOfFilesFullyIndexedByExtensions++
     }
-    (fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes).forEach { (indexId, time) ->
+    val perIndexerTimes = fileStatistics.perIndexerUpdateTimes + fileStatistics.perIndexerDeleteTimes
+    perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
         StatsPerIndexer(0, 0, 0, 0)
       }
@@ -69,7 +70,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
       StatsPerFileType(0, 0, 0, 0)
     }
     stats.contentLoadingTime += contentLoadingTime
-    stats.indexingTime += fileStatistics.indexingTime
+    stats.indexingTime += perIndexerTimes.values.sum()
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {

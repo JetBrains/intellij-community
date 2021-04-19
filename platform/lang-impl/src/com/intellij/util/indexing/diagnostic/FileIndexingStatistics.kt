@@ -10,7 +10,4 @@ class FileIndexingStatistics(
   val wasFullyIndexedByExtensions: Boolean,
   val perIndexerUpdateTimes: Map<ID<*, *>, TimeNano>,
   val perIndexerDeleteTimes: Map<ID<*, *>, TimeNano>
-) {
-  val indexingTime: TimeNano
-    get() = perIndexerUpdateTimes.values.sum() + perIndexerDeleteTimes.values.sum()
-}
+)
