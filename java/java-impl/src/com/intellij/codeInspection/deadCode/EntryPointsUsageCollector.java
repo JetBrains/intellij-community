@@ -9,19 +9,24 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class EntryPointsUsageCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("entry.points", 1);
-  private static final EventId2<Boolean, Boolean> ANNOTATIONS =
-    GROUP.registerEvent("annotations",
-                        EventFields.Boolean("additional_used"),
-                        EventFields.Boolean("write_used"));
-  private static final EventId1<Boolean> PATTERNS =
-    GROUP.registerEvent("patterns",
+  private static final EventLogGroup GROUP = new EventLogGroup("entry.points", 2);
+  private static final EventId2<Boolean, Boolean> ADDITIONAL_ANNOTATIONS =
+    GROUP.registerEvent("additional_annotations",
+                        EventFields.Boolean("fqn_used"),
+                        EventFields.Boolean("patterns_used"));
+  private static final EventId1<Boolean> WRITE_ANNOTATIONS =
+    GROUP.registerEvent("write_annotations",
+                        EventFields.Boolean("used"));
+  private static final EventId1<Boolean> CLASS_PATTERNS =
+    GROUP.registerEvent("class_patterns",
                         EventFields.Boolean("used"));
 
   @Override
@@ -32,13 +37,21 @@ public class EntryPointsUsageCollector extends ProjectUsagesCollector {
   @Override
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     EntryPointsManagerBase entryPointManager = EntryPointsManagerBase.getInstance(project);
-    boolean additionalAnnotationsUsed = !entryPointManager.getAdditionalAnnotations().isEmpty();
-    boolean writeAnnotationsUsed = !entryPointManager.getWriteAnnotations().isEmpty();
-    boolean patternsUsed = !entryPointManager.getPatterns().isEmpty();
-
     Set<MetricEvent> result = new LinkedHashSet<>();
-    result.add(ANNOTATIONS.metric(additionalAnnotationsUsed, writeAnnotationsUsed));
-    result.add(PATTERNS.metric(patternsUsed));
+    addAdditionalAnnotationsMetric(result, entryPointManager.getCustomAdditionalAnnotations());
+    result.add(WRITE_ANNOTATIONS.metric(!entryPointManager.getWriteAnnotations().isEmpty()));
+    result.add(CLASS_PATTERNS.metric(!entryPointManager.getPatterns().isEmpty()));
     return result;
+  }
+
+  private static void addAdditionalAnnotationsMetric(@NotNull Set<MetricEvent> metrics, @NotNull List<String> annotations) {
+    if (annotations.isEmpty()) {
+      metrics.add(ADDITIONAL_ANNOTATIONS.metric(false, false));
+      return;
+    }
+    int patternsAmount = ContainerUtil.count(annotations, fqn -> fqn.endsWith("*"));
+    int fqnAmount = annotations.size() - patternsAmount;
+    MetricEvent metric = ADDITIONAL_ANNOTATIONS.metric(fqnAmount > 0, patternsAmount > 0);
+    metrics.add(metric);
   }
 }
