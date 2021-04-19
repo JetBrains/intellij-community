@@ -17,6 +17,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +123,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
     myCachedData.put(dataId, answer == null || answer == NullResult.Initial ? NullResult.Final : answer);
     return answer;
+  }
+
+  static {
+    for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
+      DataKey.create(instance.getKey()); // initialize data keys with rules
+    }
   }
 
   private static void preGetAllData(@NotNull Component component, @NotNull Map<String, Object> cachedData) {
