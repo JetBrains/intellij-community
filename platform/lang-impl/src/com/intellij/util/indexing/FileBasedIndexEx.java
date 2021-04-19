@@ -428,30 +428,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator) {
     List<IndexableFilesIterator> providers = getOrderedIndexableFilesProviders(project);
     IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-    boolean wasIndeterminate = false;
-    if (indicator != null) {
-      wasIndeterminate = indicator.isIndeterminate();
-      indicator.setIndeterminate(false);
-      indicator.setFraction(0);
-      indicator.pushState();
-    }
-    try {
-      for (int i = 0; i < providers.size(); i++) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-        }
-        IndexableFilesIterator provider = providers.get(i);
-        if (!provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)) {
-          break;
-        }
-        if (indicator != null) {
-          indicator.setFraction((i + 1) * 1.0 / providers.size());
-        }
-      }
-    } finally {
-      if (indicator != null) {
-        indicator.popState();
-        indicator.setIndeterminate(wasIndeterminate);
+    for (IndexableFilesIterator provider : providers) {
+      if (!provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)) {
+        break;
       }
     }
   }
