@@ -194,6 +194,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.packageSearch"),
     plugin("intellij.externalSystem.dependencyUpdater"),
     plugin("intellij.gradle.dependencyUpdater"),
     plugin("intellij.android.gradle.dsl") {
