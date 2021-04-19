@@ -31,11 +31,11 @@ public interface DfIntegralType extends DfPrimitiveType {
 
   @NotNull
   default DfType meetRelation(@NotNull RelationType relation, @NotNull DfType other) {
-    if (other == DfTypes.TOP) return this;
+    if (other == DfType.TOP) return this;
     if (other instanceof DfIntegralType) {
       return meetRange(((DfIntegralType)other).getRange().fromRelation(relation));
     }
-    return DfTypes.BOTTOM;
+    return DfType.BOTTOM;
   }
 
   @NotNull DfType meetRange(@NotNull LongRangeSet range);

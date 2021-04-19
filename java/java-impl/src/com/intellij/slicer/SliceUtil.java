@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
@@ -212,7 +211,7 @@ final class SliceUtil {
       }
     }
     DfType filterDfType = builder.getFilter().getDfType();
-    if (filterDfType != DfTypes.TOP && expression instanceof PsiExpression) {
+    if (filterDfType != DfType.TOP && expression instanceof PsiExpression) {
       AnalysisStartingPoint analysis = AnalysisStartingPoint.propagateThroughExpression(expression, filterDfType);
       if (analysis != null) {
         return builder.withFilter(filter -> filter.withType(analysis.myDfType)).process(analysis.myAnchor, processor);

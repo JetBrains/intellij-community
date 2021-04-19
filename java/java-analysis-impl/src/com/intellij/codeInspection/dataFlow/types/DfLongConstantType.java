@@ -50,7 +50,7 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return getValue() + "L";
   }
 }

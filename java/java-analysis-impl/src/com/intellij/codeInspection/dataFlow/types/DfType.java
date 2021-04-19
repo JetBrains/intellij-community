@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +12,98 @@ import org.jetbrains.annotations.Nullable;
 public interface DfType {
 
   /**
+   * A type that contains every possible value supported by the type system
+   */
+  DfType TOP = new DfType() {
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      return true;
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      return this;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      return other;
+    }
+
+    @Override
+    public @NotNull DfType tryNegate() {
+      return BOTTOM;
+    }
+
+    @Override
+    public int hashCode() {
+      return 1254215;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "TOP";
+    }
+  };
+  /**
+   * A type that contains no values
+   */
+  DfType BOTTOM = new DfType() {
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      return other == this;
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      return other;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      return this;
+    }
+
+    @Override
+    public @NotNull DfType tryNegate() {
+      return TOP;
+    }
+
+    @Override
+    public int hashCode() {
+      return 67532141;
+    }
+
+    @Override
+    public @NotNull String toString() {
+      return "BOTTOM";
+    }
+  };
+  /**
+   * A special value that represents a contract failure after method return (the control flow should immediately proceed
+   * with exception handling). This value is like a constant but it's type doesn't correspond to any JVM type.
+   */
+  DfType FAIL = new DfConstantType<>(ObjectUtils.sentinel("FAIL")) {
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      return other == this ? this : TOP;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      return other == this ? this : BOTTOM;
+    }
+
+    @Override
+    public int hashCode() {
+      return 5362412;
+    }
+  };
+
+  /**
    * Checks whether this type is the supertype of the supplied type, i.e. every value from the other type belongs to this type as well.
    * if A.isSuperType(B) then A.join(B) is A and A.meet(B) is B.
-   * 
+   *
    * @param other other type
    * @return true if this type is the supertype of other.
    */
@@ -26,7 +116,7 @@ public interface DfType {
   default boolean containsConstant(@NotNull DfConstantType<?> constant) {
     return isSuperType(constant);
   }
-  
+
   default boolean isMergeable(@NotNull DfType other) {
     return isSuperType(other);
   }
@@ -56,7 +146,7 @@ public interface DfType {
 
   /**
    * @return a type that contains all the values of the corresponding JVM type except the values of given type;
-   * may return null if the corresponding type is not supported by our type system. 
+   * may return null if the corresponding type is not supported by our type system.
    */
   @Nullable
   default DfType tryNegate() {
@@ -79,7 +169,9 @@ public interface DfType {
   default <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
     return null;
   }
-  
-  @Override @NlsSafe
-  String toString();
+
+  /**
+   * @return human-readable representation of this DfType, could be localized
+   */
+  @Override @NlsSafe @NotNull String toString();
 }

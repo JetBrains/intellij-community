@@ -10,8 +10,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-
 /**
  * Type that corresponds to JVM reference type; represents subset of possible reference values (may include null)
  */
@@ -52,7 +50,7 @@ public interface DfReferenceType extends DfType {
   }
 
   /**
-   * @return type of special field; {@link DfTypes#BOTTOM} if {@link #getSpecialField()} returns null
+   * @return type of special field; {@link DfType#BOTTOM} if {@link #getSpecialField()} returns null
    */
   @NotNull
   default DfType getSpecialFieldType() {
@@ -137,5 +135,5 @@ public interface DfReferenceType extends DfType {
   }
 
   @Override
-  @NlsSafe String toString();
+  @NlsSafe @NotNull String toString();
 }

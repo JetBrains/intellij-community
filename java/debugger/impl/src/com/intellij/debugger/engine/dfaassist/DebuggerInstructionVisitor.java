@@ -51,7 +51,7 @@ class DebuggerInstructionVisitor extends JavaDfaInstructionVisitor implements Df
     else if (dfType == DfTypes.FALSE) {
       hint = DfaHint.FALSE;
     }
-    else if (dfType == DfTypes.FAIL) {
+    else if (dfType == DfType.FAIL) {
       hint = DfaHint.FAIL;
     }
     addHint(expression, hint);

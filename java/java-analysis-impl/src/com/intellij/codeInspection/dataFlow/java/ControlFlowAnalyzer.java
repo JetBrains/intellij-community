@@ -693,7 +693,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     } else {
       // loop like for(int i = start; i != end; i++)
       if (loop.mayOverflow()) return false;
-      new CFGBuilder(this).assign(loopVar, DfTypes.TOP)
+      new CFGBuilder(this).assign(loopVar, DfType.TOP)
                           .push(origin)
                           .compare(JavaTokenType.LE);
       addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
@@ -1559,7 +1559,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void pushUnknown() {
-    addInstruction(new PushValueInstruction(DfTypes.TOP, null));
+    addInstruction(new PushValueInstruction(DfType.TOP, null));
   }
 
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
@@ -1750,7 +1750,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
-      addInstruction(new PushValueInstruction(DfTypes.FAIL));
+      addInstruction(new PushValueInstruction(DfType.FAIL));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);

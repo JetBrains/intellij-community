@@ -19,13 +19,13 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    return other.equals(this) || other == DfTypes.BOTTOM;
+    return other.equals(this) || other == DfType.BOTTOM;
   }
 
   @NotNull
   @Override
   public DfType meet(@NotNull DfType other) {
-    return other.isSuperType(this) ? this : DfTypes.BOTTOM;
+    return other.isSuperType(this) ? this : DfType.BOTTOM;
   }
 
   /**
@@ -47,7 +47,7 @@ public abstract class DfConstantType<T> implements DfType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return String.valueOf(myValue);
   }
 

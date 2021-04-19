@@ -57,7 +57,7 @@ public enum SpecialField implements VariableDescriptor {
           }
         }
       }
-      return DfTypes.TOP;
+      return DfType.TOP;
     }
   },
   STRING_LENGTH("length", "special.field.string.length", true) {
@@ -84,7 +84,7 @@ public enum SpecialField implements VariableDescriptor {
     @NotNull
     @Override
     public DfType fromConstant(@Nullable Object obj) {
-      return obj instanceof String ? DfTypes.intValue(((String)obj).length()) : DfTypes.TOP;
+      return obj instanceof String ? DfTypes.intValue(((String)obj).length()) : DfType.TOP;
     }
   },
   COLLECTION_SIZE("size", "special.field.collection.size", false) {
@@ -124,7 +124,7 @@ public enum SpecialField implements VariableDescriptor {
 
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-      if (qualifier == null) return DfTypes.TOP;
+      if (qualifier == null) return DfType.TOP;
       TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
       return constraint.getUnboxedType();
     }
@@ -133,7 +133,7 @@ public enum SpecialField implements VariableDescriptor {
     public @NotNull DfType getFromQualifier(@NotNull DfType dfType) {
       DfType fromQualifier = super.getFromQualifier(dfType);
       DfType unboxedType = TypeConstraint.fromDfType(dfType).getUnboxedType();
-      if (unboxedType != DfTypes.BOTTOM) {
+      if (unboxedType != DfType.BOTTOM) {
         return fromQualifier.meet(unboxedType);
       }
       return fromQualifier;
@@ -142,7 +142,7 @@ public enum SpecialField implements VariableDescriptor {
     @NotNull
     @Override
     public DfType getDefaultValue(boolean forAccessor) {
-      return DfTypes.TOP;
+      return DfType.TOP;
     }
 
     @Override
@@ -158,7 +158,7 @@ public enum SpecialField implements VariableDescriptor {
   OPTIONAL_VALUE("value", "special.field.optional.value", true) {
     @Override
     public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-      if (qualifier == null) return DfTypes.TOP;
+      if (qualifier == null) return DfType.TOP;
       TypeConstraint qualifierType = TypeConstraint.fromDfType(qualifier.getDfType());
       String type = null;
       if (qualifierType.isExact(OptionalUtil.OPTIONAL_INT)) {
@@ -296,14 +296,14 @@ public enum SpecialField implements VariableDescriptor {
         PsiExpression initializer = psiVariable.getInitializer();
         if (initializer != null) {
           DfType dfType = fromInitializer(initializer);
-          if (dfType != DfTypes.TOP) {
+          if (dfType != DfType.TOP) {
             return factory.fromDfType(dfType);
           }
         }
       }
       return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
     }
-    DfType dfType = qualifier == null ? DfTypes.TOP : getFromQualifier(qualifier.getDfType());
+    DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
     return factory.fromDfType(dfType.meet(getDefaultValue(forAccessor)));
   }
 
@@ -326,12 +326,12 @@ public enum SpecialField implements VariableDescriptor {
 
   @NotNull
   DfType fromInitializer(PsiExpression initializer) {
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   @NotNull
   public DfType fromConstant(@Nullable Object obj) {
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   /**
@@ -360,7 +360,7 @@ public enum SpecialField implements VariableDescriptor {
     DfType defaultType = this == OPTIONAL_VALUE ? DfTypes.OBJECT_OR_NULL : getDefaultValue(false);
     DfType clamped = fieldValue.meet(defaultType);
     if (clamped.equals(defaultType)) return DfTypes.NOT_NULL_OBJECT;
-    if (clamped.equals(DfTypes.BOTTOM)) return DfTypes.BOTTOM;
+    if (clamped.equals(DfType.BOTTOM)) return DfType.BOTTOM;
     return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
   }
 
@@ -388,11 +388,11 @@ public enum SpecialField implements VariableDescriptor {
    */
   @NotNull
   public DfType getFromQualifier(@NotNull DfType dfType) {
-    if (dfType == DfTypes.TOP) return DfTypes.TOP;
-    if (!(dfType instanceof DfReferenceType)) return DfTypes.BOTTOM;
+    if (dfType == DfType.TOP) return DfType.TOP;
+    if (!(dfType instanceof DfReferenceType)) return DfType.BOTTOM;
     SpecialField sf = ((DfReferenceType)dfType).getSpecialField();
-    if (sf == null) return DfTypes.TOP;
-    if (sf != this) return DfTypes.BOTTOM;
+    if (sf == null) return DfType.TOP;
+    if (sf != this) return DfType.BOTTOM;
     return ((DfReferenceType)dfType).getSpecialFieldType();
   }
 

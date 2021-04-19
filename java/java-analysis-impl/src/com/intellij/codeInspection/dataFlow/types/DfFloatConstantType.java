@@ -16,7 +16,7 @@ class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
   public DfType join(@NotNull DfType other) {
     if (other.isSuperType(this)) return other;
     if (other instanceof DfFloatType) return DfTypes.FLOAT;
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   @NotNull
@@ -32,7 +32,7 @@ class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return getValue()+"f";
   }
 }

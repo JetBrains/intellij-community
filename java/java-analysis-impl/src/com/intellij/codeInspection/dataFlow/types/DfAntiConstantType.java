@@ -38,7 +38,7 @@ public abstract class DfAntiConstantType<T> implements DfType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return "!= " + StreamEx.of(myNotValues).map(DfaPsiUtil::renderValue).joining(", ");
   }
 }

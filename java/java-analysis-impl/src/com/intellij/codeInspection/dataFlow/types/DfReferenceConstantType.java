@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
-
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
@@ -117,7 +114,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return DfaPsiUtil.renderValue(getValue());
   }
 }

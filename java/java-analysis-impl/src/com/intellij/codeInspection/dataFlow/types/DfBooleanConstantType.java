@@ -14,7 +14,7 @@ class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBoolean
   public DfType join(@NotNull DfType other) {
     if (other.equals(this)) return this;
     if (other instanceof DfBooleanType) return DfTypes.BOOLEAN;
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   @NotNull

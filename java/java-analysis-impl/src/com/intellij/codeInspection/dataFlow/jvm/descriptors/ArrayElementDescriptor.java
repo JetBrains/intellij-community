@@ -32,7 +32,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
 
   @Override
   public @NotNull DfType getDfType(@Nullable DfaVariableValue qualifier) {
-    if (qualifier == null) return DfTypes.TOP;
+    if (qualifier == null) return DfType.TOP;
     TypeConstraint constraint = TypeConstraint.fromDfType(qualifier.getDfType());
     return constraint.getArrayComponentType();
   }
@@ -89,7 +89,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     if (!(array instanceof DfaVariableValue) || index < 0) return null;
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
     DfType componentType = TypeConstraint.fromDfType(arrayDfaVar.getDfType()).getArrayComponentType();
-    if (componentType == DfTypes.BOTTOM) return null;
+    if (componentType == DfType.BOTTOM) return null;
     PsiVariable arrayPsiVar = ObjectUtils.tryCast(arrayDfaVar.getPsiVariable(), PsiVariable.class);
     if (arrayPsiVar != null) {
       PsiExpression constantArrayElement = ExpressionUtils.getConstantArrayElement(arrayPsiVar, index);
@@ -155,7 +155,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
                                   .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));
-    if (dfType instanceof DfPrimitiveType && targetType instanceof DfPrimitiveType && dfType.meet(targetType) == DfTypes.BOTTOM) {
+    if (dfType instanceof DfPrimitiveType && targetType instanceof DfPrimitiveType && dfType.meet(targetType) == DfType.BOTTOM) {
       if (targetType instanceof DfIntegralType) {
         if (targetType instanceof DfLongType) return factory.fromDfType(((DfPrimitiveType)dfType).castTo(PsiType.LONG));
       }

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
-
 public class DfNullConstantType extends DfConstantType<Object> implements DfReferenceType {
   DfNullConstantType() {
     super(null);

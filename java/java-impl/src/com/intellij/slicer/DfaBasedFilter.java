@@ -40,7 +40,7 @@ final class DfaBasedFilter {
   }
 
   DfaBasedFilter wrap() {
-    return new DfaBasedFilter(this, DfTypes.TOP);
+    return new DfaBasedFilter(this, DfType.TOP);
   }
 
   DfaBasedFilter unwrap() {
@@ -67,7 +67,7 @@ final class DfaBasedFilter {
       }
     }
     DfType dfType = getElementDfType(element, assertionsDisabled);
-    return dfType.meet(myDfType) != DfTypes.BOTTOM;
+    return dfType.meet(myDfType) != DfType.BOTTOM;
   }
 
   @Nullable DfaBasedFilter mergeFilter(@NotNull PsiElement element) {
@@ -76,13 +76,13 @@ final class DfaBasedFilter {
       type = ((DfReferenceType)type).dropLocality().dropMutability();
     }
     DfType meet = type.meet(myDfType);
-    if (meet == DfTypes.TOP && myNextFilter == null) return null;
-    if (meet == DfTypes.BOTTOM || meet.equals(myDfType)) return this;
+    if (meet == DfType.TOP && myNextFilter == null) return null;
+    if (meet == DfType.BOTTOM || meet.equals(myDfType)) return this;
     return new DfaBasedFilter(myNextFilter, meet);
   }
 
   private @NotNull DfType getElementDfType(@NotNull PsiElement element, boolean assertionsDisabled) {
-    if (!(element instanceof PsiExpression)) return DfTypes.TOP;
+    if (!(element instanceof PsiExpression)) return DfType.TOP;
     PsiExpression expression = (PsiExpression)element;
     PsiType expressionType = expression.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(expressionType) && myDfType instanceof DfReferenceType) {
@@ -92,7 +92,7 @@ final class DfaBasedFilter {
       return DfTypes.typedObject(PsiPrimitiveType.getUnboxedType(expressionType), Nullability.NOT_NULL);
     }
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
-    if (result == null) return DfTypes.TOP;
+    if (result == null) return DfType.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     DfType type = assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
     if (myDfType instanceof DfLongType && type instanceof DfIntType) {
@@ -136,7 +136,7 @@ final class DfaBasedFilter {
   }
 
   static @Nls String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
-    if (type == DfTypes.TOP) {
+    if (type == DfType.TOP) {
       return "";
     }
     if (type instanceof DfIntegralType) {

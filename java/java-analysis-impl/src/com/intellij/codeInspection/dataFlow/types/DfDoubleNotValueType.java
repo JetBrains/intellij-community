@@ -15,7 +15,7 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
 
   @Override
   public boolean isSuperType(@NotNull DfType other) {
-    if (other == DfTypes.BOTTOM || other.equals(this)) return true;
+    if (other == DfType.BOTTOM || other.equals(this)) return true;
     if (other instanceof DfDoubleNotValueType) return ((DfDoubleNotValueType)other).myNotValues.containsAll(myNotValues);
     if (other instanceof DfDoubleConstantType) return !myNotValues.contains(((DfDoubleConstantType)other).getValue());
     return false;
@@ -31,7 +31,7 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
       notValues.retainAll(((DfDoubleNotValueType)other).myNotValues);
       return notValues.isEmpty() ? DfTypes.DOUBLE : new DfDoubleNotValueType(notValues);
     }
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   @NotNull
@@ -39,17 +39,17 @@ final class DfDoubleNotValueType extends DfAntiConstantType<Double> implements D
   public DfType meet(@NotNull DfType other) {
     if (isSuperType(other)) return other;
     if (other.isSuperType(this)) return this;
-    if (other instanceof DfDoubleConstantType && myNotValues.contains(((DfDoubleConstantType)other).getValue())) return DfTypes.BOTTOM;
+    if (other instanceof DfDoubleConstantType && myNotValues.contains(((DfDoubleConstantType)other).getValue())) return DfType.BOTTOM;
     if (other instanceof DfDoubleNotValueType) {
       Set<Double> notValues = new HashSet<>(myNotValues);
       notValues.addAll(((DfDoubleNotValueType)other).myNotValues);
       return new DfDoubleNotValueType(notValues);
     }
-    return DfTypes.BOTTOM;
+    return DfType.BOTTOM;
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return JavaAnalysisBundle.message("type.presentation.except.values", PsiKeyword.DOUBLE, myNotValues);
   }
 }

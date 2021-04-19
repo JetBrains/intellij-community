@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +118,7 @@ public abstract class DfaCondition {
             return fromBoolean(relationType == RelationType.NE);
           }
         }
-        else if (leftType.meet(rightType) == DfTypes.BOTTOM) {
+        else if (leftType.meet(rightType) == DfType.BOTTOM) {
           return fromBoolean(relationType == RelationType.NE);
         }
       }
@@ -128,17 +127,17 @@ public abstract class DfaCondition {
         if (isSuperState) {
           return fromBoolean(relationType == RelationType.IS);
         }
-        boolean isDistinct = rightType.meet(leftType) == DfTypes.BOTTOM;
+        boolean isDistinct = rightType.meet(leftType) == DfType.BOTTOM;
         if (isDistinct) {
           return fromBoolean(relationType == RelationType.IS_NOT);
         }
       }
 
       if (leftType instanceof DfIntegralType && rightType instanceof DfIntegralType) {
-        if (((DfIntegralType)leftType).meetRelation(relationType, rightType) == DfTypes.BOTTOM) {
+        if (((DfIntegralType)leftType).meetRelation(relationType, rightType) == DfType.BOTTOM) {
           return FALSE;
         }
-        if (((DfIntegralType)leftType).meetRelation(relationType.getNegated(), rightType) == DfTypes.BOTTOM) {
+        if (((DfIntegralType)leftType).meetRelation(relationType.getNegated(), rightType) == DfType.BOTTOM) {
           return TRUE;
         }
       }

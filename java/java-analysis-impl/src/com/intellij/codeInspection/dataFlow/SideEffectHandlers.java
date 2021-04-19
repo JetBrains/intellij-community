@@ -73,7 +73,7 @@ class SideEffectHandlers {
         if (!list) {
           resultSize = resultSize.join(sizeType.meet(DfTypes.intRange(LongRangeSet.range(1, Integer.MAX_VALUE))));
         }
-        if (resultSize == DfTypes.BOTTOM) {
+        if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
           resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
         }
@@ -114,7 +114,7 @@ class SideEffectHandlers {
           argSizeType = argSizeType.join(DfTypes.intRange(addedForSet));
         }
         resultSize = sizeType.eval(argSizeType, LongRangeBinOp.PLUS).meet(DfTypes.intRange(totalRange));
-        if (resultSize == DfTypes.BOTTOM) {
+        if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
           resultSize = SpecialField.COLLECTION_SIZE.getDefaultValue(false);
         }

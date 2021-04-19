@@ -276,7 +276,7 @@ public class StreamChainInliner implements CallInliner {
       if ("count".equals(myCall.getMethodExpression().getReferenceName())) {
         myResultRange = DfTypes.longRange(narrowCountResult(myCall));
       } else {
-        myResultRange = DfTypes.TOP;
+        myResultRange = DfType.TOP;
       }
       PsiType type = myCall.getType();
       if (!(type instanceof PsiPrimitiveType)) {

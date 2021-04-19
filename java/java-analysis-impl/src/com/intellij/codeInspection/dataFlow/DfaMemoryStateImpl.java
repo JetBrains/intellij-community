@@ -230,7 +230,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
-    if (dfType == DfTypes.BOTTOM) return; // likely uncompilable code or bad CFG
+    if (dfType == DfType.BOTTOM) return; // likely uncompilable code or bad CFG
     if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
         !ControlFlow.isTempVariable((DfaVariableValue)value) &&
         (var.getQualifier() == null || !ControlFlow.isTempVariable(var.getQualifier()))) {
@@ -480,7 +480,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
           else {
             toType = fromType.meet(toType);
-            if (toType == DfTypes.BOTTOM) return false;
+            if (toType == DfType.BOTTOM) return false;
           }
           recordVariableType(target, toType);
         }
@@ -599,8 +599,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public boolean meetDfType(@NotNull DfaValue value, @NotNull DfType dfType) {
-    if (dfType == DfTypes.TOP) return true;
-    if (dfType == DfTypes.BOTTOM) return false;
+    if (dfType == DfType.TOP) return true;
+    if (dfType == DfType.BOTTOM) return false;
     if (value instanceof DfaBinOpValue) {
       return propagateRangeBack(ObjectUtils.tryCast(dfType, DfIntegralType.class), (DfaBinOpValue)value);
     }
@@ -609,7 +609,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfType type = getDfType(var);
       DfType result = type.meet(dfType);
       if (result.equals(type)) return true;
-      if (result == DfTypes.BOTTOM) return false;
+      if (result == DfType.BOTTOM) return false;
       recordVariableType(var, result);
       TypeConstraint newConstraint = TypeConstraint.fromDfType(result);
       if (newConstraint.isComparedByEquals() && !newConstraint.equals(TypeConstraint.fromDfType(type))) {
@@ -633,7 +633,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return true;
     }
-    return value.getDfType().meet(dfType) != DfTypes.BOTTOM;
+    return value.getDfType().meet(dfType) != DfType.BOTTOM;
   }
 
   private boolean propagateRangeBack(@Nullable DfIntegralType appliedRange, @NotNull DfaBinOpValue binOp) {
@@ -645,7 +645,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if(leftDfType == null || rightDfType == null) return true;
     DfType result = getBinOpRange(binOp);
     DfType targetRange = result.meet(appliedRange);
-    if (targetRange == DfTypes.BOTTOM) return false;
+    if (targetRange == DfType.BOTTOM) return false;
     DfType leftConstraint = binOp.getDfType();
     DfType rightConstraint = binOp.getDfType();
     switch (binOp.getOperation()) {
@@ -769,7 +769,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         if (rightType.isSuperType(leftType)) return false;
         DfType antiType = rightType.tryNegate();
         if (antiType != null && !meetDfType(dfaLeft, antiType)) {
-          return leftType.meet(rightType) == DfTypes.BOTTOM;
+          return leftType.meet(rightType) == DfType.BOTTOM;
         }
       }
       return true;
@@ -1682,7 +1682,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         // Calls may refer to changed object indirectly (unless it's local)
         flushCalls = true;
         if (relation != null) continue;
-        if (typeToFlush.meet(dfType) != DfTypes.BOTTOM) {
+        if (typeToFlush.meet(dfType) != DfType.BOTTOM) {
           // possible aliasing
           return QualifierStatus.SHOULD_FLUSH_ALWAYS;
         }

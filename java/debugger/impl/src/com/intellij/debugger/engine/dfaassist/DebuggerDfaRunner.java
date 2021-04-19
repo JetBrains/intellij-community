@@ -239,7 +239,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
             .filter(v -> !TypeConstraint.fromDfType(v.getDfType()).isComparedByEquals())
             .toArray(new DfaVariableValue[0]);
         EntryStream.ofPairs(distinctValues)
-          .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfTypes.BOTTOM)
+          .filterKeyValue((left, right) -> left.getDfType().meet(right.getDfType()) != DfType.BOTTOM)
           .limit(20) // avoid too complex state
           .forKeyValue((left, right) -> myMemState.applyCondition(left.cond(RelationType.NE, right)));
       }
@@ -247,7 +247,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
 
     private void addConditions(DfaVariableValue var, Value jdiValue) {
       DfType val = getConstantValue(jdiValue);
-      if (val != DfTypes.TOP) {
+      if (val != DfType.TOP) {
         myMemState.applyCondition(var.eq(myFactory.fromDfType(val)));
       }
       if (jdiValue instanceof ObjectReference) {
@@ -366,7 +366,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
           }
         }
       }
-      return DfTypes.TOP;
+      return DfType.TOP;
     }
   }
 

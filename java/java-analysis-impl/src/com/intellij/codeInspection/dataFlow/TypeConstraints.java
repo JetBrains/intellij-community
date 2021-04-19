@@ -31,7 +31,7 @@ public final class TypeConstraints {
     @Override public boolean isSubtypeOf(@NotNull String className) { return false;}
     @Override public TypeConstraint tryNegate() { return BOTTOM; }
     @Override public String toString() { return ""; }
-    @Override public DfType getUnboxedType() { return DfTypes.TOP; }
+    @Override public DfType getUnboxedType() { return DfType.TOP; }
   };
   /**
    * Bottom constraint (no actual type satisfies this)
@@ -327,7 +327,7 @@ public final class TypeConstraints {
     @Override
     public DfType getUnboxedType() {
       String name = myClass.getQualifiedName();
-      if (name == null) return DfTypes.BOTTOM;
+      if (name == null) return DfType.BOTTOM;
       switch (name) {
         case JAVA_LANG_BOOLEAN:
           return DfTypes.BOOLEAN;
@@ -346,7 +346,7 @@ public final class TypeConstraints {
         case JAVA_LANG_CHARACTER:
           return DfTypes.intRange(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(PsiType.CHAR)));
         default:
-          return DfTypes.BOTTOM;
+          return DfType.BOTTOM;
       }
     }
 

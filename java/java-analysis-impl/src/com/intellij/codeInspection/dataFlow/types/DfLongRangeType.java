@@ -14,7 +14,7 @@ final class DfLongRangeType extends DfAbstractRangeType implements DfLongType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     if (getRange() == LongRangeSet.all()) return PsiKeyword.LONG;
     return PsiKeyword.LONG + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiType.LONG);
   }

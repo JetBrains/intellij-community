@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ public class DfaTypeValue extends DfaValue {
   }
 
   public static boolean isUnknown(DfaValue value) {
-    return value instanceof DfaTypeValue && value.getDfType() == DfTypes.TOP;
+    return value instanceof DfaTypeValue && value.getDfType() == DfType.TOP;
   }
 
   @Override
@@ -45,7 +44,7 @@ public class DfaTypeValue extends DfaValue {
    */
   @Contract("null -> false")
   public static boolean isContractFail(DfaValue value) {
-    return value instanceof DfaTypeValue && value.getDfType() == DfTypes.FAIL;
+    return value instanceof DfaTypeValue && value.getDfType() == DfType.FAIL;
   }
 
   static class Factory {

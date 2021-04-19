@@ -105,11 +105,11 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         if (result != RunnerResult.OK) return;
         Set<PsiExpression> reportedAnchors = new HashSet<>();
         returnMap.forEach((name, map) -> {
-          DfType reduced = map.values().stream().reduce(DfTypes.BOTTOM, DfType::join);
+          DfType reduced = map.values().stream().reduce(DfType.BOTTOM, DfType::join);
           PsiType wantedType = getWantedType(body, name);
           if (wantedType == null) return;
           TypeConstraint wantedConstraint = TypeConstraints.exact(wantedType);
-          if (reduced.meet(wantedConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)) != DfTypes.BOTTOM &&
+          if (reduced.meet(wantedConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)) != DfType.BOTTOM &&
               DfaNullability.fromDfType(reduced) != DfaNullability.NULLABLE) {
             return;
           }

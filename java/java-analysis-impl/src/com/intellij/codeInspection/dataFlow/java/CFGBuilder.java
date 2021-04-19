@@ -510,7 +510,7 @@ public class CFGBuilder {
    */
   public CFGBuilder assignAndPop(DfaValue target, DfType source) {
     if (target instanceof DfaVariableValue) {
-      if (source == DfTypes.TOP) {
+      if (source == DfType.TOP) {
         add(new FlushVariableInstruction((DfaVariableValue)target));
       } else {
         pushForWrite((DfaVariableValue)target).push(source).assign().pop();
@@ -532,7 +532,7 @@ public class CFGBuilder {
    */
   public CFGBuilder assign(DfaValue target, DfType source) {
     if (target instanceof DfaVariableValue) {
-      if (source == DfTypes.TOP) {
+      if (source == DfType.TOP) {
         flush(target).push(target);
       } else {
         pushForWrite((DfaVariableValue)target).push(source).assign();

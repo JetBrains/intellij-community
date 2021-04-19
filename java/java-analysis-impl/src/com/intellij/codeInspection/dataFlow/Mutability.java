@@ -77,7 +77,7 @@ public enum Mutability {
   }
 
   public DfReferenceType asDfType() {
-    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfTypes.BOTTOM);
+    return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfType.BOTTOM);
   }
 
   public @NotNull @Nls String getPresentationName() {

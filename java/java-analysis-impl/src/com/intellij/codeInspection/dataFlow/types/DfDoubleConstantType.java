@@ -16,7 +16,7 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
   public DfType join(@NotNull DfType other) {
     if (other.isSuperType(this)) return other;
     if (other instanceof DfDoubleType) return DfTypes.DOUBLE;
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   @NotNull

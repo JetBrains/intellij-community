@@ -147,8 +147,8 @@ public interface TypeConstraint {
    * @return a {@link DfType} that represents any object that satisfies this constraint, or null (nullability is unknown)
    */
   default DfType asDfType() {
-    return this == TypeConstraints.BOTTOM ? DfTypes.BOTTOM :
-           DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
+    return this == TypeConstraints.BOTTOM ? DfType.BOTTOM :
+           DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfType.BOTTOM);
   }
 
   /**
@@ -162,7 +162,7 @@ public interface TypeConstraint {
    * @return an array component type for an array type; BOTTOM if this type is not always an array type
    */
   default @NotNull DfType getArrayComponentType() {
-    return DfTypes.BOTTOM;
+    return DfType.BOTTOM;
   }
 
   /**
@@ -174,11 +174,11 @@ public interface TypeConstraint {
 
   /**
    * @return type that represents unboxed type of this type;
-   * {@link DfTypes#TOP} if this constraint can be one of several primitive wrappers
-   * {@link DfTypes#BOTTOM} if this constraint is not primitive wrapper
+   * {@link DfType#TOP} if this constraint can be one of several primitive wrappers
+   * {@link DfType#BOTTOM} if this constraint is not primitive wrapper
    */
   default DfType getUnboxedType() {
-    return DfTypes.BOTTOM;
+    return DfType.BOTTOM;
   }
 
   /**
@@ -194,7 +194,7 @@ public interface TypeConstraint {
    */
   static @NotNull TypeConstraint fromDfType(DfType type) {
     return type instanceof DfReferenceType ? ((DfReferenceType)type).getConstraint() :
-           type == DfTypes.BOTTOM ? TypeConstraints.BOTTOM :
+           type == DfType.BOTTOM ? TypeConstraints.BOTTOM :
            TypeConstraints.TOP;
   }
 
@@ -561,12 +561,12 @@ public interface TypeConstraint {
     @Override
     public @NotNull DfType getArrayComponentType() {
       return instanceOfTypes().map(Exact::getArrayComponentType)
-        .reduce(DfType::meet).orElse(DfTypes.BOTTOM);
+        .reduce(DfType::meet).orElse(DfType.BOTTOM);
     }
 
     @Override
     public DfType getUnboxedType() {
-      return instanceOfTypes().allMatch(t -> WRAPPER_SUPER_TYPES.contains(t.toString())) ? DfTypes.TOP : DfTypes.BOTTOM;
+      return instanceOfTypes().allMatch(t -> WRAPPER_SUPER_TYPES.contains(t.toString())) ? DfType.TOP : DfType.BOTTOM;
     }
 
     @Override

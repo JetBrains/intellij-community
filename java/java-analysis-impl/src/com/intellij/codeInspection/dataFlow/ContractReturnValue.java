@@ -25,7 +25,7 @@ public abstract class ContractReturnValue {
   private static final int MAX_SUPPORTED_PARAMETER = 100;
 
   private interface Validator extends Function<PsiMethod, @Nls @Nullable String> {}
-  
+
   private static final Validator NOT_CONSTRUCTOR =
     method -> method.isConstructor() ? JavaAnalysisBundle.message("contract.return.validator.not.applicable.for.constructor") : null;
   private static final Validator NOT_STATIC =
@@ -112,7 +112,7 @@ public abstract class ContractReturnValue {
     DfType defaultType = memState.getDfType(defaultValue);
     DfType newType = memState.getDfType(newValue);
     DfType result = defaultType.meet(newType);
-    if (result == DfTypes.BOTTOM) return newValue;
+    if (result == DfType.BOTTOM) return newValue;
     if (newValue instanceof DfaVariableValue) {
       memState.meetDfType(newValue, result);
       return newValue;
@@ -364,7 +364,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaValue defaultValue, DfaCallState callState) {
-      return factory.fromDfType(DfTypes.FAIL);
+      return factory.fromDfType(DfType.FAIL);
     }
 
     @Override
@@ -543,7 +543,7 @@ public abstract class ContractReturnValue {
         PsiType parameterType = parameters[myParamNumber].getType();
         PsiType returnType = method.getReturnType();
         if (returnType != null && !returnType.isConvertibleFrom(parameterType)) {
-          return JavaAnalysisBundle.message("contract.return.validator.incompatible.return.parameter.type", 
+          return JavaAnalysisBundle.message("contract.return.validator.incompatible.return.parameter.type",
                                             returnType.getPresentableText(), parameterType.getPresentableText());
         }
         return null;

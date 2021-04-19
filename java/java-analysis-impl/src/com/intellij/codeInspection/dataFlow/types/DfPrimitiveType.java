@@ -22,6 +22,6 @@ public interface DfPrimitiveType extends DfType {
     if (value != null) {
       return DfTypes.primitiveConstant(value);
     }
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 }

@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.BOTTOM;
-import static com.intellij.codeInspection.dataFlow.types.DfTypes.TOP;
-
 final class DfGenericObjectType extends DfAntiConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull DfaNullability myNullability;
@@ -311,7 +308,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     List<String> components = new ArrayList<>();
     if (myConstraint != TypeConstraints.TOP) {
       components.add(myConstraint.toString());

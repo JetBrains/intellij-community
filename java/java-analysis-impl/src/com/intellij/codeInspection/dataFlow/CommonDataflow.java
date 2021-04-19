@@ -30,7 +30,7 @@ import static com.intellij.codeInspection.dataFlow.DfaUtil.hasImplicitImpureSupe
 
 public final class CommonDataflow {
   private static class DataflowPoint {
-    @NotNull DfType myDfType = DfTypes.BOTTOM;
+    @NotNull DfType myDfType = DfType.BOTTOM;
     // empty = top; null = bottom
     @Nullable Set<Object> myPossibleValues = Collections.emptySet();
     boolean myMayFailByContract = false;
@@ -62,7 +62,7 @@ public final class CommonDataflow {
     }
 
     void addFacts(DfaMemoryState memState, DfaValue value) {
-      if (myDfType == DfTypes.TOP) return;
+      if (myDfType == DfType.TOP) return;
       DfType newType = memState.getDfType(value);
       if (value instanceof DfaVariableValue) {
         SpecialField field = SpecialField.fromQualifier(value);
@@ -131,7 +131,7 @@ public final class CommonDataflow {
         point.myMayFailByContract = true;
         return;
       }
-      if (point.myDfType != DfTypes.TOP) {
+      if (point.myDfType != DfType.TOP) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiConditionalExpression &&
             !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
@@ -188,25 +188,25 @@ public final class CommonDataflow {
     /**
      * @param expression an expression to infer the DfType, must be deparenthesized.
      * @return DfType for that expression, assuming assertions are disabled.
-     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfTypeNoAssertions(PsiExpression)
      */
     @NotNull
     public DfType getDfType(PsiExpression expression) {
       DataflowPoint point = myData.get(expression);
-      return point == null ? DfTypes.TOP : point.myDfType;
+      return point == null ? DfType.TOP : point.myDfType;
     }
 
     /**
      * @param expression an expression to infer the DfType, must be deparenthesized.
      * @return DfType for that expression, assuming assertions are disabled.
-     * May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+     * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfType(PsiExpression)
      */
     @NotNull
     public DfType getDfTypeNoAssertions(PsiExpression expression) {
       DataflowPoint point = myDataAssertionsDisabled.get(expression);
-      return point == null ? DfTypes.TOP : point.myDfType;
+      return point == null ? DfType.TOP : point.myDfType;
     }
   }
 
@@ -287,12 +287,12 @@ public final class CommonDataflow {
 
   /**
    * @param expression an expression to infer the DfType
-   * @return DfType for that expression. May return {@link DfTypes#TOP} if no information from dataflow is known about this expression
+   * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
   @NotNull
   public static DfType getDfType(PsiExpression expression) {
     DataflowResult result = getDataflowResult(expression);
-    if (result == null) return DfTypes.TOP;
+    if (result == null) return DfType.TOP;
     return result.getDfType(PsiUtil.skipParenthesizedExprDown(expression));
   }
 

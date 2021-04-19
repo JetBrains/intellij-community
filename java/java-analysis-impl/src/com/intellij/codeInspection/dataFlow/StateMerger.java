@@ -325,7 +325,7 @@ final class StateMerger {
     abstract void removeFromState(@NotNull DfaMemoryStateImpl state);
 
     void restoreCommonState(DfaMemoryStateImpl stripped, Collection<DfaMemoryStateImpl> merged) {
-      DfType commonType = StreamEx.of(merged).map(s -> s.getDfType(myVar)).foldLeft(DfTypes.BOTTOM, DfType::join);
+      DfType commonType = StreamEx.of(merged).map(s -> s.getDfType(myVar)).foldLeft(DfType.BOTTOM, DfType::join);
       stripped.meetDfType(myVar, commonType);
     }
 

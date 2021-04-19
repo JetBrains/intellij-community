@@ -111,7 +111,7 @@ public enum DfaNullability {
       case UNKNOWN:
         return DfTypes.OBJECT_OR_NULL;
       default:
-        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfTypes.BOTTOM);
+        return DfTypes.customObject(TypeConstraints.TOP, this, Mutability.UNKNOWN, null, DfType.BOTTOM);
     }
   }
 

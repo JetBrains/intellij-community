@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,7 +53,7 @@ public abstract class DfaValue {
    */
   @NotNull
   public DfType getDfType() {
-    return DfTypes.TOP;
+    return DfType.TOP;
   }
 
   /**

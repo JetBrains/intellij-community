@@ -282,13 +282,13 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   }
 
   private static boolean mayLeakFromType(@NotNull DfType type) {
-    if (type == BOTTOM) return false;
+    if (type == DfType.BOTTOM) return false;
     // Complex value from field or method return call may contain back-reference to the object, so
     // local value could leak. Do not drop locality only for some simple values.
     while (true) {
       TypeConstraint constraint = TypeConstraint.fromDfType(type);
       DfType arrayComponentType = constraint.getArrayComponentType();
-      if (arrayComponentType == BOTTOM) {
+      if (arrayComponentType == DfType.BOTTOM) {
         return !(type instanceof DfPrimitiveType) && !constraint.isExact(CommonClassNames.JAVA_LANG_STRING);
       }
       type = arrayComponentType;
@@ -348,7 +348,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     ThreeState ok = checkNotNullable(memState, value, problem);
     if (value instanceof DfaTypeValue) {
       DfType dfType = value.getDfType().meet(NOT_NULL_OBJECT);
-      return value.getFactory().fromDfType(dfType == BOTTOM ? NOT_NULL_OBJECT : dfType);
+      return value.getFactory().fromDfType(dfType == DfType.BOTTOM ? NOT_NULL_OBJECT : dfType);
     }
     if (ok != ThreeState.NO) return value;
     if (memState.isNull(value) && problem != null && problem.getKind() == NullabilityProblemKind.nullableFunctionReturn) {
@@ -568,10 +568,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaVariableValue qualifier = ((DfaVariableValue)dfaDest).getQualifier();
     if (qualifier == null) return;
     DfType toType = TypeConstraint.fromDfType(memState.getDfType(qualifier)).getArrayComponentType();
-    if (toType == BOTTOM) return;
+    if (toType == DfType.BOTTOM) return;
     DfType fromType = memState.getDfType(dfaSource);
     DfType meet = fromType.meet(toType);
-    if (meet != BOTTOM) return;
+    if (meet != DfType.BOTTOM) return;
     Project project = lValue.getProject();
     PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(rValue, PsiAssignmentExpression.class);
     PsiType psiFromType = TypeConstraint.fromDfType(fromType).getPsiType(project);
@@ -1045,7 +1045,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     ArrayList<DfaInstructionState> states = new ArrayList<>(2);
     DfType leftType = memState.getDfType(dfaLeft);
     if (condition == DfaCondition.getUnknown()) {
-      if (leftType != TOP && dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
+      if (leftType != DfType.TOP && dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
         TypeConstraint left = TypeConstraint.fromDfType(leftType);
         TypeConstraint right = TypeConstraint.fromDfType(dfaRight.getDfType());
         useful = !right.isSuperConstraintOf(left);

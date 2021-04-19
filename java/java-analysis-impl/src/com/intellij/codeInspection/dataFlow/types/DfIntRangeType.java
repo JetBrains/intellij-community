@@ -25,7 +25,7 @@ final class DfIntRangeType extends DfAbstractRangeType implements DfIntType {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     if (getRange() == FULL_RANGE) return PsiKeyword.INT;
     return PsiKeyword.INT + " " + JvmPsiRangeSetUtil.getPresentationText(getRange(), PsiType.INT);
   }

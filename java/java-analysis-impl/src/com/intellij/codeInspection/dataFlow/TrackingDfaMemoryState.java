@@ -132,7 +132,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         removed.removeAll(newValueRelations);
         changeMap.compute(
           value, (v, change) -> change == null
-                                ? Change.create(removed, added, DfTypes.BOTTOM, DfTypes.BOTTOM)
+                                ? Change.create(removed, added, DfType.BOTTOM, DfType.BOTTOM)
                                 : Change.create(removed, added, change.myOldType, change.myNewType));
       }
     }
@@ -230,7 +230,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
 
     @Nullable
     static Change create(Set<Relation> removedRelations, Set<Relation> addedRelations, DfType oldType, DfType newType) {
-      if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfTypes.BOTTOM && newType == DfTypes.BOTTOM) {
+      if (removedRelations.isEmpty() && addedRelations.isEmpty() && oldType == DfType.BOTTOM && newType == DfType.BOTTOM) {
         return null;
       }
       return new Change(removedRelations, addedRelations, oldType, newType);
@@ -248,7 +248,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
       DfType oldType = myOldType.join(other.myOldType);
       DfType newType = myNewType.join(other.myNewType);
       if (oldType.equals(newType)) {
-        oldType = newType = DfTypes.BOTTOM;
+        oldType = newType = DfType.BOTTOM;
       }
       return create(removed, added, oldType, newType);
     }

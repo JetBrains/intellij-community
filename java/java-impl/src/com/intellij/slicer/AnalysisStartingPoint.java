@@ -33,21 +33,21 @@ class AnalysisStartingPoint {
   @Nullable AnalysisStartingPoint tryMeet(@NotNull AnalysisStartingPoint next) {
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
     DfType meet = this.myDfType.meet(next.myDfType);
-    if (meet == DfTypes.BOTTOM) return null;
+    if (meet == DfType.BOTTOM) return null;
     return new AnalysisStartingPoint(meet, this.myAnchor);
   }
 
   @Nullable AnalysisStartingPoint tryJoin(@NotNull AnalysisStartingPoint next) {
     if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(this.myAnchor, next.myAnchor)) return null;
     DfType meet = this.myDfType.join(next.myDfType);
-    if (meet == DfTypes.TOP) return null;
+    if (meet == DfType.TOP) return null;
     return new AnalysisStartingPoint(meet, this.myAnchor);
   }
 
   static @Nullable AnalysisStartingPoint create(@NotNull DfType type, @Nullable PsiExpression anchor) {
     anchor = extractAnchor(anchor);
     if (anchor == null) return null;
-    if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfTypes.BOTTOM) return null;
+    if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfType.BOTTOM) return null;
     return new AnalysisStartingPoint(type, anchor);
   }
 
@@ -129,7 +129,7 @@ class AnalysisStartingPoint {
           }
           if (type != null && anchor != null) {
             PsiType anchorType = anchor.getType();
-            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfTypes.BOTTOM) return null;
+            if (anchorType == null || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(type) == DfType.BOTTOM) return null;
             return new AnalysisStartingPoint(type, anchor);
           }
         }
@@ -195,7 +195,7 @@ class AnalysisStartingPoint {
       if (anchorType.equals(PsiType.BYTE) || anchorType.equals(PsiType.CHAR) || anchorType.equals(PsiType.SHORT)) {
         anchorType = PsiType.INT;
       }
-      if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfTypes.BOTTOM) {
+      if (constantType == DfTypes.NULL || DfTypes.typedObject(anchorType, Nullability.NOT_NULL).meet(constantType) != DfType.BOTTOM) {
         if (type.equals(JavaTokenType.EQEQ)) {
           return new AnalysisStartingPoint(constantType, anchor);
         }

@@ -15,7 +15,7 @@ public interface DfIntType extends DfIntegralType {
 
   @Override
   default boolean isSuperType(@NotNull DfType other) {
-    if (other == DfTypes.BOTTOM) return true;
+    if (other == DfType.BOTTOM) return true;
     if (!(other instanceof DfIntType)) return false;
     DfIntType intType = (DfIntType)other;
     return getRange().contains(intType.getRange()) &&
@@ -39,8 +39,8 @@ public interface DfIntType extends DfIntegralType {
   @NotNull
   @Override
   default DfType join(@NotNull DfType other) {
-    if (other == DfTypes.BOTTOM) return this;
-    if (!(other instanceof DfIntType)) return DfTypes.TOP;
+    if (other == DfType.BOTTOM) return this;
+    if (!(other instanceof DfIntType)) return DfType.TOP;
     LongRangeSet range = ((DfIntType)other).getRange().unite(getRange());
     LongRangeSet wideRange = ((DfIntType)other).getWideRange().unite(getWideRange());
     return DfTypes.intRange(range, wideRange);
@@ -49,8 +49,8 @@ public interface DfIntType extends DfIntegralType {
   @NotNull
   @Override
   default DfType meet(@NotNull DfType other) {
-    if (other == DfTypes.TOP) return this;
-    if (!(other instanceof DfIntType)) return DfTypes.BOTTOM;
+    if (other == DfType.TOP) return this;
+    if (!(other instanceof DfIntType)) return DfType.BOTTOM;
     LongRangeSet range = ((DfIntType)other).getRange().intersect(getRange());
     LongRangeSet wideRange = ((DfIntType)other).getWideRange().intersect(getWideRange());
     return DfTypes.intRange(range, wideRange);

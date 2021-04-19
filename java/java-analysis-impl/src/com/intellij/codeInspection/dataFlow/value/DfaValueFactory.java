@@ -75,7 +75,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaTypeValue getUnknown() {
-    return fromDfType(DfTypes.TOP);
+    return fromDfType(DfType.TOP);
   }
 
   /**
