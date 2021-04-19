@@ -16,7 +16,7 @@ public final class PopupImplUtil {
     boolean[] insideOnChosen = { true };
     //noinspection resource
     AccessToken token = ProhibitAWTEvents.startFiltered("Popup.handleSelect", e -> {
-      if (!(e instanceof FocusEvent)) return null;
+      if (!(e instanceof FocusEvent) || ((FocusEvent)e).isTemporary()) return null;
       Throwable throwable = new Throwable("Focus events are prohibited inside Popup.handleSelect; got " + e +
                                           "Please put the handler into BaseStep.doFinalStep or PopupStep.getFinalRunnable.");
       // give the secondary event loop in `actionSystem.impl.Utils.expandActionGroupImpl`
