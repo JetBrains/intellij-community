@@ -1,8 +1,15 @@
 <html>
 <body>
+<p>Reports boolean methods which can be accessed via the same property name, for example:</p>
+<pre>
+class X {
+    boolean isFoo() { true }
+    boolean getFoo() { false }
+}
 
-  Assume you have two methods with signatures 'getX()' and 'isX()'. Both methods are getters for property 'x'. So the result of invoking
-  'foo.x' can be unexpected.
-  Reports methods which have such a problem.
+// getFoo() will be called,
+// which might be unexpected
+new X().foo
+</pre>
 </body>
 </html>
