@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.diff.FrameDiffTool;
@@ -25,9 +25,12 @@ import java.util.stream.Stream;
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
 
+  private final boolean myIsInEditor;
+
   VcsLogChangeProcessor(@NotNull Project project, @NotNull VcsLogChangesBrowser browser, boolean isInEditor,
                         @NotNull Disposable disposable) {
     super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
+    myIsInEditor = isInEditor;
     myBrowser = browser;
     myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     Disposer.register(disposable, this);
@@ -78,7 +81,7 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   }
 
   private void updatePreviewLater() {
-    ApplicationManager.getApplication().invokeLater(() -> updatePreview(getComponent().isShowing()));
+    ApplicationManager.getApplication().invokeLater(() -> updatePreview(myIsInEditor || getComponent().isShowing()));
   }
 
   public void updatePreview(boolean state) {
