@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,9 +22,13 @@ import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +86,6 @@ final class ProgressDialog implements Disposable {
 
   private boolean myRepaintedFlag = true; // guarded by this
   private TitlePanel myTitlePanel;
-  private JPanel myInnerPanel;
   DialogWrapper myPopup;
   private final Window myParentWindow;
   private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any());
@@ -91,10 +95,57 @@ final class ProgressDialog implements Disposable {
                  boolean shouldShowBackground,
                  @NlsContexts.Button @Nullable String cancelText,
                  @Nullable Window parentWindow) {
+    setupUI();
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;
     myShouldShowBackground = shouldShowBackground;
     initDialog(cancelText);
+  }
+
+  private void setupUI() {
+    myPanel = new JPanel();
+    myPanel.setLayout(new GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false));
+
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridLayoutManager(1, 2, JBUI.insets(6, 10, 10, 10), -1, -1, false, false));
+    panel.setOpaque(false);
+    myPanel.add(panel, new GridConstraints(1, 0, 1, 1, 0, 3, 3, 3, null, null, null));
+
+    JPanel innerPanel = new JPanel();
+    innerPanel.setLayout(new GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1, false, false));
+    innerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUIScale.scale(450), -1));
+    panel.add(innerPanel, new GridConstraints(0, 0, 1, 1, 0, 1, 7, 2, null, null, null));
+
+    myTextLabel = new JLabel(" ");
+    innerPanel.add(myTextLabel, new GridConstraints(0, 0, 1, 1, 0, 1, 7, 0, new Dimension(0, -1), null, null));
+
+    myText2Label = new JBLabel("");
+    myText2Label.setComponentStyle(UIUtil.ComponentStyle.REGULAR);
+    innerPanel.add(myText2Label, new GridConstraints(2, 0, 1, 1, 9, 1, 7, 0, new Dimension(0, -1), null, null));
+
+    myProgressBar = new JProgressBar();
+    myProgressBar.putClientProperty("html.disable", Boolean.FALSE);
+    innerPanel.add(myProgressBar, new GridConstraints(1, 0, 1, 2, 0, 1, 7, 0, null, null, null));
+
+    innerPanel.add(new JLabel(" "), new GridConstraints(2, 1, 1, 1, 8, 0, 0, 0, null, null, null));
+    innerPanel.add(new JLabel(" "), new GridConstraints(0, 1, 1, 1, 8, 0, 0, 0, null, null, null));
+
+    JPanel buttonPanel = new JPanel();
+    buttonPanel.setLayout(new GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false));
+    panel.add(buttonPanel, new GridConstraints(0, 1, 1, 1, 0, 1, 1, 2, null, null, null));
+
+    myCancelButton = new JButton();
+    myCancelButton.setText(CommonBundle.getCancelButtonText());
+    DialogUtil.registerMnemonic(myCancelButton, '&');
+    buttonPanel.add(myCancelButton, new GridConstraints(0, 0, 1, 1, 0, 1, 3, 0, null, null, null));
+
+    myBackgroundButton = new JButton();
+    myBackgroundButton.setText(CommonBundle.message("button.background"));
+    DialogUtil.registerMnemonic(myBackgroundButton, '&');
+    buttonPanel.add(myBackgroundButton, new GridConstraints(1, 0, 1, 1, 0, 1, 3, 0, null, null, null));
+
+    myTitlePanel = new TitlePanel();
+    myPanel.add(myTitlePanel, new GridConstraints(0, 0, 1, 1, 0, 1, 7, 0, null, null, null));
   }
 
   @Contract(pure = true)
@@ -115,7 +166,6 @@ final class ProgressDialog implements Disposable {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
     myText2Label.setForeground(UIUtil.getContextHelpForeground());
-    myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : JBUIScale.scale(450), -1));
 
     myCancelButton.addActionListener(__ -> doCancelAction());
 
