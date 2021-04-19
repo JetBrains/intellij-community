@@ -22,7 +22,6 @@ import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,9 +46,24 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   // false by default - do not attempt to use such a relatively heavy code on start-up
   private volatile boolean myShouldStartActivity = SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.mac.prevent.app.nap", "true"));
 
-  private Stack<@NlsContexts.ProgressText String> myTextStack; // guarded by this
-  private DoubleArrayList myFractionStack; // guarded by this
-  private Stack<@NlsContexts.ProgressDetails String> myText2Stack; // guarded by this
+  private static class State {
+    private final @NlsContexts.ProgressText String myText;
+    private final @NlsContexts.ProgressDetails String myText2;
+    private final double myFraction;
+    private final boolean myIndeterminate;
+
+    private State(@NlsContexts.ProgressText String text,
+                  @NlsContexts.ProgressDetails String text2,
+                  double fraction,
+                  boolean indeterminate) {
+      myText = text;
+      myText2 = text2;
+      myFraction = fraction;
+      myIndeterminate = indeterminate;
+    }
+  }
+
+  private Stack<State> myStateStack; // guarded by this
 
   private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
@@ -181,42 +195,39 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
-    if (isIndeterminate()) {
-      StackTraceElement[] trace = new Throwable().getStackTrace();
-      StackTraceElement first = ContainerUtil.find(trace,
-        element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"));
-      @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
-                               "Please call setIndeterminate(false) before you start progress.";
-      if (first != null) {
-        message += "\n" + first;
+    synchronized (getLock()) {
+      if (isIndeterminate()) {
+        StackTraceElement[] trace = new Throwable().getStackTrace();
+        StackTraceElement first = ContainerUtil.find(trace,
+          element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"));
+        @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                                 "Please call setIndeterminate(false) before you start progress.";
+        if (first != null) {
+          message += "\n" + first;
+        }
+        LOG.warn(message);
+        setIndeterminate(false);
       }
-      LOG.warn(message);
-      setIndeterminate(false);
+      myFraction = fraction;
     }
-    myFraction = fraction;
   }
 
   @Override
   public void pushState() {
     synchronized (getLock()) {
-      getTextStack().push(myText);
-      getFractionStack().add(myFraction);
-      getText2Stack().push(myText2);
+      getStateStack().push(new State(getText(), getText2(), getFraction(), isIndeterminate()));
     }
   }
 
   @Override
   public void popState() {
     synchronized (getLock()) {
-      LOG.assertTrue(!myTextStack.isEmpty());
-      String oldText = myTextStack.pop();
-      String oldText2 = myText2Stack.pop();
-      setText(oldText);
-      setText2(oldText2);
-
-      double oldFraction = myFractionStack.removeDouble(myFractionStack.size() - 1);
+      State state = myStateStack.pop();
+      setText(state.myText);
+      setText2(state.myText2);
+      setIndeterminate(state.myIndeterminate);
       if (!isIndeterminate()) {
-        setFraction(oldFraction);
+        setFraction(state.myFraction);
       }
     }
   }
@@ -276,7 +287,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setIndeterminate(final boolean indeterminate) {
-    myIndeterminate = indeterminate;
+    // avoid race with popState()
+    synchronized (getLock()) {
+      myIndeterminate = indeterminate;
+    }
   }
 
 
@@ -311,9 +325,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       if (indicator instanceof AbstractProgressIndicatorBase) {
         AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
-        myTextStack = stacked.myTextStack == null ? null : new Stack<>(stacked.getTextStack());
-        myText2Stack = stacked.myText2Stack == null ? null : new Stack<>(stacked.getText2Stack());
-        myFractionStack = stacked.myFractionStack == null ? null : new DoubleArrayList(stacked.getFractionStack().toDoubleArray());
+        myStateStack = stacked.myStateStack == null ? null : new Stack<>(stacked.getStateStack());
       }
       dontStartActivity();
     }
@@ -324,26 +336,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @NotNull
-  private Stack<String> getTextStack() {
-    Stack<String> stack = myTextStack;
-    if (stack == null) myTextStack = stack = new Stack<>(2);
-    return stack;
-  }
-
-  @NotNull
-  private DoubleArrayList getFractionStack() {
-    DoubleArrayList stack = myFractionStack;
-    if (stack == null) {
-      stack = new DoubleArrayList(2);
-      myFractionStack = stack;
-    }
-    return stack;
-  }
-
-  @NotNull
-  private Stack<String> getText2Stack() {
-    Stack<String> stack = myText2Stack;
-    if (stack == null) myText2Stack = stack = new Stack<>(2);
+  private Stack<State> getStateStack() {
+    Stack<State> stack = myStateStack;
+    if (stack == null) myStateStack = stack = new Stack<>(2);
     return stack;
   }
 

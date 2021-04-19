@@ -907,6 +907,16 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     indicator.popState(); // should not cause NPE
   }
 
+  public void testPushStateMustStoreIndeterminateFlag() {
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+    indicator.setIndeterminate(true);
+    indicator.pushState();
+    indicator.setIndeterminate(false);
+    assertFalse(indicator.isIndeterminate());
+    indicator.popState();
+    assertTrue(indicator.isIndeterminate());
+  }
+
   public void testRelayUiToDelegateIndicatorMustBeReusable() {
     ProgressIndicatorEx ui = new ProgressIndicatorBase();
     RelayUiToDelegateIndicator relay = new RelayUiToDelegateIndicator(ui);
