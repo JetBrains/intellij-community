@@ -66,7 +66,6 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test just loading with existing cache`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     saveToCache(projectData.storage)
@@ -86,7 +85,6 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test module added`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/before")
     val projectFileAfter = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
@@ -109,7 +107,6 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `add library to project loaded from cache`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectData = copyAndLoadProject(sampleDirBasedProjectFile, virtualFileManager)
     saveToCache(projectData.storage)
 

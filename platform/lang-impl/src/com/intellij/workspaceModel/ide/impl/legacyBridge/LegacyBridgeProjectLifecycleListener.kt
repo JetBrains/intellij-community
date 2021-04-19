@@ -30,17 +30,9 @@ import org.jetbrains.annotations.ApiStatus
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
-
-    fun enabled(project: Project) = ModuleManager.getInstance(project) is ModuleManagerComponentBridge
   }
 
   override fun serviceRegistered(project: Project) {
-    val enabled = WorkspaceModel.isEnabled || WorkspaceModelInitialTestContent.peek() != null
-    if (!enabled) {
-      LOG.info("Using legacy project model to open project")
-      return
-    }
-
     LOG.info("Using workspace model to open project")
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)

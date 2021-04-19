@@ -14,10 +14,6 @@ import org.jetbrains.annotations.ApiStatus
 object LegacyBridgeTestFrameworkUtils {
   @ApiStatus.Internal
   fun dropCachesOnTeardown(project: Project) {
-    if (!LegacyBridgeProjectLifecycleListener.enabled(project)) {
-      return
-    }
-
     WriteAction.runAndWait<RuntimeException> {
       for (module in ModuleManager.getInstance(project).modules) {
         (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()

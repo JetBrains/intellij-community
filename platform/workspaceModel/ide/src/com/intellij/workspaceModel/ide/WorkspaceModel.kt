@@ -67,10 +67,6 @@ interface WorkspaceModel {
   fun replaceProjectModel(replacement: StorageReplacement): Boolean
 
   companion object {
-    @JvmStatic
-    val isEnabled: Boolean
-      get() = !Registry.`is`("ide.old.project.model")
-
     val enabledForArtifacts: Boolean
       get() = Registry.`is`("ide.new.project.model.artifacts")
 

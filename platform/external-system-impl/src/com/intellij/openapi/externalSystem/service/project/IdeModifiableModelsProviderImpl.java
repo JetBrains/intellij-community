@@ -64,25 +64,19 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
     if (myLibrariesModel != null) return myLibrariesModel;
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
-    if (WorkspaceModel.isEnabled()) {
-      return myLibrariesModel = ((ProjectLibraryTableBridge)libraryTable).getModifiableModel(getActualStorageBuilder());
-    }
-    return myLibrariesModel = libraryTable.getModifiableModel();
+    return myLibrariesModel = ((ProjectLibraryTableBridge)libraryTable).getModifiableModel(getActualStorageBuilder());
   }
 
   @Override
   protected ModifiableModuleModel doGetModifiableModuleModel() {
     return ReadAction.compute(() -> {
       ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-      if (WorkspaceModel.isEnabled()) {
-        ModifiableModuleModel modifiableModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(getActualStorageBuilder());
-        Module[] modules = modifiableModel.getModules();
-        for (Module module : modules) {
-          setIdeModelsProviderForModule(module);
-        }
-        return modifiableModel;
+      ModifiableModuleModel modifiableModel = ((ModuleManagerComponentBridge)moduleManager).getModifiableModel(getActualStorageBuilder());
+      Module[] modules = modifiableModel.getModules();
+      for (Module module : modules) {
+        setIdeModelsProviderForModule(module);
       }
-      return moduleManager.getModifiableModel();
+      return modifiableModel;
     });
   }
 
@@ -102,28 +96,19 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
     return ReadAction.compute(() -> {
       ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
-      if (WorkspaceModel.isEnabled()) {
-        return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), initialStorage, rootConfigurationAccessor);
-      }
-      return rootManager.getModifiableModel(rootConfigurationAccessor);
+      return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), initialStorage, rootConfigurationAccessor);
     });
   }
 
   @Override
   protected ModifiableFacetModel doGetModifiableFacetModel(Module module) {
     FacetManager facetManager = FacetManager.getInstance(module);
-    if (WorkspaceModel.isEnabled()) {
-      return ((FacetManagerBridge)facetManager).createModifiableModel(getActualStorageBuilder());
-    }
-    return facetManager.createModifiableModel();
+    return ((FacetManagerBridge)facetManager).createModifiableModel(getActualStorageBuilder());
   }
 
   @Override
   protected Library.ModifiableModel doGetModifiableLibraryModel(Library library) {
-    if (WorkspaceModel.isEnabled()) {
-      return ((LibraryBridge)library).getModifiableModel(getActualStorageBuilder());
-    }
-    return library.getModifiableModel();
+    return ((LibraryBridge)library).getModifiableModel(getActualStorageBuilder());
   }
 
   @Override
@@ -142,11 +127,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   public void commit() {
-    if (WorkspaceModel.isEnabled()) {
-      workspaceModelCommit();
-    } else {
-      super.commit();
-    }
+    workspaceModelCommit();
   }
 
   private void workspaceModelCommit() {
@@ -219,7 +200,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   @Override
   public void dispose() {
-    if (WorkspaceModel.isEnabled() && myModifiableModuleModel != null) {
+    if (myModifiableModuleModel != null) {
       Module[] modules = myModifiableModuleModel.getModules();
       for (Module module : modules) {
         module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
@@ -235,6 +216,6 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
-    if (WorkspaceModel.isEnabled()) module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
+    module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
   }
 }

@@ -128,14 +128,12 @@ class ReloadProjectTest {
       val changedFacet = FacetManager.getInstance(module).getFacetByType(MockFacetType.ID)!!
       assertThat(changedFacet.configuration.data).isEqualTo("changed-data")
 
-      if (WorkspaceModel.isEnabled) {
-        val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
-        assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
-        assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
-        val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()
-        assertThat(moduleOptionsEntity.externalSystem).isEqualTo("GRADLE")
-        assertThat(moduleOptionsEntity.externalSystemModuleVersion).isEqualTo("42.0")
-      }
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      assumeTrue(entityStorage.entities(ModuleEntity::class.java).single().entitySource is DummyParentEntitySource)
+      assumeTrue(entityStorage.entities(ModuleCustomImlDataEntity::class.java).single().entitySource is JpsImportedEntitySource)
+      val moduleOptionsEntity = entityStorage.entities(ExternalSystemModuleOptionsEntity::class.java).single()
+      assertThat(moduleOptionsEntity.externalSystem).isEqualTo("GRADLE")
+      assertThat(moduleOptionsEntity.externalSystemModuleVersion).isEqualTo("42.0")
      }
   }
 

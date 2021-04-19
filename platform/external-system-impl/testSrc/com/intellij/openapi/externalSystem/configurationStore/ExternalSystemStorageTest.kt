@@ -302,7 +302,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `edit imported facet in internal storage with regular facet`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("singleModuleFromExternalSystemInInternalStorage", "mixedFacetsInInternalStorage") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       addFacet(module, null, "regular")
@@ -313,7 +312,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `edit regular facet in internal storage with imported facet`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("singleModuleFromExternalSystemInInternalStorage", "mixedFacetsInInternalStorage") { project ->
       val module = ModuleManager.getInstance(project).modules.single()
       addFacet(module, "GRADLE", "imported")
@@ -373,7 +371,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `load unloaded modules`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadProjectAndCheckResults("unloadedModules") { project ->
       val unloadedModuleName = "imported"
       val moduleManager = ModuleManager.getInstance(project)
@@ -428,7 +425,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `mark module as mavenized`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     //after module is mavenized, we still store iml file with empty root tag inside; it would be better to delete the file in such cases,
     // but it isn't simple to implement so let's leave it as is for now; and the old project model behaves in the same way.
     loadModifySaveAndCheck("singleRegularModule", "singleModuleAfterMavenization") { project ->
@@ -451,7 +447,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `change storeExternally property and save libraries to internal storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     }
@@ -459,7 +454,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `change storeExternally property several times`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
       runBlocking { project.stateStore.save() }
@@ -471,7 +465,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `remove library stored externally`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("librariesInExternalStorage", "singleLibraryInExternalStorage") { project ->
       val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       runWriteActionAndWait {
@@ -483,7 +476,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `clean up iml file if we start store project model at external storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("singleModule", "singleModuleAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
       runBlocking { project.stateStore.save() }
@@ -493,7 +485,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `test facet and libraries saved in internal store after IDE reload`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("singleModuleFacetAndLibFromExternalSystemInInternalStorage", "singleModuleFacetAndLibFromExternalSystem") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
     }
@@ -501,7 +492,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `clean up facet tag in iml file if we start store project model at external storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("importedFacetInImportedModule", "importedFacetAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
       runBlocking { project.stateStore.save() }
@@ -511,7 +501,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `clean up external_build_system at saving data at idea folder`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("singleModuleWithLibrariesInInternalStorage", "singleModuleWithLibrariesInInternalStorage") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
       runBlocking { project.stateStore.save() }
@@ -521,7 +510,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `check project model saved correctly at internal storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     }
@@ -529,7 +517,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `check project model saved correctly at internal storage after misc manual modification`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
       val miscFile = File(project.projectFilePath!!)
       miscFile.writeText("""
@@ -550,7 +537,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `check project model saved correctly at external storage after misc manual modification`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
       val miscFile = File(project.projectFilePath!!)
       miscFile.writeText("""
@@ -572,7 +558,6 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
       JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
     }

@@ -190,8 +190,6 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
-    if (!ProjectModelRule.isWorkspaceModelEnabled) return@runWriteCommandAction
-
     val workspaceModel = WorkspaceModel.getInstance(project)
     var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
 
