@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Ref
 import com.intellij.util.xmlb.JDOMXIncluder
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
@@ -10,7 +9,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.nio.file.Path
@@ -68,7 +66,7 @@ final class PluginsCollector {
       }
 
       // Not a plugin
-      if (jpsModule.name == "intellij.idea.ultimate.resources") {
+      if (jpsModule.name == "intellij.idea.ultimate.resources" || jpsModule.name == "intellij.lightEdit" || jpsModule.name == "intellij.webstorm") {
         continue
       }
 
@@ -94,7 +92,19 @@ final class PluginsCollector {
         continue
       }
 
-      JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toUri().toURL(), true, new SourcesBasedXIncludeResolver(jpsModule))
+      JDOMXIncluder.resolveNonXIncludeElement(xml, pluginXml.toUri().toURL(), true, new SourcesBasedXIncludeResolver(pluginLayout, myBuildContext))
+      //this code is temporary added to fix problems with xi:include tags without xpointer attribute; JDOMXIncluder keeps top-level idea-plugin tag for them
+      //todo move PathBasedJdomXIncluder.kt to util module and reuse it here
+      while (!xml.getChildren("idea-plugin").isEmpty()) {
+        List<Element> contentOfIncludes = xml.getChildren("idea-plugin").collectMany { it.children as Collection<Element> }
+        contentOfIncludes.forEach { Element child ->
+          child.detach()
+        }
+        xml.removeChildren("idea-plugin")
+        contentOfIncludes.forEach { Element child ->
+          xml.addContent(child)
+        }
+      }
 
       String id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
       if (id == null || id.isEmpty()) {
@@ -141,26 +151,30 @@ final class PluginsCollector {
   }
 
   private static final class SourcesBasedXIncludeResolver implements JDOMXIncluder.PathResolver {
-    private final JpsModule myMainModule
+    private final PluginLayout myPluginLayout
+    private final BuildContext myBuildContext
 
-    SourcesBasedXIncludeResolver(@NotNull JpsModule mainModule) {
-      myMainModule = mainModule
+    SourcesBasedXIncludeResolver(@NotNull PluginLayout pluginLayout, @NotNull BuildContext buildContext) {
+      myPluginLayout = pluginLayout
+      this.myBuildContext = buildContext
     }
 
     @Override
     URL resolvePath(@NotNull String relativePath, @Nullable URL url) throws MalformedURLException {
-      Ref<URL> result = Ref.create()
-      JpsJavaExtensionService.dependencies(myMainModule).recursively().processModules({ module ->
-        for (def sourceRoot : module.sourceRoots) {
-          def resolved = new File(sourceRoot.file, relativePath)
-          if (resolved.exists()) {
-            result.set(resolved.toURI().toURL())
-            return false
-          }
+      URL result = null
+      for (moduleName in myPluginLayout.moduleJars.values()) {
+        def path = myBuildContext.findFileInModuleSources(moduleName, relativePath)
+        if (path != null) {
+          result = path.toUri().toURL()
         }
-        return true
-      })
-      return result.isNull() ? JDOMXIncluder.DEFAULT_PATH_RESOLVER.resolvePath(relativePath, url) : result.get()
+      }
+      if (result == null) {
+        result = JDOMXIncluder.DEFAULT_PATH_RESOLVER.resolvePath(relativePath, url)
+      }
+      if (result == null) {
+        throw new IllegalArgumentException("Cannot resolve path $relativePath in ${myPluginLayout.mainModule}")
+      }
+      return result
     }
   }
 }
