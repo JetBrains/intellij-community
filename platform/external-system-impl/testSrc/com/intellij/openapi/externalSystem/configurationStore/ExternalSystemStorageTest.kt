@@ -583,6 +583,14 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `duplicating library in internal storage`() {
+    loadModifySaveAndCheck("duplicatingLibrariesInInternalStorage", "librariesInExternalStorage") {
+      val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(it).libraries
+      assertThat(libraries.size).isEqualTo(3)
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
