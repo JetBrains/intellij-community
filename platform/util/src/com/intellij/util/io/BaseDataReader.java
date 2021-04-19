@@ -181,7 +181,9 @@ public abstract class BaseDataReader {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
     }
     catch (Exception e) {
       LOG.error(e);
