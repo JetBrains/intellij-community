@@ -79,7 +79,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowEvent;
-import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
@@ -232,37 +231,29 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
-  private static @Nullable <T> T instantiate(@NotNull String stubClassName, @NotNull PluginDescriptor pluginDescriptor, @NotNull Class<T> expectedClass) {
+  private static @Nullable <T> T instantiate(@NotNull String stubClassName,
+                                             @NotNull PluginDescriptor pluginDescriptor,
+                                             @NotNull Class<T> expectedClass) {
     Object obj;
     try {
-      Class<?> aClass = Class.forName(stubClassName, true, pluginDescriptor.getPluginClassLoader());
-      Constructor<?> constructor = aClass.getDeclaredConstructor();
-      try {
-        constructor.setAccessible(true);
-      }
-      catch (SecurityException ignored) {
-      }
-      obj = constructor.newInstance();
+      obj = ApplicationManager.getApplication().instantiateClass(stubClassName, pluginDescriptor);
     }
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (PluginException e) {
+    catch (Throwable e) {
       LOG.error(e);
       return null;
     }
-    catch (Throwable e) {
-      LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
-      return null;
+
+    if (expectedClass.isInstance(obj)) {
+      //noinspection unchecked
+      return (T)obj;
     }
 
-    if (!expectedClass.isInstance(obj)) {
-      LOG.error(new PluginException("class with name '" +
-                                    stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; got " + obj, pluginDescriptor.getPluginId()));
-      return null;
-    }
-    //noinspection unchecked
-    return (T)obj;
+    LOG.error(new PluginException("class with name '" + stubClassName + "' must be an instance of '" + expectedClass.getName() + "'; " +
+                                  "got " + obj, pluginDescriptor.getPluginId()));
+    return null;
   }
 
   private static void updateIconFromStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
