@@ -9,6 +9,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Function
@@ -52,15 +53,20 @@ fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: St
 fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
   val targetFileSeparator = targetPlatform.platform.fileSeparator
   return uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(),
-                              file = localPath,
-                              targetFileSeparator = targetFileSeparator)?.let { relativePath -> uploadRoot to relativePath }
+    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath.toString(), file = localPath)?.let { relativePath ->
+      uploadRoot to if (File.separatorChar != targetFileSeparator) {
+        relativePath.replace(File.separatorChar, targetFileSeparator)
+      }
+      else {
+        relativePath
+      }
+    }
   }.firstOrNull()
 }
 
-private fun getRelativePathIfAncestor(ancestor: String, file: String, targetFileSeparator: Char): String? =
+private fun getRelativePathIfAncestor(ancestor: String, file: String): String? =
   if (FileUtil.isAncestor(ancestor, file, false)) {
-    FileUtil.getRelativePath(ancestor, file, targetFileSeparator)
+    FileUtil.getRelativePath(ancestor, file, File.separatorChar)
   }
   else {
     null
