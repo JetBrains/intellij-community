@@ -75,6 +75,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(789),
           JsonDuration(234),
           JsonDuration(345),
+          JsonDuration(345),
           JsonDateTime(ZonedDateTime.now()),
           JsonDateTime(ZonedDateTime.now()),
           JsonDuration(333),
@@ -131,13 +132,21 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
         ),
         fileProviderStatistics = listOf(
           JsonFileProviderIndexStatistics(
-            "providerName",
-            444,
-            33,
-            JsonDuration(123),
-            JsonDuration(456),
-            1,
-            listOf(
+            providerName = "providerName",
+            totalNumberOfIndexedFiles = 444,
+            totalNumberOfFilesFullyIndexedByExtensions = 33,
+            totalIndexingTime = JsonDuration(123),
+            contentLoadingTime = JsonDuration(456),
+            numberOfTooLargeForIndexingFiles = 1,
+            slowIndexedFiles = listOf(
+              JsonFileProviderIndexStatistics.JsonSlowIndexedFile(
+                "file",
+                JsonDuration(123),
+                JsonDuration(456),
+                JsonDuration(789)
+              )
+            ),
+            indexedFiles = listOf(
               JsonFileProviderIndexStatistics.JsonIndexedFile(
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 wasFullyIndexedByExtensions = true

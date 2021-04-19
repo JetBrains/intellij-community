@@ -13,6 +13,12 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
  */
 class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
 
+  companion object {
+    const val SLOW_FILES_LIMIT = 10
+
+    const val SLOW_FILE_PROCESSING_THRESHOLD_MS = 500
+  }
+
   var indexingVisibleTime: TimeNano = 0
 
   var processingTimeInAllThreads: TimeNano = 0
@@ -35,6 +41,8 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   val indexedFiles = arrayListOf<IndexedFile>()
 
+  val slowIndexedFiles = LimitedPriorityQueue<SlowIndexedFile>(SLOW_FILES_LIMIT, compareBy { it.processingTime })
+
   data class IndexedFile(val portableFilePath: PortableFilePath, val wasFullyIndexedByExtensions: Boolean)
 
   data class StatsPerIndexer(
@@ -54,9 +62,9 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
   fun addFileStatistics(
     file: VirtualFile,
     fileStatistics: FileIndexingStatistics,
-    processingTime: Long,
-    contentLoadingTime: Long,
-    fileSize: Long
+    processingTime: TimeNano,
+    contentLoadingTime: TimeNano,
+    fileSize: BytesNumber
   ) {
     numberOfIndexedFiles++
     if (fileStatistics.wasFullyIndexedByExtensions) {
@@ -81,11 +89,15 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
       StatsPerFileType(0, 0, 0, 0)
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
-    stats.indexingTimeInAllThreads += perIndexerTimes.values.sum()
+    val indexingTime = perIndexerTimes.values.sum()
+    stats.indexingTimeInAllThreads += indexingTime
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
+    }
+    if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS) {
+      slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, indexingTime, contentLoadingTime))
     }
   }
 
