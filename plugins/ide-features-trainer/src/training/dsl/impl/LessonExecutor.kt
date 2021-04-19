@@ -212,6 +212,15 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     processTestActions(taskContext)
   }
 
+  internal fun restoreByTimer(taskContext: TaskContextImpl, delayMillis: Int, restoreId: TaskContext.TaskId?) {
+    val restore = {
+      if (currentTaskIndex == taskContext.taskIndex) {
+        applyRestore(taskContext, restoreId)
+      }
+    }
+    Alarm().addRequest(restore, delayMillis)
+  }
+
   internal fun applyRestore(taskContext: TaskContextImpl, restoreId: TaskContext.TaskId? = null) {
     taskContext.steps.forEach { it.cancel(true) }
     val restoreIndex = restoreId?.idx ?: taskActions[taskContext.taskIndex].restoreIndex
