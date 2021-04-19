@@ -157,27 +157,26 @@ final class CommonCodeStyleSettingsManager {
       for (Element commonSettingsElement : element.getChildren(COMMON_SETTINGS_TAG)) {
         final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
         if (!StringUtil.isEmpty(languageId)) {
-          Language target = Language.findLanguageByID(languageId);
-          boolean isKnownLanguage = target != null;
-          if (isKnownLanguage) {
-            final LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(target);
-            if (provider != null) {
-              CommonCodeStyleSettings commonSettings = readExternal(provider, commonSettingsElement);
-              if (commonSettings != null) {
-                init(commonSettings, provider.getLanguage().getID());
-              }
-            }
-            else {
-              isKnownLanguage = false;
+          final LanguageCodeStyleProvider provider = findProvider(languageId);
+          if (provider != null) {
+            CommonCodeStyleSettings commonSettings = readExternal(provider, commonSettingsElement);
+            if (commonSettings != null) {
+              init(commonSettings, provider.getLanguage().getID());
             }
           }
-          if (!isKnownLanguage) {
+          else {
             myUnknownSettingsMap.put(languageId, JDOMUtil.internElement(commonSettingsElement));
           }
         }
       }
       initNonReadSettings();
     }
+  }
+
+  @Nullable
+  private static LanguageCodeStyleProvider findProvider(@NotNull String languageId) {
+    return ContainerUtil.find(CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders(),
+                              provider -> languageId.equals(provider.getLanguage().getID()));
   }
 
   @Nullable
