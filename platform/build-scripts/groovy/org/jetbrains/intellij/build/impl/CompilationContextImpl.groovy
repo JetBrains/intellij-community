@@ -50,6 +50,7 @@ class CompilationContextImpl implements CompilationContext {
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
   KotlinBinaries kotlinBinaries
+  String classesOutputDirectory
   private final CompilationTasks compilationTasks
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -171,8 +172,10 @@ class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
+    def copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
+    copy.classesOutputDirectory = classesOutputDirectory
+    return copy
   }
 
   private static JpsModel loadProject(String projectHome, KotlinBinaries kotlinBinaries, BuildMessages messages) {
@@ -210,6 +213,7 @@ class CompilationContextImpl implements CompilationContext {
 
     def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
+    classesOutputDirectory = classesOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
     if (compilationTasks.areCompiledClassesProvided()) {
       outputDirectoriesToKeep.add(classesDirName)
@@ -244,8 +248,7 @@ class CompilationContextImpl implements CompilationContext {
 
   static final String CLASSES_DIR_NAME = "classes"
 
-  @Lazy
-  String classesOutputDirectory = {
+  private String classesOutputDirectory() {
     String classesOutput
     if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
       classesOutput = options.projectClassesOutputDirectory
@@ -264,8 +267,8 @@ class CompilationContextImpl implements CompilationContext {
         messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $classesOutput doesn't exist")
       }
     }
-    classesOutput
-  }()
+    return classesOutput
+  }
 
   @Override
   File getProjectOutputDirectory() {
