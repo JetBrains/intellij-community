@@ -1441,7 +1441,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   protected @NotNull ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getApp();
+    return pluginDescriptor.appContainerDescriptor;
   }
 
   @Override

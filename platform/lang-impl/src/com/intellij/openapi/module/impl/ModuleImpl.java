@@ -187,7 +187,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getModule();
+    return pluginDescriptor.moduleContainerDescriptor;
   }
 
   @Override

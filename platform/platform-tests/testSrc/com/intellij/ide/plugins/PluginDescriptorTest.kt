@@ -67,14 +67,14 @@ class PluginDescriptorTest {
   fun testOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("family")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies!!.size).isEqualTo(1)
+    assertThat(descriptor.getPluginDependencies().size).isEqualTo(1)
   }
 
   @Test
   fun testMultipleOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.pluginDependencies!!
+    val pluginDependencies = descriptor.getPluginDependencies()
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep2", "dep1")
   }
@@ -148,8 +148,8 @@ class PluginDescriptorTest {
   fun testDuplicateDependency() {
     val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.pluginDependencies?.filter { it.isOptional }).isEmpty()
-    assertThat(descriptor.pluginDependencies?.map { it.id }).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.getPluginDependencies().filter { it.isOptional }).isEmpty()
+    assertThat(descriptor.getPluginDependencies().map { it.id }).containsExactly(PluginId.getId("foo"))
   }
 
   @Test
@@ -331,7 +331,7 @@ class PluginDescriptorTest {
 
     val foo = list[1]
 
-    assertThat(foo.pluginDependencies!!.map { it.id }).containsExactly(bar.pluginId)
+    assertThat(foo.getPluginDependencies().map { it.id }).containsExactly(bar.pluginId)
 
     assertThat(foo.pluginId.idString).isEqualTo("foo")
     val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
@@ -414,7 +414,7 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest("disabled", setOf(PluginId.getId("com.intellij.disabled")))
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
-    assertThat(descriptor.pluginDependencies!!.map { it.id.idString }).containsExactly("com.intellij.modules.lang")
+    assertThat(descriptor.getPluginDependencies().map { it.id.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   @Test

@@ -1005,10 +1005,9 @@ public final class PluginManagerCore {
     return checkBuildNumberCompatibility(descriptor, ideBuildNumber, null);
   }
 
-  @Nullable
-  public static PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
-                                                                 @NotNull BuildNumber ideBuildNumber,
-                                                                 @Nullable Runnable beforeCreateErrorCallback) {
+  public static @Nullable PluginLoadingError checkBuildNumberCompatibility(@NotNull IdeaPluginDescriptor descriptor,
+                                                                           @NotNull BuildNumber ideBuildNumber,
+                                                                           @Nullable Runnable beforeCreateErrorCallback) {
     String sinceBuild = descriptor.getSinceBuild();
     String untilBuild = descriptor.getUntilBuild();
     try {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -282,7 +282,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   public void registerExtensions(@NotNull Map<String, List<Element>> extensions,
                                  @NotNull PluginDescriptor pluginDescriptor,
-                                 @Nullable List<? super Runnable> listenerCallbacks) {
+                                 @Nullable List<Runnable> listenerCallbacks) {
     extensions.forEach((name, list) -> {
       ExtensionPointImpl<?> point = extensionPoints.get(name);
       if (point != null) {
@@ -292,9 +292,9 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   public boolean registerExtensions(@NotNull String pointName,
-                                    @NotNull List<? extends Element> extensions,
+                                    @NotNull List<Element> extensions,
                                     @NotNull PluginDescriptor pluginDescriptor,
-                                    @Nullable List<? super Runnable> listenerCallbacks)  {
+                                    @Nullable List<Runnable> listenerCallbacks)  {
     ExtensionPointImpl<?> point = extensionPoints.get(pointName);
     if (point == null) {
       return false;

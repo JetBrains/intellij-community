@@ -148,15 +148,15 @@ internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptor
 
         val dependencyId = PluginId.getId(item.getAttributeValue("id")!!)
         if (context.isPluginDisabled(dependencyId)) {
-          descriptor.markAsIncomplete(context, {
+          descriptor.markAsIncomplete(context, dependencyId) {
             CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
-          }, dependencyId)
+          }
           return false
         }
         else if (context.result.isBroken(dependencyId)) {
-          descriptor.markAsIncomplete(context, {
+          descriptor.markAsIncomplete(context, null) {
             CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependencyId)
-          }, null)
+          }
           return false
         }
         plugins.add(ModuleDependenciesDescriptor.PluginItem(dependencyId))
@@ -169,7 +169,7 @@ internal fun readNewDependencies(list: Element, descriptor: IdeaPluginDescriptor
 }
 
 internal fun readIdAndName(descriptor: IdeaPluginDescriptorImpl, element: Element) {
-  var idString = if (descriptor.id == null) element.getChildTextTrim("id") else descriptor.id.idString
+  var idString = if (descriptor.id == null) element.getChildTextTrim("id") else descriptor.id!!.idString
   var name = element.getChildTextTrim("name")
   if (idString == null) {
     idString = name
@@ -191,10 +191,10 @@ internal fun readMetaInfo(descriptor: IdeaPluginDescriptorImpl, element: Element
   for (attribute in element.attributes) {
     when (attribute.name) {
       "url" -> descriptor.url = getNullifiedValue(attribute)
-      "use-idea-classloader" -> descriptor.useIdeaClassLoader = java.lang.Boolean.parseBoolean(attribute.value)
-      "allow-bundled-update" -> descriptor.allowBundledUpdate = java.lang.Boolean.parseBoolean(attribute.value)
+      "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = java.lang.Boolean.parseBoolean(attribute.value)
+      "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = java.lang.Boolean.parseBoolean(attribute.value)
       "implementation-detail" -> descriptor.implementationDetail = java.lang.Boolean.parseBoolean(attribute.value)
-      "require-restart" -> descriptor.requireRestart = java.lang.Boolean.parseBoolean(attribute.value)
+      "require-restart" -> descriptor.isRestartRequired = java.lang.Boolean.parseBoolean(attribute.value)
       "package" -> descriptor.packagePrefix = getNullifiedValue(attribute)
       "version" -> {
         val internalVersionString = getNullifiedValue(attribute)
@@ -284,7 +284,7 @@ private fun checkCycle(rootDescriptor: IdeaPluginDescriptorImpl,
   while (i < n) {
     if (configFile == visitedFiles[i]) {
       val cycle = visitedFiles.subList(i, visitedFiles.size)
-      throw RuntimeException("Plugin " + rootDescriptor + " optional descriptors form a cycle: " + java.lang.String.join(", ", cycle))
+      throw RuntimeException("Plugin $rootDescriptor optional descriptors form a cycle: ${java.lang.String.join(", ", cycle)}")
     }
     i++
   }
@@ -296,9 +296,9 @@ private fun getBoolean(name: String, child: Element): Boolean {
 }
 
 internal fun readExtensions(descriptor: IdeaPluginDescriptorImpl,
-                   epNameToExtensions: MutableMap<String?, MutableList<Element?>>?,
-                   loadingContext: DescriptorListLoadingContext,
-                   child: Element): Map<String?, MutableList<Element?>>? {
+                            epNameToExtensions: MutableMap<String, MutableList<Element>>?,
+                            loadingContext: DescriptorListLoadingContext,
+                            child: Element): MutableMap<String, MutableList<Element>>? {
   var result = epNameToExtensions
   val ns = child.getAttributeValue("defaultExtensionNs")
   for (extensionElement in child.children) {

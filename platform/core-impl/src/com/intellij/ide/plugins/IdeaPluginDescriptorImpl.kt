@@ -1,771 +1,580 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+package com.intellij.ide.plugins
 
-import com.intellij.AbstractBundle;
-import com.intellij.DynamicBundle;
-import com.intellij.core.CoreBundle;
-import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.util.text.Strings;
-import org.jdom.Content;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.text.ParseException;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
+import com.intellij.core.CoreBundle
+import com.intellij.openapi.components.ComponentConfig
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.text.Strings
+import org.jdom.Element
+import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.io.File
+import java.io.IOException
+import java.nio.file.Path
+import java.text.ParseException
+import java.util.*
+import java.util.function.Supplier
+import java.util.regex.Pattern
 
 @ApiStatus.Internal
-public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
-  public enum OS {
+class IdeaPluginDescriptorImpl(val path: Path, private val isBundled: Boolean) : IdeaPluginDescriptor {
+  constructor(id: PluginId, name: String, descriptorPath: String, path: Path, isBundled: Boolean) : this(path, isBundled) {
+    this.id = id
+    this.name = name
+    this.descriptorPath = descriptorPath
+  }
+
+  @Suppress("EnumEntryName")
+  enum class OS {
     mac, linux, windows, unix, freebsd
   }
 
-  public static final IdeaPluginDescriptorImpl[] EMPTY_ARRAY = new IdeaPluginDescriptorImpl[0];
-  public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
+  companion object {
+    @JvmField
+    val EMPTY_ARRAY = arrayOfNulls<IdeaPluginDescriptorImpl>(0)
 
-  final Path path;
+    @JvmField
+    val EXPLICIT_BIG_NUMBER_PATTERN: Pattern = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)")
 
-  private final boolean isBundled;
+    /**
+     * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
+     * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
+     */
+    @JvmStatic
+    fun convertExplicitBigNumberInUntilBuildToStar(build: String?): String? {
+      if (build == null) {
+        return null
+      }
+      val matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build)
+      return if (matcher.matches()) {
+        matcher.group(1) + ".*"
+      }
+      else build
+    }
+  }
 
-  String name;
-  PluginId id;
+  @JvmField
+  internal var name: String? = null
+  var id: PluginId? = null
+    internal set
 
   // only for sub descriptors
-  String descriptorPath;
+  @JvmField
+  internal var descriptorPath: String? = null
 
-  private volatile String description;
-  private @Nullable String productCode;
-  private @Nullable Date releaseDate;
-  private int releaseVersion;
-  private boolean isLicenseOptional;
-  private String resourceBundleBaseName;
-  private String changeNotes;
-  private String version;
-  private String vendor;
-  private String vendorEmail;
-  private String vendorUrl;
-  private String category;
-  String url;
-  @Nullable List<PluginDependency> pluginDependencies;
-  @Nullable List<PluginId> incompatibilities;
+  @Volatile
+  private var description: String? = null
+  private var productCode: String? = null
+  private var releaseDate: Date? = null
+  private var releaseVersion = 0
+  private var isLicenseOptional = false
+  private var resourceBundleBaseName: String? = null
+  private var changeNotes: String? = null
+  private var version: String? = null
+  private var vendor: String? = null
+  private var vendorEmail: String? = null
+  private var vendorUrl: String? = null
+  private var category: String? = null
+  @JvmField
+  internal var url: String? = null
+  @JvmField
+  internal var pluginDependencies: MutableList<PluginDependency>? = null
+  @JvmField
+  var incompatibilities: MutableList<PluginId>? = null
 
-  transient List<Path> jarFiles;
+  @Transient
+  @JvmField
+  internal var jarFiles: List<Path>? = null
+  @JvmField
+  internal var actionElements: MutableList<Element>? = null
 
-  private @Nullable List<Element> actionElements;
   // extension point name -> list of extension elements
-  private @Nullable Map<String, List<Element>> epNameToExtensionElements;
+  private var epNameToExtensionElements: MutableMap<String, MutableList<Element>>? = null
 
-  final ContainerDescriptor appContainerDescriptor = new ContainerDescriptor();
-  final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
-  final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
+  @ApiStatus.Internal
+  @JvmField
+  val appContainerDescriptor = ContainerDescriptor()
+  @ApiStatus.Internal
+  @JvmField
+  val projectContainerDescriptor = ContainerDescriptor()
+  @ApiStatus.Internal
+  @JvmField
+  val moduleContainerDescriptor = ContainerDescriptor()
 
-  @NotNull PluginContentDescriptor contentDescriptor = PluginContentDescriptor.EMPTY;
-  @NotNull ModuleDependenciesDescriptor dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY;
+  @JvmField
+  internal var contentDescriptor = PluginContentDescriptor.EMPTY
+  @JvmField
+  internal var dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY
+  private var modules: MutableList<PluginId>? = null
 
-  private List<PluginId> modules;
-  private ClassLoader classLoader;
-  private @NlsSafe String descriptionChildText;
-  boolean useIdeaClassLoader;
-  private boolean useCoreClassLoader;
-  boolean allowBundledUpdate;
-  boolean implementationDetail;
-  boolean requireRestart;
-  String packagePrefix;
-  private String sinceBuild;
-  private String untilBuild;
+  @JvmField
+  var classLoader: ClassLoader? = null
 
-  private boolean isEnabled = true;
-  private boolean isDeleted;
+  private var descriptionChildText: @NlsSafe String? = null
 
-  boolean isIncomplete;
+  var isUseIdeaClassLoader = false
+    internal set
 
-  public IdeaPluginDescriptorImpl(@NotNull Path path, boolean isBundled) {
-    this.path = path;
-    this.isBundled = isBundled;
-  }
+  var isUseCoreClassLoader = false
+    private set
 
-  @Override
-  public @Nullable String getDescriptorPath() {
-    return descriptorPath;
+  @JvmField
+  var isBundledUpdateAllowed = false
+
+  @JvmField
+  internal var implementationDetail = false
+
+  @JvmField
+  internal var isRestartRequired = false
+
+  var packagePrefix: String? = null
+    internal set
+
+  private var sinceBuild: String? = null
+  private var untilBuild: String? = null
+  private var isEnabled = true
+
+  var isDeleted = false
+
+  @JvmField
+  internal var isIncomplete = false
+
+  override fun getDescriptorPath() = descriptorPath
+
+  override fun getDependencies(): List<IdeaPluginDependency> {
+    return Collections.unmodifiableList(pluginDependencies ?: return Collections.emptyList())
   }
 
   @ApiStatus.Internal
-  public @NotNull ContainerDescriptor getApp() {
-    return appContainerDescriptor;
+  fun getPluginDependencies(): List<PluginDependency> {
+    return if (pluginDependencies == null) Collections.emptyList() else pluginDependencies!!
   }
 
-  @ApiStatus.Internal
-  public @NotNull ContainerDescriptor getProject() {
-    return projectContainerDescriptor;
-  }
+  override fun getPluginPath() = path
 
-  @ApiStatus.Internal
-  public @NotNull ContainerDescriptor getModule() {
-    return moduleContainerDescriptor;
-  }
-
-  @Override
-  public @NotNull List<IdeaPluginDependency> getDependencies() {
-    return pluginDependencies == null ? Collections.emptyList() : Collections.unmodifiableList(pluginDependencies);
-  }
-
-  @ApiStatus.Internal
-  public @NotNull List<PluginDependency> getPluginDependencies() {
-    return pluginDependencies == null ? Collections.emptyList() : pluginDependencies;
-  }
-
-  @Override
-  public @NotNull Path getPluginPath() {
-    return path;
-  }
-
-  boolean readExternal(@NotNull Element element,
-                       @NotNull PathResolver pathResolver,
-                       @NotNull DescriptorListLoadingContext context,
-                       @NotNull IdeaPluginDescriptorImpl mainDescriptor,
-                       @NotNull DataLoader dataLoader) throws IOException, JDOMException {
+  @Throws(IOException::class, JDOMException::class)
+  fun readExternal(element: Element,
+                   pathResolver: PathResolver,
+                   context: DescriptorListLoadingContext,
+                   mainDescriptor: IdeaPluginDescriptorImpl,
+                   dataLoader: DataLoader): Boolean {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
-      markAsIncomplete(context, () -> CoreBundle.message("plugin.loading.error.descriptor.file.is.empty"), null);
-      return false;
+      markAsIncomplete(context = context, disabledDependency = null) { CoreBundle.message("plugin.loading.error.descriptor.file.is.empty") }
+      return false
     }
-
-    XmlReader.readIdAndName(this, element);
+    readIdAndName(this, element)
 
     // some information required for "incomplete" plugins can be in included files
-    PathBasedJdomXIncluder.resolveNonXIncludeElement(context, pathResolver, dataLoader, element, null);
-
-    if (id != null && context.isPluginDisabled(id)) {
-      markAsIncomplete(context, null, null);
+    resolveNonXIncludeElement(context, pathResolver, dataLoader, element, null)
+    if (id != null && context.isPluginDisabled(id!!)) {
+      markAsIncomplete(context, null, null)
     }
     else {
       if (id == null || name == null) {
         // read again after resolve
-        XmlReader.readIdAndName(this, element);
-        if (id != null && context.isPluginDisabled(id)) {
-          markAsIncomplete(context, null, null);
+        readIdAndName(this, element)
+        if (id != null && context.isPluginDisabled(id!!)) {
+          markAsIncomplete(context, null, null)
         }
       }
     }
-
     if (isIncomplete) {
-      readEssentialPluginInformation(element, context);
-      return false;
+      readEssentialPluginInformation(element, context)
+      return false
     }
-
-    XmlReader.readMetaInfo(this, element);
-
-    pluginDependencies = null;
+    readMetaInfo(this, element)
+    pluginDependencies = null
     if (doRead(element, context, mainDescriptor, true)) {
-      return false;
+      return false
     }
-
     if (version == null) {
-      version = context.getDefaultVersion();
+      version = context.defaultVersion
     }
     if (vendor == null) {
-      vendor = mainDescriptor.vendor;
+      vendor = mainDescriptor.vendor
     }
     if (resourceBundleBaseName == null) {
-      resourceBundleBaseName = mainDescriptor.resourceBundleBaseName;
+      resourceBundleBaseName = mainDescriptor.resourceBundleBaseName
     }
-
     if (pluginDependencies != null) {
-      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies, dataLoader);
+      readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies!!, dataLoader)
     }
 
     // include module file descriptor if not specified as `depends` (old way - xi:include)
-    if (this == mainDescriptor) {
-      moduleLoop:
-      for (PluginContentDescriptor.ModuleItem module : contentDescriptor.modules) {
-        String descriptorFile = module.configFile == null ? module.name + ".xml" : module.configFile;
+    if (this === mainDescriptor) {
+      moduleLoop@ for (module in contentDescriptor.modules) {
+        val descriptorFile = module.configFile ?: module.name + ".xml"
         if (pluginDependencies != null) {
-          for (PluginDependency dependency : pluginDependencies) {
-            if (descriptorFile.equals(dependency.configFile)) {
+          for (dependency in pluginDependencies!!) {
+            if (descriptorFile == dependency.configFile) {
               // ok, it is specified in old way as depends tag - skip it
-              continue moduleLoop;
+              continue@moduleLoop
             }
           }
         }
 
         // inject as xi:include does
-        Element moduleElement = pathResolver.resolvePath(dataLoader, descriptorFile, context.getXmlFactory());
-        if (moduleElement == null) {
-          throw new RuntimeException("Plugin " + this + " misses optional descriptor " + descriptorFile);
-        }
-        doRead(moduleElement, context, mainDescriptor, false);
-
-        module.isInjected = true;
+        val moduleElement = pathResolver.resolvePath(dataLoader, descriptorFile, context.xmlFactory)
+                            ?: throw RuntimeException("Plugin $this misses optional descriptor $descriptorFile")
+        doRead(moduleElement, context, mainDescriptor, false)
+        module.isInjected = true
       }
     }
-
-    return true;
+    return true
   }
 
-  private void readEssentialPluginInformation(@NotNull Element element, @NotNull DescriptorListLoadingContext context) {
-    XmlReader.readMetaInfo(this, element);
+  private fun readEssentialPluginInformation(element: Element, context: DescriptorListLoadingContext) {
+    readMetaInfo(this, element)
     if (descriptionChildText == null) {
-      descriptionChildText = element.getChildTextTrim("description");
+      descriptionChildText = element.getChildTextTrim("description")
     }
     if (category == null) {
-      category = element.getChildTextTrim("category");
+      category = element.getChildTextTrim("category")
     }
     if (version == null) {
-      version = element.getChildTextTrim("version");
+      version = element.getChildTextTrim("version")
     }
-    if (DescriptorListLoadingContext.LOG.isDebugEnabled()) {
-      DescriptorListLoadingContext.LOG.debug("Skipping reading of " + id + " from " + path + " (reason: disabled)");
+    if (DescriptorListLoadingContext.LOG.isDebugEnabled) {
+      DescriptorListLoadingContext.LOG.debug("Skipping reading of $id from $path (reason: disabled)")
     }
     if (pluginDependencies == null) {
-      List<Element> dependsElements = element.getChildren("depends");
-      for (Element dependsElement : dependsElements) {
-        readOldPluginDependency(context, dependsElement);
+      val dependsElements = element.getChildren("depends")
+      for (dependsElement in dependsElements) {
+        readOldPluginDependency(context, dependsElement)
       }
     }
-    Element productElement = element.getChild("product-descriptor");
-    if (productElement != null) {
-      readProduct(context, productElement);
-    }
+    val productElement = element.getChild("product-descriptor")
+    productElement?.let { readProduct(context, it) }
     if (modules == null) {
-      List<Element> moduleElements = element.getChildren("module");
-      for (Element moduleElement : moduleElements) {
-        readModule(moduleElement);
+      val moduleElements = element.getChildren("module")
+      for (moduleElement in moduleElements) {
+        readModule(moduleElement)
       }
     }
   }
 
   @TestOnly
-  public void readForTest(@NotNull Element element, @NotNull PluginId pluginId) {
-    id = pluginId;
-    doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this, true);
+  fun readForTest(element: Element, pluginId: PluginId) {
+    id = pluginId
+    doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this, true)
   }
 
   /**
-   * @return {@code true} - if there are compatibility problems with IDE (`depends`, `since-until`).
-   * <br>{@code false} - otherwise
+   * Returns `true` if there are compatibility problems with IDE (`depends`, `since-until`),
+   * `false` - otherwise
    */
-  private boolean doRead(@NotNull Element element,
-                         @NotNull DescriptorListLoadingContext context,
-                         @NotNull IdeaPluginDescriptorImpl mainDescriptor,
-                         boolean readDependencies) {
-    for (Content content : element.getContent()) {
-      if (!(content instanceof Element)) {
-        continue;
+  private fun doRead(element: Element,
+                     context: DescriptorListLoadingContext,
+                     mainDescriptor: IdeaPluginDescriptorImpl,
+                     readDependencies: Boolean): Boolean {
+    for (content in element.content) {
+      if (content !is Element) {
+        continue
       }
 
-      boolean clearContent = true;
-      Element child = (Element)content;
-      switch (child.getName()) {
-        case "extensions":
-          epNameToExtensionElements = XmlReader.readExtensions(this, epNameToExtensionElements, context, child);
-          break;
-
-        case "extensionPoints":
-          XmlReader.readExtensionPoints(this, child);
-          break;
-
-        case "actions":
+      var clearContent = true
+      when (content.name) {
+        "extensions" -> epNameToExtensionElements = readExtensions(this, epNameToExtensionElements, context, content)
+        "extensionPoints" -> readExtensionPoints(this, content)
+        "actions" -> {
           if (actionElements == null) {
-            actionElements = new ArrayList<>(child.getChildren());
+            actionElements = ArrayList(content.children)
           }
           else {
-            actionElements.addAll(child.getChildren());
+            actionElements!!.addAll(content.children)
           }
-          clearContent = child.getAttributeValue("resource-bundle") == null;
-          break;
-
-        case "module":
-          readModule(child);
-          break;
-
-        case "application-components":
-          // because of x-pointer, maybe several application-components tag in document
-          readComponents(child, appContainerDescriptor);
-          break;
-
-        case "project-components":
-          readComponents(child, projectContainerDescriptor);
-          break;
-
-        case "module-components":
-          readComponents(child, moduleContainerDescriptor);
-          break;
-
-        case "applicationListeners":
-          XmlReader.readListeners(child, appContainerDescriptor, mainDescriptor);
-          break;
-
-        case "projectListeners":
-          XmlReader.readListeners(child, projectContainerDescriptor, mainDescriptor);
-          break;
-
-        case "content":
-          XmlReader.readContent(child, this);
-          break;
-
-        case "dependencies":
-          if (readDependencies && !XmlReader.readNewDependencies(child, this, context)) {
-            return true;
+          clearContent = content.getAttributeValue("resource-bundle") == null
+        }
+        "module" -> readModule(content)
+        // because of x-pointer, maybe several application-components tag in document
+        "application-components" -> readComponents(content, appContainerDescriptor)
+        "project-components" -> readComponents(content, projectContainerDescriptor)
+        "module-components" -> readComponents(content, moduleContainerDescriptor)
+        "applicationListeners" -> readListeners(content, appContainerDescriptor, mainDescriptor)
+        "projectListeners" -> readListeners(content, projectContainerDescriptor, mainDescriptor)
+        "content" -> readContent(content, this)
+        "dependencies" -> if (readDependencies && !readNewDependencies(content, this, context)) {
+          return true
+        }
+        "depends" -> if (readDependencies && !readOldPluginDependency(context, content)) {
+          return true
+        }
+        "incompatible-with" -> readPluginIncompatibility(content)
+        "category" -> category = Strings.nullize(content.textTrim)
+        "change-notes" -> changeNotes = Strings.nullize(content.textTrim)
+        "version" -> version = Strings.nullize(content.textTrim)
+        "description" -> descriptionChildText = Strings.nullize(content.textTrim)
+        "resource-bundle" -> {
+          val value = Strings.nullize(content.textTrim)
+          if (PluginManagerCore.CORE_ID == mainDescriptor.pluginId) {
+            DescriptorListLoadingContext.LOG.warn(
+              "<resource-bundle>$value</resource-bundle> tag is found in an xml descriptor included into the platform part of the IDE " +
+              "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
+              "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)")
           }
-          break;
-
-        case "depends":
-          if (readDependencies && !readOldPluginDependency(context, child)) {
-            return true;
+          if (resourceBundleBaseName != null && resourceBundleBaseName != value) {
+            DescriptorListLoadingContext.LOG.warn(
+              "Resource bundle redefinition for plugin '${mainDescriptor.pluginId}'. Old value: $resourceBundleBaseName, new value: $value")
           }
-          break;
-
-        case "incompatible-with":
-          readPluginIncompatibility(child);
-          break;
-
-        case "category":
-          category = Strings.nullize(child.getTextTrim());
-          break;
-
-        case "change-notes":
-          changeNotes = Strings.nullize(child.getTextTrim());
-          break;
-
-        case "version":
-          version = Strings.nullize(child.getTextTrim());
-          break;
-
-        case "description":
-          descriptionChildText = Strings.nullize(child.getTextTrim());
-          break;
-
-        case "resource-bundle":
-          String value = Strings.nullize(child.getTextTrim());
-          if (PluginManagerCore.CORE_ID.equals(mainDescriptor.getPluginId())) {
-            DescriptorListLoadingContext.LOG.warn("<resource-bundle>" + value + "</resource-bundle> tag is found in an xml descriptor included into the platform part of the IDE " +
-                                                  "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
-                                                  "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)");
+          resourceBundleBaseName = value
+        }
+        "product-descriptor" -> readProduct(context, content)
+        "vendor" -> {
+          vendor = Strings.nullize(content.textTrim)
+          vendorEmail = Strings.nullize(content.getAttributeValue("email"))
+          vendorUrl = Strings.nullize(content.getAttributeValue("url"))
+        }
+        "idea-version" -> {
+          sinceBuild = Strings.nullize(content.getAttributeValue("since-build"))
+          untilBuild = Strings.nullize(content.getAttributeValue("until-build"))
+          if (!checkCompatibility(context) { readEssentialPluginInformation(element, context) }) {
+            return true
           }
-          if (resourceBundleBaseName != null && !Objects.equals(resourceBundleBaseName, value)) {
-            DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
-                                                  "Old value: " + resourceBundleBaseName + ", new value: " + value);
-          }
-          resourceBundleBaseName = value;
-          break;
-
-        case "product-descriptor":
-          readProduct(context, child);
-          break;
-
-        case "vendor":
-          vendor = Strings.nullize(child.getTextTrim());
-          vendorEmail = Strings.nullize(child.getAttributeValue("email"));
-          vendorUrl = Strings.nullize(child.getAttributeValue("url"));
-          break;
-
-        case "idea-version":
-          sinceBuild = Strings.nullize(child.getAttributeValue("since-build"));
-          untilBuild = Strings.nullize(child.getAttributeValue("until-build"));
-          if (!checkCompatibility(context, () -> readEssentialPluginInformation(element, context))) {
-            return true;
-          }
-          break;
+        }
       }
-
       if (clearContent) {
-        child.getContent().clear();
+        content.content.clear()
       }
     }
-    return false;
+    return false
   }
 
-  private void readModule(@NotNull Element child) {
-    String moduleName = child.getAttributeValue("value");
-    if (moduleName == null) {
-      return;
-    }
-
+  private fun readModule(child: Element) {
+    val moduleName = child.getAttributeValue("value") ?: return
     if (modules == null) {
-      modules = Collections.singletonList(PluginId.getId(moduleName));
+      modules = Collections.singletonList(PluginId.getId(moduleName))
     }
     else {
-      if (modules.size() == 1) {
-        List<PluginId> singleton = modules;
-        modules = new ArrayList<>(4);
-        modules.addAll(singleton);
+      if (modules!!.size == 1) {
+        val singleton = modules!!
+        modules = ArrayList(4)
+        modules!!.addAll(singleton)
       }
-      modules.add(PluginId.getId(moduleName));
+      modules!!.add(PluginId.getId(moduleName))
     }
   }
 
-  private void readProduct(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
-    productCode = Strings.nullize(child.getAttributeValue("code"));
-    releaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
-    releaseVersion = StringUtilRt.parseInt(child.getAttributeValue("release-version"), 0);
-    isLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
+  private fun readProduct(context: DescriptorListLoadingContext, child: Element) {
+    productCode = Strings.nullize(child.getAttributeValue("code"))
+    releaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context)
+    releaseVersion = StringUtilRt.parseInt(child.getAttributeValue("release-version"), 0)
+    isLicenseOptional = java.lang.Boolean.parseBoolean(child.getAttributeValue("optional", "false"))
   }
 
-  private void readPluginIncompatibility(@NotNull Element child) {
-    String pluginId = child.getTextTrim();
+  private fun readPluginIncompatibility(child: Element) {
+    val pluginId = child.textTrim
     if (pluginId.isEmpty()) {
-      return;
+      return
     }
-
     if (incompatibilities == null) {
-      incompatibilities = new ArrayList<>();
+      incompatibilities = ArrayList()
     }
-    incompatibilities.add(PluginId.getId(pluginId));
+    incompatibilities!!.add(PluginId.getId(pluginId))
   }
 
-  private boolean readOldPluginDependency(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
-    String dependencyIdString = child.getTextTrim();
+  private fun readOldPluginDependency(context: DescriptorListLoadingContext, child: Element): Boolean {
+    val dependencyIdString = child.textTrim
     if (dependencyIdString.isEmpty()) {
-      return true;
+      return true
     }
 
-    PluginId dependencyId = PluginId.getId(dependencyIdString);
-    boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
-    boolean isDisabledOrBroken = false;
+    val dependencyId = PluginId.getId(dependencyIdString)
+    val isOptional = java.lang.Boolean.parseBoolean(child.getAttributeValue("optional"))
+    var isDisabledOrBroken = false
     // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
     if (context.isPluginDisabled(dependencyId)) {
       if (!isOptional) {
-        markAsIncomplete(context, () -> {
-          return CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId);
-        }, dependencyId);
-        return false;
+        markAsIncomplete(context, dependencyId) {
+          CoreBundle.message("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId)
+        }
+        return false
       }
-
-      isDisabledOrBroken = true;
+      isDisabledOrBroken = true
     }
     else if (context.result.isBroken(dependencyId)) {
       if (!isOptional) {
-        DescriptorListLoadingContext.LOG.info("Skipping reading of " +
-                                              id + " from " + path + " (reason: non-optional dependency " + dependencyId + " is broken)");
-        markAsIncomplete(context, () -> {
-          return CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependencyId);
-        }, null);
-        return false;
+        DescriptorListLoadingContext.LOG.info("Skipping reading of $id from $path " +
+                                              "(reason: non-optional dependency $dependencyId is broken)")
+        markAsIncomplete(context = context, disabledDependency = null) {
+          CoreBundle.message("plugin.loading.error.short.depends.on.broken.plugin", dependencyId)
+        }
+        return false
       }
-
-      isDisabledOrBroken = true;
+      isDisabledOrBroken = true
     }
-
-    PluginDependency dependency = new PluginDependency(dependencyId,
-                                                       Strings.nullize(child.getAttributeValue("config-file")), isDisabledOrBroken);
-    dependency.isOptional = isOptional;
+    val dependency = PluginDependency(dependencyId, child.getAttributeValue("config-file")?.takeIf { it.isNotEmpty() }, isDisabledOrBroken)
+    dependency.isOptional = isOptional
     if (pluginDependencies == null) {
-      pluginDependencies = new ArrayList<>();
+      pluginDependencies = ArrayList()
     }
     else {
       // https://youtrack.jetbrains.com/issue/IDEA-206274
-      for (PluginDependency item : pluginDependencies) {
-        if (dependencyId.equals(item.getPluginId())) {
+      for (item in pluginDependencies!!) {
+        if (dependencyId == item.pluginId) {
           if (item.isOptional) {
             if (!isOptional) {
-              item.isOptional = false;
+              item.isOptional = false
             }
           }
           else {
-            dependency.isOptional = false;
+            dependency.isOptional = false
             if (item.configFile == null) {
-              item.configFile = dependency.configFile;
-              return true;
+              item.configFile = dependency.configFile
+              return true
             }
           }
         }
       }
     }
-    pluginDependencies.add(dependency);
-    return true;
+    pluginDependencies!!.add(dependency)
+    return true
   }
 
-  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context, Runnable beforeCreateErrorCallback) {
-    String since = sinceBuild;
-    String until = untilBuild;
-    if (isBundled() || (since == null && until == null)) {
-      return true;
+  private fun checkCompatibility(context: DescriptorListLoadingContext, beforeCreateErrorCallback: Runnable): Boolean {
+    if (isBundled || sinceBuild == null && untilBuild == null) {
+      return true
     }
 
-    PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
-                                                                               beforeCreateErrorCallback);
-    if (error == null) {
-      return true;
-    }
+    val error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get(),
+                                                                beforeCreateErrorCallback) ?: return true
 
     // error will be added by reportIncompatiblePlugin
-    markAsIncomplete(context, null, null);
-    context.result.reportIncompatiblePlugin(this, error);
-    return false;
+    markAsIncomplete(context = context, disabledDependency = null, shortMessage = null)
+    context.result.reportIncompatiblePlugin(this, error)
+    return false
   }
 
-  void markAsIncomplete(@NotNull DescriptorListLoadingContext context,
-                        @Nullable Supplier<@Nls String> shortMessage,
-                        @Nullable PluginId disabledDependency) {
-    boolean wasIncomplete = isIncomplete;
-    isIncomplete = true;
-    setEnabled(false);
+  internal fun markAsIncomplete(context: DescriptorListLoadingContext, disabledDependency: PluginId?, shortMessage: Supplier<String>?) {
+    val wasIncomplete = isIncomplete
+    isIncomplete = true
+    isEnabled = false
     if (id != null && !wasIncomplete) {
-      PluginLoadingError pluginError = shortMessage == null ? null : PluginLoadingError.createWithoutNotification(this, shortMessage);
+      val pluginError = if (shortMessage == null) null else PluginLoadingError.createWithoutNotification(this, shortMessage)
       if (pluginError != null && disabledDependency != null) {
-        pluginError.setDisabledDependency(disabledDependency);
+        pluginError.disabledDependency = disabledDependency
       }
-      context.result.addIncompletePlugin(this, pluginError);
+      context.result.addIncompletePlugin(this, pluginError)
     }
   }
 
-  private static void readComponents(@NotNull Element parent, @NotNull ContainerDescriptor containerDescriptor) {
-    List<Content> content = parent.getContent();
-    int contentSize = content.size();
-    if (contentSize == 0) {
-      return;
-    }
-
-    List<ComponentConfig> result = containerDescriptor.getComponentListToAdd(contentSize);
-    for (Content child : content) {
-      if (!(child instanceof Element)) {
-        continue;
-      }
-
-      Element componentElement = (Element)child;
-      if (!componentElement.getName().equals("component")) {
-        continue;
-      }
-
-      ComponentConfig componentConfig = new ComponentConfig();
-      Map<String, String> options = null;
-      loop:
-      for (Element elementChild : componentElement.getChildren()) {
-        switch (elementChild.getName()) {
-          case "skipForDefaultProject":
-            if (!readBoolValue(elementChild.getTextTrim())) {
-              componentConfig.setLoadForDefaultProject(true);
-            }
-            break;
-
-          case "loadForDefaultProject":
-            componentConfig.setLoadForDefaultProject(readBoolValue(elementChild.getTextTrim()));
-            break;
-
-          case "interface-class":
-            componentConfig.setInterfaceClass(elementChild.getTextTrim());
-            break;
-
-          case "implementation-class":
-            componentConfig.setImplementationClass(elementChild.getTextTrim());
-            break;
-
-          case "headless-implementation-class":
-            componentConfig.setHeadlessImplementationClass(elementChild.getTextTrim());
-            break;
-
-          case "option":
-            String name = elementChild.getAttributeValue("name");
-            String value = elementChild.getAttributeValue("value");
-            if (name != null) {
-              if (name.equals("os")) {
-                if (value != null && !XmlReader.isSuitableForOs(value)) {
-                  continue loop;
-                }
-              }
-              else {
-                if (options == null) {
-                  options = Collections.singletonMap(name, value);
-                }
-                else {
-                  if (options.size() == 1) {
-                    options = new HashMap<>(options);
-                  }
-                  options.put(name, value);
-                }
-              }
-            }
-            break;
-        }
-      }
-
-      if (options != null) {
-        componentConfig.options = options;
-      }
-
-      result.add(componentConfig);
-    }
-  }
-
-  private static boolean readBoolValue(@NotNull String value) {
-    return value.isEmpty() || value.equalsIgnoreCase("true");
-  }
-
-  private @Nullable Date parseReleaseDate(@Nullable String dateStr, @NotNull DescriptorListLoadingContext context) {
-    if (Strings.isEmpty(dateStr)) {
-      return null;
+  private fun parseReleaseDate(dateStr: String?, context: DescriptorListLoadingContext): Date? {
+    if (dateStr.isNullOrEmpty()) {
+      return null
     }
 
     try {
-      return context.getDateParser().parse(dateStr);
+      return context.dateParser.parse(dateStr)
     }
-    catch (ParseException e) {
-      DescriptorListLoadingContext.LOG.info("Error parse release date from plugin descriptor for plugin " + name + " {" + id + "}: " + e.getMessage());
+    catch (e: ParseException) {
+      DescriptorListLoadingContext.LOG.info("Error parse release date from plugin descriptor for plugin $name (id=$id): ${e.message}")
     }
-    return null;
-  }
-
-  /**
-   * Convert build number like '146.9999' to '146.*' (like plugin repository does) to ensure that plugins which have such values in
-   * 'until-build' attribute will be compatible with 146.SNAPSHOT build.
-   */
-  public static String convertExplicitBigNumberInUntilBuildToStar(@Nullable String build) {
-    if (build == null) {
-      return null;
-    }
-    Matcher matcher = EXPLICIT_BIG_NUMBER_PATTERN.matcher(build);
-    if (matcher.matches()) {
-      return matcher.group(1) + ".*";
-    }
-    return build;
-  }
-
-  public @NotNull ContainerDescriptor getAppContainerDescriptor() {
-    return appContainerDescriptor;
+    return null
   }
 
   @ApiStatus.Internal
-  public void registerExtensions(@NotNull ExtensionsAreaImpl area,
-                                 @NotNull ContainerDescriptor containerDescriptor,
-                                 @Nullable List<? super Runnable> listenerCallbacks) {
-    Map<String, List<Element>> extensions = containerDescriptor.extensions;
+  fun registerExtensions(area: ExtensionsAreaImpl, containerDescriptor: ContainerDescriptor, listenerCallbacks: List<Runnable>?) {
+    val extensions = containerDescriptor.extensions
     if (extensions != null) {
-      area.registerExtensions(extensions, this, listenerCallbacks);
-      return;
+      area.registerExtensions(extensions, this, listenerCallbacks)
+      return
     }
-
     if (epNameToExtensionElements == null) {
-      return;
+      return
     }
 
     // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
     // project container: rest of extensions wil be mostly project level
     // module container: just use rest, area will not register unrelated extension anyway as no registered point
-    containerDescriptor.extensions = epNameToExtensionElements;
-
-    LinkedHashMap<String, List<Element>> other = null;
-    Iterator<Map.Entry<String, List<Element>>> iterator = containerDescriptor.extensions.entrySet().iterator();
+    containerDescriptor.extensions = epNameToExtensionElements
+    var other: LinkedHashMap<String, MutableList<Element>>? = null
+    val iterator = containerDescriptor.extensions.entries.iterator()
     while (iterator.hasNext()) {
-      Map.Entry<String, List<Element>> entry = iterator.next();
-      if (!area.registerExtensions(entry.getKey(), entry.getValue(), this, listenerCallbacks)) {
-        iterator.remove();
+      val (key, value) = iterator.next()
+      if (!area.registerExtensions(key, value, this, listenerCallbacks)) {
+        iterator.remove()
         if (other == null) {
-          other = new LinkedHashMap<>();
+          other = LinkedHashMap()
         }
-        addExtensionList(other, entry.getKey(), entry.getValue());
+        addExtensionList(other, key, value)
       }
     }
-
     if (containerDescriptor.extensions.isEmpty()) {
-      containerDescriptor.extensions = Collections.emptyMap();
+      containerDescriptor.extensions = Collections.emptyMap()
     }
-
     if (containerDescriptor == projectContainerDescriptor) {
       // assign unsorted to module level to avoid concurrent access during parallel module loading
-      moduleContainerDescriptor.extensions = other;
-      epNameToExtensionElements = null;
+      moduleContainerDescriptor.extensions = other
+      epNameToExtensionElements = null
     }
     else {
-      epNameToExtensionElements = other;
+      epNameToExtensionElements = other
     }
   }
 
-  @Override
-  public String getDescription() {
-    @NlsSafe String result = description;
+  override fun getDescription(): String? {
+    @Suppress("HardCodedStringLiteral")
+    var result = description
     if (result != null) {
-      return result;
+      return result
     }
 
-    ResourceBundle bundle = null;
-    if (resourceBundleBaseName != null) {
+    val bundle: ResourceBundle? = resourceBundleBaseName?.let { resourceBundleBaseName ->
       try {
-        bundle = DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName, getPluginClassLoader());
+        DynamicBundle.INSTANCE.getResourceBundle(resourceBundleBaseName, pluginClassLoader)
       }
-      catch (MissingResourceException e) {
-        PluginManagerCore.getLogger().info("Cannot find plugin " + id + " resource-bundle: " + resourceBundleBaseName);
+      catch (e: MissingResourceException) {
+        DescriptorListLoadingContext.LOG.info("Cannot find plugin $id resource-bundle: $resourceBundleBaseName")
+        null
       }
     }
-
     if (bundle == null) {
-      result = descriptionChildText;
+      result = descriptionChildText
     }
     else {
-      result = AbstractBundle.messageOrDefault(bundle, "plugin." + id + ".description", Strings.notNullize(descriptionChildText));
+      result = AbstractBundle.messageOrDefault(bundle, "plugin.$id.description", descriptionChildText ?: "")
     }
-    description = result;
-    return result;
+    description = result
+    return result
   }
 
-  @Override
-  public String getChangeNotes() {
-    return changeNotes;
-  }
+  override fun getChangeNotes() = changeNotes
 
-  @Override
-  public String getName() {
-    return name;
-  }
+  override fun getName(): String = name!!
 
-  @Override
-  public @Nullable String getProductCode() {
-    return productCode;
-  }
+  override fun getProductCode() = productCode
 
-  @Override
-  public @Nullable Date getReleaseDate() {
-    return releaseDate;
-  }
+  override fun getReleaseDate() = releaseDate
 
-  @Override
-  public int getReleaseVersion() {
-    return releaseVersion;
-  }
+  override fun getReleaseVersion() = releaseVersion
 
-  @Override
-  public boolean isLicenseOptional() {
-    return isLicenseOptional;
-  }
+  override fun isLicenseOptional() = isLicenseOptional
 
-  @Override
-  public PluginId @NotNull [] getOptionalDependentPluginIds() {
+  override fun getOptionalDependentPluginIds(): Array<PluginId> {
+    val pluginDependencies = pluginDependencies
     if (pluginDependencies == null || pluginDependencies.isEmpty()) {
-      return PluginId.EMPTY_ARRAY;
+      return PluginId.EMPTY_ARRAY
     }
-    return pluginDependencies.stream().filter(it -> it.isOptional).map(it -> it.id).toArray(PluginId[]::new);
+    else {
+      return pluginDependencies.asSequence().filter { it.isOptional }.map { it.id }.toList().toTypedArray()
+    }
   }
 
-  @Override
-  public String getVendor() {
-    return vendor;
-  }
+  override fun getVendor() = vendor
 
-  @Override
-  public String getVersion() {
-    return version;
-  }
+  override fun getVersion() = version
 
-  @Override
-  public String getResourceBundleBaseName() {
-    return resourceBundleBaseName;
-  }
+  override fun getResourceBundleBaseName() = resourceBundleBaseName
 
-  @Override
-  public String getCategory() {
-    return category;
-  }
+  override fun getCategory() = category
 
   /*
      This setter was explicitly defined to be able to set a category for a
@@ -774,148 +583,131 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
      category in its .xml file so to be consistent in plugins representation
      (e.g. in the Plugins form) we have to set this value outside.
   */
-  public void setCategory(String category) {
-    this.category = category;
+  fun setCategory(category: String?) {
+    this.category = category
   }
 
-  public @NotNull Map<String, List<Element>> getUnsortedEpNameToExtensionElements() {
-    return epNameToExtensionElements == null ? Collections.emptyMap() : Collections.unmodifiableMap(epNameToExtensionElements);
-  }
-
-  public @Nullable List<Element> getActionDescriptionElements() {
-    return actionElements;
-  }
-
-  @Override
-  public String getVendorEmail() {
-    return vendorEmail;
-  }
-
-  @Override
-  public String getVendorUrl() {
-    return vendorUrl;
-  }
-
-  @Override
-  public String getUrl() {
-    return url;
-  }
-
-  public void setUrl(String val) {
-    url = val;
-  }
-
-  public boolean isDeleted() {
-    return isDeleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    isDeleted = deleted;
-  }
-
-  @Nullable ClassLoader getClassLoader() {
-    return classLoader;
-  }
-
-  void setClassLoader(@Nullable ClassLoader classLoader) {
-    this.classLoader = classLoader;
-  }
-
-  @Override
-  public PluginId getPluginId() {
-    return id;
-  }
-
-  @Override
-  public @NotNull ClassLoader getPluginClassLoader() {
-    return classLoader == null ? getClass().getClassLoader() : classLoader;
-  }
-
-  public boolean isUseIdeaClassLoader() {
-    return useIdeaClassLoader;
-  }
-
-  boolean isUseCoreClassLoader() {
-    return useCoreClassLoader;
-  }
-
-  void setUseCoreClassLoader() {
-    useCoreClassLoader = true;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return isEnabled;
-  }
-
-  @Override
-  public void setEnabled(final boolean enabled) {
-    isEnabled = enabled;
-  }
-
-  @Override
-  public String getSinceBuild() {
-    return sinceBuild;
-  }
-
-  @Override
-  public String getUntilBuild() {
-    return untilBuild;
-  }
-
-  private static void addExtensionList(@NotNull Map<String, List<Element>> map, @NotNull String name, @NotNull List<Element> list) {
-    List<Element> mapList = map.computeIfAbsent(name, __ -> list);
-    if (mapList != list) {
-      mapList.addAll(list);
+  val unsortedEpNameToExtensionElements: Map<String, List<Element>>
+    get() {
+      return Collections.unmodifiableMap(epNameToExtensionElements ?: return Collections.emptyMap())
     }
+
+  fun getActionDescriptionElements(): List<Element>? = actionElements
+
+  override fun getVendorEmail() = vendorEmail
+
+  override fun getVendorUrl() = vendorUrl
+
+  override fun getUrl() = url!!
+
+  //fun setUrl(`val`: String?) {
+  //  url = `val`
+  //}
+
+  override fun getPluginId() = id!!
+
+  override fun getPluginClassLoader(): ClassLoader = classLoader ?: javaClass.classLoader
+
+  fun setUseCoreClassLoader() {
+    isUseCoreClassLoader = true
   }
 
-  @Override
-  public boolean isBundled() {
-    return isBundled;
+  override fun isEnabled() = isEnabled
+
+  override fun setEnabled(enabled: Boolean) {
+    isEnabled = enabled
   }
 
-  @Override
-  public boolean allowBundledUpdate() {
-    return allowBundledUpdate;
-  }
+  override fun getSinceBuild() = sinceBuild
 
-  @Override
-  public boolean isImplementationDetail() {
-    return implementationDetail;
-  }
+  override fun getUntilBuild() = untilBuild
 
-  @Override
-  public boolean isRequireRestart() {
-    return requireRestart;
-  }
+  override fun isBundled() = isBundled
 
-  public @NotNull List<PluginId> getModules() {
-    return modules == null ? Collections.emptyList() : modules;
-  }
+  override fun allowBundledUpdate() = isBundledUpdateAllowed
 
-  @Override
-  public boolean equals(Object o) {
-    return this == o ||
-           Objects.equals(id,
-                          o instanceof IdeaPluginDescriptorImpl ? ((IdeaPluginDescriptorImpl)o).id : null);
-  }
+  override fun isImplementationDetail() = implementationDetail
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(id);
-  }
+  override fun isRequireRestart() = isRestartRequired
 
-  @Override
-  public String toString() {
+  fun getModules(): List<PluginId> = modules ?: Collections.emptyList()
+
+  override fun equals(other: Any?) = this === other || id == if (other is IdeaPluginDescriptorImpl) other.id else null
+
+  override fun hashCode() = id?.hashCode() ?: 0
+
+  override fun toString(): String {
     // don't expose user home in error messages
-    String pathString = path.toString().replace(System.getProperty("user.home") + File.separatorChar, "~" + File.separatorChar);
-    return "PluginDescriptor(name=" + name +
-           ", id=" + id +
-           ", descriptorPath=" + (descriptorPath == null ? "plugin.xml" : descriptorPath) +
-           ", path=" + pathString +
-           ", version=" + version +
-           ", package=" + packagePrefix +
-           ")";
+    val pathString = path.toString().replace("${System.getProperty("user.home")}${File.separatorChar}", "~${File.separatorChar}")
+    return "PluginDescriptor(name=$name, id=$id, descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
+           "path=$pathString, version=$version, package=$packagePrefix)"
+  }
+}
+
+private fun addExtensionList(map: MutableMap<String, MutableList<Element>>, name: String, list: MutableList<Element>) {
+  val mapList = map.computeIfAbsent(name) { list }
+  if (mapList !== list) {
+    mapList.addAll(list)
+  }
+}
+
+private fun readBoolValue(value: String): Boolean {
+  return value.isEmpty() || value.equals("true", ignoreCase = true)
+}
+
+private fun readComponents(parent: Element, containerDescriptor: ContainerDescriptor) {
+  val content = parent.content
+  val contentSize = content.size
+  if (contentSize == 0) {
+    return
+  }
+
+  val result = containerDescriptor.getComponentListToAdd(contentSize)
+  for (child in content) {
+    if (child !is Element) {
+      continue
+    }
+
+    if (child.name != "component") {
+      continue
+    }
+
+    val componentConfig = ComponentConfig()
+    var options: MutableMap<String, String?>? = null
+    loop@ for (elementChild in child.children) {
+      when (elementChild.name) {
+        "skipForDefaultProject" -> {
+          if (!readBoolValue(elementChild.textTrim)) {
+            componentConfig.isLoadForDefaultProject = true
+          }
+        }
+        "loadForDefaultProject" -> componentConfig.isLoadForDefaultProject = readBoolValue(elementChild.textTrim)
+        "interface-class" -> componentConfig.interfaceClass = elementChild.textTrim
+        "implementation-class" -> componentConfig.implementationClass = elementChild.textTrim
+        "headless-implementation-class" -> componentConfig.headlessImplementationClass = elementChild.textTrim
+        "option" -> {
+          val name = elementChild.getAttributeValue("name") ?: continue@loop
+          val value = elementChild.getAttributeValue("value")
+          if (name == "os") {
+            if (value != null && !isSuitableForOs(value)) {
+              continue@loop
+            }
+          }
+          else if (options == null) {
+            options = Collections.singletonMap(name, value)
+          }
+          else {
+            if (options.size == 1) {
+              options = HashMap(options)
+            }
+            options.put(name, value)
+          }
+        }
+      }
+    }
+    if (options != null) {
+      componentConfig.options = options
+    }
+    result.add(componentConfig)
   }
 }

@@ -336,7 +336,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getProject();
+    return pluginDescriptor.projectContainerDescriptor;
   }
 
   @Override

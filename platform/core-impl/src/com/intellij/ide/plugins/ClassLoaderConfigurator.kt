@@ -182,11 +182,15 @@ class ClassLoaderConfigurator(
       if (pluginPackagePrefix == parentDescriptor.packagePrefix) {
         throw PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id)
       }
+
       if (parentDescriptor.packagePrefix == null) {
-        val parentId = parentDescriptor.id.idString
-        if (!(parentId == "Docker" || parentId == "org.jetbrains.plugins.ruby" || parentId == "org.intellij.grails" || parentId == "JavaScript")) {
+        val parentId = parentDescriptor.id!!.idString
+        if (!(parentId == "Docker" ||
+              parentId == "org.jetbrains.plugins.ruby" ||
+              parentId == "org.intellij.grails" ||
+              parentId == "JavaScript")) {
           throw PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
-            parentDescriptor.id)
+                                parentDescriptor.id)
         }
       }
       if (!pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
@@ -395,7 +399,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                     resourceFileFactory: ClassPath.ResourceFileFactory?): PluginClassLoader {
   // main plugin descriptor
   if (descriptor.descriptorPath == null) {
-    when (descriptor.id.idString) {
+    when (descriptor.id!!.idString) {
       "com.intellij.diagram" -> {
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
         return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
@@ -580,7 +584,7 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
 }
 
 private fun isClassloaderPerDescriptorEnabled(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id, descriptor.packagePrefix)
+  return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id!!, descriptor.packagePrefix)
 }
 
 private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packagePrefixes: MutableList<String>) {

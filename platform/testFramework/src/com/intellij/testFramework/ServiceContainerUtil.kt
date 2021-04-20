@@ -67,9 +67,9 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
   for (plugin in PluginManagerCore.getLoadedPlugins()) {
     val pluginDescriptor = plugin as IdeaPluginDescriptorImpl
     val containerDescriptor = when (componentManager) {
-      is Application -> pluginDescriptor.app
-      is Project -> pluginDescriptor.project
-      else -> pluginDescriptor.module
+      is Application -> pluginDescriptor.appContainerDescriptor
+      is Project -> pluginDescriptor.projectContainerDescriptor
+      else -> pluginDescriptor.moduleContainerDescriptor
     }
     containerDescriptor.services.forEach(consumer)
   }

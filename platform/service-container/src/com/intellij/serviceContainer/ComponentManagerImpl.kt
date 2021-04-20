@@ -77,7 +77,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
                                            componentManager: ComponentManagerImpl,
                                            task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
       task(mainPluginDescriptor, mainContainerDescriptor)
-      for (dep in mainPluginDescriptor.pluginDependencies) {
+      for (dep in mainPluginDescriptor.getPluginDependencies()) {
         if (dep.isDisabledOrBroken) {
           continue
         }
@@ -85,11 +85,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         val subPluginDescriptor = dep.subDescriptor ?: continue
         task(subPluginDescriptor, componentManager.getContainerDescriptor(subPluginDescriptor))
 
-        for (subDep in subPluginDescriptor.pluginDependencies) {
+        for (subDep in subPluginDescriptor.getPluginDependencies()) {
           if (!subDep.isDisabledOrBroken) {
             val d = subDep.subDescriptor ?: continue
             task(d, componentManager.getContainerDescriptor(d))
-            assert(d.pluginDependencies.isEmpty() || d.pluginDependencies.all { it.subDescriptor == null })
+            assert(d.getPluginDependencies().isEmpty() || d.getPluginDependencies().all { it.subDescriptor == null })
           }
         }
       }

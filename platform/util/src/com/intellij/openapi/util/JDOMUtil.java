@@ -379,9 +379,6 @@ public final class JDOMUtil {
     return stream == null ? null : load(stream, null);
   }
 
-  /**
-   * Internal use only.
-   */
   @ApiStatus.Internal
   public static @NotNull Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
     return loadUsingStaX(new InputStreamReader(stream, StandardCharsets.UTF_8), factory);
