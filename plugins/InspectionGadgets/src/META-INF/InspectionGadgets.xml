@@ -1127,7 +1127,7 @@
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.internationalization.AbsoluteAlignmentInUserInterfaceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryUnicodeEscape" bundle="messages.InspectionGadgetsBundle"
-                     key="unnecessary.unicode.escape.display.name" groupBundle="messages.InspectionsBundle"
+                     key="unnecessary.unicode.escape.display.name" groupBundle="messages.InspectionsBundle" runForWholeFile="true"
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.internationalization.UnnecessaryUnicodeEscapeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ImplicitDefaultCharsetUsage" bundle="messages.InspectionGadgetsBundle"
