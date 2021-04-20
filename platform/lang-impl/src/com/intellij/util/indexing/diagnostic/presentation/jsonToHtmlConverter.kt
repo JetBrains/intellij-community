@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
 import com.intellij.util.indexing.diagnostic.dto.*
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 
 fun createAggregateHtml(
@@ -119,11 +120,14 @@ private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
   }
 }
 
+private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" else ""
+
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
     head {
       title("Indexing diagnostics of '${projectIndexingHistory.projectName}'")
       style(CSS_STYLE)
+      script(JS_SCRIPT)
     }
     body {
       div(className = "navigation-bar") {
@@ -137,6 +141,16 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           li { link("#$SECTION_STATS_PER_INDEXER_ID", SECTION_STATS_PER_INDEXER_TITLE) }
           li { link("#$SECTION_SCANNING_ID", SECTION_SCANNING_TITLE) }
           li { link("#$SECTION_INDEXING_ID", SECTION_INDEXING_TITLE) }
+        }
+        hr("solid")
+        ul {
+          li {
+            label(forId = "id-hide-minor-data-checkbox") {
+              text("Hide minor data")
+              input(id = "id-hide-minor-data-checkbox", type = "checkbox", onClick = "hideElementsHavingClass('minor-data', this.checked)",
+                    style = "padding-left: 10px", checked = true)
+            }
+          }
         }
       }
 
@@ -247,7 +261,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 val visibleContentLoadingTime = JsonDuration(
                   (projectIndexingHistory.times.contentLoadingTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
                 )
-                tr {
+                tr(className = getMinorDataClass(visibleIndexingTime.milliseconds < 500)) {
                   td(statsPerFileType.fileType)
                   td(statsPerFileType.totalNumberOfFiles.toString())
                   td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
@@ -284,7 +298,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (statsPerIndexer in projectIndexingHistory.totalStatsPerIndexer) {
-                tr {
+                tr(className = getMinorDataClass(statsPerIndexer.partOfTotalIndexingTime.partition < 0.1)) {
                   td(statsPerIndexer.indexId)
                   td(statsPerIndexer.totalNumberOfFiles.toString())
                   td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
@@ -328,7 +342,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (scanningStats in projectIndexingHistory.scanningStatistics) {
-                tr {
+                tr(className = getMinorDataClass(scanningStats.scanningTime.milliseconds < 100)) {
                   td(scanningStats.providerName)
                   td(scanningStats.numberOfScannedFiles.toString())
                   td(scanningStats.numberOfFilesForIndexing.toString())
@@ -378,7 +392,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             }
             tbody {
               for (providerStats in projectIndexingHistory.fileProviderStatistics) {
-                tr {
+                tr(className = getMinorDataClass(providerStats.totalIndexingTime.milliseconds < 100)) {
                   td(providerStats.providerName)
                   td(providerStats.totalIndexingTime.presentableDuration())
                   td(providerStats.contentLoadingTime.presentableDuration())
@@ -404,10 +418,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
   }.toString()
 }
 
-//language=CSS
+@Language("CSS")
 private val CSS_STYLE = """
   body {
-    font-family: Arial,sans-serif;
+    font-family: Arial, sans-serif;
     margin: 0;
   }
   
@@ -441,28 +455,52 @@ private val CSS_STYLE = """
     margin-left: 20%;
   }
 
-  div.navigation-bar ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+  .navigation-bar {
     width: 15%;
     background-color: lightgrey;
     position: fixed;
     height: 100%;
-    overflow: auto;
   }
 
-  div.navigation-bar ul li a {
+  div.navigation-bar ul {
+    list-style-type: none;
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+    font-size: 24px;
+  }
+
+  div.navigation-bar ul li a, label {
     display: block;
     color: #000;
     padding: 8px 20px;
     text-decoration: none;
-    font-size: 24px;
+  }
+
+  label input {
+    margin-left: 10px;
+    width: 20px;
+    height: 20px;
   }
 
   div.navigation-bar ul li a:hover {
     background-color: #555;
     color: white;
+  }
+
+  .minor-data {
+    display: none;
+  }
+""".trimIndent()
+
+@Language("JavaScript")
+private val JS_SCRIPT = """
+  function hideElementsHavingClass(className, hideOrShow) {
+    const elements = document.getElementsByClassName(className)
+    const displayType = hideOrShow ? 'none' : 'initial'
+    for (const element of elements) {
+      element.style.display = displayType
+    }
   }
 """.trimIndent()
 
@@ -477,6 +515,7 @@ private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
 private fun HtmlBuilder.title(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("title")))
 
 private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
+private fun HtmlBuilder.script(@Nls script: String) = append(tag("script").addRaw(script))
 
 private fun Element.addAttrIfNotEmpty(key: String, value: String): Element =
   if (value.isEmpty()) this else this.attr(key, value)
@@ -484,10 +523,12 @@ private fun Element.addAttrIfNotEmpty(key: String, value: String): Element =
 private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
-private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table").attr("class", className)))
+private fun HtmlBuilder.hr(className: String) = append(HtmlChunk.hr().attr("class", className))
+
+private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tr")))
+private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
 private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("th")))
 private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
@@ -512,6 +553,12 @@ private fun HtmlBuilder.textarea(
   ))
 
 private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
+
+private fun HtmlBuilder.label(forId: String, body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("label").attr("for", forId)))
+private fun HtmlBuilder.input(id: String, type: String, onClick: String = "", style: String = "", checked: Boolean = false) =
+  append(raw("""
+     <input id="$id" type="$type" style="$style" ${if (checked) "checked" else ""} onclick="$onClick"/>
+  """.trimIndent()))
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
 private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
