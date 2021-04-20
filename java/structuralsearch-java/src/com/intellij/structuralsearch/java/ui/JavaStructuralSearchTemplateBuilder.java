@@ -7,49 +7,42 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateBuilder;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaStructuralSearchTemplateBuilder {
+public final class JavaStructuralSearchTemplateBuilder extends StructuralSearchTemplateBuilder {
+  @Override
+  public TemplateBuilder buildTemplate(@NotNull PsiFile psiFile) {
+    TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiFile);
+    PlaceholderCount classCount = new PlaceholderCount("Class");
+    PlaceholderCount varCount = new PlaceholderCount("Var");
+    PlaceholderCount funCount = new PlaceholderCount("Fun");
 
-  private final TemplateBuilder myBuilder;
-  private final PsiFile myPsiFile;
-
-  private final PlaceholderCount myClassCount = new PlaceholderCount("Class");
-  private final PlaceholderCount myVarCount = new PlaceholderCount("Var");
-  private final PlaceholderCount myFunCount = new PlaceholderCount("Fun");
-
-  private int myShift;
-
-  public JavaStructuralSearchTemplateBuilder(@NotNull PsiFile psiFile) {
-    myBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiFile);
-    myPsiFile = psiFile;
-  }
-
-  public TemplateBuilder buildTemplate() {
-
+    IntRef shift = new IntRef();
     JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
       @Override
       public void visitIdentifier(PsiIdentifier identifier) {
         PsiElement parent = identifier.getParent();
         if (parent instanceof PsiClass) {
-          replaceElement(identifier, myClassCount, true);
+          replaceElement(identifier, classCount, true, builder, shift.get());
         }
         else if (parent instanceof PsiReferenceExpression) {
           if (parent.getParent() instanceof PsiMethodCallExpression)
-            replaceElement(identifier, myFunCount, true);
+            replaceElement(identifier, funCount, true, builder, shift.get());
           else
-            replaceElement(identifier, myVarCount, false);
+            replaceElement(identifier, varCount, false, builder, shift.get());
         }
         else if (parent instanceof PsiJavaCodeReferenceElement) {
-          replaceElement(identifier, myClassCount, false);
+          replaceElement(identifier, classCount, false, builder, shift.get());
         }
       }
 
@@ -57,39 +50,39 @@ public class JavaStructuralSearchTemplateBuilder {
       public void visitReferenceList(PsiReferenceList list) {
         PsiJavaCodeReferenceElement[] elements = list.getReferenceElements();
         for (PsiJavaCodeReferenceElement element : elements) {
-          replaceElement(element.getReferenceNameElement(), myClassCount, false);
+          replaceElement(element.getReferenceNameElement(), classCount, false, builder, shift.get());
         }
       }
     };
 
     MatchOptions matchOptions = new MatchOptions();
-    String text = myPsiFile.getText();
+    String text = psiFile.getText();
     int textOffset = 0;
     while (textOffset < text.length() && StringUtil.isWhiteSpace(text.charAt(textOffset))) {
       textOffset++;
     }
-    myShift -= textOffset;
+    shift.set(shift.get() - textOffset);
     matchOptions.setSearchPattern(text);
     PsiElement[] elements =
-      MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, (LanguageFileType)myPsiFile.getFileType(), myPsiFile.getProject());
+      MatcherImplUtil.createTreeFromText(text, PatternTreeContext.Block, (LanguageFileType)psiFile.getFileType(), psiFile.getProject());
     if (elements.length > 0) {
       PsiElement element = elements[0];
-      myShift += element.getTextRange().getStartOffset();
+      shift.set(shift.get() + element.getTextRange().getStartOffset());
       element.accept(visitor);
     }
-    return myBuilder;
+    return builder;
   }
 
-  void replaceElement(@Nullable PsiElement element, PlaceholderCount count, boolean preferOriginal) {
+  void replaceElement(@Nullable PsiElement element, PlaceholderCount count, boolean preferOriginal, TemplateBuilder builder, int shift) {
     if (element == null) {
       return;
     }
     String placeholder = count.getPlaceholder();
     String originalText = element.getText();
     LookupElement[] elements = {LookupElementBuilder.create(placeholder), LookupElementBuilder.create(originalText)};
-    myBuilder.replaceRange(element.getTextRange().shiftLeft(myShift),
-                           new ConstantNode(preferOriginal ? originalText : placeholder)
-                             .withLookupItems(preferOriginal ? ArrayUtil.reverseArray(elements) : elements));
+    builder.replaceRange(element.getTextRange().shiftLeft(shift),
+                         new ConstantNode(preferOriginal ? originalText : placeholder)
+                           .withLookupItems(preferOriginal ? ArrayUtil.reverseArray(elements) : elements));
   }
 
   private static final class PlaceholderCount {
