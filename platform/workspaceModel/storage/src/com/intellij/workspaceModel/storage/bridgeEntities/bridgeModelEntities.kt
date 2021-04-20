@@ -207,6 +207,25 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
     get() = null
   override val presentableName: String
     get() = name
+
+  private var codeCache: Int = 0
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleId) return false
+
+    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
+    if (name != other.name) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    if (codeCache != 0) return codeCache
+    val hashCode = name.hashCode()
+    codeCache = hashCode
+    return hashCode
+  }
 }
 
 sealed class ModuleDependencyItem : Serializable {
@@ -569,6 +588,27 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
     get() = null
   override val presentableName: String
     get() = name
+
+  private var codeCache: Int = 0
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LibraryId) return false
+
+    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
+    if (name != other.name) return false
+    if (tableId != other.tableId) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    if (codeCache != 0) return codeCache
+    var result = name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    this.codeCache = result
+    return result
+  }
 }
 
 data class LibraryRootTypeId(val name: String) : Serializable {
