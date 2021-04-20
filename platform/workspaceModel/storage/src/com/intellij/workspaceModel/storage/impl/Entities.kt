@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 
@@ -189,6 +188,12 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   fun addMetaData(res: E, snapshot: WorkspaceEntityStorage) {
     (res as WorkspaceEntityBase).entitySource = entitySource
     (res as WorkspaceEntityBase).id = createEntityId()
+    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
+  }
+
+  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
+    (res as WorkspaceEntityBase).entitySource = entitySource
+    (res as WorkspaceEntityBase).id = EntityId(id, classId)
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
