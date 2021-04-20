@@ -354,9 +354,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
       }
-      double averageLoad = dumpTask.getOsAverageLoad();
-      if (averageLoad > 0) {
-        message += ", load average: " + String.format("%.2f", averageLoad);
+      double processCpuLoad = dumpTask.getProcessCpuLoad();
+      if (processCpuLoad > 0) {
+        message += ", cpu load: " + (int)(processCpuLoad * 100) + "%";
       }
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
