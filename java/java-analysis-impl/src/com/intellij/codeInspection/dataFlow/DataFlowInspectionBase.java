@@ -879,6 +879,17 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         }
       }
     }
+    if (expression instanceof PsiBinaryExpression) {
+      PsiExpression lOperand = ((PsiBinaryExpression)expression).getLOperand();
+      PsiExpression rOperand = ((PsiBinaryExpression)expression).getROperand();
+      IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
+      // Suppress on type mismatch compilation errors
+      if (rOperand == null) return true;
+      PsiType lType = lOperand.getType();
+      PsiType rType = rOperand.getType();
+      if (lType == null || rType == null) return true;
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(tokenType, lType, rType, false)) return true;
+    }
     if (expression instanceof PsiInstanceOfExpression) {
       PsiType type = ((PsiInstanceOfExpression)expression).getOperand().getType();
       if (type == null || !TypeConstraints.instanceOf(type).isResolved()) return true;

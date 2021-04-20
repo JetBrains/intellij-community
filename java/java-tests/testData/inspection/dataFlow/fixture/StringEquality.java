@@ -100,11 +100,11 @@ class StringEquality {
     Object y = " foo ".trim();
     if (x == y) {}
   }
-  
+
   void testIncorrect(String s) {
-    if(<error descr="Operator '==' cannot be applied to 'java.lang.String', 'int'"><warning descr="Condition 's == s.length()' is always 'false'">s == s.length()</warning></error>) {}
+    if(<error descr="Operator '==' cannot be applied to 'java.lang.String', 'int'">s == s.length()</error>) {}
   }
-  
+
   void testTrim() {
     System.out.println(" EQ ".trim() == "EQ");
   }
