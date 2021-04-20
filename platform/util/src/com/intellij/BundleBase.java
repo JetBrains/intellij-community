@@ -91,6 +91,7 @@ public abstract class BundleBase {
    * Created for UI tests. {@code {translationConsumerList}} is used from robot-server plugin to collect `text` to `key` pairs
    * which are useful when writing UI tests for different locales, not to depend on language specific texts.
    */
+  @TestOnly
   public static final List<Consumer<Pair<String, String>>> translationConsumerList = Collections.synchronizedList(new ArrayList<>());
 
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
