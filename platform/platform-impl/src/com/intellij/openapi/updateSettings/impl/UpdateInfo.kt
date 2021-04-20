@@ -83,7 +83,7 @@ class BuildInfo internal constructor(node: Element) {
 
 class PatchInfo internal constructor(node: Element) {
   companion object {
-    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
+    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) if (SystemInfo.isArm64) "mac_arm" else "mac" else if (SystemInfo.isUnix) "unix" else "unknown" // Android Studio: mac_arm support
   }
 
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!
