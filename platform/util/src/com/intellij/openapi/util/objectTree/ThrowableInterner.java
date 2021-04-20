@@ -50,7 +50,7 @@ public final class ThrowableInterner {
     }
   });
 
-  public static int computeHashCode(@NotNull Throwable throwable) {
+  private static int computeHashCode(@NotNull Throwable throwable) {
     String message = throwable.getMessage();
     if (message != null) {
       return message.hashCode();
@@ -70,6 +70,15 @@ public final class ThrowableInterner {
       }
     }
     return 0;
+  }
+
+  // more accurate hash code (different for different line numbers inside same method) but more expensive than computeTraceHashCode
+  public static int computeAccurateTraceHashCode(@NotNull Throwable throwable) {
+    Object[] backtrace = getBacktrace(throwable);
+    if (backtrace == null) {
+      return Arrays.hashCode(throwable.getStackTrace());
+    }
+    return Arrays.deepHashCode(backtrace);
   }
 
   private static final Field BACKTRACE_FIELD;

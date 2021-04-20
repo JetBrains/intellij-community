@@ -34,16 +34,18 @@ public final class FrequentErrorLogger {
     report(t, () -> myLogger.error(message, t));
   }
 
-  public void error(@NotNull @NonNls String message, @NotNull Throwable t, Attachment... attachments) {
+  public void error(@NotNull @NonNls String message, @NotNull Throwable t, @NotNull Attachment @NotNull ... attachments) {
     report(t, () -> myLogger.error(message, t, attachments));
   }
-
+  public void warn(@NotNull @NonNls String message, @NotNull Throwable t) {
+    report(t, () -> myLogger.warn(message, t));
+  }
   public void info(@NotNull @NonNls String message, @NotNull Throwable t) {
     report(t, () -> myLogger.info(message, t));
   }
 
   private void report(@NotNull Throwable t, @NotNull Runnable writeToLog) {
-    int hash = ThrowableInterner.computeHashCode(t);
+    int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
     int reportedTimes;
     synchronized (myReportedIssues) {
       reportedTimes = myReportedIssues.addTo(hash, 1);

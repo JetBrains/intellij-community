@@ -288,10 +288,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull SearchSession session,
                                                        @NotNull ProgressIndicator progress,
                                                        @NotNull BulkOccurrenceProcessor processor) {
+    progress.setIndeterminate(false);
     progress.pushState();
     try {
       progress.setText(IndexingBundle.message("psi.scanning.files.progress"));
-      progress.setIndeterminate(false);
 
       Processor<PsiElement> localProcessor = localProcessor(searcher, processor);
 

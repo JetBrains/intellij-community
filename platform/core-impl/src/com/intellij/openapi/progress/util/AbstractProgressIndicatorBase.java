@@ -20,18 +20,14 @@ import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.exception.FrequentErrorLogger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
-  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
+  private static final FrequentErrorLogger LOG = FrequentErrorLogger.newInstance(Logger.getInstance(AbstractProgressIndicatorBase.class));
 
   private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;
@@ -63,7 +59,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  private Stack<State> myStateStack; // guarded by this
+  private Stack<State> myStateStack; // guarded by getLock()
 
   private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
@@ -73,12 +69,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void start() {
     synchronized (getLock()) {
-      LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
+      if (isRunning()) {
+        LOG.error("Attempt to start ProgressIndicator which is already running", new IllegalStateException());
+      }
       if (myStopped) {
         if (myCanceled && !isReuseable()) {
-          if (ourReportedReuseExceptions.add(getClass())) {
-            LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
-          }
+          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass(), new IllegalStateException());
         }
         myCanceled = false;
         myStopped = false;
@@ -101,9 +97,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     }
   }
 
-  @SuppressWarnings("SSBasedInspection")
-  private static final Set<Class<?>> ourReportedReuseExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
   protected boolean isReuseable() {
     return false;
   }
@@ -111,7 +104,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void stop() {
     synchronized (getLock()) {
-      LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
+      if (!myRunning) {
+        LOG.error("stop() should be called only if start() called before", new IllegalStateException());
+      }
       myRunning = false;
       myStopped = true;
       stopSystemActivity();
@@ -197,15 +192,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void setFraction(final double fraction) {
     synchronized (getLock()) {
       if (isIndeterminate()) {
-        StackTraceElement[] trace = new Throwable().getStackTrace();
-        StackTraceElement first = ContainerUtil.find(trace,
-          element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"));
         @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
-                                 "Please call setIndeterminate(false) before you start progress.";
-        if (first != null) {
-          message += "\n" + first;
-        }
-        LOG.warnInProduction(new IllegalStateException(message));
+                                 "Please call setIndeterminate(false) before you start progress. "+getClass();
+        LOG.warn(message, new IllegalStateException());
         setIndeterminate(false);
       }
       myFraction = fraction;
@@ -215,7 +204,21 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void pushState() {
     synchronized (getLock()) {
-      getStateStack().push(new State(getText(), getText2(), getFraction(), isIndeterminate()));
+      getStateStack().push(getState());
+    }
+  }
+
+  @NotNull
+  private State getState() {
+    return new State(getText(), getText2(), getFraction(), isIndeterminate());
+  }
+
+  private void restoreFrom(@NotNull State state) {
+    setText(state.myText);
+    setText2(state.myText2);
+    setIndeterminate(state.myIndeterminate);
+    if (!isIndeterminate()) {
+      setFraction(state.myFraction);
     }
   }
 
@@ -223,12 +226,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void popState() {
     synchronized (getLock()) {
       State state = myStateStack.pop();
-      setText(state.myText);
-      setText2(state.myText2);
-      setIndeterminate(state.myIndeterminate);
-      if (!isIndeterminate()) {
-        setFraction(state.myFraction);
-      }
+      restoreFrom(state);
     }
   }
 
@@ -264,7 +262,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) {
-    LOG.assertTrue(!isRunning());
+    if (isRunning()) {
+      LOG.error("Must be not running but got: "+this, new IllegalStateException());
+    }
     myModalityProgress = modalityProgress;
     setModalityState(modalityProgress);
   }

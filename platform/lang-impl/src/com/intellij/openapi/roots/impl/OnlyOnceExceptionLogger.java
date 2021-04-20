@@ -15,7 +15,7 @@ class OnlyOnceExceptionLogger {
   OnlyOnceExceptionLogger(@NotNull Logger logger) {myLogger = logger;}
 
   void info(@NotNull String message, @NotNull Throwable throwable) {
-    int hash = ThrowableInterner.computeHashCode(throwable);
+    int hash = ThrowableInterner.computeAccurateTraceHashCode(throwable);
 
     boolean added;
     synchronized (myReportedHashes) {

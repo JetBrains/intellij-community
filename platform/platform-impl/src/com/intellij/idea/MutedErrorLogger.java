@@ -136,7 +136,7 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
       return true;
     }
 
-    int hash = ThrowableInterner.computeTraceHashCode(t);
+    int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
     String key = hash + ":" + t;
     LoggerWithCounter holder = MyCache.cache.get(key, __ -> new LoggerWithCounter(this));
     if (holder.counter.compareAndSet(0, 1)) {

@@ -1055,4 +1055,16 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     });
     assertEquals("result", result.getMessage());
   }
+
+  public void testInvalidStateActionsMustLeadToExceptions() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    ProgressIndicator indicator = new ProgressIndicatorBase(false);
+    indicator.start();
+    assertThrows(Exception.class, () -> indicator.start());
+    indicator.cancel();
+    indicator.stop();
+    assertThrows(Exception.class, () -> indicator.start());
+
+    assertThrows(Exception.class, () -> new ProgressIndicatorBase().stop());
+  }
 }
