@@ -43,7 +43,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public MergeableLineMarkerInfo(@NotNull T element,
                                  @NotNull TextRange textRange,
                                  Icon icon,
-                                 int updatePass,
+                                 int __,
                                  @Nullable Function<? super T, String> tooltipProvider,
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
                                  @NotNull GutterIconRenderer.Alignment alignment) {
@@ -100,7 +100,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return GutterIconRenderer.Alignment.LEFT;
   }
 
-  public Supplier<@NotNull @Nls String> getCommonAccessibleNameProvider(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+  private static Supplier<@NotNull @Nls String> getCommonAccessibleNameProvider(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return infos.get(0).getAccessibleNameProvider();
   }
 
@@ -119,16 +119,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         MergeableLineMarkerInfo<?> current = markers.get(k);
         boolean canMergeWith = marker.canMergeWith(current);
         if (ApplicationManager.getApplication().isUnitTestMode() && !canMergeWith && current.canMergeWith(marker)) {
-          LOG.error(current.getClass() +
-                    "[" +
-                    current.getLineMarkerTooltip() +
-                    "]" +
-                    " can merge " +
-                    marker.getClass() +
-                    "[" +
-                    marker.getLineMarkerTooltip() +
-                    "]" +
-                    ", but not contrariwise");
+          LOG.error(current.getClass() + "[" + current.getLineMarkerTooltip() + "] can merge " +
+                    marker.getClass() + "[" + marker.getLineMarkerTooltip() + "], but not vice versa");
         }
         if (canMergeWith) {
           toMerge.add(0, current);
@@ -154,7 +146,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, @NotNull MergeableLineMarkerInfo<?> template) {
       //noinspection ConstantConditions
       super(template.getElement(), getCommonTextRange(markers), template.getCommonIcon(markers),
-            template.getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
+            getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
     }
 
