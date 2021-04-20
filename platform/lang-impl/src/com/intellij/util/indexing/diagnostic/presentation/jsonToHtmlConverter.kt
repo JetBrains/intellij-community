@@ -51,7 +51,7 @@ fun createAggregateHtml(
 
 private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
   h1("Runtime")
-  table {
+  table(className = "two-columns") {
     thead {
       tr { th("Name"); th("Value") }
     }
@@ -69,7 +69,7 @@ private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
 
 private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
   h1("Application info")
-  table {
+  table(className = "two-columns") {
     thead {
       tr { th("Name"); th("Value") }
     }
@@ -90,6 +90,12 @@ fun JsonIndexDiagnostic.generateHtml(): String {
       title("Indexing diagnostics of '${projectIndexingHistory.projectName}'")
       //language=CSS
       style("""
+        body {
+          font-family: Arial,sans-serif;
+          margin-left: 15%;
+          margin-top: 20px;
+        }
+        
         table, th, td {
           border: 1px solid black;
           border-collapse: collapse;
@@ -97,6 +103,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         
         table {
           width: 80%;
+        }
+        
+        table.two-columns td {
+          width: 50%;
         }
         
         th, td {
@@ -121,7 +131,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
       printRuntimeInfo(runtimeInfo)
 
       h1("Indexing info")
-      table {
+      table(className = "two-columns") {
         thead {
           tr { th("Name"); th("Time") }
         }
@@ -130,7 +140,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr { td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString()) }
           tr {
             td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
-            td(projectIndexingHistory.scanningStatistics.map { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.sum().toString())
+            td(projectIndexingHistory.scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.toString())
           }
           tr {
             td("Number of files sent to the indexing stage after scanning (to load file content and index)")
@@ -138,11 +148,11 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           }
           tr {
             td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
-            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfFilesFullyIndexedByExtensions }.sum().toString())
+            td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions }.toString())
           }
           tr {
             td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
-            td(projectIndexingHistory.fileProviderStatistics.map { it.totalNumberOfIndexedFiles }.sum().toString())
+            td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfIndexedFiles }.toString())
           }
           tr {
             td("Number of too large for indexing files")
@@ -378,7 +388,7 @@ private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
 private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
-private fun HtmlBuilder.table(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table")))
+private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("table").attr("class", className)))
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
 private fun HtmlBuilder.tr(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tr")))
