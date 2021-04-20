@@ -3498,5 +3498,6 @@ public final class UIUtil {
       }
     });
     ObjectUtils.consumeIfCast(focusOwner.getParent(), JTable.class, table -> TableUtil.stopEditing(table));
+    ObjectUtils.consumeIfCast(focusOwner.getParent(), JTree.class, tree -> tree.stopEditing());
   }
 }
