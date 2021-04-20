@@ -65,7 +65,7 @@ internal class ModuleGroupsTree private constructor(private val grouper: ModuleG
     }
   }
 
-  private fun isContainedInRoots(file: VirtualFile, roots: Array<VirtualFile>) = roots.all { VfsUtilCore.isAncestor(it, file, false) }
+  private fun isContainedInRoots(file: VirtualFile, roots: Array<VirtualFile>) = roots.any { VfsUtilCore.isAncestor(it, file, false) }
 
   private fun addChildGroup(groupPath: List<String>,
                             moduleAsGroupPaths: HashSet<List<String>>?) {
