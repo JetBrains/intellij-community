@@ -50,6 +50,11 @@ final class DfFloatNotValueType extends DfAntiConstantType<Float> implements DfF
   }
 
   @Override
+  protected String renderValue(Float value) {
+    return value + "f";
+  }
+
+  @Override
   public @NotNull String toString() {
     return JavaAnalysisBundle.message("type.presentation.except.values", PsiKeyword.FLOAT, StringUtil.join(myNotValues, ", "));
   }

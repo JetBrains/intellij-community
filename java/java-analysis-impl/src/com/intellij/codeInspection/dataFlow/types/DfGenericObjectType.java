@@ -308,6 +308,11 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   }
 
   @Override
+  protected String renderValue(Object value) {
+    return DfaPsiUtil.renderValue(value);
+  }
+
+  @Override
   public @NotNull String toString() {
     List<String> components = new ArrayList<>();
     if (myConstraint != TypeConstraints.TOP) {
@@ -326,7 +331,7 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       components.add(mySpecialField + "=" + mySpecialFieldType);
     }
     if (!myNotValues.isEmpty()) {
-      components.add("!= " + StreamEx.of(myNotValues).map(DfaPsiUtil::renderValue).joining(", "));
+      components.add(super.toString());
     }
     return String.join(" ", components);
   }
