@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
+import java.util.concurrent.TimeUnit
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
@@ -96,7 +97,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
-    if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS) {
+    if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, indexingTime, contentLoadingTime))
     }
   }
