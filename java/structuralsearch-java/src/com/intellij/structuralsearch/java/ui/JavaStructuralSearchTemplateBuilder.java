@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.structuralsearch.java.ui;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -16,7 +16,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StructuralSearchTemplateBuilder {
+public class JavaStructuralSearchTemplateBuilder {
 
   private final TemplateBuilder myBuilder;
   private final PsiFile myPsiFile;
@@ -27,7 +27,7 @@ public class StructuralSearchTemplateBuilder {
 
   private int myShift;
 
-  public StructuralSearchTemplateBuilder(@NotNull PsiFile psiFile) {
+  public JavaStructuralSearchTemplateBuilder(@NotNull PsiFile psiFile) {
     myBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(psiFile);
     myPsiFile = psiFile;
   }
