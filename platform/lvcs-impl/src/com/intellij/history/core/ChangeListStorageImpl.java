@@ -35,16 +35,19 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   private long myLastId;
 
   private boolean isCompletelyBroken;
+  private final boolean myUnitTestMode;
 
   public ChangeListStorageImpl(@NotNull Path storageDir) throws IOException {
     myStorageDir = storageDir;
+    myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+
     initStorage(myStorageDir);
   }
 
   private synchronized void initStorage(@NotNull Path storageDir) throws IOException {
     Path path = storageDir.resolve(STORAGE_FILE);
 
-    boolean fromScratch = ApplicationManager.getApplication().isUnitTestMode() && !Files.exists(path);
+    boolean fromScratch = myUnitTestMode && !Files.exists(path);
 
     LocalHistoryStorage result = new LocalHistoryStorage(path);
 
@@ -89,13 +92,19 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       LocalHistoryLog.LOG.warn("cannot read storage timestamp", ex);
     }
 
-    LocalHistoryLog.LOG.error("Local history is broken" +
-                              "(version:" + VERSION +
-                              ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
-                              ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
-                              ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
-                              ", path: "+myStorageDir+
-                              ")\n" + message, e);
+    String fullMsg = "Local history is broken" +
+                      "(version:" + VERSION +
+                      ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
+                      ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
+                      ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
+                      ", path: " + myStorageDir +
+                      ")\n" + message;
+    if (myUnitTestMode) {
+      LocalHistoryLog.LOG.warn(fullMsg, e);
+    }
+    else {
+      LocalHistoryLog.LOG.error(fullMsg, e);
+    }
 
     Disposer.dispose(myStorage);
     try {
