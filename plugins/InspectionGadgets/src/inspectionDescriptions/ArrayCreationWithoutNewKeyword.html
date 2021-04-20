@@ -1,6 +1,13 @@
 <html>
 <body>
-<p>Reports array initializers without <code>new</code> array expressions, for example: <code>int[] a = {42}</code>.</p>
-<p>The quick-fix for this inspection adds a <code>new</code> array expression to the initializer, for example: <code>int[] a = new int[]{42}</code>.</p>
+Reports array initializers without <code>new</code> array expressions and suggests adding them.
+<p>Example:</p>
+<pre><code>
+  int[] a = {42}
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  int[] a = new int[]{42}
+</code></pre>
 </body>
 </html>
