@@ -189,7 +189,7 @@ public final class ReflectionUtil {
       resetField(null, findField(clazz, type, name));
     }
     catch (NoSuchFieldException e) {
-      LOG.info(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -198,7 +198,7 @@ public final class ReflectionUtil {
       resetField(object, findField(object.getClass(), null, name));
     }
     catch (NoSuchFieldException e) {
-      LOG.info(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -225,7 +225,7 @@ public final class ReflectionUtil {
       }
     }
     catch (IllegalAccessException e) {
-      LOG.info(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -671,7 +671,7 @@ public final class ReflectionUtil {
   }
 
   /**
-   * Use {@link java.lang.invoke.VarHandle} or {@link java.util.concurrent.ConcurrentHashMap} or other standard JDK concurrent facilities
+   * @deprecated Use {@link java.lang.invoke.VarHandle} or {@link java.util.concurrent.ConcurrentHashMap} or other standard JDK concurrent facilities
    */
   @ApiStatus.Internal
   @Deprecated
