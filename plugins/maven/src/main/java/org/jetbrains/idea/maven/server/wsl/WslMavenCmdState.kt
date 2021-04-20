@@ -48,7 +48,6 @@ internal class WslMavenCmdState(private val myWslDistribution: WSLDistribution,
     val parameters = super.createJavaParameters()
     val wslParams = toWslParameters(parameters)
     wslParams.vmParametersList.add("-D${RemoteServer.SERVER_HOSTNAME}=${remoteHost}")
-    wslParams.vmParametersList.add("-Didea.maven.knownPort=true")
     wslParams.vmParametersList.add("-Didea.maven.wsl=true")
     return wslParams
   }
