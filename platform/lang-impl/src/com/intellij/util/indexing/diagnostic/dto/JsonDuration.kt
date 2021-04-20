@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.indexing.diagnostic.TimeMillis
 import com.intellij.util.indexing.diagnostic.TimeNano
 import java.util.concurrent.TimeUnit
 
@@ -27,6 +29,10 @@ data class JsonDuration(val nano: TimeNano = 0) {
   object Deserializer : JsonDeserializer<JsonDuration>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JsonDuration = JsonDuration(p.longValue)
   }
+
+  val milliseconds: TimeMillis
+    @JsonIgnore
+    get() = TimeUnit.NANOSECONDS.toMillis(nano)
 
   fun presentableDuration(): String = when {
     nano == 0L -> "0"
