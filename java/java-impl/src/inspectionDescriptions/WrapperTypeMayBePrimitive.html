@@ -6,31 +6,33 @@ Some heuristics are applied to estimate the number of boxing operations, for exa
 as much more common.
 
 <p>Example:</p>
-<pre>
+<pre><code>
   public void example() {
     Integer value = 12;
     needBox(value);
-    for (int i = 0; i < 10; i++) {
-      needPrimitive(value); // Loops usages considered as more often
+    for (int i = 0; i &lt; 10; i++) {
+      // Loop usages considered as happening more often
+      needPrimitive(value);
     }
   }
 
   void needPrimitive(int value) {}
   void needBox(Integer value) {}
-</pre>
+</code></pre>
 <p>After the quick-fix is applied the result looks like:</p>
-<pre>
+<pre><code>
   public void example() {
     int value = 12;
     needBox(value);
-    for (int i = 0; i < 10; i++) {
-      needPrimitive(value); // Loops usages considered as more often
+    for (int i = 0; i &lt; 10; i++) {
+      // Loop usages considered as happening more often
+      needPrimitive(value);
     }
   }
 
   void needPrimitive(int value) {}
   void needBox(Integer value) {}
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   <small>New in 2018.2</small>

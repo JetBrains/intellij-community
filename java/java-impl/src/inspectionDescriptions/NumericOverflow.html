@@ -4,11 +4,11 @@ Reports expressions which overflow during computation.
 Usually it happens by accident (for example wrong type is used or shift should be done in opposite direction) and indicates a bug.
 
 <p>Examples:</p>
-<pre>
+<pre><code>
   float a = 1.0f/0.0f;
   long b = 30 * 24 * 60 * 60 * 1000;
-  long c = 1000L << 62;
-</pre>
+  long c = 1000L &lt;&lt; 62;
+</code></pre>
 
 </body>
 </html>

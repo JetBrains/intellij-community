@@ -5,13 +5,13 @@ many return points may be confusing, and hard to refactor.
 <p>Example:</p>
 <pre>
 <code>
-int foo(int a) {
-  if (a > 0) {
-    return a
+  int foo(int a) {
+    if (a > 0) {
+      return a
+    }
+    if (a &lt; 0) return -a
+    return 0
   }
-  if (a < 0) return -a
-  return 0
-}
 </code>
 </pre>
 <!-- tooltip end -->

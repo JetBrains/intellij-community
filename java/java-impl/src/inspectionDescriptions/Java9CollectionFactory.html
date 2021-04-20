@@ -18,7 +18,7 @@ This can change the semantics of the code after migration.
   List&lt;Integer> even = Collections.unmodifiableList(
     Arrays.asList(2, 4, 6, 8, 10, 2));
   List&lt;Integer> evenCopy = Collections.unmodifiableList(
-    new ArrayList<>(list1));
+    new ArrayList&lt;>(list1));
 </code></pre>
 <p>After the quick fix is applied the result looks like:
 <pre><code>

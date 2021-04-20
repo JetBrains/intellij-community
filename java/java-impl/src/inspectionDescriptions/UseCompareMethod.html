@@ -4,20 +4,20 @@ Reports cases where the static <code>Integer.compare()</code> method or similar 
 instead of more verbose or less efficient constructs.
 If <code>x</code> and <code>y</code> are already boxed integers, then <code>x.compareTo(y)</code> is suggested.
 <p>Example:</p>
-<pre>
+<pre><code>
   public int compare(int x, int y) {
-    return x > y ? 1 : x < y ? -1 : 0;
+    return x > y ? 1 : x &lt; y ? -1 : 0;
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+<pre><code>
   public int compare(int x, int y) {
     return Integer.compare(x, y);
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-  <code>Double.compare</code> and <code>Float.compare</code> methods appeared in Java 1.4, methods for other primitive types
+  <code>Double.compare()</code> and <code>Float.compare()</code> methods were introduced in Java 1.4, methods for other primitive types
   are available since Java 1.7.
 </p>
 <p><small>New in 2017.2</small></p>

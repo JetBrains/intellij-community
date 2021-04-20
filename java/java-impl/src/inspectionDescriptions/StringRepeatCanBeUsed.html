@@ -2,19 +2,19 @@
 <body>
 Reports loops which could be replaced with single <code>String.repeat()</code> method (available since Java 11).
 <p>Example:</p>
-<pre>
+<pre><code>
   void append(StringBuilder sb, int count, Object obj) {
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i &lt; count; i++) {
       sb.append(obj);
     }
   }
-</pre>
+</code></pre>
 <p>After the quick-fix is applied the result looks like:</p>
-<pre>
+<pre><code>
   void append(StringBuilder sb, int count, Object obj) {
     sb.append(String.valueOf(obj).repeat(Math.max(0, count)));
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
   By default the inspection may wrap <code>count</code> with <code>Math.max(0, count)</code> if it cannot prove statically that count is

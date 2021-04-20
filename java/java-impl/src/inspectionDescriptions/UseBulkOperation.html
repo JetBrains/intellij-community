@@ -2,20 +2,20 @@
 <body>
 Warns when calling some method in a loop (e.g. <code>collection.add(x)</code>) could be
 replaced when calling a bulk method (e.g. <code>collection.addAll(listOfX)</code>. It's
-not only shorter form but in some cases may be more performant as well.
+not only shorter but in some cases may be more performant as well.
 <p>Example:</p>
-<pre>
+<pre><code>
   void test(Collection&lt;Integer&gt; numbers) {
-    List&lt;Integer&gt; result = new ArrayList<>();
+    List&lt;Integer&gt; result = new ArrayList&lt;>();
     for (Integer i : numbers) {
       result.add(i);
     }
   }
-</pre>
+</code></pre>
 <p>After the fix is applied, the result will be like this:</p>
 <pre>
   void test(Collection&lt;Integer&gt; numbers) {
-    List&lt;Integer&gt; result = new ArrayList<>();
+    List&lt;Integer&gt; result = new ArrayList&lt;>();
     result.addAll(numbers);
   }
 </pre>
@@ -25,6 +25,6 @@ not only shorter form but in some cases may be more performant as well.
   bulk method requires a <code>Collection</code>. In this case the quick-fix action will
   automatically wrap an array with <code>Arrays.asList()</code> call.
 </p>
-<small>New in 2017.1</small>
+<p><small>New in 2017.1</small></p>
 </body>
 </html>
