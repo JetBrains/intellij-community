@@ -1,0 +1,33 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+package pkg;
+
+public class TestGenericWildcardFunctionReturnType {
+    public TestGenericWildcardFunctionReturnType() {
+    }
+
+    public static <T> T seeXenoAmess(TestGenericWildcardFunctionReturnType.A<? extends T> xenoAmess) {
+        return xenoAmess instanceof TestGenericWildcardFunctionReturnType.B ? ((TestGenericWildcardFunctionReturnType.B<? extends T>)xenoAmess).bGlitch() : xenoAmess.aGlitch();
+    }
+
+    static class B<T> extends TestGenericWildcardFunctionReturnType.A<T> {
+        B() {
+        }
+
+        public T bGlitch() {
+            return null;
+        }
+    }
+
+    static class A<T> {
+        A() {
+        }
+
+        public T aGlitch() {
+            return null;
+        }
+    }
+}
