@@ -191,6 +191,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private IdeEventQueue() {
+    assert EventQueue.isDispatchThread() : Thread.currentThread();
     EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);

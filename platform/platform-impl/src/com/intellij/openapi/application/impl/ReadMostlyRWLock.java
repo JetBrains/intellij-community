@@ -32,7 +32,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelAc
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 final class ReadMostlyRWLock {
-  final Thread writeThread;
+  @NotNull final Thread writeThread;
   @VisibleForTesting
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private final AtomicBoolean writeIntent = new AtomicBoolean(false);

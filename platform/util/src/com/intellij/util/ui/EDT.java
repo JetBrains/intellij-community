@@ -25,7 +25,9 @@ public final class EDT {
    */
   @ApiStatus.Internal
   public static void updateEdt() {
-    myEventDispatchThread = Thread.currentThread();
+    if (myEventDispatchThread != Thread.currentThread()) {
+      myEventDispatchThread = Thread.currentThread();
+    }
   }
 
   @ApiStatus.Internal

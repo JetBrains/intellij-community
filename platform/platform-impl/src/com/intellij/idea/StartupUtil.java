@@ -939,6 +939,8 @@ public final class StartupUtil {
 
   // must be called from EDT
   private static void patchSystem(@NotNull Logger log) {
+    assert EventQueue.isDispatchThread() : Thread.currentThread();
+
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();

@@ -815,18 +815,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return true;
   }
 
-  @NotNull
-  public ThreeState isCurrentWriteOnEdt() {
-    Thread writeThread = myLock.writeThread;
-    if (writeThread == null) {
-      return ThreeState.UNSURE;
-    }
-    else if (EDT.isEdt(writeThread)) {
-      return ThreeState.YES;
-    }
-    else {
-      return ThreeState.NO;
-    }
+  public boolean isCurrentWriteOnEdt() {
+    return EDT.isEdt(myLock.writeThread);
   }
 
   @Override
