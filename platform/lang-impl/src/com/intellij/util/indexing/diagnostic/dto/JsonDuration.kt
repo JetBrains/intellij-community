@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -15,7 +16,8 @@ import java.util.concurrent.TimeUnit
 
 @JsonSerialize(using = JsonDuration.Serializer::class)
 @JsonDeserialize(using = JsonDuration.Deserializer::class)
-data class JsonDuration(val nano: TimeNano) {
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class JsonDuration(val nano: TimeNano = 0) {
   object Serializer : JsonSerializer<JsonDuration>() {
     override fun serialize(value: JsonDuration, gen: JsonGenerator, serializers: SerializerProvider?) {
       gen.writeNumber(value.nano)
