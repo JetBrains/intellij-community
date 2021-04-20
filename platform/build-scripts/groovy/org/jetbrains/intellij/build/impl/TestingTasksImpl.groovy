@@ -532,7 +532,11 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin', 'setupBundledMaven')
+      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven',
+                         // Kotlin compiler distribution also includes Kotlin plugin
+                         // which shouldn't be accidentally used in runtime
+                         // since proper version is being built from source
+                         'cleanSetupKotlinCompiler')
     }
   }
 

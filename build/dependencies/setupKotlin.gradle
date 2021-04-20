@@ -10,30 +10,27 @@ repositories {
 }
 
 configurations {
-  kotlinPlugin
+  kotlinCompiler
 }
 
-def pluginChannelSeparator = kotlinPluginBuild.indexOf(":")
+def pluginChannelSeparator = kotlinCompilerBuild.indexOf(":")
 def groupId = pluginChannelSeparator == -1 ? "com.jetbrains.plugins"
-                                           : "${kotlinPluginBuild.substring(pluginChannelSeparator + 1)}.com.jetbrains.plugins"
-def pluginArtifactVersion = pluginChannelSeparator == -1 ? kotlinPluginBuild : kotlinPluginBuild.substring(0, pluginChannelSeparator)
+                                           : "${kotlinCompilerBuild.substring(pluginChannelSeparator + 1)}.com.jetbrains.plugins"
+def pluginArtifactVersion = pluginChannelSeparator == -1 ? kotlinCompilerBuild : kotlinCompilerBuild.substring(0, pluginChannelSeparator)
+def outputDir = "${project.buildDir}/kotlin-compiler"
 dependencies {
-  if (project.hasProperty('kotlinPluginPath')) {
-    kotlinPlugin files(kotlinPluginPath)
-  } else {
-    kotlinPlugin "$groupId:org.jetbrains.kotlin:$pluginArtifactVersion@zip"
-  }
+  kotlinCompiler "$groupId:org.jetbrains.kotlin:$pluginArtifactVersion@zip"
 }
 
-task unzipKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
-  from zipTree(configurations.kotlinPlugin.singleFile)
-  into "${project.buildDir}/kotlin"
+task unzipKotlinCompiler(dependsOn: configurations.kotlinCompiler, type: Sync) {
+  from zipTree(configurations.kotlinCompiler.singleFile)
+  into outputDir
 }
 
-task setKotlincExecutablePermissions(dependsOn: unzipKotlinPlugin) {
+task setKotlincExecutablePermissions(dependsOn: unzipKotlinCompiler) {
   doLast {
     if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
-      file("${project.buildDir}/kotlin/Kotlin/kotlinc/bin").eachFileMatch(
+      file("$outputDir/Kotlin/kotlinc/bin").eachFileMatch(
         { it.startsWith('kotlin') && !it.endsWith(".bat") },
         {
           Files.setPosixFilePermissions(it.toPath(), Stream.of(PosixFilePermission.values()).collect(Collectors.toSet()))
@@ -43,9 +40,6 @@ task setKotlincExecutablePermissions(dependsOn: unzipKotlinPlugin) {
   }
 }
 
-task setupKotlinPlugin(dependsOn: setKotlincExecutablePermissions)
-
-task deployKotlinPlugin(dependsOn: setupKotlinPlugin, type: Sync) {
-  from file("${project.buildDir}/kotlin")
-  into "${System.getProperty("idea.config.path")}/plugins/"
+task setupKotlinCompiler(dependsOn: setKotlincExecutablePermissions) {
+  outputs.dir(outputDir)
 }

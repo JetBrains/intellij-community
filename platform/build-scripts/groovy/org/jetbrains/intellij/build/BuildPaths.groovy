@@ -63,7 +63,7 @@ abstract class BuildPaths {
   String jdkHome
 
   /**
-   * Path to a directory containing Kotlin plugin with compiler which is used to compile the project
+   * Path to a directory containing Kotlin compiler which is used to compile the project
    */
-  String kotlinHome
+  String kotlinCompilerHome
 }

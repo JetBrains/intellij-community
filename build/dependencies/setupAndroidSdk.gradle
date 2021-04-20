@@ -39,12 +39,12 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){
 }
 
 // infer kotlin_version from kotlin-plugin (e.g. "1.4.10" in "203-1.4.10-release-IJ2965:Ideadev")
-def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
+def kotlinVersionLen = kotlinCompilerBuild.indexOf("-release")
 if (kotlinVersionLen == -1) {
-  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ")
+  kotlinVersionLen = kotlinCompilerBuild.indexOf("-IJ")
 }
 
-ext.kotlin_version = kotlinPluginBuild.substring(
+ext.kotlin_version = kotlinCompilerBuild.substring(
   4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
   kotlinVersionLen
 )
@@ -104,11 +104,11 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androi
   }
 }
 
-task setupAndroidPluginRuntimeForIdea(dependsOn: [setupKotlinPlugin]){
+// TODO introduce Kotlin plugin source dependency
+task setupAndroidPluginRuntimeForIdea(dependsOn: setupKotlinCompiler)
 
-}
-
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], type: Sync) {
+// TODO introduce Kotlin plugin source dependency
+task syncKotlinPluginForAndroid(dependsOn: [setupKotlinCompiler, syncAndroidSdk], type: Sync) {
   from "$buildDir/kotlin"
   into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
@@ -116,9 +116,7 @@ task syncKotlinPluginForAndroid(dependsOn: [setupKotlinPlugin, syncAndroidSdk], 
 /**
  * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
  */
-task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid]) {
-
-}
+task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid])
 
 class CopyData implements Serializable {
   String from

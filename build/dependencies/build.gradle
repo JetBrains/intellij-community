@@ -57,9 +57,9 @@ apply from: 'setupAndroidStudio.gradle'
 //Temporary unbundle VulnerabilitySearch
 //apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin',
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'

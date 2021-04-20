@@ -20,7 +20,7 @@ object KotlinTester {
 
   fun assumeCanUseKotlin() {
     Assume.assumeTrue(
-      "Kotlin plugin JARs aren't found in the classpath; run 'setupKotlinPlugin' task in community/build/dependencies Gradle project " +
+      "Kotlin plugin JARs aren't found in the classpath; run 'setupKotlinCompiler' task in community/build/dependencies Gradle project " +
       "to download Kotlin plugin JARs.", canUseKotlin())
   }
 
