@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -371,13 +370,8 @@ public final class ChangeListWorker {
 
 
   @NotNull
-  public List<File> getAffectedPaths() {
-    return ContainerUtil.map(myIdx.getAffectedPaths(), FilePath::getIOFile);
-  }
-
-  @NotNull
-  public List<VirtualFile> getAffectedFiles() {
-    return ContainerUtil.mapNotNull(myIdx.getAffectedPaths(), FilePath::getVirtualFile);
+  public List<FilePath> getAffectedPaths() {
+    return new ArrayList<>(myIdx.getAffectedPaths());
   }
 
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
