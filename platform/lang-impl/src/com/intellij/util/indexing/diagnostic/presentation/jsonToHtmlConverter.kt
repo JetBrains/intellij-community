@@ -53,37 +53,68 @@ fun createAggregateHtml(
   }.toString()
 }
 
+private const val SECTION_PROJECT_NAME_ID = "id-project-name"
+private const val SECTION_PROJECT_NAME_TITLE = "Project name"
+
+private const val SECTION_APP_INFO_ID = "id-app-info"
+private const val SECTION_APP_INFO_TITLE = "Application info"
+
+private const val SECTION_RUNTIME_INFO_ID = "id-runtime-info"
+private const val SECTION_RUNTIME_INFO_TITLE = "Runtime"
+
+private const val SECTION_INDEXING_INFO_ID = "id-indexing-info"
+private const val SECTION_INDEXING_INFO_TITLE = "Indexing info"
+
+private const val SECTION_SLOW_FILES_ID = "id-slow-files"
+private const val SECTION_SLOW_FILES_TITLE = "Slowly indexed files"
+
+private const val SECTION_STATS_PER_FILE_TYPE_ID = "id-stats-per-file-type"
+private const val SECTION_STATS_PER_FILE_TYPE_TITLE = "Statistics per file type"
+
+private const val SECTION_STATS_PER_INDEXER_ID = "id-stats-per-indexer"
+private const val SECTION_STATS_PER_INDEXER_TITLE = "Statistics per indexer"
+
+private const val SECTION_SCANNING_ID = "id-scanning"
+private const val SECTION_SCANNING_TITLE = "Scanning"
+
+private const val SECTION_INDEXING_ID = "id-indexing"
+private const val SECTION_INDEXING_TITLE = "Indexing"
+
 private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
-  h1("Runtime")
-  table(className = "two-columns") {
-    thead {
-      tr { th("Name"); th("Value") }
-    }
-    tbody {
-      tr { td("Max memory"); td(StringUtil.formatFileSize(runtimeInfo.maxMemory)) }
-      tr { td("Number of processors"); td(runtimeInfo.numberOfProcessors.toString()) }
-      tr { td("Max number of indexing threads"); td(runtimeInfo.maxNumberOfIndexingThreads.toString()) }
-      tr { td("Max size of file for analysis"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForIntelliSense.toLong())) }
-      tr {
-        td("Max size of file for content loading"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForContentLoading.toLong()))
+  div(id = SECTION_RUNTIME_INFO_ID) {
+    h1(SECTION_RUNTIME_INFO_TITLE)
+    table(className = "two-columns") {
+      thead {
+        tr { th("Name"); th("Value") }
+      }
+      tbody {
+        tr { td("Max memory"); td(StringUtil.formatFileSize(runtimeInfo.maxMemory)) }
+        tr { td("Number of processors"); td(runtimeInfo.numberOfProcessors.toString()) }
+        tr { td("Max number of indexing threads"); td(runtimeInfo.maxNumberOfIndexingThreads.toString()) }
+        tr { td("Max size of file for analysis"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForIntelliSense.toLong())) }
+        tr {
+          td("Max size of file for content loading"); td(StringUtil.formatFileSize(runtimeInfo.maxSizeOfFileForContentLoading.toLong()))
+        }
       }
     }
   }
 }
 
 private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
-  h1("Application info")
-  table(className = "two-columns") {
-    thead {
-      tr { th("Name"); th("Value") }
-    }
-    tbody {
-      tr { td("Build"); td(appInfo.build) }
-      tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
-      tr { td("Product code"); td(appInfo.productCode) }
-      tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
-      tr { td("OS"); td(appInfo.os) }
-      tr { td("Runtime"); td(appInfo.runtime) }
+  div(id = SECTION_APP_INFO_ID) {
+    h1(SECTION_APP_INFO_TITLE)
+    table(className = "two-columns") {
+      thead {
+        tr { th("Name"); th("Value") }
+      }
+      tbody {
+        tr { td("Build"); td(appInfo.build) }
+        tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
+        tr { td("Product code"); td(appInfo.productCode) }
+        tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
+        tr { td("OS"); td(appInfo.os) }
+        tr { td("Runtime"); td(appInfo.runtime) }
+      }
     }
   }
 }
@@ -95,244 +126,273 @@ fun JsonIndexDiagnostic.generateHtml(): String {
       style(CSS_STYLE)
     }
     body {
-      h1("Project name")
-      text(projectIndexingHistory.projectName)
-
-      printAppInfo(appInfo)
-      printRuntimeInfo(runtimeInfo)
-
-      h1("Indexing info")
-      table(className = "two-columns") {
-        thead {
-          tr { th("Name"); th("Time") }
-        }
-        tbody {
-          tr { td("Number of file providers"); td(projectIndexingHistory.scanningStatistics.size.toString()) }
-          tr { td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString()) }
-          tr {
-            td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
-            td(projectIndexingHistory.scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.toString())
-          }
-          tr {
-            td("Number of files sent to the indexing stage after scanning (to load file content and index)")
-            td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfFilesForIndexing }.toString())
-          }
-          tr {
-            td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
-            td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions }.toString())
-          }
-          tr {
-            td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
-            td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfIndexedFiles }.toString())
-          }
-          tr {
-            td("Number of too large for indexing files")
-            td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
-          }
-
-          val times = projectIndexingHistory.times
-          tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
-          tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
-          tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
-          tr { td("Finished at"); td(times.updatingEnd.presentableDateTime()) }
-          tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
-          tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
-          tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
-          tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
-          tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
-          tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
+      div(className = "navigation-bar") {
+        ul {
+          li { link("#$SECTION_PROJECT_NAME_ID", SECTION_PROJECT_NAME_TITLE) }
+          li { link("#$SECTION_APP_INFO_ID", SECTION_APP_INFO_TITLE) }
+          li { link("#$SECTION_RUNTIME_INFO_ID", SECTION_RUNTIME_INFO_TITLE) }
+          li { link("#$SECTION_INDEXING_INFO_ID", SECTION_INDEXING_INFO_TITLE) }
+          li { link("#$SECTION_SLOW_FILES_ID", SECTION_SLOW_FILES_TITLE) }
+          li { link("#$SECTION_STATS_PER_FILE_TYPE_ID", SECTION_STATS_PER_FILE_TYPE_TITLE) }
+          li { link("#$SECTION_STATS_PER_INDEXER_ID", SECTION_STATS_PER_INDEXER_TITLE) }
+          li { link("#$SECTION_SCANNING_ID", SECTION_SCANNING_TITLE) }
+          li { link("#$SECTION_INDEXING_ID", SECTION_INDEXING_TITLE) }
         }
       }
 
-      val hasSlowIndexedFiles = projectIndexingHistory.fileProviderStatistics.any { it.slowIndexedFiles.isNotEmpty() }
-      if (hasSlowIndexedFiles) {
-        h1("Slowly indexed files (> ${IndexingJobStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
-        table {
-          thead {
-            tr {
-              th("Provider name")
-              th("File")
-              th("Content loading time")
-              th("Indexing time")
-              th("Total processing time")
+      div(className = "stats-content") {
+        div(id = SECTION_PROJECT_NAME_ID) {
+          h1(SECTION_PROJECT_NAME_TITLE)
+          text(projectIndexingHistory.projectName)
+        }
+
+        printAppInfo(appInfo)
+        printRuntimeInfo(runtimeInfo)
+
+        div(id = SECTION_INDEXING_INFO_ID) {
+          h1(SECTION_INDEXING_INFO_TITLE)
+          table(className = "two-columns") {
+            thead {
+              tr { th("Name"); th("Time") }
+            }
+            tbody {
+              tr { td("Number of file providers"); td(projectIndexingHistory.scanningStatistics.size.toString()) }
+              tr {
+                td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString())
+              }
+              tr {
+                td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
+                td(projectIndexingHistory.scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.toString())
+              }
+              tr {
+                td("Number of files sent to the indexing stage after scanning (to load file content and index)")
+                td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfFilesForIndexing }.toString())
+              }
+              tr {
+                td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
+                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions }.toString())
+              }
+              tr {
+                td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
+                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfIndexedFiles }.toString())
+              }
+              tr {
+                td("Number of too large for indexing files")
+                td(projectIndexingHistory.fileProviderStatistics.sumBy { it.numberOfTooLargeForIndexingFiles }.toString())
+              }
+
+              val times = projectIndexingHistory.times
+              tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
+              tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
+              tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableDateTime()) }
+              tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
+              tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
+              tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
+              tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
             }
           }
-          tbody {
-            for (providerStatistic in projectIndexingHistory.fileProviderStatistics.filter { it.slowIndexedFiles.isNotEmpty() }) {
-              val slowIndexedFiles = providerStatistic.slowIndexedFiles
-              for ((index, slowFile) in slowIndexedFiles.sortedByDescending { it.processingTime.nano }.withIndex()) {
-                tr {
-                  td(if (index == 0) providerStatistic.providerName else "^")
-                  td(slowFile.fileName)
-                  td(slowFile.contentLoadingTime.presentableDuration())
-                  td(slowFile.indexingTime.presentableDuration())
-                  td(slowFile.processingTime.presentableDuration())
-                }
+        }
+
+        div(id = SECTION_SLOW_FILES_ID) {
+          h1("$SECTION_SLOW_FILES_TITLE (> ${IndexingJobStatistics.SLOW_FILE_PROCESSING_THRESHOLD_MS} ms)")
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("File")
+                th("Content loading time")
+                th("Indexing time")
+                th("Total processing time")
               }
             }
-          }
-        }
-      }
-
-      h1("Statistics per file type")
-      table {
-        thead {
-          tr {
-            th("File type")
-            th("Number of files")
-            th("Indexing time")
-            th("Content loading time")
-            th("Total files size")
-            th("Indexing speed")
-            th("The biggest contributors")
-          }
-        }
-        tbody {
-          for (statsPerFileType in projectIndexingHistory.totalStatsPerFileType) {
-            val visibleIndexingTime = JsonDuration(
-              (projectIndexingHistory.times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
-            )
-            val visibleContentLoadingTime = JsonDuration(
-              (projectIndexingHistory.times.contentLoadingTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
-            )
-            tr {
-              td(statsPerFileType.fileType)
-              td(statsPerFileType.totalNumberOfFiles.toString())
-              td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
-              td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
-              td(statsPerFileType.totalFilesSize.presentableSize())
-              td(statsPerFileType.indexingSpeed.presentableSpeed())
-              td(
-                statsPerFileType.biggestContributors.joinToString("\n") {
-                  it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
-                  it.providerName + " " +
-                  it.numberOfFiles + " files of total size " +
-                  it.totalFilesSize.presentableSize()
-                }
-              )
-            }
-          }
-        }
-      }
-
-      h1("Statistics per indexer")
-      table {
-        thead {
-          tr {
-            th("Index")
-            th("Number of files")
-            th("Part of total indexing time")
-            th("Total number of files indexed by extensions")
-            th("Total files size")
-            th("Indexing speed")
-            th("Snapshot input mapping statistics")
-          }
-        }
-        tbody {
-          for (statsPerIndexer in projectIndexingHistory.totalStatsPerIndexer) {
-            tr {
-              td(statsPerIndexer.indexId)
-              td(statsPerIndexer.totalNumberOfFiles.toString())
-              td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
-              td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
-              td(statsPerIndexer.totalFilesSize.presentableSize())
-              td(statsPerIndexer.indexingSpeed.presentableSpeed())
-
-              fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
-                val hitsPercentages = JsonPercentages(totalHits, totalRequests)
-                val missesPercentages = JsonPercentages(totalMisses, totalRequests)
-                return "requests: $totalRequests, " +
-                       "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
-                       "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
-              }
-              td(statsPerIndexer.snapshotInputMappingStats.presentable())
-            }
-          }
-        }
-      }
-
-      val shouldPrintScannedFiles = projectIndexingHistory.scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
-      h1("Scanning")
-      table {
-        thead {
-          tr {
-            th("Provider name")
-            th("Number of scanned files")
-            th("Number of files scheduled for indexing")
-            th("Number of files fully indexed by infrastructure extensions")
-            th("Number of double-scanned skipped files")
-            th("Scanning time")
-            th("Time processing up-to-date files")
-            th("Time updating content-less indexes")
-            th("Time indexing without content")
-            if (shouldPrintScannedFiles) {
-              th("Scanned files")
-            }
-          }
-        }
-        tbody {
-          for (scanningStats in projectIndexingHistory.scanningStatistics) {
-            tr {
-              td(scanningStats.providerName)
-              td(scanningStats.numberOfScannedFiles.toString())
-              td(scanningStats.numberOfFilesForIndexing.toString())
-              td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
-              td(scanningStats.numberOfSkippedFiles.toString())
-              td(scanningStats.scanningTime.presentableDuration())
-              td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
-              td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
-              td(scanningStats.timeIndexingWithoutContent.presentableDuration())
-              if (shouldPrintScannedFiles) {
-                td {
-                  textarea {
-                    rawText(
-                      scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
-                        file.path.presentablePath + when {
-                          file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
-                          file.isUpToDate -> " [up-to-date]"
-                          else -> ""
-                        }
-                      }
-                    )
+            tbody {
+              for (providerStatistic in projectIndexingHistory.fileProviderStatistics.filter { it.slowIndexedFiles.isNotEmpty() }) {
+                val slowIndexedFiles = providerStatistic.slowIndexedFiles
+                for ((index, slowFile) in slowIndexedFiles.sortedByDescending { it.processingTime.nano }.withIndex()) {
+                  tr {
+                    td(if (index == 0) providerStatistic.providerName else "^")
+                    td(slowFile.fileName)
+                    td(slowFile.contentLoadingTime.presentableDuration())
+                    td(slowFile.indexingTime.presentableDuration())
+                    td(slowFile.processingTime.presentableDuration())
                   }
                 }
               }
             }
           }
         }
-      }
 
-      val shouldPrintIndexedFiles = projectIndexingHistory.fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
-      h1("Indexing with content")
-      table {
-        thead {
-          tr {
-            th("Provider name")
-            th("Indexing time")
-            th("Content loading time")
-            th("Number of indexed files")
-            th("Number of files indexed by infrastructure extensions")
-            th("Number of too large for indexing files")
-            if (shouldPrintIndexedFiles) {
-              th("Indexed files")
+        div(id = SECTION_STATS_PER_FILE_TYPE_ID) {
+          h1(SECTION_STATS_PER_FILE_TYPE_TITLE)
+          table {
+            thead {
+              tr {
+                th("File type")
+                th("Number of files")
+                th("Indexing time")
+                th("Content loading time")
+                th("Total files size")
+                th("Indexing speed")
+                th("The biggest contributors")
+              }
+            }
+            tbody {
+              for (statsPerFileType in projectIndexingHistory.totalStatsPerFileType) {
+                val visibleIndexingTime = JsonDuration(
+                  (projectIndexingHistory.times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
+                )
+                val visibleContentLoadingTime = JsonDuration(
+                  (projectIndexingHistory.times.contentLoadingTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
+                )
+                tr {
+                  td(statsPerFileType.fileType)
+                  td(statsPerFileType.totalNumberOfFiles.toString())
+                  td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
+                  td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
+                  td(statsPerFileType.totalFilesSize.presentableSize())
+                  td(statsPerFileType.indexingSpeed.presentableSpeed())
+                  td(
+                    statsPerFileType.biggestContributors.joinToString("\n") {
+                      it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
+                      it.providerName + " " +
+                      it.numberOfFiles + " files of total size " +
+                      it.totalFilesSize.presentableSize()
+                    }
+                  )
+                }
+              }
             }
           }
         }
-        tbody {
-          for (providerStats in projectIndexingHistory.fileProviderStatistics) {
-            tr {
-              td(providerStats.providerName)
-              td(providerStats.totalIndexingTime.presentableDuration())
-              td(providerStats.contentLoadingTime.presentableDuration())
-              td(providerStats.totalNumberOfIndexedFiles.toString())
-              td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
-              td(providerStats.numberOfTooLargeForIndexingFiles.toString())
-              if (shouldPrintIndexedFiles) {
-                td {
-                  textarea {
-                    rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
-                      file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
-                    })
+
+        div(id = SECTION_STATS_PER_INDEXER_ID) {
+          h1(SECTION_STATS_PER_INDEXER_TITLE)
+          table {
+            thead {
+              tr {
+                th("Index")
+                th("Number of files")
+                th("Part of total indexing time")
+                th("Total number of files indexed by extensions")
+                th("Total files size")
+                th("Indexing speed")
+                th("Snapshot input mapping statistics")
+              }
+            }
+            tbody {
+              for (statsPerIndexer in projectIndexingHistory.totalStatsPerIndexer) {
+                tr {
+                  td(statsPerIndexer.indexId)
+                  td(statsPerIndexer.totalNumberOfFiles.toString())
+                  td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
+                  td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
+                  td(statsPerIndexer.totalFilesSize.presentableSize())
+                  td(statsPerIndexer.indexingSpeed.presentableSpeed())
+
+                  fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
+                    val hitsPercentages = JsonPercentages(totalHits, totalRequests)
+                    val missesPercentages = JsonPercentages(totalMisses, totalRequests)
+                    return "requests: $totalRequests, " +
+                           "hits: $totalHits (${hitsPercentages.presentablePercentages()}), " +
+                           "misses: $totalMisses (${missesPercentages.presentablePercentages()})"
+                  }
+                  td(statsPerIndexer.snapshotInputMappingStats.presentable())
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintScannedFiles = projectIndexingHistory.scanningStatistics.any { it.scannedFiles.orEmpty().isNotEmpty() }
+        div(id = SECTION_SCANNING_ID) {
+          h1(SECTION_SCANNING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Number of scanned files")
+                th("Number of files scheduled for indexing")
+                th("Number of files fully indexed by infrastructure extensions")
+                th("Number of double-scanned skipped files")
+                th("Scanning time")
+                th("Time processing up-to-date files")
+                th("Time updating content-less indexes")
+                th("Time indexing without content")
+                if (shouldPrintScannedFiles) {
+                  th("Scanned files")
+                }
+              }
+            }
+            tbody {
+              for (scanningStats in projectIndexingHistory.scanningStatistics) {
+                tr {
+                  td(scanningStats.providerName)
+                  td(scanningStats.numberOfScannedFiles.toString())
+                  td(scanningStats.numberOfFilesForIndexing.toString())
+                  td(scanningStats.numberOfFilesFullyIndexedByInfrastructureExtensions.toString())
+                  td(scanningStats.numberOfSkippedFiles.toString())
+                  td(scanningStats.scanningTime.presentableDuration())
+                  td(scanningStats.timeProcessingUpToDateFiles.presentableDuration())
+                  td(scanningStats.timeUpdatingContentLessIndexes.presentableDuration())
+                  td(scanningStats.timeIndexingWithoutContent.presentableDuration())
+                  if (shouldPrintScannedFiles) {
+                    td {
+                      textarea {
+                        rawText(
+                          scanningStats.scannedFiles.orEmpty().joinToString("\n") { file ->
+                            file.path.presentablePath + when {
+                              file.wasFullyIndexedByInfrastructureExtension -> " [by infrastructure]"
+                              file.isUpToDate -> " [up-to-date]"
+                              else -> ""
+                            }
+                          }
+                        )
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        val shouldPrintIndexedFiles = projectIndexingHistory.fileProviderStatistics.any { it.indexedFiles.orEmpty().isNotEmpty() }
+        div(id = SECTION_INDEXING_ID) {
+          h1(SECTION_INDEXING_TITLE)
+          table {
+            thead {
+              tr {
+                th("Provider name")
+                th("Indexing time")
+                th("Content loading time")
+                th("Number of indexed files")
+                th("Number of files indexed by infrastructure extensions")
+                th("Number of too large for indexing files")
+                if (shouldPrintIndexedFiles) {
+                  th("Indexed files")
+                }
+              }
+            }
+            tbody {
+              for (providerStats in projectIndexingHistory.fileProviderStatistics) {
+                tr {
+                  td(providerStats.providerName)
+                  td(providerStats.totalIndexingTime.presentableDuration())
+                  td(providerStats.contentLoadingTime.presentableDuration())
+                  td(providerStats.totalNumberOfIndexedFiles.toString())
+                  td(providerStats.totalNumberOfFilesFullyIndexedByExtensions.toString())
+                  td(providerStats.numberOfTooLargeForIndexingFiles.toString())
+                  if (shouldPrintIndexedFiles) {
+                    td {
+                      textarea {
+                        rawText(providerStats.indexedFiles.orEmpty().joinToString("\n") { file ->
+                          file.path.presentablePath + if (file.wasFullyIndexedByExtensions) " [by infrastructure]" else ""
+                        })
+                      }
+                    }
                   }
                 }
               }
@@ -348,8 +408,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
 private val CSS_STYLE = """
   body {
     font-family: Arial,sans-serif;
-    margin-left: 15%;
-    margin-top: 20px;
+    margin: 0;
   }
   
   table, th, td {
@@ -376,7 +435,35 @@ private val CSS_STYLE = """
   td {
     white-space: pre-wrap;
     word-break: break-word;
-  }        
+  }
+          
+  .stats-content {
+    margin-left: 20%;
+  }
+
+  div.navigation-bar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    width: 15%;
+    background-color: lightgrey;
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+  }
+
+  div.navigation-bar ul li a {
+    display: block;
+    color: #000;
+    padding: 8px 20px;
+    text-decoration: none;
+    font-size: 24px;
+  }
+
+  div.navigation-bar ul li a:hover {
+    background-color: #555;
+    color: white;
+  }
 """.trimIndent()
 
 private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
@@ -391,6 +478,9 @@ private fun HtmlBuilder.title(@Nls title: String) = append(HtmlChunk.text(title)
 
 private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
 
+private fun Element.addAttrIfNotEmpty(key: String, value: String): Element =
+  if (value.isEmpty()) this else this.attr(key, value)
+
 private infix operator fun HtmlBuilder.plus(@Nls text: String): HtmlBuilder = text(text)
 private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("h1")))
 
@@ -402,6 +492,9 @@ private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body
 private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
+
+private fun HtmlBuilder.ul(body: HtmlBuilder.() -> Unit) = append(createTag(body, ul()))
+private fun HtmlBuilder.li(body: HtmlBuilder.() -> Unit) = append(createTag(body, li()))
 
 private fun HtmlBuilder.textarea(
   columns: Int = 75,
@@ -421,7 +514,7 @@ private fun HtmlBuilder.textarea(
 private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
-private fun HtmlBuilder.div(body: HtmlBuilder.() -> Unit) = append(createTag(body, div()))
+private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
 private fun HtmlBuilder.head(head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
 private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
 private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
