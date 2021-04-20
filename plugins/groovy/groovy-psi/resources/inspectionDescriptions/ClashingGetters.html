@@ -1,15 +1,14 @@
 <html>
 <body>
-<p>Reports boolean methods which can be accessed via the same property name, for example:</p>
-<pre>
+<p>Reports boolean methods which can be accessed via the same property name. The result of accessing such property might be unexpected.</p>
+<p>Example:</p>
+<pre><code>
 class X {
     boolean isFoo() { true }
     boolean getFoo() { false }
 }
 
-// getFoo() will be called,
-// which might be unexpected
-new X().foo
-</pre>
+new X().foo // getFoo() will be called
+</code></pre>
 </body>
 </html>
