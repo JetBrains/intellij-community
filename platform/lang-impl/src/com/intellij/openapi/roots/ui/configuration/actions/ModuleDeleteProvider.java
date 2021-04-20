@@ -37,6 +37,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
+  public static ModuleDeleteProvider getInstance() {
+    return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
+  }
+
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
