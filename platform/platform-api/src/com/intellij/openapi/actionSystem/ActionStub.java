@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,31 +20,30 @@ import java.util.function.Supplier;
  *
  * @author Vladimir Kondratyev
  */
-@SuppressWarnings("ComponentNotRegistered")
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
-  private final String myClassName;
-  private final String myProjectType;
-  private final Supplier<Presentation> myTemplatePresentation;
-  private final String myId;
-  private final PluginDescriptor myPlugin;
-  private final String myIconPath;
+  private final @NotNull String myClassName;
+  private final @NotNull String myId;
+  private final @NotNull PluginDescriptor myPlugin;
+  private final @Nullable String myIconPath;
+  private final @Nullable ProjectType myProjectType;
+  private final @NotNull Supplier<Presentation> myTemplatePresentation;
   private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
-                    @Nullable String projectType,
+                    @Nullable ProjectType projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
-    myPlugin = plugin;
     myClassName = actionClass;
-    myProjectType = projectType;
-    myTemplatePresentation = templatePresentation;
     LOG.assertTrue(!id.isEmpty());
     myId = id;
+    myPlugin = plugin;
     myIconPath = iconPath;
+    myProjectType = projectType;
+    myTemplatePresentation = templatePresentation;
   }
 
   @Override
@@ -56,36 +56,32 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     }
   }
 
-  @NotNull
   @Override
-  public PluginDescriptor getPlugin() {
+  public @NotNull PluginDescriptor getPlugin() {
     return myPlugin;
   }
 
-  @NotNull
   @Override
-  Presentation createTemplatePresentation() {
+  @NotNull Presentation createTemplatePresentation() {
     return myTemplatePresentation.get();
   }
 
-  @NotNull
-  public String getClassName() {
+  public @NotNull String getClassName() {
     return myClassName;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
-  public ClassLoader getLoader() {
-    return myPlugin.getPluginClassLoader();
+  @Override
+  public @Nullable String getIconPath() {
+    return myIconPath;
   }
 
-  @Override
-  public String getIconPath() {
-    return myIconPath;
+  public @Nullable ProjectType getProjectType() {
+    return myProjectType;
   }
 
   @Override
@@ -116,9 +112,5 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
       targetPresentation.setDescription(sourcePresentation.getDescription());
     }
-  }
-
-  public String getProjectType() {
-    return myProjectType;
   }
 }

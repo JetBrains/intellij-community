@@ -15,12 +15,17 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+
 /**
  * @author Dmitry Avdeev
  */
 public class ProjectType {
 
-  private String id;
+  private @Nullable String id;
 
   /**
    * For serialization.
@@ -28,15 +33,15 @@ public class ProjectType {
   public ProjectType() {
   }
 
-  public ProjectType(String id) {
+  public ProjectType(@NotNull String id) {
     this.id = id;
   }
 
-  public String getId() {
+  public @Nullable String getId() {
     return id;
   }
 
-  public void setId(String id) {
+  public void setId(@Nullable String id) {
     this.id = id;
   }
 
@@ -46,14 +51,15 @@ public class ProjectType {
     if (o == null || getClass() != o.getClass()) return false;
 
     ProjectType type = (ProjectType)o;
-
-    if (id != null ? !id.equals(type.id) : type.id != null) return false;
-
-    return true;
+    return Objects.equals(id, type.id);
   }
 
   @Override
   public int hashCode() {
     return id != null ? id.hashCode() : 0;
+  }
+
+  public static @Nullable ProjectType create(@Nullable String id) {
+    return id != null ? new ProjectType(id) : null;
   }
 }

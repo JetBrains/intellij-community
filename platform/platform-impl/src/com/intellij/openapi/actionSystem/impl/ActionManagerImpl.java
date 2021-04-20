@@ -562,8 +562,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @NotNull
-  private AnAction replaceStub(@NotNull ActionStubBase stub, AnAction anAction) {
+  private @Nullable AnAction replaceStub(@NotNull ActionStubBase stub, @NotNull AnAction anAction) {
     LOG.assertTrue(actionToId.containsKey(stub));
     actionToId.remove(stub);
 
@@ -576,7 +575,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     actionToId.put(anAction, stub.getId());
     updateHandlers(anAction);
 
-    return addToMap(stub.getId(), anAction, stub.getPlugin().getPluginId(), stub instanceof ActionStub ? ((ActionStub)stub).getProjectType() : null);
+    AnAction result = addToMap(stub.getId(),
+                               anAction,
+                               stub instanceof ActionStub ? ((ActionStub)stub).getProjectType() : null);
+    if (result == null) {
+      reportActionIdCollision(stub.getId(), action, stub.getPlugin().getPluginId());
+    }
+    return result;
   }
 
   @Override
@@ -656,7 +661,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     //noinspection HardCodedStringLiteral
     String descriptionValue = element.getAttributeValue(DESCRIPTION);
 
-    ActionStub stub = new ActionStub(className, id, plugin, iconPath, projectType, () -> {
+    ActionStub stub = new ActionStub(className, id, plugin, iconPath, ProjectType.create(projectType), () -> {
       Supplier<String> text = () -> computeActionText(bundle, id, ACTION_ELEMENT_NAME, textValue);
       if (text.get() == null) {
         reportActionError(plugin.getPluginId(), "'text' attribute is mandatory (actionId=" + id +
@@ -1267,15 +1272,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     registerAction(actionId, action, pluginId, null);
   }
 
-  public void registerAction(@NotNull String actionId,
-                             @NotNull AnAction action,
-                             @Nullable PluginId pluginId,
-                             @Nullable String projectType) {
+  private void registerAction(@NotNull String actionId,
+                              @NotNull AnAction action,
+                              @Nullable PluginId pluginId,
+                              @Nullable String projectType) {
     synchronized (myLock) {
       if (myProhibitedActionIds.contains(actionId)) {
         return;
       }
-      if (addToMap(actionId, action, pluginId, projectType) == null) return;
+      if (addToMap(actionId, action, ProjectType.create(projectType)) == null) {
+        reportActionIdCollision(actionId, action, pluginId);
+        return;
+      }
       if (actionToId.containsKey(action)) {
         reportActionError(pluginId,
                           "ID \"" + actionToId.get(action) + "\" is already taken by action \"" + action + "\"" + getPluginInfo(pluginId) +
@@ -1304,44 +1312,38 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private AnAction addToMap(String actionId, AnAction action, PluginId pluginId, String projectType) {
-    if (projectType != null || idToAction.containsKey(actionId)) {
-      return registerChameleon(actionId, action, pluginId, projectType);
+  private @Nullable AnAction addToMap(@NotNull String actionId,
+                                      @NotNull AnAction action,
+                                      @Nullable ProjectType projectType) {
+    AnAction chameleonAction = idToAction.computeIfPresent(actionId,
+                                                           (__, old) -> old instanceof ChameleonAction
+                                                                        ? old
+                                                                        : new ChameleonAction(old, projectType));
+    if (chameleonAction != null) {
+      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
     }
     else {
-      idToAction.put(actionId, action);
-      return action;
+      AnAction result = projectType != null ?
+                        new ChameleonAction(action, projectType) :
+                        action;
+      idToAction.put(actionId, result);
+      return result;
     }
   }
 
-  private AnAction registerChameleon(String actionId, AnAction action, PluginId pluginId, String projectType) {
-    ProjectType type = projectType == null ? null : new ProjectType(projectType);
-    // make sure id+projectType is unique
-    AnAction o = idToAction.get(actionId);
-    ChameleonAction chameleonAction;
-    if (o == null) {
-      chameleonAction = new ChameleonAction(action, type);
-      idToAction.put(actionId, chameleonAction);
-      return chameleonAction;
-    }
-    if (o instanceof ChameleonAction) {
-      chameleonAction = (ChameleonAction)o;
-    }
-    else {
-      chameleonAction = new ChameleonAction(o, type);
-      idToAction.put(actionId, chameleonAction);
-    }
-    AnAction old = chameleonAction.addAction(action, type);
-    if (old != null) {
-      String oldPluginInfo = pluginToId.keySet().stream()
-        .filter(p -> pluginToId.get(p).contains(actionId))
-        .map(ActionManagerImpl::getPluginInfo).collect(Collectors.joining(","));
-      reportActionError(pluginId,
-                        "ID \"" + actionId + "\" is already taken by action \"" + idToAction.get(actionId) + "\"" + oldPluginInfo +
-                        ". Action \"" + action + "\"" + getPluginInfo(pluginId) + " cannot use the same ID");
-      return null;
-    }
-    return chameleonAction;
+  private void reportActionIdCollision(@NotNull String actionId,
+                                       @NotNull AnAction action,
+                                       @Nullable PluginId pluginId) {
+    String oldPluginInfo = pluginToId.entrySet()
+      .stream()
+      .filter(entry -> entry.getValue().contains(actionId))
+      .map(Map.Entry::getKey)
+      .map(ActionManagerImpl::getPluginInfo)
+      .collect(Collectors.joining(","));
+
+    reportActionError(pluginId,
+                      "ID \"" + actionId + "\" is already taken by action \"" + idToAction.get(actionId) + "\"" + oldPluginInfo +
+                      ". Action \"" + action + "\"" + getPluginInfo(pluginId) + " cannot use the same ID");
   }
 
   @Override
