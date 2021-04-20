@@ -20,18 +20,28 @@ import java.io.Serializable
 class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var name: String
   var type: String? = null
-  lateinit var dependencies: List<ModuleDependencyItem>
+  var dependencies: List<ModuleDependencyItem> = emptyList()
+    set(value) {
+      field = value
+      this.softLinksCache = null
+    }
+
+  @Transient
+  private var softLinksCache: Set<PersistentEntityId<*>>? = null
 
   @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
-
-    return dependencies.mapNotNullTo(HashSet()) { dependency ->
+    val cache = softLinksCache
+    if (cache != null) return cache
+    val result = dependencies.mapNotNullTo(HashSet()) { dependency ->
       when (dependency) {
         is ModuleDependencyItem.Exportable.ModuleDependency -> dependency.module
         is ModuleDependencyItem.Exportable.LibraryDependency -> dependency.library
         else -> null
       }
     }
+    this.softLinksCache = result
+    return result
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
