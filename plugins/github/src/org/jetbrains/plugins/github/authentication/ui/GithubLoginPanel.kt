@@ -34,7 +34,6 @@ internal class GithubLoginPanel(
   private var tokenAcquisitionError: ValidationInfo? = null
 
   private lateinit var currentUi: GHCredentialsUi
-  private var passwordUi = GHPasswordCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var tokenUi = GHTokenCredentialsUi(serverTextField, executorFactory, isAccountUnique)
   private var oauthUi = GHOAuthCredentialsUi(executorFactory, isAccountUnique)
 
@@ -44,14 +43,13 @@ internal class GithubLoginPanel(
   var footer: LayoutBuilder.() -> Unit
     get() = tokenUi.footer
     set(value) {
-      passwordUi.footer = value
       tokenUi.footer = value
       oauthUi.footer = value
       applyUi(currentUi)
     }
 
   init {
-    applyUi(passwordUi)
+    applyUi(tokenUi)
   }
 
   private fun applyUi(ui: GHCredentialsUi) {
@@ -59,19 +57,6 @@ internal class GithubLoginPanel(
     setContent(currentUi.getPanel())
     currentUi.getPreferredFocusableComponent()?.requestFocus()
     tokenAcquisitionError = null
-  }
-
-  @Nls
-  private fun switchUiText(): String {
-    return if (currentUi == passwordUi) message("login.use.token") else message("login.use.credentials")
-  }
-
-  private fun nextUi(): GHCredentialsUi = if (currentUi == passwordUi) tokenUi else passwordUi
-
-  fun createSwitchUiLink() = ActionLink(switchUiText()) {
-    applyUi(nextUi())
-    val link = it.source as ActionLink
-    link.text = switchUiText()
   }
 
   fun getPreferredFocusableComponent(): JComponent? =
@@ -124,11 +109,9 @@ internal class GithubLoginPanel(
   }
 
   fun setLogin(login: String?, editable: Boolean) {
-    passwordUi.setLogin(login.orEmpty(), editable)
     tokenUi.setFixedLogin(if (editable) null else login)
   }
 
-  fun setPassword(password: String?) = passwordUi.setPassword(password.orEmpty())
   fun setToken(token: String?) = tokenUi.setToken(token.orEmpty())
 
   fun setError(exception: Throwable?) {
@@ -136,6 +119,5 @@ internal class GithubLoginPanel(
   }
 
   fun setOAuthUi() = applyUi(oauthUi)
-  fun setPasswordUi() = applyUi(passwordUi)
   fun setTokenUi() = applyUi(tokenUi)
 }

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.authentication
 import com.intellij.ide.BrowserUtil.browse
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Url
 import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.io.DigestUtil.randomToken
@@ -19,8 +18,6 @@ import org.jetbrains.plugins.github.authentication.GHOAuthService.Companion.AUTH
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-
-internal fun isOAuthEnabled(): Boolean = Registry.`is`("github.use.oauth")
 
 @Service
 internal class GHOAuthService {

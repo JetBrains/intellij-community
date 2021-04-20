@@ -28,14 +28,6 @@ internal class GHLoginRequest(
   val token: String? = null
 )
 
-internal fun GHLoginRequest.loginWithPasswordOrToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
-  val dialog = GHPasswordTokenLoginDialog(project, parentComponent, isLoginUniqueChecker, text)
-  configure(dialog)
-  password?.let { dialog.setPassword(it) }
-
-  return dialog.getAuthData()
-}
-
 internal fun GHLoginRequest.loginWithToken(project: Project?, parentComponent: Component?): GHAccountAuthData? {
   val dialog = GHTokenLoginDialog(project, parentComponent, isLoginUniqueChecker)
   configure(dialog)

@@ -93,15 +93,9 @@ class GithubAuthenticationManager internal constructor() {
     )?.updateAccount(account) != null
 
   @RequiresEdt
-  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
-    val isGH = request.server?.isGithubDotCom
-
-    return when {
-      isGH == false -> request.loginWithToken(project, parentComponent)
-      isGH == true && isOAuthEnabled() -> request.loginWithOAuthOrToken(project, parentComponent)
-      else -> request.loginWithPasswordOrToken(project, parentComponent)
-    }
-  }
+  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? =
+    if (request.server?.isGithubDotCom == true) request.loginWithOAuthOrToken(project, parentComponent)
+    else request.loginWithToken(project, parentComponent)
 
   @RequiresEdt
   internal fun removeAccount(account: GithubAccount) {

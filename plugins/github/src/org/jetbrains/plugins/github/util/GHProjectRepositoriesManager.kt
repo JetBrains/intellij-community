@@ -77,7 +77,6 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     val authenticatedServers = service<GithubAccountManager>().accounts.map { it.server }
     val servers = mutableListOf<GithubServerPath>().apply {
       add(GithubServerPath.DEFAULT_SERVER)
-      GithubAccountsMigrationHelper.getInstance().getOldServer()?.let { add(it) }
       addAll(authenticatedServers)
       addAll(serversFromDiscovery)
     }
