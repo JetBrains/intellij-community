@@ -1,22 +1,32 @@
 <html>
 <body>
-Reports any implementations of the <b>Object.finalize()</b> method
-which are not declared <b>protected</b>. <b>finalize()</b> should be declare <b>protected</b>,
-to prevent it from being explicitly invoked by other classes.
+<p>
+  Reports any implementations of the <code>Object.finalize()</code> method which are
+  declared <code>public</code>.
+</p>
+<p>
+  According to the contract of the <code>Object.finalize()</code>, only the garbage
+  collector calls this method. Making this method public may be confusing, because it
+  means that this method can be used by users.
+</p>
+<p>
+  The quick-fix makes the method protected to prevent it from being explicitly invoked
+  by other classes.
+</p>
 <!-- tooltip end -->
-<p>Example:
+<p>Example:</p>
 <pre><code>
   <b>class</b> X {
     <b>public void</b> finalize() {
-      // todo cleanup
+      /* ... */
     }
   }
 </code></pre>
-<p>After the quick fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   <b>class</b> X {
     <b>protected void</b> finalize() {
-      // todo cleanup
+      /* ... */
     }
   }
 </code></pre>

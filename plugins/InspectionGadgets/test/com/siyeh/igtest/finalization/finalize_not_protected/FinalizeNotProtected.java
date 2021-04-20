@@ -6,7 +6,7 @@ public class FinalizeNotProtected
     {
     }
 
-    public void <warning descr="'finalize()' not declared 'protected'">finalize</warning>() throws Throwable
+    public void <warning descr="'finalize()' should have protected access, not public">finalize</warning>() throws Throwable
     {
         super.finalize();
     }
