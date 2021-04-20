@@ -29,7 +29,7 @@ abstract class AbstractKlibLibraryInfo(project: Project, library: Library, val l
 
     val uniqueName: String? by lazy { resolvedKotlinLibrary.safeRead(null) { uniqueName } }
 
-    val isInterop: Boolean by lazy { resolvedKotlinLibrary.safeRead(null) { isInterop } == true }
+    val isInterop: Boolean by lazy { resolvedKotlinLibrary.safeRead(false) { isInterop } }
 
     companion object {
         private val LOG = IJLoggerAdapter.getInstance(AbstractKlibLibraryInfo::class.java)
