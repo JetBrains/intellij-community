@@ -467,12 +467,15 @@ public final class PerformanceWatcher implements Disposable {
       if (myState.getAndSet(CheckerState.FINISHED) == CheckerState.FREEZE) {
         long end = System.nanoTime();
         stopDumping(); // stop sampling as early as possible
-        try {
-          myExecutor.submit(() -> edtResponds(end)).get();
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
+        // Android Studio: workaround for bug 166548413
+        myExecutor.execute(() -> {
+          try {
+            edtResponds(end);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        });
       }
     }
 
