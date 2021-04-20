@@ -72,7 +72,7 @@ abstract class ToolbarActionTracker<T: PositionTracker.Client<*>>: Disposable {
    * the tooltip if it can be shown. Term "follow" is used because ActionToolbar updates its content and ActionButton's
    * showing status / location may change in time.
    */
-  abstract fun assignTo(presentation: Presentation, pointProvider: (Component, T) -> Point, disposeAction: Runnable? = null)
+  abstract fun assignTo(presentation: Presentation, pointProvider: (Component, T) -> Point)
 
   abstract fun wasCreated(): Boolean
 
