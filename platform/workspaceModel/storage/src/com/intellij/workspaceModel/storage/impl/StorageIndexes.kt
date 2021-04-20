@@ -7,6 +7,7 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
+import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
@@ -204,12 +205,11 @@ internal class MutableStorageIndexes(
   fun <T : WorkspaceEntity> simpleUpdateSoftReferences(copiedData: WorkspaceEntityData<T>) {
     val pid = copiedData.createEntityId()
     if (copiedData is SoftLinkable) {
-      val beforeSoftLinks = HashSet(this.softLinks.getEntriesById(pid))
+      val beforeSoftLinksCopy = HashSet(this.softLinks.getEntriesById(pid))
       val afterSoftLinks = copiedData.getLinks()
-      if (beforeSoftLinks != afterSoftLinks) {
-        beforeSoftLinks.forEach { this.softLinks.remove(pid, it) }
-        afterSoftLinks.forEach { this.softLinks.index(pid, it) }
-      }
+      val (removed, added) = getDiff(beforeSoftLinksCopy, afterSoftLinks)
+      removed.forEach { this.softLinks.remove(pid, it) }
+      added.forEach { this.softLinks.index(pid, it) }
     }
   }
 

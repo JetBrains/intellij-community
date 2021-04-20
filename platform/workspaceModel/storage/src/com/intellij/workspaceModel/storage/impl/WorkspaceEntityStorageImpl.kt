@@ -11,6 +11,7 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -756,8 +757,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
 
       // Collect children changes
-      val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
-      val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
+      val beforeChildrenSet = beforeChildren.toMutableSet()
+      val (removedChildren, addedChildren) = getDiff(beforeChildrenSet, children)
 
       // Collect parent changes
       val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
