@@ -208,7 +208,7 @@ class MergedProducer(private val project: Project,
                         ChangeDiffRequestProducer.getBaseVersion(),
                         ChangeDiffRequestProducer.getServerVersion())
     val contents = listOf(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST).map {
-      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath.fileType, statusNode.filePath.name)
+      DiffContentFactory.getInstance().createFromBytes(project, it, statusNode.filePath)
     }
     val request = SimpleDiffRequest(title, contents, titles)
     putRevisionInfos(request, mergeData)
