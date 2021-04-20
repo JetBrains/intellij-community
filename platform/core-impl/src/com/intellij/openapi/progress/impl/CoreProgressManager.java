@@ -804,29 +804,32 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private final Object myPrioritizationLock = ObjectUtils.sentinel("myPrioritizationLock");
   private volatile long myPrioritizingStarted;
 
-  // this thread
   @Override
   public <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E {
     Thread thread = Thread.currentThread();
-
-    if (!SystemProperties.getBooleanProperty("ide.prioritize.threads", true) || isPrioritizedThread(thread)) {
-      return computable.compute();
-    }
-
+    boolean prioritize;
     synchronized (myPrioritizationLock) {
-      if (myPrioritizedThreads.isEmpty()) {
-        myPrioritizingStarted = System.nanoTime();
+      if (isCurrentThreadPrioritized()) {
+        prioritize = false;
       }
-      myPrioritizedThreads.add(thread);
-      updateEffectivePrioritized();
+      else {
+        prioritize = true;
+        if (myPrioritizedThreads.isEmpty()) {
+          myPrioritizingStarted = System.nanoTime();
+        }
+        myPrioritizedThreads.add(thread);
+        updateEffectivePrioritized();
+      }
     }
     try {
       return computable.compute();
     }
     finally {
-      synchronized (myPrioritizationLock) {
-        myPrioritizedThreads.remove(thread);
-        updateEffectivePrioritized();
+      if (prioritize) {
+        synchronized (myPrioritizationLock) {
+          myPrioritizedThreads.remove(thread);
+          updateEffectivePrioritized();
+        }
       }
     }
   }
@@ -849,8 +852,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   protected void prioritizingFinished() {}
 
   @ApiStatus.Internal
-  public boolean isPrioritizedThread(@NotNull Thread from) {
-    return myPrioritizedThreads.contains(from);
+  public boolean isCurrentThreadPrioritized() {
+    return myPrioritizedThreads.contains(Thread.currentThread());
   }
 
   @ApiStatus.Internal
