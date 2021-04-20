@@ -1147,7 +1147,7 @@ final class DistributionJARsBuilder {
   private static Set<String> excludedFromMergeLibs = Set.of(
     "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
-    "intellij-coverage", // used as agent
+    "intellij-coverage", "intellij-test-discovery", // used as agent
     "winp", "junixsocket-core", "pty4j" // contains native library
   )
 
