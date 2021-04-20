@@ -11,7 +11,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.Compressor
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
 import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
@@ -100,10 +99,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Check for persistent id uniqueness
     pEntityData.persistentId(this)?.let { persistentId ->
       val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
-      if (ids != null) {
+      if (ids != null && ids.isNotEmpty()) {
         // Oh oh. This persistent id exists already
         // Fallback strategy: remove existing entity with all it's references
-        val existingEntityData = entityDataByIdOrDie(ids)
+        val existingEntityData = entityDataByIdOrDie(ids.single())
         val existingEntity = existingEntityData.createEntity(this)
         removeEntity(existingEntity)
         LOG.error("""
@@ -154,11 +153,11 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val newPersistentId = copiedData.persistentId(this)
       if (newPersistentId != null) {
         val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-        if (beforePersistentId != newPersistentId && ids != null) {
+        if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
           // Oh oh. This persistent id exists already.
           // Remove an existing entity and replace it with the new one.
 
-          val existingEntityData = entityDataByIdOrDie(ids)
+          val existingEntityData = entityDataByIdOrDie(ids.single())
           val existingEntity = existingEntityData.createEntity(this)
           removeEntity(existingEntity)
           LOG.error("""
@@ -207,7 +206,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptySet(), emptyMap())
+      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
 
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
@@ -371,7 +370,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           val persistentId = matchedEntityData.persistentId(this)
           if (persistentId != null) {
-            val existingEntity = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)
+            val existingEntity = this.indexes.persistentIdIndex.getIdsByEntry(persistentId)?.firstOrNull()
             if (existingEntity != null) {
               // Bad news, we have this persistent id already. CPP-22547
               // This may happened if local entity has entity source and remote entity has a different entity source
@@ -569,7 +568,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     this.indexes.updateExternalMappingForEntityId(matchedEntityId, clonedEntityId, replaceWith.indexes)
 
     if (dataDiffersByProperties) {
-      this.changeLog.addReplaceEvent(clonedEntityId, clonedEntity, emptyList(), emptySet(), emptyMap())
+      this.changeLog.addReplaceEvent(clonedEntityId, clonedEntity, emptyList(), emptyList(), emptyMap())
     }
     if (dataDiffersByEntitySource) {
       this.changeLog.addChangeSourceEvent(clonedEntityId, clonedEntity)
@@ -757,8 +756,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       val children = unmappedChildren.flatMap { (key, value) -> value.map { key to it } }
 
       // Collect children changes
-      val beforeChildrenSet = beforeChildren.toMutableSet()
-      val (removedChildren, addedChildren) = getDiff(beforeChildrenSet, children)
+      val addedChildren = (children.toSet() - beforeChildren.toSet()).toList()
+      val removedChildren = (beforeChildren.toSet() - children.toSet()).toList()
 
       // Collect parent changes
       val parentsMapRes: MutableMap<ConnectionId, EntityId?> = beforeParents.toMutableMap()
@@ -821,8 +820,20 @@ internal sealed class AbstractEntityStorage(internal val consistencyCheckingMode
 
   override fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
     val entityIds = indexes.persistentIdIndex.getIdsByEntry(id) ?: return null
+    if (entityIds.isEmpty()) return null
+    if (entityIds.size > 1) {
+      val entities = entityIds.associateWith { this.entityDataById(it) }.entries.joinToString(
+        "\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
+      LOG.error("""Cannot resolve persistent id $id. The store contains ${entityIds.size} associated entities:
+        |$entities
+        |Broken consistency: $brokenConsistency
+      """.trimMargin())
+      @Suppress("UNCHECKED_CAST")
+      return entityDataById(entityIds.first())?.createEntity(this) as E?
+    }
+    val entityId = entityIds.single()
     @Suppress("UNCHECKED_CAST")
-    return entityDataById(entityIds)?.createEntity(this) as E?
+    return entityDataById(entityId)?.createEntity(this) as E?
   }
 
   // Do not remove cast to Class<out TypedEntity>. kotlin fails without it

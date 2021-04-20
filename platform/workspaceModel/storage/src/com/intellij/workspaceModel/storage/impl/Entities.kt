@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 
@@ -189,12 +190,6 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
-  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
-    (res as WorkspaceEntityBase).entitySource = entitySource
-    (res as WorkspaceEntityBase).id = EntityId(id, classId)
-    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
-  }
-
   internal fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilderImpl): ModifiableWorkspaceEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
     val res = returnClass.java.newInstance()
@@ -261,9 +256,7 @@ fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): Persi
 
 class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    return field.get(thisRef.original) as B
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {

@@ -20,28 +20,18 @@ import java.io.Serializable
 class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var name: String
   var type: String? = null
-  var dependencies: List<ModuleDependencyItem> = emptyList()
-    set(value) {
-      field = value
-      this.softLinksCache = null
-    }
-
-  @Transient
-  private var softLinksCache: Set<PersistentEntityId<*>>? = null
+  lateinit var dependencies: List<ModuleDependencyItem>
 
   @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
-    val cache = softLinksCache
-    if (cache != null) return cache
-    val result = dependencies.mapNotNullTo(HashSet()) { dependency ->
+
+    return dependencies.mapNotNullTo(HashSet()) { dependency ->
       when (dependency) {
         is ModuleDependencyItem.Exportable.ModuleDependency -> dependency.module
         is ModuleDependencyItem.Exportable.LibraryDependency -> dependency.library
         else -> null
       }
     }
-    this.softLinksCache = result
-    return result
   }
 
   override fun updateLink(oldLink: PersistentEntityId<*>,
@@ -73,7 +63,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
-    addMetaData(it, snapshot, classId)
+    addMetaData(it, snapshot)
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
@@ -116,11 +106,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + entitySource.hashCode()
     return result
-  }
-
-  companion object {
-    @Transient
-    private val classId: Int = ClassToIntConverter.getInt(ModuleEntity::class.java)
   }
 }
 
@@ -222,26 +207,6 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
     get() = null
   override val presentableName: String
     get() = name
-
-  @Transient
-  private var codeCache: Int = 0
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is ModuleId) return false
-
-    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
-    if (name != other.name) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    if (codeCache != 0) return codeCache
-    val hashCode = name.hashCode()
-    codeCache = hashCode
-    return hashCode
-  }
 }
 
 sealed class ModuleDependencyItem : Serializable {
@@ -584,15 +549,10 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot, classId) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
-
-  companion object {
-    @Transient
-    private val classId: Int = ClassToIntConverter.getInt(LibraryEntity::class.java)
-  }
 }
 
 class LibraryEntity(
@@ -609,28 +569,6 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
     get() = null
   override val presentableName: String
     get() = name
-
-  @Transient
-  private var codeCache: Int = 0
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is LibraryId) return false
-
-    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
-    if (name != other.name) return false
-    if (tableId != other.tableId) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    if (codeCache != 0) return codeCache
-    var result = name.hashCode()
-    result = 31 * result + tableId.hashCode()
-    this.codeCache = result
-    return result
-  }
 }
 
 data class LibraryRootTypeId(val name: String) : Serializable {

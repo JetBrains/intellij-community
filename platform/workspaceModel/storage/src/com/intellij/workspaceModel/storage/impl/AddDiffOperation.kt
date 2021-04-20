@@ -345,11 +345,11 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
     val newPersistentId = entityData.persistentId(target)
     if (newPersistentId != null) {
       val existingIds = target.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-      if (existingIds != null) {
-        val existingIdCheck = if (newEntityId != null) existingIds != newEntityId else true
+      if (existingIds != null && existingIds.isNotEmpty()) {
+        val existingIdCheck = if (newEntityId != null) existingIds.single() != newEntityId else true
         if (existingIdCheck) {
           // target persistent id exists already.
-          val existingEntity = target.entityDataByIdOrDie(existingIds).createEntity(target)
+          val existingEntity = target.entityDataByIdOrDie(existingIds.single()).createEntity(target)
           target.removeEntity(existingEntity)
           target.addDiffAndReport(
             """
