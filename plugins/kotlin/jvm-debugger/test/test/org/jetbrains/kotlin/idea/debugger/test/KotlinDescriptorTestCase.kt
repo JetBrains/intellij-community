@@ -175,11 +175,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val javaCommandLineState: JavaCommandLineState = object : JavaCommandLineState(environment) {
             override fun createJavaParameters() = javaParameters
 
-            override fun createTargetedCommandLine(
-                request: TargetEnvironmentRequest,
-                configuration: TargetEnvironmentConfiguration?
-            ): TargetedCommandLineBuilder {
-                return getJavaParameters().toCommandLine(request, configuration)
+            override fun createTargetedCommandLine(request: TargetEnvironmentRequest): TargetedCommandLineBuilder {
+                return getJavaParameters().toCommandLine(request)
             }
         }
 
