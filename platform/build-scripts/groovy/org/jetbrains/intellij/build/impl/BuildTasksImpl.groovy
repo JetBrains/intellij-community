@@ -333,7 +333,8 @@ idea.fatal.error.notification=disabled
       buildProvidedModulesList(providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish.addAll(new PluginsCollector(buildContext, providedModulesFile.toString()).collectCompatiblePluginsToPublish())
+          final PluginsCollector collector = new PluginsCollector(buildContext)
+          pluginsToPublish.addAll(collector.collectCompatiblePluginsToPublish(providedModulesFile.toString()))
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")

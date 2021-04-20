@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Pair
 import com.intellij.util.xmlb.JDOMXIncluder
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
@@ -15,20 +16,18 @@ import java.nio.file.Path
 
 @CompileStatic
 final class PluginsCollector {
-  private final String myProvidedModulesFilePath
   private final BuildContext myBuildContext
 
-  PluginsCollector(@NotNull BuildContext buildContext, @NotNull String providedModulesFilePath) {
-    this.myBuildContext = buildContext
-    this.myProvidedModulesFilePath = providedModulesFilePath
+  PluginsCollector(@NotNull BuildContext buildContext) {
+    myBuildContext = buildContext
   }
 
-  List<PluginLayout> collectCompatiblePluginsToPublish() {
-    def parse = new JsonSlurper().parse(new File(myProvidedModulesFilePath)) as Map
+  List<PluginLayout> collectCompatiblePluginsToPublish(String providedModulesFilePath) {
+    def parse = new JsonSlurper().parse(new File(providedModulesFilePath)) as Map
     Set<String> availableModulesAndPlugins = new HashSet<String>(parse['modules'] as Collection)
     availableModulesAndPlugins.addAll(parse['plugins'] as Collection)
 
-    def descriptorsMap = collectPluginDescriptors()
+    def descriptorsMap = collectPluginDescriptors(true, true, true)
     def pluginDescriptors = new HashSet<PluginDescriptor>(descriptorsMap.values())
     return pluginDescriptors.findAll { isPluginCompatible(it, availableModulesAndPlugins, descriptorsMap) }.collect { it.pluginLayout }
   }
@@ -55,13 +54,15 @@ final class PluginsCollector {
     return true
   }
 
-  private @NotNull Map<String, PluginDescriptor> collectPluginDescriptors() {
+  @NotNull Map<String, PluginDescriptor> collectPluginDescriptors(boolean skipImplementationDetailPlugins, boolean skipBundledPlugins,
+                                                                  boolean honorCompatiplePluginsToIgnore) {
     def pluginDescriptors = new HashMap<String, PluginDescriptor>()
     def productLayout = myBuildContext.productProperties.productLayout
     def nonTrivialPlugins = productLayout.allNonTrivialPlugins.groupBy { it.mainModule }
     def allBundledPlugins = productLayout.bundledPluginModules as Set<String>
     for (JpsModule  jpsModule : myBuildContext.project.modules) {
-      if (allBundledPlugins.contains(jpsModule.name) || productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
+      if (skipBundledPlugins && allBundledPlugins.contains(jpsModule.name) ||
+          honorCompatiplePluginsToIgnore && productLayout.compatiblePluginsToIgnore.contains(jpsModule.name)) {
         continue
       }
 
@@ -87,7 +88,7 @@ final class PluginsCollector {
         continue
       }
 
-      if (xml.getAttributeValue('implementation-detail') == 'true') {
+      if (xml.getAttributeValue('implementation-detail') == 'true' && skipImplementationDetailPlugins) {
         myBuildContext.messages.debug("PluginsCollector: skipping module '$jpsModule.name' since 'implementation-detail' == 'true' in '$pluginXml'")
         continue
       }
@@ -121,13 +122,17 @@ final class PluginsCollector {
         }
       }
       def requiredDependencies = new HashSet<String>()
+      def optionalDependencies = new ArrayList<Pair<String, String>>()
       for (dependency in xml.getChildren('depends')) {
         if (dependency.getAttributeValue('optional') != 'true') {
           requiredDependencies += dependency.getTextTrim()
         }
+        else {
+          optionalDependencies += new Pair(dependency.getTextTrim(), dependency.getAttributeValue("config-file"))
+        }
       }
 
-      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, pluginLayout)
+      def pluginDescriptor = new PluginDescriptor(id, declaredModules, requiredDependencies, optionalDependencies, pluginLayout)
       pluginDescriptors[id] = pluginDescriptor
       for (module in declaredModules) {
         pluginDescriptors[module] = pluginDescriptor
@@ -136,16 +141,19 @@ final class PluginsCollector {
     return pluginDescriptors
   }
 
-  private static final class PluginDescriptor {
-    private final String id
-    private final Set<String> declaredModules
-    private final Set<String> requiredDependencies
-    private final PluginLayout pluginLayout
+  static final class PluginDescriptor {
+    final String id
+    final Set<String> declaredModules
+    final Set<String> requiredDependencies
+    final List<Pair<String, String>> optionalDependencies
+    final PluginLayout pluginLayout
 
-    PluginDescriptor(String id, Set<String> declaredModules, Set<String> requiredDependencies, PluginLayout pluginLayout) {
+    PluginDescriptor(String id, Set<String> declaredModules, Set<String> requiredDependencies,
+                     List<Pair<String, String>> optionalDependencies, PluginLayout pluginLayout) {
       this.id = id
       this.declaredModules = declaredModules
       this.requiredDependencies = requiredDependencies
+      this.optionalDependencies = optionalDependencies
       this.pluginLayout = pluginLayout
     }
   }
