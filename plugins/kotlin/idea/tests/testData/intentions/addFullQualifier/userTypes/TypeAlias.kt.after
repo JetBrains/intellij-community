@@ -1,0 +1,5 @@
+// WITH_RUNTIME
+
+fun test() {
+    val list: kotlin.collections.ArrayList<Int>
+}
