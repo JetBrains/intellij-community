@@ -184,6 +184,8 @@ import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeLi
 import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginDiagnosticTest
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
+import org.jetbrains.uast.test.kotlin.AbstractFE1UastDeclarationTest
+import org.jetbrains.uast.test.kotlin.AbstractFirUastDeclarationTest
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
@@ -1517,6 +1519,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
         testClass<AbstractSerializationQuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"), filenameStartsLowerCase = true)
+        }
+    }
+
+    testGroup("plugins/uast-kotlin-fir/tests") {
+        testClass<AbstractFirUastDeclarationTest> {
+            model("declaration")
+            model("legacy")
+        }
+    }
+
+    testGroup("plugins/uast-kotlin-fir/tests") {
+        testClass<AbstractFE1UastDeclarationTest> {
+            model("declaration")
+            model("legacy")
         }
     }
 
