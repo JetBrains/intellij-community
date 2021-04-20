@@ -33,6 +33,7 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.scriptDefinitionExists
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName as getKotlinFqNameOriginal
 
 infix fun SearchScope.and(otherScope: SearchScope): SearchScope = intersectWith(otherScope)
 infix fun SearchScope.or(otherScope: SearchScope): SearchScope = union(otherScope)
@@ -150,3 +152,11 @@ data class ReceiverTypeSearcherInfo(
 
 fun PsiReference.isImportUsage(): Boolean =
     element.getNonStrictParentOfType<KtImportDirective>() != null
+
+// Used in the "mirai" plugin
+@Deprecated(
+    "Use org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName()",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("getKotlinFqName()", "org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName")
+)
+fun PsiElement.getKotlinFqName(): FqName? = getKotlinFqNameOriginal()
