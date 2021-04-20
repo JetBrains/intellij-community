@@ -1,26 +1,27 @@
 <html>
 <body>
 Reports <code>null</code> assigned to <code>Optional</code> variable or returned from method returning <code>Optional</code>.
-It's recommended to use <code>Optional.empty()</code> (or <code>Optional.absent()</code> for Guava) to denote an empty value.
+<p>It's recommended that you use <code>Optional.empty()</code> (or <code>Optional.absent()</code> for Guava) to denote an empty value.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   Optional&lt;Integer&gt; foo(boolean flag) {
     return flag ? Optional.of(42) : null;
   }
-</pre>
-<p>After the fix is applied, the result will be like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   Optional&lt;Integer&gt; foo(boolean flag) {
     return flag ? Optional.of(42) : Optional.empty();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
+<p>Configure the inspection:</p>
 <p>
-  Use the checkbox below to report also comparisons like <code>optional == null</code>. While in rare cases (e.g. lazily initialized
-  optional field) this might be correct, usually optional variable is never null, and probably <code>optional.isPresent()</code> was
+  Use the <b>Report comparison of Optional with null</b> option to also report comparisons like <code>optional == null</code>. While in rare cases (e.g. lazily initialized
+  optional field) this might be correct, optional variable is usually never null, and probably <code>optional.isPresent()</code> was
   intended.
 </p>
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 <p><small>New in 2017.2</small>
 </body>
 </html>
