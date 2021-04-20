@@ -254,6 +254,14 @@ final class DistributionJARsBuilder {
   }
 
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
+    plugins = plugins.findAll {
+      // Kotlin Multiplatform Mobile plugin is excluded since:
+      // * is compatible with Android Studio only;
+      // * has release cycle of its own;
+      // * shadows IntelliJ utility modules included via Kotlin Compiler;
+      // * breaks searchable options index and jar order generation steps.
+      it.mainModule != 'kotlin-ultimate.kmm-plugin'
+    }
     if (plugins.isEmpty()) {
       return plugins
     }
