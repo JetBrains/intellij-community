@@ -208,6 +208,7 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
   override val presentableName: String
     get() = name
 
+  @Transient
   private var codeCache: Int = 0
 
   override fun equals(other: Any?): Boolean {
@@ -589,6 +590,7 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
   override val presentableName: String
     get() = name
 
+  @Transient
   private var codeCache: Int = 0
 
   override fun equals(other: Any?): Boolean {
