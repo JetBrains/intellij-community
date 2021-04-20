@@ -111,11 +111,6 @@ class ContentTabLabel extends BaseLabel {
     }
   };
 
-  boolean showIfSingle() {
-    return !StringUtil.isEmptyOrSpaces(myText) ||
-           hasActiveIcons();
-  }
-
   @Override
   public void setText(@NlsContexts.Label String text) {
     myText = text;
@@ -221,7 +216,7 @@ class ContentTabLabel extends BaseLabel {
     showTooltip(null);
   }
 
-  private boolean hasActiveIcons() {
+  boolean hasActiveIcons() {
     return myAdditionalIcons.stream().anyMatch(icon -> icon.getAvailable());
   }
 
@@ -238,7 +233,7 @@ class ContentTabLabel extends BaseLabel {
 
   public void update() {
     setHorizontalAlignment(SwingConstants.LEFT);
-    if (!myLayout.isToDrawTabs()) {
+    if (myLayout.isToDrawTabs() == TabContentLayout.TabsDrawMode.HIDE) {
       setBorder(null);
     }
 
@@ -255,11 +250,16 @@ class ContentTabLabel extends BaseLabel {
       }
     }
 
+    boolean additionalIconsOnly = StringUtil.isEmptyOrSpaces(getText());
     int left = DEFAULT_HORIZONTAL_INSET;
+    int right = DEFAULT_HORIZONTAL_INSET;
+    if (additionalIconsOnly) {
+      left = ICONS_GAP;
+      right = ICONS_GAP;
+    }
 
-    int iconWidth = 0;
     if (map.get(false) != null) {
-      iconWidth = ICONS_GAP;
+      int iconWidth = ICONS_GAP;
 
       for (AdditionalIcon icon : map.get(false)) {
         icon.setX(iconWidth);
@@ -267,23 +267,32 @@ class ContentTabLabel extends BaseLabel {
       }
 
       left = iconWidth;
-      iconWidth = 0;
     }
 
-    int right = DEFAULT_HORIZONTAL_INSET;
+    int rightIconWidth = 0;
     if (map.get(true) != null) {
-      right = ICONS_GAP + JBUIScale.scale(4);
+      if (additionalIconsOnly) {
+        for (AdditionalIcon icon : map.get(true)) {
+          icon.setX(left + rightIconWidth);
+          rightIconWidth += icon.getIconWidth() + ICONS_GAP;
+        }
+        rightIconWidth -= ICONS_GAP;
+      }
+      else {
+        right = ICONS_GAP + JBUIScale.scale(4);
+        int offset = size.width - JBUIScale.scale(4);
 
-      for (AdditionalIcon icon : map.get(true)) {
-        icon.setX(iconWidth + size.width + ICONS_GAP - right);
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
+        for (AdditionalIcon icon : map.get(true)) {
+          icon.setX(offset + rightIconWidth);
+          rightIconWidth += icon.getIconWidth() + ICONS_GAP;
+        }
       }
     }
 
     setBorder(new EmptyBorder(0, left, 0, right));
-    myIconWithInsetsWidth = iconWidth + right + left;
+    myIconWithInsetsWidth = rightIconWidth + right + left;
 
-    return new Dimension(iconWidth + size.width, size.height);
+    return new Dimension(rightIconWidth + size.width, size.height);
   }
 
   @Override

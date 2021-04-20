@@ -47,7 +47,7 @@ abstract class AdditionalIcon(val action: ContentTabAction) {
   }
 
   private fun getIconY(): Int {
-    return height / 2 - getIconHeight() / 2 + 1
+    return (height - getIconHeight()) / 2 + 1
   }
 
   fun contains(point: Point): Boolean {
