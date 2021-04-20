@@ -7,12 +7,17 @@ the source or documentation.
 This problem is also known as <a href="https://ariya.io/2011/08/hall-of-api-shame-boolean-trap">the boolean trap</a>.
 The <code>boolean</code> parameter can often be profitably replaced with an <code>enum</code>.
 <p>Example:</p>
-<pre>
-  // Warning: it's hard to understand what boolean parameters mean when reading the code
-  public boolean setPermission(File f, int access, boolean enable, boolean owneronly) {
-    ...
+<pre><code>
+  // Warning: it's hard to understand what the
+  // boolean parameters mean when looking at
+  // a call to this method
+  public boolean setPermission(File f,
+                               int access,
+                               boolean enable,
+                               boolean ownerOnly) {
+    // ...
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 Use the option below to only warn when a method contains more than one boolean parameter.

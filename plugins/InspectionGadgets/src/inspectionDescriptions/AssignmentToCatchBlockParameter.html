@@ -4,7 +4,7 @@ Reports assignment to variable declared as a <code>catch</code> block parameter.
 Changing the <code>catch</code> block parameter is very confusing and should be discouraged.
 If you need to update the exception for rethrowing, consider declaring a new variable.
 <p>Example:</p>
-<pre>
+<pre><code>
   void processFile(String fileName) throws Exception {
     try {
       doProcessFile(fileName);
@@ -17,20 +17,21 @@ If you need to update the exception for rethrowing, consider declaring a new var
       throw ex;
     }
   }
-</pre>
+</code></pre>
 <p>A quick-fix is suggested to declare a new variable:</p>
-<pre>
+<pre><code>
     catch(Exception ex) {
       Exception unwrapped = ex;
       if (unwrapped instanceof UncheckedIOException) {
-        unwrapped = ((UncheckedIOException) unwrapped).getCause();
+        unwrapped = ((UncheckedIOException)
+          unwrapped).getCause();
       }
       throw unwrapped;
     }
-</pre>
+</code></pre>
 <p>
-  Note that this inspection does not report parameters of multi-catch blocks, as such a parameter
-  is implicitly final and reassigning it is a compilation error.
+  Note that this inspection does not report parameters of multi-catch blocks, as such parameters
+  are implicitly final and reassigning them is a compilation error.
 </p>
 <!-- tooltip end -->
 </body>

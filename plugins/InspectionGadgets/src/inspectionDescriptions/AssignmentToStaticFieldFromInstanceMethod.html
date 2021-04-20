@@ -6,16 +6,17 @@ While legal, such assignments are tricky to do
 safely, and are often a result of fields being inadvertently marked
 <code>static</code>.
 <p>Example:</p>
-<pre>
-class Counter {
-  private static int count = 0;
+<pre><code>
+  class Counter {
+    private static int count = 0;
 
-  void increment() {
-    // Warning: updating the static field from the instance method
-    count++;
+    void increment() {
+      // Warning: updating a static field
+      // from an instance method
+      count++;
+    }
   }
-}
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

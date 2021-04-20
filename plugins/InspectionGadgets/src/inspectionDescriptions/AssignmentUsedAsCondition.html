@@ -2,24 +2,25 @@
 <body>
 Reports an assignment being used as the condition of an <code>if</code>, <code>while</code>, <code>for</code> or
 <code>do</code> statement, or in any other context. While occasionally intended, this usage is confusing,
-and may indicate a typo (<code>=</code> instead of <code>==</code>).
+and may indicate a typo (<code>=</code> used instead of <code>==</code>).
 <p>Example:</p>
-<pre>
+<pre><code>
   void update(String str, boolean empty) {
-    // Warning: 'empty' is reassigned, not compared to str.isEmpty()
+    // Warning: 'empty' is reassigned,
+    // not compared to str.isEmpty()
     if (empty = str.isEmpty()) {
       ...
     }
   }
-</pre>
+</code></pre>
 <p>A quick-fix is suggested to replace <code>=</code> with <code>==</code>:</p>
-<pre>
+<pre><code>
   void update(String str, boolean empty) {
     if (empty == str.isEmpty()) {
       ...
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

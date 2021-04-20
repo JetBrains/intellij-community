@@ -7,17 +7,16 @@ Reports any cases in which <code>java.util.Optional&lt;T&gt;</code>, <code>java.
 <p>Using a field with the <code>java.util.Optional</code> type is also problematic if the class needs to be
   <code>Serializable</code>, as <code>java.util.Optional</code> is not serializable.</p>
 <p>Example:</p>
-<pre>
-  <code>
-class MyClass {
-  Optional&lt;String&gt; name; // Optional field
-  
-  void setName(Optional&lt;String&gt; name) { // Optional parameter
-    this.name = name;
+<pre><code>
+  class MyClass {
+    Optional&lt;String&gt; name; // Optional field
+
+    // Optional parameter
+    void setName(Optional&lt;String&gt; name) {
+      this.name = name;
+    }
   }
-}
-  </code>
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2016.1</small></p>
 </body>

@@ -3,12 +3,13 @@
 Reports assignment expressions nested inside other expressions. While admirably terse,
 such expressions may be confusing, and violate the general design principle that a given construct should do precisely one thing.
 <p>Example:</p>
-<pre>
+<pre><code>
   String userName;
   // Warning: result of assignment to 'userName' is used
-  System.out.println("Hello " + (userName = "Alice") + "!");
+  String message = "Hello " + (userName = "Alice") + "!"
+  System.out.println(message);
   System.out.println("Goodbye " + userName);
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 
