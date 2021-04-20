@@ -207,7 +207,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       (entity as SoftLinkable).updateLink(beforePersistentId, newPersistentId)
 
       // Add an entry to changelog
-      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptyList(), emptyMap())
+      this.changeLog.addReplaceEvent(entityId, entity, emptyList(), emptySet(), emptyMap())
 
       updatePersistentIdIndexes(entity.createEntity(this), editingBeforePersistentId, entity)
     }
@@ -569,7 +569,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     this.indexes.updateExternalMappingForEntityId(matchedEntityId, clonedEntityId, replaceWith.indexes)
 
     if (dataDiffersByProperties) {
-      this.changeLog.addReplaceEvent(clonedEntityId, clonedEntity, emptyList(), emptyList(), emptyMap())
+      this.changeLog.addReplaceEvent(clonedEntityId, clonedEntity, emptyList(), emptySet(), emptyMap())
     }
     if (dataDiffersByEntitySource) {
       this.changeLog.addChangeSourceEvent(clonedEntityId, clonedEntity)
