@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,18 +27,6 @@ import java.util.stream.Collectors;
 
 public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
 
-  @Nls
-  @VisibleForTesting
-  static String getAddNoteFixName() {
-    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name");
-  }
-
-  @Nls
-  @VisibleForTesting
-  static String getGenerateEqualsFixName() {
-    return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.generate.equals.name");
-  }
-
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -63,7 +50,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return getGenerateEqualsFixName();
+      return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.generate.equals.name");
     }
 
     @Override
@@ -75,8 +62,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
       }
       methodText.append("public ");
       methodText.append("boolean equals(Object o) {\n");
-      methodText.append("if (!(o instanceof ").append(aClass.getName()).append("))").append("return false;");
-      methodText.append("return compareTo((").append(aClass.getName()).append(")o)==0;\n");
+      methodText.append("return o instanceof ").append(aClass.getName());
+      methodText.append("&& compareTo((").append(aClass.getName()).append(")o) == 0;\n");
       methodText.append("}");
       final PsiMethod method =
         JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), aClass, PsiUtil.getLanguageLevel(aClass));
@@ -96,7 +83,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     @NotNull
     @Override
     public String getFamilyName() {
-      return getAddNoteFixName();
+      return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name");
     }
 
     @Override
