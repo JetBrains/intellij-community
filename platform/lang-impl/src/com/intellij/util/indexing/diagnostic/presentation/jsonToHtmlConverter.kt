@@ -199,8 +199,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           tr {
             th("File type")
             th("Number of files")
-            th("Part of total indexing time")
-            th("Part of total content loading time")
+            th("Indexing time")
+            th("Content loading time")
             th("Total files size")
             th("Indexing speed")
             th("The biggest contributors")
@@ -208,16 +208,22 @@ fun JsonIndexDiagnostic.generateHtml(): String {
         }
         tbody {
           for (statsPerFileType in projectIndexingHistory.totalStatsPerFileType) {
+            val visibleIndexingTime = JsonDuration(
+              (projectIndexingHistory.times.indexingTime.nano * statsPerFileType.partOfTotalProcessingTime.partition).toLong()
+            )
+            val visibleContentLoadingTime = JsonDuration(
+              (projectIndexingHistory.times.contentLoadingTime.nano * statsPerFileType.partOfTotalContentLoadingTime.partition).toLong()
+            )
             tr {
               td(statsPerFileType.fileType)
               td(statsPerFileType.totalNumberOfFiles.toString())
-              td(statsPerFileType.partOfTotalIndexingTime.presentablePercentages())
-              td(statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages())
+              td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
+              td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
               td(statsPerFileType.totalFilesSize.presentableSize())
               td(statsPerFileType.indexingSpeed.presentableSpeed())
               td(
                 statsPerFileType.biggestContributors.joinToString("\n") {
-                  it.partOfTotalIndexingTimeOfThisFileType.presentablePercentages() + ": " +
+                  it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
                   it.providerName + " " +
                   it.numberOfFiles + " files of total size " +
                   it.totalFilesSize.presentableSize()
