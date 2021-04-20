@@ -186,6 +186,7 @@ class EntityStorageSerializerImpl(
     kryo.register(ImmutableIntIntUniqueBiMap::class.java)
     kryo.register(VirtualFileIndex::class.java)
     kryo.register(EntityStorageInternalIndex::class.java)
+    kryo.register(PersistentIdInternalIndex::class.java)
     kryo.register(ImmutableNonNegativeIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
@@ -474,7 +475,7 @@ class EntityStorageSerializerImpl(
         val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo, entityId2JarDir)
 
         val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
-        val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
+        val persistentIdIndex = kryo.readClassAndObject(input) as PersistentIdInternalIndex<PersistentEntityId<*>>
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
         val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)
