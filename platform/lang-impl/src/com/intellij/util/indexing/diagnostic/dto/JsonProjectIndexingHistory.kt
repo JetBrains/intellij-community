@@ -15,7 +15,7 @@ data class JsonProjectIndexingHistory(
 
   data class JsonStatsPerFileType(
     val fileType: String,
-    val partOfTotalIndexingTime: JsonPercentages,
+    val partOfTotalProcessingTime: JsonPercentages,
     val partOfTotalContentLoadingTime: JsonPercentages,
     val totalNumberOfFiles: Int,
     val totalFilesSize: JsonFileSize,
@@ -26,7 +26,7 @@ data class JsonProjectIndexingHistory(
       val providerName: String,
       val numberOfFiles: Int,
       val totalFilesSize: JsonFileSize,
-      val partOfTotalIndexingTimeOfThisFileType: JsonPercentages
+      val partOfTotalProcessingTimeOfThisFileType: JsonPercentages
     )
   }
 

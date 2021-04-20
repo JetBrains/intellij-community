@@ -93,7 +93,7 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory {
   return JsonProjectIndexingHistory(
     projectName = project.name,
     times = times.toJson(),
-    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
+    totalStatsPerFileType = aggregateStatsPerFileType().sortedByDescending { it.partOfTotalProcessingTime.doublePercentages },
     totalStatsPerIndexer = aggregateStatsPerIndexer().sortedByDescending { it.partOfTotalIndexingTime.doublePercentages },
     scanningStatistics = scanningStatistics.sortedByDescending { it.scanningTime.nano },
     fileProviderStatistics = providerStatistics.sortedByDescending { it.totalIndexingTime.nano }
@@ -101,9 +101,9 @@ fun ProjectIndexingHistory.toJson(): JsonProjectIndexingHistory {
 }
 
 private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProjectIndexingHistory.JsonStatsPerFileType> {
-  val totalIndexingTime = totalStatsPerFileType.values.sumOf { it.totalIndexingTimeInAllThreads }
-  val fileTypeToIndexingTimePart = totalStatsPerFileType.mapValues {
-    calculatePercentages(it.value.totalIndexingTimeInAllThreads, totalIndexingTime)
+  val totalProcessingTime = totalStatsPerFileType.values.sumOf { it.totalProcessingTimeInAllThreads }
+  val fileTypeToProcessingTimePart = totalStatsPerFileType.mapValues {
+    calculatePercentages(it.value.totalProcessingTimeInAllThreads, totalProcessingTime)
   }
 
   @Suppress("DuplicatedCode")
@@ -113,7 +113,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
   }
 
   val fileTypeToProcessingSpeed = totalStatsPerFileType.mapValues {
-    JsonProcessingSpeed(it.value.totalBytes, it.value.totalIndexingTimeInAllThreads)
+    JsonProcessingSpeed(it.value.totalBytes, it.value.totalProcessingTimeInAllThreads)
   }
 
   return totalStatsPerFileType.map { (fileType, stats) ->
@@ -122,17 +122,17 @@ private fun ProjectIndexingHistory.aggregateStatsPerFileType(): List<JsonProject
         it.providerName,
         it.numberOfFiles,
         JsonFileSize(it.totalBytes),
-        calculatePercentages(it.indexingTimeInAllThreads, stats.totalIndexingTimeInAllThreads)
+        calculatePercentages(it.processingTimeInAllThreads, stats.totalProcessingTimeInAllThreads)
       )
     }
     JsonProjectIndexingHistory.JsonStatsPerFileType(
       fileType,
-      fileTypeToIndexingTimePart.getValue(fileType),
+      fileTypeToProcessingTimePart.getValue(fileType),
       fileTypeToContentLoadingTimePart.getValue(fileType),
       stats.totalNumberOfFiles,
       JsonFileSize(stats.totalBytes),
       fileTypeToProcessingSpeed.getValue(fileType),
-      jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalIndexingTimeOfThisFileType.doublePercentages }
+      jsonBiggestFileTypeContributors.sortedByDescending { it.partOfTotalProcessingTimeOfThisFileType.doublePercentages }
     )
   }
 }

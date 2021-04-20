@@ -5,9 +5,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 
 data class JsonPercentages(val part: Long, val total: Long) {
 
+  val partition: Double
+    @JsonIgnore
+    get() = if (total == 0L) 1.0 else part.toDouble() / total
+
   val doublePercentages: Double
     @JsonIgnore
-    get() = if (total == 0L) 100.0 else part.toDouble() / total * 100
+    get() = partition * 100
 
   fun presentablePercentages(): String =
     when {

@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
-import java.util.concurrent.TimeUnit
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
@@ -54,7 +53,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
   )
 
   data class StatsPerFileType(
-    var indexingTimeInAllThreads: TimeNano,
+    var processingTimeInAllThreads: TimeNano,
     var contentLoadingTimeInAllThreads: TimeNano,
     var numberOfFiles: Int,
     var totalBytes: BytesNumber
@@ -91,7 +90,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
     val indexingTime = perIndexerTimes.values.sum()
-    stats.indexingTimeInAllThreads += indexingTime
+    stats.processingTimeInAllThreads += processingTime
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
