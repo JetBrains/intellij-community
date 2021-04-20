@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.platform.util.plugins.XIncludeResolvingContext;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.*;
@@ -36,6 +37,7 @@ public final class DescriptorListLoadingContext implements AutoCloseable {
   final @NotNull PluginLoadingResult result;
 
   final Set<PluginId> disabledPlugins;
+  final XIncludeResolvingContext xincludeResolveContext = new MyXIncludeResolvingContext();
 
   private volatile String defaultVersion;
 
@@ -126,6 +128,19 @@ public final class DescriptorListLoadingContext implements AutoCloseable {
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: '" + rootDescriptor + "'. ");
     return true;
+  }
+
+  private class MyXIncludeResolvingContext implements XIncludeResolvingContext {
+    @NotNull
+    @Override
+    public SafeJdomFactory getXmlFactory() {
+      return DescriptorListLoadingContext.this.getXmlFactory();
+    }
+
+    @Override
+    public boolean getIgnoreMissingInclude() {
+      return ignoreMissingInclude;
+    }
   }
 }
 

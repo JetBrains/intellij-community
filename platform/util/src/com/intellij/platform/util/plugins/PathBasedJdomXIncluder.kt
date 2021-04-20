@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("PathBasedJdomXIncluder")
-package com.intellij.ide.plugins
+package com.intellij.platform.util.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SafeJdomFactory
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Namespace
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 interface PathResolver {
@@ -24,6 +25,11 @@ interface PathResolver {
   fun resolvePath(dataLoader: DataLoader, relativePath: String, jdomFactory: SafeJdomFactory): Element?
 }
 
+interface XIncludeResolvingContext {
+  val xmlFactory: SafeJdomFactory
+  val ignoreMissingInclude: Boolean
+}
+
 private const val INCLUDE = "include"
 private const val HREF = "href"
 private const val BASE = "base"
@@ -35,7 +41,7 @@ private const val XPOINTER = "xpointer"
 private val LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager")
 
 @Throws(JDOMException::class)
-private fun resolveXIncludeElement(context: DescriptorListLoadingContext,
+private fun resolveXIncludeElement(context: XIncludeResolvingContext,
                                    pathResolver: PathResolver,
                                    dataLoader: DataLoader,
                                    linkElement: Element,
@@ -82,7 +88,7 @@ private fun resolveXIncludeElement(context: DescriptorListLoadingContext,
 }
 
 @Throws(JDOMException::class)
-private fun loadXIncludeReference(context: DescriptorListLoadingContext,
+private fun loadXIncludeReference(context: XIncludeResolvingContext,
                                   pathResolver: PathResolver,
                                   dataLoader: DataLoader,
                                   base: String?,
@@ -125,12 +131,13 @@ private fun loadXIncludeReference(context: DescriptorListLoadingContext,
   }
 }
 
+@ApiStatus.Internal
 @Throws(JDOMException::class)
-internal fun resolveNonXIncludeElement(context: DescriptorListLoadingContext,
-                                       pathResolver: PathResolver,
-                                       dataLoader: DataLoader,
-                                       original: Element,
-                                       base: String?) {
+fun resolveNonXIncludeElement(context: XIncludeResolvingContext,
+                              pathResolver: PathResolver,
+                              dataLoader: DataLoader,
+                              original: Element,
+                              base: String?) {
   val contentList = original.content
   for (i in contentList.indices.reversed()) {
     val content = contentList.get(i) as? Element ?: continue

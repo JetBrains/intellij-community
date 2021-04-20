@@ -15,6 +15,8 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.util.plugins.LocalFsDataLoader;
+import com.intellij.platform.util.plugins.PathResolver;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;

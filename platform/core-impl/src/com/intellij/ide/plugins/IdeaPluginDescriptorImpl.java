@@ -11,6 +11,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.util.plugins.DataLoader;
+import com.intellij.platform.util.plugins.PathBasedJdomXIncluder;
+import com.intellij.platform.util.plugins.PathResolver;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -145,7 +148,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     XmlReader.readIdAndName(this, element);
 
     // some information required for "incomplete" plugins can be in included files
-    PathBasedJdomXIncluder.resolveNonXIncludeElement(context, pathResolver, dataLoader, element, null);
+    PathBasedJdomXIncluder.resolveNonXIncludeElement(context.xincludeResolveContext, pathResolver, dataLoader, element, null);
 
     if (id != null && context.isPluginDisabled(id)) {
       markAsIncomplete(context, null, null);

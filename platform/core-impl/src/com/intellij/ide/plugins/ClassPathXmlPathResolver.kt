@@ -3,6 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SafeJdomFactory
+import com.intellij.platform.util.plugins.DataLoader
+import com.intellij.platform.util.plugins.PathResolver
 import org.jdom.Element
 
 internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader) : PathResolver {

@@ -14,6 +14,8 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.InterfaceExtensionPoint
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.util.plugins.DataLoader
+import com.intellij.platform.util.plugins.PathResolver
 import com.intellij.util.messages.ListenerDescriptor
 import org.jdom.Attribute
 import org.jdom.Element

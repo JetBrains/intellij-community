@@ -10,6 +10,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.util.plugins.DataLoader
+import com.intellij.platform.util.plugins.LocalFsDataLoader
+import com.intellij.platform.util.plugins.PathResolver
+import com.intellij.platform.util.plugins.ZipFsDataLoader
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
@@ -95,13 +99,13 @@ object PluginDescriptorLoader {
   }
 
   internal fun loadDescriptorFromJar(file: Path,
-                                    fileName: String,
-                                    pathResolver: PathResolver,
-                                    context: DescriptorLoadingContext,
-                                    parentContext: DescriptorListLoadingContext,
-                                    isBundled: Boolean,
-                                    isEssential: Boolean,
-                                    pluginPath: Path?): IdeaPluginDescriptorImpl? {
+                                     fileName: String,
+                                     pathResolver: PathResolver,
+                                     context: DescriptorLoadingContext,
+                                     parentContext: DescriptorListLoadingContext,
+                                     isBundled: Boolean,
+                                     isEssential: Boolean,
+                                     pluginPath: Path?): IdeaPluginDescriptorImpl? {
     val factory = parentContext.xmlFactory
     try {
       val element: Element
