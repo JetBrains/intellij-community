@@ -154,10 +154,12 @@ final class CommonCodeStyleSettingsManager {
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     synchronized (this) {
       initCommonSettingsMap();
+      CodeStyleSettingsService settingsService = CodeStyleSettingsService.getInstance();
       for (Element commonSettingsElement : element.getChildren(COMMON_SETTINGS_TAG)) {
         final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
         if (!StringUtil.isEmpty(languageId)) {
-          final LanguageCodeStyleProvider provider = findProvider(languageId);
+          final LanguageCodeStyleProvider provider = ContainerUtil.find(settingsService.getLanguageCodeStyleProviders(),
+                                                                        p -> languageId.equals(p.getLanguage().getID()));
           if (provider != null) {
             CommonCodeStyleSettings commonSettings = readExternal(provider, commonSettingsElement);
             if (commonSettings != null) {
@@ -171,12 +173,6 @@ final class CommonCodeStyleSettingsManager {
       }
       initNonReadSettings();
     }
-  }
-
-  @Nullable
-  private static LanguageCodeStyleProvider findProvider(@NotNull String languageId) {
-    return ContainerUtil.find(CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders(),
-                              provider -> languageId.equals(provider.getLanguage().getID()));
   }
 
   @Nullable
