@@ -1,6 +1,6 @@
 [
   {
-    "repositoryUrl": "https://jetbrains.bintray.com/intellij-redist",
+    "repositoryUrl": "https://packages.jetbrains.team/maven/p/ij/intellij-redist",
     "artifacts": [
       {
         "groupId": "junit",
