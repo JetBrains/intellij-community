@@ -38,7 +38,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("GotoDeclaration") {
       text(LessonsBundle.message("recent.files.first.transition", code(transitionMethodName), action(it)))
-      trigger(it) { virtualFile.name.contains(transitionFileName) }
+      stateCheck { virtualFile.name.contains(transitionFileName) }
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }
