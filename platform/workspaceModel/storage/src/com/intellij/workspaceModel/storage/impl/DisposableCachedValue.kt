@@ -5,16 +5,29 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
-class DisposableCachedValue<R : Disposable>(private val entityStorage: () -> VersionedEntityStorage,
+class DisposableCachedValue<R : Disposable>(private val entityStorage: VersionedEntityStorage,
                                             private val cachedValue: CachedValue<R>) : Disposable {
 
   private var latestValue: R? = null
+  private var latestStorageModificationCount: Long? = null
 
   val value: R
     @Synchronized
     get() {
-      val currentValue = entityStorage().cachedValue(cachedValue)
+      val currentValue: R
+      if (entityStorage is DummyVersionedEntityStorage) {
+        val storageModificationCount = (entityStorage.current as WorkspaceEntityStorageBuilder).modificationCount
+        if (storageModificationCount != latestStorageModificationCount) {
+          currentValue = entityStorage.cachedValue(cachedValue)
+          latestStorageModificationCount = storageModificationCount
+        } else {
+          currentValue = latestValue!!
+        }
+      } else {
+        currentValue = entityStorage.cachedValue(cachedValue)
+      }
 
       val oldValue = latestValue
       if (oldValue !== currentValue && oldValue != null) {
@@ -33,8 +46,9 @@ class DisposableCachedValue<R : Disposable>(private val entityStorage: () -> Ver
   fun dropCache() {
     val oldValue = latestValue
     if (oldValue != null) {
-      entityStorage().clearCachedValue(cachedValue)
+      entityStorage.clearCachedValue(cachedValue)
       Disposer.dispose(oldValue)
+      latestStorageModificationCount = null
       latestValue = null
     }
   }

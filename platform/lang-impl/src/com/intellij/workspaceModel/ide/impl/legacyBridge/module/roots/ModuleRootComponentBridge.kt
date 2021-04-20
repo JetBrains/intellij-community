@@ -33,7 +33,7 @@ class ModuleRootComponentBridge(
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
   private val modelValue = DisposableCachedValue(
-    { moduleBridge.entityStorage },
+    moduleBridge.entityStorage,
     CachedValue { storage ->
       RootModelBridgeImpl(
         moduleEntity = storage.findModuleEntity(moduleBridge),
