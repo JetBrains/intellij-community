@@ -43,7 +43,7 @@ catch (UnknownHostException e) {
 
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
-apply from: 'setupKotlin.gradle'
+apply from: 'setupKotlinCompiler.gradle'
 apply from: 'setupJetSign.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
