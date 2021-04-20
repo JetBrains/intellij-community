@@ -243,19 +243,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @Nls
   @Nullable
   private static String getAdvertisement(List<SearchEverywhereContributor<?>> contributors) {
-    List<String> advertisements = new ArrayList<>();
 
     boolean commandsSupported = contributors.stream().anyMatch(contributor -> !contributor.getSupportedCommands().isEmpty());
     if (commandsSupported) {
-      advertisements.add(IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator()));
+      return IdeBundle.message("searcheverywhere.textfield.hint", SearchTopHitProvider.getTopHitAccelerator());
     }
 
-    advertisements.addAll(
-      contributors.stream()
-        .map(c -> c.getAdvertisement())
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList())
-    );
+    List<String> advertisements = contributors.stream()
+      .map(c -> c.getAdvertisement())
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
 
     return advertisements.isEmpty() ? null : advertisements.get(new Random().nextInt(advertisements.size()));
   }
