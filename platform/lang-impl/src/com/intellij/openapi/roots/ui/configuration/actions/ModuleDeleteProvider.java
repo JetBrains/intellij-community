@@ -84,7 +84,8 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }
 
     String names = StringUtil.join(moduleDescriptions, description -> "'" + description.getName() + "'", ", ");
-    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), getActionTitle(), CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+    String dialogTitle = StringUtil.trimEnd(getActionTitle(), "...");
+    int ret = Messages.showOkCancelDialog(getConfirmationText(names, moduleDescriptions.size()), dialogTitle, CommonBundle.message("button.remove"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
     if (ret != Messages.OK) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       final Runnable action = () -> {
@@ -117,7 +118,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  private static @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
+  protected @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
     if (ProjectAttachProcessor.canAttachToProject()) {
       return ProjectBundle.message("project.remove.confirmation.prompt", names, numberOfModules);
     }
