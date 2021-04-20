@@ -34,9 +34,7 @@ import com.intellij.psi.util.ProximityLocation
 import com.intellij.psi.util.proximity.PsiProximityComparator
 import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -178,7 +176,9 @@ class KotlinAddImportAction internal constructor(
 
     fun isUnambiguous(): Boolean {
         singleImportVariant = variants.singleOrNull()?.variant?.takeIf { variant ->
-            variant.descriptorsToImport.all { it is ClassDescriptor }
+            variant.descriptorsToImport.all { it is ClassDescriptor } ||
+                    variant.descriptorsToImport.all { it is FunctionDescriptor } ||
+                    variant.descriptorsToImport.all { it is PropertyDescriptor }
         }
 
         return singleImportVariant != null

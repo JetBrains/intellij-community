@@ -178,7 +178,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     }
 
     protected fun getProjectDescriptorFromFileDirective(): LightProjectDescriptor {
-        val file = File(testDataDirectory, fileName())
+        val file = mainFile()
         if (!file.exists()) {
             return KotlinLightProjectDescriptor.INSTANCE
         }
@@ -242,6 +242,8 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             throw rethrow(e)
         }
     }
+
+    protected open fun mainFile() = File(testDataDirectory, fileName())
 
     private fun sdk(javaVersion: Int): Sdk = when (javaVersion) {
         6 -> IdeaTestUtil.getMockJdk16()

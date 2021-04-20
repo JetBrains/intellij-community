@@ -72,6 +72,7 @@ import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.highlighter.*
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
+import org.jetbrains.kotlin.idea.imports.AbstractAutoImportTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
 import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
@@ -743,6 +744,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractClsStubBuilderTest> {
             model("decompiler/stubBuilder", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractAutoImportTest> {
+            model("editor/autoImport", testMethodName = "doTest", testClassName="WithAutoImport", pattern = DIRECTORY, isRecursive = false)
+            model("editor/autoImport", testMethodName = "doTestWithoutAutoImport", testClassName="WithoutAutoImport", pattern = DIRECTORY, isRecursive = false)
         }
 
         testClass<AbstractJvmOptimizeImportsTest> {
