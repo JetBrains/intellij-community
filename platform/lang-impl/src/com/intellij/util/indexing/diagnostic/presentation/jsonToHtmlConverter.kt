@@ -19,6 +19,10 @@ fun createAggregateHtml(
   val appInfo = JsonIndexDiagnosticAppInfo.create()
   val runtimeInfo = JsonRuntimeInfo.create()
   return html {
+    head {
+      title("Indexing diagnostics of '$projectName'")
+      style(CSS_STYLE)
+    }
     body {
       h1("Project name")
       text(projectName)
@@ -88,40 +92,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
     head {
       title("Indexing diagnostics of '${projectIndexingHistory.projectName}'")
-      //language=CSS
-      style("""
-        body {
-          font-family: Arial,sans-serif;
-          margin-left: 15%;
-          margin-top: 20px;
-        }
-        
-        table, th, td {
-          border: 1px solid black;
-          border-collapse: collapse;
-        }
-        
-        table {
-          width: 80%;
-        }
-        
-        table.two-columns td {
-          width: 50%;
-        }
-        
-        th, td {
-          padding: 3px;
-        }
-        
-        th {
-          background: lightgrey;
-        }
-        
-        td {
-          white-space: pre-wrap;
-          word-break: break-word;
-        }        
-      """.trimIndent())
+      style(CSS_STYLE)
     }
     body {
       h1("Project name")
@@ -372,6 +343,41 @@ fun JsonIndexDiagnostic.generateHtml(): String {
     }
   }.toString()
 }
+
+//language=CSS
+private val CSS_STYLE = """
+  body {
+    font-family: Arial,sans-serif;
+    margin-left: 15%;
+    margin-top: 20px;
+  }
+  
+  table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+  }
+  
+  table {
+    width: 80%;
+  }
+  
+  table.two-columns td {
+    width: 50%;
+  }
+  
+  th, td {
+    padding: 3px;
+  }
+  
+  th {
+    background: lightgrey;
+  }
+  
+  td {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }        
+""".trimIndent()
 
 private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
   val tagBuilder = HtmlBuilder()
