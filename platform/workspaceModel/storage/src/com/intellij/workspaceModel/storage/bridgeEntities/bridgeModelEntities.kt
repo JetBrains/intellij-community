@@ -63,7 +63,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
-    addMetaData(it, snapshot)
+    addMetaData(it, snapshot, classId)
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
@@ -106,6 +106,11 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + entitySource.hashCode()
     return result
+  }
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(ModuleEntity::class.java)
   }
 }
 
@@ -569,10 +574,15 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot, classId) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(LibraryEntity::class.java)
+  }
 }
 
 class LibraryEntity(
