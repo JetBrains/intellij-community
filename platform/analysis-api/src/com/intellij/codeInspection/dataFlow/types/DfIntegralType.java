@@ -3,7 +3,6 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,15 +23,6 @@ public interface DfIntegralType extends DfType {
    * @return result of the operation
    */
   @NotNull DfType eval(@NotNull DfType other, @NotNull LongRangeBinOp op);
-
-  @NotNull
-  default DfType meetRelation(@NotNull RelationType relation, @NotNull DfType other) {
-    if (other == DfType.TOP) return this;
-    if (other instanceof DfIntegralType) {
-      return meetRange(((DfIntegralType)other).getRange().fromRelation(relation));
-    }
-    return DfType.BOTTOM;
-  }
 
   @NotNull DfType meetRange(@NotNull LongRangeSet range);
 }

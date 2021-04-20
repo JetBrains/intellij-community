@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,18 @@ public abstract class DfConstantType<T> implements DfType {
   @Override
   public DfType meet(@NotNull DfType other) {
     return other.isSuperType(this) ? this : DfType.BOTTOM;
+  }
+
+  @Override
+  public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+    if (relationType == RelationType.EQ) return this;
+    if (relationType == RelationType.NE) {
+      DfType negated = tryNegate();
+      if (negated != null) {
+        return negated;
+      }
+    }
+    return TOP;
   }
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,12 @@ public interface DfIntType extends DfJvmIntegralType {
   default DfType widen() {
     LongRangeSet wideRange = getWideRange();
     return wideRange.equals(getRange()) ? this : DfTypes.intRange(wideRange);
+  }
+
+  @Override
+  @NotNull
+  default DfType fromRelation(@NotNull RelationType relationType) {
+    return DfTypes.intRangeClamped(getRange().fromRelation(relationType));
   }
 
   @NotNull

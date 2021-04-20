@@ -1,10 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a domain of possible values within data flow analysis
@@ -36,6 +40,11 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+      return this;
+    }
+
+    @Override
     public int hashCode() {
       return 1254215;
     }
@@ -61,6 +70,11 @@ public interface DfType {
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
+      return this;
+    }
+
+    @Override
+    public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
       return this;
     }
 
@@ -95,8 +109,49 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType tryNegate() {
+      return NOT_FAIL;
+    }
+
+    @Override
+    public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+      return relationType == RelationType.EQ ? this :
+             relationType == RelationType.NE ? NOT_FAIL :
+             BOTTOM;
+    }
+
+    @Override
     public int hashCode() {
       return 5362412;
+    }
+  };
+  /**
+   * Anything but a FAIL value
+   */
+  DfType NOT_FAIL = new DfAntiConstantType<>(Set.of(Objects.requireNonNull(FAIL.getConstantOfType(Object.class)))) {
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      return other != TOP && other != FAIL;
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      return other == FAIL ? TOP : this;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      return other == FAIL ? BOTTOM : this;
+    }
+
+    @Override
+    public @NotNull DfType tryNegate() {
+      return FAIL;
+    }
+
+    @Override
+    public int hashCode() {
+      return 23145416;
     }
   };
 
@@ -136,6 +191,11 @@ public interface DfType {
    */
   @NotNull
   DfType meet(@NotNull DfType other);
+
+  @NotNull
+  default DfType fromRelation(@NotNull RelationType relationType) {
+    return relationType == RelationType.EQ ? this : TOP;
+  }
 
   /**
    * @return the widened version of this type; should be called on back-branches.

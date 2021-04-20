@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.types.DfConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -101,28 +98,7 @@ public abstract class DfaCondition {
         return fromBoolean(relationType.isSubRelation(RelationType.EQ));
       }
 
-      if (relationType == RelationType.EQ || relationType == RelationType.NE) {
-        if (leftType instanceof DfConstantType) {
-          DfConstantType<?> leftConst = (DfConstantType<?>)leftType;
-          if (rightType instanceof DfConstantType) {
-            return fromBoolean(leftType.isConst(((DfConstantType<?>)rightType).getValue()) ^
-                               !DfaUtil.isNaN(leftConst.getValue()) ^
-                               relationType == RelationType.EQ);
-          }
-          if (!rightType.containsConstant(leftConst)) {
-            return fromBoolean(relationType == RelationType.NE);
-          }
-        }
-        else if (rightType instanceof DfConstantType) {
-          if (!leftType.containsConstant((DfConstantType<?>)rightType)) {
-            return fromBoolean(relationType == RelationType.NE);
-          }
-        }
-        else if (leftType.meet(rightType) == DfType.BOTTOM) {
-          return fromBoolean(relationType == RelationType.NE);
-        }
-      }
-      if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
+      if (relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
         boolean isSuperState = rightType.isSuperType(leftType);
         if (isSuperState) {
           return fromBoolean(relationType == RelationType.IS);
@@ -131,13 +107,14 @@ public abstract class DfaCondition {
         if (isDistinct) {
           return fromBoolean(relationType == RelationType.IS_NOT);
         }
-      }
-
-      if (leftType instanceof DfIntegralType && rightType instanceof DfIntegralType) {
-        if (((DfIntegralType)leftType).meetRelation(relationType, rightType) == DfType.BOTTOM) {
-          return FALSE;
+      } else {
+        DfType meetRelation = leftType.meet(rightType.fromRelation(relationType));
+        DfType meetNegatedRelation = leftType.meet(rightType.fromRelation(relationType.getNegated()));
+        if (meetRelation == DfType.BOTTOM) {
+          // both could be BOTTOM if declared type mismatches
+          return meetNegatedRelation == DfType.BOTTOM ? null : FALSE;
         }
-        if (((DfIntegralType)leftType).meetRelation(relationType.getNegated(), rightType) == DfType.BOTTOM) {
+        if (meetNegatedRelation == DfType.BOTTOM) {
           return TRUE;
         }
       }

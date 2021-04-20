@@ -222,6 +222,39 @@ public final class DfTypes {
       return PsiKeyword.FLOAT;
     }
   };
+  /**
+   * Represents +0.0f and -0.0f at the same time
+   */
+  public static final DfFloatType FLOAT_ZERO = new DfFloatType() {
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      if (other == BOTTOM || other == this) return true;
+      Float constant = other.getConstantOfType(Float.class);
+      return constant != null && constant == 0.0f;
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      if (isSuperType(other)) return this;
+      if (other.isSuperType(this)) return other;
+      if (other instanceof DfFloatNotValueType) return other.join(this);
+      if (other instanceof DfFloatType) return FLOAT;
+      return TOP;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      if (isSuperType(other)) return other;
+      if (other.isSuperType(this)) return this;
+      if (other instanceof DfFloatNotValueType) return other.meet(this);
+      return BOTTOM;
+    }
+
+    @Override
+    public @NotNull DfType tryNegate() {
+      return new DfFloatNotValueType(Set.of(0.0f, -0.0f));
+    }
+  };
 
   /**
    * @param value float value
@@ -266,6 +299,39 @@ public final class DfTypes {
     @Override
     public @NotNull String toString() {
       return PsiKeyword.DOUBLE;
+    }
+  };
+  /**
+   * Represents +0.0 and -0.0 at the same time
+   */
+  public static final DfDoubleType DOUBLE_ZERO = new DfDoubleType() {
+    @Override
+    public boolean isSuperType(@NotNull DfType other) {
+      if (other == BOTTOM || other == this) return true;
+      Double constant = other.getConstantOfType(Double.class);
+      return constant != null && constant == 0.0;
+    }
+
+    @Override
+    public @NotNull DfType join(@NotNull DfType other) {
+      if (isSuperType(other)) return this;
+      if (other.isSuperType(this)) return other;
+      if (other instanceof DfDoubleNotValueType) return other.join(this);
+      if (other instanceof DfDoubleType) return DOUBLE;
+      return TOP;
+    }
+
+    @Override
+    public @NotNull DfType meet(@NotNull DfType other) {
+      if (isSuperType(other)) return other;
+      if (other.isSuperType(this)) return this;
+      if (other instanceof DfDoubleNotValueType) return other.meet(this);
+      return BOTTOM;
+    }
+
+    @Override
+    public @NotNull DfType tryNegate() {
+      return new DfDoubleNotValueType(Set.of(0.0, -0.0));
     }
   };
 

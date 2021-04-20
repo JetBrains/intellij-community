@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -286,6 +287,27 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
       return new DfEphemeralReferenceType(constraint);
     }
     return null;
+  }
+
+  @Override
+  public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+    if (relationType == RelationType.EQ || relationType == RelationType.IS) {
+      DfReferenceType result = this;
+      if (myConstraint.isComparedByEquals()) {
+        result = result.dropLocality();
+      }
+      if (myNullability == DfaNullability.NULLABLE) {
+        result = result.dropNullability();
+      }
+      return result;
+    }
+    if (relationType == RelationType.IS_NOT) {
+      DfType negated = tryNegate();
+      if (negated != null) {
+        return negated;
+      }
+    }
+    return DfTypes.OBJECT_OR_NULL;
   }
 
   @Override

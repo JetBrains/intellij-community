@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,12 @@ public interface DfLongType extends DfJvmIntegralType {
   default boolean containsConstant(@NotNull DfConstantType<?> constant) {
     Long value = constant.getConstantOfType(Long.class);
     return value != null && getRange().contains(value);
+  }
+
+  @Override
+  @NotNull
+  default DfType fromRelation(@NotNull RelationType relationType) {
+    return DfTypes.longRange(getRange().fromRelation(relationType));
   }
 
   @Override

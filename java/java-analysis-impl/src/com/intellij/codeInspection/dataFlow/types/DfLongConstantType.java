@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,11 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
   @Override
   public LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
+  }
+
+  @Override
+  public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
+    return DfLongType.super.fromRelation(relationType);
   }
 
   @Override
