@@ -63,6 +63,16 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
 */
   }
 
+  fun `test empty index diagnostic with default fields can be deserialized`() {
+    val mapper = jacksonObjectMapper().registerKotlinModule()
+
+    val indexDiagnostic = JsonIndexDiagnostic()
+    println(mapper.writeValueAsString(indexDiagnostic))
+
+    val deserialized = mapper.readValue<JsonIndexDiagnostic>(mapper.writeValueAsString(indexDiagnostic))
+    Assert.assertEquals(indexDiagnostic, deserialized)
+  }
+
   fun `test index diagnostics json can be deserialized`() {
     val indexDiagnostic = JsonIndexDiagnostic(
       JsonIndexDiagnosticAppInfo.create(),
