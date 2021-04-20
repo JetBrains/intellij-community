@@ -13,14 +13,12 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author: db
  */
 final class MethodRepr extends ProtoMember {
-  interface Predicate {
-    boolean satisfy(MethodRepr m);
-  }
 
   public final Set<ParamAnnotation> myParameterAnnotations;
   public final TypeRepr.AbstractType[] myArgumentTypes;
@@ -165,13 +163,9 @@ final class MethodRepr extends ProtoMember {
     };
   }
 
-  static Predicate equalByJavaRules(final MethodRepr me) {
-    return new Predicate() {
-      @Override
-      public boolean satisfy(MethodRepr that) {
-        if (me == that) return true;
-        return me.name == that.name && Arrays.equals(me.myArgumentTypes, that.myArgumentTypes);
-      }
+  static Predicate<MethodRepr> equalByJavaRules(final MethodRepr me) {
+    return that -> {
+      return me == that || me.name == that.name && Arrays.equals(me.myArgumentTypes, that.myArgumentTypes);
     };
   }
 
