@@ -165,7 +165,7 @@ public final class TerminalShellCommandHandlerHelper {
     tooltip.show(myWidget.getTerminalPanel(), (component, balloon) -> {
       Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
       if (bounds != null) {
-        int shiftY = BalloonImpl.getAbstractPositionFor(Balloon.Position.below) == ((BalloonImpl)balloon).getPosition() ? 0 : bounds.height;
+        int shiftY = BalloonImpl.getAbstractPositionFor(Balloon.Position.below) != ((BalloonImpl)balloon).getPosition() ? 0 : bounds.height;
         return new Point(bounds.x + bounds.width / 2, bounds.y + shiftY);
       }
       Disposer.dispose(notificationDisposable);
