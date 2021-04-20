@@ -1,25 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonScanningStatistics(
-  val providerName: String,
-  val numberOfScannedFiles: Int,
-  val numberOfSkippedFiles: Int,
-  val numberOfFilesForIndexing: Int,
-  val numberOfFilesFullyIndexedByInfrastructureExtensions: Int,
-  val scanningTime: JsonDuration,
-  val timeProcessingUpToDateFiles: JsonDuration,
-  val timeUpdatingContentLessIndexes: JsonDuration,
-  val timeIndexingWithoutContent: JsonDuration,
+  val providerName: String = "",
+  val numberOfScannedFiles: Int = 0,
+  val numberOfSkippedFiles: Int = 0,
+  val numberOfFilesForIndexing: Int = 0,
+  val numberOfFilesFullyIndexedByInfrastructureExtensions: Int = 0,
+  val scanningTime: JsonDuration = JsonDuration(0),
+  val timeProcessingUpToDateFiles: JsonDuration = JsonDuration(0),
+  val timeUpdatingContentLessIndexes: JsonDuration = JsonDuration(0),
+  val timeIndexingWithoutContent: JsonDuration = JsonDuration(0),
 
   // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
-  val scannedFiles: List<JsonScannedFile>?
+  val scannedFiles: List<JsonScannedFile>? = null
 ) {
+  @JsonIgnoreProperties(ignoreUnknown = true)
   data class JsonScannedFile(
     val path: PortableFilePath,
     val isUpToDate: Boolean,
