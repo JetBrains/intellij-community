@@ -256,7 +256,9 @@ fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): Persi
 
 class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    return field.get(thisRef.original) as B
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
