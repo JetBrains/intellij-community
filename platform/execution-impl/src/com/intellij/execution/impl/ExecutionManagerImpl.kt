@@ -155,7 +155,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
   private fun processNotStarted(environment: ExecutionEnvironment, activity: StructuredIdeActivity?) {
-    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED)
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
     inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment)
@@ -947,7 +947,7 @@ private class ProcessExecutionListener(private val project: Project,
 
     project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC).processTerminated(executorId, environment, processHandler, event.exitCode)
 
-    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.SUCCESS)
+    RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.UNKNOWN)
 
     processHandler.removeProcessListener(this)
     SaveAndSyncHandler.getInstance().scheduleRefresh()
