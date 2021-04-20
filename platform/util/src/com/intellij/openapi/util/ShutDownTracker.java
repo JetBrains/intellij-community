@@ -44,7 +44,12 @@ public final class ShutDownTracker implements Runnable {
         task.run();
       }
       catch (Throwable e) {
-        Logger.getInstance(ShutDownTracker.class).error(e);
+        try {
+          Logger.getInstance(ShutDownTracker.class).error(e);
+        }
+        catch (AssertionError ignore) {
+          // give a chance to execute all shutdown tasks in tests
+        }
       }
     }
   }
