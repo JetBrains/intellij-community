@@ -50,6 +50,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleCatchBlock() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "try {\n" +
                     "        System.out.println(\"AA!\");\n" +
@@ -79,7 +80,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleCatchAndTryBlock() {
     String before = "try {} catch (Exception e) {      System.out.println(\"AA!\"); }";
-    String after = "try {} catch (Exception e) { System.out.println(\"AA!\"); }";
+    String after = "try {} catch (Exception e) {System.out.println(\"AA!\");}";
     String afterExpanded = "try {\n" +
                            "} catch (Exception e) {\n" +
                            "    System.out.println(\"AA!\");\n" +
@@ -123,6 +124,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleDoWhileStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "do {     System.out.println(\"AAA!\"); } while (1 == 1);";
     String after = "do { System.out.println(\"AAA!\"); } while (1 == 1);";
 
@@ -162,6 +164,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleForEachStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (String arg : args) {     System.out.println(\"AAA!\"); }";
     String after = "for (String arg : args) { System.out.println(\"AAA!\"); }";
@@ -201,6 +204,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
 
   public void testSimpleForStatement() {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
 
     String before = "for (int i = 0; i < 10; i = i + 3) {    System.out.println(\"AAA!\"); }";
     String after = "for (int i = 0; i < 10; i = i + 3) { System.out.println(\"AAA!\"); }";
@@ -288,6 +292,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleSynchronizedStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "synchronized (this) {     System.out.println(\"AAA!\"); }";
     String after = "synchronized (this) { System.out.println(\"AAA!\"); }";
 
@@ -326,6 +331,7 @@ public class JavaCodeBlockBracesPlacementTest extends AbstractJavaFormatterTest 
   }
 
   public void testSimpleWhileStatement() {
+    getSettings().SPACE_WITHIN_BRACES = true;
     String before = "while (true) {    System.out.println(\"AAA\"); }";
     String after = "while (true) { System.out.println(\"AAA\"); }";
 
