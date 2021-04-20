@@ -6,6 +6,7 @@ import com.intellij.openapi.paths.StaticPathReferenceProvider;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestinationImpl;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class MarkdownReferenceProvider extends PsiReferenceContributor {
     }
   }
 
-  private static class GithubWikiLocalFileReferenceProvider extends PsiReferenceProvider {
+  static class GithubWikiLocalFileReferenceProvider extends PsiReferenceProvider {
     private static final Pattern LINK_PATTERN = Pattern.compile("^https://github.com/[^/]*/[^/]*/wiki/");
     private static final boolean ARE_REFERENCES_SOFT = false;
 
@@ -61,10 +62,19 @@ public class MarkdownReferenceProvider extends PsiReferenceContributor {
 
         myAnchorPathReferenceProvider.createReferences(element, references, ARE_REFERENCES_SOFT);
 
-        return references.toArray(PsiReference.EMPTY_ARRAY);
+        return ContainerUtil.map(references, GithubWikiLocalFileReferenceWrapper::new).toArray(PsiReference.EMPTY_ARRAY);
       }
       else {
         return PsiReference.EMPTY_ARRAY;
+      }
+    }
+
+    /**
+     * see {@link MarkdownUnresolvedFileReferenceInspectionKt#shouldSkip}
+     */
+    static class GithubWikiLocalFileReferenceWrapper extends PsiReferenceWrapper {
+      private GithubWikiLocalFileReferenceWrapper(PsiReference originalPsiReference) {
+        super(originalPsiReference);
       }
     }
   }

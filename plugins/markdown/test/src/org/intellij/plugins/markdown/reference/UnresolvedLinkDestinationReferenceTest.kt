@@ -24,6 +24,22 @@ class UnresolvedLinkDestinationReferenceTest : BasePlatformTestCase() {
     doTest("sample_anchor_unresolved.md")
   }
 
+  fun testGithubWikiResolvedReference() {
+    doTest("sample_github_wiki_resolved.md")
+  }
+
+  fun testGithubWikiResolvedMissingExtensionReference() {
+    doTest("sample_github_wiki_missing_extension_resolved.md")
+  }
+
+  fun testGithubWikiUnresolvedReferenceNotHighlighted() {
+    doTest("sample_github_wiki_unresolved.md")
+  }
+
+  fun testGithubWikiUnresolvedMissingExtensionReferenceNotHighlighted() {
+    doTest("sample_github_wiki_missing_extension_unresolved.md")
+  }
+
   private fun doTest(fileName: String) {
     myFixture.enableInspections(MarkdownUnresolvedFileReferenceInspection::class.java)
     myFixture.testHighlighting(true, false, false, fileName)
