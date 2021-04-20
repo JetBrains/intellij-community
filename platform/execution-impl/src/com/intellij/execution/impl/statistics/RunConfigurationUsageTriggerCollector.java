@@ -109,5 +109,5 @@ public final class RunConfigurationUsageTriggerCollector {
     }
   }
 
-  public enum RunConfigurationFinishType {SUCCESS, FAILED}
+  public enum RunConfigurationFinishType {FAILED_TO_START, UNKNOWN}
 }
