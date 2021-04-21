@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -362,6 +363,21 @@ public enum SpecialField implements VariableDescriptor {
     if (clamped.equals(defaultType)) return DfTypes.NOT_NULL_OBJECT;
     if (clamped.equals(DfType.BOTTOM)) return DfType.BOTTOM;
     return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
+  }
+
+  /**
+   * @param fieldValue dfType of the special field value
+   * @param project project
+   * @return a dfType that represents a value having this special field restricted to the supplied dfType.
+   * Unlike {@link #asDfType(DfType)} this overload may canonicalize some values.
+   */
+  @NotNull
+  public DfType asDfType(@NotNull DfType fieldValue, @NotNull Project project) {
+    if (this == STRING_LENGTH && fieldValue.isConst(0)) {
+      return DfTypes.referenceConstant("", JavaPsiFacade.getElementFactory(project)
+        .createTypeByFQClassName(JAVA_LANG_STRING));
+    }
+    return asDfType(fieldValue);
   }
 
   /**

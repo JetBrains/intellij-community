@@ -3,8 +3,6 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +10,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 /**
  * A reference value whose SpecialField value is equal to some variable.
@@ -77,15 +73,8 @@ public final class DfaWrappedValue extends DfaValue {
         }
       }
       if (specialFieldValue instanceof DfaTypeValue) {
-        DfType dfType;
         DfType fieldValue = specialFieldValue.getDfType();
-        if (specialField == SpecialField.STRING_LENGTH && fieldValue.isConst(0)) {
-          dfType = DfTypes.referenceConstant("", JavaPsiFacade.getElementFactory(specialFieldValue.getFactory().getProject())
-            .createTypeByFQClassName(JAVA_LANG_STRING));
-        }
-        else {
-          dfType = qualifierType.meet(specialField.asDfType(fieldValue));
-        }
+        DfType dfType = qualifierType.meet(specialField.asDfType(fieldValue, specialFieldValue.getFactory().getProject()));
         return myFactory.fromDfType(dfType);
       }
       if (specialFieldValue instanceof DfaVariableValue) {
