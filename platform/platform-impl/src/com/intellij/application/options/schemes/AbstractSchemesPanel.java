@@ -111,7 +111,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
-    myToolbar = createToolbar();
+    ActionToolbar toolbar = createToolbar();
+    toolbar.setTargetComponent(mySchemesCombo.getComponent());
+    myToolbar = toolbar.getComponent();
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
@@ -127,17 +129,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   @NotNull
-  private JComponent createToolbar() {
+  private ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowSchemesActionsListAction(myActions));
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SchemesPanelToolbar", group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
     Dimension maxSize = toolbarComponent.getMaximumSize();
     toolbarComponent.setMaximumSize(JBUI.size(22, maxSize.height));
     toolbarComponent.setBorder(JBUI.Borders.empty(3));
-    return toolbarComponent;
+    return toolbar;
   }
 
   public final JComponent getToolbar() {
