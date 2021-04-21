@@ -624,7 +624,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (opSign == JavaTokenType.AND || opSign == JavaTokenType.OR) {
       boolean or = opSign == JavaTokenType.OR;
       DfaMemoryState copy = memState.createCopy();
-      DfaCondition cond = dfaRight.eq(runner.getFactory().getBoolean(or));
+      DfaCondition cond = dfaRight.eq(runner.getFactory().fromDfType(booleanValue(or)));
       if (copy.applyCondition(cond)) {
         result.add(makeBooleanResult(instruction, runner, copy, ThreeState.fromBoolean(or)));
       }
@@ -702,7 +702,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     }
     if (states.isEmpty()) {
       // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
-      pushExpressionResult(factory.getBoolean(false), instruction, memState);
+      pushExpressionResult(factory.fromDfType(FALSE), instruction, memState);
       return nextInstruction(instruction, runner, memState);
     }
 
@@ -727,12 +727,12 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaMemoryState falseState = memState.createCopy();
     DfaValueFactory factory = runner.getFactory();
     List<DfaInstructionState> result = new ArrayList<>(2);
-    if (memState.applyCondition(dfaValue.eq(factory.getBoolean(false)))) {
-      pushExpressionResult(factory.getBoolean(true), instruction, memState);
+    if (memState.applyCondition(dfaValue.eq(factory.fromDfType(FALSE)))) {
+      pushExpressionResult(factory.fromDfType(TRUE), instruction, memState);
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
     }
-    if (falseState.applyCondition(dfaValue.eq(factory.getBoolean(true)))) {
-      pushExpressionResult(factory.getBoolean(false), instruction, falseState);
+    if (falseState.applyCondition(dfaValue.eq(factory.fromDfType(TRUE)))) {
+      pushExpressionResult(factory.fromDfType(FALSE), instruction, falseState);
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), falseState));
     }
 
@@ -740,7 +740,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   }
 
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    DfaCondition condTrue = memState.pop().eq(runner.getFactory().getBoolean(!instruction.isNegated()));
+    boolean value = !instruction.isNegated();
+    DfaCondition condTrue = memState.pop().eq(runner.getFactory().fromDfType(booleanValue(value)));
     DfaCondition condFalse = condTrue.negate();
 
     PsiElement anchor = instruction.getPsiAnchor();
@@ -1084,7 +1085,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                                 DataFlowRunner runner,
                                                 DfaMemoryState memState,
                                                 @NotNull ThreeState result) {
-    DfaValue value = result == ThreeState.UNSURE ? runner.getFactory().getUnknown() : runner.getFactory().getBoolean(result.toBoolean());
+    DfaValue value = result == ThreeState.UNSURE ? runner.getFactory().getUnknown() : runner.getFactory()
+      .fromDfType(booleanValue(result.toBoolean()));
     pushExpressionResult(value, instruction, memState);
     return new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState);
   }

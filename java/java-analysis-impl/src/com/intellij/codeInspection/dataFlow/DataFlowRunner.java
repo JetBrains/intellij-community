@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -312,7 +313,7 @@ public class DataFlowRunner {
                                                                               @NotNull ControlFlow flow) {
     DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(myValueFactory);
     if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
-      DfaCondition condition = assertionStatus.eq(myValueFactory.getBoolean(myIgnoreAssertions.toBoolean()));
+      DfaCondition condition = assertionStatus.eq(myValueFactory.fromDfType(DfTypes.booleanValue(myIgnoreAssertions.toBoolean())));
       for (DfaMemoryState state : memStates) {
         state.applyCondition(condition);
       }

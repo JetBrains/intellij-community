@@ -72,11 +72,6 @@ public class DfaValueFactory {
     return mySentinelValue;
   }
 
-  @NotNull
-  public DfaTypeValue getBoolean(boolean value) {
-    return fromDfType(DfTypes.booleanValue(value));
-  }
-
   /**
    * @return a null value
    */

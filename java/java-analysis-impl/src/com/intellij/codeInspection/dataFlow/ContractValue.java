@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
@@ -238,13 +239,13 @@ public abstract class ContractValue {
 
   private static class IndependentValue extends ContractValue {
     static final IndependentValue NULL = new IndependentValue("null", factory -> factory.getNull());
-    static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.getBoolean(true)) {
+    static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.fromDfType(DfTypes.TRUE)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == FALSE;
       }
     };
-    static final IndependentValue FALSE = new IndependentValue("false", factory -> factory.getBoolean(false)) {
+    static final IndependentValue FALSE = new IndependentValue("false", factory -> factory.fromDfType(DfTypes.FALSE)) {
       @Override
       public boolean isExclusive(ContractValue other) {
         return other == TRUE;

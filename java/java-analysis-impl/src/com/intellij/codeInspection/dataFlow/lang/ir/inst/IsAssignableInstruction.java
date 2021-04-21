@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -27,11 +28,11 @@ public class IsAssignableInstruction extends EvalInstruction {
       TypeConstraint superType = TypeConstraints.instanceOf(superClass);
       TypeConstraint subType = TypeConstraints.instanceOf(subClass);
       if (subType.meet(superType) == TypeConstraints.BOTTOM) {
-        return factory.getBoolean(false);
+        return factory.fromDfType(DfTypes.FALSE);
       } else {
         TypeConstraint negated = subType.tryNegate();
         if (negated != null && negated.meet(superType) == TypeConstraints.BOTTOM) {
-          return factory.getBoolean(true);
+          return factory.fromDfType(DfTypes.TRUE);
         }
       }
     }

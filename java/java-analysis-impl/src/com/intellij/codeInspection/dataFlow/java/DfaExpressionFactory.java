@@ -244,7 +244,7 @@ public class DfaExpressionFactory {
     if (value == null) {
       Boolean boo = computeJavaLangBooleanFieldReference(variable);
       if (boo != null) {
-        DfaValue unboxed = factory.getBoolean(boo);
+        DfaValue unboxed = factory.fromDfType(DfTypes.booleanValue(boo));
         return factory.getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
       }
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {

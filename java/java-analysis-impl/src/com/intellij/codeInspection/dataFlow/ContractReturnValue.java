@@ -510,7 +510,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaCallState callState) {
-      return DfaUtil.boxUnbox(factory.getBoolean(myValue), callState.myReturnValue.getDfType());
+      return DfaUtil.boxUnbox(factory.fromDfType(DfTypes.booleanValue(myValue)), callState.myReturnValue.getDfType());
     }
 
     @Override
