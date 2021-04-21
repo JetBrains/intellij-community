@@ -1320,50 +1320,63 @@ public final class PluginManagerConfigurable
     return null;
   }
 
-  @NotNull
-  public static @NlsSafe String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
-    return StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown") +
-           " " + UIUtil.rightArrow() + " " +
-           StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown");
+  public static @NlsSafe @NotNull String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
+    String[] strings = {StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown"),
+      UIUtil.rightArrow(),
+      StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown")};
+    return StringUtil.join(strings, " ");
   }
 
   @Messages.YesNoResult
   public static int showRestartDialog() {
-    return showRestartDialog(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+    return showRestartDialog(getUpdatesDialogTitle());
   }
 
   @Messages.YesNoResult
   public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title) {
-    return showRestartDialog(title, action -> IdeBundle
-      .message("ide.restart.required.message", action, ApplicationNamesInfo.getInstance().getFullProductName()));
+    return showRestartDialog(title, PluginManagerConfigurable::getUpdatesDialogMessage);
   }
 
   @Messages.YesNoResult
-  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<? super String, @Nls String> message) {
+  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title,
+                                      @NotNull Function<? super String, @Nls String> message) {
     String action =
       IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
-    return Messages
-      .showYesNoDialog(message.apply(action), title, action, IdeBundle.message("ide.notnow.action"), Messages.getQuestionIcon());
+    return Messages.showYesNoDialog(message.apply(action),
+                                    title,
+                                    action,
+                                    IdeBundle.message("ide.notnow.action"),
+                                    Messages.getQuestionIcon());
   }
 
   public static void shutdownOrRestartApp() {
-    shutdownOrRestartApp(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
+    shutdownOrRestartApp(getUpdatesDialogTitle());
   }
 
   public static void shutdownOrRestartApp(@NotNull @NlsContexts.DialogTitle String title) {
-    if (showRestartDialog(title) == Messages.YES) {
+    shutdownOrRestartAppAfterInstall(title, PluginManagerConfigurable::getUpdatesDialogMessage);
+  }
+
+  public static void shutdownOrRestartAppAfterInstall(@NotNull Function<? super String, @Nls String> message) {
+    shutdownOrRestartAppAfterInstall(getUpdatesDialogTitle(), message);
+  }
+
+  static void shutdownOrRestartAppAfterInstall(@NotNull @NlsContexts.DialogTitle String title,
+                                               @NotNull Function<? super String, @Nls String> message) {
+    if (showRestartDialog(title, message) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 
-  public static void shutdownOrRestartAppAfterInstall(@NotNull String plugin) {
-    String title = IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    Function<String, String> message = action -> IdeBundle
-      .message("plugin.installed.ide.restart.required.message", plugin, action, ApplicationNamesInfo.getInstance().getFullProductName());
+  static @Nls @NotNull String getUpdatesDialogTitle() {
+    return IdeBundle.message("updates.dialog.title",
+                             ApplicationNamesInfo.getInstance().getFullProductName());
+  }
 
-    if (showRestartDialog(title, message) == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true);
-    }
+  static @Nls @NotNull String getUpdatesDialogMessage(@Nls @NotNull String action) {
+    return IdeBundle.message("ide.restart.required.message",
+                             action,
+                             ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
   /**
@@ -1744,22 +1757,22 @@ public final class PluginManagerConfigurable
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PluginInstaller.chooseAndInstall(myPluginModel, myCardPanel, callbackData -> {
-        myPluginModel.pluginInstalledFromDisk(callbackData);
+      PluginInstaller.chooseAndInstall(e.getProject(), myCardPanel, (file, parent) ->
+        PluginInstaller.installFromDisk(myPluginModel, myPluginModel, file, parent, callbackData -> {
+          myPluginModel.pluginInstalledFromDisk(callbackData);
 
-        boolean select = myInstalledPanel == null;
+          boolean select = myInstalledPanel == null;
+          updateSelectionTab(INSTALLED_TAB);
 
-        updateSelectionTab(INSTALLED_TAB);
+          myInstalledTab.clearSearchPanel("");
 
-        myInstalledTab.clearSearchPanel("");
-
-        if (select) {
-          ListPluginComponent component = findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId());
+          ListPluginComponent component = select ?
+                                          findInstalledPluginById(callbackData.getPluginDescriptor().getPluginId()) :
+                                          null;
           if (component != null) {
             myInstalledPanel.setSelection(component);
           }
-        }
-      });
+        }));
     }
   }
 

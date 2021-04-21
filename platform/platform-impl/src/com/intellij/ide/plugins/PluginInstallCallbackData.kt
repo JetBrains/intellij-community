@@ -9,21 +9,10 @@ import java.nio.file.Path
 data class PluginInstallCallbackData(
   val file: Path,
   val pluginDescriptor: IdeaPluginDescriptorImpl,
-  val restartNeeded: Boolean
+  val restartNeeded: Boolean,
 )
 
 data class PendingDynamicPluginInstall(
   val file: Path,
-  val pluginDescriptor: IdeaPluginDescriptorImpl
+  val pluginDescriptor: IdeaPluginDescriptorImpl,
 )
-
-fun installPluginFromCallbackData(callbackData: PluginInstallCallbackData) {
-  if (callbackData.restartNeeded) {
-    PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
-  }
-  else {
-    if (!PluginInstaller.installAndLoadDynamicPlugin(callbackData.file, callbackData.pluginDescriptor)) {
-      PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(callbackData.pluginDescriptor.name)
-    }
-  }
-}

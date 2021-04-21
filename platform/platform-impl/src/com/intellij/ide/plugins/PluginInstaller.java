@@ -6,8 +6,8 @@ import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
-import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -37,13 +38,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -216,15 +216,27 @@ public final class PluginInstaller {
     PluginStateManager.addStateListener(listener);
   }
 
+  static boolean installFromDisk(@Nullable Project project,
+                                 @NotNull File file) {
+    return installFromDisk(new InstalledPluginsTableModel(project),
+                           PluginEnabler.HEADLESS,
+                           file,
+                           null,
+                           PluginInstaller::installPluginFromCallbackData);
+  }
+
   static boolean installFromDisk(@NotNull InstalledPluginsTableModel model,
-                                 @NotNull Path file,
-                                 @NotNull Consumer<? super PluginInstallCallbackData> callback,
-                                 @Nullable JComponent parent) {
+                                 @NotNull PluginEnabler pluginEnabler,
+                                 @NotNull File file,
+                                 @Nullable JComponent parent,
+                                 @NotNull Consumer<? super PluginInstallCallbackData> callback) {
     try {
-      IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(file, null);
+      Path path = file.toPath();
+      IdeaPluginDescriptorImpl pluginDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(path, null);
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, IdeBundle
-          .message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getFileName().toString()), CommonBundle.getErrorTitle());
+        MessagesEx.showErrorDialog(parent,
+                                   IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getName()),
+                                   CommonBundle.getErrorTitle());
         return false;
       }
 
@@ -255,16 +267,15 @@ public final class PluginInstaller {
         return false;
       }
 
-      String previousVersion = (installedPlugin == null) ? null : installedPlugin.getVersion();
-      PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor, InstallationSourceEnum.FROM_DISK, previousVersion);
+      PluginManagerUsageCollector.pluginInstallationStarted(pluginDescriptor,
+                                                            InstallationSourceEnum.FROM_DISK,
+                                                            installedPlugin != null ? installedPlugin.getVersion() : null);
 
       if (Registry.is("marketplace.certificate.signature.check")) {
-        if (!PluginSignatureChecker.isSignedByAnyCertificates(pluginDescriptor, file.toFile())) {
+        if (!PluginSignatureChecker.isSignedByAnyCertificates(pluginDescriptor, file)) {
           return false;
         }
       }
-
-      PluginEnabler pluginEnabler = model instanceof PluginEnabler ? (PluginEnabler)model : PluginEnabler.HEADLESS;
 
       Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
         new Task.WithResult<>(null,
@@ -292,18 +303,17 @@ public final class PluginInstaller {
         return false;
       }
 
-      Path oldFile = null;
-      if (installedPlugin != null && !installedPlugin.isBundled()) {
-        oldFile = installedPlugin.getPluginPath();
-      }
+      Path oldFile = installedPlugin != null && !installedPlugin.isBundled() ?
+                     installedPlugin.getPluginPath() :
+                     null;
 
-      boolean installWithoutRestart = oldFile == null &&
-                                      DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) &&
-                                      !operation.isRestartRequired();
-      if (!installWithoutRestart) {
-        installAfterRestart(file, false, oldFile, pluginDescriptor);
+      boolean isRestartRequired = oldFile != null ||
+                                  !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor) ||
+                                  operation.isRestartRequired();
+      if (isRestartRequired) {
+        installAfterRestart(path, false, oldFile, pluginDescriptor);
       }
-      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, !installWithoutRestart);
+      ourState.onPluginInstall(pluginDescriptor, installedPlugin != null, isRestartRequired);
 
       IdeaPluginDescriptor toDisable = pair.getSecond();
       if (toDisable != null) {
@@ -317,30 +327,38 @@ public final class PluginInstaller {
       for (PluginInstallCallbackData plugin : installedDependencies) {
         installedPlugins.add(plugin.getPluginDescriptor());
       }
-      checkInstalledPluginDependencies(model,
-                                       pluginDescriptor,
-                                       parent,
-                                       ContainerUtil.map2Set(installedPlugins, PluginDescriptor::getPluginId));
+
+      Set<String> notInstalled = findNotInstalledPluginDependencies(pluginDescriptor.getDependencies(),
+                                                                    model,
+                                                                    ContainerUtil.map2Set(installedPlugins, PluginDescriptor::getPluginId));
+      if (!notInstalled.isEmpty()) {
+        String message = IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin",
+                                           pluginDescriptor.getName(),
+                                           notInstalled.size(),
+                                           StringUtil.join(notInstalled, ", "));
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
+      }
+
       PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, installedPlugins);
 
-      callback.accept(new PluginInstallCallbackData(file, pluginDescriptor, !installWithoutRestart));
+      callback.accept(new PluginInstallCallbackData(path, pluginDescriptor, isRestartRequired));
       for (PluginInstallCallbackData callbackData : installedDependencies) {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
           callback.accept(callbackData);
         }
       }
 
-      if (file.toString().endsWith(".zip") && Registry.is("ide.plugins.keep.archive")) {
+      if (path.toString().endsWith(".zip") && Registry.is("ide.plugins.keep.archive")) {
         File tempFile = MarketplacePluginDownloadService.getPluginTempFile();
-        FileUtil.copy(file.toFile(), tempFile);
+        FileUtil.copy(file, tempFile);
         MarketplacePluginDownloadService.renameFileToZipRoot(tempFile);
       }
       return true;
     }
     catch (IOException ex) {
       MessagesEx.showErrorDialog(parent, ex.getMessage(), CommonBundle.getErrorTitle());
+      return false;
     }
-    return false;
   }
 
   public static boolean installAndLoadDynamicPlugin(@NotNull Path file,
@@ -370,53 +388,73 @@ public final class PluginInstaller {
     return DynamicPlugins.loadPlugin(targetDescriptor);
   }
 
-  private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,
-                                                       @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
-                                                       @Nullable Component parent,
-                                                       Set<PluginId> installedDependencies) {
-    final Set<PluginId> notInstalled = new HashSet<>();
-    for (IdeaPluginDependency dep : pluginDescriptor.getDependencies()) {
-      if (dep.isOptional()) continue;
-      PluginId id = dep.getPluginId();
-      if (installedDependencies.contains(id)) continue;
-      final boolean disabled = model.isDisabled(id);
-      final boolean enabled = model.isEnabled(id);
-      if (!enabled && !disabled && !PluginManagerCore.isModuleDependency(id)) {
-        notInstalled.add(id);
+  private static @NotNull Set<String> findNotInstalledPluginDependencies(@NotNull List<? extends IdeaPluginDependency> dependencies,
+                                                                         @NotNull InstalledPluginsTableModel model,
+                                                                         @NotNull Set<PluginId> installedDependencies) {
+    Set<String> notInstalled = new HashSet<>();
+    for (IdeaPluginDependency dependency : dependencies) {
+      if (dependency.isOptional()) continue;
+
+      PluginId pluginId = dependency.getPluginId();
+      if (installedDependencies.contains(pluginId) ||
+          model.isEnabled(pluginId) ||
+          model.isDisabled(pluginId) ||
+          PluginManagerCore.isModuleDependency(pluginId)) {
+        continue;
       }
+
+      notInstalled.add(pluginId.getIdString());
     }
-    if (!notInstalled.isEmpty()) {
-      String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
-      String message =
-        IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin", pluginDescriptor.getName(), notInstalled.size(), deps);
-      MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
-    }
+
+    return notInstalled;
   }
 
-  static void chooseAndInstall(@NotNull InstalledPluginsTableModel model,
+  static void chooseAndInstall(@Nullable Project project,
                                @Nullable JComponent parent,
-                               @NotNull Consumer<? super PluginInstallCallbackData> callback) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
+                               @NotNull BiConsumer<@NotNull ? super File, @Nullable ? super JComponent> callback) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
+
+      {
+        setTitle(IdeBundle.message("chooser.title.plugin.file"));
+        setDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"));
+      }
+
       @Override
       public boolean isFileSelectable(VirtualFile file) {
         final String extension = file.getExtension();
         return Comparing.strEqual(extension, "jar") || Comparing.strEqual(extension, "zip");
       }
     };
-    descriptor.setTitle(IdeBundle.message("chooser.title.plugin.file"));
-    descriptor.setDescription(IdeBundle.message("chooser.description.jar.and.zip.archives.are.accepted"));
+
     String oldPath = PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH);
-    VirtualFile toSelect =
-      oldPath == null ? null : VfsUtil.findFileByIoFile(new File(FileUtilRt.toSystemDependentName(oldPath)), false);
-    FileChooser.chooseFile(descriptor, null, parent, toSelect, virtualFile -> {
-      Path file = VfsUtilCore.virtualToIoFile(virtualFile).toPath();
-      PropertiesComponent.getInstance()
-        .setValue(PLUGINS_PRESELECTION_PATH, FileUtilRt.toSystemIndependentName(file.getParent().toString()));
-      installFromDisk(model, file, callback, parent);
+    VirtualFile toSelect = oldPath != null ?
+                           VfsUtil.findFileByIoFile(new File(FileUtilRt.toSystemDependentName(oldPath)), false) :
+                           null;
+
+    FileChooser.chooseFile(descriptor, project, parent, toSelect, virtualFile -> {
+      File file = VfsUtilCore.virtualToIoFile(virtualFile);
+      PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH,
+                                                 FileUtilRt.toSystemIndependentName(file.getParent()));
+      callback.accept(file, parent);
     });
   }
 
   private static @NotNull Path getPluginsPath() {
     return Paths.get(PathManager.getPluginsPath());
+  }
+
+  private static void installPluginFromCallbackData(@NotNull PluginInstallCallbackData callbackData) {
+    IdeaPluginDescriptorImpl descriptor = callbackData.getPluginDescriptor();
+    if (!callbackData.getRestartNeeded() &&
+        installAndLoadDynamicPlugin(callbackData.getFile(), descriptor)) {
+      return;
+    }
+
+    PluginManagerConfigurable.shutdownOrRestartAppAfterInstall(PluginManagerConfigurable.getUpdatesDialogTitle(),
+                                                               action -> IdeBundle.message("plugin.installed.ide.restart.required.message",
+                                                                                           descriptor.getName(),
+                                                                                           action,
+                                                                                           ApplicationNamesInfo.getInstance()
+                                                                                             .getFullProductName()));
   }
 }
