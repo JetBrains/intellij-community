@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxPopupState;
@@ -245,13 +244,18 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
-  @Nullable
-  public Sdk getSelectedJdk() {
+  /**
+   * Returns selected JDK or null if there is no selection or Project JDK inherited.
+   *
+   * @see #isProjectJdkSelected()
+   */
+  public @Nullable Sdk getSelectedJdk() {
     JdkComboBoxItem selectedItem = getSelectedItem();
-    if (selectedItem instanceof ProjectJdkComboBoxItem && myProject != null) {
-      return ProjectRootManager.getInstance(myProject).getProjectSdk();
-    }
-    return selectedItem != null? selectedItem.getJdk() : null;
+    return selectedItem != null ? selectedItem.getJdk() : null;
+  }
+
+  public boolean isProjectJdkSelected() {
+    return getSelectedItem() instanceof ProjectJdkComboBoxItem;
   }
 
   public void setSelectedJdk(@Nullable Sdk jdk) {
