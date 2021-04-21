@@ -38,7 +38,12 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
   private final AtomicBoolean myConnectStarted = new AtomicBoolean(false);
 
   private MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport mySupport;
-  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>();
+  private final AsyncPromise<@NotNull MavenServer> myServerPromise = new AsyncPromise<>() {
+    @Override
+    protected boolean shouldLogErrors() {
+      return false;
+    }
+  };
 
 
   public MavenServerConnectorImpl(@NotNull Project project,
