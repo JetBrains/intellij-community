@@ -715,6 +715,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (DfaTypeValue.isUnknown(dfaLeft) || DfaTypeValue.isUnknown(dfaRight)) return true;
 
+    if (relationType == RelationType.EQ && dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
+      checkEphemeral(dfaLeft, dfaRight);
+      checkEphemeral(dfaRight, dfaLeft);
+    }
+
     DfType leftType = getDfType(dfaLeft);
     DfType rightType = getDfType(dfaRight);
 
@@ -877,13 +882,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    if (type == RelationType.EQ) {
-      if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
-        checkEphemeral(dfaLeft, dfaRight);
-        checkEphemeral(dfaRight, dfaLeft);
-      }
-      if (!applySpecialFieldEquivalence(dfaLeft, dfaRight)) return false;
-    }
+    if (type == RelationType.EQ && !applySpecialFieldEquivalence(dfaLeft, dfaRight)) return false;
+
     if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue && !isNegated) {
       if (!equalizeTypesOnGetClass((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) {
         return false;
