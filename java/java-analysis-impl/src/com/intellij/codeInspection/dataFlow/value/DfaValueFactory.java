@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.TransferTarget;
 import com.intellij.codeInspection.dataFlow.Trap;
@@ -42,11 +41,6 @@ public class DfaValueFactory {
 
   public @Nullable PsiElement getContext() {
     return myContext;
-  }
-
-  @NotNull
-  public DfaTypeValue getObjectType(@Nullable PsiType type, @NotNull Nullability nullability) {
-    return fromDfType(DfTypes.typedObject(type, nullability));
   }
 
   int registerValue(DfaValue value) {

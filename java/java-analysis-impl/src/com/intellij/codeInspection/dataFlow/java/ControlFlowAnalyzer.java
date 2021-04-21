@@ -1243,7 +1243,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     DfaValue toPush = DfaExpressionFactory.getExpressionDfaValue(myFactory, expression);
     if (toPush == null) {
-      toPush = myFactory.getObjectType(expression.getType(), Nullability.UNKNOWN);
+      toPush = myFactory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.UNKNOWN));
     }
     DfaControlTransferValue transfer =
       shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ArrayIndexOutOfBoundsException"), myTrapStack) : null;

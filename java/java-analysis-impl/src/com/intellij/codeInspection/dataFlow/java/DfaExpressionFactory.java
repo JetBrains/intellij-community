@@ -22,7 +22,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -62,7 +61,7 @@ public class DfaExpressionFactory {
       }
       PsiType type = expression.getType();
       if (type != null) {
-        return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, null));
+        return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, null)));
       }
     }
 
@@ -79,7 +78,7 @@ public class DfaExpressionFactory {
     }
 
     if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
-      return factory.getObjectType(expression.getType(), Nullability.NOT_NULL);
+      return factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL));
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
@@ -94,13 +93,13 @@ public class DfaExpressionFactory {
       PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
       PsiClass target;
       if (qualifier != null) {
-        target = ObjectUtils.tryCast(qualifier.resolve(), PsiClass.class);
+        target = tryCast(qualifier.resolve(), PsiClass.class);
       }
       else {
         target = ClassUtils.getContainingClass(expression);
       }
       return target == null
-             ? factory.getObjectType(expression.getType(), Nullability.NOT_NULL)
+             ? factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL))
              : ThisDescriptor.createThisValue(factory, target);
     }
     return null;

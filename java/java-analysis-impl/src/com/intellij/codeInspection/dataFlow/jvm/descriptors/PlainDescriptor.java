@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -64,7 +65,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
-      return factory.getObjectType(type, DfaPsiUtil.getElementNullability(type, myVariable));
+      return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
     }
     if (PsiUtil.isJvmLocalVariable(myVariable) ||
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {

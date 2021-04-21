@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -183,7 +184,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
             for (DfaMemoryState memState : memStates) {
               memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
               memState.applyCondition(
-                myExceptionVar.cond(RelationType.IS, factory.getObjectType(exception, Nullability.NOT_NULL)));
+                myExceptionVar.cond(RelationType.IS, factory.fromDfType(DfTypes.typedObject(exception, Nullability.NOT_NULL))));
             }
             return super.createInitialInstructionStates(psiBlock, memStates, flow);
           }
