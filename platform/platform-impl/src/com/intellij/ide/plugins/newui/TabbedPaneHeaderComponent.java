@@ -99,8 +99,8 @@ public class TabbedPaneHeaderComponent extends JPanel {
                                            @Nullable @NlsActions.ActionText String tooltip,
                                            @NotNull Icon icon) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PluginsHeaderToolbar", toolbarActionGroup, true);
+    toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
