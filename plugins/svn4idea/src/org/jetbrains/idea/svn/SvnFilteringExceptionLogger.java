@@ -58,11 +58,10 @@ class SvnFilteringExceptionLogger extends DelegatingLogger<Logger> {
         ErrorCode key = ourErrorsToFilter[i];
         if (((SvnBindException)t).contains(key)) {
           long now = System.nanoTime();
-          long lastLogged = myLastLogged[i];
-          myLastLogged[i] = now;
-          if (lastLogged + EXPIRATION < now) {
+          if (myLastLogged[i] + EXPIRATION < now) {
             return false;
           }
+          myLastLogged[i] = now;
         }
       }
     }
