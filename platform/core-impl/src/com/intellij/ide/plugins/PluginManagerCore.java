@@ -73,10 +73,9 @@ public final class PluginManagerCore {
 
   static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
-
-  public static final @NonNls String DISABLE = "disable";
-  public static final @NonNls String ENABLE = "enable";
-  public static final @NonNls String EDIT = "edit";
+  static final @NonNls String DISABLE = "disable";
+  static final @NonNls String ENABLE = "enable";
+  static final @NonNls String EDIT = "edit";
 
   private static final boolean IGNORE_DISABLED_PLUGINS = Boolean.getBoolean("idea.ignore.disabled.plugins");
   private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
@@ -97,12 +96,10 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   private static final List<Supplier<? extends HtmlChunk>> ourPluginErrors = new ArrayList<>();
 
-  @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
-  public static Set<PluginId> ourPluginsToDisable;
-  @SuppressWarnings("StaticNonFinalField")
+  private static Set<PluginId> ourPluginsToDisable;
   @ApiStatus.Internal
-  public static Set<PluginId> ourPluginsToEnable;
+  private static Set<PluginId> ourPluginsToEnable;
 
   @SuppressWarnings("StaticNonFinalField")
   @ApiStatus.Internal
@@ -289,11 +286,11 @@ public final class PluginManagerCore {
   }
 
   public static boolean disablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.disablePlugin(id);
+    return DisabledPluginsState.setEnabledState(Collections.singleton(id), false);
   }
 
   public static boolean enablePlugin(@NotNull PluginId id) {
-    return DisabledPluginsState.enablePlugin(id);
+    return DisabledPluginsState.setEnabledState(Collections.singleton(id), true);
   }
 
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
@@ -468,7 +465,7 @@ public final class PluginManagerCore {
       StringBuilder target;
       PluginId pluginId = descriptor.getPluginId();
       if (!descriptor.isEnabled()) {
-        if (!DisabledPluginsState.isDisabled(pluginId)) {
+        if (!isDisabled(pluginId)) {
           // plugin will be logged as part of "Problems found loading plugins"
           continue;
         }
@@ -486,7 +483,9 @@ public final class PluginManagerCore {
     }
     for (IdeaPluginDescriptorImpl plugin : incompletePlugins) {
       // log only explicitly disabled plugins
-      if (DisabledPluginsState.isDisabled(plugin.getPluginId()) && !disabledPlugins.contains(plugin.getPluginId())) {
+      PluginId pluginId = plugin.getPluginId();
+      if (isDisabled(pluginId) &&
+          !disabledPlugins.contains(pluginId)) {
         appendPlugin(plugin, disabled);
       }
     }
@@ -765,11 +764,33 @@ public final class PluginManagerCore {
         String nameToEnable = disabledRequiredIds.size() == 1 && idMap.containsKey(disabledRequiredIds.iterator().next())
                               ? idMap.get(disabledRequiredIds.iterator().next()).getName()
                               : null;
-        actions.add(() -> HtmlChunk.link(ENABLE, CoreBundle.message("link.text.enable.plugin.or.plugins", nameToEnable, nameToEnable != null ? 0 : 1)));
+        actions.add(() -> HtmlChunk
+          .link(ENABLE, CoreBundle.message("link.text.enable.plugin.or.plugins", nameToEnable, nameToEnable != null ? 0 : 1)));
       }
       actions.add(() -> HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")));
     }
     prepareLoadingPluginsErrorMessage(pluginErrors, globalErrors, actions);
+  }
+
+  @ApiStatus.Internal
+  static boolean onEnable(boolean enabled) {
+    Set<PluginId> pluginIds = enabled ? ourPluginsToEnable : ourPluginsToDisable;
+    ourPluginsToEnable = null;
+    ourPluginsToDisable = null;
+
+    boolean applied = pluginIds != null;
+    if (applied) {
+      Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = buildPluginIdMap();
+      for (PluginId pluginId : pluginIds) {
+        IdeaPluginDescriptor descriptor = pluginIdMap.get(pluginId);
+        if (descriptor != null) {
+          descriptor.setEnabled(enabled);
+        }
+      }
+
+      DisabledPluginsState.setEnabledState(pluginIds, enabled);
+    }
+    return applied;
   }
 
   // separate method to avoid exposing of DescriptorListLoadingContext class

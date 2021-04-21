@@ -259,17 +259,15 @@ public final class PluginInstaller {
         return false;
       }
 
-      PluginManagerMain.PluginEnabler pluginEnabler = model instanceof PluginManagerMain.PluginEnabler
-                                                      ? (PluginManagerMain.PluginEnabler)model
-                                                      : new PluginManagerMain.PluginEnabler.HEADLESS();
+      PluginEnabler pluginEnabler = model instanceof PluginEnabler ? (PluginEnabler)model : PluginEnabler.HEADLESS;
 
-      Task.WithResult<Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
+      Task.WithResult<Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor>, RuntimeException> task =
         new Task.WithResult<>(null,
                               parent,
                               IdeBundle.message("progress.title.checking.plugin.dependencies"),
                               true) {
           @Override
-          protected @NotNull Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
+          protected @NotNull Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> compute(@NotNull ProgressIndicator indicator) {
             PluginInstallOperation operation = new PluginInstallOperation(List.of(),
                                                                           CustomPluginRepositoryService.getInstance()
                                                                             .getCustomRepositoryPlugins(),
@@ -283,7 +281,7 @@ public final class PluginInstaller {
           }
         };
 
-      Pair<? extends PluginInstallOperation, ? extends IdeaPluginDescriptor> pair = ProgressManager.getInstance().run(task);
+      Pair<PluginInstallOperation, ? extends IdeaPluginDescriptor> pair = ProgressManager.getInstance().run(task);
       PluginInstallOperation operation = pair.getFirst();
       if (operation == null) {
         return false;

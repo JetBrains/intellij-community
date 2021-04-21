@@ -841,10 +841,9 @@ public final class PluginManagerConfigurable
             group.rightAction = new LinkLabel<>(
               "",
               null,
-              (__, ___) -> myPluginModel.changeEnableDisable(
-                Set.copyOf(group.descriptors),
-                PluginEnableDisableAction.globally(group.rightAction.getText().startsWith("Enable"))
-              )
+              (__, ___) -> myPluginModel.setEnabledState(group.descriptors,
+                                                         PluginEnableDisableAction
+                                                           .globally(group.rightAction.getText().startsWith("Enable")))
             );
             group.titleWithEnabled(myPluginModel);
             groups.add(group);
@@ -1575,10 +1574,8 @@ public final class PluginManagerConfigurable
       }
 
       if (!descriptors.isEmpty()) {
-        myPluginModel.changeEnableDisable(
-          descriptors,
-          PluginEnableDisableAction.globally(myEnable)
-        );
+        myPluginModel.setEnabledState(descriptors,
+                                      PluginEnableDisableAction.globally(myEnable));
       }
     }
   }

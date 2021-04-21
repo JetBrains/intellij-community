@@ -108,10 +108,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myPluginModel.changeEnableDisable(
-        getAllDescriptors(),
-        myAction
-      );
+      myPluginModel.setEnabledState(getAllDescriptors(),
+                                    myAction);
     }
 
     private static boolean isPerProjectEnabled() {

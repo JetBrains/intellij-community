@@ -14,8 +14,6 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.notification.Notification
@@ -32,7 +30,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.AppUIUtil
@@ -298,28 +295,7 @@ private fun reportPluginErrors() {
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR) { notification, event ->
       notification.expire()
-
-      val description = event.description
-      if (PluginManagerCore.EDIT == description) {
-        PluginManagerConfigurable.showPluginConfigurable(
-          WindowManagerEx.getInstanceEx().findFrameFor(null)?.component,
-          null,
-          emptyList(),
-        )
-        return@Notification
-      }
-
-      if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false)
-      }
-      else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true)
-        @Suppress("SSBasedInspection")
-        PluginManagerMain.notifyPluginsUpdated(null)
-      }
-
-      PluginManagerCore.ourPluginsToEnable = null
-      PluginManagerCore.ourPluginsToDisable = null
+      PluginManagerMain.onEvent(event.description)
     }.notify(null)
   }, ModalityState.NON_MODAL)
 }

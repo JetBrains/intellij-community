@@ -37,7 +37,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -193,10 +192,8 @@ public class ListPluginComponent extends JPanel {
           }
           else {
             myEnableDisableButton = createEnableDisableButton(
-              __ -> myPluginModel.changeEnableDisable(
-                Set.of(myPlugin),
-                PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled())
-              )
+              __ -> myPluginModel.setEnabledState(List.of(myPlugin),
+                                                  PluginEnableDisableAction.globally(myPluginModel.getState(myPlugin).isDisabled()))
             );
           }
 

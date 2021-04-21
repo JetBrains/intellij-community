@@ -1,39 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.core.CoreBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public enum PluginEnabledState {
 
-  ENABLED(
-    "plugins.configurable.enabled.for.all.projects",
-    true,
-    false
-  ),
-  ENABLED_FOR_PROJECT(
-    "plugins.configurable.enabled.for.current.project",
-    true,
-    true
-  ),
-  DISABLED(
-    "plugins.configurable.disabled.for.all.projects",
-    false,
-    false
-  ),
-  DISABLED_FOR_PROJECT(
-    "plugins.configurable.disabled.for.current.project",
-    false,
-    true
-  );
+  ENABLED("plugins.configurable.enabled.for.all.projects",
+          true,
+          false),
+  ENABLED_FOR_PROJECT("plugins.configurable.enabled.for.current.project",
+                      true,
+                      true),
+  DISABLED("plugins.configurable.disabled.for.all.projects",
+           false,
+           false),
+  DISABLED_FOR_PROJECT("plugins.configurable.disabled.for.current.project",
+                       false,
+                       true);
 
-  private final @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String myPropertyKey;
+  private final @NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String myPropertyKey;
   private final boolean myEnabled;
   private final boolean myPerProject;
 
-  PluginEnabledState(@NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String propertyKey,
+  PluginEnabledState(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String propertyKey,
                      boolean enabled,
                      boolean perProject) {
     myPropertyKey = propertyKey;
@@ -42,7 +34,7 @@ public enum PluginEnabledState {
   }
 
   public @NotNull @Nls String toString() {
-    return IdeBundle.message(myPropertyKey);
+    return CoreBundle.message(myPropertyKey);
   }
 
   public boolean isEnabled() {

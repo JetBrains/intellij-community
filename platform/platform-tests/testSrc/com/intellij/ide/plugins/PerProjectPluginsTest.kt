@@ -46,7 +46,7 @@ class PerProjectPluginsTest {
     )
     assertTrue(loaded)
     assertRestartIsNotRequired()
-    assertFalse(DisabledPluginsState.isDisabled(descriptor.pluginId))
+    assertFalse(PluginManagerCore.isDisabled(descriptor.pluginId))
     assertTrue(PluginManagerCore.getLoadedPlugins().contains(descriptor))
 
     val unloaded = pluginTrackerManager.updatePluginsState(
@@ -56,7 +56,7 @@ class PerProjectPluginsTest {
     )
     assertTrue(unloaded)
     assertRestartIsNotRequired()
-    assertFalse(DisabledPluginsState.isDisabled(descriptor.pluginId))
+    assertFalse(PluginManagerCore.isDisabled(descriptor.pluginId))
     assertFalse(PluginManagerCore.getLoadedPlugins().contains(descriptor))
   }
 

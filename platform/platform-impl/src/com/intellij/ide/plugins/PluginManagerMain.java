@@ -25,9 +25,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +72,8 @@ public final class PluginManagerMain {
   }
 
   /**
-   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, PluginEnabler, Runnable)}
-   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, PluginEnabler, Consumer)}.
+   * @deprecated Please migrate to either {@link #downloadPluginsAndCleanup(List, Collection, Runnable, com.intellij.ide.plugins.PluginEnabler, Runnable)}
+   * or {@link #downloadPlugins(List, Collection, boolean, Runnable, com.intellij.ide.plugins.PluginEnabler, Consumer)}.
    */
   @Deprecated(since = "2020.2", forRemoval = true)
   public static boolean downloadPlugins(@NotNull List<PluginNode> plugins,
@@ -87,7 +91,7 @@ public final class PluginManagerMain {
   public static boolean downloadPluginsAndCleanup(@NotNull List<PluginNode> plugins,
                                                   @NotNull Collection<PluginNode> customPlugins,
                                                   @Nullable Runnable onSuccess,
-                                                  @NotNull PluginEnabler pluginEnabler,
+                                                  @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                                   @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
                            customPlugins,
@@ -101,7 +105,7 @@ public final class PluginManagerMain {
                                         @NotNull Collection<PluginNode> customPlugins,
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
-                                        @NotNull PluginEnabler pluginEnabler,
+                                        @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                         @Nullable Consumer<? super Boolean> function) throws IOException {
     try {
       boolean[] result = new boolean[1];
@@ -299,7 +303,8 @@ public final class PluginManagerMain {
     return descriptionSet.isEmpty();
   }
 
-  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull PluginEnabler pluginEnabler, @NotNull List<? extends IdeaPluginDescriptor> list) {
+  public static boolean suggestToEnableInstalledDependantPlugins(@NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
+                                                                 @NotNull List<? extends IdeaPluginDescriptor> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (IdeaPluginDescriptor node : list) {
@@ -386,30 +391,42 @@ public final class PluginManagerMain {
     return false;
   }
 
-  public interface PluginEnabler {
-    void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+  /**
+   * @deprecated Please use {@link com.intellij.ide.plugins.PluginEnabler} directly.
+   */
+  @Deprecated
+  public interface PluginEnabler extends com.intellij.ide.plugins.PluginEnabler {
 
-    void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+    @Override
+    default void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                                 @NotNull PluginEnableDisableAction action) {
+      HEADLESS.setEnabledState(descriptors, action);
+    }
 
-    boolean isDisabled(@NotNull PluginId pluginId);
+    @Override
+    default boolean isDisabled(@NotNull PluginId pluginId) {
+      return HEADLESS.isDisabled(pluginId);
+    }
 
-    class HEADLESS implements PluginEnabler {
-      @Override
-      public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-        DisabledPluginsState.enablePlugins(plugins, true);
-      }
+    final class HEADLESS implements PluginEnabler {
+    }
+  }
 
-      @Override
-      public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-        for (IdeaPluginDescriptor descriptor : plugins) {
-          PluginManagerCore.disablePlugin(descriptor.getPluginId());
+  @ApiStatus.Internal
+  public static void onEvent(@NonNls String description) {
+    switch (description) {
+      case PluginManagerCore.DISABLE:
+        PluginManagerCore.onEnable(false);
+      case PluginManagerCore.ENABLE:
+        if (PluginManagerCore.onEnable(true)) {
+          notifyPluginsUpdated(null);
         }
-      }
-
-      @Override
-      public boolean isDisabled(@NotNull PluginId pluginId) {
-        return PluginManagerCore.isDisabled(pluginId);
-      }
+      case PluginManagerCore.EDIT:
+        IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+        PluginManagerConfigurable.showPluginConfigurable(frame != null ? frame.getComponent() : null,
+                                                         null,
+                                                         List.of());
+      default:
     }
   }
 
@@ -417,7 +434,8 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    Notification notification = UpdateChecker.getNotificationGroup().createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
+    Notification notification = UpdateChecker.getNotificationGroup()
+      .createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
     notification.addAction(new NotificationAction(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {

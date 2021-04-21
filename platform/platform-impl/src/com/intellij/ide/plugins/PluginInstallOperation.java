@@ -33,7 +33,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PluginInstallOperation {
+@ApiStatus.Internal
+public final class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
 
   private static final Cache<String, Optional<PluginId>> ourCache = Caffeine
@@ -43,7 +44,7 @@ public class PluginInstallOperation {
 
   private final @NotNull List<PluginNode> myPluginsToInstall;
   private final @NotNull Collection<PluginNode> myCustomReposPlugins;
-  private final @NotNull PluginManagerMain.PluginEnabler myPluginEnabler;
+  private final @NotNull PluginEnabler myPluginEnabler;
   private final @NotNull ProgressIndicator myIndicator;
   private boolean mySuccess = true;
   private final Set<PluginInstallCallbackData> myDependant = new HashSet<>();
@@ -53,7 +54,7 @@ public class PluginInstallOperation {
   private boolean myShownErrors;
 
   /**
-   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginManagerMain.PluginEnabler, ProgressIndicator)} instead
+   * @deprecated use {@link #PluginInstallOperation(List, Collection, PluginEnabler, ProgressIndicator)} instead
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
@@ -69,7 +70,7 @@ public class PluginInstallOperation {
 
   public PluginInstallOperation(@NotNull List<PluginNode> pluginsToInstall,
                                 @NotNull Collection<PluginNode> customReposPlugins,
-                                @NotNull PluginManagerMain.PluginEnabler pluginEnabler,
+                                @NotNull PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
     myPluginsToInstall = pluginsToInstall;
     myCustomReposPlugins = customReposPlugins;

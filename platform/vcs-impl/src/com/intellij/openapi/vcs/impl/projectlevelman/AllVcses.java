@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.PluginEnabler;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
@@ -303,7 +303,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              DisabledPluginsState.enablePlugins(Collections.singletonList(descriptor), true);
+              PluginEnabler.HEADLESS.enablePlugins(List.of(descriptor));
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }

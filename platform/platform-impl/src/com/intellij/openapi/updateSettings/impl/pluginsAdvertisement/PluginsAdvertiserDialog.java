@@ -91,8 +91,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       return false;
     }
 
-    PluginManagerMain.PluginEnabler pluginHelper = new PluginManagerMain.PluginEnabler.HEADLESS();
-    PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
+    PluginManagerMain.suggestToEnableInstalledDependantPlugins(PluginEnabler.HEADLESS, nodes);
 
     Runnable notifyRunnable = () -> {
       boolean notInstalled = nodes.stream()
@@ -103,14 +102,15 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
         PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
-    DisabledPluginsState.enablePlugins(pluginsToEnable, true);
+
+    PluginEnabler.HEADLESS.enablePlugins(pluginsToEnable);
     if (!nodes.isEmpty()) {
       try {
         PluginManagerMain.downloadPlugins(nodes,
                                           myCustomPlugins,
                                           true,
                                           notifyRunnable,
-                                          pluginHelper,
+                                          PluginEnabler.HEADLESS,
                                           myFinishFunction);
       }
       catch (IOException e) {

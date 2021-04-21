@@ -149,24 +149,21 @@ public class InstalledPluginsTableModel {
     }
   }
 
-  protected final void enableRows(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
+  protected final void enableRows(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
                                   @NotNull PluginEnableDisableAction action) {
     Map<PluginId, PluginEnabledState> tempEnabled = new HashMap<>(myEnabled);
 
-    setNewEnabled(
-      ideaPluginDescriptors,
-      tempEnabled,
-      action,
-      (descriptor, pair) -> {
-      }
-    );
+    setNewEnabled(descriptors,
+                  tempEnabled,
+                  action,
+                  (descriptor, pair) -> {
+                  });
 
     boolean enabled = action.isEnable();
-    Set<Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> dependencies = getDependenciesToUpdateState(
-      ideaPluginDescriptors,
-      tempEnabled,
-      enabled
-    );
+    Set<Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> dependencies =
+      getDependenciesToUpdateState(descriptors,
+                                   tempEnabled,
+                                   enabled);
 
     if (!dependencies.isEmpty() &&
         !SystemProperties.getBooleanProperty("startup.performance.framework", false) &&
@@ -176,25 +173,19 @@ public class InstalledPluginsTableModel {
       return;
     }
 
-    setNewEnabled(
-      ContainerUtil.mapNotNull(dependencies, pair -> pair.getFirst()),
-      action
-    );
-    setNewEnabled(
-      ideaPluginDescriptors,
-      action
-    );
+    setNewEnabled(ContainerUtil.mapNotNull(dependencies, pair -> pair.getFirst()),
+                  action);
+    setNewEnabled(descriptors,
+                  action);
     updatePluginDependencies();
   }
 
-  private void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> dependencies,
+  private void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
                              @NotNull PluginEnableDisableAction action) {
-    setNewEnabled(
-      dependencies,
-      myEnabled,
-      action,
-      this::handleBeforeChangeEnableState
-    );
+    setNewEnabled(descriptors,
+                  myEnabled,
+                  action,
+                  this::handleBeforeChangeEnableState);
   }
 
   private static void setNewEnabled(@NotNull Collection<@NotNull ? extends IdeaPluginDescriptor> descriptors,
@@ -228,7 +219,7 @@ public class InstalledPluginsTableModel {
   }
 
   // todo to be defined static
-  private @NotNull Set<@NotNull Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> getDependenciesToUpdateState(@NotNull Set<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
+  private @NotNull Set<@NotNull Pair<@Nullable ? extends IdeaPluginDescriptor, @NotNull String>> getDependenciesToUpdateState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
                                                                                                                               @NotNull Map<PluginId, PluginEnabledState> enabledMap,
                                                                                                                               boolean enabled) {
     List<IdeaPluginDescriptor> descriptorsToCheckDependencies =

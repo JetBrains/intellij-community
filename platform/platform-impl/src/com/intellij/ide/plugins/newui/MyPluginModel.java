@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-public class MyPluginModel extends InstalledPluginsTableModel implements PluginManagerMain.PluginEnabler {
+public class MyPluginModel extends InstalledPluginsTableModel implements PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
 
   private final List<ListPluginComponent> myInstalledPluginComponents = new ArrayList<>();
@@ -863,21 +863,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myUninstalled.add(descriptor);
   }
 
-  public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins,
-                                  @NotNull PluginEnableDisableAction action) {
-    enableRows(plugins, action);
+  @Override
+  public void setEnabledState(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
+                              @NotNull PluginEnableDisableAction action) {
+    enableRows(descriptors, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
-  }
-
-  @Override
-  public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, PluginEnableDisableAction.ENABLE_GLOBALLY);
-  }
-
-  @Override
-  public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, PluginEnableDisableAction.DISABLE_GLOBALLY);
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
