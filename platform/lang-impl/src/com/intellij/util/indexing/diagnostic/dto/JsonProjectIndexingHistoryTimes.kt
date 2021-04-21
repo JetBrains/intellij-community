@@ -4,7 +4,6 @@ package com.intellij.util.indexing.diagnostic.dto
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 
-@Suppress("unused", "used for JSON")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonProjectIndexingHistoryTimes(
