@@ -190,7 +190,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   void setIconAt(int index, Icon icon) {
-    myTabs.getTabAt(index).setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null);
+    myTabs.getTabAt(index).setIcon(icon);
   }
 
   Icon getIconAt(int index) {

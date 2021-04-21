@@ -1096,30 +1096,26 @@ public final class EditorWindow {
     }
   }
 
-  /**
-   * @return baseIcon augmented with pin/modification status
-   */
+  @Nullable
   private static Icon decorateFileIcon(@NotNull EditorComposite composite, @NotNull Icon baseIcon) {
     UISettings settings = UISettings.getInstance();
-    if (!settings.getMarkModifiedTabsWithAsterisk()) {
-      return baseIcon;
+    boolean showAsterisk = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified();
+    boolean showFileIconInTabs = UISettings.getInstance().getShowFileIconInTabs();
+    if (!showAsterisk) {
+      return showFileIconInTabs ? baseIcon : null;
     }
 
-    Icon crop = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
-    Icon modifiedIcon = settings.getMarkModifiedTabsWithAsterisk() && composite.isModified() ? crop : EmptyIcon.create(7, 7);
-    DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
-    result.setIcon(baseIcon, 0);
-    result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    Icon modifiedIcon = IconUtil.cropIcon(AllIcons.General.Modified, new JBRectangle(3, 3, 7, 7));
+    LayeredIcon result = new LayeredIcon(2);
+    if (showFileIconInTabs) {
+      result.setIcon(baseIcon, 0);
+      result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
+    } else {
+      result.setIcon(EmptyIcon.create(modifiedIcon.getIconWidth(), baseIcon.getIconHeight()), 0);
+      result.setIcon(modifiedIcon, 1, 0, 0);
+
+    }
     return JBUIScale.scaleIcon(result);
-  }
-
-  private static class DecoratedTabIcon extends LayeredIcon {
-    final Icon fileIcon;
-
-    DecoratedTabIcon(int layerCount, Icon fileIcon) {
-      super(layerCount);
-      this.fileIcon = fileIcon;
-    }
   }
 
   public void unsplit(boolean setCurrent) {
