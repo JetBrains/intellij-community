@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * @author Sergey Simonchik
- */
 public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
   public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
