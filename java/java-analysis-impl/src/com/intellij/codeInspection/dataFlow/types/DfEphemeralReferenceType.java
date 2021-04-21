@@ -16,7 +16,7 @@ import java.util.Set;
  *
  * @see DfaMemoryState#isEphemeral()
  */
-public class DfEphemeralReferenceType implements DfReferenceType {
+public class DfEphemeralReferenceType implements DfEphemeralType, DfReferenceType {
   private final @NotNull TypeConstraint myTypeConstraint;
 
   DfEphemeralReferenceType(@NotNull TypeConstraint constraint) {
@@ -64,7 +64,7 @@ public class DfEphemeralReferenceType implements DfReferenceType {
              constraint == TypeConstraints.TOP ? DfTypes.NOT_NULL_OBJECT :
              new DfEphemeralReferenceType(constraint);
     }
-    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).myNotValues : Set.of();
+    Set<Object> notValues = other instanceof DfGenericObjectType ? ((DfGenericObjectType)other).getRawNotValues() : Set.of();
     return new DfGenericObjectType(notValues, constraint, ((DfReferenceType)other).getNullability(),
                                    Mutability.UNKNOWN, null, DfType.BOTTOM, false);
   }

@@ -97,6 +97,10 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
     return super.getNotValues();
   }
 
+  Set<Object> getRawNotValues() {
+    return super.getNotValues();
+  }
+
   @NotNull
   @Override
   public DfReferenceType dropTypeConstraint() {
