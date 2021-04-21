@@ -117,13 +117,12 @@ public final class UIUtil {
 
     JBInsets topWindowInset =  JBUI.insetsTop("small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24);
 
+    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
+    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
+
     // Use standard properties starting jdk 17
-    if (Runtime.version().feature() < 17) {
-      rootPane.putClientProperty("jetbrains.awt.transparentTitleBarAppearance", true);
-    } else {
+    if (Runtime.version().feature() >= 17) {
       rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-      rootPane.putClientProperty("apple.awt.fullWindowContent", true);
-      rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
     }
 
     AbstractBorder customDecorationBorder = new AbstractBorder() {
@@ -143,18 +142,6 @@ public final class UIUtil {
                         ? JBColor.black
                         : JBColor.gray;
           graphics.setColor(color);
-          int controlButtonsWidth = 70;
-          String windowTitle = getWindowTitle(window);
-          double widthToFit = controlButtonsWidth * 2 + GraphicsUtil.stringWidth(windowTitle, g.getFont()) - c.getWidth();
-          if (widthToFit <= 0) {
-            drawCenteredString(graphics, headerRectangle, windowTitle);
-          } else {
-            FontMetrics fm = graphics.getFontMetrics();
-            Rectangle2D stringBounds = fm.getStringBounds(windowTitle, graphics);
-            Rectangle bounds =
-              AffineTransform.getTranslateInstance(controlButtonsWidth, fm.getAscent() + (headerRectangle.height - stringBounds.getHeight()) / 2).createTransformedShape(stringBounds).getBounds();
-            drawCenteredString(graphics, bounds, windowTitle, false, true);
-          }
         }
         finally {
           graphics.dispose();
