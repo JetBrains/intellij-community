@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.jvm.ControlTransferHandler;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
@@ -491,7 +492,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
   public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
                                                               @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
-    return controlTransferInstruction.getTransfer().dispatch(state, runner).toArray(DfaInstructionState.EMPTY_ARRAY);
+    return ControlTransferHandler.dispatch(state, runner, controlTransferInstruction.getTransfer())
+      .toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
@@ -789,7 +791,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (alwaysOutOfBounds) {
       DfaControlTransferValue transfer = instruction.getOutOfBoundsExceptionTransfer();
       if (transfer != null) {
-        List<DfaInstructionState> states = transfer.dispatch(memState, runner);
+        List<DfaInstructionState> states = ControlTransferHandler.dispatch(memState, runner, transfer);
         for (DfaInstructionState state : states) {
           state.getMemoryState().markEphemeral();
         }
@@ -870,7 +872,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       DfaCondition notNullCondition = value.cond(RelationType.NE, NULL);
       DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, typedObject(type, Nullability.NOT_NULL));
       if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
-        List<DfaInstructionState> states = transfer.dispatch(castFail, runner);
+        List<DfaInstructionState> states = ControlTransferHandler.dispatch(castFail, runner, transfer);
         for (DfaInstructionState cceState : states) {
           cceState.getMemoryState().markEphemeral();
         }
@@ -937,7 +939,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
           result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
         }
         if (nullState.applyCondition(value.eq(NULL))) {
-          List<DfaInstructionState> dispatched = transfer.dispatch(nullState, runner);
+          List<DfaInstructionState> dispatched = ControlTransferHandler.dispatch(nullState, runner, transfer);
           for (DfaInstructionState npeState : dispatched) {
             npeState.getMemoryState().markEphemeral();
           }
@@ -1006,7 +1008,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       result.add(nextState);
     }
     if (hasNegative) {
-      List<DfaInstructionState> states = transfer.dispatch(negativeSize, runner);
+      List<DfaInstructionState> states = ControlTransferHandler.dispatch(negativeSize, runner, transfer);
       for (DfaInstructionState negState : states) {
         negState.getMemoryState().markEphemeral();
       }

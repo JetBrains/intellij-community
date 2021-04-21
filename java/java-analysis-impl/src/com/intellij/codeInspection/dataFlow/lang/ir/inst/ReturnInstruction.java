@@ -16,8 +16,8 @@
 
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
-import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
-import com.intellij.codeInspection.dataFlow.ExceptionTransfer;
+import com.intellij.codeInspection.dataFlow.jvm.ExceptionTransfer;
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

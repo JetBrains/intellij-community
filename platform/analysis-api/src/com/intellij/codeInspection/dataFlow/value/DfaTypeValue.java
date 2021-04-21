@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DfaTypeValue extends DfaValue {
+public final class DfaTypeValue extends DfaValue {
   private final @NotNull DfType myType;
 
   DfaTypeValue(@NotNull DfaValueFactory factory, @NotNull DfType type) {

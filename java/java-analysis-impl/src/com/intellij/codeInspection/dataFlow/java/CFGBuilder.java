@@ -4,8 +4,8 @@ package com.intellij.codeInspection.dataFlow.java;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.Trap;
 import com.intellij.codeInspection.dataFlow.java.inliner.CallInliner;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -547,7 +547,7 @@ public class CFGBuilder {
    */
   public CFGBuilder doTry(@NotNull PsiElement anchor) {
     ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
-    myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
+    myAnalyzer.pushTrap(new JvmTrap.TryCatchAll(anchor, offset));
     myBranches.add(() -> offset.setOffset(myAnalyzer.getInstructionCount()));
     return this;
   }
@@ -558,7 +558,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder catchAll() {
-    myAnalyzer.popTrap(Trap.TryCatchAll.class);
+    myAnalyzer.popTrap(JvmTrap.TryCatchAll.class);
     GotoInstruction gotoInstruction = new GotoInstruction(null);
     add(gotoInstruction).end();
     myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));

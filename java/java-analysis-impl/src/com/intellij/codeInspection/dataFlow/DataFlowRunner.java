@@ -7,10 +7,7 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDes
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaCondition;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
@@ -93,7 +90,7 @@ public class DataFlowRunner {
   }
 
   private @Nullable Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
-                                                                   @NotNull InstructionVisitor visitor,
+                                                                   @NotNull InstructionVisitor<?> visitor,
                                                                    boolean allowInlining) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
@@ -129,7 +126,7 @@ public class DataFlowRunner {
    * @param visitor a visitor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+  public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor<?> visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, initialStates);
   }
@@ -142,7 +139,7 @@ public class DataFlowRunner {
    * @param visitor a visitor to use
    * @return result status
    */
-  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+  public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor<?> visitor) {
     Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, true);
     if (initialStates == null) {
       return RunnerResult.NOT_APPLICABLE;
@@ -190,7 +187,7 @@ public class DataFlowRunner {
   }
 
   protected final @NotNull RunnerResult interpret(@NotNull PsiElement psiBlock,
-                                                  @NotNull InstructionVisitor visitor,
+                                                  @NotNull InstructionVisitor<?> visitor,
                                                   @NotNull ControlFlow flow,
                                                   @NotNull List<DfaInstructionState> startingStates) {
     int endOffset = flow.getInstructionCount();

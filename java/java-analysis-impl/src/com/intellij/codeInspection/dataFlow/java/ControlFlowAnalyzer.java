@@ -6,12 +6,12 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.Trap.InsideFinally;
-import com.intellij.codeInspection.dataFlow.Trap.TryCatch;
-import com.intellij.codeInspection.dataFlow.Trap.TryFinally;
-import com.intellij.codeInspection.dataFlow.Trap.TwrFinally;
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.*;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.InsideFinally;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TryCatch;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TryFinally;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TwrFinally;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -59,7 +59,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Project myProject;
   private final DfaValueFactory myFactory;
   private ControlFlow myCurrentFlow;
-  private FList<Trap> myTrapStack = FList.emptyList();
+  private FList<DfaControlTransferValue.Trap> myTrapStack = FList.emptyList();
   private final Map<PsiExpression, NullabilityProblemKind<? super PsiExpression>> myCustomNullabilityProblems = new HashMap<>();
   private final Map<String, ExceptionTransfer> myExceptionCache;
   private ExpressionBlockContext myExpressionBlockContext;
@@ -418,11 +418,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void controlTransfer(@NotNull TransferTarget target, FList<Trap> traps) {
+  private void controlTransfer(@NotNull JvmTransferTarget target, FList<DfaControlTransferValue.Trap> traps) {
     addInstruction(new ControlTransferInstruction(myFactory.controlTransfer(target, traps)));
   }
 
-  private @NotNull FList<Trap> getTrapsInsideElement(PsiElement element) {
+  private @NotNull FList<DfaControlTransferValue.Trap> getTrapsInsideElement(PsiElement element) {
     return FList.createFromReversed(ContainerUtil.reverse(
       ContainerUtil.findAll(myTrapStack, cd -> PsiTreeUtil.isAncestor(element, cd.getAnchor(), true))));
   }
@@ -1051,7 +1051,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private boolean shouldHandleException() {
-    for (Trap trap : myTrapStack) {
+    for (DfaControlTransferValue.Trap trap : myTrapStack) {
       if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally) {
         return true;
       }
@@ -1087,7 +1087,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     processTryWithResources(resourceList, tryBlock);
 
     InstructionTransfer gotoEnd = createTransfer(statement, tryBlock);
-    FList<Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
+    FList<DfaControlTransferValue.Trap> singleFinally = FList.createFromReversed(ContainerUtil.createMaybeSingletonList(finallyDescriptor));
     controlTransfer(gotoEnd, singleFinally);
 
     if (sections.length > 0) {
@@ -1122,11 +1122,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
   }
 
-  void pushTrap(Trap elem) {
+  void pushTrap(JvmTrap elem) {
     myTrapStack = myTrapStack.prepend(elem);
   }
 
-  void popTrap(Class<? extends Trap> aClass) {
+  void popTrap(Class<? extends JvmTrap> aClass) {
     if (!aClass.isInstance(myTrapStack.getHead())) {
       throw new IllegalStateException("Unexpected trap-stack head (wanted: "+aClass.getSimpleName()+"); stack: "+myTrapStack);
     }
@@ -2100,7 +2100,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                     @NotNull DfaVariableValue target,
                                     @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
-    pushTrap(new Trap.InsideInlinedBlock(block));
+    pushTrap(new JvmTrap.InsideInlinedBlock(block));
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, FList.emptyList()), null));
     myExpressionBlockContext =
       new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
@@ -2110,7 +2110,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void exitExpressionBlock() {
     finishElement(myExpressionBlockContext.myCodeBlock);
     myExpressionBlockContext = myExpressionBlockContext.myPreviousBlock;
-    popTrap(Trap.InsideInlinedBlock.class);
+    popTrap(JvmTrap.InsideInlinedBlock.class);
     // Pop transfer value
     addInstruction(new PopInstruction());
   }
