@@ -5,6 +5,7 @@ import com.intellij.execution.target.*
 import com.intellij.execution.wsl.target.wizard.WslTargetIntrospectionStep
 import com.intellij.execution.wsl.target.wizard.WslTargetLanguageStep
 import com.intellij.execution.wsl.target.wizard.WslTargetWizardModel
+import com.intellij.execution.wsl.ui.WslPathBrowser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.diagnostic.logger

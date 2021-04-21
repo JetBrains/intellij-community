@@ -1,4 +1,4 @@
-package com.intellij.execution.wsl.target
+package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.IdeBundle
