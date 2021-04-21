@@ -62,7 +62,6 @@ final class DistributionJARsBuilder {
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "plugins"
-  private static final String PLATFORM_JAR = "platform-impl.jar"
 
   private final BuildContext buildContext
   final ProjectStructureMapping projectStructureMapping = new ProjectStructureMapping()
@@ -140,124 +139,15 @@ final class DistributionJARsBuilder {
           .collect { it.name }
       }
 
-    platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
-      BaseLayoutSpec.metaClass.addModule = { String moduleName ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName)
-        }
-      }
-      BaseLayoutSpec.metaClass.addModule = { String moduleName, String relativeJarPath ->
-        if (!productLayout.excludedModuleNames.contains(moduleName)) {
-          withModule(moduleName, relativeJarPath)
-        }
-      }
-
-      productLayout.additionalPlatformJars.entrySet().each {
-        def jarName = it.key
-        it.value.each {
-          addModule(it, jarName)
-        }
-      }
-      CommunityRepositoryModules.PLATFORM_API_MODULES.each {
-        addModule(it, "platform-api.jar")
-      }
-
-      for (String module in CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES) {
-        addModule(module, PLATFORM_JAR)
-      }
-      productLayout.productApiModules.each {
-        addModule(it, "openapi.jar")
-      }
-
-      for (String module in productLayout.productImplementationModules) {
-        boolean isRelocated = module == "intellij.xml.dom.impl" ||
-                              module == "intellij.platform.structuralSearch" ||
-                              module == "intellij.platform.duplicates.analysis"
-        addModule(module, isRelocated ? PLATFORM_JAR : productLayout.mainJarName)
-      }
-
-      productLayout.moduleExcludes.entrySet().each {
-        layout.moduleExcludes.putValues(it.key, it.value)
-      }
-
-      addModule("intellij.platform.util", "util.jar")
-      addModule("intellij.platform.util.rt", "util.jar")
-      addModule("intellij.platform.util.zip", "util.jar")
-      addModule("intellij.platform.util.classLoader", "util.jar")
-      addModule("intellij.platform.util.text.matching", "util.jar")
-      addModule("intellij.platform.util.collections", "util.jar")
-      addModule("intellij.platform.util.strings", "util.jar")
-      addModule("intellij.platform.util.diagnostic", "util.jar")
-      addModule("intellij.platform.util.ui", "util.jar")
-      addModule("intellij.platform.util.ex", "util.jar")
-      addModule("intellij.platform.ide.util.io", "util.jar")
-      addModule("intellij.platform.extensions", "util.jar")
-
-      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
-      addModule("intellij.platform.statistics", "stats.jar")
-      addModule("intellij.platform.statistics.uploader", "stats.jar")
-      addModule("intellij.platform.statistics.config", "stats.jar")
-      addModule("intellij.platform.statistics.devkit")
-
-      for (String module in List.of("intellij.relaxng",
-                                    "intellij.json",
-                                    "intellij.spellchecker",
-                                    "intellij.xml.analysis.impl",
-                                    "intellij.xml.psi.impl",
-                                    "intellij.xml.structureView.impl",
-                                    "intellij.xml.impl")) {
-        addModule(module, PLATFORM_JAR)
-      }
-
-      addModule("intellij.platform.vcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.dvcs.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.graph.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.log.impl", PLATFORM_JAR)
-      addModule("intellij.platform.vcs.codeReview", PLATFORM_JAR)
-
-      addModule("intellij.platform.objectSerializer.annotations")
-
-      addModule("intellij.platform.bootstrap")
-      addModule("intellij.java.guiForms.rt")
-      addModule("intellij.platform.boot", "bootstrap.jar")
-
-      addModule("intellij.platform.icons", "resources.jar")
-      addModule("intellij.platform.resources", "resources.jar")
-      addModule("intellij.platform.colorSchemes", "resources.jar")
-      addModule("intellij.platform.resources.en", "resources.jar")
-
-      addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
-      addModule("intellij.platform.jps.model.impl", "jps-model.jar")
-
-      addModule("intellij.platform.externalSystem.rt", "external-system-rt.jar")
-
-      addModule("intellij.platform.cdsAgent", "cds/classesLogAgent.jar")
-
-      if (allProductDependencies.contains("intellij.platform.coverage")) {
-        addModule("intellij.platform.coverage")
-      }
-
-      projectLibrariesUsedByPlugins.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
-          withProjectLibrary(it.name)
-        }
-      }
-      productLayout.projectLibrariesToUnpackIntoMainJar.each {
-        withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
-      }
-      withProjectLibrariesFromIncludedModules(buildContext)
-
-      for (def toRemoveVersion : getLibsToRemoveVersion()) {
-        removeVersionFromProjectLibraryJarNames(toRemoveVersion)
-      }
-    }
+    platform = PlatformModules.createPlatformLayout(productLayout, allProductDependencies, projectLibrariesUsedByPlugins, buildContext)
   }
+
 
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
     plugins = plugins.findAll {
       // Kotlin Multiplatform Mobile plugin is excluded since:
       // * is compatible with Android Studio only;
-      // * has release cycle of its own;
+      // * has release cycle of its 
       // * shadows IntelliJ utility modules included via Kotlin Compiler;
       // * breaks searchable options index and jar order generation steps.
       it.mainModule != 'kotlin-ultimate.kmm-plugin'
@@ -276,10 +166,6 @@ final class DistributionJARsBuilder {
     return plugins.findAll { toInclude.contains(it.directoryName) }
   }
 
-  private static @NotNull Set<String> getLibsToRemoveVersion() {
-    return Set.of("Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM")
-  }
-
   private Set<String> getEnabledPluginModules() {
     buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
   }
@@ -289,7 +175,7 @@ final class DistributionJARsBuilder {
   }
 
   static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
-    CommunityRepositoryModules.PLATFORM_API_MODULES + CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
+    PlatformModules.PLATFORM_API_MODULES + PlatformModules.PLATFORM_IMPLEMENTATION_MODULES + modulesLayout.productApiModules +
     modulesLayout.productImplementationModules + modulesLayout.additionalPlatformJars.values()
   }
 
@@ -422,13 +308,13 @@ final class DistributionJARsBuilder {
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
     def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-            CommunityRepositoryModules.PLATFORM_API_MODULES +
-            CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-            productLayout.productApiModules +
-            productLayout.productImplementationModules +
-            productLayout.additionalPlatformJars.values() +
-            toolModules + buildContext.productProperties.additionalModulesToCompile +
-            ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
+                           PlatformModules.PLATFORM_API_MODULES +
+                           PlatformModules.PLATFORM_IMPLEMENTATION_MODULES +
+                           productLayout.productApiModules +
+                           productLayout.productImplementationModules +
+                           productLayout.additionalPlatformJars.values() +
+                           toolModules + buildContext.productProperties.additionalModulesToCompile +
+                           ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
     modulesToInclude - productLayout.excludedModuleNames
   }
 
