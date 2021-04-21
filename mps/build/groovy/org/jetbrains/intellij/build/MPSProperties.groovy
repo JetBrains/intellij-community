@@ -21,10 +21,10 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = ["intellij.idea.community.main"]
 
-        productLayout.productApiModules = BaseIdeaProperties.JAVA_IDE_API_MODULES + [
+        productLayout.productApiModules = [
                 "intellij.java.execution"
         ]
-        productLayout.productImplementationModules = BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES + [
+        productLayout.productImplementationModules = [
                 "intellij.platform.main",
                 "intellij.java.execution.impl",
                 "intellij.java.compiler.instrumentationUtil",
