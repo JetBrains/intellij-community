@@ -772,6 +772,7 @@
           <action id="StretchSplitToBottom" class="com.intellij.ide.actions.StretchSplitAction$StretchToBottom"/>
           <action id="StretchSplitToRight" class="com.intellij.ide.actions.StretchSplitAction$StretchToRight"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.SplitterAction$ChangeOrientation"/>
+          <action id="MaximizeEditorInSplit" class="com.intellij.ide.actions.MaximizeEditorInSplitAction"/>
           <action id="Unsplit" class="com.intellij.ide.actions.SplitterAction$Unsplit"/>
           <action id="UnsplitAll" class="com.intellij.ide.actions.SplitterAction$UnsplitAll"/>
           <action id="NextSplitter" class="com.intellij.ide.actions.SplitterAction$Goto$Next"/>

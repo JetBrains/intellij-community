@@ -5,7 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.HideAllToolWindowsAction;
+import com.intellij.ide.actions.MaximizeEditorInSplitAction;
 import com.intellij.ide.actions.SplitAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -229,7 +229,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                     splitter.getProportion() == splitter.getMinimumProportion())) ||
                   (splitter.getProportion() == splitter.getMinProportion(false) ||
                    splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = HideAllToolWindowsAction.Companion.getSplittersToMaximize(project, editor1);
+                Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1);
                 for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
                   Splitter s = pair.getFirst();
                   s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());
