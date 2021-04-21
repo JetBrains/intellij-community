@@ -185,7 +185,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   private fun isCommonPlace(place: String): Boolean {
-    return ActionPlaces.isCommonPlace(place) || ActionPlaces.TOOLWINDOW_POPUP == place
+    return ActionPlaces.isCommonPlace(place)
   }
 
   fun addAnonymizedPath(@NonNls path: String?): FeatureUsageData {
