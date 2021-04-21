@@ -34,6 +34,8 @@ public class RemoteObject implements Remote, Unreferenced {
 
   public static final boolean IN_PROCESS = "true".equals(System.getProperty("idea.rmi.server.in.process"));
 
+  private static final int ALLOWED_EXCEPTIONS_RECURSION_DEPTH = 30;
+
   private final WeakReference<RemoteObject> myWeakRef;
   private RemoteObject myParent;
   private final Map<RemoteObject, Remote> myChildren = new ConcurrentHashMap<RemoteObject, Remote>();
@@ -104,7 +106,11 @@ public class RemoteObject implements Remote, Unreferenced {
     }
   }
 
-  public Throwable wrapException(Throwable ex) {
+  public final Throwable wrapException(Throwable ex) {
+    return wrapException(ex, 0);
+  }
+
+  protected Throwable wrapException(Throwable ex, int exDepth) {
     boolean foreignException = false;
     Throwable each = ex;
     while (each != null) {
@@ -116,11 +122,15 @@ public class RemoteObject implements Remote, Unreferenced {
     }
 
     if (foreignException) {
-      final RuntimeException wrapper = new RuntimeException(ex.toString(), wrapException(ex.getCause()));
+      final RuntimeException wrapper = new RuntimeException(ex.toString(), wrapExceptionCause(ex, exDepth));
       wrapper.setStackTrace(ex.getStackTrace());
       ex = wrapper;
     }
     return ex;
+  }
+
+  protected final Throwable wrapExceptionCause(Throwable ex, int exDepth) {
+    return exDepth >= ALLOWED_EXCEPTIONS_RECURSION_DEPTH ? null : wrapException(ex.getCause(), exDepth + 1);
   }
 
   protected boolean isKnownException(Throwable ex) {
