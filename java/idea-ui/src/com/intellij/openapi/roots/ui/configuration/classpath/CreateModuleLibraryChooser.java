@@ -52,8 +52,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
   private final DefaultLibraryRootsComponentDescriptor myDefaultDescriptor;
 
   public CreateModuleLibraryChooser(ClasspathPanel classpathPanel, LibraryTable.ModifiableModel moduleLibraryModel) {
-    this(LibraryEditingUtil.getSuitableTypes(classpathPanel), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
-         moduleLibraryModel, null);
+    this(ContainerUtil.map(LibraryEditingUtil.getSuitableTypes(classpathPanel), LibraryEditingUtil.TypeForNewLibrary::getType), classpathPanel.getComponent(), classpathPanel.getRootModel().getModule(),
+                           moduleLibraryModel, null);
   }
 
   public CreateModuleLibraryChooser(List<? extends LibraryType> libraryTypes, JComponent parentComponent,
