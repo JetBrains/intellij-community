@@ -1,10 +1,10 @@
 <html>
 <body>
-<p>Reports the interface methods that clash with the <code>clone()</code> and <code>finalize()</code> methods with the <code>protected</code>
-  access modifier in <code>java.lang.Object</code>.</p>
+Reports the interface methods that clash with the <code>clone()</code> and <code>finalize()</code> methods with the <code>protected</code>
+  access modifier in <code>java.lang.Object</code>.
 <p>In an interface, it is possible to declare these methods with a return type that is incompatible with <code>java.lang.Object</code> methods.
 This allows creating a class that implements such an interface.
-When the interface is functional, it is possible to create a lambda from it, but the code might still be confusing.
+  When the interface is functional, it is possible to create a lambda from it, but the code might still be confusing.</p>
 <p>Example:</p>
 <pre><code>
 // Warning: this interface cannot be implemented by any class,

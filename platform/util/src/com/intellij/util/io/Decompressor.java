@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -229,6 +230,7 @@ public abstract class Decompressor {
   private @Nullable Predicate<? super String> myFilter = null;
   private @Nullable List<String> myPathsPrefix = null;
   private boolean myOverwrite = true;
+  private boolean myErrorOnOutsideSymlinkTarget = false;
   private @Nullable Consumer<Pair<? super Entry, ? super Path>>  myPostProcessor;
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -239,6 +241,11 @@ public abstract class Decompressor {
 
   public Decompressor overwrite(boolean overwrite) {
     myOverwrite = overwrite;
+    return this;
+  }
+
+  public Decompressor errorOnOutsideSymlinkTarget(boolean errorOnOutsideSymlinkTarget) {
+    myErrorOnOutsideSymlinkTarget = errorOnOutsideSymlinkTarget;
     return this;
   }
 
@@ -318,9 +325,8 @@ public abstract class Decompressor {
             break;
 
           case SYMLINK:
-            if (Strings.isEmpty(entry.linkTarget)) {
-              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
-            }
+            verifySymlinkTarget(entry, outputDir, outputFile);
+
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
                 Path outputTarget = Paths.get(entry.linkTarget);
@@ -342,6 +348,25 @@ public abstract class Decompressor {
     }
     finally {
       closeStream();
+    }
+  }
+
+  private static void verifySymlinkTarget(Entry entry, Path outputDir, Path outputFile) throws IOException {
+    try {
+      if (Strings.isEmpty(entry.linkTarget)) {
+        throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
+      }
+
+      Path outputTarget = Paths.get(entry.linkTarget);
+      if (outputTarget.isAbsolute()) {
+        throw new IOException("Invalid symlink (absolute path): " + entry.name + " -> " + entry.linkTarget);
+      }
+
+      if (!FileUtil.isAncestor(outputDir.toString(), outputFile.getParent().resolve(entry.linkTarget).toString(), true)) {
+        throw new IOException("Invalid symlink (points outside of output directory): " + entry.name + " -> " + entry.linkTarget);
+      }
+    } catch(InvalidPathException e) {
+      throw new IOException("Failed to verify symlink entry scope: " + entry.name + " -> " + entry.linkTarget, e);
     }
   }
 

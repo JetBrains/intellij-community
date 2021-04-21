@@ -13,6 +13,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.*;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author: db
@@ -336,11 +337,11 @@ public class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
+  public Collection<MethodRepr> findMethods(final Predicate<MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {
-      if (p.satisfy(mm)) {
+      if (p.test(mm)) {
         result.add(mm);
       }
     }

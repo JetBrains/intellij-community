@@ -1,24 +1,25 @@
 <html>
 <body>
-Reports rules of <code>switch</code> expression or enhanced <code>switch</code> statement which can be converted to a code block.
-<p><b>Example:</b></p>
-<pre>
+Reports the rules of <code>switch</code> expressions or enhanced <code>switch</code> statements
+that can be converted to code blocks.
+<p>Example:</p>
+<pre><code>
   String message = switch (errorCode) {
     case 404 -> "Not found!";
     ...
   };
-</pre>
-<p>After the quickfix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   String message = switch (errorCode) {
     case 404 -> {
                 yield "Not found!";
             }
     ...
   };
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 14 or higher</p>
+<p>The inspection only reports if the language level of the project or module is 14 or higher.</p>
 <p><small>New in 2019.1</small></p>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.CantRunException;
@@ -197,7 +197,7 @@ public class LocalTargetEnvironment extends TargetEnvironment {
 
     @Override
     public void upload(@NotNull String relativePath,
-                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator targetProgressIndicator) throws IOException {
+                       @NotNull TargetProgressIndicator targetProgressIndicator) throws IOException {
       if (myReal) {
         File targetFile = myTargetRoot.resolve(relativePath).toFile().getCanonicalFile();
         FileUtil.copyFileOrDir(myLocalRoot.resolve(relativePath).toFile().getCanonicalFile(), targetFile);

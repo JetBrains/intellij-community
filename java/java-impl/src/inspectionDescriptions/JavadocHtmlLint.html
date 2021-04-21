@@ -1,5 +1,23 @@
 <html>
 <body>
-This inspection detects HTML issues in the Javadoc comments (such as unclosed, empty, or misplaced tags) outlawed since Java 8.
+Reports the same HTML issues in the Javadoc comments which are reported by the DocLint since Java 8.
+<p>The inspection detects issues like:</p>
+<ul>
+  <li>self-closed, unclosed, unknown, misplaced or empty tag</li>
+  <li>unknown or wrong attribute</li>
+  <li>misplaced text</li>
+</ul>
+<p>Example:</p>
+<pre>
+/**
+ * Unknown tag: List&lt;String&gt;
+ * Unclosed tag: error&lt;/b&gt;
+ * Misplaced text or tag: &lt;ul&gt;&lt;li&gt;one&lt;/li&gt;, &lt;li&gt;two&lt;/li&gt;&lt;/ul&gt;
+ * Wrong or empty attribute: &lt;a href=""&gt;&lt;/a&gt;
+ * Self-closed tag: &lt;br/&gt;
+ * ...
+ */
+void sample(){ }
+</pre>
 </body>
 </html>

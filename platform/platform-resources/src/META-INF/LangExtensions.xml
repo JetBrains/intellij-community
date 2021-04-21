@@ -322,6 +322,9 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
 
+    <applicationService
+      serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
+
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
     <moduleService serviceImplementation="com.intellij.facet.FacetFromExternalSourcesStorage"/>

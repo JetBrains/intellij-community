@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.rmi.RemoteObject;
 
-public class MavenRemoteObject extends RemoteObject{
+public class MavenRemoteObject extends RemoteObject {
   @Override
   protected boolean isKnownException(Throwable ex) {
     return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());

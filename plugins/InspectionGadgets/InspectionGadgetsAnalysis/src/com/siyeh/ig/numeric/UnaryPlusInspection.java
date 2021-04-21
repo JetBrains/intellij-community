@@ -27,6 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.numeric.UnnecessaryUnaryMinusInspection.UnaryDecrementFix;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -100,31 +101,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiPrefixExpression prefixExpr = ObjectUtils.tryCast(descriptor.getPsiElement().getParent(), PsiPrefixExpression.class);
-      if (prefixExpr == null) {
-        return;
-      }
-      final PsiExpression operand = prefixExpr.getOperand();
-      final PsiExpression oldExpr;
-      final PsiReferenceExpression refExpr;
-      if (operand instanceof PsiReferenceExpression) {
-        oldExpr = (PsiExpression)prefixExpr.getParent();
-        refExpr = (PsiReferenceExpression)operand;
-      }
-      else if (operand instanceof PsiPrefixExpression) {
-        oldExpr = prefixExpr;
-        refExpr = (PsiReferenceExpression)((PsiPrefixExpression)operand).getOperand();
-      }
-      else {
-        return;
-      }
-      if (refExpr == null || oldExpr == null) {
-        return;
-      }
-      final String refName = refExpr.getReferenceName();
-      if (refName == null) {
-        return;
-      }
-      PsiReplacementUtil.replaceExpression(oldExpr, "++" + refName);
+      applyIncrementDecrementFix(prefixExpr, true);
     }
   }
 
@@ -154,6 +131,9 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
       if (operand == null) {
         return;
       }
+      if (!containsOnlyWhitespaceBetweenOperatorAndOperand(prefixExpression)) {
+        return;
+      }
       final PsiType type = operand.getType();
       if (type == null) {
         return;
@@ -178,15 +158,15 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
       if (myOnTheFly) {
         if (operand instanceof PsiReferenceExpression) {
           final PsiPrefixExpression parentPrefixExpr = ObjectUtils.tryCast(prefixExpression.getParent(), PsiPrefixExpression.class);
-          if (unaryPlusPrefixExpression(parentPrefixExpr)) {
-            addUnaryIncrementFix(fixes, (PsiReferenceExpression)operand);
+          if (unaryPlusPrefixExpression(parentPrefixExpr) && containsOnlyWhitespaceBetweenOperatorAndOperand(parentPrefixExpr)) {
+            addIncrementDecrementFix(fixes, (PsiReferenceExpression)operand, true);
           }
         }
         else if (operand instanceof PsiPrefixExpression && unaryPlusPrefixExpression((PsiPrefixExpression)operand)) {
           final PsiExpression operandExpr = ((PsiPrefixExpression)operand).getOperand();
           final PsiReferenceExpression operandRefExpr = ObjectUtils.tryCast(operandExpr, PsiReferenceExpression.class);
-          if (operandRefExpr != null) {
-            addUnaryIncrementFix(fixes, operandRefExpr);
+          if (operandRefExpr != null && containsOnlyWhitespaceBetweenOperatorAndOperand((PsiPrefixExpression)operand)) {
+            addIncrementDecrementFix(fixes, operandRefExpr, true);
           }
         }
       }
@@ -197,26 +177,67 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
     private static boolean unaryPlusPrefixExpression(@Nullable PsiPrefixExpression prefixExpr) {
       return prefixExpr != null && prefixExpr.getOperationTokenType().equals(JavaTokenType.PLUS);
     }
+  }
 
-    private static void addUnaryIncrementFix(@NotNull List<LocalQuickFix> fixes, @NotNull PsiReferenceExpression refExpr) {
-      final String refName = refExpr.getReferenceName();
-      if (refName == null) {
-        return;
+  static boolean containsOnlyWhitespaceBetweenOperatorAndOperand(@NotNull PsiPrefixExpression prefixExpression) {
+    final PsiJavaToken operator = prefixExpression.getOperationSign();
+    final PsiExpression operand = prefixExpression.getOperand();
+    PsiElement nextSibling = operator.getNextSibling();
+    while (nextSibling != operand) {
+      if (!(nextSibling instanceof PsiWhiteSpace)) {
+        return false;
       }
-      final PsiPrefixExpression topPrefixExpr = ObjectUtils.tryCast(refExpr.getParent().getParent(), PsiPrefixExpression.class);
-      if (topPrefixExpr == null) {
-        return;
-      }
-      final PsiType refExprType = refExpr.getType();
-      if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
-          MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
-        return;
-      }
-      final PsiVariable resolved = ObjectUtils.tryCast(refExpr.resolve(), PsiVariable.class);
-      if (resolved == null || resolved.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      fixes.add(new UnaryIncrementFix(refName));
+      nextSibling = nextSibling.getNextSibling();
     }
+    return true;
+  }
+
+  static void addIncrementDecrementFix(@NotNull List<LocalQuickFix> fixes, @NotNull PsiReferenceExpression refExpr, boolean increment) {
+    final String refName = refExpr.getReferenceName();
+    if (refName == null) {
+      return;
+    }
+    final PsiPrefixExpression topPrefixExpr = ObjectUtils.tryCast(refExpr.getParent().getParent(), PsiPrefixExpression.class);
+    if (topPrefixExpr == null) {
+      return;
+    }
+    final PsiType refExprType = refExpr.getType();
+    if (TypeUtils.unaryNumericPromotion(refExprType) != refExprType &&
+        MethodCallUtils.isNecessaryForSurroundingMethodCall(topPrefixExpr, refExpr)) {
+      return;
+    }
+    final PsiVariable resolved = ObjectUtils.tryCast(refExpr.resolve(), PsiVariable.class);
+    if (resolved == null || resolved.hasModifierProperty(PsiModifier.FINAL)) {
+      return;
+    }
+    fixes.add(increment ? new UnaryIncrementFix(refName) : new UnaryDecrementFix(refName));
+  }
+
+  static void applyIncrementDecrementFix(@Nullable PsiPrefixExpression prefixExpr, boolean increment) {
+    if (prefixExpr == null) {
+      return;
+    }
+    final PsiExpression operand = prefixExpr.getOperand();
+    final PsiExpression oldExpr;
+    final PsiReferenceExpression refExpr;
+    if (operand instanceof PsiReferenceExpression) {
+      oldExpr = (PsiExpression)prefixExpr.getParent();
+      refExpr = (PsiReferenceExpression)operand;
+    }
+    else if (operand instanceof PsiPrefixExpression) {
+      oldExpr = prefixExpr;
+      refExpr = (PsiReferenceExpression)((PsiPrefixExpression)operand).getOperand();
+    }
+    else {
+      return;
+    }
+    if (refExpr == null || oldExpr == null) {
+      return;
+    }
+    final String refName = refExpr.getReferenceName();
+    if (refName == null) {
+      return;
+    }
+    PsiReplacementUtil.replaceExpression(oldExpr, (increment ? "++" : "--") + refName);
   }
 }

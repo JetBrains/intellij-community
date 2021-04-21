@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.java.structuralsearch;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
@@ -43,7 +43,7 @@ public class SSTemplateBuilderTest extends LightJavaCodeInsightFixtureTestCase {
 
   private Template doTest(String text, String expected) {
     PsiFile psiFile = myFixture.configureByText(JavaFileType.INSTANCE, text);
-    TemplateBuilderImpl builder = (TemplateBuilderImpl)new StructuralSearchTemplateBuilder(getFile()).buildTemplate();
+    TemplateBuilderImpl builder = (TemplateBuilderImpl)StructuralSearchTemplateBuilder.getInstance().buildTemplate(getFile());
     Template template = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       Template inlineTemplate = builder.buildInlineTemplate();
       TemplateManager.getInstance(getProject()).startTemplate(getEditor(), inlineTemplate);

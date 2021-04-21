@@ -28,9 +28,9 @@ class UpdateStrategy @JvmOverloads constructor(
     settings,
   )
 
-  fun checkForUpdates(): CheckForUpdateResult {
+  fun checkForUpdates(): PlatformUpdates {
     if (product == null || product.channels.isEmpty()) {
-      return CheckForUpdateResult.Empty
+      return PlatformUpdates.Empty
     }
 
     val selectedChannel = settings.selectedChannelStatus
@@ -44,12 +44,12 @@ class UpdateStrategy @JvmOverloads constructor(
              .filter { p -> isApplicable(p.first, ignoredBuilds) }                                     // filters out inapplicable builds
              .maxWithOrNull(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline
              ?.let { (newBuild, channel) ->
-               CheckForUpdateResult.Loaded(
+               PlatformUpdates.Loaded(
                  newBuild,
                  channel,
                  patches(newBuild, product, currentBuild),
                )
-             } ?: CheckForUpdateResult.Empty
+             } ?: PlatformUpdates.Empty
   }
 
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =

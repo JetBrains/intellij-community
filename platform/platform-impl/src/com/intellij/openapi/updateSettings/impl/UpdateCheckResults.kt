@@ -14,18 +14,18 @@ class UpdateChain internal constructor(
   val size: String?,
 )
 
-sealed class CheckForUpdateResult(open val newBuild: BuildInfo? = null) {
+@ApiStatus.Internal
+sealed class PlatformUpdates {
 
-  internal object Empty : CheckForUpdateResult()
+  object Empty : PlatformUpdates()
 
-  @ApiStatus.Internal
   data class Loaded @JvmOverloads internal constructor(
-    override val newBuild: BuildInfo,
+    val newBuild: BuildInfo,
     val updatedChannel: UpdateChannel,
     val patches: UpdateChain? = null,
-  ) : CheckForUpdateResult(newBuild)
+  ) : PlatformUpdates()
 
-  internal data class ConnectionError(val error: Exception) : CheckForUpdateResult()
+  data class ConnectionError internal constructor(val error: Exception) : PlatformUpdates()
 }
 
 /**

@@ -88,11 +88,6 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     loginPanel.setTokenUi()
   }
 
-  fun setPasswordUi() {
-    setupNewUi(false)
-    loginPanel.setPasswordUi()
-  }
-
   fun setOAuthUi() {
     setupNewUi(true)
     loginPanel.setOAuthUi()

@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.Platform
 import com.intellij.execution.process.*
 import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState.TargetProgressIndicator
+import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine

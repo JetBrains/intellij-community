@@ -759,17 +759,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   @NotNull
   @Override
   public List<File> getAffectedPaths() {
+    List<FilePath> filePaths;
     synchronized (myDataLock) {
-      return myWorker.getAffectedPaths();
+      filePaths = myWorker.getAffectedPaths();
     }
+    return mapNotNull(filePaths, FilePath::getIOFile);
   }
 
   @Override
   @NotNull
   public List<VirtualFile> getAffectedFiles() {
+    List<FilePath> filePaths;
     synchronized (myDataLock) {
-      return myWorker.getAffectedFiles();
+      filePaths = myWorker.getAffectedPaths();
     }
+    return mapNotNull(filePaths, FilePath::getVirtualFile);
   }
 
   @Override

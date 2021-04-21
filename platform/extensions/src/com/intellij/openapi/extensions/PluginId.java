@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +33,8 @@ public final class PluginId implements Comparable<PluginId> {
     return null;
   }
 
+  @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableSet()")
   public static @NotNull Set<PluginId> getRegisteredIds() {
-    // TODO use `Collectors.toUnmodifiableSet()` in JDK 10
     return Collections.unmodifiableSet(new HashSet<>(registeredIds.values()));
   }
 

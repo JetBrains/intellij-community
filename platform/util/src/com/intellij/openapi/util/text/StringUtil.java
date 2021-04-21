@@ -1100,7 +1100,7 @@ public class StringUtil extends StringUtilRt {
     return ExceptionUtil.getMessage(e);
   }
 
-  @ReviseWhenPortedToJDK("11") // Character.toString(aChar).repeat(count)
+  @ReviseWhenPortedToJDK(value = "11", description = "Character.toString(aChar).repeat(count)")
   @Contract(pure = true)
   public static @NotNull String repeatSymbol(final char aChar, final int count) {
     char[] buffer = new char[count];

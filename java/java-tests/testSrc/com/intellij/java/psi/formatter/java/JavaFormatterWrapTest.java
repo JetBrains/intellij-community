@@ -383,7 +383,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().RESOURCE_LIST_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doMethodTest("try (MyResource r1 = null; MyResource r2 = null) { }",
                  "try (MyResource r1 = null;\n" +
-                 "     MyResource r2 = null) { }");
+                 "     MyResource r2 = null) {}");
 
     getSettings().RESOURCE_LIST_LPAREN_ON_NEXT_LINE = true;
     getSettings().RESOURCE_LIST_RPAREN_ON_NEXT_LINE = true;
@@ -391,7 +391,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "try (\n" +
                  "        MyResource r1 = null;\n" +
                  "        MyResource r2 = null\n" +
-                 ") { }");
+                 ") {}");
   }
 
   public void testLineLongEnoughToExceedAfterFirstWrapping() {

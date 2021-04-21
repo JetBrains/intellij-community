@@ -2,7 +2,6 @@
 package com.intellij.ide.customize;
 
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,6 @@ public final class IdSet {
    * @deprecated Please use {@link #getPluginIds()}.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public @NotNull List<PluginId> getIds() {
     return new ArrayList<>(myPluginIds);
   }

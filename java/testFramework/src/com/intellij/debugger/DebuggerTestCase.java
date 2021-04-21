@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -29,7 +29,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.Disposable;
@@ -55,7 +54,6 @@ import com.sun.jdi.Location;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -198,10 +196,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @NotNull
       @Override
-      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                     @Nullable TargetEnvironmentConfiguration configuration)
+      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
         throws ExecutionException {
-        return getJavaParameters().toCommandLine(request, configuration);
+        return getJavaParameters().toCommandLine(request);
       }
     };
 
@@ -266,10 +263,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
       @NotNull
       @Override
-      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request,
-                                                                     @Nullable TargetEnvironmentConfiguration configuration)
+      protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
         throws ExecutionException {
-        return getJavaParameters().toCommandLine(request, configuration);
+        return getJavaParameters().toCommandLine(request);
       }
     };
 

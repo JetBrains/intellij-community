@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports multi-<code>catch</code> sections. The quick fix splits multi-catch section into separate <code>catch</code> blocks.
+Reports multi-<code>catch</code> sections and suggests splitting them into separate <code>catch</code> blocks.
 <p>Example:</p>
-<pre>
+<pre><code>
   try {
     int i = getIndex();
   } catch (NullPointerException|IndexOutOfBoundsException e) {
     e.printStackTrace();
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   try {
     int i = getIndex();
   } catch (NullPointerException e) {
@@ -18,8 +18,8 @@ Reports multi-<code>catch</code> sections. The quick fix splits multi-catch sect
   } catch (IndexOutOfBoundsException e) {
     e.printStackTrace();
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 7 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 </body>
 </html>

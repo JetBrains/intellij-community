@@ -224,7 +224,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"
                      key="inspection.u.element.as.psi.display.name"/>
-    <localInspection language="UAST" shortName="UsePrimitiveTypesEquals"
+    <localInspection language="UAST" shortName="UsePrimitiveTypes"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection"

@@ -179,14 +179,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     else if (info == null || info.handler == null) {
       throw new ExecutionException(ExecutionBundle.message("dialog.remote.process.unable.to.acquire.remote.proxy.for", getName(target)));
     }
-    int publishedPort = publishPort(info.port);
-    int publishedServicePort = info.servicePort != -1 ? publishPort(info.servicePort) : info.servicePort;
-    if (publishedPort != info.port || publishedServicePort != info.servicePort) {
-      return acquire(new RunningInfo(info.handler, info.host, publishedPort, info.name, publishedServicePort));
-    }
-    else {
-      return acquire(info);
-    }
+    return acquire(info);
   }
 
   private static void checkIndicator(@Nullable ProgressIndicator indicator) {
@@ -198,7 +191,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  protected int publishPort(int port) throws ExecutionException {
+  protected int publishPort(int port) {
     return port;
   }
 
@@ -310,10 +303,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return info != null;
   }
 
-  private EntryPoint acquire(final RunningInfo port) throws Exception {
+  private EntryPoint acquire(final RunningInfo info) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(() -> {
-      Registry registry = LocateRegistry.getRegistry(port.host, port.port);
-      Remote remote = Objects.requireNonNull(registry.lookup(port.name));
+      Registry registry = LocateRegistry.getRegistry(info.host, info.port);
+      Remote remote = Objects.requireNonNull(registry.lookup(info.name));
 
       if (myValueClass.isInstance(remote)) {
         EntryPoint entryPoint = myValueClass.cast(remote);
@@ -324,7 +317,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
     }, getClass().getClassLoader()); // should be the loader of client plugin
     // init hard ref that will keep it from DGC and thus preventing from System.exit
-    port.entryPointHardRef = result;
+    info.entryPointHardRef = result;
     return result;
   }
 
@@ -374,21 +367,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           if (o instanceof PendingInfo) {
             info = (PendingInfo)o;
             if (outputType == ProcessOutputTypes.STDOUT) {
-              String prefix = "Port/ID:";
+              String prefix = "Port/ServicesPort/ID:";
               if (text.startsWith(prefix)) {
-                String pair = text.substring(prefix.length()).trim();
-                int idx = pair.indexOf("/");
-                int port = Integer.parseInt(pair.substring(0, idx));
+                List<String> data = StringUtil.split(text.substring(prefix.length()).trim(), "/");
+                int port = Integer.parseInt(data.get(0));
+                int servicesPort = Integer.parseInt(data.get(1));
+                String id = data.get(2);
 
-                int idxEnd = pair.indexOf("#");
-                if (idxEnd > 0) {
-                  String name = pair.substring(idx + 1, idxEnd);
-                  int servicePort = Integer.parseInt(pair.substring(idxEnd + 1));
-                  result = new RunningInfo(info.handler, getRemoteHost(), port, name, servicePort);
-                }
-                else {
-                  result = new RunningInfo(info.handler, getRemoteHost(), port, pair.substring(idx + 1));
-                }
+                result = new RunningInfo(info.handler, getRemoteHost(), publishPort(port), id, publishPort(servicesPort));
                 myProcMap.put(key, result);
                 myProcMap.notifyAll();
               }
@@ -501,19 +487,19 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final String host;
     final int port;
     final String name;
-    final int servicePort; //port number when was exported with RemoteServer.start(knownPort=true), -1 otherwise
+    final int servicesPort; // port number when was exported with RemoteServer.start(knownPort=true), 0 otherwise
     Object entryPointHardRef;
 
     RunningInfo(ProcessHandler handler, String host, int port, String name) {
-      this(handler, host, port, name, -1);
+      this(handler, host, port, name, 0);
     }
 
-    RunningInfo(ProcessHandler handler, String host, int port, String name, int servicePort) {
+    RunningInfo(ProcessHandler handler, String host, int port, String name, int servicesPort) {
       super(handler);
       this.host = host;
       this.port = port;
       this.name = name;
-      this.servicePort = servicePort;
+      this.servicesPort = servicesPort;
     }
 
     @Override

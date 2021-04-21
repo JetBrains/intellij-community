@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports instantiation of generic classes where <b>&lt;&gt;</b> (diamond) is used instead of type parameters.
-This action could be useful when the code needs to be adapted to be compatible with Java 6.
-<p>The quick fix replaces the <b>&lt;&gt;</b> (diamond) with the explicit type parameters.
-<p>Example of use of the diamond:
+Reports instantiation of generic classes in which the <b>&lt;&gt;</b> symbol (diamond) is used instead of
+  type parameters.
+
+<p>The quick-fix replaces <b>&lt;&gt;</b> (diamond) with explicit type parameters.
+  This action can be useful to make the code compatible with Java 6.</p>
+<p>Example:</p>
 <pre><code>List &lt;String&gt; list = new ArrayList&lt;&gt;()</code></pre>
-<p>The statement above is replaced with the following:
+<p>After the quick-fix is applied:</p>
 <pre><code>List &lt;String&gt; list = new ArrayList&lt;String&gt;()</code></pre>
 </body>
 </html>

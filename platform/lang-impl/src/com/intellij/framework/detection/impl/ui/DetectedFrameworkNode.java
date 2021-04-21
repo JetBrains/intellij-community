@@ -15,12 +15,14 @@
  */
 package com.intellij.framework.detection.impl.ui;
 
+import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetectionContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -82,8 +84,22 @@ class DetectedFrameworkNode extends DetectedFrameworkTreeNodeBase {
 
   @Override
   public void disableDetection(DetectionExcludesConfiguration configuration) {
-    for (VirtualFile file : myDescription.getRelatedFiles()) {
-      configuration.addExcludedFile(file, myDescription.getDetector().getFrameworkType());
+    Collection<? extends VirtualFile> files = myDescription.getRelatedFiles();
+    FrameworkType frameworkType = myDescription.getDetector().getFrameworkType();
+    if (files.size() <= 5) {
+      for (VirtualFile file : files) {
+        configuration.addExcludedFile(file, frameworkType);
+      }
+    }
+    else {
+      VirtualFile commonAncestor = VfsUtil.getCommonAncestor(files);
+      if (commonAncestor != null) {
+        configuration.addExcludedFile(commonAncestor, frameworkType);
+      }
+      else {
+        LOG.info("Cannot find common ancestor for " + files.size() + " files, disabling detection for " + frameworkType.getId() + " in the whole project");
+        configuration.addExcludedFramework(frameworkType);
+      }
     }
   }
 

@@ -3,6 +3,7 @@ package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -228,6 +229,24 @@ class DecompressorTest {
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
   }
 
+  @Test fun tarRogueSymlinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    testNoTraversal(Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true), dir, dir.resolve("rogue"))
+  }
+
+  @Test fun zipRogueSymlinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val zip = tempDir.newFile("test.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    testNoTraversal(Decompressor.Zip(zip).withZipExtensions().errorOnOutsideSymlinkTarget(true), dir, dir.resolve("rogue"))
+  }
+
   @Test fun prefixPathsFilesInZip() {
     val zip = tempDir.newFile("test.zip")
     ZipOutputStream(FileOutputStream(zip)).use {
@@ -373,6 +392,17 @@ class DecompressorTest {
 
     assertThat(dir.resolve("f")).isRegularFile()
     assertThat(dir.resolve("links/ok")).isSymbolicLink().hasSameBinaryContentAs(dir.resolve("f"))
+  }
+
+  @Test fun prefixPathRogueSymlinks() {
+    assumeSymLinkCreationIsSupported()
+
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "a/b/c/rogue", link = "../f")
+    }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    testNoTraversal(Decompressor.Tar(tar).errorOnOutsideSymlinkTarget(true).removePrefixPath("a/b/c"), dir, dir.resolve("rogue"))
   }
 
   @Test fun prefixPathSkipsTooShortPaths() {

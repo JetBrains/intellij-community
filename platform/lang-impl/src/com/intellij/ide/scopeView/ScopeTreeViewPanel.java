@@ -114,7 +114,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private TreeExpansionMonitor<PackageDependenciesNode> myTreeExpansionMonitor;
   private CopyPasteDelegator myCopyPasteDelegator;
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final DependencyValidationManager myDependencyValidationManager;
   private final FileStatusListener myFileStatusListener = new FileStatusListener() {
     @Override
@@ -349,7 +348,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       if (getSelectedModules() != null) {
-        return myDeleteModuleProvider;
+        return ModuleDeleteProvider.getInstance();
       }
       return myDeletePSIElementProvider;
     }

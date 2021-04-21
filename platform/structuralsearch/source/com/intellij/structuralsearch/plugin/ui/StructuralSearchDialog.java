@@ -807,7 +807,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final Document document = mySearchCriteriaEdit.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
     assert psiFile != null;
-    final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
+    final TemplateBuilder builder = StructuralSearchTemplateBuilder.getInstance().buildTemplate(psiFile);
+    if (builder == null) return;
     WriteCommandAction
       .runWriteCommandAction(getProject(), SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
                              () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));

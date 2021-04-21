@@ -28,7 +28,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInforma
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
-import org.jetbrains.plugins.github.authentication.isOAuthEnabled
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -145,16 +144,11 @@ private class GHCloneDialogLoginPanel(account: GithubAccount?) :
 
   fun setChooseLoginUi() = setContent(chooseLoginUiPanel)
 
-  fun setPrimaryLoginUi() = if (isOAuthEnabled()) setOAuthUi() else setPasswordUi()
+  fun setPrimaryLoginUi() = setOAuthUi()
 
   fun setTokenUi() {
     setContent(loginPanel)
     loginPanel.setTokenUi() // after `loginPanel` is set as content to ensure correct focus behavior
-  }
-
-  fun setPasswordUi() {
-    setContent(loginPanel)
-    loginPanel.setPasswordUi() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
   fun setOAuthUi() {

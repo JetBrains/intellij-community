@@ -22,7 +22,6 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="github.use.oauth" description="Use OAuth to log in to github.com" defaultValue="true"/>
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
@@ -32,7 +31,6 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.github.extensions.GHGitAuthenticationFailureManager"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -14,9 +14,9 @@ import java.nio.file.Path
 class MavenOnSshTargetConfigurationExtension : TargetConfigurationMavenExtension {
   override fun createUploadRoot(mavenRuntimeConfiguration: MavenRuntimeTargetConfiguration?,
                                 targetEnvironmentRequest: TargetEnvironmentRequest,
-                                targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
                                 volumeDescriptor: VolumeDescriptor,
                                 localRootPath: Path): UploadRoot? {
+    val targetEnvironmentConfiguration = targetEnvironmentRequest.configuration
     if (targetEnvironmentConfiguration !is SshTargetEnvironmentConfiguration) return null
     if (!targetEnvironmentConfiguration.useRsync) return null
 

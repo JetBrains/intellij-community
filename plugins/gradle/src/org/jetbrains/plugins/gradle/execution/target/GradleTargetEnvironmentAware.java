@@ -2,16 +2,16 @@
 package org.jetbrains.plugins.gradle.execution.target;
 
 import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.target.TargetEnvironmentRequest;
+import com.intellij.execution.target.TargetProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 public interface GradleTargetEnvironmentAware {
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                        @NotNull GradleServerEnvironmentSetup environmentSetup,
-                                       @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator progressIndicator);
+                                       @NotNull TargetProgressIndicator progressIndicator);
 
   void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
                                       @NotNull GradleServerEnvironmentSetup environmentSetup,
-                                      @NotNull TargetEnvironmentAwareRunProfileState.TargetProgressIndicator progressIndicator);
+                                      @NotNull TargetProgressIndicator progressIndicator);
 }

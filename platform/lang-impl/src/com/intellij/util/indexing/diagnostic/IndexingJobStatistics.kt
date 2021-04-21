@@ -53,7 +53,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
   )
 
   data class StatsPerFileType(
-    var indexingTimeInAllThreads: TimeNano,
+    var processingTimeInAllThreads: TimeNano,
     var contentLoadingTimeInAllThreads: TimeNano,
     var numberOfFiles: Int,
     var totalBytes: BytesNumber
@@ -90,13 +90,13 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     }
     stats.contentLoadingTimeInAllThreads += contentLoadingTime
     val indexingTime = perIndexerTimes.values.sum()
-    stats.indexingTimeInAllThreads += indexingTime
+    stats.processingTimeInAllThreads += processingTime
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       indexedFiles += IndexedFile(getIndexedFilePath(file), fileStatistics.wasFullyIndexedByExtensions)
     }
-    if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS) {
+    if (processingTime > SLOW_FILE_PROCESSING_THRESHOLD_MS * 1_000_000) {
       slowIndexedFiles.addElement(SlowIndexedFile(file.name, processingTime, indexingTime, contentLoadingTime))
     }
   }

@@ -20,9 +20,11 @@ class InfoBannerPanel(
 
     private val bannerLabel = JLabel()
 
+    @get:Nls
+    @set:Nls
     var text: String
         get() = bannerLabel.text
-        set(value) {
+        set(@Nls value) {
             bannerLabel.text = value
         }
 

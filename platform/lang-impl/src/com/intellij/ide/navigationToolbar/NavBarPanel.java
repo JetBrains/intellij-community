@@ -84,7 +84,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private final ArrayList<NavBarItem> myList = new ArrayList<>();
 
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final IdeView myIdeView;
   private FocusListener myNavBarItemFocusListener;
 
@@ -762,7 +761,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return getCopyPasteDelegator(source).getPasteProvider();
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return selection.get().filter(Module.class).isNotEmpty() ? myDeleteModuleProvider : new DeleteHandler.DefaultDeleteProvider();
+      return selection.get().filter(Module.class).isNotEmpty() ? ModuleDeleteProvider.getInstance() : new DeleteHandler.DefaultDeleteProvider();
     }
 
     if (LangDataKeys.IDE_VIEW.is(dataId)) {

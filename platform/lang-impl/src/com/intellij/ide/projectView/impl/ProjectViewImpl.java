@@ -477,7 +477,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
-  private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
   private SimpleToolWindowPanel myPanel;
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
@@ -1347,7 +1346,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         final Module[] modules = getSelectedModules();
         if (modules != null || !getSelectedUnloadedModules().isEmpty()) {
-          return myDeleteModuleProvider;
+          return ModuleDeleteProvider.getInstance();
         }
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
         if (orderEntry != null) {

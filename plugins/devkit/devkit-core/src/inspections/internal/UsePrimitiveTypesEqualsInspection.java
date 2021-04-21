@@ -15,8 +15,8 @@ public final class UsePrimitiveTypesEqualsInspection extends UseEqualsInspection
   }
 
   @Override
-  protected boolean isThisOrLiteral(@NotNull UExpression operand) {
-    return super.isThisOrLiteral(operand) ||
+  protected boolean isExcluded(@NotNull UExpression operand) {
+    return super.isExcluded(operand) ||
            operand instanceof UReferenceExpression &&
            isNullPrimitivePsiType(((UReferenceExpression)operand).resolve());
   }

@@ -1,6 +1,6 @@
 <html>
 <body>
-<p>Reports redundant method parameters that can be replaced with local variables.</p>
+Reports redundant method parameters that can be replaced with local variables.
 <p>If all local usages of a parameter are preceded by assignments to that parameter, the
 parameter can be removed and its usages replaced with local variables.
 It makes no sense to have such a parameter, as values that are passed to it are overwritten.
@@ -12,7 +12,7 @@ It makes no sense to have such a parameter, as values that are passed to it are 
     System.out.print(p);
   }
 </code></pre>
-<p>After applying the quick-fix:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   void test() {
     int p = 1;

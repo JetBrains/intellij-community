@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +38,10 @@ public abstract class DataValidators {
     return (data, dataId, source) -> {
       for (T element : data) {
         if (element == null) {
-          LOG.error("Array with null provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")");
+          T notNull = ContainerUtil.find(data, Conditions.notNull());
+          LOG.error("Array with null provided by " + source.getClass().getName() + ".getData(\"" + dataId + "\")" +
+                    ": " + data.getClass().getComponentType().getName() + "[" + data.length + "] " +
+                    "{" + (notNull == null ? null : notNull.getClass().getName()) + (data.length > 1 ? ", ..." : "") + "}");
           return false;
         }
         if (!validator.checkValid(element, dataId, source)) {

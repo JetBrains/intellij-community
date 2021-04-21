@@ -40,7 +40,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || (SystemInfo.isMac && e.getID() == WindowEvent.WINDOW_DEACTIVATED)) {
       if (!isPopupActive()) return false;
 
       Window focused = ((WindowEvent)e).getOppositeWindow();

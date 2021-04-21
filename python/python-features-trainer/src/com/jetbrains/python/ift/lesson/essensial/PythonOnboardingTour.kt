@@ -332,9 +332,8 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(
-        PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 300))
+      text(PythonLessonsBundle.message("python.onboarding.balloon.open.learn.toolbar", strong(LearnBundle.message("toolwindow.stripe.Learn"))),
+           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
       stateCheck {
         ToolWindowManager.getInstance(project).getToolWindow("Learn")?.isVisible == true
       }
@@ -343,6 +342,7 @@ class PythonOnboardingTour :
 
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
+      FocusManagerImpl.getInstance(project).requestFocus(editor.contentComponent, false)
     }
   }
 
@@ -382,7 +382,7 @@ class PythonOnboardingTour :
 
     task {
       text(PythonLessonsBundle.message("python.onboarding.balloon.project.directory"),
-           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 400))
+           LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
       triggerByFoundPathAndHighlight { _: JTree, path: TreePath ->
         isDemoFilePath(path)
       }
@@ -435,16 +435,23 @@ class PythonOnboardingTour :
       restoreByUi()
     }
 
+    lateinit var completionTask: TaskContext.TaskId
     task("CodeCompletion") {
       text(PythonLessonsBundle.message("python.onboarding.invoke.completion",
                                        code("values"),
                                        code("()"),
                                        action(it)))
       trigger(it)
+      restoreIfModifiedOrMoved()
+      completionTask = taskId
+    }
+
+    task {
       triggerByListItemAndHighlight(highlightBorder = true, highlightInside = false) { item ->
         item.toString().contains("values")
       }
       restoreIfModifiedOrMoved()
+      restoreByTimer() // completion may be invoked in the another place, for example...
     }
 
     task {
@@ -453,7 +460,7 @@ class PythonOnboardingTour :
       stateCheck {
         checkEditorModification(completionPosition, "/len(values)")
       }
-      restoreByUi()
+      restoreByUi(restoreId = completionTask)
     }
   }
 
@@ -514,7 +521,7 @@ class PythonOnboardingTour :
       text(PythonLessonsBundle.message("python.onboarding.apply.intention", strong(returnTypeMessage(project)), LessonUtil.rawEnter()))
       stateCheck {
         val text = editor.document.text
-        previous.sample.text != text && text.contains("object")
+        previous.sample.text != text && text.contains("object") && !text.contains("values: object")
       }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }

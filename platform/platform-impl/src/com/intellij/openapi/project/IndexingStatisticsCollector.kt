@@ -7,16 +7,16 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class IndexingStatisticsCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("indexing", 4)
+    val GROUP = EventLogGroup("indexing", 5)
 
     @JvmField
     val STAGE_CLASS = EventFields.Class("stage_class")
 
     @JvmField
-    val INDEXING_ACTIVITY = GROUP.registerIdeActivity(null, startEventAdditionalFields = arrayOf(EventFields.PluginInfo))
+    val INDEXING_ACTIVITY = GROUP.registerIdeActivity(null)
 
     @JvmField
-    val INDEXING_STAGE = INDEXING_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS))
+    val INDEXING_STAGE = INDEXING_ACTIVITY.registerStage("stage", arrayOf(STAGE_CLASS, EventFields.PluginInfo))
   }
 
   override fun getGroup(): EventLogGroup {

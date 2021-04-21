@@ -27,6 +27,7 @@ import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class Mappings {
@@ -293,10 +294,6 @@ public final class Mappings {
   private static final ClassRepr MOCK_CLASS = null;
   private static final MethodRepr MOCK_METHOD = null;
 
-  private interface MemberComparator {
-    boolean isSame(ProtoMember member);
-  }
-
   private final class Util {
     @Nullable
     private final Mappings myMappings;
@@ -322,38 +319,38 @@ public final class Mappings {
       return depClasses;
     }
 
-    void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final MemberComparator comparator, final int reflcass) {
+    private TIntHashSet propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final Predicate<ProtoMember> isSame, final int reflcass) {
+      if (acc.contains(reflcass)) {
+        return acc; // SOE prevention
+      }
       final ClassRepr repr = classReprByName(reflcass);
       if (repr != null) {
         if (!root) {
           final Set<? extends ProtoMember> members = isField ? repr.getFields() : repr.getMethods();
 
           for (ProtoMember m : members) {
-            if (comparator.isSame(m)) {
-              return;
+            if (isSame.test(m)) {
+              return acc;
             }
           }
 
-          if (!acc.add(reflcass)) {
-            return; // SOE prevention
-          }
+          acc.add(reflcass);
         }
 
         final TIntHashSet subclasses = myClassToSubclasses.get(reflcass);
 
         if (subclasses != null) {
-          subclasses.forEach(subclass -> {
-            propagateMemberAccessRec(acc, isField, false, comparator, subclass);
-            return true;
-          });
+          final TIntIterator subclassIterator = subclasses.iterator();
+          while (subclassIterator.hasNext()) {
+            propagateMemberAccessRec(acc, isField, false, isSame, subclassIterator.next());
+          }
         }
       }
+      return acc;
     }
 
-    TIntHashSet propagateMemberAccess(final boolean isField, final MemberComparator comparator, final int className) {
-      final TIntHashSet acc = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-      propagateMemberAccessRec(acc, isField, true, comparator, className);
-      return acc;
+    TIntHashSet propagateMemberAccess(final boolean isField, final Predicate<ProtoMember> isSame, final int className) {
+      return propagateMemberAccessRec(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), isField, true, isSame, className);
     }
 
     TIntHashSet propagateFieldAccess(final int name, final int className) {
@@ -364,27 +361,24 @@ public final class Mappings {
       return propagateMemberAccess(false, member -> m.equals(member), className);
     }
 
-    MethodRepr.Predicate lessSpecific(final MethodRepr than) {
-      return new MethodRepr.Predicate() {
-        @Override
-        public boolean satisfy(final MethodRepr m) {
-          if (m.name == myInitName || m.name != than.name || m.myArgumentTypes.length != than.myArgumentTypes.length) {
+    Predicate<MethodRepr> lessSpecific(final MethodRepr than) {
+      return m -> {
+        if (m.name == myInitName || m.name != than.name || m.myArgumentTypes.length != than.myArgumentTypes.length) {
+          return false;
+        }
+
+        for (int i = 0; i < than.myArgumentTypes.length; i++) {
+          final Boolean subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
+          if (subtypeOf != null && !subtypeOf) {
             return false;
           }
-
-          for (int i = 0; i < than.myArgumentTypes.length; i++) {
-            final Boolean subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
-            if (subtypeOf != null && !subtypeOf) {
-              return false;
-            }
-          }
-
-          return true;
         }
+
+        return true;
       };
     }
 
-    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final Predicate<MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (m.name == myInitName) {
         return; // overriding is not defined for constructors
       }
@@ -420,7 +414,7 @@ public final class Mappings {
     }
 
     private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
-      final MethodRepr.Predicate predicate = lessSpecific(m);
+      final Predicate<MethodRepr> predicate = lessSpecific(m);
       final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<>();
       addOverridenMethods(c, predicate, result, null);
       addOverridingMethods(m, c, predicate, result, null);
@@ -436,7 +430,7 @@ public final class Mappings {
       return result;
     }
 
-    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, TIntHashSet visitedClasses) {
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final Predicate<MethodRepr> predicate, TIntHashSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new TIntHashSet();
         visitedClasses.add(fromClass.name);
@@ -477,7 +471,7 @@ public final class Mappings {
       return false;
     }
 
-    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
+    private void addOverridenMethods(final ClassRepr fromClass, final Predicate<MethodRepr> predicate, final Collection<? super Pair<MethodRepr, ClassRepr>> container, TIntHashSet visitedClasses) {
       if (visitedClasses == null) {
         visitedClasses = new TIntHashSet();
         visitedClasses.add(fromClass.name);
@@ -1222,21 +1216,15 @@ public final class Mappings {
         }
       }
 
-      final Supplier<ClassRepr> oldClassRepr = lazy(() -> getClassReprByName(null, it.name)); // todo: 'it' appears already to be the oldRepr, should we lookup it additionally?
       for (final MethodRepr m : added) {
         debug("Method: ", m.name);
 
         final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
 
-        if (!m.isPrivate()) {
-          final ClassRepr oldRepr = oldClassRepr.get();
-          if (oldRepr == null || !myPresent.hasOverriddenMethods(oldRepr, MethodRepr.equalByJavaRules(m), null)) {
-            if (m.myArgumentTypes.length > 0) {
-              debug("Conservative case on overriding methods, affecting method usages");
-              // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
-              myFuture.affectMethodUsages(m, m.name == myInitName? null : propagated.get(), m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
-            }
-          }
+        if (!m.isPrivate() && m.myArgumentTypes.length > 0 && !myPresent.hasOverriddenMethods(it, MethodRepr.equalByJavaRules(m), null)) {
+          debug("Conservative case on overriding methods, affecting method usages");
+          // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
+          myFuture.affectMethodUsages(m, m.name == myInitName? null : propagated.get(), m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
 
         if (!m.isPrivate()) {
@@ -1255,7 +1243,7 @@ public final class Mappings {
 
           debug("Processing affected by specificity methods");
           final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
-          final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
+          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(m);
 
           for (final Pair<MethodRepr, ClassRepr> pair : affectedMethods) {
             final MethodRepr method = pair.first;
@@ -1270,7 +1258,7 @@ public final class Mappings {
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
 
-            if (overrides.satisfy(method) && isInheritor) {
+            if (overrides.test(method) && isInheritor) {
               debug("Current method overrides that found");
 
               final Iterable<File> files = classToSourceFileGet(methodClass.name);
