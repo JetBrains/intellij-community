@@ -8,6 +8,7 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -31,9 +32,9 @@ public class JBCefTestHelper {
   }
 
   /**
-   * Invokes and waits for the browser component showing.
+   * Invokes and waits for the condition to become true.
    */
-  public static void invokeAndWaitForShow(@NotNull JBCefBrowserBase browser, @NotNull Runnable runnable) {
+  public static void invokeAndWaitForCondition(@NotNull Runnable runnable, @NotNull Callable<Boolean> condition) {
     CountDownLatch latch = new CountDownLatch(1);
 
     invokeAndWaitForLatch(latch, () -> {
@@ -41,15 +42,13 @@ public class JBCefTestHelper {
       latch.countDown();
     });
 
-    while (!browser.getComponent().isShowing()) {
-      try {
+    try {
+      while (!condition.call()) {
         //noinspection BusyWait
         Thread.sleep(100);
       }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-        break;
-      }
+    } catch (Throwable e) {
+      throw new RuntimeException(e);
     }
   }
 
