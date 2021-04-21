@@ -33,7 +33,6 @@ import javax.swing.JButton
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JList
-import kotlin.collections.ArrayList
 
 @LearningDsl
 class TaskTestContext(rt: TaskRuntimeContext): TaskRuntimeContext(rt) {
@@ -317,7 +316,7 @@ private fun findIdeFrame(robot: Robot, timeout: Timeout): IdeFrameFixture {
   val matcher: GenericTypeMatcher<IdeFrameImpl> = object : GenericTypeMatcher<IdeFrameImpl>(
     IdeFrameImpl::class.java) {
     override fun isMatching(frame: IdeFrameImpl): Boolean {
-      return true
+      return frame.isShowing
     }
   }
   return try {
