@@ -103,20 +103,21 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
     Set<DfaMemoryState> finalStates = new LinkedHashSet<>();
 
-    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
     PsiType qualifierType = getPsiType(memState, callArguments.myQualifier);
     PsiMethod realMethod = findSpecificMethod(instruction.getContext(), instruction.getTargetMethod(), qualifierType);
     DfaValue defaultResult = getMethodResultValue(instruction, callArguments, memState, factory, realMethod);
+    DfaCallState initialState = new DfaCallState(memState, callArguments, defaultResult);
+    Set<DfaCallState> currentStates = Collections.singleton(initialState);
     PsiExpression expression = instruction.getExpression();
     if (callArguments.myArguments != null && !(defaultResult.getDfType() instanceof DfConstantType)) {
       for (MethodContract contract : instruction.getContracts()) {
-        currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, expression);
+        currentStates = addContractResults(contract, currentStates, factory, finalStates, expression);
         if (currentStates.size() + finalStates.size() > runner.getComplexityLimit()) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
           }
           finalStates.clear();
-          currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
+          currentStates = Collections.singleton(initialState);
           break;
         }
       }
@@ -300,11 +301,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                                Set<DfaCallState> states,
                                                DfaValueFactory factory,
                                                Set<DfaMemoryState> finalStates,
-                                               DfaValue defaultResult,
                                                PsiExpression expression) {
     if(contract.isTrivial()) {
       for (DfaCallState callState : states) {
-        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, callState);
+        DfaValue result = contract.getReturnValue().getDfaValue(factory, callState);
         pushExpressionResult(result, new ResultOfInstruction(expression), callState.myMemoryState);
         finalStates.add(callState.myMemoryState);
       }
@@ -324,7 +324,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
             falseState.applyCondition(falseCondition) :
             falseState.applyContractCondition(falseCondition)) {
           DfaCallArguments falseArguments = contractValue.updateArguments(arguments, true);
-          falseStates.add(new DfaCallState(falseState, falseArguments));
+          falseStates.add(callState.withMemoryState(falseState).withArguments(falseArguments));
         }
         if (!state.applyContractCondition(condition)) {
           state = null;
@@ -332,9 +332,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         }
         arguments = contractValue.updateArguments(arguments, false);
       }
-      if(state != null) {
-        DfaValue result = contract.getReturnValue().getDfaValue(factory, defaultResult, new DfaCallState(state, arguments));
-        result = DfaUtil.boxUnbox(result, expression.getType());
+      if (state != null) {
+        DfaValue result = contract.getReturnValue().getDfaValue(factory, callState.withArguments(arguments));
         state.push(result);
         finalStates.add(state);
       }
@@ -407,7 +406,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       return ((DfaWrappedValue)qualifierValue).getWrappedValue();
     }
     if (precalculated != null) {
-      return DfaUtil.boxUnbox(precalculated, type);
+      return precalculated;
     }
     if (field != null) {
       return DfaUtil.boxUnbox(factory.fromDfType(field.getFromQualifier(state.getDfType(qualifierValue))), type);
@@ -446,13 +445,13 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     }
     LongRangeSet range = JvmPsiRangeSetUtil.typeRange(type);
     if (range != null) {
-      PsiCall call = instruction.getCallExpression();
-      if (call instanceof PsiMethodCallExpression) {
-        range = range.intersect(JvmPsiRangeSetUtil.fromPsiElement(call.resolveMethod()));
+      PsiMethod method = instruction.getTargetMethod();
+      if (method != null) {
+        range = range.intersect(JvmPsiRangeSetUtil.fromPsiElement(method));
       }
       return factory.fromDfType(rangeClamped(range, PsiType.LONG.equals(type)));
     }
-    return factory.getUnknown();
+    return PsiType.VOID.equals(type) ? factory.getUnknown() : factory.getObjectType(type, Nullability.UNKNOWN);
   }
 
   private static @NotNull PsiType narrowReturnType(@NotNull PsiType returnType, @Nullable PsiType qualifierType,
@@ -1118,10 +1117,10 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (contracts.isEmpty()) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().getObjectType(returnType, DfaPsiUtil.getElementNullability(returnType, method));
-    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments));
+    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
     for (MethodContract contract : contracts) {
       Set<DfaMemoryState> results = new HashSet<>();
-      currentStates = addContractResults(contract, currentStates, runner.getFactory(), results, defaultResult, methodRef);
+      currentStates = addContractResults(contract, currentStates, runner.getFactory(), results, methodRef);
       for (DfaMemoryState result : results) {
         pushExpressionResult(result.pop(), new ResultOfInstruction(methodRef), result);
       }
