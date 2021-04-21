@@ -11,36 +11,42 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 
 import javax.swing.*;
 
-public class MethodOrFunctionalExpressionCellRenderer extends PsiElementListCellRenderer<NavigatablePsiElement> {
-  private final PsiClassListCellRenderer myClassListCellRenderer = new PsiClassListCellRenderer();
-  private final MethodCellRenderer myMethodCellRenderer;
+public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiElementCellRenderer<NavigatablePsiElement> {
+  public static class MethodOrFunctionalExpressionCellRenderingInfo
+    implements PsiElementCellRenderingInfo<NavigatablePsiElement> {
+    private final MethodCellRenderer.MethodCellRenderingInfo myMethodCellRenderer;
+
+    public MethodOrFunctionalExpressionCellRenderingInfo(boolean showMethodNames, @PsiFormatUtil.FormatMethodOptions int options) {
+      myMethodCellRenderer = new MethodCellRenderer.MethodCellRenderingInfo(showMethodNames, options);
+    }
+
+    @Override
+    public String getElementText(NavigatablePsiElement element) {
+      return element instanceof PsiMethod ? myMethodCellRenderer.getElementText((PsiMethod)element)
+                                          : ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)element, false);
+    }
+
+    @Override
+    public String getContainerText(final NavigatablePsiElement element, final String name) {
+      return element instanceof PsiMethod ? myMethodCellRenderer.getContainerText((PsiMethod)element, name)
+                                          : PsiClassListCellRenderer.getContainerTextStatic(element);
+    }
+
+    @Override
+    public int getIconFlags() {
+      return PsiClassListCellRenderer.INFO.getIconFlags();
+    }
+
+    @Override
+    public Icon getIcon(PsiElement element) {
+      return element instanceof PsiMethod ? myMethodCellRenderer.getIcon(element) : PsiElementCellRenderingInfo.super.getIcon(element);
+    }
+  }
 
   public MethodOrFunctionalExpressionCellRenderer(boolean showMethodNames) {
     this(showMethodNames, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS);
   }
   public MethodOrFunctionalExpressionCellRenderer(boolean showMethodNames, @PsiFormatUtil.FormatMethodOptions int options) {
-    myMethodCellRenderer = new MethodCellRenderer(showMethodNames, options);
-  }
-
-  @Override
-  public String getElementText(NavigatablePsiElement element) {
-    return element instanceof PsiMethod ? myMethodCellRenderer.getElementText((PsiMethod)element)
-                                        : ClassPresentationUtil.getFunctionalExpressionPresentation((PsiFunctionalExpression)element, false);
-  }
-
-  @Override
-  protected Icon getIcon(PsiElement element) {
-    return element instanceof PsiMethod ? myMethodCellRenderer.getIcon(element) : super.getIcon(element);
-  }
-
-  @Override
-  public String getContainerText(final NavigatablePsiElement element, final String name) {
-    return element instanceof PsiMethod ? myMethodCellRenderer.getContainerText((PsiMethod)element, name)
-                                        : PsiClassListCellRenderer.getContainerTextStatic(element);
-  }
-
-  @Override
-  public int getIconFlags() {
-    return myClassListCellRenderer.getIconFlags();
+    super(new MethodOrFunctionalExpressionCellRenderingInfo(showMethodNames, options));
   }
 }

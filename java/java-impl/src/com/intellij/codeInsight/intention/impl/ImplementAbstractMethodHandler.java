@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiElementCellRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -184,10 +185,10 @@ public class ImplementAbstractMethodHandler {
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    private final PsiClassListCellRenderer myRenderer = new PsiClassListCellRenderer();
+    private final PsiElementCellRenderingInfo<PsiClass> myInfo = PsiClassListCellRenderer.INFO;
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = myRenderer.getComparator();
+      final Comparator<PsiClass> comparator = myInfo.getComparator();
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
@@ -200,7 +201,7 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     public String getElementText(PsiElement element) {
-      return element instanceof PsiClass ? myRenderer.getElementText((PsiClass)element)
+      return element instanceof PsiClass ? myInfo.getElementText((PsiClass)element)
                                          : ((PsiEnumConstant)element).getName();
     }
 
