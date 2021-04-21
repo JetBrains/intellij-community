@@ -699,7 +699,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinx-coroutines-slf4j"),
     jetbrainsLibrary("ml-completion-prev-exprs-models"),
     jetbrainsLibrary("org.jetbrains.kotlin:backend.native:mobile"),
-    jetbrainsLibrary("org.jetbrains.kotlin:kotlin-compiler"),
     jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("rd-core"),
     jetbrainsLibrary("rd-framework"),
