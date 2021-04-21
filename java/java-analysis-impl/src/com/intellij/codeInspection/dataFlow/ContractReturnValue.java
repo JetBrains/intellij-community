@@ -381,7 +381,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public DfaValue getDfaValue(DfaValueFactory factory, DfaCallState callState) {
-      return factory.getNull();
+      return factory.fromDfType(DfTypes.NULL);
     }
 
     @Override

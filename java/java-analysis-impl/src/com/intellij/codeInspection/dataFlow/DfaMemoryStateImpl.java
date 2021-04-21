@@ -1324,7 +1324,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   void doFlush(@NotNull DfaVariableValue var, boolean markFlushed) {
     if(isNull(var)) {
-      myStack.replaceAll(val -> val == var ? myFactory.getNull() : val);
+      myStack.replaceAll(val -> val == var ? myFactory.fromDfType(DfTypes.NULL) : val);
     }
 
     removeEquivalence(var);

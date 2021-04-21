@@ -73,14 +73,6 @@ public class DfaValueFactory {
   }
 
   /**
-   * @return a null value
-   */
-  @NotNull
-  public DfaTypeValue getNull() {
-    return fromDfType(DfTypes.NULL);
-  }
-
-  /**
    * Creates a constant of given type and given value. Constants are always unique
    * (two different constants are not equal to each other).
    *

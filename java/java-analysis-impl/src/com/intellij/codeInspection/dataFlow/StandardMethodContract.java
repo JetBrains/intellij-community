@@ -287,7 +287,7 @@ public final class StandardMethodContract extends MethodContract {
 
     @Nullable
     DfaValue getComparisonValue(DfaValueFactory factory) {
-      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.getNull();
+      if (this == NULL_VALUE || this == NOT_NULL_VALUE) return factory.fromDfType(DfTypes.NULL);
       if (this == TRUE_VALUE || this == FALSE_VALUE) return factory.fromDfType(DfTypes.TRUE);
       return null;
     }

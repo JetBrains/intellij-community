@@ -228,7 +228,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         // Methods like "getCause" and "getMessage" return "null" for our test exception
         if (memState.areEqual(qualifier, myExceptionVar)) {
           memState.pop();
-          memState.push(runner.getFactory().getNull());
+          memState.push(runner.getFactory().fromDfType(DfTypes.NULL));
           return nextInstruction(instruction, runner, memState);
         }
       }

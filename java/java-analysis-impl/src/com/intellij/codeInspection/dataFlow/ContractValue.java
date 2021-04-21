@@ -238,7 +238,7 @@ public abstract class ContractValue {
   }
 
   private static class IndependentValue extends ContractValue {
-    static final IndependentValue NULL = new IndependentValue("null", factory -> factory.getNull());
+    static final IndependentValue NULL = new IndependentValue("null", factory -> factory.fromDfType(DfTypes.NULL));
     static final IndependentValue TRUE = new IndependentValue("true", factory -> factory.fromDfType(DfTypes.TRUE)) {
       @Override
       public boolean isExclusive(ContractValue other) {

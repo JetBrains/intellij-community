@@ -483,7 +483,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
     boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
     if (notNullable && problem != null && problem.thrownException() != null) {
-      state.applyCondition(value.cond(RelationType.NE, value.getFactory().getNull()));
+      state.applyCondition(value.cond(RelationType.NE, value.getFactory().fromDfType(NULL)));
     }
     boolean unknown = nullability == DfaNullability.UNKNOWN;
     return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
@@ -867,7 +867,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         }
       }
       DfaValue value = castFail.peek();
-      DfaCondition notNullCondition = value.cond(RelationType.NE, factory.getNull());
+      DfaCondition notNullCondition = value.cond(RelationType.NE, factory.fromDfType(NULL));
       DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, factory.fromDfType(typedObject(type, Nullability.NOT_NULL)));
       if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
         List<DfaInstructionState> states = transfer.dispatch(castFail, runner);
@@ -937,7 +937,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
           result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
         }
         DfaValueFactory factory = runner.getFactory();
-        if (nullState.applyCondition(value.eq(factory.getNull()))) {
+        if (nullState.applyCondition(value.eq(factory.fromDfType(NULL)))) {
           List<DfaInstructionState> dispatched = transfer.dispatch(nullState, runner);
           for (DfaInstructionState npeState : dispatched) {
             npeState.getMemoryState().markEphemeral();
@@ -1035,7 +1035,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       PsiType type = memState.getDfType(dfaRight).getConstantOfType(PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
-        condition = dfaLeft.cond(RelationType.NE, factory.getNull());
+        condition = dfaLeft.cond(RelationType.NE, factory.fromDfType(NULL));
         unknownTargetType = true;
       } else {
         dfaRight = factory.fromDfType(typedObject(type, Nullability.NOT_NULL));

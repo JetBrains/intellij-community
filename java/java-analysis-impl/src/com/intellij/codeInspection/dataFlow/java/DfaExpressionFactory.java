@@ -253,7 +253,7 @@ public class DfaExpressionFactory {
       PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
       if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
-        return factory.getNull();
+        return factory.fromDfType(DfTypes.NULL);
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
         return factory.getConstant(variable, type);
