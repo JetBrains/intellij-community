@@ -47,6 +47,11 @@ public abstract class DfaCondition {
   }
 
   /**
+   * @return true if result of this condition cannot be known exactly in any possible memory state
+   */
+  abstract public boolean isUnknown();
+
+  /**
    * @see DfaValue#cond(RelationType, DfaValue)
    */
   @NotNull
@@ -80,6 +85,11 @@ public abstract class DfaCondition {
       if (this == TRUE) return FALSE;
       if (this == FALSE) return TRUE;
       return UNKNOWN;
+    }
+
+    @Override
+    public boolean isUnknown() {
+      return this == UNKNOWN;
     }
 
     private static Exact fromBoolean(boolean value) {

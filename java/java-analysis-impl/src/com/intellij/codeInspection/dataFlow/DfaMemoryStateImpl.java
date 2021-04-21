@@ -666,6 +666,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaRelation relation = (DfaRelation)condition;
       if (relation.isEquality()) {
         checkEphemeral(relation.getLeftOperand(), relation.getRightOperand());
+        checkEphemeral(relation.getRightOperand(), relation.getLeftOperand());
       }
     }
     return applyCondition(condition);
@@ -714,6 +715,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     RelationType relationType = dfaRelation.getRelation();
 
     if (DfaTypeValue.isUnknown(dfaLeft) || DfaTypeValue.isUnknown(dfaRight)) return true;
+    // Such relations are only useful to update ephemeral marks in applyContractCondition
+    if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) return true;
 
     if (relationType == RelationType.EQ && dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
       checkEphemeral(dfaLeft, dfaRight);

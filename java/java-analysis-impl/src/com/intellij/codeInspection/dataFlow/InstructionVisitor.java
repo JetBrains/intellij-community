@@ -1047,7 +1047,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     boolean useful;
     ArrayList<DfaInstructionState> states = new ArrayList<>(2);
     DfType leftType = memState.getDfType(dfaLeft);
-    if (condition == DfaCondition.getUnknown()) {
+    if (condition.isUnknown()) {
       if (leftType != DfType.TOP && dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaTypeValue) {
         TypeConstraint left = TypeConstraint.fromDfType(leftType);
         TypeConstraint right = TypeConstraint.fromDfType(dfaRight.getDfType());
