@@ -688,6 +688,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final boolean prevVal = myShowFnInitial;
       myShowFnInitial = myCheckbox.isSelected();
       NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+      TouchbarSupport.enable(!myShowFnInitial);
 
       if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
         NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial, true); // try again with extra checks
@@ -701,6 +702,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           // System.out.println("can't restart touchbar-server, roll back settings");
           myShowFnInitial = prevVal;
           NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+          TouchbarSupport.enable(!myShowFnInitial);
 
           if (!myDisposed) {
             // System.out.println("ui wasn't disposed, invoke roll back of checkbox state");

@@ -15,7 +15,7 @@ public class NSTLibTest {
     NSTLibrary lib = null;
     try {
       // NOTE: for supported OS-versions library must always loads (even SystemSettingsWrapper.isTouchBarServerRunning() == false)
-      lib = NST.loadLibrary();
+      lib = NST.loadLibraryImpl();
     } catch (Throwable e) {
       fail("Failed to load nst library for touchbar: " + e.getMessage());
     }

@@ -43,7 +43,7 @@ final class NST {
     return SystemInfo.isMac && SystemInfo.isOsVersionAtLeast(MIN_OS_VERSION);
   }
 
-  static void initialize() {
+  static void loadLibrary() {
     try {
       if (!isSupportedOS()) {
         LOG.info("OS doesn't support touchbar, skip nst loading");
@@ -62,7 +62,7 @@ final class NST {
       }
       else {
         try {
-          loadLibrary();
+          loadLibraryImpl();
         }
         catch (Throwable e) {
           LOG.error("Failed to load nst library for touchbar: ", e);
@@ -96,7 +96,7 @@ final class NST {
     }
   }
 
-  static NSTLibrary loadLibrary() {
+  static NSTLibrary loadLibraryImpl() {
     Path lib = PathManager.findBinFile("libnst64.dylib");
     assert lib != null : "NST lib missing; bin=" + Arrays.toString(new File(PathManager.getBinPath()).list());
     return ourNSTLibrary = Native.load(lib.toString(), NSTLibrary.class, Collections.singletonMap("jna.encoding", "UTF8"));

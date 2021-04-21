@@ -16,7 +16,7 @@ public class TouchbarTest {
   }
 
   private static void _createFrame() {
-    NST.loadLibrary();
+    NST.loadLibraryImpl();
 
     final TouchBar testTB = _createTestScrubberTouchbar();
     testTB.selectVisibleItemsToShow();

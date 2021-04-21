@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Map;
 
 class CtxDefault {
   private static final Logger LOG = Logger.getInstance(CtxDefault.class);
+  private static MessageBusConnection ourConnection = null;
 
   static void initialize() {
     // 1. load default touchbar actions for all opened projects
@@ -33,7 +35,8 @@ class CtxDefault {
     }
 
     // 2. listen for projects
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ourConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    ourConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         registerTouchbarActions(project);
@@ -56,6 +59,14 @@ class CtxDefault {
 
     // 3. schedule to collect run/debug actions
     fillRunDebugGroup();
+  }
+
+  static void disable() {
+    if (ourConnection != null)
+      ourConnection.disconnect();
+    ourConnection = null;
+    // NOTE: all registered project actions will 'unregister' in manager.clearAll
+    // no necessity to do it here
   }
 
   private static void registerTouchbarActionsImpl(@NotNull Project project) {
@@ -115,6 +126,11 @@ class CtxDefault {
 
     if (!(runButtons instanceof DefaultActionGroup)) {
       LOG.debug("RunnersGroup for touchbar isn't a group");
+      return;
+    }
+
+    if (((DefaultActionGroup)runButtons).getChildrenCount() > 0) {
+      LOG.debug("RunnersGroup for touchbar is already filled, skip fill");
       return;
     }
 

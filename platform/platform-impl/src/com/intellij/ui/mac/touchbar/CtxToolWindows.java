@@ -12,21 +12,27 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.util.containers.WeakList;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 class CtxToolWindows {
   private static final Logger LOG = Logger.getInstance(CtxToolWindows.class);
+  private static MessageBusConnection ourConnection = null;
+  private static final WeakList<MessageBusConnection> ourProjConnections = new WeakList<>();
 
   static void initialize() {
     for (Project project : ProjectUtil.getOpenProjects()) {
       subscribeToolWindowTopic(project);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ourConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    ourConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
         subscribeToolWindowTopic(project);
@@ -42,6 +48,19 @@ class CtxToolWindows {
     });
   }
 
+  synchronized
+  static void disable() {
+    if (ourConnection != null)
+      ourConnection.disconnect();
+    ourConnection = null;
+
+    ourProjConnections.forEach(mbc -> mbc.disconnect());
+    ourProjConnections.clear();
+
+    // NOTE: all registered project actions will 'unregister' in manager.clearAll
+    // no necessity to do it here
+  }
+
   private static void forEachToolWindow(@NotNull Project project, Consumer<ToolWindow> func) {
     ToolWindowManager twm = ToolWindowManager.getInstance(project);
     if (twm == null) return;
@@ -55,8 +74,11 @@ class CtxToolWindows {
     if (project.isDisposed()) {
       return;
     }
+
+
     LOG.debug("subscribe for ToolWindow topic of project %s", project);
-    project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+    MessageBusConnection pbc = project.getMessageBus().connect();
+    pbc.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
         for (String id : ids) {
@@ -79,6 +101,8 @@ class CtxToolWindows {
         TouchBarsManager.unregister(toolWindow.getComponent());
       }
     });
+
+    ourProjConnections.add(pbc);
   }
 
   static void reloadAllActions() {
