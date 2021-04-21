@@ -42,6 +42,7 @@ class CompilationTasksImpl extends CompilationTasks {
     }
     else if (jpsCache.canBeUsed) {
       context.messages.info("JPS remote cache will be used")
+      jpsCache.downloadCacheAndCompileProject()
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
@@ -95,6 +96,10 @@ class CompilationTasksImpl extends CompilationTasks {
     if (!artifactNames.isEmpty()) {
       try {
         def buildIncludedModules = !areCompiledClassesProvided()
+        if (buildIncludedModules && jpsCache.canBeUsed) {
+          jpsCache.downloadCacheAndCompileProject()
+          buildIncludedModules = false
+        }
         new JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
       }
       catch (Throwable e) {
@@ -122,7 +127,7 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   boolean areCompiledClassesProvided() {
-    return !context.kotlinBinaries.isCompilerRequired() || jpsCache.canBeUsed
+    return !context.kotlinBinaries.isCompilerRequired()
   }
 
   @Override
@@ -132,9 +137,6 @@ class CompilationTasksImpl extends CompilationTasks {
     }
     else if (context.options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(context.classesOutputDirectory)
-    }
-    else if (jpsCache.canBeUsed) {
-      jpsCache.downloadCacheAndCompileProject()
     }
     else if (!context.options.useCompiledClassesFromProjectOutput) {
       context.messages.warning("Compiled classes cannot be reused")
