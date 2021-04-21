@@ -62,6 +62,10 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
     return "create.from.template." + getGithubUserName() + "." + getGithubRepositoryName();
   }
 
+  public @Nullable String getDefaultBranchName() {
+    return "master";
+  }
+
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @NotNull GithubTagInfo tag, @NotNull Module module) {

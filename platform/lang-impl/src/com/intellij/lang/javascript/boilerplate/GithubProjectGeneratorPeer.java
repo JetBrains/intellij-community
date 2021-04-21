@@ -42,7 +42,9 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
           selectedItem = sortedTags.get(0);
         }
         myComboBox.removeAllItems();
-        myComboBox.addItem(myMasterTag);
+        if (myDefaultBranchTag != null) {
+          myComboBox.addItem(myDefaultBranchTag);
+        }
         for (GithubTagInfo tag : sortedTags) {
           myComboBox.addItem(tag);
         }
@@ -98,7 +100,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   private final List<WebProjectGenerator.SettingsStateListener> myListeners = new ArrayList<>();
-  private final GithubTagInfo myMasterTag;
+  private final GithubTagInfo myDefaultBranchTag;
   private final GithubTagListProvider myTagListProvider;
   private JComponent myComponent;
   private JPanel myVersionPanel;
@@ -107,10 +109,11 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   public GithubProjectGeneratorPeer(@NotNull AbstractGithubTagDownloadedProjectGenerator generator) {
     String ghUserName = generator.getGithubUserName();
     String ghRepoName = generator.getGithubRepositoryName();
-    myMasterTag = new GithubTagInfo(
-      "master",
-      getGithubZipballUrl(ghUserName, ghRepoName, "master")
-    );
+    String defaultBranchName = generator.getDefaultBranchName();
+    myDefaultBranchTag = defaultBranchName != null ? new GithubTagInfo(
+      defaultBranchName,
+      getGithubZipballUrl(ghUserName, ghRepoName, defaultBranchName)
+    ) : null;
 
     myTagListProvider = new GithubTagListProvider(ghUserName, ghRepoName);
 
