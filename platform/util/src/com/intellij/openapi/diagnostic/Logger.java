@@ -232,8 +232,8 @@ public abstract class Logger {
   protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
            new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged: " +
-                         "ignore for explicitly started processes or rethrow to handle on the outer process level", t)
-                                             : t;
+                         "ignore for explicitly started processes or rethrow to handle on the outer process level", t) :
+           t;
   }
 
   @TestOnly
