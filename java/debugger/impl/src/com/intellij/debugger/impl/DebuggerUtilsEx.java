@@ -933,7 +933,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     PsiFile file = position.getFile();
     final int line = position.getLine();
     final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
-    if (document == null || line >= document.getLineCount()) {
+    if (document == null || line < 0 || line >= document.getLineCount()) {
       return Collections.emptyList();
     }
     TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
