@@ -188,8 +188,9 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
 
     fun run() {
 
-        val (psiClass, containsTypeOrDerivedInside) =
-            targetDeclaration.getReceiverTypeSearcherInfo(this is DestructuringDeclarationReferenceSearcher) ?: return
+        val (psiClass, containsTypeOrDerivedInside) = runReadAction {
+            targetDeclaration.getReceiverTypeSearcherInfo(this is DestructuringDeclarationReferenceSearcher)
+        } ?: return
 
         val inProgress = SearchesInProgress.get()
         if (psiClass != null) {
