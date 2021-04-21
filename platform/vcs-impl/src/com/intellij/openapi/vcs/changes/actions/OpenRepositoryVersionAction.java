@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -38,11 +38,11 @@ public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
-    e.getPresentation().setEnabled(project != null && changes != null &&
-                                   (!CommittedChangesBrowserUseCase.IN_AIR
-                                     .equals(e.getData(CommittedChangesBrowserUseCase.DATA_KEY))) &&
-                                   hasValidChanges(changes) &&
-                                   ModalityState.NON_MODAL.equals(ModalityState.current()));
+    boolean isModalContext = e.getData(PlatformDataKeys.IS_MODAL_CONTEXT) == Boolean.TRUE;
+    boolean isEnabled = project != null && changes != null && !isModalContext &&
+                        !CommittedChangesBrowserUseCase.IN_AIR.equals(e.getData(CommittedChangesBrowserUseCase.DATA_KEY)) &&
+                        hasValidChanges(changes);
+    e.getPresentation().setEnabled(isEnabled);
   }
 
   private static boolean hasValidChanges(Change @NotNull [] changes) {
