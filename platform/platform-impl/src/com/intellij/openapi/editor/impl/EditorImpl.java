@@ -2719,9 +2719,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   static Object calcFractionalMetricsHint() {
-    return Registry.is("editor.text.fractional.metrics")
-           ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
-           : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
+    return UISettings.getEditorFractionalMetricsHint();
   }
 
   private static class RepaintCursorCommand implements Runnable {

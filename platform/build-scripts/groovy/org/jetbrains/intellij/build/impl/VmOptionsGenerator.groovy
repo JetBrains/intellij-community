@@ -19,7 +19,6 @@ final class VmOptionsGenerator {
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
     '-Dkotlinx.coroutines.debug=off',
-    '-Djava2d.font.subpixelResolution=4x1',
     )
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
