@@ -63,6 +63,32 @@ public abstract class DfaCondition {
     return Exact.UNKNOWN;
   }
 
+  @Nullable
+  static Exact tryEvaluate(@NotNull DfType leftType, @NotNull RelationType relationType, @NotNull DfType rightType) {
+    if (relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
+      boolean isSuperState = rightType.isSuperType(leftType);
+      if (isSuperState) {
+        return Exact.fromBoolean(relationType == RelationType.IS);
+      }
+      boolean isDistinct = rightType.meet(leftType) == DfType.BOTTOM;
+      if (isDistinct) {
+        return Exact.fromBoolean(relationType == RelationType.IS_NOT);
+      }
+    } else {
+      DfType meetRelation = leftType.meet(rightType.fromRelation(relationType));
+      DfType meetNegatedRelation = leftType.meet(rightType.fromRelation(relationType.getNegated()));
+      if (meetRelation == DfType.BOTTOM) {
+        // both could be BOTTOM if declared type mismatches
+        return meetNegatedRelation == DfType.BOTTOM ? null : Exact.FALSE;
+      }
+      if (meetNegatedRelation == DfType.BOTTOM) {
+        return Exact.TRUE;
+      }
+    }
+
+    return null;
+  }
+
   static final class Exact extends DfaCondition {
     private final String myName;
 
@@ -97,39 +123,18 @@ public abstract class DfaCondition {
     }
 
     @Nullable
-    static Exact tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    private static Exact tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
       DfaValue sentinel = dfaLeft.getFactory().getSentinel();
       if ((dfaLeft == sentinel) || (dfaRight == sentinel)) {
         return fromBoolean((dfaLeft == sentinel && dfaRight == sentinel) == (relationType == RelationType.EQ));
       }
-      DfType leftType = dfaLeft.getDfType();
-      DfType rightType = dfaRight.getDfType();
       if (dfaLeft == dfaRight && dfaLeft instanceof DfaBinOpValue) {
         return fromBoolean(relationType.isSubRelation(RelationType.EQ));
       }
+      DfType leftType = dfaLeft.getDfType();
+      DfType rightType = dfaRight.getDfType();
 
-      if (relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
-        boolean isSuperState = rightType.isSuperType(leftType);
-        if (isSuperState) {
-          return fromBoolean(relationType == RelationType.IS);
-        }
-        boolean isDistinct = rightType.meet(leftType) == DfType.BOTTOM;
-        if (isDistinct) {
-          return fromBoolean(relationType == RelationType.IS_NOT);
-        }
-      } else {
-        DfType meetRelation = leftType.meet(rightType.fromRelation(relationType));
-        DfType meetNegatedRelation = leftType.meet(rightType.fromRelation(relationType.getNegated()));
-        if (meetRelation == DfType.BOTTOM) {
-          // both could be BOTTOM if declared type mismatches
-          return meetNegatedRelation == DfType.BOTTOM ? null : FALSE;
-        }
-        if (meetNegatedRelation == DfType.BOTTOM) {
-          return TRUE;
-        }
-      }
-
-      return null;
+      return tryEvaluate(leftType, relationType, rightType);
     }
   }
 }

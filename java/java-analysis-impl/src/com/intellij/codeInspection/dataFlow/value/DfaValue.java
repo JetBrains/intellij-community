@@ -111,7 +111,9 @@ public abstract class DfaValue {
    * @return resulting condition between this value and other operand
    */
   @NotNull
-  public final DfaCondition cond(@NotNull RelationType relationType, @NotNull DfType other) {
+  public DfaCondition cond(@NotNull RelationType relationType, @NotNull DfType other) {
+    DfaCondition.Exact result = DfaCondition.tryEvaluate(getDfType(), relationType, other);
+    if (result != null) return result;
     return DfaCondition.createCondition(this, relationType, myFactory.fromDfType(other));
   }
 
