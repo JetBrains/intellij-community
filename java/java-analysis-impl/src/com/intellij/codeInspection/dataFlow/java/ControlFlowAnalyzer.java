@@ -1397,13 +1397,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, lExpr, lType, rExpr, rType);
-      if (isBinaryDivision(op) && rType != null && PsiType.LONG.isAssignableFrom(rType)) {
+      PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
+      if (isBinaryDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
         Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
         if (!(divisorValue instanceof Number) || (((Number)divisorValue).longValue() == 0)) {
-          checkZeroDivisor(rType);
+          checkZeroDivisor(resType);
         }
       }
-      PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
       addInstruction(new BinopInstruction(op, expression, resType, i));
 
       lExpr = rExpr;
