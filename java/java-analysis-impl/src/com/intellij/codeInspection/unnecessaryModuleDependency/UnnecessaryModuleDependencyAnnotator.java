@@ -9,8 +9,9 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
@@ -75,7 +76,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private void collectRequiredModulesInHierarchy(RefElement refElement, Set<? super Module> modules) {
+  private static void collectRequiredModulesInHierarchy(RefElement refElement, Set<? super Module> modules) {
     if (refElement instanceof RefClass) {
       processClassHierarchy(null, (RefClass)refElement, modules);
     }
@@ -87,6 +88,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
         for (UParameter parameter : uMethod.getUastParameters()) {
           processTypeHierarchy(classes, parameter.getType(), modules);
         }
+        //todo thrown types
       }
     }
     else if (refElement instanceof RefField) {
@@ -98,28 +100,17 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private void processTypeHierarchy(Set<? super PsiClass> classes, PsiType returnType, Set<? super Module> modules) {
+  private static void processTypeHierarchy(Set<? super PsiClass> classes, PsiType returnType, Set<? super Module> modules) {
     UClass aClass = UastContextKt.toUElement(PsiUtil.resolveClassInType(returnType), UClass.class);
     if (aClass != null && classes.add(aClass)) {
       processClassHierarchy(aClass, null, modules);
     }
   }
 
-  private void processClassHierarchy(UClass uClass, RefClass refClass, Set<? super Module> modules) {
+  private static void processClassHierarchy(UClass uClass, RefClass refClass, Set<? super Module> modules) {
     LinkedHashSet<UClass> superClasses = new LinkedHashSet<>();
     if (refClass == null) {
-      refClass = ObjectUtils.tryCast(myManager.getReference(uClass.getPsi()), RefClass.class);
-    }
-    if (refClass == null) {
-      PsiClass psiClass = uClass.getJavaPsi();
-      PsiManager psiManager = psiClass.getManager();
-      InheritanceUtil.processSupers(psiClass, false, s -> {
-        UClass uc = UastContextKt.toUElement(s, UClass.class);
-        if (uc != null && psiManager.isInProject(s)) {
-          superClasses.add(uc);
-        }
-        return true;
-      });
+      processSupers(uClass, superClasses);
     }
     else {
       for (RefClass aClass : refClass.getBaseClasses()) {
@@ -132,6 +123,18 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     for (PsiClass superClass : superClasses) {
       Set<Module> onModules = getAllPossibleWhatModules(superClass);
       if (onModules != null) modules.addAll(onModules);
+    }
+  }
+
+  private static void processSupers(UClass uClass, LinkedHashSet<UClass> superClasses) {
+    for (UTypeReferenceExpression uastSuperType : uClass.getUastSuperTypes()) {
+      PsiClass superClass = PsiUtil.resolveClassInType(uastSuperType.getType());
+      if (superClass == null || !superClass.getManager().isInProject(superClass)) continue;
+
+      UClass aClass = UastContextKt.toUElement(superClass, UClass.class);
+      if (aClass != null && superClasses.add(aClass)) {
+        processSupers(aClass, superClasses);
+      }
     }
   }
 
