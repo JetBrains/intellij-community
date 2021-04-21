@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.*;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
     JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
-    JavaRunConfigurationExtensionManager.getInstance()
-      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor());
+    ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
+      .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor()));
   }
 
   @Override
