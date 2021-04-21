@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports expressions which are affected by autoboxing conversion, the automatic wrapping of primitive values as objects.
-In some cases unnecessary autoboxing and unboxing conversions may significantly affect the performance.
+Don't use objects instead of primitives in hot code when possible. It may significantly affect the performance.
 <p>Example:</p>
 <pre>
   Integer x = 42;

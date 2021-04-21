@@ -2,6 +2,14 @@
 <body>
 Reports fields with type <code>java.lang.StringBuffer</code> or <code>java.lang.StringBuilder</code>.
 Fields with these types can grow without a limit and are often the cause of memory leaks.
+<p>Example:</p>
+<pre>
+public class Example {
+  StringBuilder builder = new StringBuilder();
+
+  ...
+}
+</pre>
 <!-- tooltip end -->
 <p>
 

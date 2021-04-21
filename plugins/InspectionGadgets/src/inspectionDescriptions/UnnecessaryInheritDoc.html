@@ -4,7 +4,27 @@ Reports any Javadoc comments which contain only the <code>{@inheritDoc}</code>
 tag. Since Javadoc copies the super class' comment if no comment is present, a
 comment containing only an <code>{@inheritDoc}</code> adds nothing.
 <p>Also reports <code>{@inheritDoc}</code> usages in invalid locations, for example on fields.</p>
-<p>The quick-fix removes the unnecessary Javadoc comment.</p>
+<p>Example:</p>
+<pre>
+  class Example implements Comparable&lt;Example&gt; {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int compareTo(Example o) {
+      return 0;
+    }
+  }
+</pre>
+<p>The quick-fix removes the unnecessary Javadoc comment:</p>
+<pre>
+  class Example implements Comparable&lt;Example&gt; {
+    @Override
+    public int compareTo(Example o) {
+      return 0;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 
