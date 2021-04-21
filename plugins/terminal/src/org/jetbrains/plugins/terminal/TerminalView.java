@@ -462,7 +462,7 @@ public final class TerminalView implements Disposable {
 
   public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
     TerminalTabState state = new TerminalTabState();
-    VirtualFile parentDirectory = fileToOpen != null ? fileToOpen.getParent() : null;
+    VirtualFile parentDirectory = fileToOpen != null && !fileToOpen.isDirectory() ? fileToOpen.getParent() : fileToOpen;
     if (parentDirectory != null) {
       state.myWorkingDirectory = parentDirectory.getPath();
     }
