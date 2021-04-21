@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 data class JsonProjectIndexingHistory(
   val projectName: String = "",
   val times: JsonProjectIndexingHistoryTimes = JsonProjectIndexingHistoryTimes(),
+  val fileCount: JsonProjectIndexingFileCount = JsonProjectIndexingFileCount(),
   val totalStatsPerFileType: List<JsonStatsPerFileType> = emptyList(),
   val totalStatsPerIndexer: List<JsonStatsPerIndexer> = emptyList(),
   val scanningStatistics: List<JsonScanningStatistics> = emptyList(),

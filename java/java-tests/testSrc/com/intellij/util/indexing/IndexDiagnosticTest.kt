@@ -91,6 +91,14 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(333),
           false
         ),
+        fileCount = JsonProjectIndexingFileCount(
+          numberOfFileProviders = 0,
+          numberOfScannedFiles = 0,
+          numberOfFilesIndexedByInfrastructureExtensionsDuringScan = 0,
+          numberOfFilesScheduledForIndexingAfterScan = 0,
+          numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = 0,
+          numberOfFilesIndexedWithLoadingContent = 0
+        ),
         totalStatsPerFileType = listOf(
           JsonProjectIndexingHistory.JsonStatsPerFileType(
             "java",
@@ -133,7 +141,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(222),
             scannedFiles = listOf(
               JsonScanningStatistics.JsonScannedFile(
-                path = PortableFilePath.RelativePath (PortableFilePath.ProjectRoot, "src/a.java"),
+                path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),
                 isUpToDate = true,
                 wasFullyIndexedByInfrastructureExtension = false
               )

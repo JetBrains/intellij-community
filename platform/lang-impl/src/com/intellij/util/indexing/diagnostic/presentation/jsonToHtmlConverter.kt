@@ -34,7 +34,20 @@ fun createAggregateHtml(
       h1("Indexing history")
       table {
         thead {
-          tr { th("Started"); th("Total duration"); th("Scanning duration"); th("Indexing duration"); th("Details") }
+          tr {
+            th("Started")
+            th("Total time")
+            th("Scanning time")
+            th("Indexing time")
+            th("Content loading time")
+            th(TITLE_NUMBER_OF_FILE_PROVIDERS)
+            th(TITLE_NUMBER_OF_SCANNED_FILES)
+            th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+            th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+            th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+            th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+            th("Details")
+          }
         }
         tbody {
           for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
@@ -43,6 +56,16 @@ fun createAggregateHtml(
               td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
               td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
               td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+              td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+
+              val fileCount = diagnostic.fileCount
+              td(fileCount?.numberOfFileProviders?.toString() ?: "N/A")
+              td(fileCount?.numberOfScannedFiles?.toString() ?: "N/A")
+              td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: "N/A")
+              td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: "N/A")
+              td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: "N/A")
+              td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: "N/A")
+
               td {
                 link(diagnostic.htmlFile.fileName.toString(), "details")
               }
@@ -80,6 +103,13 @@ private const val SECTION_SCANNING_TITLE = "Scanning"
 
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
+
+private const val TITLE_NUMBER_OF_FILE_PROVIDERS = "Number of file providers"
+private const val TITLE_NUMBER_OF_SCANNED_FILES = "Number of scanned files"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN = "Number of files indexed by infrastructure extensions during the scan (without loading content)"
+private const val TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN = "Number of files scheduled for indexing after scanning"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING = "Number of files indexed by infrastructure extensions during the indexing stage (with loading content)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT = "Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)"
 
 private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
   div(id = SECTION_RUNTIME_INFO_ID) {
@@ -170,25 +200,24 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { th("Name"); th("Time") }
             }
             tbody {
-              tr { td("Number of file providers"); td(projectIndexingHistory.scanningStatistics.size.toString()) }
+              val fileCount = projectIndexingHistory.fileCount
+              tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
+              tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
               tr {
-                td("Number of scanned files"); td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfScannedFiles }.toString())
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringScan.toString())
               }
               tr {
-                td("Number of files indexed by infrastructure extensions during the scan (without loading content)")
-                td(projectIndexingHistory.scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions }.toString())
+                td(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+                td(fileCount.numberOfFilesScheduledForIndexingAfterScan.toString())
               }
               tr {
-                td("Number of files sent to the indexing stage after scanning (to load file content and index)")
-                td(projectIndexingHistory.scanningStatistics.sumBy { it.numberOfFilesForIndexing }.toString())
+                td(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+                td(fileCount.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage.toString())
               }
               tr {
-                td("Number of files indexed by infrastructure extensions during the indexing stage (with loading content)")
-                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions }.toString())
-              }
-              tr {
-                td("Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)")
-                td(projectIndexingHistory.fileProviderStatistics.sumOf { it.totalNumberOfIndexedFiles }.toString())
+                td(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+                td(fileCount.numberOfFilesIndexedWithLoadingContent.toString())
               }
               tr {
                 td("Number of too large for indexing files")
