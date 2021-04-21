@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.JBColor
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
@@ -43,6 +44,11 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             }
         )
     }
+
+    private val tagForeground = JBColor(0x808080, 0x9C9C9C)
+    private val tagBackground = JBColor(0xE5E5E5, 0x666B6E)
+    private val tagForegroundSelected = JBColor(0xFFFFFF, 0xFFFFFF)
+    private val tagBackgroundSelected = JBColor(0x4395E2, 0x78ADE2)
 
     private fun componentConstraint(x: Int = 0, y: Int = 0, gapAfter: Int? = null): CC = CC().apply {
         cellX = x
@@ -91,7 +97,7 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         @NlsSafe identifier: String,
         isKotlinMultiplatform: Boolean,
         isSelected: Boolean
-    ) = TagPaintingJPanel(columnWidth).apply {
+    ) = TagPaintingJPanel(columnWidth, isSelected).apply {
         if (!name.isNullOrBlank() && name != identifier) {
             add(
                 JLabel(name).apply {
@@ -123,7 +129,9 @@ internal object PackageNameCellRenderer : TableCellRenderer {
         }
     }
 
-    private class TagPaintingJPanel(private val columnWidth: Int) : JPanel(
+    // This is a hack; ideally we should have this done by the layout itself, but MigLayout wasn't cooperating
+    // TODO Use a custom layout to do this in a less hacky fashion
+    private class TagPaintingJPanel(private val columnWidth: Int, private val isSelected: Boolean) : JPanel(
         MigLayout(layoutConstraints.width("${columnWidth}px!"), columnConstraints)
     ) {
 
@@ -140,12 +148,18 @@ internal object PackageNameCellRenderer : TableCellRenderer {
             val tagY = height / 2 - tagComponent.height / 2
 
             g.apply {
+                // We first paint over the gap between the text and the tag, to have a pretend margin if needed
                 color = background
                 fillRect(tagX - componentGapX, 0, columnWidth - tagX, height)
 
+                // Then we manually translate the tag to the right hand side of the row and paint it
                 translate(tagX, tagY)
-                tagComponent.isVisible = true
-                tagComponent.paint(this)
+                tagComponent.apply {
+                    isVisible = true
+                    foreground = JBColor.namedColor("Plugins.tagForeground", if (isSelected) tagForegroundSelected else tagForeground)
+                    background = JBColor.namedColor("Plugins.tagBackground", if (isSelected) tagBackgroundSelected else tagBackground)
+                    paint(g)
+                }
             }
         }
     }

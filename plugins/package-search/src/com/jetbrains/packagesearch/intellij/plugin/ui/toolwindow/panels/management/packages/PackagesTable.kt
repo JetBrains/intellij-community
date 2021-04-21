@@ -29,7 +29,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.autosizeColumnsAt
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.disableHoverIfNeeded
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -229,8 +228,6 @@ internal class PackagesTable(
                 }
             }
         )
-
-        disableHoverIfNeeded()
     }
 
     override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =

@@ -40,17 +40,3 @@ internal fun mouseListener(
         onExited(e)
     }
 }
-
-internal fun JBTable.disableHoverIfNeeded() {
-    // There is a bug on IJ 2020.3—2020.3.2 (and maybe later versions) where the hover effect
-    // causes item rendering to break. This works around it. See IDEA-260619.
-    val buildNumber = PluginEnvironment().ideBuildNumber
-    if (buildNumber >= BuildNumber(buildNumber.productCode, 203, 4449)) {
-        logDebug { "Disabling hover effect on packages table to avoid rendering artefacts" }
-        val field = RenderingUtil::class.java.getDeclaredField("PAINT_HOVERED_BACKGROUND")
-            ?: throw IllegalStateException("RenderingUtil#PAINT_HOVERED_BACKGROUND field not found on IJ 203+!")
-        val key = field.get(null)
-            ?: throw IllegalStateException("RenderingUtil#PAINT_HOVERED_BACKGROUND value not available on IJ 203+!")
-        putClientProperty(key, java.lang.Boolean.FALSE)
-    }
-}
