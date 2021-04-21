@@ -196,6 +196,7 @@ public interface IdeActions {
 
   String GROUP_PROJECT_VIEW_POPUP = "ProjectViewPopupMenu";
   String GROUP_NAVBAR_POPUP = "NavbarPopupMenu";
+  String GROUP_NAVBAR_TOOLBAR = "NavBarToolBar";
   String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
   String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";

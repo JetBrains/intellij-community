@@ -3,10 +3,7 @@ package com.intellij.internal
 
 import com.intellij.execution.RunManager
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -20,7 +17,7 @@ class DumpRunDebugActionStateAction : AnAction() {
     val result = buildString {
       val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
       appendLine("Selected configuration: ${selectedConfiguration?.name}")
-      val toolbar = ActionToolbarImpl.findToolbar(CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar") as ActionGroup) ?: run {
+      val toolbar = ActionToolbarImpl.findToolbar(CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR) as ActionGroup) ?: run {
         appendLine("No toolbar for action group NavBarToolBar")
         return@buildString
       }

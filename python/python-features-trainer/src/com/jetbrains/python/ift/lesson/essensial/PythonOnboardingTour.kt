@@ -12,6 +12,7 @@ import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -290,7 +291,7 @@ class PythonOnboardingTour :
     task {
 
       triggerByPartOfComponent(highlightInside = true, usePulsation = true) { ui: ActionToolbarImpl ->
-        ui.takeIf { (ui.place == "NavBarToolbar" || ui.place == "MainToolbar") }?.let { toolbar ->
+        ui.takeIf { (ui.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR || ui.place == ActionPlaces.MAIN_TOOLBAR) }?.let { toolbar ->
           val configurations = ui.components.find { it is JPanel && it.components.any { b -> b is ComboBoxAction.ComboBoxButton } }
           val stop = ui.components.find { it is ActionButton && it.action == ActionManager.getInstance().getAction("Stop") }
           if (configurations != null && stop != null) {

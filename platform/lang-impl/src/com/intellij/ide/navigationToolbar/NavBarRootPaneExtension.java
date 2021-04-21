@@ -73,7 +73,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public static boolean runToolbarExists() {
-    final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
+    final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
     return correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
            correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
   }
@@ -131,7 +131,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private void toggleRunPanel(final boolean show) {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
-      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
+      AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
 
       if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
         ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
