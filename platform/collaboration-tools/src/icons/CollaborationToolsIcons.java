@@ -1,4 +1,3 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -10,9 +9,9 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public final class VcsCodeReviewIcons {
+public final class CollaborationToolsIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
-    return IconManager.getInstance().loadRasterizedIcon(path, VcsCodeReviewIcons.class.getClassLoader(), cacheKey, flags);
+    return IconManager.getInstance().loadRasterizedIcon(path, CollaborationToolsIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", -3056595990209732615L, 0);
   /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/commentHovered.svg", 7093337652238115394L, 0);

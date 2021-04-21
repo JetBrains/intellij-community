@@ -28,7 +28,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -165,7 +165,7 @@ class SubmittableTextField(
 
   private fun createSubmitButton(@NlsActions.ActionText actionName: String) =
     InlineIconButton(
-      VcsCodeReviewIcons.Send, VcsCodeReviewIcons.SendHovered,
+      CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
       tooltip = actionName,
       shortcut = SUBMIT_SHORTCUT_SET
     ).apply {

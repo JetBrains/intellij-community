@@ -27,7 +27,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.InlineIconButton
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -177,7 +177,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          val button = InlineIconButton(icon = VcsCodeReviewIcons.Delete, hoveredIcon = VcsCodeReviewIcons.DeleteHovered,
+          val button = InlineIconButton(icon = CollaborationToolsIcons.Delete, hoveredIcon = CollaborationToolsIcons.DeleteHovered,
                                         tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
           button.actionListener = ActionListener {
             if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),

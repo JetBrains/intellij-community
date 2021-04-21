@@ -9,7 +9,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
-import icons.VcsCodeReviewIcons
+import icons.CollaborationToolsIcons
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
@@ -95,7 +95,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
       override fun createStatusComponent(): JComponent {
         val stateLabel = JLabel(
           GithubBundle.message("pull.request.state.closed.long"),
-          VcsCodeReviewIcons.PullRequestClosed,
+          CollaborationToolsIcons.PullRequestClosed,
           SwingConstants.LEFT
         )
         return if (canReopen) stateLabel
