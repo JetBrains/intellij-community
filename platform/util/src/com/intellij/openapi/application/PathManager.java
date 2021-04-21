@@ -34,10 +34,6 @@ public final class PathManager {
   public static final String OPTIONS_DIRECTORY = "options";
   public static final String DEFAULT_EXT = ".xml";
 
-  private static final String KOTLIN_IDE_IML_RELATIVE_PATH = "kotlin/idea/kotlin.idea.iml";
-  private static final String KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH = "idea/kotlin.idea.iml";
-  private static final String INTELLIJ_SUB_REPO_NAME = "intellij";
-
   private static final String PROPERTY_HOME = "idea.home";  // reduced variant of PROPERTY_HOME_PATH, now deprecated
   private static final String PROPERTY_VENDOR_NAME = "idea.vendor.name";
 
@@ -149,26 +145,8 @@ public final class PathManager {
     Path root = Paths.get(rootPath).toAbsolutePath();
     do {
       root = root.getParent();
-    } while (root != null && !isIdeaHome(root) && !isKotlinIdeRepoHome(root));
-    if (root != null && isKotlinIdeRepoHome(root)) {
-      root = root.resolve(INTELLIJ_SUB_REPO_NAME);
-    }
+    } while (root != null && !isIdeaHome(root));
     return root != null ? root.toString() : null;
-  }
-
-  /**
-   * Checks whether it's intellij + kotlin kotlin-ide repo home.
-   * <p></p>
-   * This is temp util method and it's supposed to be removed when kotlin-20202 experiment is over
-   */
-  private static boolean isKotlinIdeRepoHome(@NotNull Path path) {
-    boolean containsRootKotlinModuleFile = Files.isRegularFile(path.resolve(KOTLIN_IDE_IML_RELATIVE_PATH)) ||
-                                           Files.isRegularFile(path.resolve(KOTLIN_COMMUNITY_IDE_IML_RELATIVE_PATH));
-
-    return Files.isDirectory(path) &&
-           containsRootKotlinModuleFile &&
-           Files.isDirectory(path.resolve(INTELLIJ_SUB_REPO_NAME)) &&
-           isIdeaHome(path.resolve(INTELLIJ_SUB_REPO_NAME));
   }
 
   private static boolean isIdeaHome(Path root) {
