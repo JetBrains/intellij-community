@@ -15,7 +15,7 @@ enum KotlinPluginKind {
   MI("MobilePlugin",
      "kotlin.plugin.version",
      "kotlin-ultimate.mobile-native",
-     "kotlin-ultimate/mobile-native/resources",
+     "mobile-ide/mobile-native/resources",
      [
        Couple.of("artifacts/kotlin-android-extensions", "kotlin-android-extensions"),
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
@@ -24,11 +24,11 @@ enum KotlinPluginKind {
   AC("AppCodeKotlinPlugin",
      "kotlin.plugin.version",
      "kotlin-ultimate.appcode-native",
-     "kotlin-ultimate/appcode-native/resources"),
+     "CIDR-appcode/appcode-kotlin-native/resources"),
   ROBOSCOPE(
     "RoboscopePlugin.zip", "kotlin.plugin.version",
     "util.android-studio.android-studio-roboscope-plugin",
-    "tools/android-studio/android-studio-roboscope-plugin/resources",
+    "plugins/kotlin/tools/android-studio/android-studio-roboscope-plugin/resources",
     [
       Couple.of("RoboscopePlugin_zip/RoboscopePlugin.zip", "roboscope-plugin.zip")
     ]),
