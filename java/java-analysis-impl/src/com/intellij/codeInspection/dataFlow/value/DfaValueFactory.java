@@ -10,9 +10,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
@@ -70,27 +67,6 @@ public class DfaValueFactory {
   @NotNull
   public DfaValue getSentinel() {
     return mySentinelValue;
-  }
-
-  /**
-   * Creates a constant of given type and given value. Constants are always unique
-   * (two different constants are not equal to each other).
-   *
-   * The following types of the objects are supported:
-   * <ul>
-   *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
-   *   <li>Character/Byte/Short (will be unboxed and widened to int)</li>
-   *   <li>String</li>
-   *   <li>{@link PsiEnumConstant} (enum constant value, type must be the corresponding enum type)</li>
-   *   <li>{@link PsiField} (a final field that contains a unique value, type must be a type of that field)</li>
-   *   <li>{@link PsiType} (java.lang.Class object value, type must be java.lang.Class)</li>
-   * </ul>
-   *
-   * @param type type of the constant
-   * @return a DfaTypeValue whose type is DfConstantType that corresponds to given constant.
-   */
-  public DfaTypeValue getConstant(Object value, @NotNull PsiType type) {
-    return fromDfType(DfTypes.constant(value, type));
   }
 
   @NotNull

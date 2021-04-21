@@ -370,6 +370,16 @@ public final class DfTypes {
   /**
    * Returns a custom constant type
    *
+   * The following types of the objects are supported:
+   * <ul>
+   *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
+   *   <li>Character/Byte/Short (will be unboxed and widened to int)</li>
+   *   <li>String</li>
+   *   <li>{@link com.intellij.psi.PsiEnumConstant} (enum constant value, type must be the corresponding enum type)</li>
+   *   <li>{@link com.intellij.psi.PsiField} (a final field that contains a unique value, type must be a type of that field)</li>
+   *   <li>{@link PsiType} (java.lang.Class object value, type must be java.lang.Class)</li>
+   * </ul>
+   *
    * @param constant constant value
    * @param type value type
    * @return a constant type that contains only given constant

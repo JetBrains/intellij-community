@@ -203,10 +203,10 @@ public class SuspiciousInvocationHandlerImplementationInspection extends Abstrac
         }
       }
       for (DfaMemoryState state : memStates) {
-        state.applyCondition(myDfaMethodDeclaringClass.eq(factory.getConstant(myObjectType, myClassType)));
+        state.applyCondition(myDfaMethodDeclaringClass.eq(factory.fromDfType(DfTypes.constant(myObjectType, myClassType))));
         for (String methodName : Arrays.asList("hashCode", "equals", "toString")) {
           DfaMemoryState methodSpecificState = state.createCopy();
-          methodSpecificState.applyCondition(myDfaMethodName.eq(factory.getConstant(methodName, myStringType)));
+          methodSpecificState.applyCondition(myDfaMethodName.eq(factory.fromDfType(DfTypes.constant(methodName, myStringType))));
           result.add(new DfaInstructionState(instruction, methodSpecificState));
         }
       }

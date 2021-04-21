@@ -85,7 +85,7 @@ public class DfaExpressionFactory {
     if (value != null) {
       PsiType type = expression.getType();
       if (type != null) {
-        return factory.getConstant(value, type);
+        return factory.fromDfType(DfTypes.constant(value, type));
       }
     }
 
@@ -248,7 +248,7 @@ public class DfaExpressionFactory {
         return factory.getWrapperFactory().createWrapper(DfTypes.typedObject(type, Nullability.NOT_NULL), SpecialField.UNBOX, unboxed);
       }
       if (DfaUtil.isEmptyCollectionConstantField(variable)) {
-        return factory.getConstant(variable, type);
+        return factory.fromDfType(DfTypes.constant(variable, type));
       }
       PsiExpression initializer = PsiFieldImpl.getDetachedInitializer(variable);
       initializer = PsiUtil.skipParenthesizedExprDown(initializer);
@@ -256,11 +256,11 @@ public class DfaExpressionFactory {
         return factory.fromDfType(DfTypes.NULL);
       }
       if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
-        return factory.getConstant(variable, type);
+        return factory.fromDfType(DfTypes.constant(variable, type));
       }
       return null;
     }
-    return factory.getConstant(value, type);
+    return factory.fromDfType(DfTypes.constant(value, type));
   }
 
   @Nullable
