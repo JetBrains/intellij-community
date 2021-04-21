@@ -201,3 +201,11 @@ fun learningProgressString(lessons: List<Lesson>): String {
 fun learningToolWindow(project: Project): ToolWindow? {
   return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
 }
+
+fun Any.toNullableString(): String? {
+  return excludeNullCheck(toString())
+}
+
+private fun excludeNullCheck(value: String?): String? {
+  return value
+}
