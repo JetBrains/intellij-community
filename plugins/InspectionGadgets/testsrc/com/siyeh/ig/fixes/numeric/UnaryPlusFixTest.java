@@ -31,4 +31,8 @@ public class UnaryPlusFixTest extends IGQuickFixesTestCase {
   public void testMethodCall() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
   }
+
+  public void testCommentBetweenOperatorAndOperand() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unary.increment.quickfix", "i"));
+  }
 }

@@ -5,6 +5,7 @@ class Test {
     i = <caret>+(+ + a++);
     i = +(+ +4);
     i = +(-a) + + - +b;
+    i = + /*first*/ + /*second*/ a;
   }
 
   void test() {

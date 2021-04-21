@@ -34,4 +34,8 @@ public class UnnecessaryUnaryMinusFixTest extends IGQuickFixesTestCase {
   public void testMethodCall() {
     assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
   }
+
+  public void testCommentBetweenOperatorAndOperand() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
+  }
 }

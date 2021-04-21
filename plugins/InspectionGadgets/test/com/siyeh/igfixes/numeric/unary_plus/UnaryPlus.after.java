@@ -5,6 +5,7 @@ class Test {
     i = (a++);
     i = (4);
     i = (-a) + -b;
+    i = a;
   }
 
   void test() {

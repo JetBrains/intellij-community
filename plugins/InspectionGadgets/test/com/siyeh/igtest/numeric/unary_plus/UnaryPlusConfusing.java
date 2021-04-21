@@ -6,7 +6,7 @@ class UnaryPlusConfusing {
     x = <warning descr="Unary '+' operator">+</warning> ++x;
     x = 1 + <warning descr="Unary '+' operator">+</warning> 1;
     int y =<warning descr="Unary '+' operator">+</warning> x;
-    x = + /*fsdf*/1;
+    x = <warning descr="Unary '+' operator">+</warning> /*fsdf*/1;
     x = /*fsdf*/ <warning descr="Unary '+' operator">+</warning>1;
   }
 
