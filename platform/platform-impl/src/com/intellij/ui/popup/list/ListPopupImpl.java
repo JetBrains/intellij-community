@@ -294,13 +294,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
 
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    for (int i = 0, size = myListModel.getSize(); i < size; i++) {
-      if (myListModel.get(i) == null) {
-        LOG.error("Popup contains `null` item: " + step.getClass().getName() + "('" + step.getTitle() + "')");
-        break;
-      }
-    }
     return myList;
   }
 
@@ -720,7 +713,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         return myList.getSelectedValue();
       }
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
-        return myList.getSelectedValues();
+        Object[] values = myList.getSelectedValues();
+        if (values != null && values.length == 1 && values[0] == null) {
+          return null;
+        }
+        return values;
       }
       if (PlatformDataKeys.SPEED_SEARCH_COMPONENT.is(dataId)) {
         if (mySpeedSearchPatternField != null && mySpeedSearchPatternField.isVisible()) {
