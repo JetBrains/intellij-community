@@ -1057,4 +1057,21 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testIdea186208() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
+    getSettings().RIGHT_MARGIN = 60;
+
+    doClassTest(
+      "final ImmutableMap<String, String> map = ImmutableMap.of(\"content\", \"value\", \"content\", \"value\",\"content\", \"value\"," +
+      "\"content\", \"value\",\"content\", \"value\",\"content\", \"value\");",
+
+      "final ImmutableMap<String, String> map = ImmutableMap.of(\n" +
+      "        \"content\", \"value\", \"content\", \"value\",\n" +
+      "        \"content\", \"value\", \"content\", \"value\",\n" +
+      "        \"content\", \"value\", \"content\", \"value\");"
+    );
+  }
 }
