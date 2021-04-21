@@ -201,7 +201,7 @@ public final class MadTestingUtil {
     }
   }
 
-  private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
+  public static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
     return randomFiles(rootPath, fileFilter, USE_ROULETTE_WHEEL);
   }
 
