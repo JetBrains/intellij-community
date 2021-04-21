@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -106,7 +107,6 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     setTitle(DiagnosticBundle.message("error.list.title"));
     setModal(false);
-    getOKAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
     setCancelButtonText(CommonBundle.message("close.action.name"));
 
@@ -336,6 +336,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   @Override
   protected Action @NotNull [] createActions() {
+    myOKAction = new CompositeAction(getOKAction(), List.of(new ReportAllAction(), new ReportAndClearAllAction()));
     if (SystemInfo.isWindows) {
       return new Action[]{getOKAction(), new ClearErrorsAction(), getCancelAction()};
     }
@@ -954,5 +955,84 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else {
       out.append(DiagnosticBundle.message("error.list.message.submitted"));
     }
+  }
+
+  private static final class CompositeAction extends AbstractAction implements OptionAction {
+
+    private final Action myDefaultAction;
+    private final List<? extends Action> myOptions;
+
+    private CompositeAction(@NotNull Action defaultAction, @NotNull List<? extends Action> additionalActions) {
+      super((String)defaultAction.getValue(Action.NAME));
+      putValue(DEFAULT_ACTION, Boolean.TRUE);
+      myDefaultAction = defaultAction;
+      myOptions = additionalActions;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myDefaultAction.actionPerformed(e);
+    }
+
+    @Override
+    public void setEnabled(boolean isEnabled) {
+      super.setEnabled(isEnabled);
+      myDefaultAction.setEnabled(isEnabled);
+      for (Action optionAction : myOptions) {
+        optionAction.setEnabled(isEnabled);
+      }
+    }
+
+    @Override
+    public Action @NotNull [] getOptions() {
+      return myOptions.toArray(new Action[0]);
+    }
+  }
+
+  private class ReportAllAction extends AbstractAction {
+
+    private ReportAllAction() {
+      super(DiagnosticBundle.message("error.report.all.action"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      boolean reportingStarted = reportAll();
+      if (reportingStarted) {
+        IdeErrorsDialog.super.doOKAction();
+      }
+    }
+  }
+
+  private class ReportAndClearAllAction extends AbstractAction {
+
+    private ReportAndClearAllAction() {
+      super(DiagnosticBundle.message("error.report.and.clear.all.action"));
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      boolean reportingStarted = reportAll();
+      if (reportingStarted) {
+        myMessagePool.clearErrors();
+        IdeErrorsDialog.super.doOKAction();
+      }
+    }
+  }
+
+  private boolean reportAll() {
+    boolean reportingStarted = true;
+    for (int i = 0; i < myMessageClusters.size(); i++) {
+      MessageCluster cluster = myMessageClusters.get(i);
+      if (!cluster.canSubmit()) {
+        continue;
+      }
+      if (!(reportingStarted = reportMessage(cluster, true))) {
+        myIndex = i;
+        updateControls();
+        break;
+      }
+    }
+    return reportingStarted;
   }
 }
