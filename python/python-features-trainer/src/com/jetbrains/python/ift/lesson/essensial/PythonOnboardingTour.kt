@@ -343,7 +343,7 @@ class PythonOnboardingTour :
 
     prepareRuntimeTask {
       LearningUiHighlightingManager.clearHighlights()
-      FocusManagerImpl.getInstance(project).requestFocus(editor.contentComponent, false)
+      requestEditorFocus()
     }
   }
 
