@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 
 public final class FileBasedIndexProjectHandler {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexProjectHandler.class);
@@ -122,16 +123,15 @@ public final class FileBasedIndexProjectHandler {
         IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(
           index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads
         );
-        IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
         Instant indexingStart = Instant.now();
         String fileSetName = "Refreshed files";
+        IndexUpdateRunner.BagOfFiles bagOfFiles = new IndexUpdateRunner.BagOfFiles(project, fileSetName, files);
         try {
-          statistics = indexUpdateRunner.indexFiles(project, fileSetName, files, indicator);
+          indexUpdateRunner.indexFiles(project, Collections.singletonList(bagOfFiles), indicator);
         }
         catch (IndexUpdateRunner.IndexingInterruptedException e) {
           projectIndexingHistory.getTimes().setWasInterrupted(true);
-          statistics = e.myStatistics;
           interruptedException = e;
         }
         finally {
@@ -144,7 +144,7 @@ public final class FileBasedIndexProjectHandler {
         scanningStatistics.setNumberOfScannedFiles(files.size());
         scanningStatistics.setNumberOfFilesForIndexing(files.size());
         projectIndexingHistory.addScanningStatistics(scanningStatistics);
-        projectIndexingHistory.addProviderStatistics(statistics);
+        projectIndexingHistory.addProviderStatistics(bagOfFiles.statistics);
 
         if (interruptedException != null) {
           ExceptionUtil.rethrow(interruptedException.getCause());
