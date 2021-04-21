@@ -48,6 +48,7 @@ open class PillActionComponent : AnAction(), CustomComponentAction, DumbAware {
 
       init {
         setForceMinimumSize(true)
+        targetComponent = null
         layoutPolicy = NOWRAP_LAYOUT_POLICY
       }
 
