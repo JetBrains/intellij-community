@@ -282,8 +282,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     document.setFormat(format);
 
     if (previousImage == null || !zoomModel.isZoomLevelChanged()) {
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+      ZoomOptions zoomOptions = getZoomOptions();
 
       if (!(zoomOptions.isSmartZooming() && updateZoomFactor())) {
         zoomModel.setZoomFactor(1.0);
@@ -292,8 +291,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private boolean updateZoomFactor() {
-    Options options = OptionsManager.getInstance().getOptions();
-    ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+    ZoomOptions zoomOptions = getZoomOptions();
 
     if (zoomOptions.isSmartZooming() && !zoomModel.isZoomLevelChanged()) {
       Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
@@ -303,6 +301,18 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       }
     }
     return false;
+  }
+
+  private ZoomOptions getZoomOptions() {
+    ImageEditor editor = this.editor;
+    if (editor != null) {
+      ZoomOptions options = editor.getZoomModel().getCustomZoomOptions();
+      if (options != null) {
+        return options;
+      }
+    }
+    Options options = OptionsManager.getInstance().getOptions();
+    return options.getEditorOptions().getZoomOptions();
   }
 
   private final class ImageContainerPane extends JBLayeredPane {
@@ -383,6 +393,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private final class ImageZoomModelImpl implements ImageZoomModel {
+    private @Nullable ZoomOptions myCustomZoomOptions;
+
     private boolean myZoomLevelChanged;
     private final LazyInitializer.LazyValue<@NotNull Double> IMAGE_MAX_ZOOM_FACTOR = LazyInitializer.create(() -> {
       if (editor == null) return Double.MAX_VALUE;
@@ -436,8 +448,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     @Override
     public void fitZoomToWindow() {
-      Options options = OptionsManager.getInstance().getOptions();
-      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+      ZoomOptions zoomOptions = getZoomOptions();
 
       Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
       if (smartZoomFactor != null) {
@@ -508,6 +519,16 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     @Override
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
+    }
+
+    @Override
+    public @Nullable ZoomOptions getCustomZoomOptions() {
+      return myCustomZoomOptions;
+    }
+
+    @Override
+    public void setCustomZoomOptions(@Nullable ZoomOptions zoomOptions) {
+      myCustomZoomOptions = zoomOptions;
     }
   }
 
