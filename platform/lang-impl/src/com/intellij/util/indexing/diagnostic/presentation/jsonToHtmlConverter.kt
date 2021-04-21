@@ -150,7 +150,8 @@ private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
   }
 }
 
-private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" else ""
+private const val hideMinorDataInitial = true
+private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (if (hideMinorDataInitial) " invisible" else "") else ""
 
 fun JsonIndexDiagnostic.generateHtml(): String {
   return html {
@@ -178,7 +179,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             label(forId = "id-hide-minor-data-checkbox") {
               text("Hide minor data")
               input(id = "id-hide-minor-data-checkbox", type = "checkbox", onClick = "hideElementsHavingClass('minor-data', this.checked)",
-                    style = "padding-left: 10px", checked = true)
+                    style = "padding-left: 10px", checked = hideMinorDataInitial)
             }
           }
         }
@@ -517,7 +518,9 @@ private val CSS_STYLE = """
     color: white;
   }
 
-  .minor-data {
+  .minor-data {}
+
+  .invisible {
     display: none;
   }
 """.trimIndent()
@@ -528,7 +531,7 @@ private val JS_SCRIPT = """
     const elements = document.getElementsByClassName(className)
     const displayType = hideOrShow ? 'none' : 'initial'
     for (const element of elements) {
-      element.style.display = displayType
+      element.classList.toggle('invisible', hideOrShow)
     }
   }
 """.trimIndent()
@@ -578,7 +581,7 @@ private fun HtmlBuilder.textarea(
       .attr("rows", rows)
       .attr("readonly", "true")
       .attr("placeholder", "empty")
-      .attr("style", "white-space: pre;")
+      .attr("style", "white-space: pre; border: none")
   ))
 
 private fun HtmlBuilder.textarea(@Nls text: String) = textarea { rawText(text) }
