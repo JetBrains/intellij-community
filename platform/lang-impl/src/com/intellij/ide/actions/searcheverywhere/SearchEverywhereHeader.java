@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.*;
+import static com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.ContributorFilterCollector;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.getReportableContributorID;
 
 public class SearchEverywhereHeader {
@@ -52,20 +52,22 @@ public class SearchEverywhereHeader {
   private final @Nullable Project myProject;
   private final @NotNull JPanel myTabsPanel;
   private final @NotNull JPanel myToolbarPanel;
-  private ActionToolbar myToolbar;
+  private final @NotNull ActionToolbar myToolbar;
   private boolean myEverywhereAutoSet = true;
 
   public SearchEverywhereHeader(@Nullable Project project,
                                 Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors,
                                 @NotNull Runnable scopeChangedCallback, Function<? super String, String> shortcutSupplier,
-                                AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
+                                @Nullable AnAction showInFindToolWindowAction, SearchEverywhereUI ui) {
     myScopeChangedCallback = scopeChangedCallback;
     myProject = project;
     myShortcutSupplier = shortcutSupplier;
     myTabs = createTabs(contributors);
     mySelectedTab = myTabs.get(0);
     myTabsPanel = createTabsPanel(myTabs);
-    myToolbarPanel = createToolbarPanel(showInFindToolWindowAction);
+    myToolbar = createToolbar(showInFindToolWindowAction);
+    myToolbar.setTargetComponent(myTabsPanel);
+    myToolbarPanel = (JPanel)myToolbar.getComponent();
 
     MessageBusConnection busConnection = myProject != null
                                          ? myProject.getMessageBus().connect(ui)
@@ -99,7 +101,7 @@ public class SearchEverywhereHeader {
     myToolbar.updateActionsImmediately();
   }
 
-  private JPanel createToolbarPanel(AnAction showInFindToolWindowAction) {
+  private @NotNull ActionToolbar createToolbar(@Nullable AnAction showInFindToolWindowAction) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ActionGroup() {
       @Override
@@ -109,18 +111,16 @@ public class SearchEverywhereHeader {
       }
     });
 
-    if (myProject != null) {
+    if (showInFindToolWindowAction != null) {
       actionGroup.addAction(showInFindToolWindowAction);
     }
 
-    myToolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
-    myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbar.updateActionsImmediately();
-    JComponent toolbarComponent = myToolbar.getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
     toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
-    return (JPanel)toolbarComponent;
-
+    return toolbar;
   }
 
   @NotNull

@@ -138,7 +138,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       scheduleRebuildList();
     };
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
-                                          shortcutSupplier, new ShowInFindToolWindowAction(), this);
+                                          shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
 
     init();
 
