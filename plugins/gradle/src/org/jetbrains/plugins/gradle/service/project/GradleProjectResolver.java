@@ -280,9 +280,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       performanceTrace.addTrace(allModels.getPerformanceTrace());
     }
-    catch (Exception e) {
+    catch (Throwable t) {
       buildFinishWaiter.countDown();
-      throw e;
+      throw t;
     }
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
