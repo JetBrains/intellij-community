@@ -122,7 +122,7 @@ public final class TerminalView implements Disposable {
         if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
             toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
-          createNewSession(myTerminalRunner, null, true);
+          createNewSession(myTerminalRunner, null, true, true);
         }
       }
     });
@@ -138,7 +138,7 @@ public final class TerminalView implements Disposable {
 
     if (arrangementState != null) {
       for (TerminalTabState tabState : arrangementState.myTabStates) {
-        createNewSession(myTerminalRunner, tabState, false);
+        createNewSession(myTerminalRunner, tabState, false, true);
       }
 
       Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
@@ -157,25 +157,38 @@ public final class TerminalView implements Disposable {
   }
 
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
-    return createLocalShellWidget(workingDirectory, tabName, true);
+    return createLocalShellWidget(workingDirectory, tabName, true, true);
   }
 
   public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
                                                              @Nullable @Nls String tabName,
                                                              boolean requestFocus) {
+    return createLocalShellWidget(workingDirectory, tabName, requestFocus, true);
+  }
+
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
+                                                             @Nullable @Nls String tabName,
+                                                             boolean requestFocus,
+                                                             boolean deferSessionStartUntilUiShown) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
-    JBTerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus);
+    JBTerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus, deferSessionStartUntilUiShown);
     return (ShellTerminalWidget)Objects.requireNonNull(widget);
   }
 
-  @NotNull
-  private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
-                                            @Nullable TerminalTabState tabState,
-                                            boolean requestFocus) {
+  private void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
+                                @Nullable TerminalTabState tabState,
+                                boolean requestFocus) {
+    createNewSession(terminalRunner, tabState, requestFocus, true);
+  }
+
+  private @NotNull JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
+                                                     @Nullable TerminalTabState tabState,
+                                                     boolean requestFocus,
+                                                     boolean deferSessionStartUntilUiShown) {
     ToolWindow toolWindow = getOrInitToolWindow();
-    Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus);
+    Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus, deferSessionStartUntilUiShown);
     return Objects.requireNonNull(getWidgetByContent(content));
   }
 
@@ -191,7 +204,7 @@ public final class TerminalView implements Disposable {
 
   @NotNull
   private Content newTab(@NotNull ToolWindow toolWindow, @Nullable JBTerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, true);
+    return createNewTab(terminalWidget, myTerminalRunner, toolWindow, null, true, true);
   }
 
   @NotNull
@@ -199,8 +212,9 @@ public final class TerminalView implements Disposable {
                                @NotNull AbstractTerminalRunner<?> terminalRunner,
                                @NotNull ToolWindow toolWindow,
                                @Nullable TerminalTabState tabState,
-                               boolean requestFocus) {
-    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState);
+                               boolean requestFocus,
+                               boolean deferSessionStartUntilUiShown) {
+    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState, deferSessionStartUntilUiShown);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject, this);
@@ -227,7 +241,8 @@ public final class TerminalView implements Disposable {
   private Content createTerminalContent(@NotNull AbstractTerminalRunner<?> terminalRunner,
                                         @NotNull ToolWindow toolWindow,
                                         @Nullable JBTerminalWidget terminalWidget,
-                                        @Nullable TerminalTabState tabState) {
+                                        @Nullable TerminalTabState tabState,
+                                        boolean deferSessionStartUntilUiShown) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
     String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
@@ -237,7 +252,7 @@ public final class TerminalView implements Disposable {
 
     if (terminalWidget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);
-      terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir, true);
+      terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir, deferSessionStartUntilUiShown);
       TerminalArrangementManager.getInstance(myProject).assignCommandHistoryFile(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }

@@ -119,28 +119,28 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @NotNull
   protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable VirtualFile currentWorkingDirectory,
-                                                  boolean deferSessionUntilFirstShown) {
+                                                  boolean deferSessionStartUntilUiShown) {
 
     return createTerminalWidget(parent,
                                 (terminalWidget) -> openSessionForFile(terminalWidget, currentWorkingDirectory),
-                                true);
+                                deferSessionStartUntilUiShown);
   }
 
   @NotNull
   protected JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                   @Nullable String currentWorkingDirectory,
-                                                  boolean deferSessionUntilFirstShown) {
+                                                  boolean deferSessionStartUntilUiShown) {
 
     return createTerminalWidget(parent,
                                 (terminalWidget) -> openSessionInDirectory(terminalWidget, currentWorkingDirectory),
-                                true);
+                                deferSessionStartUntilUiShown);
   }
 
   private JBTerminalWidget createTerminalWidget(@NotNull Disposable parent,
                                                 @NotNull Consumer<JBTerminalWidget> openSession,
-                                                boolean deferSessionUntilFirstShown) {
+                                                boolean deferSessionStartUntilUiShown) {
     JBTerminalWidget terminalWidget = new ShellTerminalWidget(myProject, mySettingsProvider, parent);
-    if (deferSessionUntilFirstShown) {
+    if (deferSessionStartUntilUiShown) {
       UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSession.accept(terminalWidget));
     }
     else {
