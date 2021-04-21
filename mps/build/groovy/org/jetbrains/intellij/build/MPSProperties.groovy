@@ -71,6 +71,13 @@ class MPSProperties extends JetBrainsProductProperties {
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
+                for (String name : BaseIdeaProperties.JAVA_IDE_API_MODULES) {
+                    withModule(name)
+                }
+                for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
+                    withModule(name)
+                }
+
                 withModule("intellij.platform.coverage", productLayout.mainJarName)
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
