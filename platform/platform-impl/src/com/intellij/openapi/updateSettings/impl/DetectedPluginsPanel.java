@@ -19,20 +19,21 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.Set;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * @author anna
  */
-public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
+public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
 
   private final JEditorPane myDescriptionPanel = new JEditorPane();
-  private final PluginHeaderPanel myHeader;
+  private final PluginHeaderPanel myHeader = new PluginHeaderPanel();
+  private final HashSet<PluginId> mySkippedPlugins = new HashSet<>();
 
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);
     JTable entryTable = getEntryTable();
-    myHeader = new PluginHeaderPanel();
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       @Override
@@ -88,31 +89,31 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     add(splitter, BorderLayout.CENTER);
   }
 
-  @NotNull
-  private static JScrollPane wrapWithPane(@NotNull JComponent c, int left, int right) {
+  private static @NotNull JScrollPane wrapWithPane(@NotNull JComponent c, int left, int right) {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(c);
     pane.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, left, 1, right));
     return pane;
   }
 
   @Override
+  public void addAll(@NotNull Collection<? extends PluginDownloader> orderEntries) {
+    super.addAll(orderEntries);
+    TableUtil.ensureSelectionExists(getEntryTable());
+  }
+
+  @Override
   public boolean isChecked(@NotNull PluginDownloader downloader) {
-    return !getSkippedPlugins().contains(downloader.getId());
+    return !mySkippedPlugins.contains(downloader.getId());
   }
 
   @Override
   public void setChecked(@NotNull PluginDownloader downloader, boolean checked) {
-    Set<PluginId> skippedPlugins = getSkippedPlugins();
     PluginId pluginId = downloader.getId();
     if (checked) {
-      skippedPlugins.remove(pluginId);
+      mySkippedPlugins.remove(pluginId);
     }
     else {
-      skippedPlugins.add(pluginId);
+      mySkippedPlugins.add(pluginId);
     }
-  }
-
-  protected @NotNull Set<PluginId> getSkippedPlugins() {
-    return UpdateChecker.getDisabledToUpdate();
   }
 }

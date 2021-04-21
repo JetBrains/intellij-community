@@ -119,7 +119,7 @@ public abstract class OrderPanel<T> extends JPanel {
     myModel.addRow(row);
   }
 
-  public final void addAll(@NotNull Collection<? extends T> orderEntries) {
+  public void addAll(@NotNull Collection<? extends T> orderEntries) {
     for (T orderEntry : orderEntries) {
       add(orderEntry);
     }

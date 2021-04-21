@@ -4,12 +4,10 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +15,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author anna
@@ -25,13 +24,13 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
   private final SortedSet<PluginDownloader> myPluginToInstall = new TreeSet<>(Comparator.comparing(PluginDownloader::getPluginName, String::compareToIgnoreCase));
-  private final Set<PluginId> mySkippedPlugins = new HashSet<>();
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
+  private @Nullable DetectedPluginsPanel myPanel;
 
   PluginsAdvertiserDialog(@Nullable Project project,
-                          @NotNull Set<PluginDownloader> pluginsToInstall,
+                          @NotNull Collection<PluginDownloader> pluginsToInstall,
                           @NotNull List<PluginNode> customPlugins,
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
@@ -44,30 +43,24 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   }
 
   PluginsAdvertiserDialog(@Nullable Project project,
-                          @NotNull Set<PluginDownloader> pluginsToInstall,
+                          @NotNull Collection<PluginDownloader> pluginsToInstall,
                           @NotNull List<PluginNode> customPlugins) {
     this(project, pluginsToInstall, customPlugins, null);
   }
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
-    return new DetectedPluginsPanel() {
-
-      {
-        addAll(myPluginToInstall);
-        TableUtil.ensureSelectionExists(getEntryTable());
-      }
-
-      @Override
-      protected @NotNull Set<PluginId> getSkippedPlugins() {
-        return mySkippedPlugins;
-      }
-    };
+    if (myPanel == null) {
+      myPanel = new DetectedPluginsPanel();
+      myPanel.addAll(myPluginToInstall);
+    }
+    return myPanel;
   }
 
   @Override
   protected void doOKAction() {
-    if (doInstallPlugins()) {
+    assert myPanel != null;
+    if (doInstallPlugins(myPanel::isChecked)) {
       super.doOKAction();
     }
   }
@@ -77,16 +70,16 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       showAndGet();
     }
     else {
-      doInstallPlugins();
+      doInstallPlugins(__ -> true);
     }
   }
 
-  private boolean doInstallPlugins() {
-    Set<IdeaPluginDescriptor> pluginsToEnable = new HashSet<>();
-    List<PluginNode> nodes = new ArrayList<>();
+  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate) {
+    ArrayList<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
+    ArrayList<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myPluginToInstall) {
-      IdeaPluginDescriptor plugin = downloader.getDescriptor();
-      if (!mySkippedPlugins.contains(plugin.getPluginId())) {
+      if (predicate.test(downloader)) {
+        IdeaPluginDescriptor plugin = downloader.getDescriptor();
         pluginsToEnable.add(plugin);
         if (plugin.isEnabled()) {
           nodes.add(downloader.toPluginNode());
@@ -102,10 +95,10 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginHelper, nodes);
 
     Runnable notifyRunnable = () -> {
-      boolean notInstalled = nodes
-        .stream()
+      boolean notInstalled = nodes.stream()
         .map(PluginNode::getPluginId)
-        .anyMatch(pluginId -> PluginManagerCore.getPlugin(pluginId) == null);
+        .map(PluginManagerCore::getPlugin)
+        .anyMatch(Objects::isNull);
       if (notInstalled) {
         PluginManagerMain.notifyPluginsUpdated(myProject);
       }

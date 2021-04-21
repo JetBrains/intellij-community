@@ -72,9 +72,9 @@ open class PluginAdvertiserService {
     }
 
     val bundledPlugin = getBundledPluginToInstall(ids.values)
-    val plugins = mutableSetOf<PluginDownloader>()
-
-    if (ids.isNotEmpty()) {
+    val plugins = if (ids.isEmpty())
+      emptyList()
+    else
       RepositoryHelper.mergePluginsFromRepositories(
         marketplaceRequests.loadLastCompatiblePluginDescriptors(ids.keys),
         customPlugins,
@@ -89,12 +89,7 @@ open class PluginAdvertiserService {
         || !ids.containsKey(pluginId)
         || PluginManagerCore.isDisabled(pluginId)
         || PluginManagerCore.isBrokenPlugin(loadedPlugin)
-      }.map {
-        PluginDownloader.createDownloader(it)
-      }.forEach {
-        plugins += it
-      }
-    }
+      }.map { PluginDownloader.createDownloader(it) }
 
     invokeLater(ModalityState.NON_MODAL) {
       if (project.isDisposed)
@@ -175,7 +170,7 @@ open class PluginAdvertiserService {
   }
 
   open fun getAddressedMessagePresentation(
-    plugins: Set<PluginDownloader>,
+    plugins: Collection<PluginDownloader>,
     disabledPlugins: Collection<IdeaPluginDescriptor>,
     features: MultiMap<PluginId, UnknownFeature>,
   ): @NotificationContent String {

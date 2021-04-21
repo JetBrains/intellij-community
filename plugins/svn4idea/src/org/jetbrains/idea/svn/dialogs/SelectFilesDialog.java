@@ -132,9 +132,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     }
 
     private void init() {
-      for (String path : mySelectedFiles.keySet()) {
-        add(path);
-      }
+      addAll(mySelectedFiles.keySet());
     }
 
     private @NotNull SortedSet<String> getSelectedPaths() {
