@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
@@ -105,7 +105,7 @@ public final class DisabledPluginsState {
 
     // to preserve the order of additions and removals
     if (ourIgnoreDisabledPlugins || System.getProperty("idea.ignore.disabled.plugins") != null) {
-      return Collections.emptySet();
+      return new HashSet<>();
     }
 
     //noinspection SynchronizeOnThis

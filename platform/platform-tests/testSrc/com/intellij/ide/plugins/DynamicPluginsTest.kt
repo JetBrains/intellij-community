@@ -520,26 +520,28 @@ class DynamicPluginsTest {
     val disposable = loadPluginWithText(pluginBuilder)
     val app = ApplicationManager.getApplication()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
+    try {
+      val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginBuilder.id))!!
 
-    val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginBuilder.id))!!
+      val disabled = ProjectPluginTrackerManager.instance.updatePluginsState(
+        listOf(pluginDescriptor),
+        PluginEnableDisableAction.DISABLE_GLOBALLY,
+      )
+      assertThat(disabled).isTrue()
+      assertThat(pluginDescriptor.isEnabled).isFalse()
+      assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
 
-    val disabled = ProjectPluginTrackerManager.instance.updatePluginsState(
-      listOf(pluginDescriptor),
-      PluginEnableDisableAction.DISABLE_GLOBALLY,
-    )
-    assertThat(disabled).isTrue()
-    assertThat(pluginDescriptor.isEnabled).isFalse()
-    assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
-
-    val enabled = ProjectPluginTrackerManager.instance.updatePluginsState(
-      listOf(pluginDescriptor),
-      PluginEnableDisableAction.ENABLE_GLOBALLY,
-    )
-    assertThat(enabled).isTrue()
-    assertThat(pluginDescriptor.isEnabled).isTrue()
-    assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
-
-    Disposer.dispose(disposable)
+      val enabled = ProjectPluginTrackerManager.instance.updatePluginsState(
+        listOf(pluginDescriptor),
+        PluginEnableDisableAction.ENABLE_GLOBALLY,
+      )
+      assertThat(enabled).isTrue()
+      assertThat(pluginDescriptor.isEnabled).isTrue()
+      assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
+    }
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   @Test
