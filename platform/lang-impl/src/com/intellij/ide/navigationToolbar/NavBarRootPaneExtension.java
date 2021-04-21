@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -135,9 +134,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
 
       if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
-        final ActionToolbar actionToolbar =
-          manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
-        final JComponent component = actionToolbar.getComponent();
+        ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
+        actionToolbar.setTargetComponent(null);
         myRunPanel = new JPanel(new BorderLayout()) {
           @Override
           public void doLayout() {
@@ -145,7 +143,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           }
         };
         myRunPanel.setOpaque(false);
-        myRunPanel.add(component, BorderLayout.CENTER);
+        myRunPanel.add(actionToolbar.getComponent(), BorderLayout.CENTER);
         final boolean needGap = isNeedGap(toolbarRunGroup);
         myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
