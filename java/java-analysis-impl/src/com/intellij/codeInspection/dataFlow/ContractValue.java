@@ -252,7 +252,7 @@ public abstract class ContractValue {
         return other == TRUE;
       }
     };
-    static final IndependentValue ZERO = new IndependentValue("0", factory -> factory.getInt(0));
+    static final IndependentValue ZERO = new IndependentValue("0", factory -> factory.fromDfType(DfTypes.intValue(0)));
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;

@@ -263,7 +263,7 @@ class DebuggerDfaRunner extends DataFlowRunner {
         if (jdiValue instanceof ArrayReference) {
           DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(myFactory, var);
           int jdiLength = ((ArrayReference)jdiValue).length();
-          myMemState.applyCondition(dfaLength.eq(myFactory.getInt(jdiLength)));
+          myMemState.applyCondition(dfaLength.eq(myFactory.fromDfType(DfTypes.intValue(jdiLength))));
         }
         else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
           setSpecialField(var, ref, type, "value", SpecialField.UNBOX);
@@ -272,10 +272,10 @@ class DebuggerDfaRunner extends DataFlowRunner {
           setSpecialField(var, ref, type, "size", SpecialField.COLLECTION_SIZE);
         }
         else if (name.startsWith("java.util.Collections$Empty")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(0)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.fromDfType(DfTypes.intValue(0))));
         }
         else if (name.startsWith("java.util.Collections$Singleton")) {
-          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.getInt(1)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(myFactory.fromDfType(DfTypes.intValue(1))));
         }
         else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
           setSpecialField(var, ref, type, "value", SpecialField.OPTIONAL_VALUE);

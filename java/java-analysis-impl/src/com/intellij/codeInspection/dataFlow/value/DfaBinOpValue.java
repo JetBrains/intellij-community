@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,7 @@ public final class DfaBinOpValue extends DfaValue {
         right = right.getFactory().fromDfType(rightDfType);
       }
       if (op == LongRangeBinOp.MINUS && state.areEqual(left, right)) {
-        return myFactory.getInt(0);
+        return myFactory.fromDfType(DfTypes.intValue(0));
       }
       if (op == LongRangeBinOp.MOD) {
         if (leftDfType instanceof DfIntegralType && rightDfType instanceof DfIntegralType) {

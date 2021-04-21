@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.TransferTarget;
 import com.intellij.codeInspection.dataFlow.Trap;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -47,11 +46,6 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
-  }
-
-  @NotNull
-  public DfaTypeValue getInt(int value) {
-    return fromDfType(DfTypes.intValue(value));
   }
 
   @NotNull

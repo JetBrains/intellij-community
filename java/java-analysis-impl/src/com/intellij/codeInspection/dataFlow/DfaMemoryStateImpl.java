@@ -810,11 +810,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (areEqual(leftLeft, right)) {
         RelationType finalRelation = op == LongRangeBinOp.MINUS ?
                                      Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
-        if (!applyCondition(leftRight.cond(finalRelation, myFactory.getInt(0)))) return false;
+        if (!applyCondition(leftRight.cond(finalRelation, myFactory.fromDfType(DfTypes.intValue(0))))) return false;
       }
       // a+b (rel) c && b == c => a (rel) 0
       if (op == LongRangeBinOp.PLUS && areEqual(leftRight, right)) {
-        if (!applyCondition(leftLeft.cond(correctedRelation, myFactory.getInt(0)))) return false;
+        if (!applyCondition(leftLeft.cond(correctedRelation, myFactory.fromDfType(DfTypes.intValue(0))))) return false;
       }
 
       if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, isLong)) return false;

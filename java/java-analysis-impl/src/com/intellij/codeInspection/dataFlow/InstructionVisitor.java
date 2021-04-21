@@ -820,9 +820,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                           @NotNull DfaValue index) {
     DfaValueFactory factory = index.getFactory();
     DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, factory.getInt(0));
+    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, factory.fromDfType(intValue(0)));
     if (!memState.applyCondition(lengthMoreThanZero)) return false;
-    DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.getInt(0));
+    DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.fromDfType(intValue(0)));
     if (!memState.applyCondition(indexNonNegative)) return false;
     DfaCondition indexLessThanLength = index.cond(RelationType.LT, length);
     if (!memState.applyCondition(indexLessThanLength)) return false;
@@ -985,7 +985,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                                    DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue arraySize = memState.peek();
     DfaControlTransferValue transfer = instruction.getNegativeSizeExceptionTransfer();
-    DfaCondition cond = arraySize.cond(RelationType.GE, runner.getFactory().getInt(0));
+    DfaCondition cond = arraySize.cond(RelationType.GE, runner.getFactory().fromDfType(intValue(0)));
     Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
     DfaInstructionState nextState = new DfaInstructionState(nextInstruction, memState);
     if (cond.equals(DfaCondition.getTrue())) {
