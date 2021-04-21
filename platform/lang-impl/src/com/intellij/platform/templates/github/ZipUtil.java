@@ -31,9 +31,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-/**
- * @author Sergey Simonchik
- */
 public final class ZipUtil {
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
