@@ -15,11 +15,13 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import gnu.trove.THashMap;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.execution.*;
+import org.jetbrains.idea.maven.execution.MavenExecutor;
+import org.jetbrains.idea.maven.execution.MavenRunner;
+import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
@@ -27,9 +29,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ArchetypesTest extends MavenTestCase {
+  @Test
   public void testGenerating() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -37,7 +39,8 @@ public class ArchetypesTest extends MavenTestCase {
     dir.mkdirs();
 
     MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(), (String)null,
-                                                             Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+                                                             Arrays
+                                                               .asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
                                                              Collections.emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();

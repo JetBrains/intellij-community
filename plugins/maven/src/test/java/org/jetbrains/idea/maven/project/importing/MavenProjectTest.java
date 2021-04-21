@@ -9,7 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -19,7 +19,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import java.io.File;
 import java.util.*;
 
-public class MavenProjectTest extends MavenImportingTestCase {
+public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   public void testCollectingPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

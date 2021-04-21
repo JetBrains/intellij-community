@@ -11,11 +11,11 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 
 import java.io.File;
 
-public abstract class MavenExecutionTestCase extends MavenImportingTestCase {
+public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingTestCase {
 
   private static final String JDK_NAME = "MavenExecutionTestJDK";
   private String myJdkHome;

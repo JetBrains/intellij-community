@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.maven.importing
+
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+
 /**
  * @author Sergey Evdokimov
  */
-class EncodingImportingTest extends MavenImportingTestCase {
+class EncodingImportingTest extends MavenMultiVersionImportingTestCase {
 
   void testEncodingDefinedByProperty() {
     byte[] text = [-12, -59, -53, -45, -44] // Russian text in koi8-r encoding.

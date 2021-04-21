@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -50,7 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class MavenProjectsManagerTest extends MavenImportingTestCase {
+public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

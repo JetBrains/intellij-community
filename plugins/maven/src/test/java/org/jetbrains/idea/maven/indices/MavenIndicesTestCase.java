@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
-public abstract class MavenIndicesTestCase extends MavenImportingTestCase {
+public abstract class MavenIndicesTestCase extends MavenMultiVersionImportingTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
