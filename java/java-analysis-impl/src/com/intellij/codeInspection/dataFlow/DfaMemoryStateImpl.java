@@ -661,7 +661,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyContractCondition(DfaCondition condition) {
+  public boolean applyContractCondition(@NotNull DfaCondition condition) {
     if (condition instanceof DfaRelation) {
       DfaRelation relation = (DfaRelation)condition;
       if (relation.isEquality()) {
@@ -693,7 +693,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public @Nullable RelationType getRelation(DfaValue left, DfaValue right) {
+  public @Nullable RelationType getRelation(@NotNull DfaValue left, @NotNull DfaValue right) {
     int leftClass = getEqClassIndex(left);
     int rightClass = getEqClassIndex(right);
     if (leftClass == -1 || rightClass == -1) return null;
@@ -702,7 +702,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean applyCondition(DfaCondition dfaCond) {
+  public boolean applyCondition(@NotNull DfaCondition dfaCond) {
     if (!(dfaCond instanceof DfaRelation)) {
       return dfaCond != DfaCondition.getFalse();
     }

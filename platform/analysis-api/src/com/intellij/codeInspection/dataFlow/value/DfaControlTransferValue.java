@@ -40,7 +40,10 @@ public final class DfaControlTransferValue extends DfaValue {
     return traps;
   }
 
-  // TransferTarget should be reusable in another factory
+  /**
+   * Represents the target location.
+   * TransferTarget should be reusable in another factory
+   */
   public interface TransferTarget {
     /**
      * @return list of possible instruction offsets for given target
@@ -50,6 +53,9 @@ public final class DfaControlTransferValue extends DfaValue {
     }
   }
 
+  /**
+   * Represents traps (e.g. catch sections) that may prevent normal transfer
+   */
   public interface Trap {
     /**
      * @return list of possible instruction offsets for given trap
@@ -59,7 +65,7 @@ public final class DfaControlTransferValue extends DfaValue {
     }
 
     /**
-     * @return PSI anchor (e.g. try section)
+     * @return PSI anchor (e.g. catch section)
      */
     @NotNull PsiElement getAnchor();
   }
