@@ -810,11 +810,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (areEqual(leftLeft, right)) {
         RelationType finalRelation = op == LongRangeBinOp.MINUS ?
                                      Objects.requireNonNull(correctedRelation.getFlipped()) : correctedRelation;
-        if (!applyCondition(leftRight.cond(finalRelation, myFactory.fromDfType(DfTypes.intValue(0))))) return false;
+        if (!applyCondition(leftRight.cond(finalRelation, DfTypes.intValue(0)))) return false;
       }
       // a+b (rel) c && b == c => a (rel) 0
       if (op == LongRangeBinOp.PLUS && areEqual(leftRight, right)) {
-        if (!applyCondition(leftLeft.cond(correctedRelation, myFactory.fromDfType(DfTypes.intValue(0))))) return false;
+        if (!applyCondition(leftLeft.cond(correctedRelation, DfTypes.intValue(0)))) return false;
       }
 
       if (!applyRelationOnAddition(type, leftLeft, leftRange, rightCorrected, right, isLong)) return false;
@@ -937,8 +937,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       PsiElement psi = var.getPsiVariable();
       DfaVariableValue qualifier = var.getQualifier();
       if (qualifier != null && psi instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)psi)) {
-        DfaTypeValue typeValue = getFactory().fromDfType(TypeConstraints.exact(value).asDfType());
-        if (!applyCondition(qualifier.cond(negated ? RelationType.IS_NOT : RelationType.IS, typeValue))) {
+        DfType dfType = TypeConstraints.exact(value).asDfType();
+        if (!applyCondition(qualifier.cond(negated ? RelationType.IS_NOT : RelationType.IS, dfType))) {
           return false;
         }
       }

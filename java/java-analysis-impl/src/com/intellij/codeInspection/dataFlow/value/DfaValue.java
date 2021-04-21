@@ -79,6 +79,17 @@ public abstract class DfaValue {
   }
 
   /**
+   * Creates an equivalence condition (suitable to pass into {@link DfaMemoryState#applyCondition(DfaCondition)})
+   * between this and other value.
+   *
+   * @param other other value that is tested to be equal to this
+   * @return a condition
+   */
+  public final DfaCondition eq(DfType other) {
+    return this.cond(RelationType.EQ, myFactory.fromDfType(other));
+  }
+
+  /**
    * Create condition (suitable to pass into {@link DfaMemoryState#applyCondition(DfaCondition)}),
    * evaluating it statically if possible.
    *
@@ -89,6 +100,19 @@ public abstract class DfaValue {
   @NotNull
   public final DfaCondition cond(@NotNull RelationType relationType, @NotNull DfaValue other) {
     return DfaCondition.createCondition(this, relationType, other);
+  }
+
+  /**
+   * Create condition (suitable to pass into {@link DfaMemoryState#applyCondition(DfaCondition)}),
+   * evaluating it statically if possible.
+   *
+   * @param relationType relation
+   * @param other        other condition operand
+   * @return resulting condition between this value and other operand
+   */
+  @NotNull
+  public final DfaCondition cond(@NotNull RelationType relationType, @NotNull DfType other) {
+    return DfaCondition.createCondition(this, relationType, myFactory.fromDfType(other));
   }
 
   public boolean dependsOn(DfaVariableValue other) {

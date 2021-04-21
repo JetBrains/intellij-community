@@ -179,12 +179,9 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           protected List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
                                                                              @NotNull Collection<? extends DfaMemoryState> memStates,
                                                                              @NotNull ControlFlow flow) {
-            DfaValueFactory factory = getFactory();
-
             for (DfaMemoryState memState : memStates) {
               memState.applyCondition(myExceptionVar.eq(myStableExceptionVar));
-              memState.applyCondition(
-                myExceptionVar.cond(RelationType.IS, factory.fromDfType(DfTypes.typedObject(exception, Nullability.NOT_NULL))));
+              memState.applyCondition(myExceptionVar.cond(RelationType.IS, DfTypes.typedObject(exception, Nullability.NOT_NULL)));
             }
             return super.createInitialInstructionStates(psiBlock, memStates, flow);
           }

@@ -313,7 +313,7 @@ public class DataFlowRunner {
                                                                               @NotNull ControlFlow flow) {
     DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(myValueFactory);
     if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
-      DfaCondition condition = assertionStatus.eq(myValueFactory.fromDfType(DfTypes.booleanValue(myIgnoreAssertions.toBoolean())));
+      DfaCondition condition = assertionStatus.eq(DfTypes.booleanValue(myIgnoreAssertions.toBoolean()));
       for (DfaMemoryState state : memStates) {
         state.applyCondition(condition);
       }

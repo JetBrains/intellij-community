@@ -483,7 +483,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
     boolean notNullable = nullability != DfaNullability.NULL && nullability != DfaNullability.NULLABLE;
     if (notNullable && problem != null && problem.thrownException() != null) {
-      state.applyCondition(value.cond(RelationType.NE, value.getFactory().fromDfType(NULL)));
+      state.applyCondition(value.cond(RelationType.NE, NULL));
     }
     boolean unknown = nullability == DfaNullability.UNKNOWN;
     return notNullable ? unknown ? ThreeState.UNSURE : ThreeState.YES : ThreeState.NO;
@@ -624,7 +624,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     if (opSign == JavaTokenType.AND || opSign == JavaTokenType.OR) {
       boolean or = opSign == JavaTokenType.OR;
       DfaMemoryState copy = memState.createCopy();
-      DfaCondition cond = dfaRight.eq(runner.getFactory().fromDfType(booleanValue(or)));
+      DfaCondition cond = dfaRight.eq(booleanValue(or));
       if (copy.applyCondition(cond)) {
         result.add(makeBooleanResult(instruction, runner, copy, ThreeState.fromBoolean(or)));
       }
@@ -727,11 +727,11 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaMemoryState falseState = memState.createCopy();
     DfaValueFactory factory = runner.getFactory();
     List<DfaInstructionState> result = new ArrayList<>(2);
-    if (memState.applyCondition(dfaValue.eq(factory.fromDfType(FALSE)))) {
+    if (memState.applyCondition(dfaValue.eq(FALSE))) {
       pushExpressionResult(factory.fromDfType(TRUE), instruction, memState);
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
     }
-    if (falseState.applyCondition(dfaValue.eq(factory.fromDfType(TRUE)))) {
+    if (falseState.applyCondition(dfaValue.eq(TRUE))) {
       pushExpressionResult(factory.fromDfType(FALSE), instruction, falseState);
       result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), falseState));
     }
@@ -741,7 +741,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
 
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     boolean value = !instruction.isNegated();
-    DfaCondition condTrue = memState.pop().eq(runner.getFactory().fromDfType(booleanValue(value)));
+    DfaCondition condTrue = memState.pop().eq(booleanValue(value));
     DfaCondition condFalse = condTrue.negate();
 
     PsiElement anchor = instruction.getPsiAnchor();
@@ -820,9 +820,9 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                           @NotNull DfaValue index) {
     DfaValueFactory factory = index.getFactory();
     DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
-    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, factory.fromDfType(intValue(0)));
+    DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, intValue(0));
     if (!memState.applyCondition(lengthMoreThanZero)) return false;
-    DfaCondition indexNonNegative = index.cond(RelationType.GE, factory.fromDfType(intValue(0)));
+    DfaCondition indexNonNegative = index.cond(RelationType.GE, intValue(0));
     if (!memState.applyCondition(indexNonNegative)) return false;
     DfaCondition indexLessThanLength = index.cond(RelationType.LT, length);
     if (!memState.applyCondition(indexLessThanLength)) return false;
@@ -867,8 +867,8 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         }
       }
       DfaValue value = castFail.peek();
-      DfaCondition notNullCondition = value.cond(RelationType.NE, factory.fromDfType(NULL));
-      DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, factory.fromDfType(typedObject(type, Nullability.NOT_NULL)));
+      DfaCondition notNullCondition = value.cond(RelationType.NE, NULL);
+      DfaCondition notTypeCondition = value.cond(RelationType.IS_NOT, typedObject(type, Nullability.NOT_NULL));
       if (castFail.applyCondition(notNullCondition) && castFail.applyCondition(notTypeCondition)) {
         List<DfaInstructionState> states = transfer.dispatch(castFail, runner);
         for (DfaInstructionState cceState : states) {
@@ -936,8 +936,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         if (!isNull) {
           result.add(new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState));
         }
-        DfaValueFactory factory = runner.getFactory();
-        if (nullState.applyCondition(value.eq(factory.fromDfType(NULL)))) {
+        if (nullState.applyCondition(value.eq(NULL))) {
           List<DfaInstructionState> dispatched = transfer.dispatch(nullState, runner);
           for (DfaInstructionState npeState : dispatched) {
             npeState.getMemoryState().markEphemeral();
@@ -985,7 +984,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                                    DataFlowRunner runner, DfaMemoryState memState) {
     DfaValue arraySize = memState.peek();
     DfaControlTransferValue transfer = instruction.getNegativeSizeExceptionTransfer();
-    DfaCondition cond = arraySize.cond(RelationType.GE, runner.getFactory().fromDfType(intValue(0)));
+    DfaCondition cond = arraySize.cond(RelationType.GE, intValue(0));
     Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
     DfaInstructionState nextState = new DfaInstructionState(nextInstruction, memState);
     if (cond.equals(DfaCondition.getTrue())) {
@@ -1035,7 +1034,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       PsiType type = memState.getDfType(dfaRight).getConstantOfType(PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
-        condition = dfaLeft.cond(RelationType.NE, factory.fromDfType(NULL));
+        condition = dfaLeft.cond(RelationType.NE, NULL);
         unknownTargetType = true;
       } else {
         dfaRight = factory.fromDfType(typedObject(type, Nullability.NOT_NULL));
