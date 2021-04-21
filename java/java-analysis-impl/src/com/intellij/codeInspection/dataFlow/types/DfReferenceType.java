@@ -5,7 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public interface DfReferenceType extends DfType {
    * @return special field if additional information is known about the special field of all referenced objects
    */
   @Nullable
-  default SpecialField getSpecialField() {
+  default JvmSpecialField getSpecialField() {
     return null;
   }
 

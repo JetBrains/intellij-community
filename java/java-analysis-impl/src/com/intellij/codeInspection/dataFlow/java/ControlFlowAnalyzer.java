@@ -11,7 +11,7 @@ import com.intellij.codeInspection.dataFlow.Trap.TryCatch;
 import com.intellij.codeInspection.dataFlow.Trap.TryFinally;
 import com.intellij.codeInspection.dataFlow.Trap.TwrFinally;
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -22,10 +22,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -521,10 +518,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType type = iteratedValue.getType();
       SpecialField length = null;
       if (type instanceof PsiArrayType) {
-        length = SpecialField.ARRAY_LENGTH;
+        length = JvmSpecialField.ARRAY_LENGTH;
       }
       else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
-        length = SpecialField.COLLECTION_SIZE;
+        length = JvmSpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
         addInstruction(new UnwrapSpecialFieldInstruction(length));
@@ -1300,7 +1297,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    DfType arrayType = SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length))
+    DfType arrayType = JvmSpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(initializers.length))
       .meet(type == null ? DfTypes.OBJECT_OR_NULL : TypeConstraints.exact(type).asDfType())
       .meet(DfTypes.LOCAL_OBJECT);
     if (arrayWriteTarget != null) {
@@ -1461,7 +1458,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
-      addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
+      addInstruction(new UnwrapSpecialFieldInstruction(JvmSpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
     expectedType = toBound(expectedType);
@@ -1474,7 +1471,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (unboxedType != null && !unboxedType.equals(actualType)) {
         addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
       }
-      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), JvmSpecialField.UNBOX));
     }
     else if (actualType != expectedType &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
@@ -1802,7 +1799,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
       }
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new WrapSpecialFieldInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
+      addInstruction(new WrapSpecialFieldInstruction(arrayValue, JvmSpecialField.ARRAY_LENGTH));
 
       initializeSmallArray((PsiArrayType)type, expression, dimensions);
     }
@@ -1844,7 +1841,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
+      DfType dfType = JvmSpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
         .meet(TypeConstraints.exact(type).asDfType())
         .meet(DfTypes.LOCAL_OBJECT);
       return myFactory.fromDfType(dfType);
@@ -1954,7 +1951,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PrimitiveConversionInstruction(unboxedType, null));
     }
     if (!(operandType instanceof PsiPrimitiveType)) {
-      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(operandType, Nullability.NOT_NULL), SpecialField.UNBOX));
+      addInstruction(new WrapSpecialFieldInstruction(DfTypes.typedObject(operandType, Nullability.NOT_NULL), JvmSpecialField.UNBOX));
     }
     addInstruction(new AssignInstruction(operand, null, DfaExpressionFactory.getExpressionDfaValue(myFactory, operand)));
     return true;

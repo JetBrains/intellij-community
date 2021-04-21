@@ -3,9 +3,10 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
@@ -35,9 +36,9 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  */
 public final class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
-    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
+    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(JvmSpecialField.ARRAY_LENGTH),
                             fail()),
-    singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
+    singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(JvmSpecialField.ARRAY_LENGTH),
                             fail()),
     singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
   );
@@ -96,34 +97,34 @@ public final class HardcodedContracts {
                 return Collections.singletonList(new StandardMethodContract(constraints, fail()));
               })
     .register(instanceCall(JAVA_LANG_STRING, "charAt", "codePointAt").parameterCount(1),
-              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH)))
+              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, JvmSpecialField.STRING_LENGTH)))
     .register(anyOf(instanceCall(JAVA_LANG_STRING, "substring", "subSequence").parameterCount(2),
                     instanceCall(JAVA_LANG_STRING, "substring").parameterCount(1)),
               (call, cnt) -> getSubstringContracts(cnt == 2))
     .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
-              ContractProvider.of(SpecialField.STRING_LENGTH.getEmptyContracts()))
+              ContractProvider.of(JvmSpecialField.STRING_LENGTH.getEmptyContracts()))
     .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
                     instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0)),
-              ContractProvider.of(SpecialField.COLLECTION_SIZE.getEmptyContracts()))
+              ContractProvider.of(JvmSpecialField.COLLECTION_SIZE.getEmptyContracts()))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
-              ContractProvider.of(SpecialField.STRING_LENGTH.getEqualsContracts()))
+              ContractProvider.of(JvmSpecialField.STRING_LENGTH.getEqualsContracts()))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT)),
-              ContractProvider.of(SpecialField.COLLECTION_SIZE.getEqualsContracts()))
+              ContractProvider.of(JvmSpecialField.COLLECTION_SIZE.getEqualsContracts()))
     .register(anyOf(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
                     instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1)),
               ContractProvider.of(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
+                ContractValue.qualifier().specialField(JvmSpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get", "remove").parameterTypes("int"),
-              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
+              ContractProvider.of(specialFieldRangeContract(0, RelationType.LT, JvmSpecialField.COLLECTION_SIZE)))
     .register(anyOf(
       instanceCall(JAVA_UTIL_SORTED_SET, "first", "last").parameterCount(0),
       instanceCall("java.util.Deque", "getFirst", "getLast").parameterCount(0),
       instanceCall(JAVA_UTIL_QUEUE, "element").parameterCount(0)),
               ContractProvider.of(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+                ContractValue.qualifier().specialField(JvmSpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))
     // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
     // thus ARRAY_RANGE_CONTRACTS are applicable to them
@@ -135,7 +136,7 @@ public final class HardcodedContracts {
       instanceCall(JAVA_UTIL_QUEUE, "peek", "poll").parameterCount(0),
       instanceCall("java.util.Deque", "peekFirst", "peekLast", "pollFirst", "pollLast").parameterCount(0)),
               (call, paramCount) -> Arrays.asList(singleConditionContract(
-                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+                ContractValue.qualifier().specialField(JvmSpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), returnNull()), trivialContract(returnAny())))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
@@ -150,14 +151,14 @@ public final class HardcodedContracts {
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
               ContractProvider.of(
                 singleConditionContract(
-                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), RelationType.EQ,
+                  ContractValue.argument(0).specialField(JvmSpecialField.STRING_LENGTH), RelationType.EQ,
                   ContractValue.zero(), returnTrue()),
                 singleConditionContract(
                   ContractValue.argument(0), RelationType.EQ,
                   ContractValue.qualifier(), returnTrue()),
                 singleConditionContract(
-                  ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
-                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())))
+                  ContractValue.qualifier().specialField(JvmSpecialField.STRING_LENGTH), RelationType.LT,
+                  ContractValue.argument(0).specialField(JvmSpecialField.STRING_LENGTH), returnFalse())))
     .register(instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT),
               (call, paramCount) -> equalsContracts(call))
     .register(anyOf(
@@ -179,8 +180,8 @@ public final class HardcodedContracts {
     ContractValue dest = ContractValue.argument(2);
     ContractValue destPos = ContractValue.argument(3);
     ContractValue length = ContractValue.argument(4);
-    ContractValue srcLength = src.specialField(SpecialField.ARRAY_LENGTH);
-    ContractValue dstLength = dest.specialField(SpecialField.ARRAY_LENGTH);
+    ContractValue srcLength = src.specialField(JvmSpecialField.ARRAY_LENGTH);
+    ContractValue dstLength = dest.specialField(JvmSpecialField.ARRAY_LENGTH);
     return ContractProvider.of(
       singleConditionContract(srcPos, RelationType.GT, srcLength, fail()),
       singleConditionContract(destPos, RelationType.GT, dstLength, fail()),
@@ -262,16 +263,16 @@ public final class HardcodedContracts {
 
   private static @NotNull List<MethodContract> getSubstringContracts(boolean endLimited) {
     List<MethodContract> contracts = new ArrayList<>(3);
-    contracts.add(specialFieldRangeContract(0, RelationType.LE, SpecialField.STRING_LENGTH));
+    contracts.add(specialFieldRangeContract(0, RelationType.LE, JvmSpecialField.STRING_LENGTH));
     if (endLimited) {
-      contracts.add(specialFieldRangeContract(1, RelationType.LE, SpecialField.STRING_LENGTH));
+      contracts.add(specialFieldRangeContract(1, RelationType.LE, JvmSpecialField.STRING_LENGTH));
       contracts.add(singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(), ContractValue.argument(1), fail()));
     }
     return contracts;
   }
 
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
-    return singleConditionContract(ContractValue.qualifier().specialField(SpecialField.OPTIONAL_VALUE), RelationType.EQ,
+    return singleConditionContract(ContractValue.qualifier().specialField(JvmSpecialField.OPTIONAL_VALUE), RelationType.EQ,
                                    ContractValue.nullValue(), returnValue);
   }
 
@@ -486,10 +487,10 @@ public final class HardcodedContracts {
   }
 
   private static @Nullable MethodContract emptyCheck(PsiType type, boolean isEmpty) {
-    SpecialField field = SpecialField.fromQualifierType(DfTypes.typedObject(type, Nullability.UNKNOWN));
+    SpecialField field = JvmSpecialField.fromQualifierType(DfTypes.typedObject(type, Nullability.UNKNOWN));
     if (field == null) return null;
     return singleConditionContract(ContractValue.argument(0).specialField(field), isEmpty ? RelationType.NE : RelationType.EQ,
-                                   field == SpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());
+                                   field == JvmSpecialField.OPTIONAL_VALUE ? ContractValue.nullValue() : ContractValue.zero(), fail());
   }
 
   private static @NotNull List<MethodContract> failIfNull(int argIndex, int argCount, boolean returnArg) {

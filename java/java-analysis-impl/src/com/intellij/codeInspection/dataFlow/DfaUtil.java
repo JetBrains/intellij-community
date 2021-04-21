@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -274,12 +274,12 @@ public final class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @NotNull DfType type) {
     if (TypeConstraint.fromDfType(type).isPrimitiveWrapper()) {
       if (value.getDfType() instanceof DfPrimitiveType) {
-        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
+        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), JvmSpecialField.UNBOX, value);
       }
     }
     if (type instanceof DfPrimitiveType) {
       if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-        return SpecialField.UNBOX.createValue(value.getFactory(), value);
+        return JvmSpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {
         return value.getFactory().fromDfType(type);

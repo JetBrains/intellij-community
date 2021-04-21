@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase.ConstantResult;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
@@ -282,7 +282,7 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
 
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
     DfaValueFactory factory = value.getFactory();
-    DfaValue optionalValue = SpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    DfaValue optionalValue = JvmSpecialField.OPTIONAL_VALUE.createValue(factory, value);
     ThreeState present;
     if (memState.isNull(optionalValue)) {
       present = ThreeState.NO;

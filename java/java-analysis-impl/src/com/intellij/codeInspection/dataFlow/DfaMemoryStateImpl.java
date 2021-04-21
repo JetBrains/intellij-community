@@ -3,7 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -950,7 +950,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (constant.getValue() instanceof PsiType) {
       if (!processGetClass(value, (PsiType)constant.getValue(), false)) return false;
     }
-    SpecialField field = SpecialField.fromQualifierType(constant);
+    JvmSpecialField field = JvmSpecialField.fromQualifierType(constant);
     if (field != null) {
       if (!meetDfType(field.createValue(getFactory(), value), field.fromConstant(constant.getValue()))) return false;
     }
@@ -995,7 +995,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
     if (right instanceof DfaVariableValue) return null;
-    SpecialField field = SpecialField.fromQualifier(left);
+    SpecialField field = JvmSpecialField.fromQualifier(left);
     if (field == null) return null;
     DfaValue leftValue = field.createValue(myFactory, left);
     DfaValue rightValue = field.createValue(myFactory, right);
@@ -1022,8 +1022,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return negated;
     }
 
-    DfaValue unboxedLeft = SpecialField.UNBOX.createValue(myFactory, dfaLeft);
-    DfaValue unboxedRight = SpecialField.UNBOX.createValue(myFactory, dfaRight);
+    DfaValue unboxedLeft = JvmSpecialField.UNBOX.createValue(myFactory, dfaLeft);
+    DfaValue unboxedRight = JvmSpecialField.UNBOX.createValue(myFactory, dfaRight);
     DfType leftDfType = getDfType(unboxedLeft);
     DfType rightDfType = getDfType(unboxedRight);
     if (leftDfType instanceof DfConstantType && rightDfType instanceof DfConstantType) {
@@ -1137,15 +1137,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public @NotNull DfType getUnboxedDfType(@NotNull DfaValue value) {
-    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == JvmSpecialField.UNBOX) {
       return getDfType(((DfaWrappedValue)value).getWrappedValue());
     }
     if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-      return getDfType(SpecialField.UNBOX.createValue(myFactory, value));
+      return getDfType(JvmSpecialField.UNBOX.createValue(myFactory, value));
     }
     if (value instanceof DfaTypeValue) {
       DfReferenceType refType = ObjectUtils.tryCast(value.getDfType(), DfReferenceType.class);
-      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
+      if (refType != null && refType.getSpecialField() == JvmSpecialField.UNBOX) {
         return refType.getSpecialFieldType();
       }
     }

@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ import java.util.Set;
 public class DfReferenceConstantType extends DfConstantType<Object> implements DfReferenceType {
   private final @NotNull TypeConstraint myConstraint;
   private final @NotNull Mutability myMutability;
-  private final @Nullable SpecialField mySpecialField;
+  private final @Nullable JvmSpecialField myJvmSpecialField;
   private final @NotNull DfType mySpecialFieldType;
   private final boolean myDropConstantOnWiden;
 
@@ -21,8 +21,8 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     super(constant);
     myConstraint = type;
     myMutability = constant instanceof PsiModifierListOwner ? Mutability.getMutability((PsiModifierListOwner)constant) : Mutability.UNKNOWN;
-    mySpecialField = SpecialField.fromQualifierType(this);
-    mySpecialFieldType = mySpecialField == null ? BOTTOM : mySpecialField.fromConstant(constant);
+    myJvmSpecialField = JvmSpecialField.fromQualifierType(this);
+    mySpecialFieldType = myJvmSpecialField == null ? BOTTOM : myJvmSpecialField.fromConstant(constant);
     myDropConstantOnWiden = dropConstantOnWiden;
   }
 
@@ -30,7 +30,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
   public DfType widen() {
     if (myDropConstantOnWiden) {
       return new DfGenericObjectType(Set.of(), myConstraint, DfaNullability.NOT_NULL, myMutability,
-                                     mySpecialField, mySpecialFieldType.widen(), false);
+                                     myJvmSpecialField, mySpecialFieldType.widen(), false);
     }
     return this;
   }
@@ -72,8 +72,8 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
 
   @Nullable
   @Override
-  public SpecialField getSpecialField() {
-    return mySpecialField;
+  public JvmSpecialField getSpecialField() {
+    return myJvmSpecialField;
   }
 
   @NotNull
@@ -108,7 +108,7 @@ public class DfReferenceConstantType extends DfConstantType<Object> implements D
     DfaNullability nullability = getNullability().unite(type.getNullability());
     Mutability mutability = getMutability().unite(type.getMutability());
     boolean locality = isLocal() && type.isLocal();
-    SpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
+    JvmSpecialField sf = Objects.equals(getSpecialField(), type.getSpecialField()) ? getSpecialField() : null;
     DfType sfType = sf == null ? BOTTOM : getSpecialFieldType().join(type.getSpecialFieldType());
     return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, sf, sfType, locality);
   }

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaLanguageSupport;
@@ -162,7 +162,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
           PsiType arrayType = Objects.requireNonNull(paramList.getParameter(paramCount - 1)).getType();
-          DfType dfType = SpecialField.ARRAY_LENGTH.asDfType(intValue(argCount - paramCount + 1))
+          DfType dfType = JvmSpecialField.ARRAY_LENGTH.asDfType(intValue(argCount - paramCount + 1))
             .meet(TypeConstraints.exact(arrayType).asDfType());
           argValues[paramCount - 1] = factory.fromDfType(dfType);
         }
@@ -205,7 +205,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         DfType dfType = memState.getDfType(arg);
         if (!Mutability.fromDfType(dfType).canBeModified() &&
             // Empty array cannot be modified at all
-            !memState.getDfType(SpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
+            !memState.getDfType(JvmSpecialField.ARRAY_LENGTH.createValue(factory, arg)).equals(intValue(0))) {
           reportMutabilityViolation(false, anchor);
           if (dfType instanceof DfReferenceType) {
             memState.setDfType(arg, ((DfReferenceType)dfType).dropMutability().meet(Mutability.MUTABLE.asDfType()));
@@ -401,7 +401,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     PsiType type = instruction.getResultType();
 
-    SpecialField field = SpecialField.findSpecialField(instruction.getTargetMethod());
+    SpecialField field = JvmSpecialField.findSpecialField(instruction.getTargetMethod());
     if (qualifierValue instanceof DfaWrappedValue && ((DfaWrappedValue)qualifierValue).getSpecialField() == field) {
       return ((DfaWrappedValue)qualifierValue).getWrappedValue();
     }
@@ -649,14 +649,14 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
       return factory.fromDfType(concatenationResult(leftString + rightString, stringType));
     }
-    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, left);
-    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, right);
+    DfaValue leftLength = JvmSpecialField.STRING_LENGTH.createValue(factory, left);
+    DfaValue rightLength = JvmSpecialField.STRING_LENGTH.createValue(factory, right);
     DfType leftRange = memState.getDfType(leftLength);
     DfType rightRange = memState.getDfType(rightLength);
     DfType resultRange = leftRange instanceof DfIntType ? ((DfIntType)leftRange).eval(rightRange, LongRangeBinOp.PLUS) : INT;
     DfType result = resultRange.isConst(0)
                     ? referenceConstant("", stringType)
-                    : SpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(stringType).asDfType());
+                    : JvmSpecialField.STRING_LENGTH.asDfType(resultRange).meet(TypeConstraints.exact(stringType).asDfType());
     return factory.fromDfType(result);
   }
 
@@ -819,7 +819,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
                                           @NotNull DfaValue array,
                                           @NotNull DfaValue index) {
     DfaValueFactory factory = index.getFactory();
-    DfaValue length = SpecialField.ARRAY_LENGTH.createValue(factory, array);
+    DfaValue length = JvmSpecialField.ARRAY_LENGTH.createValue(factory, array);
     DfaCondition lengthMoreThanZero = length.cond(RelationType.GT, intValue(0));
     if (!memState.applyCondition(lengthMoreThanZero)) return false;
     DfaCondition indexNonNegative = index.cond(RelationType.GE, intValue(0));

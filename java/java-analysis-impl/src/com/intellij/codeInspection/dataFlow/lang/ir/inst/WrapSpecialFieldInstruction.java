@@ -2,15 +2,16 @@
 package com.intellij.codeInspection.dataFlow.lang.ir.inst;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Create a value that has given {@link DfType} and its {@link SpecialField} value is taken from the stack.
+ * Create a value that has given {@link DfType} and its {@link JvmSpecialField} value is taken from the stack.
  * In particular, could be used to box the stack value (with SpecialField = UNBOX).
  */
 public class WrapSpecialFieldInstruction extends EvalInstruction {

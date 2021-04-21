@@ -6,8 +6,9 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.value.SpecialField;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
@@ -89,13 +90,13 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
         PsiType type = value.getType();
         String message;
         if (type instanceof PsiArrayType) {
-          lengthField = SpecialField.ARRAY_LENGTH;
+          lengthField = JvmSpecialField.ARRAY_LENGTH;
           message = JavaBundle.message("inspection.redundant.operation.on.empty.array.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
-          lengthField = SpecialField.COLLECTION_SIZE;
+          lengthField = JvmSpecialField.COLLECTION_SIZE;
           message = JavaBundle.message("inspection.redundant.operation.on.empty.collection.message");
         } else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP)) {
-          lengthField = SpecialField.COLLECTION_SIZE;
+          lengthField = JvmSpecialField.COLLECTION_SIZE;
           message = JavaBundle.message("inspection.redundant.operation.on.empty.map.message");
         } else {
           return null;

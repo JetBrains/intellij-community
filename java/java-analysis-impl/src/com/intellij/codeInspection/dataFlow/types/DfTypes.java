@@ -7,7 +7,7 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
@@ -529,18 +529,18 @@ public final class DfTypes {
    * @param constraint type constraint
    * @param nullability nullability, must not be {@link DfaNullability#NULL}
    * @param mutability mutability desired mutability
-   * @param specialField special field
+   * @param jvmSpecialField special field
    * @param sfType type of special field
    * @return a reference type object
    */
   public static DfReferenceType customObject(@NotNull TypeConstraint constraint,
                                              @NotNull DfaNullability nullability,
                                              @NotNull Mutability mutability,
-                                             @Nullable SpecialField specialField,
+                                             @Nullable JvmSpecialField jvmSpecialField,
                                              @NotNull DfType sfType) {
     if (nullability == DfaNullability.NULL) {
       throw new IllegalArgumentException();
     }
-    return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, specialField, sfType, false);
+    return new DfGenericObjectType(Set.of(), constraint, nullability, mutability, jvmSpecialField, sfType, false);
   }
 }

@@ -27,7 +27,7 @@ import static com.intellij.psi.CommonClassNames.*;
  *
  * @author Tagir Valeev
  */
-public enum SpecialField implements VariableDescriptor {
+public enum JvmSpecialField implements SpecialField {
   ARRAY_LENGTH("length", "special.field.array.length", true) {
     @Override
     boolean isMyQualifierType(DfType type) {
@@ -217,12 +217,12 @@ public enum SpecialField implements VariableDescriptor {
     }
   };
 
-  private static final SpecialField[] VALUES = values();
+  private static final JvmSpecialField[] VALUES = values();
   private final String myTitle;
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myTitleKey;
   private final boolean myFinal;
 
-  SpecialField(String title, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String titleKey, boolean isFinal) {
+  JvmSpecialField(String title, @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String titleKey, boolean isFinal) {
     myTitle = title;
     myTitleKey = titleKey;
     myFinal = isFinal;
@@ -257,10 +257,10 @@ public enum SpecialField implements VariableDescriptor {
    */
   @Contract("null -> null")
   @Nullable
-  public static SpecialField findSpecialField(PsiElement accessor) {
+  public static JvmSpecialField findSpecialField(PsiElement accessor) {
     if (!(accessor instanceof PsiMember)) return null;
     PsiMember member = (PsiMember)accessor;
-    for (SpecialField sf : VALUES) {
+    for (JvmSpecialField sf : VALUES) {
       if (sf.isMyAccessor(member)) {
         return sf;
       }
@@ -302,7 +302,7 @@ public enum SpecialField implements VariableDescriptor {
           }
         }
       }
-      return VariableDescriptor.super.createValue(factory, qualifier, forAccessor);
+      return factory.getVarFactory().createVariableValue(this, variableValue);
     }
     DfType dfType = qualifier == null ? DfType.TOP : getFromQualifier(qualifier.getDfType());
     return factory.fromDfType(dfType.meet(getDefaultValue(forAccessor)));
@@ -352,10 +352,7 @@ public enum SpecialField implements VariableDescriptor {
                            ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
-  /**
-   * @param fieldValue dfType of the special field value
-   * @return a dfType that represents a value having this special field restricted to the supplied dfType
-   */
+  @Override
   @NotNull
   public DfType asDfType(@NotNull DfType fieldValue) {
     DfType defaultType = this == OPTIONAL_VALUE ? DfTypes.OBJECT_OR_NULL : getDefaultValue(false);
@@ -365,12 +362,7 @@ public enum SpecialField implements VariableDescriptor {
     return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.NOT_NULL, Mutability.UNKNOWN, this, clamped);
   }
 
-  /**
-   * @param fieldValue dfType of the special field value
-   * @param project project
-   * @return a dfType that represents a value having this special field restricted to the supplied dfType.
-   * Unlike {@link #asDfType(DfType)} this overload may canonicalize some values.
-   */
+  @Override
   @NotNull
   public DfType asDfType(@NotNull DfType fieldValue, @NotNull Project project) {
     if (this == STRING_LENGTH && fieldValue.isConst(0)) {
@@ -380,11 +372,7 @@ public enum SpecialField implements VariableDescriptor {
     return asDfType(fieldValue);
   }
 
-  /**
-   * Returns a DfType from given DfType qualifier if it's bound to this special field
-   * @param dfType of the qualifier
-   * @return en extracted DfType
-   */
+  @Override
   @NotNull
   public DfType getFromQualifier(@NotNull DfType dfType) {
     if (dfType == DfType.TOP) return DfType.TOP;
@@ -403,11 +391,11 @@ public enum SpecialField implements VariableDescriptor {
    * @return a special field; null if no special field is available for given type
    */
   @Nullable
-  public static SpecialField fromQualifierType(@NotNull DfType type) {
+  public static JvmSpecialField fromQualifierType(@NotNull DfType type) {
     if (type instanceof DfReferenceType && ((DfReferenceType)type).getSpecialField() != null) {
       return ((DfReferenceType)type).getSpecialField();
     }
-    for (SpecialField value : VALUES) {
+    for (JvmSpecialField value : VALUES) {
       if (value.isMyQualifierType(type)) {
         return value;
       }
