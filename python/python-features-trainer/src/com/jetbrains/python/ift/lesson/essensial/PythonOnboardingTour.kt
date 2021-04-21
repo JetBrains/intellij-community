@@ -8,7 +8,6 @@ import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
-import com.intellij.ide.util.gotoByName.GotoActionItemProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -571,9 +571,11 @@ class PythonOnboardingTour :
           backupPopupLocation = oldPopupLocation
         }
       }
-      text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description", strong("AVERAGE")))
+      text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
+                                       strong(PythonLessonsBundle.message("toggle.case.part")), strong("AVERAGE")))
       triggerByListItemAndHighlight { item ->
-        (item as? GotoActionModel.MatchedValue)?.value?.let { GotoActionItemProvider.getActionText(it) } == toggleCase
+        val value = (item as? GotoActionModel.MatchedValue)?.value
+        (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
       }
       restoreByUi()
       restoreIfModifiedOrMoved()
