@@ -38,7 +38,8 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language)
+    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language,
+                                                    EventFields.DurationMs)
 
     @JvmStatic
     fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
@@ -48,7 +49,6 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.InputEvent,
         EventFields.ActionPlace,
         EventFields.CurrentFile,
-        EventFields.DurationMs,
         TOGGLE_ACTION,
         CONTEXT_MENU,
         DUMB,
