@@ -33,7 +33,6 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
  * A render handler for an off-screen browser.
  *
  * @see JBCefOsrComponent
- * @see JBCefBrowser#create(JBCefBrowser.RenderingType, JBCefClient, String)
  * @author tav
  */
 class JBCefOsrHandler implements CefRenderHandler {

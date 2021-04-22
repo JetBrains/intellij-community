@@ -9,6 +9,7 @@ import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
@@ -16,7 +17,6 @@ import org.cef.browser.CefBrowserOsrWithHandler;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefRendering;
 import org.cef.handler.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +37,11 @@ import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
  * Use {@link #getComponent()} as the browser's UI component.
  * <p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
- * <p>
- * Use {@link JBCefOsrHandlerBrowser} to render offscreen via a custom {@link CefRenderHandler}.
  *
+ * @see #createBuilder
  * @see JBCefOsrHandlerBrowser
  * @author tav
  */
-@SuppressWarnings("unused")
 public class JBCefBrowser extends JBCefBrowserBase {
   /**
    * @see #setProperty(String, Object)
@@ -130,44 +128,70 @@ public class JBCefBrowser extends JBCefBrowserBase {
   private volatile boolean myFirstShow = true;
 
   /**
-   * Creates a browser with the specified rendering type.
-   *
-   * @param type the rendering type
-   * @param client the client, a default client is used when null is passed
-   * @param url the URL, a blank url is loaded when null is passed
-   * @return the new browser instance
+   * Creates a browser builder.
    */
-  @ApiStatus.Experimental
-  public static @NotNull JBCefBrowser create(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
-    return new JBCefBrowser(type, client, url);
+  public static @NotNull JBCefBrowserBuilder createBuilder() {
+    return new JBCefBrowserBuilder();
   }
 
-  protected JBCefBrowser(@NotNull RenderingType type, @Nullable JBCefClient client, @Nullable String url) {
-    this(createBrowser(type, client, url));
+  static @NotNull JBCefBrowser create(@NotNull JBCefBrowserBuilder builder) {
+    JBCefBrowser browser = builder.myCefBrowser != null ?
+      new JBCefBrowser(ObjectUtils.notNull(builder.myRenderingType, RenderingType.EMBEDDED_WINDOW),
+                       builder.myCefBrowser,
+                       false,
+                       ObjectUtils.notNull(builder.myClient, JBCefApp.getInstance().createClient(true))) :
+      new JBCefBrowser(builder.myRenderingType, builder.myClient, builder.myUrl);
+
+    if (builder.myCreateImmediately) browser.getCefBrowser().createImmediately();
+    return browser;
+  }
+
+  /**
+   * Creates a browser with default {@link JBCefClient}. The default client is disposed with this browser and may not be used with other browsers.
+   *
+   * @see #createBuilder
+   */
+  public JBCefBrowser() {
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, null));
+  }
+
+  /**
+   * @see #createBuilder
+   */
+  public JBCefBrowser(@NotNull String url) {
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, null, url));
+  }
+
+  /**
+   * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
+   *
+   * @see #createBuilder
+   */
+  public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
+    this(createBrowser(RenderingType.EMBEDDED_WINDOW, client, url));
+  }
+
+  /**
+   * @see #createBuilder
+   */
+  public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
+    this(RenderingType.EMBEDDED_WINDOW, cefBrowser, false, client);
+  }
+
+  private JBCefBrowser(@NotNull CreateBrowserArtefacts artefacts) {
+    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client);
+  }
+
+  protected JBCefBrowser(@Nullable RenderingType type,
+                         @Nullable JBCefClient client,
+                         @Nullable String url)
+  {
+    this(createBrowser(ObjectUtils.notNull(type, RenderingType.EMBEDDED_WINDOW), client, url));
     CefBrowser cefBrowser = getCefBrowser();
     if (type == RenderingType.BUFFERED_IMAGE) {
       CefBrowserOsrWithHandler cefOsrBrowser = (CefBrowserOsrWithHandler)cefBrowser;
       ((JBCefOsrComponent)cefOsrBrowser.getUIComponent()).setBrowser(this);
     }
-  }
-
-  /**
-   * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
-   */
-  public JBCefBrowser(@NotNull JBCefClient client, @Nullable String url) {
-    this(client, false, url);
-  }
-
-  public JBCefBrowser(@NotNull CefBrowser cefBrowser, @NotNull JBCefClient client) {
-    this(RenderingType.EMBEDDED_WINDOW, cefBrowser, false, client);
-  }
-
-  private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
-    this(createBrowser(RenderingType.EMBEDDED_WINDOW, client, url));
-  }
-
-  private JBCefBrowser(@NotNull CreateBrowserArtefacts artefacts) {
-    this(artefacts.renderingType, artefacts.cefBrowser, true, artefacts.client);
   }
 
   private JBCefBrowser(@NotNull RenderingType type,
@@ -367,23 +391,6 @@ public class JBCefBrowser extends JBCefBrowserBase {
    */
   public static void removeOnBrowserMoveResizeCallback(@NotNull Consumer<? super JBCefBrowser> callback) {
     ourOnBrowserMoveResizeCallbacks.remove(callback);
-  }
-
-  /**
-   * Creates a browser with default {@link JBCefClient}. The default client is disposed with this browser and may not be used with other browsers.
-   */
-  @SuppressWarnings("unused")
-  public JBCefBrowser() {
-    this(JBCefApp.getInstance().createClient(), true, null);
-  }
-
-  /**
-   * @see #JBCefBrowser()
-   * @param url initial url
-   */
-  @SuppressWarnings("unused")
-  public JBCefBrowser(@NotNull String url) {
-    this(JBCefApp.getInstance().createClient(), true, url);
   }
 
   @Override

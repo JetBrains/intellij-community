@@ -47,12 +47,12 @@ public class IDEA246306Test {
   static class MyBrowser extends JBCefBrowser {
     static final JBCefClient ourClient = JBCefApp.getInstance().createClient();
 
-    final JBCefJSQuery myQuery = JBCefJSQuery.create(this);
+    final JBCefJSQuery myQuery = JBCefJSQuery.create((JBCefBrowserBase)this);
     final CountDownLatch latch = new CountDownLatch(1);
 
     @SuppressWarnings("ObjectToString")
     MyBrowser() {
-      super(ourClient, "chrome:version");
+      super(null, ourClient, "chrome:version");
       myQuery.addHandler(result -> {
         System.out.println("query: result " + result + ", on " + this);
         if (!result.equals(this.toString())) {

@@ -41,9 +41,9 @@ public class JBCefMultiRenderingModeTest {
 
   @Test
   public void test() {
-    show(JBCefBrowser.create(RenderingType.EMBEDDED_WINDOW, null, "chrome:version"));
-    show(JBCefBrowser.create(RenderingType.OGL_CANVAS, null, "chrome:version"));
-    show(JBCefBrowser.create(RenderingType.BUFFERED_IMAGE, null, "chrome:version"));
+    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.EMBEDDED_WINDOW).setUrl("chrome:version").createBrowser());
+    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.OGL_CANVAS).setUrl("chrome:version").createBrowser());
+    show(JBCefBrowser.createBuilder().setRenderingType(RenderingType.BUFFERED_IMAGE).setUrl("chrome:version").createBrowser());
     Disposer.dispose(JBCefApp.getInstance().getDisposable());
   }
 

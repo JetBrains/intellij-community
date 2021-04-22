@@ -48,7 +48,6 @@ import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
 /**
  * Base class for windowed and offscreen browsers.
  */
-@SuppressWarnings("unused")
 public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
@@ -554,6 +553,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
+  @SuppressWarnings("unused")
   void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
     myPropertiesHelper.addPropertyChangeListener(name, listener);
   }
@@ -561,6 +561,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
+  @SuppressWarnings("unused")
   void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
     myPropertiesHelper.removePropertyChangeListener(name, listener);
   }
@@ -623,7 +624,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);
     myDevtoolsFrame.setLayout(new BorderLayout());
-    JBCefBrowser devTools = new JBCefBrowser(myCefBrowser.getDevTools(), myCefClient);
+    JBCefBrowser devTools = JBCefBrowser.createBuilder().setCefBrowser(myCefBrowser.getDevTools()).setClient(myCefClient).createBrowser();
     myDevtoolsFrame.add(devTools.getComponent(), BorderLayout.CENTER);
     myDevtoolsFrame.addWindowListener(new WindowAdapter() {
       @Override

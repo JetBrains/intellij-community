@@ -16,8 +16,8 @@ import java.awt.event.*;
 /**
  * A lightweight component on which an off-screen browser is rendered.
  *
- * @see JBCefBrowser#create(JBCefBrowser.RenderingType, JBCefClient, String)
  * @see JBCefBrowser#getComponent()
+ * @see JBCefOsrHandler
  * @author tav
  */
 @SuppressWarnings("NotNullFieldNotInitialized")

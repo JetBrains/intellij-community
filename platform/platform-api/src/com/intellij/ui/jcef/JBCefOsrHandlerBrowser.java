@@ -19,10 +19,12 @@ import java.awt.event.MouseWheelEvent;
  * <p></p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
  * <p>
- * For window-based rendering use {@link JBCefBrowser}. Also, {@link JBCefBrowser#create(RenderingType, JBCefClient, String)} allows for creating
- * an off-screen rendering browser with default {@link CefRenderHandler} of different types.
+ * Use {@link JBCefBrowser#createBuilder} and {@link JBCefBrowserBuilder#setRenderingType(RenderingType)}
+ * for creating a browser with provided {@link RenderingType)}.
  *
- * @see JBCefBrowser#create(RenderingType, JBCefClient, String)
+ * @see RenderingType
+ * @see JBCefBrowserBuilder#setRenderingType(RenderingType)
+ * @see JBCefBrowser#createBuilder
  * @see JBCefBrowser#getCefBrowser
  */
 public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {

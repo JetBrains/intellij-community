@@ -334,7 +334,7 @@ public final class JBCefApp {
    * This mode allows for browser creation in either windowed or off-screen rendering mode.
    *
    * @see JBCefOsrHandlerBrowser
-   * @see JBCefBrowser#create(JBCefBrowserBase.RenderingType, JBCefClient, String)
+   * @see JBCefBrowserBase.RenderingType
    */
   public static boolean isOffScreenRenderingModeEnabled() {
     return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
