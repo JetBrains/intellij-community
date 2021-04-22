@@ -4,20 +4,19 @@ package git4idea.index
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.CommitTabTitleUpdater
-import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
 import git4idea.index.ui.GitStagePanel
+import git4idea.index.ui.SimpleTabTitleUpdater
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -32,7 +31,7 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
     val gitStagePanel = GitStagePanel(tracker, isVertical(), isDiffPreviewInEditor(), disposable!!) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
-    setupTabTitleUpdater(tracker, gitStagePanel)
+    GitStageTabTitleUpdater(tracker, gitStagePanel)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() = gitStagePanel.updatePanelLayout()
     })
@@ -49,17 +48,6 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
 
   private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.anchor?.isHorizontal == false
 
-  private fun setupTabTitleUpdater(tracker: GitStageTracker, panel: GitStagePanel) {
-    val updater = CommitTabTitleUpdater(panel.tree, STAGING_AREA_TAB_NAME) { VcsBundle.message("tab.title.commit") }
-    Disposer.register(panel, updater)
-
-    updater.pathsProvider = {
-      val singleRoot = tracker.state.allRoots.singleOrNull()
-      if (singleRoot != null) listOf(VcsUtil.getFilePath(singleRoot)) else tracker.state.changedRoots.map { VcsUtil.getFilePath(it) }
-    }
-    updater.start()
-  }
-
   override fun disposeContent() {
     disposable?.let { Disposer.dispose(it) }
   }
@@ -67,6 +55,20 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   companion object {
     @NonNls
     val STAGING_AREA_TAB_NAME = "Staging Area"
+  }
+}
+
+private class GitStageTabTitleUpdater(private val tracker: GitStageTracker, panel: GitStagePanel) :
+  SimpleTabTitleUpdater(panel.tree, STAGING_AREA_TAB_NAME) {
+
+  init {
+    Disposer.register(panel, this)
+  }
+
+  override fun getRoots(): Collection<VirtualFile> {
+    val roots = tracker.state.allRoots
+    if (roots.size == 1) return roots
+    return tracker.state.changedRoots
   }
 }
 
