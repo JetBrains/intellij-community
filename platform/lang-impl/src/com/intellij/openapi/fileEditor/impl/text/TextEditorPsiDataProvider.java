@@ -23,6 +23,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.InjectedDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-import static com.intellij.openapi.actionSystem.AnActionEvent.injectedId;
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
@@ -111,7 +111,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (PSI_FILE.is(dataId)) {
       return getPsiFile(e, file);
     }
-    if (dataId.equals(injectedId(EDITOR.getName()))) {
+    if (InjectedDataKeys.EDITOR.is(dataId)) {
       if (project != null &&
           PsiDocumentManager.getInstance(project).isCommitted(e.getDocument()) &&
           InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(e.getDocument(), caret.getOffset())) {
@@ -120,22 +120,22 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       }
       return e;
     }
-    if (dataId.equals(injectedId(CARET.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.CARET.is(dataId)) {
+      Editor editor = (Editor)getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
       return editor == null ? null : getInjectedCaret(editor, caret);
     }
-    if (dataId.equals(injectedId(VIRTUAL_FILE.getName()))) {
-      PsiFile psiFile = (PsiFile)getSlowData(injectedId(PSI_FILE.getName()), e, caret);
+    if (InjectedDataKeys.VIRTUAL_FILE.is(dataId)) {
+      PsiFile psiFile = (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
       if (psiFile == null) return null;
       return psiFile.getVirtualFile();
     }
-    if (dataId.equals(injectedId(PSI_FILE.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.PSI_FILE.is(dataId)) {
+      Editor editor = (Editor)getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
       if (editor == null || project == null) return null;
       return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
-    if (dataId.equals(injectedId(PSI_ELEMENT.getName()))) {
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.PSI_ELEMENT.is(dataId)) {
+      Editor editor = (Editor)getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
       if (editor == null) return null;
       Caret injectedCaret = getInjectedCaret(editor, caret);
       return getPsiElementIn(editor, injectedCaret, file);
@@ -143,9 +143,9 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (PSI_ELEMENT.is(dataId)) {
       return getPsiElementIn(e, caret, file);
     }
-    if (dataId.equals(injectedId(LANGUAGE.getName()))) {
-      PsiFile psiFile = (PsiFile)getSlowData(injectedId(PSI_FILE.getName()), e, caret);
-      Editor editor = (Editor)getSlowData(injectedId(EDITOR.getName()), e, caret);
+    if (InjectedDataKeys.LANGUAGE.is(dataId)) {
+      PsiFile psiFile = (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
+      Editor editor = (Editor)getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
       if (psiFile == null || editor == null) return null;
       Caret injectedCaret = getInjectedCaret(editor, caret);
       return getLanguageAtCurrentPositionInEditor(injectedCaret, psiFile);
@@ -157,7 +157,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     }
     if (CONTEXT_LANGUAGES.is(dataId)) {
       LinkedHashSet<Language> set = new LinkedHashSet<>(4);
-      Language injectedLanguage = (Language)getSlowData(injectedId(LANGUAGE.getName()), e, caret);
+      Language injectedLanguage = (Language)getSlowData(InjectedDataKeys.LANGUAGE.getName(), e, caret);
       addIfNotNull(set, injectedLanguage);
       Language language = (Language)getSlowData(LANGUAGE.getName(), e, caret);
       addIfNotNull(set, language);

@@ -324,7 +324,7 @@ final class ActionUpdater {
       myDataContext.getData(key);
     }
     // pre-cache injected data only if an injected editor is present
-    if (myDataContext.getData(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow) {
+    if (myDataContext.getData(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow) {
       for (DataKey<?> key : DataKey.allKeys()) {
         myDataContext.getData(AnActionEvent.injectedId(key.getName()));
       }

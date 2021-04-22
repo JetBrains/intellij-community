@@ -104,7 +104,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
       if (dataId == AnActionEvent.uninjectedId(dataId)) {
         return null; // a newly created data key => no data provider => no value
       }
-      else if (!(myCachedData.get(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName())) instanceof EditorWindow)) {
+      else if (!(myCachedData.get(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow)) {
         return null; // no injected editor => no other injected values => no value
       }
     }
@@ -140,6 +140,10 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     cachedData.put(PlatformDataKeys.MODALITY_STATE.getName(), ModalityState.stateForComponent(component));
     cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
     cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
+
+    // Ignore injected data keys, injections are slow, and slow parts must be in slow providers.
+    // But make `injectedId(EDITOR)` known for `getData` and `ActionUpdater.ensureSlowDataKeysPreCached`.
+    cachedData.put(InjectedDataKeys.EDITOR.getName(), NullResult.Initial);
 
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
@@ -181,9 +185,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     if (cachedData.get(CommonDataKeys.PROJECT.getName()) == NullResult.Initial) {
       cachedData.put(CommonDataKeys.PROJECT.getName(), NullResult.Final);
     }
-    // Ignore injected data keys, injections are slow, and slow parts must be in slow providers.
-    // But make `injectedId(EDITOR)` known for `getData` and `ActionUpdater.ensureSlowDataKeysPreCached`.
-    cachedData.put(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()), NullResult.Initial);
     long time = System.currentTimeMillis() - start;
     if (time > 200) {
       // nothing

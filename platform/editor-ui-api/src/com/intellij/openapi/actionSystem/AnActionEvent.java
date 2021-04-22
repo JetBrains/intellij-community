@@ -152,6 +152,7 @@ public class AnActionEvent implements PlaceProvider {
     return getData(CommonDataKeys.PROJECT);
   }
 
+  /** Use {@link com.intellij.openapi.actionSystem.InjectedDataKeys} if possible */
   @NonNls
   @NotNull
   public static String injectedId(@NotNull String dataId) {
