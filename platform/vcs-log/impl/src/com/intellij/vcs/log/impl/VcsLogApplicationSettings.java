@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.ui.table.VcsLogColumnDeprecated;
 import com.intellij.vcs.log.ui.table.column.Date;
@@ -21,7 +22,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 
 @State(name = "Vcs.Log.App.Settings", storages = @Storage("vcs.xml"))
 public final class VcsLogApplicationSettings implements PersistentStateComponent<VcsLogApplicationSettings.State>, VcsLogUiProperties {
-  @NotNull private final Set<VcsLogUiProperties.PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   private State myState = new State();
 
   @Nullable
@@ -125,7 +126,7 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
-    myListeners.forEach(l -> l.onPropertyChanged(property));
+    myEventDispatcher.getMulticaster().onPropertyChanged(property);
   }
 
   @Override
@@ -139,12 +140,12 @@ public final class VcsLogApplicationSettings implements PersistentStateComponent
 
   @Override
   public void addChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myListeners.add(listener);
+    myEventDispatcher.addListener(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull VcsLogUiProperties.PropertiesChangeListener listener) {
-    myListeners.remove(listener);
+    myEventDispatcher.removeListener(listener);
   }
 
   public static class State {

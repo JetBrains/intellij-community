@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EventListener;
 import java.util.Objects;
 
 public interface VcsLogUiProperties {
@@ -67,7 +68,7 @@ public interface VcsLogUiProperties {
     }
   }
 
-  interface PropertiesChangeListener {
+  interface PropertiesChangeListener extends EventListener {
     <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
   }
 }

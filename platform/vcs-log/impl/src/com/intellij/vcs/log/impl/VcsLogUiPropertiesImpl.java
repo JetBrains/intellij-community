@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
@@ -24,7 +25,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX);
-  private final Set<PropertiesChangeListener> myListeners = new LinkedHashSet<>();
+  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
   @NotNull private final VcsLogApplicationSettings myAppSettings;
 
   public VcsLogUiPropertiesImpl(@NotNull VcsLogApplicationSettings appSettings) {
@@ -113,7 +114,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   }
 
   protected <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    myListeners.forEach(l -> l.onPropertyChanged(property));
+    myEventDispatcher.getMulticaster().onPropertyChanged(property);
   }
 
   @Override
@@ -155,13 +156,13 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
 
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
-    myListeners.add(listener);
+    myEventDispatcher.addListener(listener);
     myAppSettings.addChangeListener(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
-    myListeners.remove(listener);
+    myEventDispatcher.removeListener(listener);
     myAppSettings.removeChangeListener(listener);
   }
 
