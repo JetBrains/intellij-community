@@ -952,7 +952,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
     }
     if (transfer == null) {
       boolean satisfied = memState.applyCondition(cond);
-      myLanguageSupport.processConditionFailure(myInterceptor, instruction, !satisfied);
+      myLanguageSupport.processConditionFailure(myInterceptor, tosValue, instruction, !satisfied);
       if (!satisfied) {
         return DfaInstructionState.EMPTY_ARRAY;
       }
@@ -966,6 +966,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
       result.add(nextState);
     }
     if (falseStatePossible) {
+      myLanguageSupport.processConditionFailure(myInterceptor, tosValue, instruction, !trueStatePossible);
       List<DfaInstructionState> states = ControlTransferHandler.dispatch(falseState, runner, transfer);
       for (DfaInstructionState negState : states) {
         negState.getMemoryState().markEphemeral();

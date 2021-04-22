@@ -726,6 +726,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfType leftType = getDfType(dfaLeft);
     DfType rightType = getDfType(dfaRight);
 
+    if (leftType == DfType.FAIL || rightType == DfType.FAIL) {
+      return (leftType == rightType) == (relationType == RelationType.EQ);
+    }
+
     if (!meetDfType(dfaLeft, leftType.meet(rightType.fromRelation(relationType)))) {
       return false;
     }

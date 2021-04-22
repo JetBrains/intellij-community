@@ -39,12 +39,12 @@ public class JavaDfaLanguageSupport implements DfaLanguageSupport<PsiExpression>
   }
 
   @Override
-  public void processConditionFailure(@NotNull DfaInterceptor<PsiExpression> interceptor,
-                                      @NotNull EnsureInstruction instruction,
+  public void processConditionFailure(@NotNull DfaInterceptor<? super PsiExpression> interceptor,
+                                      @NotNull DfaValue tosValue, @NotNull EnsureInstruction instruction,
                                       boolean alwaysFails) {
     PsiExpression expression = ObjectUtils.tryCast(instruction.getPsiAnchor(), PsiExpression.class);
     if (expression != null) {
-      interceptor.onConditionFailure(expression, alwaysFails);
+      interceptor.onConditionFailure(expression, tosValue, alwaysFails);
     }
   }
 

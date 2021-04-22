@@ -300,7 +300,9 @@ final class DataFlowInstructionVisitor extends JavaDfaInstructionVisitor impleme
   }
 
   @Override
-  public void onConditionFailure(@NotNull PsiExpression anchor, boolean alwaysNegative) {
+  public void onConditionFailure(@NotNull PsiExpression anchor,
+                                 @NotNull DfaValue value,
+                                 boolean alwaysNegative) {
     if (anchor.getParent() instanceof PsiNewExpression) {
       myNegativeArraySizes.merge(anchor, ThreeState.fromBoolean(alwaysNegative), ThreeState::merge);
     }

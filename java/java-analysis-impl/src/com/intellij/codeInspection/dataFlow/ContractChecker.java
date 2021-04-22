@@ -9,10 +9,7 @@ import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -76,6 +73,15 @@ final class ContractChecker {
         }
       }
       return super.visitMethodCall(instruction, runner, memState);
+    }
+
+    @Override
+    public void onConditionFailure(@NotNull PsiExpression anchor,
+                                   @NotNull DfaValue value,
+                                   boolean alwaysFailed) {
+      if (DfaTypeValue.isContractFail(value)) {
+        ContainerUtil.addIfNotNull(myFailures, anchor);
+      }
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +68,13 @@ public interface DfaInterceptor<EXPR extends PsiElement> {
 
   /**
    * Called for every expression that fails to satisfy the condition required by EnsureInstruction
-   *
    * @param anchor psi anchor that corresponds to the top-of-stack value
+   * @param value top-of-stack value that failed the condition
    * @param alwaysFailed true if condition failed always; false if it fails only sometimes
    */
-  default void onConditionFailure(@NotNull EXPR anchor, boolean alwaysFailed) {
+  default void onConditionFailure(@NotNull PsiExpression anchor,
+                                  @NotNull DfaValue value,
+                                  boolean alwaysFailed) {
 
   }
 }

@@ -8,10 +8,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.inliner.*;
 import com.intellij.codeInspection.dataFlow.jvm.*;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.InsideFinally;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TryCatch;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TryFinally;
-import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.TwrFinally;
+import com.intellij.codeInspection.dataFlow.jvm.JvmTrap.*;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -1044,7 +1041,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private boolean shouldHandleException() {
     for (DfaControlTransferValue.Trap trap : myTrapStack) {
-      if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally) {
+      if (trap instanceof TryCatch || trap instanceof TryFinally || trap instanceof TwrFinally || trap instanceof TryCatchAll) {
         return true;
       }
     }
@@ -1742,15 +1739,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
     if (contracts.stream().anyMatch(c -> c.getReturnValue().isFail())) {
+      DfaControlTransferValue transfer = shouldHandleException() ?
+                                         myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack) : null;
       // if a contract resulted in 'fail', handle it
-      addInstruction(new DupInstruction());
-      addInstruction(new PushValueInstruction(DfType.FAIL));
-      addInstruction(new BooleanBinaryInstruction(JavaTokenType.EQEQ, null));
-      ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
-      addInstruction(ifNotFail);
-      addInstruction(new ReturnInstruction(myFactory.controlTransfer(myExceptionCache.get(JAVA_LANG_THROWABLE), myTrapStack), anchor));
-
-      ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
+      addInstruction(new EnsureInstruction(anchor, RelationType.NE, DfType.FAIL, transfer));
     }
   }
 

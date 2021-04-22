@@ -29,8 +29,12 @@ public interface DfaLanguageSupport<EXPR extends PsiElement> {
   /**
    * Calls interceptor on condition failure
    * @param interceptor interceptor to delegate to
+   * @param tosValue top of stack value that failed the condition
    * @param instruction instruction whose condition is failed
    * @param alwaysFails if true then the condition fails always
    */
-  void processConditionFailure(@NotNull DfaInterceptor<EXPR> interceptor, @NotNull EnsureInstruction instruction, boolean alwaysFails);
+  void processConditionFailure(@NotNull DfaInterceptor<? super EXPR> interceptor,
+                               @NotNull DfaValue tosValue,
+                               @NotNull EnsureInstruction instruction,
+                               boolean alwaysFails);
 }

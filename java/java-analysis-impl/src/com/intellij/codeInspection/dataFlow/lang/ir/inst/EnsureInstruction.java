@@ -64,6 +64,6 @@ public class EnsureInstruction extends Instruction {
 
   @Override
   public String toString() {
-    return "CHECK_ARRAY_SIZE";
+    return "ENSURE " + myRelation + " " + myCompareTo;
   }
 }
