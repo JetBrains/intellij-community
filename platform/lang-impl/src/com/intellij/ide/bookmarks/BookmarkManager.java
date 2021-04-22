@@ -461,11 +461,18 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return isWrapped && !bookmarksForDocument.isEmpty() ? bookmarksForDocument.get(0) : null;
   }
 
+  public void deleteMnemonic(@NotNull Bookmark bookmark) {
+    if (BookmarkType.DEFAULT != bookmark.getType()) updateMnemonic(bookmark, BookmarkType.DEFAULT.getMnemonic());
+  }
+
   public void setMnemonic(@NotNull Bookmark bookmark, char c) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
+    updateMnemonic(bookmark, c);
+  }
 
+  private void updateMnemonic(@NotNull Bookmark bookmark, char c) {
     bookmark.setMnemonic(c);
     getPublisher().bookmarkChanged(bookmark);
     bookmark.updateHighlighter();

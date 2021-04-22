@@ -153,6 +153,7 @@
       <action id="EditBookmark" class="com.intellij.ide.bookmarks.actions.EditBookmarkAction"/>
       <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
       <action id="ToggleBookmarkWithMnemonic" class="com.intellij.ide.bookmarks.actions.ChooseBookmarkTypeAction"/>
+      <action id="DeleteMnemonicFromBookmark" class="com.intellij.ide.bookmarks.actions.DeleteBookmarkTypeAction"/>
       <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.BookmarksAction"/>
       <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
       <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
@@ -239,6 +240,7 @@
 
     <group id="EditBookmarksGroup" popup="true">
       <reference ref="ToggleBookmark"/>
+      <reference ref="DeleteMnemonicFromBookmark"/>
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <reference ref="ShowBookmarks"/>
       <reference ref="GotoNextBookmark"/>
@@ -251,6 +253,7 @@
     <group id="popup@BookmarkContextMenu">
       <reference ref="EditBookmark"/>
       <reference ref="ToggleBookmark"/>
+      <reference ref="DeleteMnemonicFromBookmark"/>
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <separator/>
 
