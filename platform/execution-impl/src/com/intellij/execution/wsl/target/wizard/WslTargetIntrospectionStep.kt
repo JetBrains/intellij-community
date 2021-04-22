@@ -150,6 +150,7 @@ internal class WslTargetIntrospectionStep(model: WslTargetWizardModel) : WslTarg
   override fun isComplete(): Boolean = introspectionFinished && model.distribution != null
 
   override fun doCommit(commitType: CommitType?) {
+    model.subject.distribution = model.distribution
   }
 
   override fun dispose() {
