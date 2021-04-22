@@ -46,6 +46,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.fixes.CreateMissingSwitchBranchesFix;
+import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -268,6 +269,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element) {
+    return new NavigateToDuplicateElementFix(element);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createConvertToStringLiteralAction() {
     return new ConvertToStringLiteralAction();
   }
@@ -397,6 +404,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createRenameFileFix(@NotNull String newName) {
     return new RenameFileFix(newName);
+  }
+
+  @Override
+  public @NotNull LocalQuickFix createRenameFix() {
+    return new RenameFix();
   }
 
   @NotNull

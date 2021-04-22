@@ -174,6 +174,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable);
 
   @NotNull
+  public abstract IntentionAction createNavigateToDuplicateElementFix(@NotNull NavigatablePsiElement element);
+
+  @NotNull
   public abstract IntentionAction createConvertToStringLiteralAction();
 
   /**
@@ -248,6 +251,8 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createRenameFileFix(@NotNull String newName);
+
+  public abstract @NotNull LocalQuickFix createRenameFix();
 
   @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
@@ -507,7 +512,7 @@ public abstract class QuickFixFactory {
    * @param subclassRef reference in permits list of a parent class
    */
   public abstract @NotNull List<IntentionAction> createExtendSealedClassFixes(@NotNull PsiJavaCodeReferenceElement subclassRef,
-                                                                            @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
+                                                                              @NotNull PsiClass parentClass, @NotNull PsiClass subClass);
 
   public abstract @NotNull IntentionAction createSealClassFromPermitsListFix(@NotNull PsiClass classFromPermitsList);
 
@@ -521,6 +526,6 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createConvertInterfaceToClassFix(@NotNull PsiClass aClass);
 
   public abstract @NotNull IntentionAction createUnwrapArrayInitializerMemberValueAction(@NotNull PsiArrayInitializerMemberValue arrayValue);
-  
+
   public abstract @NotNull IntentionAction createIntroduceVariableAction(@NotNull PsiExpression expression);
 }
