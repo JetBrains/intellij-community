@@ -1055,7 +1055,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrAnnotationReferencingUnknownIdentifiers"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.unresolved.labels.in.named.variant"
-                     groupKey="inspection.bugs" enabledByDefault="true"
+                     groupKey="inspection.annotations" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrNamedVariantLabelsInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.overly.complex.boolean.expression"
