@@ -87,18 +87,18 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
-  @NotNull protected static final String BLANK_URI = "about:blank";
-  @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
+  protected static final @NotNull String BLANK_URI = "about:blank";
+  private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
   @SuppressWarnings("SpellCheckingInspection")
-  protected static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
-  @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
-  @Nullable private volatile LoadDeferrer myLoadDeferrer;
-  @NotNull private String myLastRequestedUrl = "";
-  @NotNull private final Object myLastRequestedUrlLock = new Object();
-  @Nullable private volatile ErrorPage myErrorPage;
-  @NotNull protected final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
-  private final AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
+  protected static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
+  private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
+  private volatile @Nullable LoadDeferrer myLoadDeferrer;
+  private @NotNull String myLastRequestedUrl = "";
+  private final @NotNull Object myLastRequestedUrlLock = new Object();
+  private volatile @Nullable ErrorPage myErrorPage;
+  protected final @NotNull PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final @NotNull AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -137,16 +137,16 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   private static final double ZOOM_COMMON_RATIO = 1.2;
   private static final double LOG_ZOOM = Math.log(ZOOM_COMMON_RATIO);
-  @NotNull protected final JBCefClient myCefClient;
-  @NotNull protected final CefBrowser myCefBrowser;
+  protected final @NotNull JBCefClient myCefClient;
+  protected final @NotNull CefBrowser myCefBrowser;
   private final @NotNull RenderingType myRenderingType;
-  @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
-  @Nullable private final CefLoadHandler myLoadHandler;
-  @Nullable private final CefRequestHandler myRequestHandler;
+  private final @Nullable CefLifeSpanHandler myLifeSpanHandler;
+  private final @Nullable CefLoadHandler myLoadHandler;
+  private final @Nullable CefRequestHandler myRequestHandler;
   private final @Nullable CefContextMenuHandler myContextMenuHandler;
-  private final ReentrantLock myCookieManagerLock = new ReentrantLock();
-  @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
-  @Nullable private volatile String myCssBgColor;
+  private final @NotNull ReentrantLock myCookieManagerLock = new ReentrantLock();
+  private volatile @Nullable JBCefCookieManager myJBCefCookieManager;
+  private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
   /**
