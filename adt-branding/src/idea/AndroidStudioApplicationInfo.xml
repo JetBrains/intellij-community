@@ -42,6 +42,7 @@
   <whatsnew url="https://developer.android.com/r/studio-ui/menu-whats-new.html"/>
   <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
           mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <jetbrains-tv url="https://www.youtube.com/c/AndroidDevelopers"/>
 
   <!--
   Temporarily disabled: There is a bug in IDEA which prevents having a single plugins page extension.
