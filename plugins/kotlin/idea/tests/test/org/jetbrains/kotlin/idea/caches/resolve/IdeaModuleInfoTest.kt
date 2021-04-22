@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.DependencyScope
@@ -15,10 +16,12 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.*
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.*
@@ -43,6 +46,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import java.io.File
 
 @RunWith(JUnit38ClassRunner::class)
 class IdeaModuleInfoTest : JavaModuleTestCase() {
@@ -362,12 +366,15 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
             ProjectRootManager.getInstance(project).projectSdk = null
         }
 
-        val firstSDK = getProjectJdkTableSafe().allJdks.first()
+        val firstSDK = getProjectJdkTableSafe().allJdks.firstOrNull() ?: error("no jdks are present")
 
         with(createFileInProject("script.kts").moduleInfo) {
+            UIUtil.dispatchAllInvocationEvents()
+            NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+
             val filterIsInstance = dependencies().filterIsInstance<SdkInfo>()
             filterIsInstance.singleOrNull { it.sdk == firstSDK }
-                ?: error("Unable to look up ${firstSDK.name} in ${filterIsInstance.map { it.name }}")
+                ?: error("Unable to look up ${firstSDK.name} in ${filterIsInstance.map { it.name }} / allJdks: ${getProjectJdkTableSafe().allJdks}")
         }
     }
 
@@ -457,7 +464,7 @@ class IdeaModuleInfoTest : JavaModuleTestCase() {
 
     private fun createFileInProject(fileName: String): VirtualFile {
         return runWriteAction {
-            getVirtualFile(createTempFile(fileName, "")).copy(this, project.baseDir, fileName)
+            getVirtualFile(createTempFile(fileName, "")).copy(this, VfsUtil.findFileByIoFile(File(project.basePath!!), true)!!, fileName)
         }
     }
 
