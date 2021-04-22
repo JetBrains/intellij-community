@@ -192,7 +192,7 @@ class KotlinPluginUpdater : Disposable {
         val buildNumber = ApplicationInfo.getInstance().apiVersion
         val currentVersion = KotlinPluginUtil.getPluginVersion()
         val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
-        val uid = PermanentInstallationID.get()
+        val uid = PluginDownloader.getMarketplaceDownloadsUUID()
         val pluginId = KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString
         val url =
             "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
