@@ -222,7 +222,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
         // but it can also resolve to something else e.g. if the file defines a class with the same name
         // as the top-level package of the target class.
         ref.parent.safeAs<KtUserType>()?.qualifier?.let { qualifier ->
-            return if ("${qualifier.qualifier?.referencedName}.${qualifier.referencedName}" == targetPackage) {
+            return if (qualifier.text == targetPackage) {
                 Result.Ambiguity
             } else {
                 Result.FoundOther
