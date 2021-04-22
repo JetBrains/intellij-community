@@ -63,7 +63,8 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
       }
       val failedProject = parsingContext.projectsInReactor.last()
       messageConsumer.accept(
-        BuildIssueEventImpl(parentId, Source5BuildIssue(parsingContext.ideaProject, failedProject), MessageEvent.Kind.ERROR));
+        BuildIssueEventImpl(parentId, SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, failedProject),
+                            MessageEvent.Kind.ERROR));
       return true
     }
 
@@ -72,16 +73,19 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 
 }
 
-class Source5BuildIssue(project: Project, private val failedProjectId: String) : BuildIssue {
+class SourceLevelBuildIssue(project: Project,
+                            private val message: String,
+                            override val title: String,
+                            private val failedProjectId: String) : BuildIssue {
 
   override val quickFixes: List<UpdateSourceLevelQuickFix> = prepareQuickFixes(project, failedProjectId)
-  override val title = MavenProjectBundle.message("maven.source.5.not.supported.title")
   override val description = createDescription()
 
-  private fun createDescription() = quickFixes.map {
-    HtmlChunk.link(it.id, MavenProjectBundle.message("maven.source.5.not.supported.update", it.mavenProject.displayName))
+  private fun createDescription() =  "$message\n<br/>" +quickFixes.map {
+    HtmlChunk.link(it.id,
+                                       MavenProjectBundle.message("maven.source.level.not.supported.update", it.mavenProject.displayName))
       .toString()
-  }.joinToString("\n<br/>", prefix = MavenProjectBundle.message("maven.source.5.not.supported.description"))
+  }.joinToString("\n<br/>")
 
 
   override fun getNavigatable(project: Project): Navigatable? {
@@ -105,7 +109,7 @@ class Source5BuildIssue(project: Project, private val failedProjectId: String) :
 
 typealias MessagePredicate = (String) -> Boolean
 
-class JpsReleaseVersion5QuickFix : BuildIssueContributor {
+class JpsReleaseVersionQuickFix : BuildIssueContributor {
   override fun createBuildIssue(project: Project,
                                 moduleNames: Collection<String>,
                                 title: String,
@@ -121,13 +125,14 @@ class JpsReleaseVersion5QuickFix : BuildIssueContributor {
     }
     val moduleName = moduleNames.firstOrNull() ?: return null
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName);
-    if (!message.contains("release version") || !message.contains("not supported")) return null
-
-    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
-    val failedId = MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
-
-    if (predicates.any { it(message) }) return Source5BuildIssue(project, failedId.displayString)
+    val failedId = extractFailedMavenId(project, moduleName) ?: return null;
+    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, failedId.displayString)
     return null
+  }
+
+  fun extractFailedMavenId(project: Project, moduleName: String): MavenId? {
+    val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
+    return MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
   }
 
 
@@ -138,12 +143,7 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
 
     val languageLevel = MavenModuleImporter.getLanguageLevel(mavenProject)
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_6)) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   MavenProjectBundle.message("maven.quickfix.cannot.update.source.level.already.1.6", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
+
     val module = MavenProjectsManager.getInstance(project).findModule(mavenProject)
     if (module == null) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",

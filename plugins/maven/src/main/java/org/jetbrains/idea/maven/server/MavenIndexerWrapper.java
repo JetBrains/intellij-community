@@ -132,8 +132,16 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     });
   }
 
+  @Nullable
   public IndexedMavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
-    return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile, ourToken));
+    return perform(() -> {
+      try {
+        return getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile, ourToken);
+      }
+      catch (Throwable ignore) {
+        return null;
+      }
+    });
   }
 
   public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenServerIndexerException {

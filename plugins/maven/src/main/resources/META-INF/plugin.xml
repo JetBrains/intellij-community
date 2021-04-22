@@ -286,7 +286,7 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
     <toolWindowAllowlist id="Maven"/>
-    <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersion5QuickFix" />
+    <compiler.buildIssueContributor implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.JpsReleaseVersionQuickFix" />
     <untrustedModeProvider implementation="org.jetbrains.idea.maven.project.MavenUntrustedModeProvider" />
   </extensions>
 
