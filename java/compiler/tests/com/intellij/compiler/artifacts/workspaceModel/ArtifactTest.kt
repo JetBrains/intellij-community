@@ -393,5 +393,19 @@ class ArtifactTest : ArtifactsTestCase() {
     }
   }
 
+  fun `test commit and dispose modifiable model`() {
+    runWriteAction {
+      val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+      val artifact = modifiableModel.addArtifact("MyArtifact", PlainArtifactType.getInstance())
+      modifiableModel.commit()
+
+      val modifiableModel2 = ArtifactManager.getInstance(project).createModifiableModel()
+      val modifiableArtifact = modifiableModel2.getOrCreateModifiableArtifact(artifact)
+      modifiableArtifact.name = "AnotherName"
+      modifiableModel2.commit()
+      modifiableModel2.dispose()
+    }
+  }
+
   object MySource : EntitySource
 }

@@ -237,8 +237,12 @@ class ArtifactModifiableModelBridge(
 
   override fun dispose() {
     val artifacts: MutableList<Artifact> = ArrayList()
-    for (artifact in modifiableToOriginal.keys) {
-      if (modifiableToOriginal[artifact] == artifact) {
+
+    val modifiableToOriginalCopy = BidirectionalMap<ArtifactBridge, ArtifactBridge>()
+    modifiableToOriginal.forEach { (mod, orig) -> modifiableToOriginalCopy[mod] = orig }
+
+    for (artifact in modifiableToOriginalCopy.keys) {
+      if (modifiableToOriginalCopy[artifact] == artifact) {
         artifacts.add(artifact)
       }
     }
@@ -260,14 +264,14 @@ class ArtifactModifiableModelBridge(
         is EntityChange.Replaced -> {
           // Collect changes and transfer info from the modifiable bridge artifact to the original artifact
           val originalArtifact = diff.artifactsMap.getDataByEntity(it.newEntity)!!
-          val modifiableArtifact = modifiableToOriginal.getKeysByValue(originalArtifact)!!.single()
-          modifiableToOriginal.remove(modifiableArtifact, originalArtifact)
+          val modifiableArtifact = modifiableToOriginalCopy.getKeysByValue(originalArtifact)!!.single()
+          modifiableToOriginalCopy.remove(modifiableArtifact, originalArtifact)
           changed.add(modifiableArtifact)
         }
       }
     }
 
-    modifiableToOriginal.entries.forEach { (modifiable, original) ->
+    modifiableToOriginalCopy.entries.forEach { (modifiable, original) ->
       if (modifiable !== original) {
         changed.add(modifiable)
       }

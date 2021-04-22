@@ -176,7 +176,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
           if (modifiableArtifact !== originalArtifact) {
             changedArtifacts.add(modifiableArtifact)
           }
-          artifactModel.modifiableToOriginal.remove(modifiableArtifact, originalArtifact)
           originalArtifact.copyFrom(modifiableArtifact)
           changed.add(Triple(originalArtifact, (it.oldEntity as ArtifactEntity).name, modifiableArtifact))
           originalArtifact.setActualStorage()
@@ -194,7 +193,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     }
 
     (ArtifactPointerManager.getInstance(project) as ArtifactPointerManagerImpl).disposePointers(changedArtifacts)
-    artifactModel.modifiableToOriginal.clear()
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(artifactModel.diff)
