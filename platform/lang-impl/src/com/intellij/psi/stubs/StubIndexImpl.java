@@ -39,6 +39,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -100,6 +101,12 @@ public final class StubIndexImpl extends StubIndexEx {
       myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
     }
     return state;
+  }
+
+  @ApiStatus.Internal
+  @TestOnly
+  public void waitUntilStubIndexedInitialized() {
+    getAsyncState();
   }
 
   public void initializationFailed(@NotNull Throwable error) {
