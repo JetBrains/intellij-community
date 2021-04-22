@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
+import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
@@ -262,9 +264,16 @@ internal class ScriptCacheDependencies(
             } catch (e: Exception) {
                 null
             }
-
     }
 
+}
+
+class ScriptCacheDependenciesFileInvalidator: CachesInvalidator() {
+    override fun invalidateCaches() {
+        ProjectManager.getInstance().openProjects.forEach {
+            ScriptCacheDependencies(ScriptClassRootsCache.EMPTY).save(it)
+        }
+    }
 }
 
 @Service
