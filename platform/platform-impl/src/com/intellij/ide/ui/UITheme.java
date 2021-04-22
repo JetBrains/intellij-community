@@ -355,7 +355,7 @@ public final class UITheme {
         applyOSCustomizations(theme, map, key, defaults);
       } else {
         for (Map.Entry<String, Object> o : map.entrySet()) {
-          apply(theme, key + "." + o.getKey(), o.getValue(), defaults);
+          apply(theme, createUIKey(key, o.getKey()), o.getValue(), defaults);
         }
       }
     }
@@ -383,6 +383,15 @@ public final class UITheme {
       else {
         defaults.put(key, value);
       }
+    }
+  }
+
+  @NotNull
+  private static String createUIKey(String key, String propertyName) {
+    if ("UI".equals(propertyName)) {
+      return key + propertyName;
+    } else {
+      return key + "." + propertyName;
     }
   }
 
