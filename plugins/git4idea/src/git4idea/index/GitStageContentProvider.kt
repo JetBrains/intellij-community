@@ -70,6 +70,10 @@ private class GitStageTabTitleUpdater(private val tracker: GitStageTracker, pane
     Disposer.register(panel, this)
   }
 
+  override fun shouldShowBranches(): Boolean {
+    return tracker.state.allRoots.size == 1 || super.shouldShowBranches()
+  }
+
   override fun getRoots(): Collection<VirtualFile> {
     val roots = tracker.state.allRoots
     if (roots.size == 1) return roots

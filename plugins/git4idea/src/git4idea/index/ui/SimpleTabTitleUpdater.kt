@@ -62,7 +62,7 @@ abstract class SimpleTabTitleUpdater(private val tree: ChangesTree, private val 
     return getRoots().mapNotNull { CurrentBranchComponent.getCurrentBranch(tree.project, it) }.toSet()
   }
 
-  private fun shouldShowBranches(): Boolean {
+  protected open fun shouldShowBranches(): Boolean {
     val groupingSupport = tree.groupingSupport
     return !groupingSupport.isAvailable(ChangesGroupingSupport.REPOSITORY_GROUPING) ||
            !groupingSupport[ChangesGroupingSupport.REPOSITORY_GROUPING]
