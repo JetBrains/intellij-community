@@ -14,6 +14,11 @@ import com.intellij.execution.application.BaseJavaApplicationCommandLineState
 import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
+import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.module.Module
@@ -53,8 +58,8 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRunConfigurationModule, factory: ConfigurationFactory?) :
-    ModuleBasedConfiguration<JavaRunConfigurationModule?, Element?>(name, runConfigurationModule, factory!!),
-    CommonJavaRunConfigurationParameters, RefactoringListenerProvider, InputRedirectAware {
+    JavaRunConfigurationBase(name, runConfigurationModule, factory!!),
+    CommonJavaRunConfigurationParameters, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile {
 
     init {
         runConfigurationModule.setModuleToAnyFirstIfNotSpecified()
@@ -77,13 +82,13 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun readExternal(element: Element) {
-        super<ModuleBasedConfiguration>.readExternal(element)
+        super<JavaRunConfigurationBase>.readExternal(element)
         JavaRunConfigurationExtensionManager.instance.readExternal(this, element)
     }
 
     @Throws(WriteExternalException::class)
     override fun writeExternal(element: Element) {
-        super<ModuleBasedConfiguration>.writeExternal(element)
+        super<JavaRunConfigurationBase>.writeExternal(element)
         JavaRunConfigurationExtensionManager.instance.writeExternal(this, element)
     }
 
@@ -258,6 +263,34 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
 
     override fun getInputRedirectOptions(): InputRedirectOptions {
         return options.redirectOptions
+    }
+
+    override fun canRunOn(target: TargetEnvironmentConfiguration): Boolean {
+        return target.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) != null
+    }
+
+    override fun getDefaultLanguageRuntimeType(): LanguageRuntimeType<*>? {
+        return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType::class.java)
+    }
+
+    override fun getDefaultTargetName(): String? {
+        return options.remoteTarget
+    }
+
+    override fun setDefaultTargetName(targetName: String?) {
+        options.remoteTarget = targetName
+    }
+
+    override fun needPrepareTarget(): Boolean {
+        return defaultTargetName != null || runsUnderWslJdk()
+    }
+
+    override fun getShortenCommandLine(): ShortenCommandLine? {
+        return options.shortenClasspath
+    }
+
+    override fun setShortenCommandLine(mode: ShortenCommandLine?) {
+        options.shortenClasspath = mode
     }
 
     private class MyJavaCommandLineState(configuration: KotlinRunConfiguration, environment: ExecutionEnvironment?) :
