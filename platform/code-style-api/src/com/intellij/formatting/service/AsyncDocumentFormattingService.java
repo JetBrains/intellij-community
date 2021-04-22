@@ -59,7 +59,8 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       }
     }
     if (prepare(formattingContext)) {
-      AsyncFormattingRequest formattingRequest = new FormattingRequestImpl(formattingContext, document, canChangeWhiteSpaceOnly);
+      AsyncFormattingRequest formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
+                                                                           canChangeWhiteSpaceOnly);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         runAsyncFormat(formattingRequest);
       }
@@ -161,6 +162,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
   private class FormattingRequestImpl implements AsyncFormattingRequest {
     private final Document          myDocument;
+    private final List<TextRange>   myRanges;
     private final long              myInitialModificationStamp;
     private final FormattingContext myContext;
     private final boolean           myCanChangeWhitespaceOnly;
@@ -169,9 +171,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
+                                  @NotNull List<TextRange> ranges,
                                   boolean canChangeWhitespaceOnly) {
       myContext = formattingContext;
       myDocument = document;
+      myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myInitialModificationStamp = document.getModificationStamp();
     }
@@ -191,6 +195,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
     private Document getDocument() {
       return myDocument;
+    }
+
+    @Override
+    public @NotNull List<TextRange> getFormattingRanges() {
+      return myRanges;
     }
 
     @Override
