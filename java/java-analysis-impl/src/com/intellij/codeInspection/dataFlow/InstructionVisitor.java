@@ -942,7 +942,7 @@ public abstract class InstructionVisitor<EXPR extends PsiElement> {
   public DfaInstructionState[] visitEnsure(@NotNull EnsureInstruction instruction,
                                            @NotNull DataFlowRunner runner,
                                            @NotNull DfaMemoryState memState) {
-    DfaValue tosValue = memState.peek();
+    DfaValue tosValue = memState.isEmptyStack() ? runner.getFactory().getUnknown() : memState.peek();
     DfaControlTransferValue transfer = instruction.getExceptionTransfer();
     DfaCondition cond = instruction.createCondition(tosValue);
     Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);

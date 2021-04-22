@@ -1619,13 +1619,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         .notInstanceOfTypes()
         .map(TypeConstraint.Exact::instanceOf);
     }
-    allExceptions.forEach(exc -> {
-        pushUnknown();
-        ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
-        addInstruction(cond);
-        throwException(new ExceptionTransfer(exc), explicitCall);
-        cond.setOffset(myCurrentFlow.getInstructionCount());
-      });
+    allExceptions
+      .map(exc -> myFactory.controlTransfer(new ExceptionTransfer(exc), myTrapStack))
+      .map(transfer -> new EnsureInstruction(explicitCall, RelationType.EQ, DfType.TOP, transfer))
+      .forEach(this::addInstruction);
   }
 
   void throwException(@Nullable PsiType ref, @Nullable PsiElement anchor) {

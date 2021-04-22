@@ -15,12 +15,12 @@ import org.jetbrains.annotations.Nullable;
  * Instruction to ensure that a specific condition is hold on top-of-stack value
  */
 public class EnsureInstruction extends Instruction {
-  private final @NotNull PsiElement myExpression;
+  private final @Nullable PsiElement myExpression;
   private final @NotNull RelationType myRelation;
   private final @NotNull DfType myCompareTo;
   private final @Nullable DfaControlTransferValue myTransferValue;
 
-  public EnsureInstruction(@NotNull PsiElement expression,
+  public EnsureInstruction(@Nullable PsiElement expression,
                            @NotNull RelationType relation,
                            @NotNull DfType compareTo,
                            @Nullable DfaControlTransferValue value) {
@@ -39,7 +39,7 @@ public class EnsureInstruction extends Instruction {
     return instruction;
   }
 
-  public @NotNull PsiElement getPsiAnchor() {
+  public @Nullable PsiElement getPsiAnchor() {
     return myExpression;
   }
 
@@ -64,6 +64,6 @@ public class EnsureInstruction extends Instruction {
 
   @Override
   public String toString() {
-    return "ENSURE " + myRelation + " " + myCompareTo;
+    return "ENSURE " + myRelation + " " + myCompareTo + (myTransferValue == null ? "" : " " + myTransferValue.getTarget());
   }
 }
