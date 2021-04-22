@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.ui.codereview.messages;
+package com.intellij.collaboration.messages;
 
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
@@ -9,11 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class VcsCodeReviewBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.VcsCodeReviewBundle";
-  private static final VcsCodeReviewBundle INSTANCE = new VcsCodeReviewBundle();
+public class CollaborationToolsBundle extends DynamicBundle {
+  @NonNls private static final String BUNDLE = "messages.CollaborationToolsBundle";
+  private static final CollaborationToolsBundle INSTANCE = new CollaborationToolsBundle();
 
-  private VcsCodeReviewBundle() {
+  private CollaborationToolsBundle() {
     super(BUNDLE);
   }
 
