@@ -193,6 +193,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
           putMetaData(0);
           putMetaData2(0);
           setupEmptyFile();
+          doFlush();
         }
         catch (RuntimeException e) {
           LOG.info(e);
