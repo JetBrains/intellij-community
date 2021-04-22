@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -220,10 +221,12 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
         // A qualified name can resolve to the target element even if it's not imported,
         // but it can also resolve to something else e.g. if the file defines a class with the same name
         // as the top-level package of the target class.
-        val qualifier = (ref.parent as? KtUserType)?.qualifier
-        if (qualifier != null) {
-            if (qualifier.text == targetPackage) return Result.Ambiguity
-            return Result.FoundOther
+        ref.parent.safeAs<KtUserType>()?.qualifier?.let { qualifier ->
+            return if ("${qualifier.qualifier?.referencedName}.${qualifier.referencedName}" == targetPackage) {
+                Result.Ambiguity
+            } else {
+                Result.FoundOther
+            }
         }
         return null
     }
