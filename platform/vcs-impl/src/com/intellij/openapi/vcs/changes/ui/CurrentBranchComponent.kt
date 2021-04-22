@@ -17,11 +17,10 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI.emptySize
 import com.intellij.vcs.branch.BranchData
-import com.intellij.vcs.branch.BranchPresentation.getPresentableText
+import com.intellij.vcs.branch.BranchPresentation.getText
 import com.intellij.vcs.branch.BranchPresentation.getTooltip
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcsUtil.VcsUtil.getFilePath
-import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
 import java.beans.PropertyChangeListener
@@ -83,16 +82,6 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
     branches =
       if (needShowBranch) pathsProvider().mapNotNull { getCurrentBranch(project, it) }.toSet()
       else emptySet()
-  }
-
-  @Nls
-  private fun getText(branches: Collection<BranchData>): String {
-    val distinct = branches.distinctBy { it.branchName }
-    return when (distinct.size) {
-      0 -> ""
-      1 -> getPresentableText(distinct.first())
-      else -> "${getPresentableText(distinct.first())},..."
-    }
   }
 
   companion object {

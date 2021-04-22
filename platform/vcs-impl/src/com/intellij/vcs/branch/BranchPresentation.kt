@@ -7,6 +7,16 @@ import org.jetbrains.annotations.Nls
 
 object BranchPresentation {
   @Nls
+  fun getText(branches: Collection<BranchData>): String {
+    val distinct = branches.distinctBy { it.branchName }
+    return when (distinct.size) {
+      0 -> ""
+      1 -> getPresentableText(distinct.first())
+      else -> "${getPresentableText(distinct.first())},..."
+    }
+  }
+
+  @Nls
   fun getPresentableText(branch: BranchData) = if (branch is LinkedBranchData) branch.branchName ?: "!" else branch.branchName.orEmpty()
 
   @Nls
