@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.structureView.getStructureDeclarations
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -46,34 +47,23 @@ class KtClassOrObjectTreeNode(project: Project?, ktClassOrObject: KtClassOrObjec
             return false
         }
 
-        return super.canRepresent(element) || canRepresentPsiElement(value, element, settings)
+        return super.canRepresent(element) || canRepresentPsiElement(element)
     }
 
-    private fun canRepresentPsiElement(value: PsiElement?, element: Any?, settings: ViewSettings): Boolean {
+    private fun canRepresentPsiElement(element: Any?): Boolean {
         if (value == null || !value.isValid) {
             return false
+        } else if (value === element) {
+            return true
         }
 
         val file = value.containingFile
-        @Suppress("UseVirtualFileEquals")
-        if (file != null && (file === element || file.virtualFile === element)) {
-            return true
+        return when (element) {
+            file -> true
+            is VirtualFile -> element == file.virtualFile
+            is PsiElement -> !settings.isShowMembers && file == element.containingFile
+            else -> false
         }
-
-        if (value === element) {
-            return true
-        }
-
-        if (!settings.isShowMembers) {
-            if (element is PsiElement && element.containingFile != null) {
-                val elementFile = element.containingFile
-                if (elementFile != null && file != null) {
-                    return elementFile == file
-                }
-            }
-        }
-
-        return false
     }
 
     override fun expandOnDoubleClick(): Boolean = false
