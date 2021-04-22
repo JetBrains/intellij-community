@@ -220,6 +220,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     boolean changed = isSelected() != selected;
     setSelected(selected);
     if (selected) {
+      JScrollPane scrollpane = UIUtil.getParentOfType(JScrollPane.class, myComponent);
+      if (scrollpane != null) {
+        scrollpane.validate();  // should be validated beforehand to make scrollRectToVisible() work correctly
+      }
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
     }
     if (changed) {
