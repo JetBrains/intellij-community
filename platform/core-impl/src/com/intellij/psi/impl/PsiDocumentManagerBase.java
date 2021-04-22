@@ -46,6 +46,7 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
   static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
@@ -64,7 +65,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   boolean myStopTrackingDocuments;
   private boolean myPerformBackgroundCommit = true;
 
-  private final ThreadLocal<Boolean> myIsCommitInProgress = new ThreadLocal<>();
+  private final ThreadLocal<Integer> myIsCommitInProgress = new ThreadLocal<>();
   private static final ThreadLocal<Boolean> ourIsFullReparseInProgress = new ThreadLocal<>();
   private final PsiToDocumentSynchronizer mySynchronizer;
 
@@ -381,32 +382,32 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     FileViewProvider viewProvider = getCachedViewProvider(document);
 
-    myIsCommitInProgress.set(true);
-    boolean success = true;
-    try {
-      success = ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-        if (viewProvider == null) {
-          handleCommitWithoutPsi(document);
-          return true;
-        }
-        return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
-      });
-    }
-    catch (Throwable e) {
+    AtomicBoolean success = new AtomicBoolean(true);
+    executeInsideCommit(()-> {
       try {
-        forceReload(virtualFile, viewProvider);
+        success.set(ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+          if (viewProvider == null) {
+            handleCommitWithoutPsi(document);
+            return true;
+          }
+          return commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile);
+        }));
+      }
+      catch (Throwable e) {
+        try {
+          forceReload(virtualFile, viewProvider);
+        }
+        finally {
+          LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+        }
       }
       finally {
-        LOG.error("Exception while committing " + viewProvider + ", eventSystemEnabled=" + isEventSystemEnabled(document), e);
+        if (success.get()) {
+          myUncommittedDocuments.remove(document);
+        }
       }
-    }
-    finally {
-      if (success) {
-        myUncommittedDocuments.remove(document);
-      }
-      myIsCommitInProgress.set(null);
-    }
-    return success;
+    });
+    return success.get();
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,
@@ -461,7 +462,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean doCommit(@NotNull Document document) {
-    assert myIsCommitInProgress.get() == null : "Do not call commitDocument() from inside PSI change listener";
+    assert !isCommitInProgress() : "Do not call commitDocument() from inside PSI change listener";
 
     // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
     if (getSynchronizer().isDocumentAffectedByTransactions(document)) return false;
@@ -484,19 +485,27 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private void doCommit(@NotNull Document document, @NotNull PsiFile psiFile) {
-    myIsCommitInProgress.set(true);
-    try {
-      myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile);
-    }
-    finally {
-      myIsCommitInProgress.set(null);
-    }
+    assert !isCommitInProgress() : "Do not call commitDocument() from inside PSI change listener";
+    executeInsideCommit(() -> myDocumentCommitProcessor.commitSynchronously(document, myProject, psiFile));
     assert !isInUncommittedSet(document) : "Document :" + document;
+    runAfterCommitActions(document);
   }
 
   // true if the PSI is being modified and events being sent
   public boolean isCommitInProgress() {
     return myIsCommitInProgress.get() != null || isFullReparseInProgress();
+  }
+
+  // inside this method isCommitInProgress() == true
+  private void executeInsideCommit(@NotNull Runnable runnable) {
+    Integer counter = myIsCommitInProgress.get();
+    myIsCommitInProgress.set(counter == null ? 1 : counter + 1);
+    try {
+      runnable.run();
+    }
+    finally {
+      myIsCommitInProgress.set(counter);
+    }
   }
 
   @ApiStatus.Internal
@@ -698,7 +707,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean mayRunActionsWhenAllCommitted() {
-    return myIsCommitInProgress.get() == null &&
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return !isCommitInProgress() &&
            !actionsWhenAllDocumentsAreCommitted.isEmpty() &&
            !hasEventSystemEnabledUncommittedDocuments();
   }
@@ -848,7 +858,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public boolean hasUncommitedDocuments() {
-    return myIsCommitInProgress.get() == null && !myUncommittedDocuments.isEmpty();
+    return !isCommitInProgress() && !myUncommittedDocuments.isEmpty();
   }
 
   @Override

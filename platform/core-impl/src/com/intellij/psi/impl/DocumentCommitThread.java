@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -305,7 +306,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       diffLog.doActualPsiChange(file);
 
       assertAfterCommit(document, file, oldFileNode);
-      assert task.cachedViewProvider != null; // just to make an impression the field is used
+      ObjectUtils.reachabilityFence(task.cachedViewProvider); // just to make an impression the field is used
       return true;
     };
   }
