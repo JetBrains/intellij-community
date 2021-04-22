@@ -1,45 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.plugins;
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.plugins
 
-import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class PluginDependency implements IdeaPluginDependency {
-  public final @NotNull PluginId id;
-  public boolean isOptional;
+class PluginDependency internal constructor(override val pluginId: PluginId,
+                                            val configFile: String?,
+                                            override val isOptional: Boolean,
+                                            @field:Transient var isDisabledOrBroken: Boolean) : IdeaPluginDependency {
 
-  public String configFile;
+  @Transient
+  var subDescriptor: IdeaPluginDescriptorImpl? = null
 
-  public transient boolean isDisabledOrBroken;
-  public @Nullable transient IdeaPluginDescriptorImpl subDescriptor;
-
-  PluginDependency(@NotNull PluginId id, @Nullable String configFile, boolean isDisabledOrBroken) {
-    this.id = id;
-    this.configFile = configFile;
-    this.isDisabledOrBroken = isDisabledOrBroken;
-  }
-
-  @Override
-  public @NotNull PluginId getPluginId() {
-    return id;
-  }
-
-  @Override
-  public boolean isOptional() {
-    return isOptional;
-  }
-
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "PluginDependency(" +
-           "id=" + id +
+           "pluginId=" + pluginId +
            ", isOptional=" + isOptional +
            ", configFile=" + configFile +
            ", isDisabledOrBroken=" + isDisabledOrBroken +
            ", subDescriptor=" + subDescriptor +
-           ')';
+           ')'
   }
 }
