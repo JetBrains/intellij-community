@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
+import org.jetbrains.kotlin.ide.konan.CommonizerNativeTargetsCompat.commonizerNativeTargetsCompat
 import org.jetbrains.kotlin.ide.konan.analyzer.NativeResolverForModuleFactory
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.LibraryInfo
@@ -35,10 +36,16 @@ import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.lazyClosure
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProvider
-import org.jetbrains.kotlin.idea.klib.*
+import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
+import org.jetbrains.kotlin.idea.klib.createKlibPackageFragmentProvider
+import org.jetbrains.kotlin.idea.klib.isKlibLibraryRootForPlatform
+import org.jetbrains.kotlin.idea.klib.safeRead
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
+import org.jetbrains.kotlin.konan.properties.propertyList
 import org.jetbrains.kotlin.konan.util.KlibMetadataFactories
+import org.jetbrains.kotlin.library.BaseKotlinLibrary
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_NATIVE_TARGETS
 import org.jetbrains.kotlin.library.isInterop
 import org.jetbrains.kotlin.library.metadata.NullFlexibleTypeDeserializer
 import org.jetbrains.kotlin.library.nativeTargets
@@ -172,6 +179,30 @@ class NativeKlibLibraryInfo(project: Project, library: Library, libraryRoot: Str
         }
 
     override val platform: TargetPlatform by lazy {
-        nativePlatformByTargetNames(resolvedKotlinLibrary.safeRead(emptyList()) { nativeTargets })
+        val targetNames = resolvedKotlinLibrary.safeRead(null) { commonizerNativeTargetsCompat }
+            ?: resolvedKotlinLibrary.safeRead(emptyList()) { nativeTargets }
+
+        nativePlatformByTargetNames(targetNames)
     }
+}
+
+/**
+ * Provides forward compatibility to klib's 'commonizer_native_targets' property (which is expected in 1.5.20)
+ */
+@Suppress("SpellCheckingInspection")
+private object CommonizerNativeTargetsCompat {
+    /**
+     * Similar to [KLIB_PROPERTY_NATIVE_TARGETS] but this will also preserve targets
+     * that were unsupported on the host creating this artifact
+     */
+    private const val KLIB_PROPERTY_COMMONIZER_NATIVE_TARGETS = "commonizer_native_targets"
+
+    /**
+     * Accessor for 'commonizer_native_targets' manifest property.
+     * Can be removed once bundled compiler reaches 1.5.20
+     */
+    val BaseKotlinLibrary.commonizerNativeTargetsCompat: List<String>?
+        get() = if (manifestProperties.containsKey(KLIB_PROPERTY_COMMONIZER_NATIVE_TARGETS))
+            manifestProperties.propertyList(KLIB_PROPERTY_COMMONIZER_NATIVE_TARGETS)
+        else null
 }
