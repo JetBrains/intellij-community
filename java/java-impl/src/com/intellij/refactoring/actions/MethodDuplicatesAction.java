@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -38,5 +39,10 @@ public class MethodDuplicatesAction extends BaseJavaRefactoringAction {
   @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MethodDuplicatesHandler();
+  }
+
+  @Override
+  protected @Nullable String getActionName(@NotNull DataContext dataContext) {
+    return MethodDuplicatesHandler.getActionName(dataContext);
   }
 }

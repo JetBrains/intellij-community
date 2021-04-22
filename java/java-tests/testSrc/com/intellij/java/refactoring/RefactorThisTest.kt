@@ -56,6 +56,10 @@ class RefactorThisTest: LightJavaCodeInsightTestCase() {
     assertTrue(doActionExists<MethodDuplicatesAction>())
   }
 
+  fun testFindAndReplaceDuplicatesOnFieldDeclaration() {
+    assertTrue(doActionExists<MethodDuplicatesAction>())
+  }
+
   fun testGenerifyIsFiltered() {
     assertFalse(doActionExists<TypeCookAction>())
   }
