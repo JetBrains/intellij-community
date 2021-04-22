@@ -40,7 +40,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v15"
+    const val SERIALIZER_VERSION = "v16"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -51,6 +51,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
+    kryo.setAutoReset(false)
     kryo.isRegistrationRequired = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
