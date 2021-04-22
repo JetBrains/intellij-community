@@ -106,7 +106,7 @@ public abstract class JBCefOsrHandlerBrowser extends JBCefBrowserBase {
                                    boolean createImmediately)
   {
     super(createBrowser(type, client, url, renderHandler));
-    if (createImmediately) getCefBrowser().createImmediately();
+    if (createImmediately) createImmediately();
   }
 
   private static @NotNull CreateBrowserArtefacts createBrowser(@NotNull RenderingType type,

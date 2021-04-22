@@ -54,7 +54,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
     Function<Void, JBCefJSQuery> create = (v) -> {
       return new JBCefJSQuery(browser, new JSQueryFunc(browser.getJBCefClient()));
     };
-    if (!browser.isCefBrowserCreated()) {
+    if (!browser.isCefBrowserCreateStarted()) {
       return create.apply(null);
     }
     JBCefClient.JSQueryPool pool = browser.getJBCefClient().getJSQueryPool();

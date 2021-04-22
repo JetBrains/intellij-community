@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
@@ -97,6 +98,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull private final Object myLastRequestedUrlLock = new Object();
   @Nullable private volatile ErrorPage myErrorPage;
   @NotNull protected final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
+  private final AtomicBoolean myIsCreateStarted = new AtomicBoolean(false);
 
   private static final LazyInitializer.LazyValue<@NotNull String> ERROR_PAGE_READER = LazyInitializer.create(() -> {
     try {
@@ -269,6 +271,20 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
+   * Creates the native browser.
+   * <p></p>
+   * Normally the native browser is created when the browser's component is added to a UI hierarchy.
+   * <p>
+   * Prefer this method to {@link CefBrowser#createImmediately}.
+   */
+  public void createImmediately() {
+    synchronized (myIsCreateStarted) {
+      myIsCreateStarted.set(true);
+      getCefBrowser().createImmediately();
+    }
+  }
+
+  /**
    * Loads URL.
    */
   public final void loadURL(@NotNull String url) {
@@ -369,6 +385,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     assert myCefBrowser instanceof CefNativeAdapter;
     // [tav] todo: this can be thread race prone
     return ((CefNativeAdapter)myCefBrowser).getNativeRef("CefBrowser") != 0;
+  }
+
+  /**
+   * Returns whether {@link #createImmediately} has been called or the browser has already been created.
+   * <p></p>
+   * WARNING: Returns wrong result when {@link CefBrowser#createImmediately()} is called directly.
+   */
+  boolean isCefBrowserCreateStarted() {
+    synchronized (myIsCreateStarted) {
+      return myIsCreateStarted.get() || isCefBrowserCreated();
+    }
   }
 
   @Override

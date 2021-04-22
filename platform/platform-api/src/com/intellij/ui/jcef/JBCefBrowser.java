@@ -142,7 +142,7 @@ public class JBCefBrowser extends JBCefBrowserBase {
                        ObjectUtils.notNull(builder.myClient, JBCefApp.getInstance().createClient(true))) :
       new JBCefBrowser(builder.myRenderingType, builder.myClient, builder.myUrl);
 
-    if (builder.myCreateImmediately) browser.getCefBrowser().createImmediately();
+    if (builder.myCreateImmediately) browser.createImmediately();
     return browser;
   }
 

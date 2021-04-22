@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.ui.jcef.JBCefBrowserBase.RenderingType;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
@@ -21,7 +22,7 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests {@link JBCefJSQuery} for {@link JBCefOsrHandlerBrowser}.
+ * Tests {@link JBCefJSQuery} for OSR browser.
  * See: IDEA-264004, JBR-3175
  *
  * @author tav
@@ -36,7 +37,7 @@ public class JBCefJSQueryOSRTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
-    TestScaleHelper.setSystemProperty("ide.browser.jcef.osr.enabled", "true");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
 
   @After
@@ -48,6 +49,7 @@ public class JBCefJSQueryOSRTest {
   public void test1() {
     JBCefClient client = JBCefApp.getInstance().createClient();
     client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
+
     JBCefOsrHandlerBrowser browser = JBCefOsrHandlerBrowser.create("", new MyRenderHandler(), client);
     JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
 
@@ -58,12 +60,40 @@ public class JBCefJSQueryOSRTest {
   public void test2() {
     JBCefOsrHandlerBrowser browser = JBCefOsrHandlerBrowser.create("", new MyRenderHandler(), false);
     JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
-    browser.getCefBrowser().createImmediately();
+    browser.createImmediately();
 
     doTest(browser, jsQuery);
   }
 
-  public void doTest(@NotNull JBCefOsrHandlerBrowser browser, @NotNull JBCefJSQuery jsQuery) {
+  @Test
+  public void test3() {
+    JBCefClient client = JBCefApp.getInstance().createClient();
+    client.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 1);
+
+    JBCefBrowser browser = JBCefBrowser.createBuilder()
+      .setRenderingType(RenderingType.BUFFERED_IMAGE)
+      .setClient(client)
+      .setCreateImmediately(true)
+      .createBrowser();
+
+    JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
+
+    doTest(browser, jsQuery);
+  }
+
+  @Test
+  public void test4() {
+    JBCefBrowser browser = JBCefBrowser.createBuilder()
+      .setRenderingType(RenderingType.BUFFERED_IMAGE)
+      .createBrowser();
+
+    JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
+    browser.createImmediately();
+
+    doTest(browser, jsQuery);
+  }
+
+  public void doTest(@NotNull JBCefBrowserBase browser, @NotNull JBCefJSQuery jsQuery) {
     CountDownLatch latch = new CountDownLatch(1);
 
     jsQuery.addHandler(result -> {

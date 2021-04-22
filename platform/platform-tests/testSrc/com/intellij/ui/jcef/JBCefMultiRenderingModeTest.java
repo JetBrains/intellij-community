@@ -31,7 +31,7 @@ public class JBCefMultiRenderingModeTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
-    TestScaleHelper.setSystemProperty("ide.browser.jcef.osr.enabled", "true");
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
 
   @After
