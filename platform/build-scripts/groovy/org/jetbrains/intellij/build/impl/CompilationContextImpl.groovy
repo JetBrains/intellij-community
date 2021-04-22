@@ -175,6 +175,7 @@ class CompilationContextImpl implements CompilationContext {
     def copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       kotlinBinaries, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.classesOutputDirectory = classesOutputDirectory
+    copy.compilationData = compilationData
     return copy
   }
 
