@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
@@ -61,7 +62,7 @@ public class RegistryUi implements Disposable {
   private static final Icon RESTART_ICON = PlatformIcons.CHECK_ICON;
   private final RestoreDefaultsAction myRestoreDefaultsAction;
   private final MyTableModel myModel;
-  private final Map<String, String> myModifiedValuesRequiringRestart = new HashMap<>();
+  private final Map<String, String> myModifiedValues = new HashMap<>();
 
   public RegistryUi() {
     myContent.setLayout(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
@@ -374,7 +375,10 @@ public class RegistryUi implements Disposable {
   }
 
   private void processClose() {
-    if (!myModifiedValuesRequiringRestart.isEmpty()) {
+    if (!myModifiedValues.isEmpty()) {
+      IdeBackgroundUtil.repaintAllWindows();
+    }
+    if (ContainerUtil.find(myModifiedValues.keySet(), o -> Registry.get(o).isRestartRequired()) != null) {
       RegistryBooleanOptionDescriptor.suggestRestart(myContent);
     }
   }
@@ -384,17 +388,14 @@ public class RegistryUi implements Disposable {
   }
 
   private void setValue(@NotNull RegistryValue registryValue, @NotNull String value) {
-    boolean required = registryValue.isRestartRequired();
-    if (required) {
-      String key = registryValue.getKey();
-      if (!myModifiedValuesRequiringRestart.containsKey(key)) {
-        // store previous value that represent an initial value for this dialog
-        myModifiedValuesRequiringRestart.put(key, registryValue.asString());
-      }
-      else if (value.equals(myModifiedValuesRequiringRestart.get(key))) {
-        // remove stored value if it is equals to the new value
-        myModifiedValuesRequiringRestart.remove(key);
-      }
+    String key = registryValue.getKey();
+    if (!myModifiedValues.containsKey(key)) {
+      // store previous value that represent an initial value for this dialog
+      myModifiedValues.put(key, registryValue.asString());
+    }
+    else if (value.equals(myModifiedValues.get(key))) {
+      // remove stored value if it is equals to the new value
+      myModifiedValues.remove(key);
     }
     registryValue.setValue(value);
   }
