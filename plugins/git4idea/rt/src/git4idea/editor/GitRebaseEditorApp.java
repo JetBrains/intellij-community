@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import static git4idea.editor.GitRebaseEditorXmlRpcHandler.ERROR_EXIT_CODE;
 import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_HANDLER_ENV;
-import static org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV;
+import static git4idea.editor.GitRebaseEditorXmlRpcHandler.IJ_EDITOR_TOKEN_ENV;
 
 /**
  * The rebase editor application, this editor is invoked by the git.
