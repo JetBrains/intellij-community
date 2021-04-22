@@ -164,9 +164,8 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
         public void windowExitedFullScreen(FullScreenEvent event) {
           // We can get the notification when the frame has been disposed
           JRootPane rootPane = myFrame.getRootPane();
-          if (rootPane instanceof IdeRootPane && Registry.is("ide.mac.transparentTitleBarAppearance")) {
-            IdeRootPane ideRootPane = (IdeRootPane)rootPane;
-            UIUtil.setCustomTitleBar(myFrame, ideRootPane, runnable -> {
+          if (Registry.is("ide.mac.transparentTitleBarAppearance")) {
+            UIUtil.setCustomTitleBar(myFrame, rootPane, runnable -> {
               Disposer.register(parentDisposable, () -> runnable.run());
             });
           }
