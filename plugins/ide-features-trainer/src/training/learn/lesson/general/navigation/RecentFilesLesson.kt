@@ -3,8 +3,13 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
 import com.intellij.ide.actions.Switcher
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.SearchTextField
@@ -21,7 +26,7 @@ import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
-import kotlin.random.Random
+import kotlin.math.min
 
 abstract class RecentFilesLesson : KLesson("Recent Files and Locations", LessonsBundle.message("recent.files.lesson.name")) {
   abstract override val existedFile: String
@@ -155,25 +160,27 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
   // Should open (countOfFilesToOpen - 1) files
   open fun LessonContext.openManyFiles() {
-    val openedFiles = mutableSetOf<String>()
-    val random = Random(System.currentTimeMillis())
-    for (i in 0 until (countOfFilesToOpen - 1)) {
-      waitBeforeContinue(200)
-      prepareRuntimeTask {
+    task {
+      addFutureStep {
         val curFile = virtualFile
-        val files = curFile.parent?.children
-                    ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
-
-        var index = random.nextInt(0, files.size)
-        while (openedFiles.contains(files[index].name)) {
-          index = random.nextInt(0, files.size)
+        val task = object : Task.Backgroundable(project, LessonsBundle.message("recent.files.progress.title"), true) {
+          override fun run(indicator: ProgressIndicator) {
+            indicator.isIndeterminate = false
+            val files = curFile.parent?.children?.filter { it.name != curFile.name }
+                        ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
+            for (i in 0 until min(countOfFilesToOpen - 1, files.size)) {
+              invokeAndWaitIfNeeded(ModalityState.NON_MODAL) {
+                if (!indicator.isCanceled) {
+                  FileEditorManager.getInstance(project).openFile(files[i], true)
+                  indicator.fraction = (i + 1).toDouble() / (countOfFilesToOpen - 1)
+                }
+              }
+            }
+            invokeLater { completeStep() }
+          }
         }
 
-        val nextFile = files[index]
-        openedFiles.add(nextFile.name)
-        invokeLater {
-          FileEditorManager.getInstance(project).openFile(nextFile, true)
-        }
+        ProgressManager.getInstance().run(task)
       }
     }
   }
