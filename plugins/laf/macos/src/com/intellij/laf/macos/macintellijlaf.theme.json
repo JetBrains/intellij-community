@@ -13,124 +13,205 @@
       "selectionForegroundInactive": "#000000",
       "selectionInactiveBackground": "system"
     },
-    "ActionButton.hoverBackground": "#dadada",
-    "ActionButton.hoverBorderColor": "#dadada",
-    "ActionButton.pressedBackground": "#c9c9c9",
-    "ActionButton.pressedBorderColor": "#c9c9c9",
-    "AssignedMnemonic.background": "#F7C777",
-    "AssignedMnemonic.borderColor": "#F7C777",
-    "AssignedMnemonic.foreground": "#000000",
-    "AvailableMnemonic.background": "#FFFFFF",
-    "AvailableMnemonic.borderColor": "#C4C4C4",
-    "AvailableMnemonic.foreground": "#000000",
+
+    "ActionButton": {
+      "hoverBackground": "#dadada",
+      "hoverBorderColor": "#dadada",
+      "pressedBackground": "#c9c9c9",
+      "pressedBorderColor": "#c9c9c9"
+    },
+
+    "AssignedMnemonic": {
+      "background": "#F7C777",
+      "borderColor": "#F7C777",
+      "foreground": "#000000"
+    },
+
+    "AvailableMnemonic": {
+      "background": "#FFFFFF",
+      "borderColor": "#C4C4C4",
+      "foreground": "#000000"
+    },
+
     "BookmarkIcon.background": "#F7C777",
     "Borders.ContrastBorderColor": "#c9c9c9",
-    "Button.border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
-    "ButtonUI": "com.intellij.laf.macos.MacIntelliJButtonUI",
+
+    "Button": {
+      "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
+      "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
+    },
+
     "CellEditor.border.width": 2,
-    "CheckBox.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
-    "CheckBox.borderInsets": "4,4,4,0",
-    "CheckBoxUI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI",
-    "ComboBox.background": "#ffffff",
-    "ComboBox.border": "com.intellij.laf.macos.MacIntelliJComboBoxBorder",
-    "ComboBox.disabledBackground": "#ececec",
-    "ComboBox.padding": "1,6,1,6",
-    "ComboBoxUI": "com.intellij.laf.macos.MacIntelliJComboBoxUI",
-    "Component.errorFocusColor": "#f53b3b80",
-    "Component.focusColor": "#479cfc80",
-    "Component.focusWidth": 4,
-    "Component.inactiveErrorFocusColor": "#f7bcbc80",
-    "Component.inactiveWarningFocusColor": "#ffda9980",
-    "Component.warningFocusColor": "#e9ad4380",
-    "CurrentMnemonic.background": "#389FD6",
-    "CurrentMnemonic.borderColor": "#389FD6",
-    "CurrentMnemonic.foreground": "#FFFFFF",
+
+    "CheckBox": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder",
+      "borderInsets": "4,4,4,0",
+      "UI": "com.intellij.laf.macos.MacIntelliJCheckBoxUI"
+    },
+
+    "ComboBox": {
+      "background": "#ffffff",
+      "border": "com.intellij.laf.macos.MacIntelliJComboBoxBorder",
+      "disabledBackground": "#ececec",
+      "padding": "1,6,1,6",
+      "UI": "com.intellij.laf.macos.MacIntelliJComboBoxUI"
+    },
+
+    "Component": {
+      "errorFocusColor": "#f53b3b80",
+      "focusColor": "#479cfc80",
+      "focusWidth": 4,
+      "inactiveErrorFocusColor": "#f7bcbc80",
+      "inactiveWarningFocusColor": "#ffda9980",
+      "warningFocusColor": "#e9ad4380"
+    },
+
+    "CurrentMnemonic": {
+      "CurrentMnemonic.background": "#389FD6",
+      "CurrentMnemonic.borderColor": "#389FD6",
+      "CurrentMnemonic.foreground": "#FFFFFF"
+    },
+
     "EditorTabs.underlinedTabBackground": "#fafafa",
-    "HelpTooltip.descriptionSizeDelta": -1,
-    "HelpTooltip.mouseCursorOffset": 17,
-    "HelpTooltip.xOffset": 1,
-    "HelpTooltip.yOffset": 1,
-    "Link.activeForeground": "#2470B3",
-    "Link.hoverForeground": "#2470B3",
-    "Link.pressedForeground": "#0058a6",
-    "Menu.background": "#f6f6f6",
-    "Menu.border": "0,5,2,5",
-    "Menu.separatorColor": "#dfdfdf",
-    "MenuItem.acceleratorSelectionForeground": "#dcdcdc",
-    "MenuItem.background": "#f6f6f6",
-    "MenuItem.border": "0,5,2,5",
-    "MnemonicIcon.background": "#FEF7EC",
-    "MnemonicIcon.borderColor": "#F4AF3D",
-    "MnemonicIcon.foreground": "#000000",
+    "HelpTooltip": {
+      "descriptionSizeDelta": -1,
+      "mouseCursorOffset": 17,
+      "xOffset": 1,
+      "yOffset": 1
+    },
+
+    "Link": {
+      "activeForeground": "#2470B3",
+      "hoverForeground": "#2470B3",
+      "pressedForeground": "#0058a6"
+    },
+
+    "Menu": {
+      "background": "#f6f6f6",
+      "border": "0,5,2,5",
+      "separatorColor": "#dfdfdf"
+    },
+
+    "MenuItem": {
+      "acceleratorSelectionForeground": "#dcdcdc",
+      "background": "#f6f6f6",
+      "border": "0,5,2,5"
+    },
+
+    "MnemonicIcon": {
+      "background": "#FEF7EC",
+      "borderColor": "#F4AF3D",
+      "foreground": "#000000"
+    },
+
     "NavBar.borderColor": "#cdcdcd",
     "OptionButtonUI": "com.intellij.laf.macos.MacIntelliJOptionButtonUI",
     "Panel.background": "#ececec",
-    "PasswordField.border": "com.intellij.laf.macos.MacIntelliJTextBorder",
-    "PasswordFieldUI": "com.intellij.laf.macos.MacIntelliJPasswordFieldUI",
-    "Popup.Header.activeBackground": "#e0e0e0",
-    "Popup.Header.inactiveBackground": "#ebebeb",
-    "Popup.Toolbar.background": "#f5f5f5",
-    "Popup.Toolbar.borderColor": "#f5f5f5",
-    "Popup.borderColor": "#bebebe",
-    "Popup.inactiveBorderColor": "#bebebe",
-    "PopupMenu.background": "#f6f6f6",
-    "PopupMenu.borderInsets": "4,0,4,0",
-    "PopupMenu.borderWidth": 0,
-    "PopupMenu.translucentBackground": "#ececec",
-    "PopupMenuSeparator.height": 12,
-    "PopupMenuSeparator.stripeIndent": 5,
-    "PopupMenuSeparator.stripeWidth": 2,
-    "PopupMenuSeparatorUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI",
-    "PopupMenuUI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI",
-    "ProgressBar.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
-    "ProgressBar.failedColor": "#d64f4f",
-    "ProgressBar.failedEndColor": "#fb8f89",
-    "ProgressBar.indeterminateEndColor": "#0089fc",
-    "ProgressBar.indeterminateStartColor": "#86c4ff",
-    "ProgressBar.passedColor": "#34b171",
-    "ProgressBar.passedEndColor": "#7ee8a5",
-    "ProgressBar.progressColor": "#0089fc",
-    "ProgressBar.trackColor": "#d4d4d4",
-    "ProgressBarUI": "com.intellij.laf.macos.MacIntelliJProgressBarUI",
-    "RadioButton.border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
-    "RadioButton.borderInsets": "3,3,3,0",
-    "RadioButtonUI": "com.intellij.laf.macos.MacIntelliJRadioButtonUI",
+
+    "PasswordField": {
+      "border": "com.intellij.laf.macos.MacIntelliJTextBorder",
+      "UI": "com.intellij.laf.macos.MacIntelliJPasswordFieldUI"
+    },
+
+    "Popup": {
+      "Header.activeBackground": "#e0e0e0",
+      "Header.inactiveBackground": "#ebebeb",
+      "Toolbar.background": "#f5f5f5",
+      "Toolbar.borderColor": "#f5f5f5",
+      "borderColor": "#bebebe",
+      "inactiveBorderColor": "#bebebe"
+    },
+
+    "PopupMenu": {
+      "background": "#f6f6f6",
+      "borderInsets": "4,0,4,0",
+      "borderWidth": 0,
+      "translucentBackground": "#ececec",
+      "UI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
+    },
+
+    "PopupMenuSeparator": {
+      "height": 12,
+      "stripeIndent": 5,
+      "stripeWidth": 2,
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
+    },
+
+    "ProgressBar": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder",
+      "failedColor": "#d64f4f",
+      "failedEndColor": "#fb8f89",
+      "indeterminateEndColor": "#0089fc",
+      "indeterminateStartColor": "#86c4ff",
+      "passedColor": "#34b171",
+      "passedEndColor": "#7ee8a5",
+      "progressColor": "#0089fc",
+      "trackColor": "#d4d4d4",
+      "UI": "com.intellij.laf.macos.MacIntelliJProgressBarUI"
+    },
+
+    "RadioButton": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonBorder",
+      "borderInsets": "3,3,3,0",
+      "UI": "com.intellij.laf.macos.MacIntelliJRadioButtonUI"
+    },
+
     "ScrollBar.background": "#F5F5F5",
-    "Spinner.background": "#ececec",
-    "Spinner.border": "com.intellij.laf.macos.MacIntelliJSpinnerBorder",
-    "Spinner.darcula.disabledButtonColor": "#ececec",
-    "SpinnerUI": "com.intellij.laf.macos.MacIntelliJSpinnerUI",
+
+    "Spinner": {
+      "background": "#ececec",
+      "border": "com.intellij.laf.macos.MacIntelliJSpinnerBorder",
+      "darcula.disabledButtonColor": "#ececec",
+      "UI": "com.intellij.laf.macos.MacIntelliJSpinnerUI"
+    },
+
     "SplitPane.highlight": "#ececec",
-    "StatusBar.borderColor": "#c9c9c9",
-    "StatusBar.hoverBackground": "#dadada",
-    "TabbedPane.contentAreaColor": "#bfbfbf",
-    "TabbedPane.disabledUnderlineColor": "#ababab",
-    "TabbedPane.focusColor": "#dae4ed",
-    "TabbedPane.hoverColor": "#d9d9d9",
-    "TabbedPane.labelShift": 0,
-    "TabbedPane.selectedLabelShift": 0,
-    "TabbedPane.selectedTabPadInsets": "0,0,0,0",
-    "TabbedPane.tabAreaInsets": "0,0,0,0",
-    "TabbedPane.tabFillStyle": "underline",
-    "TabbedPane.tabHeight": 32,
-    "TabbedPane.tabInsets": "0,12,0,12",
-    "TabbedPane.tabSelectionHeight": 3,
-    "TabbedPane.tabsOverlapBorder": true,
-    "TabbedPane.underlineColor": "#4083C9",
-    "TabbedPaneUI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI",
-    "TableHeader.background": "#F2F2F2",
-    "TableHeader.bottomSeparatorColor": "#d6d6d6",
-    "TableHeader.cellBorder": "2,2,2,2",
-    "TableHeader.separatorColor": "#d6d6d6",
-    "TextField.border": "com.intellij.laf.macos.MacIntelliJTextBorder",
-    "TextField.disabledBackground": "#ececec",
-    "TextFieldUI": "com.intellij.laf.macos.MacIntelliJTextFieldUI",
-    "Tree.collapsedIcon": "/icons/treeCollapsed.svg",
-    "Tree.collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
-    "Tree.expandedIcon": "/icons/treeExpanded.svg",
-    "Tree.expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
-    "Tree.hash": "#E6E6E6",
-    "Tree.paintLines": false,
+
+    "StatusBar": {
+      "borderColor": "#c9c9c9",
+      "hoverBackground": "#dadada"
+    },
+
+    "TabbedPane": {
+      "contentAreaColor": "#bfbfbf",
+      "disabledUnderlineColor": "#ababab",
+      "focusColor": "#dae4ed",
+      "hoverColor": "#d9d9d9",
+      "labelShift": 0,
+      "selectedLabelShift": 0,
+      "selectedTabPadInsets": "0,0,0,0",
+      "tabAreaInsets": "0,0,0,0",
+      "tabFillStyle": "underline",
+      "tabHeight": 32,
+      "tabInsets": "0,12,0,12",
+      "tabSelectionHeight": 3,
+      "tabsOverlapBorder": true,
+      "underlineColor": "#4083C9",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaTabbedPaneUI"
+    },
+
+    "TableHeader": {
+      "background": "#F2F2F2",
+      "bottomSeparatorColor": "#d6d6d6",
+      "cellBorder": "2,2,2,2",
+      "separatorColor": "#d6d6d6"
+    },
+
+    "TextField": {
+      "border": "com.intellij.laf.macos.MacIntelliJTextBorder",
+      "disabledBackground": "#ececec",
+      "UI": "com.intellij.laf.macos.MacIntelliJTextFieldUI"
+    },
+
+    "Tree": {
+      "collapsedIcon": "/icons/treeCollapsed.svg",
+      "collapsedSelectedIcon": "/icons/treeCollapsedSelected.svg",
+      "expandedIcon": "/icons/treeExpanded.svg",
+      "expandedSelectedIcon": "/icons/treeExpandedSelected.svg",
+      "hash": "#E6E6E6",
+      "paintLines": false
+    },
+
     "window": "#ececec"
   }
 }
