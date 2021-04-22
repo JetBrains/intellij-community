@@ -77,6 +77,7 @@ class MPSProperties extends JetBrainsProductProperties {
                 for (String name : BaseIdeaProperties.JAVA_IDE_IMPLEMENTATION_MODULES) {
                     withModule(name)
                 }
+                excludeFromModule("intellij.platform.testFramework", "mockito-extensions/**")
 
                 withModule("intellij.platform.coverage", productLayout.mainJarName)
 
