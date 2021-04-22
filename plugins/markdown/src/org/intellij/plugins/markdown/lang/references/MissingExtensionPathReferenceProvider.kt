@@ -5,10 +5,13 @@ import com.intellij.openapi.paths.PathReference
 import com.intellij.openapi.paths.PathReferenceProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 
 class MissingExtensionPathReferenceProvider : PathReferenceProvider {
   override fun createReferences(psiElement: PsiElement, references: MutableList<PsiReference>, soft: Boolean): Boolean {
-    RelativeMissingExtensionFileReference.createReference(psiElement, references, soft)
+    if (psiElement is MarkdownPsiElement) {
+      RelativeMissingExtensionFileReference.createReference(psiElement, references, soft)
+    }
     return false
   }
 
