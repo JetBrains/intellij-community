@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports any redundant modifiers on interfaces or interface components.
-<p><b>Example:</b></p>
-<pre>
-  abstract interface Printer {  // 'abstract' is unnecessary
-    public int size();          // 'public' is unnecessary
+Reports any redundant modifiers on interfaces or interface components and suggests removing them.
+<p>For example, the <code>abstract</code> and <code>public</code> modifiers are
+redundant and will be reported by the inspection:</p>
+<pre><code>
+  abstract interface Printer {
+    public int size();
   }
-</pre>
+</code></pre>
 
 <!-- tooltip end -->
-<p>
 
 </body>
 </html>

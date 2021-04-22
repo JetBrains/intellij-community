@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports on any unnecessary semicolons, whether between class members, inside block statements, or after
-class definitions. While valid Java, these semicolons are redundant and may be removed.
+Reports any unnecessary semicolons, including semicolons that are used between class members, inside block statements, or after
+class definitions.
+<p>Even though these semicolons are valid in Java, they are redundant and may be removed.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   class C {
     ;
     void m() throws Exception {
@@ -13,16 +14,16 @@ class definitions. While valid Java, these semicolons are redundant and may be r
     }
     ;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class C {
     void m() throws Exception {
       try (AutoCloseable r1 = createAutoCloseable()) {
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 

@@ -1,16 +1,16 @@
 <html>
 <body>
-Reports the code where an unchecked warning is issued by the compiler. Every unchecked warning
-represents the potential for a <code>ClassCastException</code> at runtime.
+Reports the code in which an unchecked warning is issued by the compiler.
+<p>Every unchecked warning may potentially trigger <code>ClassCastException</code> at runtime.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   List items = Arrays.asList("string", "string");
   List&lt;Integer&gt; numbers = Collections.unmodifiableList(items);
-</pre>
-<p>The quick-fix tries to generify and put all missed types in the current file:</p>
-<pre>
+</code></pre>
+<p>The quick-fix tries to make the code more generic and put all missed types to the current file:</p>
+<pre><code>
   List&lt;String&gt; items = Arrays.asList("string", "string");
   List&lt;Integer&gt; numbers = Collections.unmodifiableList(items);
-</pre>
+</code></pre>
 </body>
 </html>

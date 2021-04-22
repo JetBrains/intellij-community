@@ -1,15 +1,21 @@
 <html>
 <body>
-Reports any type parameters and wildcard type arguments explicitly declared to extend <code>java.lang.Object</code>. Such extension is useless as <code>java.lang.Object</code> is supertype of all classes.
-<p><b>Example:</b></p>
-<pre>
-  class ClassA&lt;T extends Object&gt; {}    //reported
-  class ClassB&lt;T extends @A Object&gt; {} //depends on setting
-</pre>
+Reports any type parameters and wildcard type arguments that are explicitly declared to extend <code>java.lang.Object</code>.
+<p>Such extension is redundant as <code>java.lang.Object</code> is a supertype of all classes.</p>
+<p>Example:</p>
+<pre><code>
+  class ClassA&lt;T extends Object&gt; {}
+</code></pre>
 <!-- tooltip end -->
+<p>Configure the inspection:</p>
 <p>
-  Use the checkbox below to disable inspection in cases of <code>java.lang.Object</code> is annotated.
+  Use the <b>Ignore when java.lang.Object is annotated</b> option to disable the inspection if
+  <code>java.lang.Object</code> is annotated.
 </p>
+<p>Example:</p>
+<pre><code>
+  class ClassB&lt;T extends @A Object&gt; {}
+</code></pre>
 
 </body>
 </html>

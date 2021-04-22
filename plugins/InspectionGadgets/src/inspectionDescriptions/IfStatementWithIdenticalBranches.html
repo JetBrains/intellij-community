@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports <code>if</code> statements where common parts can be extracted from the branches.
-These common parts are independent from the condition and make <code>if</code> statements harder to understand.
+Reports <code>if</code> statements in which common parts can be extracted from the branches.
+<p>These common parts are independent from the condition and make <code>if</code> statements harder to understand.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   if (x &gt; 12) {
     doSomethingBefore();
     doSomethingDifferent1();
@@ -13,9 +13,9 @@ These common parts are independent from the condition and make <code>if</code> s
     doSomethingDifferent2();
     doSomethingAfter();
   }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   doSomethingBefore();
   if (x &gt; 12) {
     doSomethingDifferent1();
@@ -23,7 +23,7 @@ These common parts are independent from the condition and make <code>if</code> s
     doSomethingDifferent2();
   }
   doSomethingAfter();
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>Updated in 2018.1</small></p>
 </body>

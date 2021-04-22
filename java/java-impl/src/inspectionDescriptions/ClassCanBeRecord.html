@@ -1,20 +1,21 @@
 <html>
 <body>
 Suggests replacing classes with records.
-The inspection could be useful if you need to focus on modeling immutable data rather than extensible behavior.
-Automatic implementation of data-driven methods such as equals and accessors helps to get rid of boilerplate.
+<p>The inspection can be useful if you need to focus on modeling immutable data rather than extensible behavior.
+  Automatic implementation of data-driven methods, such as equals and accessors, helps to get rid of boilerplate.</p>
 <p>
   Note that not every class can be a record. Here are some of the restrictions:
 </p>
 <ul>
-  <li>Class must contain no inheritors and must be a top level class.</li>
+  <li>A class must contain no inheritors and must be a top-level class.</li>
   <li>All the non-static fields in class must be final.</li>
-  <li>Class must contain no instance initializers, generic constructor and native methods.</li>
+  <li>Class must contain no instance initializers, generic constructors, nor native methods.</li>
 </ul>
-To get a full list of the restrictions refer to https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
+<p>To get a full list of the restrictions, refer to the
+  <a href="https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html">Oracle documentation</a>.</p>
 <!-- tooltip end -->
 <p>Example:</p>
-<pre>
+<pre><code>
   class Point {
     private final double x;
     private final double y;
@@ -32,13 +33,13 @@ To get a full list of the restrictions refer to https://docs.oracle.com/javase/s
       return y;
     }
   }
-</pre>
-This record will be converted to:
-<pre>
+</code></pre>
+<p>This record will be converted to:</p>
+<pre><code>
   record Point(int x, int y) {
   }
-</pre>
-<p>This inspection only applies to language level 14 preview and higher.</p>
+</code></pre>
+<p>This inspection only reports if the language level of the project or module is 14 preview or higher.</p>
 <p><small>New in 2020.3</small></p>
 </body>
 </html>

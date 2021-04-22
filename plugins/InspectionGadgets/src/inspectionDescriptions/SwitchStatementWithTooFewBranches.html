@@ -2,7 +2,7 @@
 <body>
 Reports <code>switch</code> statements and expressions with too few <code>case</code> labels, and suggests rewriting them as <code>if</code>
 and
-<code>else if</code>statements.
+<code>else if</code> statements.
 <p>Example (minimum branches == 3):</p>
 <pre>
   switch (expression) {
@@ -10,7 +10,7 @@ and
     case "bar" -&gt; bar();
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   if ("foo".equals(expression)) {
     foo();
@@ -19,6 +19,7 @@ and
   }
 </pre>
 <!-- tooltip end -->
-<p>Use the field below to specify the minimum number of <code>case</code> labels expected.
+<p>Configure the inspection:</p>
+<p>Use the <b>Minimum number of branches</b> field to specify the minimum expected number of <code>case</code> labels.</p>
 </body>
 </html>
